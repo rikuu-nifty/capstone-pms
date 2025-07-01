@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inventory;
+use Inertia\Inertia;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -12,7 +13,7 @@ class InventoryController extends Controller
      */
     public function index()
     {
-        dd('hello');
+        return Inertia::render('inventory/index');
     }
  
     /**

@@ -1,4 +1,3 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -13,38 +12,54 @@ import {
 } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/react';
 import {
-    BookOpen,
     ClipboardList,
-    Cuboid,
-    Folder,
+    Network,
+    Building2,
+    Blocks,
+    Files,
+    FileCheck2,
+    Package2,
+    CalendarCheck2,
     LayoutGrid,
     PackageCheck,
     Settings,
     User,
     ArrowRightLeft,
     Calendar,
-    School
+    School,
+    File,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
-
-// Define all nav groups
-const mainNavItems = [
-    { title: 'Inventory', href: '/inventory', icon: Cuboid },
-];
-
-const formsNavItems = [
-    { title: 'Transfer', href: '/transfer', icon: ArrowRightLeft},
-    { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList },
-    { title: 'Off-campus', href: '/off-campus', icon: School },
-];
-
-const othersNavItems = [
-    { title: 'Assets Life Cycle', href: '/assetslifecycle', icon: PackageCheck },
+// Grouped nav items
+const dashboardNavItems = [
+    { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
     { title: 'Calendar', href: '/calendar', icon: Calendar },
 ];
 
+const inventoryNavItems = [
+    { title: 'Inventory List', href: '/inventory-list', icon: Package2 },
+    { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2 },
+    { title: 'Transfer', href: '/transfer', icon: ArrowRightLeft },
+    { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList },
+    { title: 'Off-campus', href: '/off-campus', icon: School },
+    { title: 'Reports', href: '/reports', icon: Files },
+];
+
+const assetsNavItems = [
+    { title: 'Categories', href: '/categories', icon: Blocks },
+    { title: 'Models', href: '/models', icon: PackageCheck },
+    { title: 'Assignment', href: '/assignment', icon: PackageCheck },
+];
+
+const institutionalSetUpNavItems = [
+    { title: 'Buildings', href: '/buildings', icon: Building2 },
+    { title: 'Organizations', href: '/organizations', icon: Network },
+];
+
 const userNavItems = [
+    { title: 'Audit Log', href: '/audit-log', icon: File },
+    { title: 'Form Approval', href: '/form-approval', icon: FileCheck2 },
     { title: 'Profile', href: '/profile', icon: User },
 ];
 
@@ -52,14 +67,9 @@ const configNavItems = [
     { title: 'Settings', href: '/settings', icon: Settings },
 ];
 
-const footerNavItems = [
-    { title: 'Repository', href: 'https://github.com/laravel/react-starter-kit', icon: Folder },
-    { title: 'Documentation', href: 'https://laravel.com/docs/starter-kits#react', icon: BookOpen },
-];
-
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset">
+        <Sidebar collapsible="icon" variant="inset" className="h-screen overflow-hidden">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -72,38 +82,25 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
-                {/* Standalone Dashboard */}
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={window.location.pathname === '/dashboard'}
-                            tooltip={{ children: 'Dashboard' }}
-                        >
-                            <Link href="/dashboard" prefetch>
-                                <LayoutGrid />
-                                <span>Dashboard</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-
-                {/* Group: Platform */}
-                <NavMain
-                    items={mainNavItems}
-                >
-                    <SidebarGroupLabel>Finance & Storage </SidebarGroupLabel>
+            <SidebarContent className="overflow-hidden">
+                {/* Group: Dashboard */}
+                <NavMain items={dashboardNavItems}>
+                    <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
                 </NavMain>
 
-                {/* Group: Forms */}
-                <NavMain items={formsNavItems}>
-                    <SidebarGroupLabel>Forms</SidebarGroupLabel>
+                {/* Group: Inventory */}
+                <NavMain items={inventoryNavItems}>
+                    <SidebarGroupLabel>Inventory</SidebarGroupLabel>
                 </NavMain>
 
-                {/* Group: Others */}
-                <NavMain items={othersNavItems}>
-                    <SidebarGroupLabel>Others</SidebarGroupLabel>
+                {/* Group: Assets */}
+                <NavMain items={assetsNavItems}>
+                    <SidebarGroupLabel>Assets</SidebarGroupLabel>
+                </NavMain>
+
+                {/* Group: Institutional Setup */}
+                <NavMain items={institutionalSetUpNavItems}>
+                    <SidebarGroupLabel>Institutional Setup</SidebarGroupLabel>
                 </NavMain>
 
                 {/* Group: User */}
@@ -118,7 +115,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

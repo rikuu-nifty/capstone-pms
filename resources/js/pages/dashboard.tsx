@@ -24,7 +24,7 @@ export default function Dashboard() {
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4">
                         <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Active Transfers</h2>
                         <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mt-2">12</p>
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/10 dark:stroke-neutral-100/10 pointer-events-none" />
+                        {/* <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/10 dark:stroke-neutral-100/10 pointer-events-none" /> */}
                     </div>
 
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4">
@@ -36,7 +36,7 @@ export default function Dashboard() {
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4">
                         <h2 className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Completed This Month</h2>
                         <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">24</p>
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/10 dark:stroke-neutral-100/10 pointer-events-none" />
+                        {/* <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/10 dark:stroke-neutral-100/10 pointer-events-none" /> */}
                     </div>
                 </div>
 
