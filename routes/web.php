@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\InventoryListController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -19,12 +19,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('calendar');
     })->name('calendar');
 
-
-
-    Route::resource('inventory', InventoryController::class);
+    Route::resource('inventory-list', InventoryListController::class);
 });
 
 
- 
+  
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

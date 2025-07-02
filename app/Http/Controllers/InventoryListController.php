@@ -1,27 +1,26 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Models\Inventory;
-use Inertia\Inertia;
+use App\Models\inventoryList;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
-class InventoryController extends Controller
+class InventoryListController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return Inertia::render('inventory/index');
+        return Inertia::render('inventory-list/index');
     }
- 
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        //
+        dd('123123');
     }
 
     /**
@@ -35,7 +34,7 @@ class InventoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Inventory $inventory)
+    public function show(inventoryList $inventoryList)
     {
         //
     }
@@ -43,7 +42,7 @@ class InventoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Inventory $inventory)
+    public function edit(inventoryList $inventoryList)
     {
         //
     }
@@ -51,7 +50,7 @@ class InventoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Inventory $inventory)
+    public function update(Request $request, inventoryList $inventoryList)
     {
         //
     }
@@ -59,7 +58,7 @@ class InventoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Inventory $inventory)
+    public function destroy(inventoryList $inventoryList)
     {
         //
     }
