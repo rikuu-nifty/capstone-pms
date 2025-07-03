@@ -19,37 +19,13 @@ import { Head } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Add Inventory',
-        href: '/inventory-list/create',
+        title: 'Add Asset',
+        href: '/inventory-list/add-asset',
     },
-];
-
-// const mockData = [
-//     {
-//         asset_name: 'Monitor',
-//         brand: 'Gamdias',
-//         date_purchased: 'May 29, 2025',
-//         asset_type: 'Electronic',
-//         quantity: 2,
-//         building: 'PS Building',
-//         department: "CAMP-Dean's Office",
-//         status: 'active',
-//     },
-//     {
-//         asset_name: 'Monitor',
-//         brand: 'Gamdias',
-//         date_purchased: 'May 29, 2025',
-//         asset_type: 'Electronic',
-//         quantity: 2,
-//         building: 'PS Building',
-//         department: "CAMP-Dean's Office",
-//         status: 'archived',
-//     },
-// ];
+];  
 
 export default function AddInventory() {
  
-    
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory List" />

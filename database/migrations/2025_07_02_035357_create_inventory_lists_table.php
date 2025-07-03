@@ -13,21 +13,23 @@ return new class extends Migration
     {
         Schema::create('inventory_lists', function (Blueprint $table) {
             $table->id();
+            $table->integer('memorandum_no');
+            $table->integer('asset_model_id');// Asset Model ID   
             $table->string('asset_name');
+            $table->text('description')->nullable();
+            $table->integer('org_id')->nullable();
+            $table->string('building')->nullable();
+            $table->string('building_room')->nullable();
+            $table->text('serial_no');  
+            $table->string('supplier');
+            $table->decimal('unit_cost', 10, 2);
+
             $table->string('brand')->nullable();
             $table->date('date_purchased')->nullable();
             $table->string('asset_type');
             $table->integer('quantity');
-            $table->string('building')->nullable();
             $table->string('unit_or_department')->nullable();	
             $table->enum('status', ['active', 'archived'])->default('active');
-            $table->string('room')->nullable();
-            $table->string('memorandum_no');
-            $table->text('description')->nullable();
-            $table->string('supplier');
-            $table->decimal('unit_cost', 10, 2)->nullable();
-            $table->text('serial_numbers');
-            $table->string('model')->nullable();
             $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->default('not_transferred');
             $table->timestamps();
         });

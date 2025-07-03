@@ -19,8 +19,10 @@ class InventoryListController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
-    {
-        dd('123123');
+    {   
+
+        return Inertia::render('inventory-list/add-asset-form');
+
     }
 
     /**

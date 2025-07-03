@@ -83,8 +83,8 @@ export default function Index() {
 
                         {/* <Link href="/inventory-list/create" as="button"> */}
                         {/* <Button onClick={() => router.visit('/inventory-list.create')}> */} 
-                            <Button onClick={() => router.visit('/inventory-list/create')} className="cursor-pointer">
-                            <PlusCircle className="mr-1 h-4 w-4"  /> Add Inventory
+                            <Button onClick={() => router.visit('/inventory-list/add-asset')} className="cursor-pointer">
+                            <PlusCircle className="mr-1 h-4 w-4"  /> Add Asset
                         </Button>
                         {/* </Link> */}
                     </div>
