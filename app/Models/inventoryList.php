@@ -7,22 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 class inventoryList extends Model
 {
         protected $fillable = [
+        'id',
+        'memorandum_no',
+        'asset_model_id',
         'asset_name',
-        'brand',  
-        'date_purchased',  
-        'asset_type',  
-        'quantity',  
-        'building',  
-        'unit_or_department',  
-        'status',  
-        'room',  
-        'memorandum_no',  
-        'description',  
-        'supplier',  
-        'unit_cost',  
-        'serial_numbers',  
-        'model',  
-        'transfer_status',  
+        'description',
+        'org_id',
+        'building',
+        'building_room',
+        'serial_no',
+        'supplier',
+        'unit_cost',
+        'brand',
+        'date_purchased',
+        'asset_type',
+        'quantity',
+        'unit_or_department',
+        'status',
+        'transfer_status',
+
     ];
 
 }

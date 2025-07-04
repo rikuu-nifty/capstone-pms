@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use Inertia\Inertia;
 use App\Models\inventoryList;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+
 
 class InventoryListController extends Controller
 {
@@ -12,8 +14,15 @@ class InventoryListController extends Controller
      */
     public function index()
     {
-        return Inertia::render('inventory-list/index');
+        return Inertia::render('inventory-list/index', [
+            'inventory-list' => inventoryList::paginate(10)->withQueryString(),
+        ]);
+
+        // return Inertia::render('inventory-list/index');
+            
     }
+
+
 
     /**
      * Show the form for creating a new resource.
