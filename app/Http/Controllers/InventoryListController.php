@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Http\Requests\InventoryListAddNewAssetFormRequest;
 use Inertia\Inertia;
 use App\Models\inventoryList;
 use Illuminate\Http\Request;
@@ -22,24 +22,24 @@ class InventoryListController extends Controller
             
     }
 
-
-
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {   
 
-        return Inertia::render('inventory-list/add-asset-form');
+        // return Inertia::render('inventory-list/add-asset-form');
 
     }
 
     /**
      * Store a newly created resource in storage.
+     * @param InventoryListAddNewAssetFormRequest 
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(InventoryListAddNewAssetFormRequest $request)
     {
-        //
+        dd($request->all());
     }
 
     /**
