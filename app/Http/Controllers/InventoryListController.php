@@ -5,6 +5,7 @@ use App\Http\Requests\InventoryListAddNewAssetFormRequest;
 use Inertia\Inertia;
 use App\Models\inventoryList;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 
 
 class InventoryListController extends Controller
@@ -12,12 +13,16 @@ class InventoryListController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+         $assets = inventoryList::latest()->get();
+
         return Inertia::render('inventory-list/index', [
-            'inventory-list' => inventoryList::paginate(10)->withQueryString(),
+            'assets' => $assets,
+            
         ]);
 
+        // 'inventory-list' => inventoryList::paginate(10)->withQueryString(),
         // return Inertia::render('inventory-list/index');
             
     }
@@ -34,12 +39,18 @@ class InventoryListController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     * @param InventoryListAddNewAssetFormRequest 
+     * @param InventoryListAddNewAssetFormRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(InventoryListAddNewAssetFormRequest $request)
+    public function store(InventoryListAddNewAssetFormRequest $request): RedirectResponse
     {
-        dd($request->all());
+        // dd($request->all()); 
+        // dd($data); // What made it through validation
+
+         $data = $request->all();
+         inventoryList::create($data);
+         return redirect()->back()->with('success', 'Asset added successfully.');
+
     }
 
     /**

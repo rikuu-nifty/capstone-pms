@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('inventory_lists', function (Blueprint $table) {
             $table->id();
             $table->integer('memorandum_no');
-            $table->integer('asset_model_id');// Asset Model ID   
+            $table->integer('asset_model_id');// Asset Model ID   // Dapat hindi ID, cause it should come from another table which is Model
             $table->string('asset_name');
             $table->text('description')->nullable();
-            $table->integer('org_id')->nullable();
+            $table->integer('organization_id')->nullable();
             $table->string('building')->nullable();
             $table->string('building_room')->nullable();
             $table->text('serial_no');  
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->string('unit_or_department')->nullable();	
             $table->enum('status', ['active', 'archived'])->default('active');
-            $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->default('not_transferred');
+            $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->nullable();
             $table->timestamps();
         });
     }

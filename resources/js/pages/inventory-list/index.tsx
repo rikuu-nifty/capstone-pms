@@ -1,23 +1,12 @@
-// import { router } from '@inertiajs/react';
-// import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useEffect, useState } from 'react';
-
-import {
-    Table,
-    TableBody,
-    // TableCaption,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -26,31 +15,38 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const mockData = [
-    {
-        asset_name: 'Monitor',
-        brand: 'Gamdias',
-        date_purchased: 'May 29, 2025',
-        asset_type: 'Electronic',
-        quantity: 2,
-        building: 'PS Building',
-        department: "CAMP-Dean's Office",
-        status: 'active',
-    },
-    {
-        asset_name: 'Monitor',
-        brand: 'Gamdias',
-        date_purchased: 'May 29, 2025',
-        asset_type: 'Electronic',
-        quantity: 2,
-        building: 'PS Building',
-        department: "CAMP-Dean's Office",
-        status: 'archived',
-    },
-];
+type Asset = {
+    id: number;
+    asset_name: string;
+    brand: string;
+    date_purchased: string;
+    asset_type: string;
+    quantity: number;
+    building: string;
+    unit_or_department: string;
+    status: 'active' | 'archived';
+};
 
-export default function Index() {
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+type AssetFormData = {
+    building: string;
+    unit_or_department: string;
+    building_room: string;
+    date_purchased: string;
+    asset_type: string;
+    asset_name: string;
+    brand: string;
+    quantity: number | string; // can be number or string
+    supplier: string;
+    unit_cost: number | string; // can be number or string
+    serial_no: string;
+    asset_model_id: number | string; // can be number or string
+    transfer_status: string;
+    description: string;
+    memorandum_no: number | string; // can be number or string
+};
+
+export default function Index({ assets = [] }: { assets: Asset[] }) {
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<AssetFormData>({
         building: '',
         unit_or_department: '',
         building_room: '',
@@ -62,43 +58,34 @@ export default function Index() {
         supplier: '',
         unit_cost: '',
         serial_no: '',
-        asset_model: '',
+        asset_model_id: '',
         transfer_status: '',
         description: '',
         memorandum_no: '',
     });
 
-    // Form Submit Handler
+    const [search, setSearch] = useState('');
+    const [showAddAsset, setShowAddAsset] = useState(false);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/inventory-list', {
             onSuccess: () => {
-                console.log('Form Submitted');
-                reset(); // Clear form fields after successful post
-                setShowAddAsset(false); // Close the modal
+                reset();
+                setShowAddAsset(false);
             },
         });
-
-        console.log('Form Submitted:', data); // Debugging log
+        console.log('Form Submitted', data)
     };
-
-    const [search, setSearch] = useState('');
-    const [showAddAsset, setShowAddAsset] = useState(false);
 
     useEffect(() => {
         if (!showAddAsset) {
-            reset(); // Reset form fields when modal is closed
+            reset();
             clearErrors();
         }
     }, [showAddAsset, reset, clearErrors]);
 
-    const closeModal = () => {
-        reset(); // Clears all input fields
-        clearErrors(); // Clears all error messages
-        setShowAddAsset(false); // Hides the modal
-    };
-
-    const filteredData = mockData.filter((item) => item.asset_name.toLowerCase().includes(search.toLowerCase()));
+    const filteredData = assets.filter((item) => item.asset_name.toLowerCase().includes(search.toLowerCase()));
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -121,27 +108,22 @@ export default function Index() {
                     </div>
 
                     <div className="flex gap-2">
-                        <Button variant="outline" className="cursor-pointer">
+                        <Button variant="outline">
                             <Grid className="mr-1 h-4 w-4" /> Category
                         </Button>
-
-                        <Button variant="outline" className="cursor-pointer">
+                        <Button variant="outline">
                             <Filter className="mr-1 h-4 w-4" /> Filter
                         </Button>
-
-                        {/* <Link href="/inventory-list/create" as="button"> */}
-                        {/* <Button onClick={() => router.visit('/inventory-list.create')}> */}
                         <Button
                             onClick={() => {
-                                reset(); // clear all field values
-                                clearErrors(); // clear all error messages
-                                setShowAddAsset(true); // open modal
+                                reset();
+                                clearErrors();
+                                setShowAddAsset(true);
                             }}
                             className="cursor-pointer"
                         >
                             <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
                         </Button>
-                        {/* </Link> */}
                     </div>
                 </div>
 
@@ -149,41 +131,40 @@ export default function Index() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="font-medium">Asset Name</TableHead>
-                                <TableHead className="font-medium">Brand</TableHead>
-                                <TableHead className="font-medium">Date Purchased</TableHead>
-                                <TableHead className="font-medium">Asset Type</TableHead>
-                                <TableHead className="font-medium">Quantity</TableHead>
-                                <TableHead className="font-medium">Building</TableHead>
-                                <TableHead className="font-medium">Unit/Dept</TableHead>
-                                <TableHead className="font-medium">Status</TableHead>
-                                <TableHead className="font-medium">Action</TableHead>
+                                <TableHead>Asset Name</TableHead>
+                                <TableHead>Brand</TableHead>
+                                <TableHead>Date Purchased</TableHead>
+                                <TableHead>Asset Type</TableHead>
+                                <TableHead>Quantity</TableHead>
+                                <TableHead>Building</TableHead>
+                                <TableHead>Unit/Dept</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Action</TableHead>
                             </TableRow>
                         </TableHeader>
-
                         <TableBody>
-                            {filteredData.map((item, index) => (
-                                <TableRow key={index}>
+                            {filteredData.map((item) => (
+                                <TableRow key={item.id}>
                                     <TableCell>{item.asset_name}</TableCell>
                                     <TableCell>{item.brand}</TableCell>
                                     <TableCell>{item.date_purchased}</TableCell>
                                     <TableCell>{item.asset_type}</TableCell>
                                     <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
                                     <TableCell>{item.building}</TableCell>
-                                    <TableCell>{item.department}</TableCell>
+                                    <TableCell>{item.unit_or_department}</TableCell>
                                     <TableCell>
                                         <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
-                                            {item.status === 'active' ? 'Active' : 'Archive'}
+                                            {item.status === 'active' ? 'Active' : 'Archived'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="flex gap-2">
-                                        <Button size="icon" variant="ghost" className="cursor-pointer">
+                                        <Button size="icon" variant="ghost">
                                             <Pencil className="h-4 w-4" />
                                         </Button>
-                                        <Button size="icon" variant="ghost" className="cursor-pointer">
+                                        <Button size="icon" variant="ghost">
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
-                                        <Button size="icon" variant="ghost" className="cursor-pointer">
+                                        <Button size="icon" variant="ghost">
                                             <Eye className="h-4 w-4 text-muted-foreground" />
                                         </Button>
                                     </TableCell>
@@ -228,6 +209,7 @@ export default function Index() {
                                     onChange={(e) => setData('building', e.target.value)}
                                 >
                                     <option value="">Select Building</option>
+                                    <option value="Example Building">Example Building</option>
                                 </select>
                                 {errors.building && <p className="mt-1 text-xs text-red-500">{errors.building}</p>}
                             </div>
@@ -240,6 +222,8 @@ export default function Index() {
                                     onChange={(e) => setData('unit_or_department', e.target.value)}
                                 >
                                     <option value="">Select Unit</option>
+                                    <option value="Example Unit">Example Unit</option>
+                                    
                                 </select>
                                 {errors.unit_or_department && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department}</p>}
                             </div>
@@ -252,6 +236,7 @@ export default function Index() {
                                     onChange={(e) => setData('building_room', e.target.value)}
                                 >
                                     <option value="">Select Room</option>
+                                    <option value="Example Room">Example Room</option>
                                 </select>
                                 {errors.building_room && <p className="mt-1 text-xs text-red-500">{errors.building_room}</p>}
                             </div>
@@ -278,6 +263,7 @@ export default function Index() {
                                     onChange={(e) => setData('asset_type', e.target.value)}
                                 >
                                     <option value="">Select Assets Category</option>
+                                    <option value="example assets category">Example Assets Category</option>
                                 </select>
                                 {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                             </div>
@@ -356,20 +342,20 @@ export default function Index() {
                                     type="text"
                                     className="w-full rounded-lg border p-2"
                                     placeholder="Enter Model"
-                                    value={data.asset_model}
-                                    onChange={(e) => setData('asset_model', e.target.value)}
+                                    value={data.asset_model_id}
+                                    onChange={(e) => setData('asset_model_id', Number(e.target.value))}
                                 />
-                                {errors.asset_model && <p className="mt-1 text-xs text-red-500">{errors.asset_model}</p>}
+                                {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Memorandum Number</label>
                                 <input
-                                    type="text"
+                                    type="number"
                                     className="w-full rounded-lg border p-2"
                                     placeholder="Enter Memorandum No."
                                     value={data.memorandum_no}
-                                    onChange={(e) => setData('memorandum_no', e.target.value)}
+                                    onChange={(e) => setData('memorandum_no', Number(e.target.value))}
                                 />
                                 {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
                             </div>
@@ -382,6 +368,7 @@ export default function Index() {
                                     onChange={(e) => setData('transfer_status', e.target.value)}
                                 >
                                     <option value="">Select Status</option>
+                                    <option value="not_transferred"> Not Transferred </option>
                                 </select>
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div>
@@ -401,7 +388,13 @@ export default function Index() {
                             {/* Buttons Footer inside the form */}
 
                             <div className="col-span-2 flex justify-end gap-2 border-t border-muted pt-4">
-                                <Button variant="secondary" onClick={closeModal} className="cursor-pointer">
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                        setShowAddAsset(false);
+                                    }}
+                                    className="cursor-pointer"
+                                >
                                     Cancel
                                 </Button>
                                 <Button type="submit" className="cursor-pointer" disabled={processing}>

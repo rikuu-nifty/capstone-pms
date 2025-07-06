@@ -34,8 +34,8 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'supplier' =>    'required|string|max:255',
             'unit_cost' =>   'required|numeric|min:0|max:999999.99',
             'serial_no' =>   'required|numeric|min:0',
-            'asset_model' =>  'nullable|string|max:255',
-            'transfer_status' => 'nullable|string|max:255',
+            'asset_model_id' =>  'nullable|integer|max:255',
+            'transfer_status' => 'nullable|in:not_transferred,transferred,pending',
             'description' =>     'nullable|string|max:1000',
             'memorandum_no' =>  'required|numeric|min:0',
         ];
@@ -91,8 +91,8 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'serial_no.numeric' => 'The serial number must be a valid number.',
             'serial_no.min' => 'The serial number must be at least 0.',
 
-            'asset_model.string' => 'The asset model must be a valid string.',
-            'asset_model.max' => 'The asset model may not be greater than 255 characters.',
+            'asset_model_id.numeric' => 'The asset model must be a valid number.',
+            // 'asset_model.max' => 'The asset model may not be greater than 255 characters.',
 
             'transfer_status.string' => 'The transfer status must be a valid string.',
             'transfer_status.max' => 'The transfer status may not be greater than 255 characters.',

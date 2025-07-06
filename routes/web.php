@@ -24,7 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // INVENTORY-LIST
     Route::get('/inventory-list', [InventoryListController::class, 'index'])->name('inventory-list.index');
     Route::post('/inventory-list', [InventoryListController::class, 'store'])->name('inventory-list.store');
-    Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
+    // Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
     Route::get('/inventory-list/{inventory_list}', [InventoryListController::class, 'show'])->name('inventory-list.show');
     Route::put('/inventory-list/{inventory_list}', [InventoryListController::class, 'update'])->name('inventory-list.update');
     Route::get('/inventory-list/{inventory_list}/edit', [InventoryListController::class, 'edit'])->name('inventory-list.edit');
@@ -33,7 +33,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 });
 
-
-  
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
