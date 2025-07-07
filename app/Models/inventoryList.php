@@ -4,28 +4,43 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class inventoryList extends Model
+class InventoryList extends Model
 {
-        protected $fillable = [
-        'id',
+    protected $fillable = [
         'memorandum_no',
         'asset_model_id',
         'asset_name',
         'description',
-        'org_id',
-        'building',
-        'building_room',
+        'unit_or_department_id',
+        'building_id',
+        'building_room_id',
         'serial_no',
         'supplier',
         'unit_cost',
-        'brand',
         'date_purchased',
         'asset_type',
         'quantity',
-        'unit_or_department',
-        'status',
         'transfer_status',
-
     ];
 
+    // 🔗 Relationships
+    public function assetModel()
+    {
+        return $this->belongsTo(AssetModel::class);
+    }
+
+    public function unitOrDepartment()
+    {
+        return $this->belongsTo(UnitOrDepartment::class);
+    }
+
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
+
+    public function buildingRoom()
+    {
+        return $this->belongsTo(BuildingRoom::class);
+    }
 }

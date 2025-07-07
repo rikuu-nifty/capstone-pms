@@ -17,6 +17,14 @@ class InventoryListController extends Controller
     {
          $assets = inventoryList::latest()->get();
 
+    //   $assets = inventoryList::with([
+    //         'assetModel.category',
+    //         'unitOrDepartment',
+    //         'building',
+    //         'buildingRoom'
+    //     ])->latest()->get();
+  
+
         return Inertia::render('inventory-list/index', [
             'assets' => $assets,
             
