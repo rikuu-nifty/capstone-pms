@@ -23,7 +23,7 @@ class InventoryList extends Model
         'transfer_status',
     ];
 
-    // 🔗 Relationships
+    // 🔗 Relationships and eto na yun FK Relationships
     public function assetModel()
     {
         return $this->belongsTo(AssetModel::class);

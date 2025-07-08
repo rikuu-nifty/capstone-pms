@@ -12,7 +12,7 @@
         public function up(): void
         {
             Schema::create('building_rooms', function (Blueprint $table) {
-                $table->id(); // Primary Key
+                $table->id(); // Primary Key (auto-increment)
 
                 $table->unsignedBigInteger('building_id'); // FK to buildings.id
                 $table->foreign('building_id')

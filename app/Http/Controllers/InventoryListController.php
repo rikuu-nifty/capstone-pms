@@ -3,7 +3,13 @@
 namespace App\Http\Controllers;
 use App\Http\Requests\InventoryListAddNewAssetFormRequest;
 use Inertia\Inertia;
-use App\Models\inventoryList;
+
+use App\Models\AssetModel;
+use App\Models\UnitOrDepartment;
+use App\Models\Building;
+use App\Models\BuildingRoom;
+
+use App\Models\InventoryList;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 
@@ -15,7 +21,32 @@ class InventoryListController extends Controller
      */
     public function index(Request $request)
     {
-         $assets = inventoryList::latest()->get();
+        $assets = InventoryList::with([
+            'assetModel.category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom'
+        ])->latest()->get();
+
+        $assetModels = AssetModel::all();
+        $units = UnitOrDepartment::all();
+        $buildings = Building::all();
+        $buildingRooms = BuildingRoom::all();
+
+        return Inertia::render('inventory-list/index', [
+            'assets' => $assets,
+            'assetModels' => $assetModels,
+            'units' => $units,
+            'buildings' => $buildings,
+            'buildingRooms' => $buildingRooms,
+        ]);
+    }
+
+
+
+
+
+    //    $assets = InventoryList::latest()->get();
 
     //   $assets = inventoryList::with([
     //         'assetModel.category',
@@ -24,16 +55,16 @@ class InventoryListController extends Controller
     //         'buildingRoom'
     //     ])->latest()->get();
   
-
-        return Inertia::render('inventory-list/index', [
-            'assets' => $assets,
+    //     return Inertia::render('inventory-list/index', [
+    //         'assets' => $assets,
+    //         'units' => $units,  for dropdown, display, etc.
             
-        ]);
+    //     ]);
 
         // 'inventory-list' => inventoryList::paginate(10)->withQueryString(),
         // return Inertia::render('inventory-list/index');
             
-    }
+    
 
     /**
      * Show the form for creating a new resource.
@@ -55,9 +86,30 @@ class InventoryListController extends Controller
         // dd($request->all()); 
         // dd($data); // What made it through validation
 
-         $data = $request->all();
-         inventoryList::create($data);
-         return redirect()->back()->with('success', 'Asset added successfully.');
+        //  $data = $request->all();
+        //  InventoryList::create($data);
+        //  return redirect()->back()->with('success', 'Asset added successfully.');
+
+        // Get validated input
+        $data = $request->validated();
+
+         // Save to database
+        $asset = InventoryList::create($data);
+
+         // Load FK relationships
+        $asset->load([
+            'assetModel.category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom'
+        ]);
+
+        // Redirect back with success message and full asset
+        return redirect()->back()->with([
+            'success' => 'Asset added successfully.',
+            'newAsset' => $asset,
+            ]);
+
 
     }
 

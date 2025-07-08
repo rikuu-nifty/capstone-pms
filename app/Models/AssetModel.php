@@ -9,7 +9,7 @@ class AssetModel extends Model
     // Optional: Define the table name explicitly if you used a different name
     // protected $table = 'tbl_asset_model';
 
-    // ✅ Define fillable fields for mass assignment
+    // Define fillable fields for mass assignment
     protected $fillable = [
         'brand',
         'model',
@@ -17,7 +17,7 @@ class AssetModel extends Model
         'status',
     ];
 
-    // ✅ Relationship: AssetModel belongs to a Category
+    //  Relationship: AssetModel belongs to a Category
     public function category()
     {
         return $this->belongsTo(Category::class);
