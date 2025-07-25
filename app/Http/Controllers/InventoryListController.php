@@ -29,14 +29,14 @@ class InventoryListController extends Controller
         ])->latest()->get();
 
         $assetModels = AssetModel::all();
-        $units = UnitOrDepartment::all();
+        $unitOrDepartment = UnitOrDepartment::all();
         $buildings = Building::all();
         $buildingRooms = BuildingRoom::all();
 
         return Inertia::render('inventory-list/index', [
             'assets' => $assets,
             'assetModels' => $assetModels,
-            'units' => $units,
+            'unitOrDepartments' => $unitOrDepartment,
             'buildings' => $buildings,
             'buildingRooms' => $buildingRooms,
         ]);

@@ -1,3 +1,5 @@
+
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,35 +24,86 @@ type Asset = {
     date_purchased: string;
     asset_type: string;
     quantity: number;
-    building: string;
-    unit_or_department: string;
+    building: Building | null;
+    building_room?: BuildingRoom | null;
+    unit_or_department: UnitOrDepartment | null;
+    asset_model: AssetModel | null;
     status: 'active' | 'archived';
 };
 
+type AssetModel = {
+    id: number;
+    brand: string;
+    model: string;
+};
+
+// type Category = {
+//     id: number;
+//     name: string;
+//     description: string;
+// };
+
+type Building = {
+    id: number;
+    name: string;
+    code: string | number;
+    description: string;
+};
+
+type BuildingRoom = {
+    id: number;
+    building_id: number;
+    room: string | number;
+    description: string;
+};
+
+type UnitOrDepartment = {
+    id: number;
+    name: string;
+    code: string | number;
+    description: string;
+};
+
 type AssetFormData = {
-    building: string;
-    unit_or_department: string;
-    building_room: string;
+    unit_or_department_id: number | string;
+    building_room_id: number | string;
     date_purchased: string;
+    // category: number | string;
     asset_type: string;
     asset_name: string;
-    brand: string;
+    brand: string;  
     quantity: number | string; // can be number or string
     supplier: string;
     unit_cost: number | string; // can be number or string
     serial_no: string;
     asset_model_id: number | string; // can be number or string
+    building_id: number | string;
     transfer_status: string;
     description: string;
     memorandum_no: number | string; // can be number or string
 };
 
-export default function Index({ assets = [] }: { assets: Asset[] }) {
+export default function Index({
+    assets = [],
+    assetModels = [],
+    buildings = [],
+    buildingRooms = [],
+    unitOrDepartments = [],
+    // categories = [],
+}: {
+    assets: Asset[];
+    assetModels: AssetModel[];
+    buildings: Building[];
+    buildingRooms: BuildingRoom[];
+    unitOrDepartments: UnitOrDepartment[];
+    // categories: Category[];
+}) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<AssetFormData>({
-        building: '',
-        unit_or_department: '',
-        building_room: '',
+        building_id: '',
+        unit_or_department_id: '',
+        building_room_id: '',
         date_purchased: '',
+        // category: '',
         asset_type: '',
         asset_name: '',
         brand: '',
@@ -63,9 +116,18 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
         description: '',
         memorandum_no: '',
     });
+    
 
     const [search, setSearch] = useState('');
     const [showAddAsset, setShowAddAsset] = useState(false);
+
+    const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
+
+    // const selectedModel = assetModels.find((model) => model.id === Number(data.asset_model_id));
+    // const filteredBrands = selectedModel ? [selectedModel.brand] : [];
+
+    const uniqueBrands = Array.from(new Set(assetModels.map((model) => model.brand)));
+    const filteredModels = assetModels.filter((model) => model.brand === data.brand);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,7 +137,7 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
                 setShowAddAsset(false);
             },
         });
-        console.log('Form Submitted', data)
+        console.log('Form Submitted', data);
     };
 
     useEffect(() => {
@@ -146,12 +208,12 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
                             {filteredData.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.asset_name}</TableCell>
-                                    <TableCell>{item.brand}</TableCell>
+                                    <TableCell>{item.asset_model?.brand ?? '—'}</TableCell>
                                     <TableCell>{item.date_purchased}</TableCell>
                                     <TableCell>{item.asset_type}</TableCell>
                                     <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
-                                    <TableCell>{item.building}</TableCell>
-                                    <TableCell>{item.unit_or_department}</TableCell>
+                                    <TableCell>{item.building?.name ?? '—'}</TableCell>
+                                    <TableCell>{item.unit_or_department?.name ?? '—'}</TableCell>
                                     <TableCell>
                                         <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
                                             {item.status === 'active' ? 'Active' : 'Archived'}
@@ -201,44 +263,57 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
                         {/*overflow-y-auto */}
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
                             {/* Top Section */}
+
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Building</label>
                                 <select
                                     className="w-full rounded-lg border p-2"
-                                    value={data.building}
-                                    onChange={(e) => setData('building', e.target.value)}
+                                    value={data.building_id}
+                                    onChange={(e) => setData('building_id', Number(e.target.value))}
                                 >
                                     <option value="">Select Building</option>
-                                    <option value="Example Building">Example Building</option>
+                                    {buildings.map((building) => (
+                                        <option key={building.id} value={building.id}>
+                                            {building.name} ({building.code})
+                                        </option>
+                                    ))}
                                 </select>
-                                {errors.building && <p className="mt-1 text-xs text-red-500">{errors.building}</p>}
+
+                                {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
                             </div>
 
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Unit/Department</label>
                                 <select
                                     className="w-full rounded-lg border p-2"
-                                    value={data.unit_or_department}
-                                    onChange={(e) => setData('unit_or_department', e.target.value)}
+                                    value={data.unit_or_department_id}
+                                    onChange={(e) => setData('unit_or_department_id', Number(e.target.value))}
                                 >
-                                    <option value="">Select Unit</option>
-                                    <option value="Example Unit">Example Unit</option>
-                                    
+                                    <option value="">Select Unit/Department</option>
+                                    {unitOrDepartments.map((unit) => (
+                                        <option key={unit.id} value={unit.id}>
+                                            {unit.code} - {unit.name}
+                                        </option>
+                                    ))}
                                 </select>
-                                {errors.unit_or_department && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department}</p>}
+                                {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
                             </div>
 
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Room</label>
                                 <select
                                     className="w-full rounded-lg border p-2"
-                                    value={data.building_room}
-                                    onChange={(e) => setData('building_room', e.target.value)}
+                                    value={data.building_room_id}
+                                    onChange={(e) => setData('building_room_id', Number(e.target.value))}
+                                    disabled={!data.building_id}
                                 >
                                     <option value="">Select Room</option>
-                                    <option value="Example Room">Example Room</option>
+                                    {filteredRooms.map((room) => (
+                                        <option key={room.id} value={room.id}>
+                                            {room.room}
+                                        </option>
+                                    ))}
                                 </select>
-                                {errors.building_room && <p className="mt-1 text-xs text-red-500">{errors.building_room}</p>}
                             </div>
 
                             {/* Divider */}
@@ -280,28 +355,7 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
 
                                 {/* <InputError message={errors.asset_name}/>  */}
                             </div>
-                            <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Brand</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Brand"
-                                    value={data.brand}
-                                    onChange={(e) => setData('brand', e.target.value)}
-                                />
-                                {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
-                            </div>
-                            <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Quantity</label>
-                                <input
-                                    type="number"
-                                    className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Quantity"
-                                    value={data.quantity}
-                                    onChange={(e) => setData('quantity', e.target.value)}
-                                />
-                                {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
-                            </div>
+
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Supplier</label>
                                 <input
@@ -312,17 +366,6 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
                                     onChange={(e) => setData('supplier', e.target.value)}
                                 />
                                 {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
-                            </div>
-                            <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Unit Cost</label>
-                                <input
-                                    type="number"
-                                    className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Unit Cost"
-                                    value={data.unit_cost}
-                                    onChange={(e) => setData('unit_cost', e.target.value)}
-                                />
-                                {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
                             </div>
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Serial Number</label>
@@ -337,14 +380,64 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
                             </div>
 
                             <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Model</label>
+                                <label className="mb-1 block font-medium">Quantity</label>
                                 <input
-                                    type="text"
+                                    type="number"
                                     className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Model"
+                                    placeholder="Enter Quantity"
+                                    value={data.quantity}
+                                    onChange={(e) => setData('quantity', e.target.value)}
+                                />
+                                {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
+                            </div>
+
+                            <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Unit Cost</label>
+                                <input
+                                    type="number"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Unit Cost"
+                                    value={data.unit_cost}
+                                    onChange={(e) => setData('unit_cost', e.target.value)}
+                                />
+                                {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
+                            </div>
+
+                            <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Brand</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.brand}
+                                    onChange={(e) => {
+                                        setData('brand', e.target.value);
+                                        setData('asset_model_id', ''); // Reset model when brand changes
+                                    }}
+                                >
+                                    <option value="">Select Brand</option>
+                                    {uniqueBrands.map((brand, index) => (
+                                        <option key={index} value={brand}>
+                                            {brand}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
+                            </div>
+
+                            <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Asset Model</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
                                     value={data.asset_model_id}
                                     onChange={(e) => setData('asset_model_id', Number(e.target.value))}
-                                />
+                                    disabled={!data.brand}
+                                >
+                                    <option value="">Select Asset Model</option>
+                                    {filteredModels.map((model) => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.model}
+                                        </option>
+                                    ))}
+                                </select>
                                 {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                             </div>
 
@@ -371,6 +464,16 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
                                     <option value="not_transferred"> Not Transferred </option>
                                 </select>
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
+                            </div>
+                            <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Total Cost</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.quantity && data.unit_cost ? `₱ ${(Number(data.quantity) * Number(data.unit_cost)).toFixed(2)}` : ''}
+                                    readOnly
+                                    disabled
+                                />
                             </div>
 
                             <div className="col-span-2">
@@ -400,11 +503,13 @@ export default function Index({ assets = [] }: { assets: Asset[] }) {
                                 <Button type="submit" className="cursor-pointer" disabled={processing}>
                                     Add New Asset
                                 </Button>
+                                
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
+            
         </AppLayout>
     );
 }
