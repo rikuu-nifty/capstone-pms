@@ -1,5 +1,3 @@
-
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,31 +15,19 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type Asset = {
+type Category = {
     id: number;
-    asset_name: string;
-    brand: string;
-    date_purchased: string;
-    asset_type: string;
-    quantity: number;
-    building: Building | null;
-    building_room?: BuildingRoom | null;
-    unit_or_department: UnitOrDepartment | null;
-    asset_model: AssetModel | null;
-    status: 'active' | 'archived';
+    name: string;
+    description: string;
 };
 
 type AssetModel = {
     id: number;
+    category_id: number;
     brand: string;
     model: string;
+    category?: Category;
 };
-
-// type Category = {
-//     id: number;
-//     name: string;
-//     description: string;
-// };
 
 type Building = {
     id: number;
@@ -64,14 +50,27 @@ type UnitOrDepartment = {
     description: string;
 };
 
+type Asset = {
+    id: number;
+    asset_name: string;
+    brand: string;
+    date_purchased: string;
+    asset_type: string;
+    quantity: number;
+    building: Building | null;
+    building_room?: BuildingRoom | null;
+    unit_or_department: UnitOrDepartment | null;
+    asset_model: AssetModel | null;
+    status: 'active' | 'archived';
+};
+
 type AssetFormData = {
     unit_or_department_id: number | string;
     building_room_id: number | string;
     date_purchased: string;
-    // category: number | string;
     asset_type: string;
     asset_name: string;
-    brand: string;  
+    brand: string;
     quantity: number | string; // can be number or string
     supplier: string;
     unit_cost: number | string; // can be number or string
@@ -89,14 +88,14 @@ export default function Index({
     buildings = [],
     buildingRooms = [],
     unitOrDepartments = [],
-    // categories = [],
+    categories = [],
 }: {
     assets: Asset[];
     assetModels: AssetModel[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
-    // categories: Category[];
+    categories: Category[];
 }) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<AssetFormData>({
         building_id: '',
@@ -116,16 +115,14 @@ export default function Index({
         description: '',
         memorandum_no: '',
     });
-    
 
     const [search, setSearch] = useState('');
     const [showAddAsset, setShowAddAsset] = useState(false);
 
+    // Filter for Rooms
     const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
 
-    // const selectedModel = assetModels.find((model) => model.id === Number(data.asset_model_id));
-    // const filteredBrands = selectedModel ? [selectedModel.brand] : [];
-
+    // Filter for Brand
     const uniqueBrands = Array.from(new Set(assetModels.map((model) => model.brand)));
     const filteredModels = assetModels.filter((model) => model.brand === data.brand);
 
@@ -199,7 +196,7 @@ export default function Index({
                                 <TableHead>Asset Type</TableHead>
                                 <TableHead>Quantity</TableHead>
                                 <TableHead>Building</TableHead>
-                                <TableHead>Unit/Dept</TableHead>
+                                <TableHead>Unit/Department</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Action</TableHead>
                             </TableRow>
@@ -210,7 +207,7 @@ export default function Index({
                                     <TableCell>{item.asset_name}</TableCell>
                                     <TableCell>{item.asset_model?.brand ?? '—'}</TableCell>
                                     <TableCell>{item.date_purchased}</TableCell>
-                                    <TableCell>{item.asset_type}</TableCell>
+                                    <TableCell>{item.asset_model?.category?.name ?? '—'}</TableCell>
                                     <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
                                     <TableCell>{item.building?.name ?? '—'}</TableCell>
                                     <TableCell>{item.unit_or_department?.name ?? '—'}</TableCell>
@@ -330,6 +327,7 @@ export default function Index({
                                 />
                                 {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                             </div>
+
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Type</label>
                                 <select
@@ -337,11 +335,15 @@ export default function Index({
                                     value={data.asset_type}
                                     onChange={(e) => setData('asset_type', e.target.value)}
                                 >
-                                    <option value="">Select Assets Category</option>
-                                    <option value="example assets category">Example Assets Category</option>
+                                    <option value="">Select Asset Category</option>
+                                    {categories.map((category) => (
+                                        <option key={category.id} value={category.name}>
+                                            {category.name}
+                                        </option>
+                                    ))}
                                 </select>
-                                {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                             </div>
+
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Name</label>
                                 <input
@@ -461,6 +463,7 @@ export default function Index({
                                     onChange={(e) => setData('transfer_status', e.target.value)}
                                 >
                                     <option value="">Select Status</option>
+                                    <option value="transferred"> Transferred </option>
                                     <option value="not_transferred"> Not Transferred </option>
                                 </select>
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
@@ -503,13 +506,11 @@ export default function Index({
                                 <Button type="submit" className="cursor-pointer" disabled={processing}>
                                     Add New Asset
                                 </Button>
-                                
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
-            
         </AppLayout>
     );
 }

@@ -8,6 +8,7 @@ use App\Models\AssetModel;
 use App\Models\UnitOrDepartment;
 use App\Models\Building;
 use App\Models\BuildingRoom;
+use App\Models\Category;
 
 use App\Models\InventoryList;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class InventoryListController extends Controller
         $unitOrDepartment = UnitOrDepartment::all();
         $buildings = Building::all();
         $buildingRooms = BuildingRoom::all();
+        $categories = Category::all();
 
         return Inertia::render('inventory-list/index', [
             'assets' => $assets,
@@ -39,6 +41,7 @@ class InventoryListController extends Controller
             'unitOrDepartments' => $unitOrDepartment,
             'buildings' => $buildings,
             'buildingRooms' => $buildingRooms,
+            'categories' => $categories,
         ]);
     }
 
