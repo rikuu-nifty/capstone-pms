@@ -56,6 +56,7 @@ type UnitOrDepartment = {
 export type Asset = {
     id: number;
     asset_name: string;
+    supplier: string;
     date_purchased: string;
     quantity: number;
     building: Building | null;
