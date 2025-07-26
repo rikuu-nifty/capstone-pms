@@ -1,3 +1,6 @@
+import { DeleteAssetModal } from '@/components/delete-modal-form';
+import { EditAssetModalForm } from '@/components/edit-modal-form';
+import { ViewAssetModal } from '@/components/view-modal-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,12 +53,10 @@ type UnitOrDepartment = {
     description: string;
 };
 
-type Asset = {
+export type Asset = {
     id: number;
     asset_name: string;
-    brand: string;
     date_purchased: string;
-    asset_type: string;
     quantity: number;
     building: Building | null;
     building_room?: BuildingRoom | null;
@@ -125,6 +126,17 @@ export default function Index({
     // Filter for Brand
     const uniqueBrands = Array.from(new Set(assetModels.map((model) => model.brand)));
     const filteredModels = assetModels.filter((model) => model.brand === data.brand);
+
+    const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+
+    // For Modal (Edit)
+    const [editModalVisible, setEditModalVisible] = useState(false);
+
+    // For Modal (Delete)
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+    // For Modal (View)
+    const [viewModalVisible, setViewModalVisible] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -217,13 +229,35 @@ export default function Index({
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="flex gap-2">
-                                        <Button size="icon" variant="ghost">
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSelectedAsset(item); // item = asset row clicked
+                                                setEditModalVisible(true); // show modal
+                                            }}
+                                        >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
-                                        <Button size="icon" variant="ghost">
+
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSelectedAsset(item); // item = asset row clicked
+                                                setDeleteModalVisible(true); // show modal
+                                            }}
+                                        >
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
-                                        <Button size="icon" variant="ghost">
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSelectedAsset(item);
+                                                setViewModalVisible(true);
+                                            }}
+                                        >
                                             <Eye className="h-4 w-4 text-muted-foreground" />
                                         </Button>
                                     </TableCell>
@@ -233,6 +267,41 @@ export default function Index({
                     </Table>
                 </div>
             </div>
+
+            {editModalVisible && selectedAsset && (
+                <EditAssetModalForm
+                    asset={selectedAsset}
+                    onClose={() => {
+                        setEditModalVisible(false);
+                        setSelectedAsset(null);
+                    }}
+                />
+            )}
+
+            {deleteModalVisible && selectedAsset && (
+                <DeleteAssetModal
+                    asset={selectedAsset}
+                    onClose={() => {
+                        setDeleteModalVisible(false);
+                        setSelectedAsset(null);
+                    }}
+                    onDelete={(id) => {
+                        console.log('Delete asset ID:', id);
+                        setDeleteModalVisible(false);
+                        setSelectedAsset(null);
+                    }}
+                />
+            )}
+
+            {viewModalVisible && selectedAsset && (
+                <ViewAssetModal
+                    asset={selectedAsset}
+                    onClose={() => {
+                        setViewModalVisible(false);
+                        setSelectedAsset(null);
+                    }}
+                />
+            )}
 
             {/* Side Panel Modal with Slide Effect */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddAsset ? 'visible' : 'invisible'}`}>
