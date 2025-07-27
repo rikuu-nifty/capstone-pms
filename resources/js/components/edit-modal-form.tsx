@@ -62,9 +62,11 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <form onSubmit={handleSubmit}>
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="w-full max-w-[700px] sm:max-w-[800px] p-6">
+
+
                     <DialogHeader>
-                        <DialogTitle>Edit Asset</DialogTitle>
+                        <DialogTitle>Update Asset</DialogTitle>
                     </DialogHeader>
 
                     <div className="grid grid-cols-2 gap-4 py-4">
