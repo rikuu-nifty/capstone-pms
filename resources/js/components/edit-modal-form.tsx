@@ -31,7 +31,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         transfer_status: '',
         description: asset.description,
 
-        asset_type: '', // or map from asset_model.category.name if needed
+        asset_type: asset.asset_model?.category?.name || '', // or map from asset_model.category.name if needed
         brand: asset.asset_model?.brand || '',
         asset_model_id: asset.asset_model?.id || '',
         unit_or_department_id: asset.unit_or_department?.id || '',
@@ -45,15 +45,16 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
 
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
     const filteredModels = assetModels.filter((model) => model.brand === form.brand);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         router.put(`/inventory-list/${asset.id}`, form, {
             onSuccess: () => {
-                onClose();
+                onClose(); // Closes the modal after successful save
             },
             onError: (errors) => {
-                console.error(errors); // optional
+                console.error(errors); // Optional: log any validation errors
             },
         });
     };
@@ -274,7 +275,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                         <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit">Save Changes</Button>
+                        <Button type="button" onClick={handleSubmit}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
             </form>

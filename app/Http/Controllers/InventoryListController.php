@@ -135,10 +135,33 @@ class InventoryListController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, inventoryList $inventoryList)
-    {
-        //
-    }
+public function update(Request $request, InventoryList $inventoryList): RedirectResponse
+{
+    $data = $request->validate([
+        'asset_name' => 'nullable|string|max:255',
+        'supplier' => 'nullable|string|max:255',
+        'serial_no' => 'nullable|string|max:255',
+        'unit_cost' => 'nullable|numeric|min:0',
+        'quantity' => 'nullable|integer|min:1',
+        'asset_type' => 'nullable|string|max:255',
+        'brand' => 'nullable|string|max:255',
+        'memorandum_no' => 'nullable|numeric|min:0',
+        'description' => 'nullable|string|max:1000',
+        'date_purchased' => 'nullable|date',
+        'transfer_status' => 'nullable|string|in:not_transferred,transferred,pending',
+        'asset_model_id' => 'nullable|integer',
+        'building_id' => 'nullable|exists:buildings,id',
+        'building_room_id' => 'nullable|exists:building_rooms,id',
+        'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
+    ]);
+
+    $inventoryList->update($data);
+
+    return redirect()->back()->with('success', 'Asset updated successfully.');
+}
+
+
+
 
     /**
      * Remove the specified resource from storage.

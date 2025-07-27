@@ -68,6 +68,7 @@ export type Asset = {
     unit_cost: number | string;
     serial_no: string;
     description: string;
+    transfer_status: string;
     // Kapag pinasok ko yun serial_no pati unit_cost ayaw mag save
 };
 
