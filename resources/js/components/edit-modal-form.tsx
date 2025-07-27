@@ -28,7 +28,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         serial_no: asset.serial_no, // or asset.serial_no if available
         unit_cost: asset.unit_cost, // or asset.unit_cost if available NAGKAKAEEROR KAPAG NILALAGAY KOTO
         memorandum_no: asset.memorandum_no, // or asset.memorandum_no if available
-        transfer_status: '',
+        transfer_status: asset.transfer_status,
         description: asset.description,
 
         asset_type: asset.asset_model?.category?.name || '', // or map from asset_model.category.name if needed
