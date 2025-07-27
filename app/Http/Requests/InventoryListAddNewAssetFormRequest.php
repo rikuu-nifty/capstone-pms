@@ -29,15 +29,15 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'unit_or_department_id' => ['nullable', 'exists:unit_or_departments,id'],
             // 'building_room' => 'nullable|string|max:255',
             'building_room_id' => ['nullable', 'exists:building_rooms,id'],
+            'category_id' => ['nullable', 'exists:categories,id'],
             'date_purchased' => 'required|date',
             'asset_type' =>  'required|string|max:255',
-            'category_id' => ['nullable', 'exists:categories,id'],
             'asset_name' =>  'required|string|max:255',
             'brand' =>       'required|string|max:255',
             'quantity' =>    'required|integer|min:1|max:1000',
             'supplier' =>    'required|string|max:255',
             'unit_cost' =>   'required|numeric|min:0|max:999999.99',
-            'serial_no' =>   'required|numeric|min:0',
+            'serial_no' =>   'required|string|max:255',
             'asset_model_id' =>  'nullable|integer|max:255',
             'transfer_status' => 'nullable|in:not_transferred,transferred,pending',
             'description' =>     'nullable|string|max:1000',
@@ -53,6 +53,9 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
     public function messages(): array 
     {
         return [
+
+            // 'building_id.required' => 'Please select a building.',
+
             'building.string' => 'The building name must be a valid string.',
             'building.max' => 'The building name may not be greater than 255 characters.',
 

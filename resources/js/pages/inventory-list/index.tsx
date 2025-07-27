@@ -1,10 +1,10 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
 import { EditAssetModalForm } from '@/components/edit-modal-form';
-import { ViewAssetModal } from '@/components/view-modal-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
@@ -18,13 +18,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type Category = {
+export type Category = {
     id: number;
     name: string;
     description: string;
 };
 
-type AssetModel = {
+export type AssetModel = {
     id: number;
     category_id: number;
     brand: string;
@@ -32,21 +32,21 @@ type AssetModel = {
     category?: Category;
 };
 
-type Building = {
+export type Building = {
     id: number;
     name: string;
     code: string | number;
     description: string;
 };
 
-type BuildingRoom = {
+export type BuildingRoom = {
     id: number;
     building_id: number;
     room: string | number;
     description: string;
 };
 
-type UnitOrDepartment = {
+export type UnitOrDepartment = {
     id: number;
     name: string;
     code: string | number;
@@ -64,9 +64,14 @@ export type Asset = {
     unit_or_department: UnitOrDepartment | null;
     asset_model: AssetModel | null;
     status: 'active' | 'archived';
+    memorandum_no: number | string;
+    unit_cost: number | string;
+    serial_no: string;
+    description: string;
+    // Kapag pinasok ko yun serial_no pati unit_cost ayaw mag save
 };
 
-type AssetFormData = {
+export type AssetFormData = {
     unit_or_department_id: number | string;
     building_room_id: number | string;
     date_purchased: string;
@@ -276,6 +281,12 @@ export default function Index({
                         setEditModalVisible(false);
                         setSelectedAsset(null);
                     }}
+                    buildings={buildings}
+                    unitOrDepartments={unitOrDepartments}
+                    buildingRooms={buildingRooms}
+                    categories={categories}
+                    assetModels={assetModels}
+                    uniqueBrands={[...new Set(assetModels.map((m) => m.brand))]}
                 />
             )}
 
@@ -412,6 +423,7 @@ export default function Index({
                                         </option>
                                     ))}
                                 </select>
+                                {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
