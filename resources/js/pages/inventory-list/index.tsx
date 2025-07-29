@@ -63,12 +63,14 @@ export type Asset = {
     building_room?: BuildingRoom | null;
     unit_or_department: UnitOrDepartment | null;
     asset_model: AssetModel | null;
+    asset_type: string;
     status: 'active' | 'archived';
     memorandum_no: number | string;
     unit_cost: number | string;
     serial_no: string;
     description: string;
     transfer_status: string;
+    brand: string;
     // Kapag pinasok ko yun serial_no pati unit_cost ayaw mag save
 };
 
@@ -147,6 +149,16 @@ export default function Index({
     // For Modal (View)
     const [viewModalVisible, setViewModalVisible] = useState(false);
 
+    // For Date Format
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/inventory-list', {
@@ -165,7 +177,26 @@ export default function Index({
         }
     }, [showAddAsset, reset, clearErrors]);
 
-    const filteredData = assets.filter((item) => item.asset_name.toLowerCase().includes(search.toLowerCase()));
+    const filteredData = assets.filter((item) => {
+        const keyword = search.toLowerCase();
+
+        return (
+            item.asset_name?.toLowerCase().includes(keyword) ||
+            item.serial_no?.toLowerCase().includes(keyword) ||
+            item.supplier?.toLowerCase().includes(keyword) ||
+            item.asset_type?.toLowerCase().includes(keyword) ||
+            item.transfer_status?.toLowerCase().includes(keyword) ||
+            item.memorandum_no?.toString().includes(keyword) ||
+            item.unit_cost?.toString().includes(keyword) ||
+            item.quantity?.toString().includes(keyword) ||
+            item.building?.name?.toLowerCase().includes(keyword) ||
+            item.building_room?.room?.toString().toLowerCase().includes(keyword) ||
+            item.unit_or_department?.name?.toLowerCase().includes(keyword) ||
+            String(item.date_purchased).toLowerCase().includes(keyword) ||
+            item.status?.toLowerCase().includes(keyword) ||
+            item.asset_model?.brand?.toLowerCase().includes(keyword)
+        );
+    });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -227,7 +258,7 @@ export default function Index({
                                 <TableRow key={item.id}>
                                     <TableCell>{item.asset_name}</TableCell>
                                     <TableCell>{item.asset_model?.brand ?? '—'}</TableCell>
-                                    <TableCell>{item.date_purchased}</TableCell>
+                                    <TableCell>{formatDate(item.date_purchased)}</TableCell>
                                     <TableCell>{item.asset_model?.category?.name ?? '—'}</TableCell>
                                     <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
                                     <TableCell>{item.building?.name ?? '—'}</TableCell>
@@ -409,7 +440,6 @@ export default function Index({
                                     <option value="archived">Archived</option>
                                 </select>
                             </div>
-
 
                             {/* Divider */}
                             <div className="col-span-2 border-t"></div>
