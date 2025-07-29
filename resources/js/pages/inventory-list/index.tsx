@@ -88,6 +88,7 @@ export type AssetFormData = {
     transfer_status: string;
     description: string;
     memorandum_no: number | string; // can be number or string
+    status: 'active' | 'archived' | '';
 };
 
 export default function Index({
@@ -122,6 +123,7 @@ export default function Index({
         transfer_status: '',
         description: '',
         memorandum_no: '',
+        status: '',
     });
 
     const [search, setSearch] = useState('');
@@ -394,6 +396,20 @@ export default function Index({
                                     ))}
                                 </select>
                             </div>
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Status</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.status}
+                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived')}
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </div>
+
 
                             {/* Divider */}
                             <div className="col-span-2 border-t"></div>

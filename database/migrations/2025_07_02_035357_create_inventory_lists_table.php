@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('inventory_lists', function (Blueprint $table) {
             $table->id(); // Primary Key (auto-increment)
             $table->integer('memorandum_no');
+           
 
             $table->unsignedBigInteger('asset_model_id'); // Done FK ASSET MODEL Table
             $table->foreign('asset_model_id')
@@ -23,6 +24,7 @@ return new class extends Migration
 
             $table->string('asset_name');
             $table->text('description')->nullable();
+            $table->enum('status', ['active', 'archived'])->default('archived');
 
             $table->unsignedBigInteger('unit_or_department_id')->nullable(); // Done FK UNIT_OR_DEPARTMENT Table
             $table->foreign('unit_or_department_id')

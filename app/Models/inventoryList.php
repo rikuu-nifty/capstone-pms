@@ -21,6 +21,7 @@ class InventoryList extends Model
         'asset_type',
         'quantity',
         'transfer_status',
+        'status',
     ];
 
     // 🔗 Relationships and eto na yun FK Relationships

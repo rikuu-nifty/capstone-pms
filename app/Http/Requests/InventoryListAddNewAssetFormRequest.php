@@ -38,10 +38,12 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'supplier' =>    'required|string|max:255',
             'unit_cost' =>   'required|numeric|min:0|max:999999.99',
             'serial_no' =>   'required|string|max:255',
-            'asset_model_id' =>  'nullable|integer|max:255',
+            'asset_model_id' =>  'required|integer|max:255',
             'transfer_status' => 'nullable|in:not_transferred,transferred,pending',
             'description' =>     'nullable|string|max:1000',
             'memorandum_no' =>  'required|numeric|min:0',
+            'status' => 'nullable|in:active,archived',
+
         ];
     }
 
@@ -55,6 +57,7 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
         return [
 
             // 'building_id.required' => 'Please select a building.',
+             'asset_model_id.required' => 'Please specify the model of the asset.',
 
             'building.string' => 'The building name must be a valid string.',
             'building.max' => 'The building name may not be greater than 255 characters.',

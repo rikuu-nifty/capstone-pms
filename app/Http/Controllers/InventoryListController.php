@@ -153,6 +153,8 @@ public function update(Request $request, InventoryList $inventoryList): Redirect
         'building_id' => 'nullable|exists:buildings,id',
         'building_room_id' => 'nullable|exists:building_rooms,id',
         'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
+        'status' => 'nullable|string|in:active,archived',
+
     ]);
 
     $inventoryList->update($data);

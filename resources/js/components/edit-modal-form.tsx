@@ -25,11 +25,11 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         supplier: asset.supplier,
         date_purchased: asset.date_purchased,
         quantity: asset.quantity,
-        serial_no: asset.serial_no, // or asset.serial_no if available
-        unit_cost: asset.unit_cost, // or asset.unit_cost if available NAGKAKAEEROR KAPAG NILALAGAY KOTO
-        memorandum_no: asset.memorandum_no, // or asset.memorandum_no if available
-        transfer_status: asset.transfer_status,
-        description: asset.description,
+        serial_no: asset.serial_no || '', // or asset.serial_no if available
+        unit_cost: asset.unit_cost || '', // or asset.unit_cost if available NAGKAKAEEROR KAPAG NILALAGAY KOTO
+        memorandum_no: asset.memorandum_no || '', // or asset.memorandum_no if available
+        transfer_status: asset.transfer_status || '',
+        description: asset.description || '',
 
         asset_type: asset.asset_model?.category?.name || '', // or map from asset_model.category.name if needed
         brand: asset.asset_model?.brand || '',
@@ -37,6 +37,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         unit_or_department_id: asset.unit_or_department?.id || '',
         building_id: asset.building?.id || '',
         building_room_id: asset.building_room?.id || '',
+        status: asset.status || 'archived',
     });
 
     const handleChange = <K extends keyof AssetFormData>(field: K, value: AssetFormData[K]) => {
@@ -62,9 +63,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <form onSubmit={handleSubmit}>
-                <DialogContent className="w-full max-w-[700px] sm:max-w-[800px] p-6">
-
-
+                <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
                     <DialogHeader>
                         <DialogTitle>Update Asset</DialogTitle>
                     </DialogHeader>
@@ -121,6 +120,21 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 ))}
                             </select>
                         </div>
+
+                        <div>
+                            <Label>Status</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.status}
+                                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
+                            >
+                                <option value="active">Active</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="col-span-2 border-t"></div>
 
                         {/* Date Purchased */}
                         <div>
@@ -277,7 +291,9 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                         <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="button" onClick={handleSubmit}>Save Changes</Button>
+                        <Button type="button" onClick={handleSubmit}>
+                            Save Changes
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </form>
