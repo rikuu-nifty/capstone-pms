@@ -182,19 +182,20 @@ export default function Index({
 
         return (
             item.asset_name?.toLowerCase().includes(keyword) ||
-            item.serial_no?.toLowerCase().includes(keyword) ||
             item.supplier?.toLowerCase().includes(keyword) ||
             item.asset_type?.toLowerCase().includes(keyword) ||
             item.transfer_status?.toLowerCase().includes(keyword) ||
-            item.memorandum_no?.toString().includes(keyword) ||
             String(item.quantity).padStart(2, '0').includes(keyword) ||
+            String(item.date_purchased).toLowerCase().includes(keyword) ||
             item.quantity?.toString().includes(keyword) ||
             item.building?.name?.toLowerCase().includes(keyword) ||
-            item.building_room?.room?.toString().toLowerCase().includes(keyword) ||
             item.unit_or_department?.name?.toLowerCase().includes(keyword) ||
-            String(item.date_purchased).toLowerCase().includes(keyword) ||
-            item.status?.toLowerCase().includes(keyword) ||
-            item.asset_model?.brand?.toLowerCase().includes(keyword) 
+            item.status?.toLowerCase().includes(keyword) 
+            
+            // item.asset_model?.brand?.toLowerCase().includes(keyword) 
+            // item.serial_no?.toLowerCase().includes(keyword) ||
+            // item.memorandum_no?.toString().includes(keyword) ||
+            // item.building_room?.room?.toString().toLowerCase().includes(keyword) ||
         );
     });
 
