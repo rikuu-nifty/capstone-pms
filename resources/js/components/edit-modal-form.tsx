@@ -139,7 +139,12 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                         {/* Date Purchased */}
                         <div>
                             <Label>Date Purchased</Label>
-                            <Input type="date" value={form.date_purchased} onChange={(e) => handleChange('date_purchased', e.target.value)} />
+                            <input
+                                type="date"
+                                className="w-full rounded-lg border p-2"
+                                value={form.date_purchased}
+                                onChange={(e) => handleChange('date_purchased', e.target.value)}
+                            />
                         </div>
 
                         {/* Asset Type */}
@@ -285,9 +290,9 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 onChange={(e) => handleChange('description', e.target.value)}
                             />
                         </div>
-                         <div className="col-span-2 border-t"></div>
+                        <div className="col-span-2 border-t"></div>
                     </div>
-                    
+
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>

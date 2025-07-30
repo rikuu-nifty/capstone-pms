@@ -121,7 +121,7 @@ export const ViewAssetModal = ({ asset, onClose }: ViewAssetModalProps) => {
 
                         <div className="col-span-2">
                             <Label>Description</Label>
-                            <Textarea value={asset.description ?? '—'} readOnly />
+                            <Textarea value={asset.description} readOnly />
                         </div>
                     </div>
 
