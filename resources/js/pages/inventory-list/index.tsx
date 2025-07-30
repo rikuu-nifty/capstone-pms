@@ -599,8 +599,8 @@ export default function Index({
                                     onChange={(e) => setData('transfer_status', e.target.value)}
                                 >
                                     <option value="">Select Status</option>
-                                    <option value="transferred"> Transferred </option>
-                                    <option value="not_transferred"> Not Transferred </option>
+                                    <option value="Transferred"> Transferred </option>
+                                    <option value="Not Transferred"> Not Transferred </option>
                                 </select>
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div>
