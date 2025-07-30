@@ -27,16 +27,17 @@ export const DeleteAssetModal = ({ asset, onClose, onDelete }: DeleteAssetModalP
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* Buttons */}
-                <DialogFooter className="flex justify-center gap-4 pt-2">
-                    <DialogClose asChild>
-                        <Button variant="outline" className="px-6">
-                            Cancel
+                <DialogFooter>
+                    <div className="flex w-full justify-center gap-4">
+                        <DialogClose asChild>
+                            <Button variant="outline" className="px-6">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button variant="destructive" className="px-6" onClick={() => onDelete(asset.id)}>
+                            Delete
                         </Button>
-                    </DialogClose>
-                    <Button variant="destructive" className="px-6" onClick={() => onDelete(asset.id)}>
-                        Delete
-                    </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -285,8 +285,9 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 onChange={(e) => handleChange('description', e.target.value)}
                             />
                         </div>
+                         <div className="col-span-2 border-t"></div>
                     </div>
-
+                    
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
