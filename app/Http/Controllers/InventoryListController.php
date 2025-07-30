@@ -170,6 +170,7 @@ public function update(Request $request, InventoryList $inventoryList): Redirect
      */
     public function destroy(inventoryList $inventoryList)
     {
-        //
+        $inventoryList->delete();
+        return redirect()->back()->with('success', 'Asset deleted successfully.');
     }
 }

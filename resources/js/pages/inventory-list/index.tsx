@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -190,9 +190,9 @@ export default function Index({
             item.quantity?.toString().includes(keyword) ||
             item.building?.name?.toLowerCase().includes(keyword) ||
             item.unit_or_department?.name?.toLowerCase().includes(keyword) ||
-            item.status?.toLowerCase().includes(keyword) 
-            
-            // item.asset_model?.brand?.toLowerCase().includes(keyword) 
+            item.status?.toLowerCase().includes(keyword)
+
+            // item.asset_model?.brand?.toLowerCase().includes(keyword)
             // item.serial_no?.toLowerCase().includes(keyword) ||
             // item.memorandum_no?.toString().includes(keyword) ||
             // item.building_room?.room?.toString().toLowerCase().includes(keyword) ||
@@ -333,9 +333,15 @@ export default function Index({
                         setSelectedAsset(null);
                     }}
                     onDelete={(id) => {
-                        console.log('Delete asset ID:', id);
-                        setDeleteModalVisible(false);
-                        setSelectedAsset(null);
+                        router.delete(`/inventory-list/${id}`, {
+                            onSuccess: () => {
+                                setDeleteModalVisible(false);
+                                setSelectedAsset(null);
+                            },
+                            onError: (err) => {
+                                console.error('Failed to delete asset:', err);
+                            },
+                        });
                     }}
                 />
             )}
