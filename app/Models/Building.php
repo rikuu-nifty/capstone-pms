@@ -23,4 +23,10 @@ class Building extends Model
     {
         return $this->hasMany(InventoryList::class);
     }
+    
+    // Relationship: Building has many inventory schedulings
+     public function inventorySchedulings()
+    {
+        return $this->hasMany(InventoryScheduling::class);
+    }
 }

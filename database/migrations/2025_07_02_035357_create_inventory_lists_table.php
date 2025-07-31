@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreign('asset_model_id')
                   ->references('id')
                   ->on('asset_models')
-                  ->onDelete('cascade');
+                  ->onDelete('cascade');   // ->onDelete('set null'); 
 
             $table->string('asset_name');
             $table->text('description')->nullable();
