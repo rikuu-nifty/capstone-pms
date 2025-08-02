@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-// use App\Http\Requests\InventoryListAddNewAssetFormRequest;
 use Inertia\Inertia;
 use App\Models\Building;
 use Illuminate\Http\Request;
@@ -17,7 +16,7 @@ class BuildingController extends Controller
     {
         $buildings = Building::withCount([
             'buildingRooms'
-        ])->orderBy('id')->get();
+        ])->orderBy('code')->get();
 
 
         return Inertia::render('buildings/index', [

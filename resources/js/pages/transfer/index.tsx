@@ -70,8 +70,8 @@ export default function BuildingIndex({
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
                                 {/* <TableHead>ID</TableHead> */}
-                                <TableHead>Name</TableHead>
                                 <TableHead>Building Code</TableHead>
+                                <TableHead>Name</TableHead>
                                 <TableHead>Description</TableHead>
                                 <TableHead>Room Count</TableHead>
                                 <TableHead>Actions</TableHead>
@@ -82,8 +82,8 @@ export default function BuildingIndex({
                                 filteredBuildings.map((building) => (
                                     <TableRow key={building.id}>
                                         {/* <TableCell>{building.id}</TableCell> */}
-                                        <TableCell>{building.name}</TableCell>
                                         <TableCell>{building.code}</TableCell>
+                                        <TableCell>{building.name}</TableCell>
                                         <TableCell>{building.description || '—'}</TableCell>
                                         <TableCell>{building.building_rooms_count}</TableCell>
                                         
