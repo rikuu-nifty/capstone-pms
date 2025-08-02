@@ -15,8 +15,10 @@ class TransferController extends Controller
     {
         $transfers = Transfer::with([
             'currentBuildingRoom',
+            'currentBuildingRoom.building',
             'currentOrganization',
             'receivingBuildingRoom',
+            'receivingBuildingRoom.building',
             'receivingOrganization',
             'designatedEmployee',
             'assignedBy',

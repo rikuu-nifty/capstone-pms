@@ -23,6 +23,14 @@ const statusVariantMap: Record<string, 'default' | 'primary' | 'secondary' | 'ou
     completed: 'secondary',
 };
 
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+};
 
 function formatStatusLabel(status: string): string {
   return status
@@ -42,7 +50,14 @@ export type BuildingRoom = {
     id: number;
     building_id: number;
     room: string;
-    description: string | null;
+
+    building?: Building;
+};
+
+export type Building = {
+    id: number;
+    name: string;
+    code: string;
 };
 
 export type User = {
@@ -64,8 +79,10 @@ export type Transfer = {
     status: string;
     remarks: string | null;
 
+    currentBuilding?: Building;
     currentBuildingRoom?: BuildingRoom;
     currentOrganization?: UnitOrDepartment;
+    receivingBuilding?: Building;
     receivingBuildingRoom?: BuildingRoom;
     receivingOrganization?: UnitOrDepartment;
     designatedEmployee?: User;
@@ -110,9 +127,9 @@ export default function TransferIndex({ transfers = [] }: { transfers: Transfer[
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
                                 <TableHead>ID</TableHead>
-                                <TableHead>Current Building</TableHead>
+                                <TableHead>Current Building/Room</TableHead>
                                 <TableHead>Current Unit/Dept</TableHead>
-                                <TableHead>Receiving Building</TableHead>
+                                <TableHead>Receiving Building/Room</TableHead>
                                 <TableHead>Receiving Unit/Dept</TableHead>
                                 <TableHead>Scheduled Date</TableHead>
                                 <TableHead>Actual Date</TableHead>
@@ -128,17 +145,15 @@ export default function TransferIndex({ transfers = [] }: { transfers: Transfer[
                                 filteredTransfers.map((transfer) => (
                                     <TableRow key={transfer.id}>
                                         <TableCell>{transfer.id}</TableCell>
-                                        <TableCell>{transfer.currentBuildingRoom?.room ?? '—'}</TableCell>
+                                        <TableCell>{transfer.currentBuildingRoom?.building?.code ?? '—'} ({transfer.currentBuildingRoom?.room ?? '—'})</TableCell>
                                         <TableCell>{transfer.currentOrganization?.code ?? '—'}</TableCell>
-                                        <TableCell>{transfer.receivingBuildingRoom?.room ?? '—'}</TableCell>
+                                        <TableCell>{transfer.currentBuildingRoom?.building?.code ?? '—'} ({transfer.receivingBuildingRoom?.room ?? '—'})</TableCell>
                                         <TableCell>{transfer.receivingOrganization?.code ?? '—'}</TableCell>
-                                        <TableCell>{new Date(transfer.scheduled_date).toLocaleDateString()}</TableCell>
+                                        <TableCell>{formatDate(transfer.scheduled_date)}</TableCell>
                                         <TableCell>
-                                            {transfer.actual_transfer_date
-                                                ? new Date(transfer.actual_transfer_date).toLocaleDateString()
-                                                : '—'}
+                                            {transfer.actual_transfer_date ? formatDate(transfer.actual_transfer_date) : '—'}
                                         </TableCell>
-                                        
+
                                         <TableCell>
                                             <Badge variant={statusVariantMap[transfer.status.toLowerCase()] ?? 'secondary'}>
                                                 {formatStatusLabel(transfer.status.toLowerCase())}
