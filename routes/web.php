@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\InventoryListController;
 use App\Http\Controllers\InventorySchedulingController;
+use App\Http\Controllers\BuildingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -43,6 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'destroy'])->name('inventory-scheduling.destroy');
     // INVENTORY-SCHEDULING
 
+    // INSTITUTIONAL SETUP - BUILDINGS
+    Route::resource('buildings', BuildingController::class);
 
 
 

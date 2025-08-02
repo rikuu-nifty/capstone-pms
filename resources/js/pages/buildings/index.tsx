@@ -1,0 +1,105 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
+import { useState } from 'react';
+import { Building2, PlusCircle } from 'lucide-react';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Buildings',
+        href: '/buildings',
+    },
+];
+
+export type Building = {
+    id: number;
+    name: string;
+    code: string;
+    description: string;
+    building_rooms_count: number;
+};
+
+export type BuildingRoom = {
+    id: number;
+    building_id: number;
+    room: string;
+    description: string;
+};
+
+export default function BuildingIndex({ buildings = [] }: { buildings: Building[] }) {
+    const [search, setSearch] = useState('');
+
+    const filteredBuildings = buildings.filter((b) =>
+        `${b.name} ${b.code} ${b.description}`.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Buildings" />
+
+            <div className="flex flex-col gap-4 p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                        <h1 className="text-2xl font-semibold">Buildings</h1>
+                        <p className="text-sm text-muted-foreground">
+                            List of all registered AUF buildings.
+                        </p>
+                        <Input
+                            type="text"
+                            placeholder="Search by name or code..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="max-w-xs"
+                        />
+                    </div>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Building
+                    </Button>
+                </div>
+
+                <div className="rounded-lg overflow-x-auto border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted text-foreground">
+                                <TableHead>ID</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Code</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>Rooms</TableHead>
+                                <TableHead>Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredBuildings.length > 0 ? (
+                                filteredBuildings.map((building) => (
+                                    <TableRow key={building.id}>
+                                        <TableCell>{building.id}</TableCell>
+                                        <TableCell>{building.name}</TableCell>
+                                        <TableCell>{building.code}</TableCell>
+                                        <TableCell>{building.description || '—'}</TableCell>
+                                        <TableCell>{building.building_rooms_count}</TableCell>
+                                        <TableCell className="flex gap-2">
+                                            <Button variant="ghost" size="icon">
+                                                <Building2 className="h-4 w-4" />
+                                            </Button>
+                                            {/* Add Edit/Delete/View buttons here as needed */}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                                        No buildings found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+        </AppLayout>
+    );
+}

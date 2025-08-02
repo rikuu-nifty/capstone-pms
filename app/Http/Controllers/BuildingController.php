@@ -15,7 +15,14 @@ class BuildingController extends Controller
      */
     public function index()
     {
-        //
+        $buildings = Building::withCount([
+            'buildingRooms'
+        ])->orderBy('id')->get();
+
+
+        return Inertia::render('buildings/index', [
+            'buildings' => $buildings
+        ]);
     }
 
     /**
