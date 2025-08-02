@@ -3,6 +3,7 @@
 use App\Http\Controllers\InventoryListController;
 use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\TransferController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route::resource('inventory-list', InventoryListController::class); // DEFAULT ROUTE
     // Route::resource('inventory-scheduling', InventorySchedulingController::class); // DEFAULT ROUTE
+    // Route::resource('buildings', BuildingController::class);
 
     // INVENTORY-LIST
         Route::get('/inventory-list', [InventoryListController::class, 'index'])->name('inventory-list.index');
@@ -44,8 +46,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'destroy'])->name('inventory-scheduling.destroy');
     // INVENTORY-SCHEDULING
 
+    // TRANSFERS
+    Route::get('/transfers', [TransferController::class, 'index'])->name('transfer.index');
+
     // INSTITUTIONAL SETUP - BUILDINGS
-    Route::resource('buildings', BuildingController::class);
+    Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
+    
 
 
 

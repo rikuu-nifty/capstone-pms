@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Inertia\Inertia;
 
 use App\Models\Transfer;
 use Illuminate\Http\Request;
@@ -12,8 +13,30 @@ class TransferController extends Controller
      */
     public function index()
     {
-        //
+        $transfers = Transfer::with([
+            'currentBuildingRoom',
+            'currentOrganization',
+            'receivingBuildingRoom',
+            'receivingOrganization',
+            'designatedEmployee',
+            'assignedBy',
+        ])->latest()->get();
+
+        return Inertia::render('transfer/index', [
+            'transfers' => $transfers->map(function ($transfer) {
+                $array = $transfer->toArray();
+                $array['currentBuildingRoom'] = $array['current_building_room'];
+                $array['currentOrganization'] = $array['current_organization'];
+                $array['receivingBuildingRoom'] = $array['receiving_building_room'];
+                $array['receivingOrganization'] = $array['receiving_organization'];
+                $array['designatedEmployee'] = $array['designated_employee'];
+                $array['assignedBy'] = $array['assigned_by'];
+                $array['status'] = ucfirst($transfer->status);
+                return $array;
+            }),
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.

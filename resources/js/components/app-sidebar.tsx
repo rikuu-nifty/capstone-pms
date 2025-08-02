@@ -40,7 +40,7 @@ const dashboardNavItems = [
 const inventoryNavItems = [
     { title: 'Inventory List', href: '/inventory-list', icon: Package2 },
     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2 },
-    { title: 'Transfer', href: '/transfer', icon: ArrowRightLeft },
+    { title: 'Transfer', href: '/transfers', icon: ArrowRightLeft },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList },
     { title: 'Off-campus', href: '/off-campus', icon: School },
     { title: 'Reports', href: '/reports', icon: Files },
