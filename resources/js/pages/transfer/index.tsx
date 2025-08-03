@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head} from '@inertiajs/react';
+// import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 // import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
@@ -75,8 +76,10 @@ export type Transfer = {
     scheduled_date: string;
     actual_transfer_date: string | null;
     received_by: number | null;
-    status: string;
+    status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
     remarks: string | null;
+    asset_count: number;
+    // assets: InventoryList[];
 
     currentBuildingRoom?: BuildingRoom;
     currentOrganization?: UnitOrDepartment;
@@ -86,12 +89,27 @@ export type Transfer = {
     assignedBy?: User;
 };
 
+export type TransferFormData = {
+    current_building_room: number;
+    current_organization: number;
+    receiving_building_room: number;
+    receiving_organization: number;
+    designated_employee: number;
+    assigned_by: number;
+    scheduled_date: string;
+    actual_transfer_date: string | null;
+    received_by: number | null;
+    status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
+    remarks: string | null;
+}
+
 export default function TransferIndex({ 
     transfers = [] 
 }: { 
     transfers: Transfer[] 
 }) {
 
+    //Search Filters
     const [search, setSearch] = useState('');
     const filteredTransfers = transfers.filter((t) =>
         `
@@ -125,34 +143,41 @@ export default function TransferIndex({
                             className="max-w-xs"
                         />
                     </div>
-                    <Button>
+                    <Button
+                        /* onClick = {() => {
+                        
+                        }}
+                        */
+                    >
                         <PlusCircle className="mr-2 h-4 w-4" /> Schedule Transfer
                     </Button>
                 </div>
 
                 <div className="rounded-lg overflow-x-auto border">
                     <Table>
-                        <TableHeader>
+                        <TableHeader >
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead>ID</TableHead>
-                                <TableHead>Current Location</TableHead>
-                                <TableHead>Current Unit/Dept</TableHead>
-                                <TableHead>Receiving Location</TableHead>
-                                <TableHead>Receiving Unit/Dept</TableHead>
-                                <TableHead>Scheduled Date</TableHead>
-                                <TableHead>Actual Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Designated</TableHead>
-                                <TableHead>Assigned By</TableHead>
-                                <TableHead>Remarks</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead className="text-center">ID</TableHead>
+                                <TableHead className="text-center">Asset Count</TableHead>
+                                <TableHead className="text-center">Current Location</TableHead>
+                                <TableHead className="text-center">Current Unit/Dept</TableHead>
+                                <TableHead className="text-center">Receiving Location</TableHead>
+                                <TableHead className="text-center">Receiving Unit/Dept</TableHead>
+                                <TableHead className="text-center">Scheduled Date</TableHead>
+                                <TableHead className="text-center">Actual Date</TableHead>
+                                <TableHead className="text-center">Status</TableHead>
+                                <TableHead className="text-center">Designated</TableHead>
+                                <TableHead className="text-center">Assigned By</TableHead>
+                                {/* <TableHead className="text-center">Remarks</TableHead> */}
+                                <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
+                        <TableBody className="text-center">
                             {filteredTransfers.length > 0 ? (
                                 filteredTransfers.map((transfer) => (
                                     <TableRow key={transfer.id}>
                                         <TableCell>{transfer.id}</TableCell>
+                                        <TableCell>{transfer.asset_count}</TableCell>
                                         <TableCell>{transfer.currentBuildingRoom?.building?.code ?? '—'} ({transfer.currentBuildingRoom?.room ?? '—'})</TableCell>
                                         <TableCell>{transfer.currentOrganization?.code ?? '—'}</TableCell>
                                         <TableCell>{transfer.currentBuildingRoom?.building?.code ?? '—'} ({transfer.receivingBuildingRoom?.room ?? '—'})</TableCell>
@@ -170,7 +195,7 @@ export default function TransferIndex({
 
                                         <TableCell>{transfer.designatedEmployee?.name ?? '—'}</TableCell>
                                         <TableCell>{transfer.assignedBy?.name ?? '—'}</TableCell>
-                                        <TableCell>{transfer.remarks ?? '—'}</TableCell>
+                                        {/* <TableCell>{transfer.remarks ?? '—'}</TableCell> */}
                                         
                                         <TableCell className="flex gap-2">
                                             <Button variant="ghost" size="icon">

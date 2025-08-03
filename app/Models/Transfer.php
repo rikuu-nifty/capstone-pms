@@ -6,6 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transfer extends Model
 {
+
+    protected $fillable = [
+        'current_building_room',
+        'current_organization',
+        'receiving_building_room',
+        'receiving_organization',
+        'designated_employee',
+        'scheduled_date',
+        'actual_transfer_date',
+        'received_by',
+        'status',
+        'remarks',
+    ];
+    
     public function currentBuildingRoom()
     {
         return $this->belongsTo(BuildingRoom::class, 'current_building_room');
@@ -34,5 +48,12 @@ class Transfer extends Model
     public function assignedBy()
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public function transferAssets()
+    {
+        return $this->hasMany(TransferAsset::class, 'transfer_id');
+        // return $this->hasMany(TransferAsset::class, 'transfer_id')->with('inventoryList);
+        /* this will allow us to show each asset detail */
     }
 }

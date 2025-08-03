@@ -22,6 +22,7 @@ class TransferController extends Controller
             'receivingOrganization',
             'designatedEmployee',
             'assignedBy',
+            'transferAssets',
         ])->latest()->get();
 
         return Inertia::render('transfer/index', [
@@ -34,11 +35,15 @@ class TransferController extends Controller
                 $array['designatedEmployee'] = $array['designated_employee'];
                 $array['assignedBy'] = $array['assigned_by'];
                 $array['status'] = ucfirst($transfer->status);
+
+                $array['asset_count'] = $transfer->transferAssets->count();
+                // $array['assets'] = $transfer->transferAsset->pluck('inventoryList');
+                /* gives full list of related asset records */
+
                 return $array;
             }),
         ]);
     }
-
 
     /**
      * Show the form for creating a new resource.
