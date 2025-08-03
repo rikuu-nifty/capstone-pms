@@ -43,7 +43,6 @@ export type UnitOrDepartment = {
     id: number;
     name: string;
     code: string;
-    description: string | null;
 };
 
 export type BuildingRoom = {
@@ -79,21 +78,30 @@ export type Transfer = {
     status: string;
     remarks: string | null;
 
-    currentBuilding?: Building;
     currentBuildingRoom?: BuildingRoom;
     currentOrganization?: UnitOrDepartment;
-    receivingBuilding?: Building;
     receivingBuildingRoom?: BuildingRoom;
     receivingOrganization?: UnitOrDepartment;
     designatedEmployee?: User;
     assignedBy?: User;
 };
 
-export default function TransferIndex({ transfers = [] }: { transfers: Transfer[] }) {
-    const [search, setSearch] = useState('');
+export default function TransferIndex({ 
+    transfers = [] 
+}: { 
+    transfers: Transfer[] 
+}) {
 
+    const [search, setSearch] = useState('');
     const filteredTransfers = transfers.filter((t) =>
-        `${t.status} ${t.currentBuildingRoom?.room ?? ''} ${t.receivingBuildingRoom?.room ?? ''} ${t.currentOrganization?.name ?? ''} ${t.receivingOrganization?.name ?? ''}`
+        `
+            ${t.currentBuildingRoom?.building?.code ?? ''}
+            ${t.status} ${t.currentBuildingRoom?.room ?? ''}
+            ${t.receivingBuildingRoom?.building?.code ?? ''}
+            ${t.receivingBuildingRoom?.room ?? ''}
+            ${t.currentOrganization?.code ?? ''}
+            ${t.receivingOrganization?.code ?? ''}
+        `
             .toLowerCase()
             .includes(search.toLowerCase())
     );
@@ -111,7 +119,7 @@ export default function TransferIndex({ transfers = [] }: { transfers: Transfer[
                         </p>
                         <Input
                             type="text"
-                            placeholder="Search by status, room, or organization..."
+                            placeholder="Search by status, room, or unit/dept..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="max-w-xs"
@@ -127,9 +135,9 @@ export default function TransferIndex({ transfers = [] }: { transfers: Transfer[
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
                                 <TableHead>ID</TableHead>
-                                <TableHead>Current Building/Room</TableHead>
+                                <TableHead>Current Location</TableHead>
                                 <TableHead>Current Unit/Dept</TableHead>
-                                <TableHead>Receiving Building/Room</TableHead>
+                                <TableHead>Receiving Location</TableHead>
                                 <TableHead>Receiving Unit/Dept</TableHead>
                                 <TableHead>Scheduled Date</TableHead>
                                 <TableHead>Actual Date</TableHead>
