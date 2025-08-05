@@ -1,6 +1,7 @@
 import type { BuildingRoom } from './building-room';
 import type { UnitOrDepartment } from './unit-or-department';
 import type { User } from './user';
+import type { TransferAsset } from './transfer-asset';
 
 export type Transfer = {
     id: number;
@@ -16,7 +17,6 @@ export type Transfer = {
     status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
     remarks: string | null;
     asset_count: number;
-    // assets: InventoryList[];
 
     currentBuildingRoom?: BuildingRoom;
     currentOrganization?: UnitOrDepartment;
@@ -24,6 +24,8 @@ export type Transfer = {
     receivingOrganization?: UnitOrDepartment;
     designatedEmployee?: User;
     assignedBy?: User;
+
+    transferAssets: TransferAsset[];
 };
 
 export type TransferFormData = {
@@ -35,7 +37,9 @@ export type TransferFormData = {
     assigned_by: number;
     scheduled_date: string;
     actual_transfer_date: string | null;
-    received_by: number | null;
+    received_by: string | null;
     status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
     remarks: string | null;
+
+    current_building_id: number;
 }
