@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 05, 2025 at 04:20 PM
+-- Generation Time: Aug 05, 2025 at 06:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -320,7 +320,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('OgrJmByjEirFqUbfL5QwGRvK6hE9TG7vYVHXeaPQ', 3, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiVlpFemM0akM1VmVzNGR5bjNxTjN1Qk1QUmtpbkl3RVY2UTl0c3hXZyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9idWlsZGluZ3MiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTozO30=', 1754403601);
+('OgrJmByjEirFqUbfL5QwGRvK6hE9TG7vYVHXeaPQ', 3, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiVlpFemM0akM1VmVzNGR5bjNxTjN1Qk1QUmtpbkl3RVY2UTl0c3hXZyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC90cmFuc2ZlcnMiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTozO30=', 1754409991);
 
 -- --------------------------------------------------------
 
@@ -355,20 +355,6 @@ INSERT INTO `transfers` (`id`, `current_building_room`, `current_organization`, 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `transfer_asset`
---
-
-CREATE TABLE `transfer_asset` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `transfer_id` bigint(20) UNSIGNED NOT NULL,
-  `asset_id` bigint(20) UNSIGNED NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `transfer_assets`
 --
 
@@ -379,6 +365,13 @@ CREATE TABLE `transfer_assets` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `transfer_assets`
+--
+
+INSERT INTO `transfer_assets` (`id`, `transfer_id`, `asset_id`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, '2025-08-05 14:40:40', NULL);
 
 -- --------------------------------------------------------
 
@@ -546,14 +539,6 @@ ALTER TABLE `transfers`
   ADD KEY `transfers_assigned_by_foreign` (`assigned_by`);
 
 --
--- Indexes for table `transfer_asset`
---
-ALTER TABLE `transfer_asset`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `transfer_asset_transfer_id_foreign` (`transfer_id`),
-  ADD KEY `transfer_asset_asset_id_foreign` (`asset_id`);
-
---
 -- Indexes for table `transfer_assets`
 --
 ALTER TABLE `transfer_assets`
@@ -639,16 +624,10 @@ ALTER TABLE `transfers`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `transfer_asset`
---
-ALTER TABLE `transfer_asset`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `transfer_assets`
 --
 ALTER TABLE `transfer_assets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `unit_or_departments`
@@ -708,13 +687,6 @@ ALTER TABLE `transfers`
   ADD CONSTRAINT `transfers_designated_employee_foreign` FOREIGN KEY (`designated_employee`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `transfers_receiving_building_room_foreign` FOREIGN KEY (`receiving_building_room`) REFERENCES `building_rooms` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `transfers_receiving_organization_foreign` FOREIGN KEY (`receiving_organization`) REFERENCES `unit_or_departments` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `transfer_asset`
---
-ALTER TABLE `transfer_asset`
-  ADD CONSTRAINT `transfer_asset_asset_id_foreign` FOREIGN KEY (`asset_id`) REFERENCES `inventory_lists` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `transfer_asset_transfer_id_foreign` FOREIGN KEY (`transfer_id`) REFERENCES `transfers` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `transfer_assets`
