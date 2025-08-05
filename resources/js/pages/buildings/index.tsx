@@ -8,27 +8,14 @@ import { useState } from 'react';
 // import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
+import { Building } from '@/types/building';
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Buildings',
         href: '/buildings',
     },
 ];
-
-export type Building = {
-    id: number;
-    name: string;
-    code: string;
-    description: string;
-    building_rooms_count: number;
-};
-
-export type BuildingRoom = {
-    id: number;
-    building_id: number;
-    room: string;
-    description: string;
-};
 
 export default function BuildingIndex({ 
     buildings = [] 

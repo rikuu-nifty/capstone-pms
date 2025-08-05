@@ -3,12 +3,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head} from '@inertiajs/react';
+import { type BreadcrumbItem} from '@/types';
+import { Head } from '@inertiajs/react';
 // import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 // import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+
+import { Transfer } from '@/types/transfer';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -40,55 +42,6 @@ function formatStatusLabel(status: string): string {
     .join(' ');
 }
 
-export type UnitOrDepartment = {
-    id: number;
-    name: string;
-    code: string;
-};
-
-export type BuildingRoom = {
-    id: number;
-    building_id: number;
-    room: string;
-
-    building?: Building;
-};
-
-export type Building = {
-    id: number;
-    name: string;
-    code: string;
-};
-
-export type User = {
-    id: number;
-    name: string;
-};
-
-export type Transfer = {
-    id: number;
-    current_building_room: number;
-    current_organization: number;
-    receiving_building_room: number;
-    receiving_organization: number;
-    designated_employee: number;
-    assigned_by: number;
-    scheduled_date: string;
-    actual_transfer_date: string | null;
-    received_by: number | null;
-    status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
-    remarks: string | null;
-    asset_count: number;
-    // assets: InventoryList[];
-
-    currentBuildingRoom?: BuildingRoom;
-    currentOrganization?: UnitOrDepartment;
-    receivingBuildingRoom?: BuildingRoom;
-    receivingOrganization?: UnitOrDepartment;
-    designatedEmployee?: User;
-    assignedBy?: User;
-};
-
 export type TransferFormData = {
     current_building_room: number;
     current_organization: number;
@@ -103,9 +56,7 @@ export type TransferFormData = {
     remarks: string | null;
 }
 
-export default function TransferIndex({ 
-    transfers = [] 
-}: { 
+export default function TransferIndex( {transfers = []}: { 
     transfers: Transfer[] 
 }) {
 
