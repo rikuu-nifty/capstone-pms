@@ -57,22 +57,22 @@ export default function BuildingIndex({
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
                                 {/* <TableHead>ID</TableHead> */}
-                                <TableHead>Name</TableHead>
-                                <TableHead>Building Code</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead>Room Count</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead className="text-center">Building Code</TableHead>
+                                <TableHead className="text-center">Building Name</TableHead>
+                                <TableHead className="text-center">Description</TableHead>
+                                <TableHead className="text-center">Room Count</TableHead>
+                                <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredBuildings.length > 0 ? (
                                 filteredBuildings.map((building) => (
-                                    <TableRow key={building.id}>
+                                    <TableRow className="text-center" key={building.id}>
                                         {/* <TableCell>{building.id}</TableCell> */}
-                                        <TableCell>{building.name}</TableCell>
                                         <TableCell>{building.code}</TableCell>
+                                        <TableCell>{building.name}</TableCell>
                                         <TableCell>{building.description || '—'}</TableCell>
-                                        <TableCell>{building.building_rooms_count}</TableCell>
+                                        <TableCell>{building.building_rooms_count || '—'}</TableCell>
                                         
                                         <TableCell className="flex gap-2">
                                             <Button variant="ghost" size="icon">

@@ -42,20 +42,6 @@ function formatStatusLabel(status: string): string {
     .join(' ');
 }
 
-export type TransferFormData = {
-    current_building_room: number;
-    current_organization: number;
-    receiving_building_room: number;
-    receiving_organization: number;
-    designated_employee: number;
-    assigned_by: number;
-    scheduled_date: string;
-    actual_transfer_date: string | null;
-    received_by: number | null;
-    status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
-    remarks: string | null;
-}
-
 export default function TransferIndex( {transfers = []}: { 
     transfers: Transfer[] 
 }) {
