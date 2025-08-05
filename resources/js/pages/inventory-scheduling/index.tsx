@@ -76,15 +76,18 @@ export type InventorySchedulingFormData = {
 
 export default function InventorySchedulingIndex({
     schedules = [],
-    // buildings = [],
+    buildings = [],
     // buildingRooms = [],
+     unitOrDepartments = [],
 }: {
     schedules: Scheduled[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
+    unitOrDepartments: UnitOrDepartment[];
+    
 }) {
     // data, setData, post, processing, errors, reset, clearErrors
-    const { processing } = useForm<InventorySchedulingFormData>({
+    const { data, setData, post, reset, processing, errors } = useForm<InventorySchedulingFormData>({
         building_id: '',
         building_room_id: '',
         unit_or_department_id: '',
@@ -102,6 +105,17 @@ export default function InventorySchedulingIndex({
 
     const [search, setSearch] = useState('');
     const [showAddScheduleInventory, setShowAddScheduleInventory] = useState(false);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post('/inventory-scheduling', {
+            onSuccess: () => {
+                reset();
+                setShowAddScheduleInventory(false);
+            },
+        });
+        console.log('Form Submitted', data);
+    };
 
     const filtered = schedules.filter((item) =>
         `${item.building?.name ?? ''} ${item.unit_or_department?.name ?? ''} ${item.status}`.toLowerCase().includes(search.toLowerCase()),
@@ -211,14 +225,56 @@ export default function InventorySchedulingIndex({
                         </button>
                     </div>
 
-                    {/* Footer Buttons */}
-                    <div className="col-span-2 flex justify-end gap-2 border-t pt-4">
-                        <Button variant="secondary" type="button" onClick={() => setShowAddScheduleInventory(false)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={processing}>
-                            + Add Schedule
-                        </Button>
+                    {/* Scrollable Form Section */}
+                    <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
+                        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
+                            {/* BUILDING*/}
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Building</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.building_id}
+                                    onChange={(e) => setData('building_id', Number(e.target.value))}
+                                >
+                                    <option value="">Select Building</option>
+                                    {buildings.map((building) => (
+                                        <option key={building.id} value={building.id}>
+                                            {building.name} ({building.code})
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
+                            </div>
+
+                            {/* UNIT/DEPARTMENT*/}
+                                <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Unit/Department</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.unit_or_department_id}
+                                    onChange={(e) => setData('unit_or_department_id', Number(e.target.value))}
+                                >
+                                    <option value="">Select Unit/Department</option>
+                                    {unitOrDepartments.map((unit) => (
+                                        <option key={unit.id} value={unit.id}>
+                                            {unit.code} - {unit.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
+                            </div>
+
+                            {/* Footer Buttons */}
+                            <div className="col-span-2 flex justify-end gap-2 border-t pt-4">
+                                <Button variant="secondary" type="button" onClick={() => setShowAddScheduleInventory(false)}>
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={processing}>
+                                    Add Schedule
+                                </Button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

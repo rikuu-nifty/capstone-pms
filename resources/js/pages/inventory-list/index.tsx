@@ -366,13 +366,14 @@ export default function InventoryListIndex({
                     onClick={() => setShowAddAsset(false)}
                 ></div>
 
-         {/* Slide-In Panel */}
+                 {/* Slide-In Panel */}
                 <div
                     className={`relative ml-auto w-full max-w-3xl transform bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-zinc-900 ${
                         showAddAsset ? 'translate-x-0' : 'translate-x-full'
                     }`}
                     style={{ display: 'flex', flexDirection: 'column' }}
                 >
+                     {/* Header */}
                     <div className="mb-4 flex items-center justify-between p-6">
                         <h2 className="text-xl font-semibold">Add New Asset</h2>
                         <button onClick={() => setShowAddAsset(false)} className="cursor-pointer text-2xl font-medium">
