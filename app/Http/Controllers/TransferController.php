@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 use Inertia\Inertia;
 
+use Illuminate\Support\Facades\Auth;
+
 use App\Models\Transfer;
 use App\Models\Building;
 use App\Models\BuildingRoom;
@@ -17,6 +19,8 @@ class TransferController extends Controller
      */
     public function index()
     {
+        $currentUser = Auth::user();
+
         $transfers = Transfer::with([
             'currentBuildingRoom',
             'currentBuildingRoom.building',
@@ -55,6 +59,7 @@ class TransferController extends Controller
             'buildingRooms' => $buildingRooms,
             'unitOrDepartments' => $unitOrDepartments,
             'users' => $users,
+            'currentUser' => $currentUser,
         ]);
     }
 
@@ -71,7 +76,27 @@ class TransferController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'current_building_id' => 'required|integer|exists:buildings,id',
+            'current_building_room' => 'required|integer|exists:building_rooms,id',
+            'current_organization' => 'required|integer|exists:unit_or_departments,id',
+            'receiving_building_id' => 'required|integer|exists:buildings,id',
+            'receiving_building_room' => 'required|integer|exists:building_rooms,id',
+            'receiving_organization' => 'required|integer|exists:unit_or_departments,id',
+            'designated_employee' => 'required|integer|exists:users,id',
+            'assigned_by' => 'required|integer|exists:users,id',
+            'scheduled_date' => 'required|date',
+            'actual_transfer_date' => 'nullable|date',
+            'received_by' => 'nullable|string',
+            'status' => 'required|in:upcoming,in_progress,completed,overdue',
+            'remarks' => 'nullable|string',
+        ]);
+
+        unset($validated['current_building_id'], $validated['receiving_building_id']);
+
+        Transfer::create($validated);
+
+        return back()->with('success', 'Transfer created successfully.');
     }
 
     /**

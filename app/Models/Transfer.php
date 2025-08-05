@@ -8,11 +8,14 @@ class Transfer extends Model
 {
 
     protected $fillable = [
+        'current_building_id',
         'current_building_room',
         'current_organization',
+        'receiving_building_id',
         'receiving_building_room',
         'receiving_organization',
         'designated_employee',
+        'assigned_by',
         'scheduled_date',
         'actual_transfer_date',
         'received_by',

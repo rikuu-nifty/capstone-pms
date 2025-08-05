@@ -51,6 +51,7 @@ export default function TransferIndex({
     buildingRooms = [],
     unitOrDepartments = [],
     users = [],
+    currentUser,
 
 }: TransferPageProps) {
 
@@ -58,10 +59,11 @@ export default function TransferIndex({
         current_building_id: 0,
         current_building_room: 0,
         current_organization: 0,
+        receiving_building_id: 0,
         receiving_building_room: 0,
         receiving_organization: 0,
         designated_employee: 0,
-        assigned_by: 0,
+        assigned_by: currentUser.id,
         scheduled_date: '',
         actual_transfer_date: '',
         received_by: '',
@@ -71,8 +73,13 @@ export default function TransferIndex({
 
     //Search Filters UseState
     const [search, setSearch] = useState('');
+
     const filteredCurrentRooms = buildingRooms.filter(
         (room) => Number(room.building_id) === Number(data.current_building_id)
+    );
+
+    const filteredReceivingRooms = buildingRooms.filter(
+        (room) => Number(room.building_id) === Number(data.receiving_building_id)
     );
 
     const filteredTransfers = transfers.filter((t) =>
@@ -256,7 +263,7 @@ export default function TransferIndex({
 
                 {/* Current Unit/Department */}
                 <div className="col-span-1">
-                    <label className="mb-1 block font-medium">Current Unit/Department</label>
+                    <label className="mb-1 block font-medium">Current Unit/Dept/Lab</label>
                     <select
                         className="w-full rounded-lg border p-2"
                         value={data.current_organization}
@@ -272,27 +279,9 @@ export default function TransferIndex({
                     {errors.current_organization && <p className="mt-1 text-xs text-red-500">{errors.current_organization}</p>}
                 </div>
 
-                {/* Receiving Location */}
-                <div className="col-span-1">
-                    <label className="mb-1 block font-medium">Receiving Location</label>
-                    <select
-                        className="w-full rounded-lg border p-2"
-                        value={data.receiving_building_room}
-                        onChange={(e) => setData('receiving_building_room', Number(e.target.value))}
-                    >
-                        <option value="">Select Room</option>
-                        {buildingRooms.map((room) => (
-                            <option key={room.id} value={room.id}>
-                                {room.building?.code ?? '—'} – {room.room}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.receiving_building_room && <p className="mt-1 text-xs text-red-500">{errors.receiving_building_room}</p>}
-                </div>
-
                 {/* Receiving Unit/Department */}
                 <div className="col-span-1">
-                    <label className="mb-1 block font-medium">Receiving Unit/Department</label>
+                    <label className="mb-1 block font-medium">Receiving Unit/Dept/Lab</label>
                     <select
                         className="w-full rounded-lg border p-2"
                         value={data.receiving_organization}
@@ -308,40 +297,48 @@ export default function TransferIndex({
                     {errors.receiving_organization && <p className="mt-1 text-xs text-red-500">{errors.receiving_organization}</p>}
                 </div>
 
-                {/* Designated Employee */}
+                {/* Receiving Building */}
                 <div className="col-span-1">
-                    <label className="mb-1 block font-medium">Designated Employee</label>
+                    <label className="mb-1 block font-medium">Receiving Building</label>
                     <select
                         className="w-full rounded-lg border p-2"
-                        value={data.designated_employee}
-                        onChange={(e) => setData('designated_employee', Number(e.target.value))}
+                        value={data.receiving_building_id}
+                        onChange={(e) => {
+                            setData('receiving_building_id', Number(e.target.value));
+                            setData('receiving_building_room', 0);
+                        }}
                     >
-                        <option value="">Select Employee</option>
-                        {users.map((user) => (
-                            <option key={user.id} value={user.id}>
-                                {user.name}
+                        <option value="">Select Building</option>
+                        {buildings.map((building) => (
+                            <option key={building.id} value={building.id}>
+                                {building.name} ({building.code})
                             </option>
                         ))}
                     </select>
-                    {errors.designated_employee && <p className="mt-1 text-xs text-red-500">{errors.designated_employee}</p>}
+                    {errors.receiving_building_id && (
+                        <p className="mt-1 text-xs text-red-500">{errors.receiving_building_id}</p>
+                    )}
                 </div>
 
-                {/* Assigned By */}
+                {/* Receiving Room */}
                 <div className="col-span-1">
-                    <label className="mb-1 block font-medium">Assigned By</label>
+                    <label className="mb-1 block font-medium">Receiving Room</label>
                     <select
                         className="w-full rounded-lg border p-2"
-                        value={data.assigned_by}
-                        onChange={(e) => setData('assigned_by', Number(e.target.value))}
+                        value={data.receiving_building_room}
+                        onChange={(e) => setData('receiving_building_room', Number(e.target.value))}
+                        disabled={!data.receiving_building_id}
                     >
-                        <option value="">Select Staff</option>
-                        {users.map((user) => (
-                            <option key={user.id} value={user.id}>
-                                {user.name}
+                        <option value="">Select Room</option>
+                        {filteredReceivingRooms.map((room) => (
+                            <option key={room.id} value={room.id}>
+                                {room.room}
                             </option>
                         ))}
                     </select>
-                    {errors.assigned_by && <p className="mt-1 text-xs text-red-500">{errors.assigned_by}</p>}
+                    {errors.receiving_building_room && (
+                        <p className="mt-1 text-xs text-red-500">{errors.receiving_building_room}</p>
+                    )}
                 </div>
 
                 {/* Scheduled Date */}
@@ -368,6 +365,24 @@ export default function TransferIndex({
                     {errors.actual_transfer_date && <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>}
                 </div>
 
+                {/* Designated Employee */}
+                <div className="col-span-1">
+                    <label className="mb-1 block font-medium">Designated Employee</label>
+                    <select
+                        className="w-full rounded-lg border p-2"
+                        value={data.designated_employee}
+                        onChange={(e) => setData('designated_employee', Number(e.target.value))}
+                    >
+                        <option value="">Select Employee</option>
+                        {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                                {user.name}
+                            </option>
+                        ))}
+                    </select>
+                    {errors.designated_employee && <p className="mt-1 text-xs text-red-500">{errors.designated_employee}</p>}
+                </div>
+                
                 {/* Status */}
                 <div className="col-span-1">
                     <label className="mb-1 block font-medium">Status</label>
@@ -386,6 +401,16 @@ export default function TransferIndex({
                     </select>
                     {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                 </div>
+                
+                {/* Assigned By */}
+                <div className="col-span-1">
+                    <label className="mb-1 block font-medium">Assigned By</label>
+                    <div className="p-1 text-sm font-bold text-blue-700">
+                        {currentUser.name}
+                    </div>
+                </div>
+
+
 
                 {/* Remarks */}
                 <div className="col-span-2">
