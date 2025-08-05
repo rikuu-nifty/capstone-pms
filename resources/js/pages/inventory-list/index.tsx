@@ -55,45 +55,47 @@ export type UnitOrDepartment = {
 
 export type Asset = {
     id: number;
+    memorandum_no: number | string;
+    asset_model: AssetModel | null;
     asset_name: string;
-    supplier: string;
-    date_purchased: string;
-    quantity: number;
+    description: string;
+    status: 'active' | 'archived';
+    unit_or_department: UnitOrDepartment | null;
     building: Building | null;
     building_room?: BuildingRoom | null;
-    unit_or_department: UnitOrDepartment | null;
-    asset_model: AssetModel | null;
-    asset_type: string;
-    status: 'active' | 'archived';
-    memorandum_no: number | string;
-    unit_cost: number | string;
     serial_no: string;
-    description: string;
+    supplier: string;
+    unit_cost: number | string;
+    date_purchased: string;
+    asset_type: string;
+    quantity: number;
     transfer_status: string;
+
+    
     brand: string;
     // Kapag pinasok ko yun serial_no pati unit_cost ayaw mag save
 };
 
 export type AssetFormData = {
-    unit_or_department_id: number | string;
-    building_room_id: number | string;
-    date_purchased: string;
-    asset_type: string;
+    memorandum_no: number | string; // can be number or string
+    asset_model_id: number | string; // can be number or string
     asset_name: string;
-    brand: string;
-    quantity: number | string; // can be number or string
+    description: string;
+    status: 'active' | 'archived' | '';
+    unit_or_department_id: number | string;
+    building_id: number | string;
+    building_room_id: number | string;
+    serial_no: string;
     supplier: string;
     unit_cost: number | string; // can be number or string
-    serial_no: string;
-    asset_model_id: number | string; // can be number or string
-    building_id: number | string;
+    date_purchased: string;
+    asset_type: string;
+    quantity: number | string; // can be number or string
+    brand: string;
     transfer_status: string;
-    description: string;
-    memorandum_no: number | string; // can be number or string
-    status: 'active' | 'archived' | '';
 };
 
-export default function Index({
+export default function InventoryListIndex({
     assets = [],
     assetModels = [],
     buildings = [],
@@ -251,7 +253,7 @@ export default function Index({
                                 <TableHead>Building</TableHead>
                                 <TableHead>Unit/Department</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Action</TableHead>
+                                <TableHead className="text-center w-[120px]">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -265,7 +267,8 @@ export default function Index({
                                     <TableCell>{item.building?.name ?? '—'}</TableCell>
                                     <TableCell>{item.unit_or_department?.name ?? '—'}</TableCell>
                                     <TableCell>
-                                        <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
+                                        <Badge 
+                                        variant={item.status === 'active' ? 'default' : 'secondary'}>
                                             {item.status === 'active' ? 'Active' : 'Archived'}
                                         </Badge>
                                     </TableCell>
@@ -363,6 +366,7 @@ export default function Index({
                     onClick={() => setShowAddAsset(false)}
                 ></div>
 
+         {/* Slide-In Panel */}
                 <div
                     className={`relative ml-auto w-full max-w-3xl transform bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-zinc-900 ${
                         showAddAsset ? 'translate-x-0' : 'translate-x-full'
@@ -375,10 +379,11 @@ export default function Index({
                             &times;
                         </button>
                     </div>
+                    
 
                     {/* Scrollable Form Section */}
                     <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
-                        {' '}
+                        
                         {/*overflow-y-auto */}
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
                             {/* Top Section */}
@@ -599,8 +604,8 @@ export default function Index({
                                     onChange={(e) => setData('transfer_status', e.target.value)}
                                 >
                                     <option value="">Select Status</option>
-                                    <option value="Transferred"> Transferred </option>
-                                    <option value="Not Transferred"> Not Transferred </option>
+                                    <option value="transferred"> Transferred </option>
+                                    <option value="not_transferred"> Not Transferred </option>
                                 </select>
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div>

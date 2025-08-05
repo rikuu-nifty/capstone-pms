@@ -43,7 +43,7 @@ class InventoryScheduling extends Model
     // User who created or owns the schedule
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // Designated employee (assigned to perform the inventory)

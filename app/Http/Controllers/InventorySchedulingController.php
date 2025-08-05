@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 // use App\Http\Requests\InventoryListAddNewAssetFormRequest;
 use Inertia\Inertia;
-
 use App\Models\InventoryScheduling;
 use App\Models\UnitOrDepartment;
 use App\Models\Building;
@@ -19,7 +18,26 @@ class InventorySchedulingController extends Controller
      */
     public function index()
     {
+        $schedules = InventoryScheduling::with([
+            'building',
+            'unitOrDepartment',
+            'buildingRoom',
+            'user',
+            'designatedEmployee',
+            'assignedBy',
+        ])->latest()->get();
+
+        $buildings = Building::all();
+        $buildingRooms = BuildingRoom::all();
+        $unitOrDepartments = UnitOrDepartment::all();
+        $users = User::all();
+
         return Inertia::render('inventory-scheduling/index', [
+            'schedules' => $schedules,
+            'buildings' => $buildings,
+            'buildingRooms' => $buildingRooms,
+            'unitOrDepartments' => $unitOrDepartments,
+            'users' => $users,
         ]);
     }
 

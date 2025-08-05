@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -15,23 +15,97 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function InventorySchedulingIndex() {
-    const [search, setSearch] = useState('');
+export type Building = {
+    id: number;
+    name: string;
+    code: string | number;
+    description: string;
+};
 
-    // 1 mock data row
-    const data = [
-        {
-            id: 1,
-            building: 'SCC Building',
-            department: 'SC, Sport Coordinator',
-            scheduleMonth: 'May',
-            actualDate: 'May 29, 2025',
-            checkedBy: 'Ramaert Millare',
-            verifiedBy: 'Jansen Venal',
-            receivedBy: 'Bien Tubil',
-            status: 'completed',
-        },
-    ];
+export type BuildingRoom = {
+    id: number;
+    building_id: number;
+    room: string | number;
+    description: string;
+};
+
+export type UnitOrDepartment = {
+    id: number;
+    name: string;
+    code: string | number;
+    description: string;
+};
+
+export type User = {
+    id: number;
+    name: string;
+    email: string;
+};
+
+export type Scheduled = {
+    id: number;
+    building: Building | null;
+    building_room?: BuildingRoom | null;
+    unit_or_department: UnitOrDepartment | null;
+    user?: User | null;
+    designated_employee?: User | null;
+    assigned_by?: User | null;
+    inventory_schedule: string;
+    actual_date_of_schedule: string;
+    checked_by: string;
+    verified_by: string;
+    received_by: string;
+    status: string;
+};
+
+export type InventorySchedulingFormData = {
+    building_id: number | string;
+    building_room_id: number | string;
+    unit_or_department_id: number | string;
+    user_id: number | string;
+    designated_employee: number | string;
+    assigned_by: number | string;
+    inventory_schedule: string;
+    actual_date_of_schedule: string;
+    checked_by: string;
+    verified_by: string;
+    received_by: string;
+    status: string;
+    description: string;
+};
+
+export default function InventorySchedulingIndex({
+    schedules = [],
+    // buildings = [],
+    // buildingRooms = [],
+}: {
+    schedules: Scheduled[];
+    buildings: Building[];
+    buildingRooms: BuildingRoom[];
+}) {
+    // data, setData, post, processing, errors, reset, clearErrors
+    const { processing } = useForm<InventorySchedulingFormData>({
+        building_id: '',
+        building_room_id: '',
+        unit_or_department_id: '',
+        user_id: '',
+        designated_employee: '',
+        assigned_by: '',
+        inventory_schedule: '',
+        actual_date_of_schedule: '',
+        checked_by: '',
+        verified_by: '',
+        received_by: '',
+        status: '',
+        description: '',
+    });
+
+    const [search, setSearch] = useState('');
+    const [showAddScheduleInventory, setShowAddScheduleInventory] = useState(false);
+
+    const filtered = schedules.filter((item) =>
+        `${item.building?.name ?? ''} ${item.unit_or_department?.name ?? ''} ${item.status}`.toLowerCase().includes(search.toLowerCase()),
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -41,9 +115,7 @@ export default function InventorySchedulingIndex() {
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
                         <h1 className="text-2xl font-semibold">Inventory Scheduling</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Manage and monitor scheduled inventory checks by room and department.
-                        </p>
+                        <p className="text-sm text-muted-foreground">Manage and monitor scheduled inventory checks by room and department.</p>
                         <Input
                             type="text"
                             placeholder="Search by building, department, or status..."
@@ -60,7 +132,7 @@ export default function InventorySchedulingIndex() {
                         <Button variant="outline">
                             <Filter className="mr-1 h-4 w-4" /> Filter
                         </Button>
-                        <Button className="cursor-pointer">
+                        <Button className="cursor-pointer" onClick={() => setShowAddScheduleInventory(true)}>
                             <PlusCircle className="mr-1 h-4 w-4" /> Schedule Inventory
                         </Button>
                     </div>
@@ -70,7 +142,6 @@ export default function InventorySchedulingIndex() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="w-20">ID no.</TableHead>
                                 <TableHead>Building</TableHead>
                                 <TableHead>Unit/Dept/Laboratories</TableHead>
                                 <TableHead>Inventory Schedule</TableHead>
@@ -78,48 +149,77 @@ export default function InventorySchedulingIndex() {
                                 <TableHead>Checked By</TableHead>
                                 <TableHead>Verified By</TableHead>
                                 <TableHead>Received By</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Action</TableHead>
+                                <TableHead className="w-[120px] text-center">Status</TableHead>
+                                <TableHead className="w-[120px] text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
-                            <TableRow key={data[0].id}>
-                                <TableCell>{String(data[0].id).padStart(2, '0')}</TableCell>
-                                <TableCell>{data[0].building}</TableCell>
-                                <TableCell>{data[0].department}</TableCell>
-                                <TableCell>{data[0].scheduleMonth}</TableCell>
-                                <TableCell>{data[0].actualDate}</TableCell>
-                                <TableCell>{data[0].checkedBy}</TableCell>
-                                <TableCell>{data[0].verifiedBy}</TableCell>
-                                <TableCell>{data[0].receivedBy}</TableCell>
-                                <TableCell>
-                                    <Badge
-                                        variant={
-                                            data[0].status === 'completed'
-                                                ? 'default'
-                                                : data[0].status === 'pending'
-                                                ? 'secondary'
-                                                : 'outline'
-                                        }
-                                    >
-                                        {data[0].status.charAt(0).toUpperCase() + data[0].status.slice(1)}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="flex gap-2">
-                                    <Button size="icon" variant="ghost">
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button size="icon" variant="ghost">
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                    <Button size="icon" variant="ghost">
-                                        <Eye className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
+                            {filtered.map((item) => (
+                                <TableRow key={item.id}>
+                                    <TableCell>{item.building?.name ?? '-'}</TableCell>
+                                    <TableCell>{item.unit_or_department?.name ?? '-'}</TableCell>
+                                    <TableCell>{item.inventory_schedule}</TableCell>
+                                    <TableCell>{item.actual_date_of_schedule}</TableCell>
+                                    <TableCell>{item.checked_by}</TableCell>
+                                    <TableCell>{item.verified_by}</TableCell>
+                                    <TableCell>{item.received_by}</TableCell>
+                                    <TableCell className="text-center align-middle">
+                                        <Badge
+                                            variant={item.status === 'completed' ? 'default' : item.status === 'pending' ? 'secondary' : 'outline'}
+                                        >
+                                            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="flex justify-center gap-2">
+                                        <Button size="icon" variant="ghost">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost">
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost">
+                                            <Eye className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
+                </div>
+            </div>
+
+            {/* Side Panel Modal with Slide Effect (Schedule Inventory) */}
+            <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddScheduleInventory ? 'visible' : 'invisible'}`}>
+                <div
+                    className={`fixed inset-0 bg-black/40 transition-opacity duration-300 ${showAddScheduleInventory ? 'opacity-100' : 'opacity-0'}`}
+                    onClick={() => setShowAddScheduleInventory(false)}
+                ></div>
+
+                {/* Slide-In Panel */}
+                <div
+                    className={`relative ml-auto w-full max-w-3xl transform bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-zinc-900 ${
+                        showAddScheduleInventory ? 'translate-x-0' : 'translate-x-full'
+                    }`}
+                    style={{ display: 'flex', flexDirection: 'column' }}
+                >
+                    {/* Header */}
+                    <div className="mb-4 flex items-center justify-between p-6">
+                        <h2 className="text-xl font-semibold">Create Schedule Inventory</h2>
+                        <button onClick={() => setShowAddScheduleInventory(false)} className="cursor-pointer text-2xl font-medium">
+                            &times;
+                        </button>
+                    </div>
+
+                    {/* Footer Buttons */}
+                    <div className="col-span-2 flex justify-end gap-2 border-t pt-4">
+                        <Button variant="secondary" type="button" onClick={() => setShowAddScheduleInventory(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={processing}>
+                            + Add Schedule
+                        </Button>
+                    </div>
                 </div>
             </div>
         </AppLayout>
