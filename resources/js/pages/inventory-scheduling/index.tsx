@@ -77,14 +77,13 @@ export type InventorySchedulingFormData = {
 export default function InventorySchedulingIndex({
     schedules = [],
     buildings = [],
-    // buildingRooms = [],
-     unitOrDepartments = [],
+    buildingRooms = [],
+    unitOrDepartments = [],
 }: {
     schedules: Scheduled[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
-    
 }) {
     // data, setData, post, processing, errors, reset, clearErrors
     const { data, setData, post, reset, processing, errors } = useForm<InventorySchedulingFormData>({
@@ -105,6 +104,9 @@ export default function InventorySchedulingIndex({
 
     const [search, setSearch] = useState('');
     const [showAddScheduleInventory, setShowAddScheduleInventory] = useState(false);
+
+    // Filter for Rooms
+    const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -248,7 +250,7 @@ export default function InventorySchedulingIndex({
                             </div>
 
                             {/* UNIT/DEPARTMENT*/}
-                                <div className="col-span-1">
+                            <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Unit/Department</label>
                                 <select
                                     className="w-full rounded-lg border p-2"
@@ -265,8 +267,50 @@ export default function InventorySchedulingIndex({
                                 {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
                             </div>
 
+                             {/* BUILING-ROOM*/}
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Room</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.building_room_id}
+                                    onChange={(e) => setData('building_room_id', Number(e.target.value))}
+                                    disabled={!data.building_id}
+                                >
+                                    <option value="">Select Room</option>
+                                    {filteredRooms.map((room) => (
+                                        <option key={room.id} value={room.id}>
+                                            {room.room}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="col-span-2 border-t"></div>
+                                    <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Actual Date of Schedule</label>
+                                <input
+                                    type="date"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.actual_date_of_schedule}
+                                    onChange={(e) => setData('actual_date_of_schedule', e.target.value)}
+                                />
+
+                                {/* wala akong request form dito dapat may error message to */}
+                                {errors.actual_date_of_schedule && <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_schedule}</p>}
+                            </div>
+
+
+
+
+
+
+
+
+
                             {/* Footer Buttons */}
-                            <div className="col-span-2 flex justify-end gap-2 border-t pt-4">
+                            {/* <div className="col-span-2 flex justify-end gap-2 border-t pt-4"> // border t for horizontal-line */}
+                              <div className="col-span-2 flex justify-end gap-2  pt-4">
                                 <Button variant="secondary" type="button" onClick={() => setShowAddScheduleInventory(false)}>
                                     Cancel
                                 </Button>
