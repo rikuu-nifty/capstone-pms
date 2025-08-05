@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 
 use App\Models\Transfer;
+use App\Models\Building;
+use App\Models\BuildingRoom;
+use App\Models\UnitOrDepartment;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class TransferController extends Controller
@@ -25,6 +29,11 @@ class TransferController extends Controller
             'transferAssets',
         ])->latest()->get();
 
+        $buildings = Building::all();
+        $buildingRooms = BuildingRoom::with('building')->get();
+        $unitOrDepartments = UnitOrDepartment::all();
+        $users = User::all();
+
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {
                 $array = $transfer->toArray();
@@ -42,6 +51,10 @@ class TransferController extends Controller
 
                 return $array;
             }),
+            'buildings' => $buildings,
+            'buildingRooms' => $buildingRooms,
+            'unitOrDepartments' => $unitOrDepartments,
+            'users' => $users,
         ]);
     }
 
