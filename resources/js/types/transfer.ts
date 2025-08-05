@@ -42,4 +42,5 @@ export type TransferFormData = {
     remarks: string | null;
 
     current_building_id: number;
+    receiving_building_id: number;
 }
