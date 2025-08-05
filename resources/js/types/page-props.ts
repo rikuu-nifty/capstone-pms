@@ -12,4 +12,6 @@ export type TransferPageProps = {
     buildingRooms: BuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
     users: User[];
+
+    currentUser: User;
 }
