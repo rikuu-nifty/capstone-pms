@@ -4,14 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
-import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import { Eye, Filter, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import { Transfer } from '@/types/transfer';
 import { TransferPageProps } from '@/types/page-props';
 import TransferAddModal from './TransferAddModal';
 import TransferEditModal from './TransferEditModal';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -54,6 +55,15 @@ export default function TransferIndex({
 
 }: TransferPageProps) {
 
+    const { props } = usePage<TransferPageProps>();
+    const successMessage = props.flash?.success;
+
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [showModal, setShowModal] = useState(false);
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [transferToDelete, setTransferToDelete] = useState<Transfer | null>(null);
+
     const [search, setSearch] = useState('');
     const [showAddTransfer, setShowAddTransfer] = useState(false);
 
@@ -72,6 +82,13 @@ export default function TransferIndex({
             .toLowerCase()
             .includes(search.toLowerCase())
     );
+
+    useEffect(() => {
+        if (successMessage) {
+            setShowModal(true);
+            setTimeout(() => setShowModal(false), 3000);
+        }
+    }, [successMessage]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -165,6 +182,10 @@ export default function TransferIndex({
                                             <Button 
                                                 variant="ghost" 
                                                 size="icon"
+                                                onClick={() => {
+                                                    setTransferToDelete(transfer);
+                                                    setShowDeleteModal(true);
+                                                }}
                                                 className="cursor-pointer"
                                             >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -222,6 +243,22 @@ export default function TransferIndex({
                     assets={assets}
                 />
             )}
+
+            <DeleteConfirmationModal
+                show={showDeleteModal}
+                onCancel={() => setShowDeleteModal(false)}
+                onConfirm={() => {
+                    if (transferToDelete) {
+                        router.delete(route('transfers.destroy', transferToDelete.id), {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDeleteModal(false);
+                                setTransferToDelete(null);
+                            },
+                        });
+                    }
+                }}
+            />
 
         </AppLayout>
     );

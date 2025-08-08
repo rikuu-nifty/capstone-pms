@@ -14,6 +14,11 @@ export type TransferPageProps = {
     users: User[];
 
     currentUser: User;
+
+    flash?: {
+        success?: string;
+        error?: string;
+    };
 }
 
 export type TransferViewPageProps = {

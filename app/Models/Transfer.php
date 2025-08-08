@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transfer extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'current_building_id',
         'current_building_room',
@@ -20,6 +23,12 @@ class Transfer extends Model
         'received_by',
         'status',
         'remarks',
+    ];
+
+    protected $casts = [
+        'deleted_at' => 'datetime',
+        'scheduled_date' => 'date',
+        'actual_transfer_date' => 'date',
     ];
     
     public function currentBuildingRoom()
