@@ -112,9 +112,9 @@ export default function TransferView({
 
                     {/* <hr className="w-1/2 border-t border-gray-300 my-4 mx-auto" /> */}
 
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-18 mt-8 text-sm">
-                        {/* Assigned By Section */}
-                        {transfer.assignedBy && (
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-15 mt-8 text-sm">
+                        {/* Prepared By Section */}
+                        {transfer.assignedBy?.name && (
                             <div className="text-center">
                                 <p className="font-semibold mb-8">Prepared By:</p>
                                 <div className="border-t border-black w-48 mx-auto mb-1"></div>
@@ -123,12 +123,12 @@ export default function TransferView({
                             </div>
                         )}
 
-                        {/* Designated Section */}
+                        {/* Designated To Section */}
                         {transfer.designatedEmployee?.name && (
                             <div className="text-center">
                                 <p className="font-semibold mb-8">Designated To:</p>
                                 <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                                <p className="font-bold text-gray-800">{transfer.designatedEmployee?.name}</p>
+                                <p className="font-bold text-gray-800">{transfer.designatedEmployee.name}</p>
                                 <p className="text-xs text-gray-500 italic">[Role Here]</p>
                             </div>
                         )}
@@ -148,14 +148,12 @@ export default function TransferView({
                             <div className="text-center">
                                 <p className="font-semibold mb-8">Approved By:</p>
                                 <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                                <p className="font-bold text-gray-800 italic">(PMO Head name)</p> {/* Placeholder until roles have been implemented */}
+                                <p className="font-bold text-gray-800 italic">(PMO Head name)</p>
                                 <p className="text-xs text-gray-500 italic">[Role Here]</p>
                             </div>
                         )}
-
-                        {/* Fallback space if received_by is null to maintain layout */}
-                        {!transfer.received_by && <div></div>}
                     </div>
+
 
                     {/* Schedule Info */}
                     <div className="mt-13 mb-2 text-sm font-medium">
