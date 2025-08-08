@@ -16,7 +16,7 @@ class TransferAsset extends Model
         return $this->belongsTo(Transfer::class, "transfer_id");
     }
 
-    public function inventoryList()
+    public function asset()
     {
         return $this->belongsTo(InventoryList::class, "asset_id");
     }

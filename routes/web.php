@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // TRANSFERS
     Route::get('/transfers', [TransferController::class, 'index'])->name('transfer.index');
     Route::post('/transfers', [TransferController::class, 'store'])->name('transfer.store');
+    Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
 
     // INSTITUTIONAL SETUP - BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');

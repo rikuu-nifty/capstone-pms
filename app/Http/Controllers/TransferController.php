@@ -31,7 +31,7 @@ class TransferController extends Controller
             'receivingOrganization',
             'designatedEmployee',
             'assignedBy',
-            'transferAssets',
+            'transferAssets.asset',
         ])->latest()->get();
 
         $buildings = Building::all();
@@ -50,6 +50,15 @@ class TransferController extends Controller
                 $array['designatedEmployee'] = $array['designated_employee'];
                 $array['assignedBy'] = $array['assigned_by'];
                 $array['status'] = ucfirst($transfer->status);
+
+                $array['transferAssets'] = $transfer->transferAssets->map(function ($ta) {
+                    return [
+                        'id' => $ta->id,
+                        'transfer_id' => $ta->transfer_id,
+                        'asset_id' => $ta->asset_id,
+                        'asset' => $ta->asset,
+                    ];
+                });
 
                 $array['asset_count'] = $transfer->transferAssets->count();
 
@@ -107,7 +116,7 @@ class TransferController extends Controller
         if ($request->has('selected_assets') && is_array($request->selected_assets)) {
             foreach ($request->selected_assets as $assetId) {
                 $transfer->transferAssets()->create([
-                    'inventory_list_id' => $assetId,
+                    'asset_id' => $assetId,
                 ]);
             }
         }
@@ -136,7 +145,35 @@ class TransferController extends Controller
      */
     public function update(Request $request, Transfer $transfer)
     {
-        //
+        $validated = $request->validate([
+            'current_building_room' => 'required|integer|exists:building_rooms,id',
+            'current_organization' => 'required|integer|exists:unit_or_departments,id',
+            'receiving_building_room' => 'required|integer|exists:building_rooms,id',
+            'receiving_organization' => 'required|integer|exists:unit_or_departments,id',
+            'designated_employee' => 'required|integer|exists:users,id',
+            'assigned_by' => 'required|integer|exists:users,id',
+            'scheduled_date' => 'required|date',
+            'actual_transfer_date' => 'nullable|date',
+            'received_by' => 'nullable|string',
+            'status' => 'required|in:upcoming,in_progress,completed,overdue',
+            'remarks' => 'nullable|string',
+
+            'selected_assets' => 'nullable|array',
+            'selected_assets.*' => 'integer|exists:inventory_lists,id',
+        ]);
+
+        $transfer->update($validated);
+
+        // Sync assets
+        $transfer->transferAssets()->delete();
+
+        if ($request->has('selected_assets')) {
+            foreach ($request->selected_assets as $assetId) {
+                $transfer->transferAssets()->create(['asset_id' => $assetId]);
+            }
+        }
+
+        return back()->with('success', 'Transfer updated successfully.');
     }
 
     /**

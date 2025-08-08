@@ -5,78 +5,84 @@ import { TransferFormData } from '@/types/transfer';
 import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types';
 
 interface TransferAddModalProps {
-  show: boolean;
-  onClose: () => void;
-  currentUser: User;
-  buildings: Building[];
-  buildingRooms: BuildingRoom[];
-  unitOrDepartments: UnitOrDepartment[];
-  users: User[];
-  assets: InventoryList[];
+    show: boolean;
+    onClose: () => void;
+    currentUser: User;
+    buildings: Building[];
+    buildingRooms: BuildingRoom[];
+    unitOrDepartments: UnitOrDepartment[];
+    users: User[];
+    assets: InventoryList[];
 }
 
 export default function TransferAddModal({
-  show,
-  onClose,
-  currentUser,
-  buildings,
-  buildingRooms,
-  unitOrDepartments,
-  users,
-  assets,
+    show,
+    onClose,
+    currentUser,
+    buildings,
+    buildingRooms,
+    unitOrDepartments,
+    users,
+    assets,
 }: TransferAddModalProps) {
 
-  const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TransferFormData>({
-    current_building_id: 0,
-    current_building_room: 0,
-    current_organization: 0,
-    receiving_building_id: 0,
-    receiving_building_room: 0,
-    receiving_organization: 0,
-    designated_employee: 0,
-    assigned_by: currentUser.id,
-    scheduled_date: '',
-    actual_transfer_date: '',
-    received_by: '',
-    status: 'upcoming',
-    remarks: '',
-    selected_assets: [],
-  });
-
-  const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
-
-  useEffect(() => {
-    if (show) {
-      reset();
-      clearErrors();
-      setShowAssetDropdown([true]);
-    }
-  }, [show]);
-
-  const filteredCurrentRooms = buildingRooms.filter(
-    (room) => Number(room.building_id) === Number(data.current_building_id)
-  );
-
-  const filteredReceivingRooms = buildingRooms.filter(
-    (room) => Number(room.building_id) === Number(data.receiving_building_id)
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    post('/transfers', {
-      onSuccess: () => {
-        reset();
-        clearErrors();
-        setShowAssetDropdown([true]);
-        onClose();
-      },
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TransferFormData>({
+        current_building_id: 0,
+        current_building_room: 0,
+        current_organization: 0,
+        receiving_building_id: 0,
+        receiving_building_room: 0,
+        receiving_organization: 0,
+        designated_employee: 0,
+        assigned_by: currentUser.id,
+        scheduled_date: '',
+        actual_transfer_date: '',
+        received_by: '',
+        status: 'upcoming',
+        remarks: '',
+        selected_assets: [],
     });
-  };
 
-  return (
+    const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
+
+    useEffect(() => {
+        if (show) {
+            reset();
+            clearErrors();
+            setShowAssetDropdown([true]);
+        }
+    }, [show]);
+
+    const filteredCurrentRooms = buildingRooms.filter(
+        (room) => Number(room.building_id) === Number(data.current_building_id)
+    );
+
+    const filteredReceivingRooms = buildingRooms.filter(
+        (room) => Number(room.building_id) === Number(data.receiving_building_id)
+    );
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        post('/transfers', {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset();
+                clearErrors();
+                setShowAssetDropdown([true]);
+                onClose();
+            },
+        });
+    };
+
+    return (
         <AddModal
             show={show}
-            onClose={onClose}
+            onClose={() => {
+                onClose();
+                reset();
+                clearErrors();
+                setShowAssetDropdown([true]);
+            }}
             title="Create Transfer"
             onSubmit={handleSubmit}
             processing={processing}

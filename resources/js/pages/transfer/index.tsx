@@ -4,15 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
-import { Head, useForm } from '@inertiajs/react';
-// import { useForm } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { Eye, Filter, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 // import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
+import { Transfer } from '@/types/transfer';
 import { TransferPageProps } from '@/types/page-props';
-import { TransferFormData } from '@/types/transfer';
 import TransferAddModal from '@/components/modals/TransferAddModal';
+import TransferEditModal from '@/components/modals/TransferEditModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -57,6 +57,10 @@ export default function TransferIndex({
 
     const [search, setSearch] = useState('');
     const [showAddTransfer, setShowAddTransfer] = useState(false);
+
+    const [showEditTransfer, setShowEditTransfer] = useState(false);
+    const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
+
 
     const filteredTransfers = transfers.filter((t) =>
         `
@@ -151,13 +155,29 @@ export default function TransferIndex({
                                         {/* <TableCell>{transfer.remarks ?? '—'}</TableCell> */}
                                         
                                         <TableCell className="flex gap-2">
-                                            <Button variant="ghost" size="icon">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    setSelectedTransfer(transfer);
+                                                    setShowEditTransfer(true);
+                                                }}
+                                                className="cursor-pointer"
+                                            >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon"
+                                                className="cursor-pointer"
+                                            >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
-                                            <Button variant="ghost" size="icon">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon"
+                                                className="cursor-pointer"
+                                            >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button>
                                         </TableCell>
@@ -185,6 +205,23 @@ export default function TransferIndex({
                 users={users}
                 assets={assets}
             />
+
+            {selectedTransfer && (
+            <TransferEditModal
+                show={showEditTransfer}
+                onClose={() => {
+                setShowEditTransfer(false);
+                setSelectedTransfer(null);
+                }}
+                transfer={selectedTransfer}
+                currentUser={currentUser}
+                buildings={buildings}
+                buildingRooms={buildingRooms}
+                unitOrDepartments={unitOrDepartments}
+                users={users}
+                assets={assets}
+            />
+            )}
 
         </AppLayout>
     );
