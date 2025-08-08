@@ -358,8 +358,7 @@ export default function TransferEditModal({
 
                 <div className="col-span-2 flex flex-col gap-2">
 
-                    {showAssetDropdown.map((visible, index) =>
-                    visible ? (
+                    {showAssetDropdown.map((visible, index) => visible ? (
                         <div key={`dropdown-${index}`} className="flex items-center gap-2">
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -389,15 +388,18 @@ export default function TransferEditModal({
                         </div>
                     ) : null
                     )}
-                
                 </div>
+
+                {errors.selected_assets && (
+                    <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
+                )}
             </div>
 
             {/* Assigned By */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Assigned By</label>
                 <div className="p-1 text-sm font-bold text-blue-700">
-                {currentUser.name}
+                    {currentUser.name}
                 </div>
             </div>
 
@@ -405,10 +407,10 @@ export default function TransferEditModal({
             <div className="col-span-2">
                 <label className="mb-1 block font-medium">Remarks</label>
                 <textarea
-                rows={3}
-                className="w-full resize-none rounded-lg border p-2"
-                value={data.remarks ?? ''}
-                onChange={(e) => setData('remarks', e.target.value)}
+                    rows={3}
+                    className="w-full resize-none rounded-lg border p-2"
+                    value={data.remarks ?? ''}
+                    onChange={(e) => setData('remarks', e.target.value)}
                 />
                 {errors.remarks && <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>}
             </div>

@@ -299,6 +299,7 @@ export default function TransferAddModal({
                             >
                                 Remove
                             </button>
+                            
                         </div>
                     );
                 })}
@@ -325,7 +326,7 @@ export default function TransferAddModal({
                             >
                                 <option value="">Select Asset</option>
                                 {assets
-                                    .filter((asset) => !data.selected_assets.includes(asset.id)) // don't show already-selected
+                                    .filter((asset) => !data.selected_assets.includes(asset.id)) 
                                     .map((asset) => (
                                         <option key={asset.id} value={asset.id}>
                                             {asset.serial_no} – {asset.asset_name?? ''}
@@ -335,6 +336,10 @@ export default function TransferAddModal({
                         </div>
                     )
                 ))}
+                
+                {errors.selected_assets && (
+                    <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
+                )}
             </div>
 
             {/* Assigned By */}

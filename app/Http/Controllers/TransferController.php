@@ -101,7 +101,7 @@ class TransferController extends Controller
             'status' => 'required|in:upcoming,in_progress,completed,overdue',
             'remarks' => 'nullable|string',
 
-            'selected_assets' => 'nullable|array',
+            'selected_assets' => 'nullable|array|min:1',
             'selected_assets.*' => 'integer|exists:inventory_lists,id',
         ]);
 
@@ -158,7 +158,7 @@ class TransferController extends Controller
             'status' => 'required|in:upcoming,in_progress,completed,overdue',
             'remarks' => 'nullable|string',
 
-            'selected_assets' => 'nullable|array',
+            'selected_assets' => 'nullable|array|min:1',
             'selected_assets.*' => 'integer|exists:inventory_lists,id',
         ]);
 
