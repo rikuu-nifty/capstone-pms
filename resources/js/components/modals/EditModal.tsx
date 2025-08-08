@@ -40,7 +40,7 @@ const EditModal: React.FC<EditModalProps> = ({ show, onClose, title, onSubmit, p
 
                         <div className="col-span-2 flex justify-end gap-2 border-t border-muted pt-4">
                             <Button 
-                                variant="outline" 
+                                variant="destructive" 
                                 onClick={onClose} 
                                 type="button"
                                 className="cursor-pointer"

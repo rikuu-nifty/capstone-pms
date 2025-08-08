@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from "./AddModal";
 import { TransferFormData } from '@/types/transfer';
@@ -307,32 +308,28 @@ export default function TransferAddModal({
                 {showAssetDropdown.map((visible, index) => (
                     visible && (
                         <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value=""
-                                onChange={(e) => {
-                                    const selectedId = Number(e.target.value);
-                                    if (!data.selected_assets.includes(selectedId)) {
-                                        setData('selected_assets', [...data.selected_assets, selectedId]);
+                            <Select
+                                className="w-full"
+                                options={assets
+                                    .filter((asset) => !data.selected_assets.includes(asset.id))
+                                    .map((asset) => ({
+                                    value: asset.id,
+                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                    }))
+                                }
+                                placeholder="Select asset for transfer..."
+                                onChange={(selectedOption) => {
+                                    if (selectedOption && !data.selected_assets.includes(selectedOption.value)) {
+                                    setData('selected_assets', [...data.selected_assets, selectedOption.value]);
 
-                                        // mark this dropdown as hidden, and add a new one
-                                        setShowAssetDropdown((prev) => {
-                                            const updated = [...prev];
-                                            updated[index] = false;
-                                            return [...updated, true];
-                                        });
+                                    setShowAssetDropdown((prev) => {
+                                        const updated = [...prev];
+                                        updated[index] = false;
+                                        return [...updated, true];
+                                    });
                                     }
                                 }}
-                            >
-                                <option value="">Select Asset</option>
-                                {assets
-                                    .filter((asset) => !data.selected_assets.includes(asset.id)) 
-                                    .map((asset) => (
-                                        <option key={asset.id} value={asset.id}>
-                                            {asset.serial_no} – {asset.asset_name?? ''}
-                                        </option>
-                                    ))}
-                            </select>
+                            />
                         </div>
                     )
                 ))}

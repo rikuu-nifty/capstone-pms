@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types';
 
@@ -60,6 +61,18 @@ export default function TransferEditModal({
                 room.id === data.current_building_room
             )
         : buildingRooms;
+
+    // const filteredCurrentRooms = (() => {
+    //     const rooms = buildingRooms.filter(room => room.building_id === data.current_building_id);
+
+    //     // Ensure selected room is in the list (when editing)
+    //     const selectedRoom = buildingRooms.find(room => room.id === data.current_building_room);
+    //     if (selectedRoom && selectedRoom.building_id !== data.current_building_id) {
+    //         rooms.push(selectedRoom);
+    //     }
+
+    //     return rooms;
+    // })();
 
     const filteredReceivingRooms = data.receiving_building_id
         ? buildingRooms.filter(
@@ -251,10 +264,10 @@ export default function TransferEditModal({
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Scheduled Date</label>
                 <input
-                type="date"
-                className="w-full rounded-lg border p-2"
-                value={data.scheduled_date}
-                onChange={(e) => setData('scheduled_date', e.target.value)}
+                    type="date"
+                    className="w-full rounded-lg border p-2"
+                    value={data.scheduled_date}
+                    onChange={(e) => setData('scheduled_date', e.target.value)}
                 />
                 {errors.scheduled_date && <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>}
             </div>
@@ -263,10 +276,10 @@ export default function TransferEditModal({
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Actual Transfer Date</label>
                 <input
-                type="date"
-                className="w-full rounded-lg border p-2"
-                value={data.actual_transfer_date ?? ''}
-                onChange={(e) => setData('actual_transfer_date', e.target.value)}
+                    type="date"
+                    className="w-full rounded-lg border p-2"
+                    value={data.actual_transfer_date ?? ''}
+                    onChange={(e) => setData('actual_transfer_date', e.target.value)}
                 />
                 {errors.actual_transfer_date && <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>}
             </div>
@@ -326,10 +339,10 @@ export default function TransferEditModal({
                             <span className="text-sm">
                                 {selectedAsset ? (
                                     <>
-                                    <span className="text-red-600 font-semibold">[{selectedAsset.asset_type}]</span>{' '}
-                                    <span className="text-blue-800">
-                                        {selectedAsset.asset_name} - {selectedAsset.serial_no}
-                                    </span>
+                                        <span className="text-red-600 font-semibold">[{selectedAsset.asset_type}]</span>{' '}
+                                        <span className="text-blue-800">
+                                            {selectedAsset.asset_name} - {selectedAsset.serial_no}
+                                        </span>
                                     </>
                                 ) : (
                                     <span className="text-gray-500 italic">Asset not found</span>
@@ -338,15 +351,15 @@ export default function TransferEditModal({
                             <button
                                 type="button"
                                 onClick={() => {
-                                const updated = [...data.selected_assets];
-                                updated.splice(index, 1);
-                                setData('selected_assets', updated);
+                                    const updated = [...data.selected_assets];
+                                    updated.splice(index, 1);
+                                    setData('selected_assets', updated);
 
-                                setShowAssetDropdown((prev) => {
-                                    const newState = [...prev];
-                                    newState.splice(index, 1);
-                                    return newState;
-                                });
+                                    setShowAssetDropdown((prev) => {
+                                        const newState = [...prev];
+                                        newState.splice(index, 1);
+                                        return newState;
+                                    });
                                 }}
                                 className="text-red-500 text-xs hover:underline cursor-pointer"
                             >
@@ -356,44 +369,46 @@ export default function TransferEditModal({
                     );
                 })}
 
-                <div className="col-span-2 flex flex-col gap-2">
+                {showAssetDropdown.map(
+                    (visible, index) =>
+                        visible && (
+                            <div key={`dropdown-${index}`} className="flex items-center gap-2">
+                                <Select
+                                    className="w-full"
+                                    placeholder="Select asset for transfer"
+                                    options={assets
+                                        .filter((asset) => !data.selected_assets.includes(asset.id))
+                                        .map((asset) => ({
+                                            value: asset.id,
+                                            label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                        }))}
+                                    onChange={(selectedOption) => {
+                                        if (
+                                            selectedOption &&
+                                            !data.selected_assets.includes(selectedOption.value)
+                                        ) {
+                                            setData('selected_assets', [
+                                                ...data.selected_assets,
+                                                selectedOption.value,
+                                            ]);
 
-                    {showAssetDropdown.map((visible, index) => visible ? (
-                        <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value=""
-                                onChange={(e) => {
-                                const selectedId = Number(e.target.value);
-                                if (!data.selected_assets.includes(selectedId)) {
-                                    setData('selected_assets', [...data.selected_assets, selectedId]);
-
-                                    setShowAssetDropdown((prev) => {
-                                    const updated = [...prev];
-                                    updated[index] = false;
-                                    return [...updated, true];
-                                    });
-                                }
-                                }}
-                            >
-                                <option value="">Select Asset</option>
-                                {assets
-                                .filter((asset) => !data.selected_assets.includes(asset.id))
-                                .map((asset) => (
-                                    <option key={asset.id} value={asset.id}>
-                                    {asset.serial_no} – {asset.asset_name ?? ''}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    ) : null
-                    )}
-                </div>
+                                            setShowAssetDropdown((prev) => {
+                                                const updated = [...prev];
+                                                updated[index] = false;
+                                                return [...updated, true];
+                                            });
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )
+                )}
 
                 {errors.selected_assets && (
                     <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
                 )}
             </div>
+
 
             {/* Assigned By */}
             <div className="col-span-1">
