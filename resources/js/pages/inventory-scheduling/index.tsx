@@ -56,6 +56,8 @@ export type Scheduled = {
     verified_by: string;
     received_by: string;
     status: string;
+    scheduling_status: string;
+    description: string;
 };
 
 export type InventorySchedulingFormData = {
@@ -71,6 +73,7 @@ export type InventorySchedulingFormData = {
     verified_by: string;
     received_by: string;
     status: string;
+    scheduling_status: string;
     description: string;
 };
 
@@ -99,6 +102,7 @@ export default function InventorySchedulingIndex({
         verified_by: '',
         received_by: '',
         status: '',
+        scheduling_status: '',
         description: '',
     });
 
@@ -214,23 +218,22 @@ export default function InventorySchedulingIndex({
 
                 {/* Slide-In Panel */}
                 <div
-                    className={`relative ml-auto w-full max-w-3xl transform bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-zinc-900 ${
+                    className={`relative ml-auto flex h-screen w-full max-w-3xl transform flex-col overflow-hidden bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-zinc-900 ${
                         showAddScheduleInventory ? 'translate-x-0' : 'translate-x-full'
                     }`}
-                    style={{ display: 'flex', flexDirection: 'column' }}
                 >
                     {/* Header */}
-                    <div className="mb-4 flex items-center justify-between p-6">
+                    <div className="mb-4 flex shrink-0 items-center justify-between p-6">
                         <h2 className="text-xl font-semibold">Create Schedule Inventory</h2>
                         <button onClick={() => setShowAddScheduleInventory(false)} className="cursor-pointer text-2xl font-medium">
                             &times;
                         </button>
                     </div>
 
-                    {/* Scrollable Form Section */}
-                    <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
-                        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
-                            {/* BUILDING*/}
+                    {/* Scrollable content — fields start at the top */}
+                    <div className="min-h-0 flex-1 overflow-y-auto px-6">
+                        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                            {/* BUILDING */}
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Building</label>
                                 <select
@@ -245,11 +248,10 @@ export default function InventorySchedulingIndex({
                                         </option>
                                     ))}
                                 </select>
-
                                 {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
                             </div>
 
-                            {/* UNIT/DEPARTMENT*/}
+                            {/* UNIT/DEPARTMENT */}
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Unit/Department</label>
                                 <select
@@ -267,8 +269,8 @@ export default function InventorySchedulingIndex({
                                 {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
                             </div>
 
-                             {/* BUILING-ROOM*/}
-                            <div className="col-span-1">
+                            {/* ROOM */}
+                            <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Room</label>
                                 <select
                                     className="w-full rounded-lg border p-2"
@@ -286,39 +288,108 @@ export default function InventorySchedulingIndex({
                             </div>
 
                             {/* Divider */}
-                            <div className="col-span-2 border-t"></div>
-                                    <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Actual Date of Schedule</label>
-                                <input
-                                    type="date"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.actual_date_of_schedule}
-                                    onChange={(e) => setData('actual_date_of_schedule', e.target.value)}
-                                />
+                            <div className="col-span-2 border-t mt-5"></div>
 
-                                {/* wala akong request form dito dapat may error message to */}
-                                {errors.actual_date_of_schedule && <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_schedule}</p>}
+                            {/* SPACE */}
+                            <div className="col-span-2 mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                                {/* DATE */}
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Actual Date of Schedule</label>
+                                    <input
+                                        type="date"
+                                        className="w-full rounded-lg border p-2"
+                                        value={data.actual_date_of_schedule}
+                                        onChange={(e) => setData('actual_date_of_schedule', e.target.value)}
+                                    />
+                                    {errors.actual_date_of_schedule && <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_schedule}</p>}
+                                </div>
+
+                                {/* STATUS */}
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Scheduling Status</label>
+                                    <select
+                                        className="w-full rounded-lg border p-2"
+                                        value={data.scheduling_status}
+                                        onChange={(e) => setData('scheduling_status', e.target.value)}
+                                    >
+                                        <option value="">Select Status</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="overdue">Overdue</option>
+                                    </select>
+                                    {errors.scheduling_status && <p className="mt-1 text-xs text-red-500">{errors.scheduling_status}</p>}
+                                </div>
+
+                                {/* CHECKED BY */}
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Checked By:</label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border p-2"
+                                        placeholder="Full Name of Checker"
+                                        value={data.checked_by}
+                                        onChange={(e) => setData('checked_by', e.target.value)}
+                                    />
+                                    {errors.checked_by && <p className="mt-1 text-xs text-red-500">{errors.checked_by}</p>}
+                                </div>
+
+                                {/* RECEIVED BY */}
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Received By:</label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border p-2"
+                                        placeholder="Full Name of Receiver"
+                                        value={data.received_by}
+                                        onChange={(e) => setData('received_by', e.target.value)}
+                                    />
+                                    {errors.received_by && <p className="mt-1 text-xs text-red-500">{errors.received_by}</p>}
+                                </div>
+
+                                {/* VERIFIED BY */}
+                                <div className="col-span-2">
+                                    <label className="mb-1 block font-medium">Verified By:</label>
+                                    <input
+                                        type="text"
+                                        className="w-full rounded-lg border p-2"
+                                        placeholder="Full Name of Verifier"
+                                        value={data.verified_by}
+                                        onChange={(e) => setData('verified_by', e.target.value)}
+                                    />
+                                    {errors.verified_by && <p className="mt-1 text-xs text-red-500">{errors.verified_by}</p>}
+                                </div>
                             </div>
 
-
-
-
-
-
-
-
-
-                            {/* Footer Buttons */}
-                            {/* <div className="col-span-2 flex justify-end gap-2 border-t pt-4"> // border t for horizontal-line */}
-                              <div className="col-span-2 flex justify-end gap-2  pt-4">
-                                <Button variant="secondary" type="button" onClick={() => setShowAddScheduleInventory(false)}>
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={processing}>
-                                    Add Schedule
-                                </Button>
+                            <div className="col-span-2 border-t mt-5"></div>
+                            <div className="col-span-2 mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                                {/* DESCRIPTION */}
+                                <div className="col-span-2">
+                                    <label className="mb-1 block font-medium">Description</label>
+                                    <textarea
+                                        rows={10}
+                                        className="w-full resize-none rounded-lg border p-2"
+                                        placeholder="Enter Description"
+                                        value={data.description}
+                                        onChange={(e) => setData('description', e.target.value)}
+                                    />
+                                    {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
+                                </div>
                             </div>
+
+                            {/* optional divider above footer if you keep footer inside form */}
+                            {/* <div className="col-span-2 border-t"></div> */}
                         </form>
+                    </div>
+
+                    {/* Footer pinned at the bottom of the panel */}
+                    <div className="flex shrink-0 justify-end gap-2 border-t bg-white p-4 dark:bg-zinc-900">
+                        <Button variant="secondary" onClick={() => setShowAddScheduleInventory(false)} className="cursor-pointer">
+                            Cancel
+                        </Button>
+                        {/* if you want this button to submit the form above, add form="scheduleForm" and set id on the form */}
+                        <Button type="submit" onClick={handleSubmit} className="cursor-pointer" disabled={processing}>
+                            Add Schedule
+                        </Button>
                     </div>
                 </div>
             </div>

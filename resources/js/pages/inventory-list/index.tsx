@@ -71,9 +71,8 @@ export type Asset = {
     quantity: number;
     transfer_status: string;
 
-    
+
     brand: string;
-    // Kapag pinasok ko yun serial_no pati unit_cost ayaw mag save
 };
 
 export type AssetFormData = {
