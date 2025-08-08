@@ -54,8 +54,31 @@ class InventorySchedulingController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        // Get validated input
+        $data = $request->all();
+        // $data = $request->validated();
+
+        // Save to database
+        $schedule = InventoryScheduling::create($data);
+
+        // Load FK relationships so frontend gets complete data
+        $schedule->load([
+        'building',
+        'unitOrDepartment',
+        'buildingRoom',
+        'user',
+        'designatedEmployee',
+        'assignedBy',
+    ]);
+
+    // Redirect back with success message and new schedule
+
+    return redirect()->back()->with([
+        'success' => 'Schedule added successfully.',
+        'newSchedule' => $schedule,
+    ]);
+
+    }   
 
     /**
      * Display the specified resource.

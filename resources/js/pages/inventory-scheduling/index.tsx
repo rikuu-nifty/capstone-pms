@@ -51,11 +51,10 @@ export type Scheduled = {
     designated_employee?: User | null;
     assigned_by?: User | null;
     inventory_schedule: string;
-    actual_date_of_schedule: string;
+    actual_date_of_inventory: string;
     checked_by: string;
     verified_by: string;
     received_by: string;
-    status: string;
     scheduling_status: string;
     description: string;
 };
@@ -68,11 +67,10 @@ export type InventorySchedulingFormData = {
     designated_employee: number | string;
     assigned_by: number | string;
     inventory_schedule: string;
-    actual_date_of_schedule: string;
+    actual_date_of_inventory: string; 
     checked_by: string;
     verified_by: string;
     received_by: string;
-    status: string;
     scheduling_status: string;
     description: string;
 };
@@ -82,11 +80,13 @@ export default function InventorySchedulingIndex({
     buildings = [],
     buildingRooms = [],
     unitOrDepartments = [],
+    users = [],
 }: {
     schedules: Scheduled[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
+    users: User[];
 }) {
     // data, setData, post, processing, errors, reset, clearErrors
     const { data, setData, post, reset, processing, errors } = useForm<InventorySchedulingFormData>({
@@ -97,11 +97,11 @@ export default function InventorySchedulingIndex({
         designated_employee: '',
         assigned_by: '',
         inventory_schedule: '',
-        actual_date_of_schedule: '',
+        actual_date_of_inventory: '',
         checked_by: '',
         verified_by: '',
         received_by: '',
-        status: '',
+
         scheduling_status: '',
         description: '',
     });
@@ -111,6 +111,39 @@ export default function InventorySchedulingIndex({
 
     // Filter for Rooms
     const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
+
+    // Date
+    const handleActualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const d = e.target.value; // "YYYY-MM-DD"
+        setData('actual_date_of_inventory', d);
+
+        if (d) {
+            const [yyyy, mm] = d.split('-');
+            setData('inventory_schedule', `${yyyy}-${mm}`); // "YYYY-MM"
+        } else {
+            setData('inventory_schedule', '');
+        }
+    };
+    //Date Format for Month Only
+    const formatMonth = (ym?: string) => {
+        if (!ym) return '-';
+        const d = new Date(`${ym}-01T00:00:00`);
+        if (Number.isNaN(d.getTime())) return ym; // fallback if malformed
+        // month only:
+        return d.toLocaleString('en-US', { month: 'long' }); // "August"
+        // if you want "August 2025":
+        // return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    };
+
+       // For Date  MM-DD-YYYY
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -124,7 +157,7 @@ export default function InventorySchedulingIndex({
     };
 
     const filtered = schedules.filter((item) =>
-        `${item.building?.name ?? ''} ${item.unit_or_department?.name ?? ''} ${item.status}`.toLowerCase().includes(search.toLowerCase()),
+        `${item.building?.name ?? ''} ${item.unit_or_department?.name ?? ''}`.toLowerCase().includes(search.toLowerCase()),
     );
 
     return (
@@ -179,18 +212,17 @@ export default function InventorySchedulingIndex({
                                 <TableRow key={item.id}>
                                     <TableCell>{item.building?.name ?? '-'}</TableCell>
                                     <TableCell>{item.unit_or_department?.name ?? '-'}</TableCell>
-                                    <TableCell>{item.inventory_schedule}</TableCell>
-                                    <TableCell>{item.actual_date_of_schedule}</TableCell>
-                                    <TableCell>{item.checked_by}</TableCell>
-                                    <TableCell>{item.verified_by}</TableCell>
-                                    <TableCell>{item.received_by}</TableCell>
+                                    <TableCell>{formatMonth(item.inventory_schedule)?? '-'}</TableCell>
+                                    <TableCell>{formatDate(item.actual_date_of_inventory) ?? '-'}</TableCell>
+                                    <TableCell>{item.checked_by ?? '-'}</TableCell>
+                                    <TableCell>{item.verified_by ?? '-'}</TableCell>
+                                    <TableCell>{item.received_by ?? '-'}</TableCell>
                                     <TableCell className="text-center align-middle">
-                                        <Badge
-                                            variant={item.status === 'completed' ? 'default' : item.status === 'pending' ? 'secondary' : 'outline'}
-                                        >
-                                            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                                        </Badge>
+                                        {item.scheduling_status === 'completed' && <Badge variant="default">Completed</Badge>}
+                                        {item.scheduling_status === 'pending' && <Badge variant="secondary">Pending</Badge>}
+                                        {item.scheduling_status === 'overdue' && <Badge variant="destructive">Overdue</Badge>}
                                     </TableCell>
+
                                     <TableCell className="flex justify-center gap-2">
                                         <Button size="icon" variant="ghost">
                                             <Pencil className="h-4 w-4" />
@@ -288,20 +320,33 @@ export default function InventorySchedulingIndex({
                             </div>
 
                             {/* Divider */}
-                            <div className="col-span-2 border-t mt-5"></div>
+                            <div className="col-span-2 border-t"></div>
 
                             {/* SPACE */}
-                            <div className="col-span-2 mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                                {/* DATE */}
+                            <div className="col-span-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                                {/* ACTUAL DATE OF SCHEDULE */}
                                 <div className="col-span-1 pt-0.5">
-                                    <label className="mb-1 block font-medium">Actual Date of Schedule</label>
+                                    <label className="mb-1 block font-medium">Actual Date of Inventory</label>
                                     <input
                                         type="date"
                                         className="w-full rounded-lg border p-2"
-                                        value={data.actual_date_of_schedule}
-                                        onChange={(e) => setData('actual_date_of_schedule', e.target.value)}
+                                        value={data.actual_date_of_inventory}
+                                        onChange={handleActualDateChange}
                                     />
-                                    {errors.actual_date_of_schedule && <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_schedule}</p>}
+                                    {errors.actual_date_of_inventory && <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_inventory}</p>}
+                                </div>
+
+                                {/* INVENTORY SCHEDULE (month only) */}
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Inventory Schedule</label>
+                                    <input
+                                        type="month" // 👈 month picker
+                                        className="w-full rounded-lg border p-2"
+                                        placeholder="YYYY-MM"
+                                        value={data.inventory_schedule || ''} // expects "YYYY-MM"
+                                        onChange={(e) => setData('inventory_schedule', e.target.value)}
+                                    />
+                                    {errors.inventory_schedule && <p className="mt-1 text-xs text-red-500">{errors.inventory_schedule}</p>}
                                 </div>
 
                                 {/* STATUS */}
@@ -320,9 +365,45 @@ export default function InventorySchedulingIndex({
                                     {errors.scheduling_status && <p className="mt-1 text-xs text-red-500">{errors.scheduling_status}</p>}
                                 </div>
 
+                                {/* ASSIGNED-BY */}
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Assigned By</label>
+                                    <select
+                                        className="w-full rounded-lg border p-2"
+                                        value={data.assigned_by}
+                                        onChange={(e) => setData('assigned_by', Number(e.target.value))}
+                                    >
+                                        <option value="">Select User</option>
+                                        {users.map((user) => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.assigned_by && <p className="mt-1 text-xs text-red-500">{errors.assigned_by}</p>}
+                                </div>
+
+                                {/* DESIGNATED-EMPLOYEE */}
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Designated Employee</label>
+                                    <select
+                                        className="w-full rounded-lg border p-2"
+                                        value={data.designated_employee}
+                                        onChange={(e) => setData('designated_employee', Number(e.target.value))}
+                                    >
+                                        <option value="">Select User</option>
+                                        {users.map((user) => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.designated_employee && <p className="mt-1 text-xs text-red-500">{errors.designated_employee}</p>}
+                                </div>
+
                                 {/* CHECKED BY */}
                                 <div className="col-span-1 pt-0.5">
-                                    <label className="mb-1 block font-medium">Checked By:</label>
+                                    <label className="mb-1 block font-medium">Checked By</label>
                                     <input
                                         type="text"
                                         className="w-full rounded-lg border p-2"
@@ -335,7 +416,7 @@ export default function InventorySchedulingIndex({
 
                                 {/* RECEIVED BY */}
                                 <div className="col-span-1 pt-0.5">
-                                    <label className="mb-1 block font-medium">Received By:</label>
+                                    <label className="mb-1 block font-medium">Received By</label>
                                     <input
                                         type="text"
                                         className="w-full rounded-lg border p-2"
@@ -347,8 +428,8 @@ export default function InventorySchedulingIndex({
                                 </div>
 
                                 {/* VERIFIED BY */}
-                                <div className="col-span-2">
-                                    <label className="mb-1 block font-medium">Verified By:</label>
+                                <div className="col-span-1 pt-0.5">
+                                    <label className="mb-1 block font-medium">Verified By</label>
                                     <input
                                         type="text"
                                         className="w-full rounded-lg border p-2"
@@ -360,8 +441,8 @@ export default function InventorySchedulingIndex({
                                 </div>
                             </div>
 
-                            <div className="col-span-2 border-t mt-5"></div>
-                            <div className="col-span-2 mt-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                            <div className="col-span-2 border-t"></div>
+                            <div className="col-span-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                                 {/* DESCRIPTION */}
                                 <div className="col-span-2">
                                     <label className="mb-1 block font-medium">Description</label>
@@ -375,18 +456,22 @@ export default function InventorySchedulingIndex({
                                     {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
                                 </div>
                             </div>
-
-                            {/* optional divider above footer if you keep footer inside form */}
-                            {/* <div className="col-span-2 border-t"></div> */}
                         </form>
                     </div>
 
-                    {/* Footer pinned at the bottom of the panel */}
                     <div className="flex shrink-0 justify-end gap-2 border-t bg-white p-4 dark:bg-zinc-900">
-                        <Button variant="secondary" onClick={() => setShowAddScheduleInventory(false)} className="cursor-pointer">
+                        <Button
+                            variant="secondary"
+                            type="button"
+                            onClick={() => {
+                                reset();
+                                setShowAddScheduleInventory(false);
+                            }}
+                            className="cursor-pointer"
+                        >
                             Cancel
                         </Button>
-                        {/* if you want this button to submit the form above, add form="scheduleForm" and set id on the form */}
+
                         <Button type="submit" onClick={handleSubmit} className="cursor-pointer" disabled={processing}>
                             Add Schedule
                         </Button>

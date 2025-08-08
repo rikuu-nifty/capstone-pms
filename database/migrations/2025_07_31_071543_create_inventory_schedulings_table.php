@@ -52,7 +52,7 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('set null');
 
-            $table->date('inventory_schedule'); // Month Only
+           $table->string('inventory_schedule', 7); // Month Only
             $table->date('actual_date_of_inventory')->nullable(); // MM-DD-YYYY
 
             $table->string('checked_by')->nullable();
