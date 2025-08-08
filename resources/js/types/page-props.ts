@@ -15,3 +15,8 @@ export type TransferPageProps = {
 
     currentUser: User;
 }
+
+export type TransferViewPageProps = {
+    transfer: Transfer;
+    assets: InventoryList[];
+};

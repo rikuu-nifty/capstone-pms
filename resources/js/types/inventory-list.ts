@@ -1,3 +1,7 @@
+import { Asset } from "@/pages/inventory-list";
+import type { AssetModel } from "./asset-model";
+import type { Category } from "./category";
+
 export type InventoryList = {
     id: number;
     memorandum_no: number;
@@ -15,4 +19,7 @@ export type InventoryList = {
     asset_type: string;
     quantity: number;
     transfer_status: 'not_transferred' | 'transferred' | 'pending';
+
+    assetModel?: AssetModel;
+    category?: Category;
 }

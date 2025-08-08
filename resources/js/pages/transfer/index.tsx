@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Eye, Filter, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
@@ -20,11 +20,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const statusVariantMap: Record<string, 'default' | 'primary' | 'secondary' | 'outline' | 'destructive'> = {
-    upcoming: 'primary',
-    in_progress: 'outline',
+const statusVariantMap: Record<string, 'default' | 'primary' | 'secondary' | 'success' | 'destructive'> = {
+    upcoming: 'secondary',
+    in_progress: 'success',
     overdue: 'destructive',
-    completed: 'secondary',
+    completed: 'primary',
 };
 
 const formatDate = (dateStr: string) => {
@@ -59,7 +59,6 @@ export default function TransferIndex({
 
     const [showEditTransfer, setShowEditTransfer] = useState(false);
     const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
-
 
     const filteredTransfers = transfers.filter((t) =>
         `
@@ -124,7 +123,6 @@ export default function TransferIndex({
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Designated</TableHead>
                                 <TableHead className="text-center">Assigned By</TableHead>
-                                {/* <TableHead className="text-center">Remarks</TableHead> */}
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -151,7 +149,6 @@ export default function TransferIndex({
 
                                         <TableCell>{transfer.designatedEmployee?.name ?? '—'}</TableCell>
                                         <TableCell>{transfer.assignedBy?.name ?? '—'}</TableCell>
-                                        {/* <TableCell>{transfer.remarks ?? '—'}</TableCell> */}
                                         
                                         <TableCell className="flex gap-2">
                                             <Button
@@ -176,6 +173,10 @@ export default function TransferIndex({
                                                 variant="ghost" 
                                                 size="icon"
                                                 className="cursor-pointer"
+                                                onClick={() => 
+                                                    // router.get(`/transfers/${transfer.id}`)
+                                                    router.visit(`/transfers/${transfer.id}/view`)
+                                                }
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button>
@@ -206,20 +207,20 @@ export default function TransferIndex({
             />
 
             {selectedTransfer && (
-            <TransferEditModal
-                show={showEditTransfer}
-                onClose={() => {
-                setShowEditTransfer(false);
-                setSelectedTransfer(null);
-                }}
-                transfer={selectedTransfer}
-                currentUser={currentUser}
-                buildings={buildings}
-                buildingRooms={buildingRooms}
-                unitOrDepartments={unitOrDepartments}
-                users={users}
-                assets={assets}
-            />
+                <TransferEditModal
+                    show={showEditTransfer}
+                    onClose={() => {
+                        setShowEditTransfer(false);
+                        setSelectedTransfer(null);
+                    }}
+                    transfer={selectedTransfer}
+                    currentUser={currentUser}
+                    buildings={buildings}
+                    buildingRooms={buildingRooms}
+                    unitOrDepartments={unitOrDepartments}
+                    users={users}
+                    assets={assets}
+                />
             )}
 
         </AppLayout>

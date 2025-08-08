@@ -129,7 +129,49 @@ class TransferController extends Controller
      */
     public function show(Transfer $transfer)
     {
-        //
+        $transfer->load([
+            'currentBuildingRoom.building',
+            'receivingBuildingRoom.building',
+            'currentOrganization',
+            'receivingOrganization',
+            'designatedEmployee',
+            'assignedBy',
+            'transferAssets.asset.assetModel.category',
+        ]);
+
+        $array = $transfer->toArray();
+        $array['currentBuildingRoom'] = $array['current_building_room'];
+        $array['currentOrganization'] = $array['current_organization'];
+        $array['receivingBuildingRoom'] = $array['receiving_building_room'];
+        $array['receivingOrganization'] = $array['receiving_organization'];
+        $array['designatedEmployee'] = $array['designated_employee'];
+        $array['assignedBy'] = $array['assigned_by'];
+        $array['receivedBy'] = $array['received_by'];
+        $array['status'] = ucfirst($transfer->status);
+
+        $array['transferAssets'] = $transfer->transferAssets->map(function ($ta) {
+            return [
+                'id' => $ta->id,
+                'transfer_id' => $ta->transfer_id,
+                'asset_id' => $ta->asset_id,
+                'asset' => $ta->asset,
+            ];
+        });
+
+        $array['asset_count'] = $transfer->transferAssets->count();
+
+        $assets = $transfer->transferAssets->pluck('asset')->map(function ($asset) {
+            $arr = $asset->toArray();
+            $arr['assetModel'] = $arr['asset_model'];
+            $arr['category'] = $arr['asset_model']['category'] ?? null;
+            return $arr;
+        })->values();
+
+
+        return Inertia::render('transfer/view', [
+            'transfer' => $array,
+            'assets' => $assets,
+        ]);
     }
 
     /**
