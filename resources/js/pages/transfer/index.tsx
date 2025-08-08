@@ -7,12 +7,11 @@ import { type BreadcrumbItem} from '@/types';
 import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { Eye, Filter, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-// import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import { Transfer } from '@/types/transfer';
 import { TransferPageProps } from '@/types/page-props';
-import TransferAddModal from '@/components/modals/TransferAddModal';
-import TransferEditModal from '@/components/modals/TransferEditModal';
+import TransferAddModal from './TransferAddModal';
+import TransferEditModal from './TransferEditModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

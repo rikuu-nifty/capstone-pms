@@ -4,7 +4,7 @@ import { useForm } from '@inertiajs/react';
 import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types';
 
 import { TransferFormData, Transfer } from '@/types/transfer';
-import EditModal from './EditModal';
+import EditModal from '@/components/modals/EditModal';
 
 interface TransferEditModalProps {
     show: boolean;

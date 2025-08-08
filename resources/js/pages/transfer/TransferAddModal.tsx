@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
-import AddModal from "./AddModal";
+import AddModal from "@/components/modals/AddModal";
 import { TransferFormData } from '@/types/transfer';
 import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types';
 
