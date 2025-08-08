@@ -159,7 +159,7 @@ export default function TransferEditModal({
                     onChange={(e) => setData('current_building_room', Number(e.target.value))}
                 >
                     {!data.current_building_room && (
-                        <option value="">Select Room</option> //BUG HERE, NOT SHOWING 603 BUT 611
+                        <option value="">Select Room</option>
                     )}
 
                     {filteredCurrentRooms.map((room) => (
@@ -409,6 +409,19 @@ export default function TransferEditModal({
                 )}
             </div>
 
+            {/* Received By */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Received By</label>
+                <input
+                    type="text"
+                    className="w-full rounded-lg border p-2"
+                    value={data.received_by ?? ''}
+                    onChange={(e) => setData('received_by', e.target.value)}
+                />
+                {errors.received_by && (
+                    <p className="mt-1 text-xs text-red-500">{errors.received_by}</p>
+                )}
+            </div>
 
             {/* Assigned By */}
             <div className="col-span-1">

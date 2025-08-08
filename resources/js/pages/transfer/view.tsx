@@ -20,7 +20,7 @@ export default function TransferView({
         <>
             <Head title={`Transfer View – #${transfer.id}`} />
 
-            <div className="min-h-screen bg-blue-100 pt-20 pb-10 px-4 flex justify-center items-start">
+            <div className="min-h-screen bg-blue-100 pt-5 pb-5 px-5 flex justify-center items-start">
                 <div className="bg-white shadow-lg rounded-lg p-6 max-w-4xl w-full border border-gray-300">
                     
                     <div className="flex justify-between items-start mb-2">
@@ -95,57 +95,81 @@ export default function TransferView({
                     </table>
 
                     {/* DO NOT DELETE, IT'S FOR SPACING */}
-                    <div className="h-6" />
+                    <div className="h-4" />
 
-                    {/* Schedule Info */}
-                    <div className="mb-4 text-sm font-medium">
-                        <div className="flex justify-between">
-                            <p>
-                            <strong>Date of Transfer:</strong> {formatDate(transfer.scheduled_date)}
-                            </p>
-
-                            {transfer.actual_transfer_date ? (
-                            <p className="text-right">
-                                <strong>Actual Date:</strong> {formatDate(transfer.actual_transfer_date)}
-                            </p>
-                            ) : (
-                            <p className="text-right">
-                                <strong>Total Assets:</strong> {assets.length}
-                            </p>
-                            )}
-                        </div>
-
-                        {/* Show total assets below if actual date exists */}
-                        {transfer.actual_transfer_date && (
-                            <div className="text-right mt-1">
+                    {/* Remarks + Total Assets Header Line */}
+                    <div className="flex justify-between items-start mb-1 px-1">
+                        <h4 className="text-sm font-semibold text-gray-800">Remarks:</h4>
+                        <p className="text-sm font-medium text-gray-800">
                             <strong>Total Assets:</strong> {assets.length}
-                            </div>
-                        )}
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6 mt-10 text-sm">
+                    {/* Remarks Value */}
+                    {transfer.remarks && (
+                        <p className="text-sm italic text-blue-700 ml-20">{transfer.remarks}</p>
+                    )}
+
+                    {/* <hr className="w-1/2 border-t border-gray-300 my-4 mx-auto" /> */}
+
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-18 mt-8 text-sm">
                         {/* Assigned By Section */}
                         {transfer.assignedBy && (
-                            <div className="text-left">
-                                <p className="font-semibold mb-7">Assigned By:</p>
-                                <div className="border-t border-black w-48 mb-2"></div>
-                                <p className="font-bold text-gray-800">{transfer.assignedBy.name}</p>
+                            <div className="text-center">
+                                <p className="font-semibold mb-8">Prepared By:</p>
+                                <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                                <p className="font-bold text-gray-700">{transfer.assignedBy.name}</p>
+                                <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                            </div>
+                        )}
+
+                        {/* Designated Section */}
+                        {transfer.designatedEmployee?.name && (
+                            <div className="text-center">
+                                <p className="font-semibold mb-8">Designated To:</p>
+                                <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                                <p className="font-bold text-gray-800">{transfer.designatedEmployee?.name}</p>
                                 <p className="text-xs text-gray-500 italic">[Role Here]</p>
                             </div>
                         )}
 
                         {/* Received By Section */}
                         {transfer.received_by && (
-                            <div className="text-right">
-                                <p className="font-semibold mb-">Received By</p>
-                                <div className="border-t border-black w-48 ml-auto mb-1"></div>
+                            <div className="text-center">
+                                <p className="font-semibold mb-8">Received By:</p>
+                                <div className="border-t border-black w-48 mx-auto mb-1"></div>
                                 <p className="font-bold text-gray-800">{transfer.received_by}</p>
+                                <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                            </div>
+                        )}
+
+                        {/* Approved By Section */}
+                        {transfer.received_by && (
+                            <div className="text-center">
+                                <p className="font-semibold mb-8">Approved By:</p>
+                                <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                                <p className="font-bold text-gray-800 italic">(PMO Head name)</p> {/* Placeholder until roles have been implemented */}
                                 <p className="text-xs text-gray-500 italic">[Role Here]</p>
                             </div>
                         )}
 
                         {/* Fallback space if received_by is null to maintain layout */}
                         {!transfer.received_by && <div></div>}
+                    </div>
+
+                    {/* Schedule Info */}
+                    <div className="mt-13 mb-2 text-sm font-medium">
+                        <div className="flex justify-between">
+                            <p>
+                                <strong>Date of Transfer:</strong> {formatDate(transfer.scheduled_date)}
+                            </p>
+
+                            {transfer.actual_transfer_date && (
+                                <p className="text-right">
+                                    <strong>Actual Date:</strong> {formatDate(transfer.actual_transfer_date)}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="mt-6 text-center print:hidden">

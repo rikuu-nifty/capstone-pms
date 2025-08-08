@@ -339,6 +339,20 @@ export default function TransferAddModal({
                 )}
             </div>
 
+            {/* Received By */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Received By</label>
+                <input
+                    type="text"
+                    className="w-full rounded-lg border p-2"
+                    value={data.received_by ?? ''}
+                    onChange={(e) => setData('received_by', e.target.value)}
+                />
+                {errors.received_by && (
+                    <p className="mt-1 text-xs text-red-500">{errors.received_by}</p>
+                )}
+            </div>
+
             {/* Assigned By */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Assigned By</label>
