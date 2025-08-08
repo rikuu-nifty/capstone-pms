@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transfer extends Model
 {
-
     protected $fillable = [
         'current_building_id',
         'current_building_room',

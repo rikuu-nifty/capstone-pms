@@ -37,10 +37,19 @@ const AddModal: React.FC<AddModalProps> = ({ show, onClose, title, onSubmit, pro
 
                         {/* Buttons */}
                         <div className="col-span-2 flex justify-end gap-2 border-t border-muted pt-4">
-                            <Button variant="secondary" onClick={onClose} type="button">
+                            <Button
+                                variant="destructive"
+                                onClick={onClose}
+                                type="button"
+                                className="cursor-pointer"
+                            >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={processing}>
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                className="cursor-pointer"
+                            >
                                 {title}
                             </Button>
                         </div>

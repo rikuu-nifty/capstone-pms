@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Transfer;
 use App\Models\Building;
 use App\Models\BuildingRoom;
+use App\Models\InventoryList;
 use App\Models\UnitOrDepartment;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class TransferController extends Controller
         $buildingRooms = BuildingRoom::with('building')->get();
         $unitOrDepartments = UnitOrDepartment::all();
         $users = User::all();
+        $assets = InventoryList::where('status', 'active')->get();
 
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {
@@ -50,8 +52,6 @@ class TransferController extends Controller
                 $array['status'] = ucfirst($transfer->status);
 
                 $array['asset_count'] = $transfer->transferAssets->count();
-                // $array['assets'] = $transfer->transferAsset->pluck('inventoryList');
-                /* gives full list of related asset records */
 
                 return $array;
             }),
@@ -60,6 +60,7 @@ class TransferController extends Controller
             'unitOrDepartments' => $unitOrDepartments,
             'users' => $users,
             'currentUser' => $currentUser,
+            'assets' => $assets,
         ]);
     }
 
@@ -90,11 +91,26 @@ class TransferController extends Controller
             'received_by' => 'nullable|string',
             'status' => 'required|in:upcoming,in_progress,completed,overdue',
             'remarks' => 'nullable|string',
+
+            'selected_assets' => 'nullable|array',
+            'selected_assets.*' => 'integer|exists:inventory_lists,id',
         ]);
 
-        unset($validated['current_building_id'], $validated['receiving_building_id']);
+        unset(
+            $validated['current_building_id'],
+            $validated['receiving_building_id'],
+            $validated['selected_assets']
+        );
 
-        Transfer::create($validated);
+        $transfer = Transfer::create($validated);
+
+        if ($request->has('selected_assets') && is_array($request->selected_assets)) {
+            foreach ($request->selected_assets as $assetId) {
+                $transfer->transferAssets()->create([
+                    'inventory_list_id' => $assetId,
+                ]);
+            }
+        }
 
         return back()->with('success', 'Transfer created successfully.');
     }

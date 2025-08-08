@@ -43,4 +43,6 @@ export type TransferFormData = {
 
     current_building_id: number;
     receiving_building_id: number;
+
+    selected_assets: number[];
 }
