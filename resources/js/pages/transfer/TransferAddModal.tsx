@@ -3,7 +3,7 @@ import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from "@/components/modals/AddModal";
 import { TransferFormData } from '@/types/transfer';
-import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types';
+import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
 
 interface TransferAddModalProps {
     show: boolean;

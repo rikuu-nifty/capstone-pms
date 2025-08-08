@@ -1,11 +1,17 @@
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { TransferViewPageProps } from '@/types/page-props';
 import { Head } from '@inertiajs/react';
-import { badgeVariants } from "@/components/ui/badge";
+import { type BreadcrumbItem } from '@/types';
 
 export default function TransferView({ 
     transfer, 
     assets, 
 }: TransferViewPageProps) {
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Transfers', href: '/transfers' },
+        { title: `View Transfer #${transfer.id}`, href: `/transfers/${transfer.id}/view` },
+    ];
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return '';
@@ -22,8 +28,8 @@ export default function TransferView({
 
             <div className="min-h-screen bg-blue-100 pt-5 pb-5 px-5 flex justify-center items-start">
                 <div className="bg-white shadow-lg rounded-lg p-6 max-w-4xl w-full border border-gray-300">
-                    
-                    <div className="flex justify-between items-start mb-2">
+                    <Breadcrumbs breadcrumbs={breadcrumbs} />
+                    <div className="flex justify-between items-start mb-2 mt-2">
                         <img src="/logo.png" alt="Logo" className="h-12" />
 
                         <div className="text-right">
