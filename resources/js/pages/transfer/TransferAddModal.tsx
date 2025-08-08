@@ -213,7 +213,7 @@ export default function TransferAddModal({
                 <label className="mb-1 block font-medium">Scheduled Date</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2"
+                    className="w-full rounded-lg border p-2 uppercase "
                     value={data.scheduled_date}
                     onChange={(e) => setData('scheduled_date', e.target.value)}
                 />
@@ -225,7 +225,7 @@ export default function TransferAddModal({
                 <label className="mb-1 block font-medium">Actual Transfer Date</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2"
+                    className="w-full rounded-lg border p-2 uppercase "
                     value={data.actual_transfer_date ?? ''}
                     onChange={(e) => setData('actual_transfer_date', e.target.value)}
                 />

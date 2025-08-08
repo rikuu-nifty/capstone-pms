@@ -195,7 +195,6 @@ export default function TransferIndex({
                                                 size="icon"
                                                 className="cursor-pointer"
                                                 onClick={() => 
-                                                    // router.get(`/transfers/${transfer.id}`)
                                                     router.visit(`/transfers/${transfer.id}/view`)
                                                 }
                                             >

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
+import 'react-datepicker/dist/react-datepicker.css';
 
 import { TransferFormData, Transfer } from '@/types/transfer';
 import EditModal from '@/components/modals/EditModal';
@@ -44,8 +45,14 @@ export default function TransferEditModal({
         receiving_organization: extractId(transfer.receiving_organization),
         designated_employee: extractId(transfer.designated_employee),
         assigned_by: currentUser.id,
-        scheduled_date: transfer.scheduled_date ?? '',
-        actual_transfer_date: transfer.actual_transfer_date ?? '',
+        scheduled_date: transfer.scheduled_date
+            ? new Date(transfer.scheduled_date).toISOString().split('T')[0]
+            : ''
+        ,
+        actual_transfer_date: transfer.actual_transfer_date
+            ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
+            : ''
+        ,
         received_by: String(transfer.received_by ?? '') ?? null,
         status: (transfer.status?.toLowerCase() ?? 'upcoming') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',
@@ -82,8 +89,14 @@ export default function TransferEditModal({
                 receiving_organization: extractId(transfer.receiving_organization),
                 designated_employee: extractId(transfer.designated_employee),
                 assigned_by: currentUser.id,
-                scheduled_date: transfer.scheduled_date ?? '',
-                actual_transfer_date: transfer.actual_transfer_date ?? '',
+                scheduled_date: transfer.scheduled_date
+                    ? new Date(transfer.scheduled_date).toISOString().split('T')[0]
+                    : ''
+                ,
+                actual_transfer_date: transfer.actual_transfer_date
+                    ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
+                    : ''
+                ,
                 received_by: transfer.received_by ? String(transfer.received_by) : null,
                 status: (transfer.status?.toLowerCase() ?? 'upcoming') as TransferFormData['status'],
                 remarks: transfer.remarks ?? '',
@@ -253,10 +266,11 @@ export default function TransferEditModal({
                 <label className="mb-1 block font-medium">Scheduled Date</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2"
+                    className="w-full rounded-lg border p-2 uppercase"
                     value={data.scheduled_date}
                     onChange={(e) => setData('scheduled_date', e.target.value)}
                 />
+
                 {errors.scheduled_date && <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>}
             </div>
 
@@ -265,7 +279,7 @@ export default function TransferEditModal({
                 <label className="mb-1 block font-medium">Actual Transfer Date</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2"
+                    className="w-full rounded-lg border p-2 uppercase "
                     value={data.actual_transfer_date ?? ''}
                     onChange={(e) => setData('actual_transfer_date', e.target.value)}
                 />
