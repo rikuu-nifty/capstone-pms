@@ -52,7 +52,7 @@ export default function TransferAddModal({
             clearErrors();
             setShowAssetDropdown([true]);
         }
-    }, [show]);
+    }, [show, reset, clearErrors]);
 
     const filteredCurrentRooms = buildingRooms.filter(
         (room) => Number(room.building_id) === Number(data.current_building_id)
