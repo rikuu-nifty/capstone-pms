@@ -35,22 +35,22 @@ export default function TransferEditModal({
     assets,
 }: TransferEditModalProps) {
 
-    const { data, setData, put, processing, errors, clearErrors } = useForm<TransferFormData>({
-        current_building_id: transfer.currentBuildingRoom?.building?.id ?? 0,
-        current_building_room: extractId(transfer.current_building_room),
-        current_organization: extractId(transfer.current_organization),
-        receiving_building_id: transfer.receivingBuildingRoom?.building?.id ?? 0,
-        receiving_building_room: extractId(transfer.receiving_building_room),
-        receiving_organization: extractId(transfer.receiving_organization),
-        designated_employee: extractId(transfer.designated_employee),
-        assigned_by: currentUser.id,
-        scheduled_date: transfer.scheduled_date ?? '',
-        actual_transfer_date: transfer.actual_transfer_date ?? '',
-        received_by: String(transfer.received_by ?? '') ?? null,
-        status: (transfer.status?.toLowerCase() ?? 'upcoming') as TransferFormData['status'],
-        remarks: transfer.remarks ?? '',
-        selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
-    });
+        const { data, setData, put, processing, errors, clearErrors } = useForm<TransferFormData>({
+            current_building_id: transfer.currentBuildingRoom?.building?.id ?? 0,
+            current_building_room: extractId(transfer.current_building_room),
+            current_organization: extractId(transfer.current_organization),
+            receiving_building_id: transfer.receivingBuildingRoom?.building?.id ?? 0,
+            receiving_building_room: extractId(transfer.receiving_building_room),
+            receiving_organization: extractId(transfer.receiving_organization),
+            designated_employee: extractId(transfer.designated_employee),
+            assigned_by: currentUser.id,
+            scheduled_date: transfer.scheduled_date ?? '',
+            actual_transfer_date: transfer.actual_transfer_date ?? '',
+            received_by: String(transfer.received_by ?? ''),
+            status: (transfer.status?.toLowerCase() ?? 'upcoming') as TransferFormData['status'],
+            remarks: transfer.remarks ?? '',
+            selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
+        });
   
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([false]);
 
