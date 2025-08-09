@@ -342,7 +342,7 @@ export default function TransferIndex({
                     onClose={() => {
                         setShowEditTransfer(false);
                         setSelectedTransfer(null);
-                        setTimeout(() => setSelectedTransfer(null), 3000);
+                        // setTimeout(() => setSelectedTransfer(null), 3000);
                     }}
                     transfer={selectedTransfer}
                     currentUser={currentUser}
