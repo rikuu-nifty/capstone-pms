@@ -51,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/transfers', [TransferController::class, 'store'])->name('transfer.store');
     Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
     Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
-    Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfers.destroy');
+    Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfer.destroy');
     
     // INSTITUTIONAL SETUP - BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');

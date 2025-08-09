@@ -6,14 +6,14 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
-import { Eye, Filter, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { type TransferFilters } from '@/components/filters/TransferFilterModal';
 import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
 import TransferSortDropdown, { type SortKey, type SortDir } from '@/components/filters/TransferSortDropdown';
 
-import { Transfer } from '@/types/transfer';
+import { Transfer, statusVariantMap, formatDate, formatStatusLabel } from '@/types/transfer';
 import { TransferPageProps } from '@/types/page-props';
 import TransferAddModal from './TransferAddModal';
 import TransferEditModal from './TransferEditModal';
@@ -25,29 +25,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/transfers',
     },
 ];
-
-const statusVariantMap: Record<string, 'default' | 'primary' | 'secondary' | 'success' | 'destructive'> = {
-    upcoming: 'secondary',
-    in_progress: 'success',
-    overdue: 'destructive',
-    completed: 'primary',
-};
-
-const formatDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-};
-
-function formatStatusLabel(status: string): string {
-  return status
-    .split('_')
-    .map(word => word[0].toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 export default function TransferIndex({
     transfers = [],
@@ -64,7 +41,7 @@ export default function TransferIndex({
     const successMessage = props.flash?.success;
 
     // const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
-    const [showModal, setShowModal] = useState(false);
+    // const [showModal, setShowModal] = useState(false);
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [transferToDelete, setTransferToDelete] = useState<Transfer | null>(null);
@@ -91,21 +68,18 @@ export default function TransferIndex({
 
     // const [showFilterModal, setShowFilterModal] = useState(false);
 
-     const buildingCodes = useMemo(
-        () => Array.from(new Set(buildings.map((b: any) => b.code).filter(Boolean))).sort(),
-        [buildings]
-    );
+    //  const buildingCodes = useMemo(
+    //     () => Array.from(new Set(buildings.map((b: any) => b.code).filter(Boolean))).sort(),
+    //     [buildings]
+    // );
 
-    const orgCodes = useMemo(
-        () => Array.from(new Set(unitOrDepartments.map((u: any) => u.code).filter(Boolean))).sort(),
-        [unitOrDepartments]
-    );
+    // const orgCodes = useMemo(
+    //     () => Array.from(new Set(unitOrDepartments.map((u: any) => u.code).filter(Boolean))).sort(),
+    //     [unitOrDepartments]
+    // );
 
     useEffect(() => {
         if (!successMessage) return;
-        setShowModal(true);
-        const id = window.setTimeout(() => setShowModal(false), 3000);
-        return () => window.clearTimeout(id);
     }, [successMessage]);
 
     const filteredTransfers = useMemo(() => {
@@ -146,26 +120,29 @@ export default function TransferIndex({
         });
     }, [transfers, search, selected_status, selected_building, selected_receiving_building, selected_org]);
 
-    const sortValue: Record<SortKey, (t: any) => number> = {
-        id:            (t) => Number(t.id) || 0,
-        scheduled_date:(t) => Date.parse(t.scheduled_date ?? '') || 0,
-        asset_count:   (t) => Number(t.asset_count) || 0,
-    };
+    const sortValue = useMemo<Record<SortKey, (t: Transfer) => number>>(
+        () => ({
+            id: (t) => Number(t.id) || 0,
+            scheduled_date: (t) => Date.parse(t.scheduled_date ?? '') || 0,
+            asset_count: (t) => Number(t.asset_count) || 0,
+        }),
+        []
+    );
 
     const sortedTransfers = useMemo(() => {
-        const get = sortValue[sortKey];
-        const dir = sortDir === 'asc' ? 1 : -1;
-        return [...filteredTransfers].sort((a, b) => {
-            const d = get(a) - get(b);
-            return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
-        });
-    }, [filteredTransfers, sortKey, sortDir]);
+    const get = sortValue[sortKey];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...filteredTransfers].sort((a, b) => {
+        const d = get(a) - get(b);
+        return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
+    });
+    }, [filteredTransfers, sortKey, sortDir, sortValue]);
 
     useEffect(() => {
         setPage(1);
     }, [search, selected_status, selected_building, selected_receiving_building, selected_org, sortKey, sortDir]);
 
-    const page_count = Math.max(1, Math.ceil(sortedTransfers.length / page_size));
+    // const page_count = Math.max(1, Math.ceil(sortedTransfers.length / page_size));
     const start = (page - 1) * page_size;
     const page_items = sortedTransfers.slice(start, start + page_size);
 
@@ -381,7 +358,7 @@ export default function TransferIndex({
                 onCancel={() => setShowDeleteModal(false)}
                 onConfirm={() => {
                     if (transferToDelete) {
-                        router.delete(route('transfers.destroy', transferToDelete.id), {
+                        router.delete(route('transfer.destroy', transferToDelete.id), {
                             preserveScroll: true,
                             onSuccess: () => {
                                 setShowDeleteModal(false);

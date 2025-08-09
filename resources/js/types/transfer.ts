@@ -46,3 +46,16 @@ export type TransferFormData = {
 
     selected_assets: number[];
 }
+
+export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'> = {
+    upcoming: 'secondary',
+    in_progress: 'success',
+    overdue: 'destructive',
+    completed: 'primary',
+};
+
+export const formatDate = (dateStr?: string) =>
+    !dateStr ? '' : new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+export const formatStatusLabel = (status: string) =>
+     status.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');

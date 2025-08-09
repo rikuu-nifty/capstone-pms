@@ -224,6 +224,6 @@ class TransferController extends Controller
     public function destroy(Transfer $transfer)
     {
         $transfer->delete(); //soft delete lang
-        return redirect()->route('transfers.index')->with('success', 'Transfer record deleted successfully.');
+        return redirect()->route('transfer.index')->with('success', 'Transfer record deleted successfully.');
     }
 }
