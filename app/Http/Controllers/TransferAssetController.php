@@ -1,27 +1,18 @@
 <?php
 
 namespace App\Http\Controllers;
-use Inertia\Inertia;
-use App\Models\Building;
+
+use App\Models\TransferAsset;
 use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
 
-
-class BuildingController extends Controller
+class TransferAssetController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $buildings = Building::withCount([
-            'buildingRooms'
-        ])->orderBy('code')->get();
-
-
-        return Inertia::render('buildings/index', [
-            'buildings' => $buildings
-        ]);
+        //
     }
 
     /**
@@ -43,7 +34,7 @@ class BuildingController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Building $building)
+    public function show(TransferAsset $transferAsset)
     {
         //
     }
@@ -51,7 +42,7 @@ class BuildingController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Building $building)
+    public function edit(TransferAsset $transferAsset)
     {
         //
     }
@@ -59,7 +50,7 @@ class BuildingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Building $building)
+    public function update(Request $request, TransferAsset $transferAsset)
     {
         //
     }
@@ -67,7 +58,7 @@ class BuildingController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Building $building)
+    public function destroy(TransferAsset $transferAsset)
     {
         //
     }

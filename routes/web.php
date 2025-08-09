@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\InventoryListController;
 use App\Http\Controllers\InventorySchedulingController;
+use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\TransferController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -22,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route::resource('inventory-list', InventoryListController::class); // DEFAULT ROUTE
     // Route::resource('inventory-scheduling', InventorySchedulingController::class); // DEFAULT ROUTE
+    // Route::resource('buildings', BuildingController::class);
 
     // INVENTORY-LIST
         Route::get('/inventory-list', [InventoryListController::class, 'index'])->name('inventory-list.index');
@@ -43,6 +46,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'destroy'])->name('inventory-scheduling.destroy');
     // INVENTORY-SCHEDULING
 
+    // TRANSFERS
+    Route::get('/transfers', [TransferController::class, 'index'])->name('transfer.index');
+    Route::post('/transfers', [TransferController::class, 'store'])->name('transfer.store');
+    Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
+    Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
+    Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfer.destroy');
+    
+    // INSTITUTIONAL SETUP - BUILDINGS
+    Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
+    
 
 
 
