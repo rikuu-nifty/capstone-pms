@@ -53,7 +53,7 @@ export default function TransferEditModal({
             ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
             : ''
         ,
-        received_by: String(transfer.received_by ?? '') ?? null,
+        received_by: String(transfer.received_by ?? ''),
         status: (transfer.status?.toLowerCase() ?? 'upcoming') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',
         selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
@@ -105,7 +105,25 @@ export default function TransferEditModal({
             clearErrors();
             setShowAssetDropdown([true]);
         }
-    }, [show]);
+    }, [
+        show,
+        transfer.currentBuildingRoom?.building?.id,
+        transfer.current_building_room,
+        transfer.current_organization,
+        transfer.receivingBuildingRoom?.building?.id,
+        transfer.receiving_building_room,
+        transfer.receiving_organization,
+        transfer.designated_employee,
+        currentUser.id,
+        transfer.scheduled_date,
+        transfer.actual_transfer_date,
+        transfer.received_by,
+        transfer.status,
+        transfer.remarks,
+        transfer.transferAssets,
+        clearErrors,
+        setData,
+    ]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
