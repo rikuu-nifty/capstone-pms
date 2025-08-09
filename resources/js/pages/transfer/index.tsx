@@ -14,9 +14,12 @@ import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown'
 import TransferSortDropdown, { type SortKey, type SortDir } from '@/components/filters/TransferSortDropdown';
 
 import { Transfer, statusVariantMap, formatDate, formatStatusLabel } from '@/types/transfer';
+import { InventoryList } from '@/types/inventory-list';
+
 import { TransferPageProps } from '@/types/page-props';
 import TransferAddModal from './TransferAddModal';
 import TransferEditModal from './TransferEditModal';
+import TransferViewModal from './TransferViewModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -40,17 +43,15 @@ export default function TransferIndex({
     const { props } = usePage<TransferPageProps>();
     const successMessage = props.flash?.success;
 
-    // const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
-    // const [showModal, setShowModal] = useState(false);
-
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [transferToDelete, setTransferToDelete] = useState<Transfer | null>(null);
 
-    // const [search, setSearch] = useState('');
-
     const [showAddTransfer, setShowAddTransfer] = useState(false);
-    const [showEditTransfer, setShowEditTransfer] = useState(false);
+    const [showEditTransfer, setShowEditTransfer] = useState(false);    
+    const [showViewTransfer, setShowViewTransfer] = useState<boolean>(false);
+
     const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
+    const [selectedAssets, setSelectedAssets] = useState<InventoryList[]>([]);
 
     const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200);
@@ -65,18 +66,6 @@ export default function TransferIndex({
     const [selected_building, setSelectedBuilding] = useState('');
     const [selected_receiving_building, setSelectedReceivingBuilding] = useState('');
     const [selected_org, setSelectedOrg] = useState('');
-
-    // const [showFilterModal, setShowFilterModal] = useState(false);
-
-    //  const buildingCodes = useMemo(
-    //     () => Array.from(new Set(buildings.map((b: any) => b.code).filter(Boolean))).sort(),
-    //     [buildings]
-    // );
-
-    // const orgCodes = useMemo(
-    //     () => Array.from(new Set(unitOrDepartments.map((u: any) => u.code).filter(Boolean))).sort(),
-    //     [unitOrDepartments]
-    // );
 
     useEffect(() => {
         if (!successMessage) return;
@@ -111,11 +100,11 @@ export default function TransferIndex({
             !selected_org || currentOrg === selected_org || receivingOrg === selected_org;
 
             return (
-            matchesSearch &&
-            matchesStatus &&
-            matchesCurrentBuilding &&
-            matchesReceivingBuilding &&
-            matchesOrg
+                matchesSearch &&
+                matchesStatus &&
+                matchesCurrentBuilding &&
+                matchesReceivingBuilding &&
+                matchesOrg
             );
         });
     }, [transfers, search, selected_status, selected_building, selected_receiving_building, selected_org]);
@@ -142,7 +131,6 @@ export default function TransferIndex({
         setPage(1);
     }, [search, selected_status, selected_building, selected_receiving_building, selected_org, sortKey, sortDir]);
 
-    // const page_count = Math.max(1, Math.ceil(sortedTransfers.length / page_size));
     const start = (page - 1) * page_size;
     const page_items = sortedTransfers.slice(start, start + page_size);
 
@@ -158,6 +146,20 @@ export default function TransferIndex({
         setSelectedBuilding('');
         setSelectedReceivingBuilding('');
         setSelectedOrg('');
+    };
+
+    const openViewTransfer = (t: Transfer) => {
+        setSelectedTransfer(t);
+        setSelectedAssets(
+            (t.transferAssets ?? []).map(ta => ta.asset)
+        );
+        setShowViewTransfer(true);
+    };
+
+    const closeViewTransfer = () => {
+        setShowViewTransfer(false);
+        setSelectedTransfer(null);
+        setSelectedAssets([]);
     };
 
     return (
@@ -182,7 +184,6 @@ export default function TransferIndex({
                         </div>
 
                     <div className="text-xs text-muted-foreground">
-                        {/* Showing {filteredTransfers.length ? start + 1 : 0}–{Math.min(start + page_size, filteredTransfers.length)} of {filteredTransfers.length} filtered transfers */}
                         Showing {sortedTransfers.length ? start + 1 : 0}–{Math.min(start + page_size, filteredTransfers.length)} of {filteredTransfers.length} filtered transfers
                     </div>
 
@@ -304,7 +305,7 @@ export default function TransferIndex({
                                                 size="icon"
                                                 className="cursor-pointer"
                                                 onClick={() => 
-                                                    router.visit(`/transfers/${transfer.id}/view`)
+                                                    openViewTransfer(transfer)
                                                 }
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
@@ -353,6 +354,15 @@ export default function TransferIndex({
                 />
             )}
 
+            {selectedTransfer && (
+                <TransferViewModal
+                    open={showViewTransfer}
+                    onClose={closeViewTransfer}
+                    transfer={selectedTransfer}
+                    assets={selectedAssets}
+                />
+            )}
+
             <DeleteConfirmationModal
                 show={showDeleteModal}
                 onCancel={() => setShowDeleteModal(false)}
@@ -368,7 +378,6 @@ export default function TransferIndex({
                     }
                 }}
             />
-
         </AppLayout>
     );
 }

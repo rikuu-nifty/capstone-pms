@@ -7,6 +7,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@page { 
+    size: A4; 
+    /* padding: 5mm; */
+}
+
 @media print {
   .dark .print-force-light,
   .print-force-light {
@@ -20,6 +25,52 @@
     box-shadow: none !important;
     border-color: #d1d5db !important; /* gray-300 */
   }
+
+  .print-footer { 
+        position: fixed; 
+        bottom: 0; 
+        left: 0; 
+        right: 0;
+        position: static !important;  /* no fixed/sticky in print */
+        box-shadow: none !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    [data-radix-dialog-overlay] { 
+        display: none !important; 
+    }
+
+    [data-radix-dialog-content] { 
+        box-shadow: none !important; 
+        border: 0 !important; 
+    }
+
+    .print-unclip { 
+        overflow: visible !important; 
+        max-height: none !important; 
+    }
+
+    thead { 
+        display: table-header-group; 
+    }
+
+    tfoot { 
+        display: table-footer-group;
+     }
+
+    .print-no-bg { 
+        background: transparent !important; 
+    }
+
+    .print-no-border { 
+        border: 0 !important; 
+    }
+
+    .avoid-break { 
+        break-inside: avoid; 
+        page-break-inside: avoid; 
+    }
 }
 
 @theme {

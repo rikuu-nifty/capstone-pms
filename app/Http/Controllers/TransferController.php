@@ -31,14 +31,17 @@ class TransferController extends Controller
             'receivingOrganization',
             'designatedEmployee',
             'assignedBy',
-            'transferAssets.asset',
+            'transferAssets.asset.assetModel.category',
         ])->latest()->get();
 
         $buildings = Building::all();
         $buildingRooms = BuildingRoom::with('building')->get();
         $unitOrDepartments = UnitOrDepartment::all();
         $users = User::all();
-        $assets = InventoryList::where('status', 'active')->get();
+        $assets = InventoryList::with(['assetModel.category'])
+            ->where('status', 'active')
+            ->get()
+        ;
 
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {

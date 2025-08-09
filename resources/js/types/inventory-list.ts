@@ -1,4 +1,4 @@
-import { Asset } from "@/pages/inventory-list";
+// import { Asset } from "@/pages/inventory-list";
 import type { AssetModel } from "./asset-model";
 import type { Category } from "./category";
 
@@ -6,7 +6,7 @@ export type InventoryList = {
     id: number;
     memorandum_no: number;
     asset_model_id: number;
-    asset_name: string;
+    asset_name: string | null;
     description: string | null;
     status: 'active' | 'archived';
     unit_or_department_id: number;
