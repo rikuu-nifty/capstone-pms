@@ -148,7 +148,7 @@ export default function TransferFilterDropdown({
                                 setLocalOrg('');
 
                                 onClear();
-                                setOpen(false);
+                                // setOpen(false);
                             }}
                             className="cursor-pointer"
                         >

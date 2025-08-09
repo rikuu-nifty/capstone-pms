@@ -9,8 +9,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { Eye, Filter, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
-import TransferFilterModal, { type TransferFilters } from '@/components/filters/TransferFilterModal';
+import { type TransferFilters } from '@/components/filters/TransferFilterModal';
 import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
+import TransferSortDropdown, { type SortKey, type SortDir } from '@/components/filters/TransferSortDropdown';
 
 import { Transfer } from '@/types/transfer';
 import { TransferPageProps } from '@/types/page-props';
@@ -77,6 +78,9 @@ export default function TransferIndex({
     const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200);
 
+    const [sortKey, setSortKey] = useState<SortKey>('id');
+    const [sortDir, setSortDir] = useState<SortDir>('desc');
+
     const [page, setPage] = useState(1);
     const page_size = 20;
 
@@ -85,7 +89,7 @@ export default function TransferIndex({
     const [selected_receiving_building, setSelectedReceivingBuilding] = useState('');
     const [selected_org, setSelectedOrg] = useState('');
 
-    const [showFilterModal, setShowFilterModal] = useState(false);
+    // const [showFilterModal, setShowFilterModal] = useState(false);
 
      const buildingCodes = useMemo(
         () => Array.from(new Set(buildings.map((b: any) => b.code).filter(Boolean))).sort(),
@@ -97,26 +101,6 @@ export default function TransferIndex({
         [unitOrDepartments]
     );
 
-    // const filteredTransfers = transfers.filter((t) =>
-    //     `
-    //         ${t.currentBuildingRoom?.building?.code ?? ''}
-    //         ${t.status} ${t.currentBuildingRoom?.room ?? ''}
-    //         ${t.receivingBuildingRoom?.building?.code ?? ''}
-    //         ${t.receivingBuildingRoom?.room ?? ''}
-    //         ${t.currentOrganization?.code ?? ''}
-    //         ${t.receivingOrganization?.code ?? ''}
-    //     `
-    //         .toLowerCase()
-    //         .includes(search.toLowerCase())
-    // );
-
-    // useEffect(() => {
-    //     if (successMessage) {
-    //         setShowModal(true);
-    //         setTimeout(() => setShowModal(false), 3000);
-    //     }
-    // }, [successMessage]);
-
     useEffect(() => {
         if (!successMessage) return;
         setShowModal(true);
@@ -124,60 +108,66 @@ export default function TransferIndex({
         return () => window.clearTimeout(id);
     }, [successMessage]);
 
-    useEffect(() => {
-    if (!successMessage) return;
-    setShowModal(true);
-    const id = window.setTimeout(() => setShowModal(false), 3000);
-    return () => window.clearTimeout(id);
-  }, [successMessage]);
-
-  // Filtering (memoized)
     const filteredTransfers = useMemo(() => {
         const term = search.trim().toLowerCase();
         return transfers.filter((t) => {
-        const haystack = `
+            const haystack = `
             ${t.currentBuildingRoom?.building?.code ?? ''}
             ${t.status} ${t.currentBuildingRoom?.room ?? ''}
             ${t.receivingBuildingRoom?.building?.code ?? ''}
             ${t.receivingBuildingRoom?.room ?? ''}
             ${t.currentOrganization?.code ?? ''}
             ${t.receivingOrganization?.code ?? ''}
-        `.toLowerCase();
+            `.toLowerCase();
 
-        const matchesSearch = !term || haystack.includes(term);
+            const matchesSearch = !term || haystack.includes(term);
 
-        const statusValue = (t.status || '').toString().toLowerCase();
-        const matchesStatus = !selected_status || statusValue === selected_status;
+            const statusValue = (t.status || '').toString().toLowerCase();
+            const matchesStatus = !selected_status || statusValue === selected_status;
 
-        const currentBuilding = t.currentBuildingRoom?.building?.code ?? '';
-        const receivingBuilding = t.receivingBuildingRoom?.building?.code ?? '';
-        const matchesCurrentBuilding = !selected_building || currentBuilding === selected_building;
-        const matchesReceivingBuilding =
+            const currentBuilding = t.currentBuildingRoom?.building?.code ?? '';
+            const receivingBuilding = t.receivingBuildingRoom?.building?.code ?? '';
+            const matchesCurrentBuilding = !selected_building || currentBuilding === selected_building;
+            const matchesReceivingBuilding =
             !selected_receiving_building || receivingBuilding === selected_receiving_building;
 
-        const currentOrg = t.currentOrganization?.code ?? '';
-        const receivingOrg = t.receivingOrganization?.code ?? '';
-        const matchesOrg =
+            const currentOrg = t.currentOrganization?.code ?? '';
+            const receivingOrg = t.receivingOrganization?.code ?? '';
+            const matchesOrg =
             !selected_org || currentOrg === selected_org || receivingOrg === selected_org;
 
-        return (
+            return (
             matchesSearch &&
             matchesStatus &&
             matchesCurrentBuilding &&
             matchesReceivingBuilding &&
             matchesOrg
-        );
+            );
         });
-  }, [transfers, search, selected_status, selected_building, selected_receiving_building, selected_org]);
+    }, [transfers, search, selected_status, selected_building, selected_receiving_building, selected_org]);
 
-  // Reset page when filters/search change
+    const sortValue: Record<SortKey, (t: any) => number> = {
+        id:            (t) => Number(t.id) || 0,
+        scheduled_date:(t) => Date.parse(t.scheduled_date ?? '') || 0,
+        asset_count:   (t) => Number(t.asset_count) || 0,
+    };
+
+    const sortedTransfers = useMemo(() => {
+        const get = sortValue[sortKey];
+        const dir = sortDir === 'asc' ? 1 : -1;
+        return [...filteredTransfers].sort((a, b) => {
+            const d = get(a) - get(b);
+            return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
+        });
+    }, [filteredTransfers, sortKey, sortDir]);
+
     useEffect(() => {
         setPage(1);
-    }, [search, selected_status, selected_building, selected_receiving_building, selected_org]);
+    }, [search, selected_status, selected_building, selected_receiving_building, selected_org, sortKey, sortDir]);
 
-    const page_count = Math.max(1, Math.ceil(filteredTransfers.length / page_size));
+    const page_count = Math.max(1, Math.ceil(sortedTransfers.length / page_size));
     const start = (page - 1) * page_size;
-    const page_items = filteredTransfers.slice(start, start + page_size);
+    const page_items = sortedTransfers.slice(start, start + page_size);
 
     const applyFilters = (f: TransferFilters) => {
         setSelectedStatus(f.status);
@@ -208,14 +198,15 @@ export default function TransferIndex({
                             <Input
                                 type="text"
                                 placeholder="Search by status, room, or unit/dept..."
-                                value={search}
+                                value={rawSearch}
                                 onChange={(e) => setRawSearch(e.target.value)}
                                 className="max-w-xs"
                             />
                         </div>
 
                     <div className="text-xs text-muted-foreground">
-                        Showing {filteredTransfers.length ? start + 1 : 0}–{Math.min(start + page_size, filteredTransfers.length)} of {filteredTransfers.length} filtered transfers
+                        {/* Showing {filteredTransfers.length ? start + 1 : 0}–{Math.min(start + page_size, filteredTransfers.length)} of {filteredTransfers.length} filtered transfers */}
+                        Showing {sortedTransfers.length ? start + 1 : 0}–{Math.min(start + page_size, filteredTransfers.length)} of {filteredTransfers.length} filtered transfers
                     </div>
 
                     {/* Active filter chips */}
@@ -229,6 +220,7 @@ export default function TransferIndex({
                                 size="sm" 
                                 variant="destructive" 
                                 onClick={clearFilters}
+                                className="cursor-pointer"
                             >
                                 Clear filters
                             </Button>
@@ -238,6 +230,13 @@ export default function TransferIndex({
                     
                     <div className="flex gap-2">
                         {/* <Filter className="mr-1 h-4 w-4" /> Filter */}
+
+                        <TransferSortDropdown
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+                        />
+
                         <TransferFilterDropdown
                             onApply={applyFilters}
                             onClear={clearFilters}
@@ -270,38 +269,37 @@ export default function TransferIndex({
                                 <TableHead className="text-center">Receiving Location</TableHead>
                                 <TableHead className="text-center">Receiving Unit/Dept</TableHead>
                                 <TableHead className="text-center">Scheduled Date</TableHead>
-                                <TableHead className="text-center">Actual Date</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Designated</TableHead>
-                                <TableHead className="text-center">Assigned By</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">
-                            {filteredTransfers.length > 0 ? (
-                                filteredTransfers.map((transfer) => (
+                            {page_items.length > 0 ? (
+                                page_items.map((transfer) => (
                                     <TableRow key={transfer.id}>
                                         <TableCell>{transfer.id}</TableCell>
                                         <TableCell>{transfer.asset_count}</TableCell>
                                         <TableCell>{transfer.currentBuildingRoom?.building?.code ?? '—'} ({transfer.currentBuildingRoom?.room ?? '—'})</TableCell>
                                         <TableCell>{transfer.currentOrganization?.code ?? '—'}</TableCell>
-                                        <TableCell>{transfer.currentBuildingRoom?.building?.code ?? '—'} ({transfer.receivingBuildingRoom?.room ?? '—'})</TableCell>
+                                        <TableCell>{transfer.receivingBuildingRoom?.building?.code ?? '—'} ({transfer.receivingBuildingRoom?.room ?? '—'})</TableCell>
                                         <TableCell>{transfer.receivingOrganization?.code ?? '—'}</TableCell>
                                         <TableCell>{formatDate(transfer.scheduled_date)}</TableCell>
-                                        <TableCell>
+                                        {/* <TableCell>
                                             {transfer.actual_transfer_date ? formatDate(transfer.actual_transfer_date) : '—'}
-                                        </TableCell>
+                                        </TableCell> */}
 
                                         <TableCell>
-                                            <Badge variant={statusVariantMap[transfer.status.toLowerCase()] ?? 'secondary'}>
+                                            <Badge 
+                                                variant={statusVariantMap[transfer.status.toLowerCase()] ?? 'secondary'}
+                                            >
                                                 {formatStatusLabel(transfer.status.toLowerCase())}
                                             </Badge>
                                         </TableCell>
 
                                         <TableCell>{transfer.designatedEmployee?.name ?? '—'}</TableCell>
-                                        <TableCell>{transfer.assignedBy?.name ?? '—'}</TableCell>
                                         
-                                        <TableCell className="flex gap-2">
+                                        <TableCell className="flex justify-center items-center gap-2">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
