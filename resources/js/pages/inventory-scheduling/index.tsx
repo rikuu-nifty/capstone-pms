@@ -1,3 +1,4 @@
+import { EditInventorySchedulingModal } from '@/components/edit-inventory-scheduling';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,7 +68,7 @@ export type InventorySchedulingFormData = {
     designated_employee: number | string;
     assigned_by: number | string;
     inventory_schedule: string;
-    actual_date_of_inventory: string; 
+    actual_date_of_inventory: string;
     checked_by: string;
     verified_by: string;
     received_by: string;
@@ -112,6 +113,11 @@ export default function InventorySchedulingIndex({
     // Filter for Rooms
     const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
 
+    const [selectedSchedule, setSelectedSchedule] = useState<Scheduled | null>(null);
+
+    // For Edit Modal
+    const [editModalVisible, setEditModalVisible] = useState(false);
+
     // Date
     const handleActualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const d = e.target.value; // "YYYY-MM-DD"
@@ -135,7 +141,7 @@ export default function InventorySchedulingIndex({
         // return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
     };
 
-       // For Date  MM-DD-YYYY
+    // For Date  MM-DD-YYYY
     const formatDate = (dateStr: string) => {
         if (!dateStr) return '';
         return new Date(dateStr).toLocaleDateString('en-US', {
@@ -192,47 +198,72 @@ export default function InventorySchedulingIndex({
                 </div>
 
                 <div className="rounded-lg-lg overflow-x-auto border">
-                    <Table>
+                    <Table className="w-full table-fixed">
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead>Building</TableHead>
-                                <TableHead>Unit/Dept/Laboratories</TableHead>
-                                <TableHead>Inventory Schedule</TableHead>
-                                <TableHead>Actual Date of Inventory</TableHead>
-                                <TableHead>Checked By</TableHead>
-                                <TableHead>Verified By</TableHead>
-                                <TableHead>Received By</TableHead>
+                                <TableHead className="w-[200px]">Building</TableHead>
+                                <TableHead className="w-[320px]">Unit/Dept/Laboratories</TableHead>
+                                <TableHead className="w-[160px]">Inventory Schedule</TableHead>
+                                <TableHead className="w-[200px]">Actual Date of Inventory</TableHead>
+                                <TableHead className="w-[140px]">Checked By</TableHead>
+                                <TableHead className="w-[140px]">Verified By</TableHead>
+                                <TableHead className="w-[140px]">Received By</TableHead>
                                 <TableHead className="w-[120px] text-center">Status</TableHead>
-                                <TableHead className="w-[120px] text-center">Action</TableHead>
+                                <TableHead className="w-[160px] text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
                             {filtered.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell>{item.building?.name ?? '-'}</TableCell>
-                                    <TableCell>{item.unit_or_department?.name ?? '-'}</TableCell>
-                                    <TableCell>{formatMonth(item.inventory_schedule)?? '-'}</TableCell>
-                                    <TableCell>{formatDate(item.actual_date_of_inventory) ?? '-'}</TableCell>
-                                    <TableCell>{item.checked_by ?? '-'}</TableCell>
-                                    <TableCell>{item.verified_by ?? '-'}</TableCell>
-                                    <TableCell>{item.received_by ?? '-'}</TableCell>
-                                    <TableCell className="text-center align-middle">
-                                        {item.scheduling_status === 'completed' && <Badge variant="default">Completed</Badge>}
-                                        {item.scheduling_status === 'pending' && <Badge variant="secondary">Pending</Badge>}
-                                        {item.scheduling_status === 'overdue' && <Badge variant="destructive">Overdue</Badge>}
+                                    <TableCell className="w-[200px] whitespace-nowrap">{item.building?.name ?? '—'}</TableCell>
+
+                                    {/* truncate long department names, keep header aligned */}
+                                    <TableCell className="w-[320px]">
+                                        <span
+                                            className="block overflow-hidden text-ellipsis whitespace-nowrap"
+                                            title={
+                                                item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'
+                                            }
+                                        >
+                                            {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
+                                        </span>
                                     </TableCell>
 
-                                    <TableCell className="flex justify-center gap-2">
-                                        <Button size="icon" variant="ghost">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="icon" variant="ghost">
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                        <Button size="icon" variant="ghost">
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
+                                    {/* prevent wrap so months don't split */}
+                                    <TableCell className="w-[160px] whitespace-nowrap">{formatMonth(item.inventory_schedule) ?? '—'}</TableCell>
+
+                                    <TableCell className="w-[200px] whitespace-nowrap">{formatDate(item.actual_date_of_inventory) ?? '—'}</TableCell>
+
+                                    <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell>
+                                    <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell>
+                                    <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell>
+
+                                    <TableCell className="w-[120px] text-center align-middle">
+                                        {item.scheduling_status === 'Completed' && <Badge variant="default">Completed</Badge>}
+                                        {item.scheduling_status === 'Pending' && <Badge variant="secondary">Pending</Badge>}
+                                        {item.scheduling_status === 'Overdue' && <Badge variant="destructive">Overdue</Badge>}
+                                    </TableCell>
+
+                                    <TableCell className="w-[160px]">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setSelectedSchedule(item);
+                                                    setEditModalVisible(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button size="icon" variant="ghost">
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                            <Button size="icon" variant="ghost">
+                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -240,6 +271,21 @@ export default function InventorySchedulingIndex({
                     </Table>
                 </div>
             </div>
+
+            {editModalVisible && selectedSchedule && (
+                <EditInventorySchedulingModal
+                    schedule={selectedSchedule}
+                    onClose={() => {
+                        setEditModalVisible(false);
+                        setSelectedSchedule(null);
+                    }}
+                    buildings={buildings}
+                    buildingRooms={buildingRooms}
+                    unitOrDepartments={unitOrDepartments}
+                    users={users}
+                    statusOptions={['Completed', 'Pending', 'Overdue']}
+                />
+            )}
 
             {/* Side Panel Modal with Slide Effect (Schedule Inventory) */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddScheduleInventory ? 'visible' : 'invisible'}`}>
@@ -294,7 +340,7 @@ export default function InventorySchedulingIndex({
                                     <option value="">Select Unit/Department</option>
                                     {unitOrDepartments.map((unit) => (
                                         <option key={unit.id} value={unit.id}>
-                                            {unit.code} - {unit.name}
+                                            {unit.name} ({unit.code})
                                         </option>
                                     ))}
                                 </select>
@@ -333,7 +379,9 @@ export default function InventorySchedulingIndex({
                                         value={data.actual_date_of_inventory}
                                         onChange={handleActualDateChange}
                                     />
-                                    {errors.actual_date_of_inventory && <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_inventory}</p>}
+                                    {errors.actual_date_of_inventory && (
+                                        <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_inventory}</p>
+                                    )}
                                 </div>
 
                                 {/* INVENTORY SCHEDULE (month only) */}
@@ -358,14 +406,14 @@ export default function InventorySchedulingIndex({
                                         onChange={(e) => setData('scheduling_status', e.target.value)}
                                     >
                                         <option value="">Select Status</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="overdue">Overdue</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Overdue">Overdue</option>
                                     </select>
                                     {errors.scheduling_status && <p className="mt-1 text-xs text-red-500">{errors.scheduling_status}</p>}
                                 </div>
 
-                                {/* ASSIGNED-BY */}
+                                {/* ASSIGNED-BY {user_id}*/}
                                 <div className="col-span-1 pt-0.5">
                                     <label className="mb-1 block font-medium">Assigned By</label>
                                     <select
@@ -459,7 +507,7 @@ export default function InventorySchedulingIndex({
                         </form>
                     </div>
 
-                    <div className="flex shrink-0 justify-end gap-2 border-t bg-white p-4 dark:bg-zinc-900">
+                    <div className="flex justify-end gap-2 border-t p-4">
                         <Button
                             variant="secondary"
                             type="button"

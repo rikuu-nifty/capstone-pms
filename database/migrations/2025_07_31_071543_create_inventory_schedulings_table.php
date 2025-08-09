@@ -58,8 +58,8 @@ return new class extends Migration
             $table->string('checked_by')->nullable();
             $table->string('verified_by')->nullable();
             $table->string('received_by')->nullable();
-            
-            $table->enum('scheduling_status', ['completed', 'pending', 'overdue'])->default('pending');
+                
+            $table->enum('scheduling_status', ['Completed', 'Pending', 'Overdue'])->default('pending');
             $table->text('description')->nullable();
 
 

@@ -4,9 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
-import { useState } from 'react';
+
 
 type Props = {
     asset: Asset;

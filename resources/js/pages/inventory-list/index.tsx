@@ -1,5 +1,5 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
-import { EditAssetModalForm } from '@/components/edit-modal-form';
+import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,7 +70,6 @@ export type Asset = {
     asset_type: string;
     quantity: number;
     transfer_status: string;
-
 
     brand: string;
 };
@@ -240,44 +239,46 @@ export default function InventoryListIndex({
                     </div>
                 </div>
 
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="rounded-lg-lg x-auto border">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead>Asset Name</TableHead>
-                                <TableHead>Brand</TableHead>
-                                <TableHead>Date Purchased</TableHead>
-                                <TableHead>Asset Type</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead>Building</TableHead>
-                                <TableHead>Unit/Department</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-center w-[120px]">Action</TableHead>
+                                <TableHead className="w-[180px]">Asset Name</TableHead>
+                                <TableHead className="w-[140px]">Brand</TableHead>
+                                <TableHead className="w-[160px]">Date Purchased</TableHead>
+                                <TableHead className="w-[150px]">Asset Type</TableHead>
+                                <TableHead className="w-[100px]">Quantity</TableHead>
+                                <TableHead className="w-[180px]">Building</TableHead>
+                                <TableHead className="w-[220px]">Unit/Department</TableHead>
+                                <TableHead className="w-[120px]">Status</TableHead>
+                                <TableHead className="w-[120px] text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
+
                         <TableBody>
                             {filteredData.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell>{item.asset_name}</TableCell>
-                                    <TableCell>{item.asset_model?.brand ?? '—'}</TableCell>
-                                    <TableCell>{formatDate(item.date_purchased)}</TableCell>
-                                    <TableCell>{item.asset_model?.category?.name ?? '—'}</TableCell>
-                                    <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
-                                    <TableCell>{item.building?.name ?? '—'}</TableCell>
-                                    <TableCell>{item.unit_or_department?.name ?? '—'}</TableCell>
-                                    <TableCell>
-                                        <Badge 
-                                        variant={item.status === 'active' ? 'default' : 'secondary'}>
+                                    <TableCell className="w-[180px]">{item.asset_name}</TableCell>
+                                    <TableCell className="w-[140px]">{item.asset_model?.brand ?? '—'}</TableCell>
+                                    <TableCell className="w-[160px]">{formatDate(item.date_purchased)}</TableCell>
+                                    <TableCell className="w-[150px]">{item.asset_model?.category?.name ?? '—'}</TableCell>
+                                    <TableCell className="w-[100px]">{String(item.quantity).padStart(2, '0')}</TableCell>
+                                    <TableCell className="w-[180px]">{item.building?.name ?? '—'}</TableCell>
+                                    <TableCell className="w-[220px]">
+                                        {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
+                                    </TableCell>
+                                    <TableCell className="w-[120px]">
+                                        <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
                                             {item.status === 'active' ? 'Active' : 'Archived'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="flex gap-2">
+                                    <TableCell className="flex w-[120px] justify-center gap-2">
                                         <Button
                                             size="icon"
                                             variant="ghost"
                                             onClick={() => {
-                                                setSelectedAsset(item); // item = asset row clicked
-                                                setEditModalVisible(true); // show modal
+                                                setSelectedAsset(item);
+                                                setEditModalVisible(true);
                                             }}
                                         >
                                             <Pencil className="h-4 w-4" />
@@ -287,12 +288,13 @@ export default function InventoryListIndex({
                                             size="icon"
                                             variant="ghost"
                                             onClick={() => {
-                                                setSelectedAsset(item); // item = asset row clicked
-                                                setDeleteModalVisible(true); // show modal
+                                                setSelectedAsset(item);
+                                                setDeleteModalVisible(true);
                                             }}
                                         >
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
+
                                         <Button
                                             size="icon"
                                             variant="ghost"
@@ -365,25 +367,24 @@ export default function InventoryListIndex({
                     onClick={() => setShowAddAsset(false)}
                 ></div>
 
-                 {/* Slide-In Panel */}
+                {/* Slide-In Panel */}
                 <div
                     className={`relative ml-auto w-full max-w-3xl transform bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-zinc-900 ${
                         showAddAsset ? 'translate-x-0' : 'translate-x-full'
                     }`}
                     style={{ display: 'flex', flexDirection: 'column' }}
                 >
-                     {/* Header */}
+                    {/* Header */}
                     <div className="mb-4 flex items-center justify-between p-6">
                         <h2 className="text-xl font-semibold">Add New Asset</h2>
                         <button onClick={() => setShowAddAsset(false)} className="cursor-pointer text-2xl font-medium">
                             &times;
                         </button>
                     </div>
-                    
 
                     {/* Scrollable Form Section */}
+                    {/* <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}> */}
                     <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
-                        
                         {/*overflow-y-auto */}
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
                             {/* Top Section */}
@@ -416,7 +417,7 @@ export default function InventoryListIndex({
                                     <option value="">Select Unit/Department</option>
                                     {unitOrDepartments.map((unit) => (
                                         <option key={unit.id} value={unit.id}>
-                                            {unit.code} - {unit.name}
+                                            {unit.name} ({unit.code} )
                                         </option>
                                     ))}
                                 </select>

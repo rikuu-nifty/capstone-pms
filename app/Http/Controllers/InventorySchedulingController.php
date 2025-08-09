@@ -101,7 +101,32 @@ class InventorySchedulingController extends Controller
      */
     public function update(Request $request, InventoryScheduling $inventoryScheduling)
     {
-        //
+        $data = $request->validate([
+        'building_id' => ['nullable','integer','exists:buildings,id'],
+        'building_room_id' => ['nullable','integer','exists:building_rooms,id'],
+        'unit_or_department_id' => ['nullable','integer','exists:unit_or_departments,id'],
+        'user_id' => ['nullable','integer','exists:users,id'],
+        'designated_employee' => ['nullable','integer','exists:users,id'],
+        'assigned_by' => ['nullable','integer','exists:users,id'],
+        'inventory_schedule' => ['required','string'],      // "YYYY-MM"
+        'actual_date_of_inventory' => ['nullable','date'],  // "YYYY-MM-DD"
+        'checked_by' => ['nullable','string'],
+        'verified_by' => ['nullable','string'],
+        'received_by' => ['nullable','string'],
+        'scheduling_status' => ['required','string'],
+        'description' => ['nullable','string'],
+    ]);
+
+    // Convert '' -> null for nullable FKs
+    $data = array_map(fn($v) => $v === '' ? null : $v, $data);
+
+    $inventoryScheduling->update($data);
+
+    $inventoryScheduling->load([
+        'building','unitOrDepartment','buildingRoom','user','designatedEmployee','assignedBy',
+    ]);
+
+    return back()->with('success', 'Schedule updated.');
     }
 
     /**
