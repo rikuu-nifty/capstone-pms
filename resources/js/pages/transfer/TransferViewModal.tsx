@@ -150,33 +150,34 @@ export default function TransferViewModal({
 
             {/* Signatures */}
             <div className="grid grid-cols-2 gap-x-5 gap-y-5 mt-5 text-sm">
-                <div className="text-center">
-                    <p className="font-semibold mb-8">Prepared By:</p>
-                    <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                    <p className="font-bold text-gray-700">
-                        {transfer.assignedBy?.name ?? '—'}
-                    </p>
-                    <p className="text-xs text-gray-500 italic">[Role Here]</p>
-                </div>
+                {(transfer.assignedBy?.name) && (
+                    <div className="text-center">
+                        <p className="font-semibold mb-8">Prepared By:</p>
+                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                        <p className="font-bold text-gray-700">{transfer.assignedBy.name}</p>
+                        <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                    </div>
+                )}
 
-                <div className="text-center">
-                    <p className="font-semibold mb-8">Designated To:</p>
-                    <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                    <p className="font-bold text-gray-800">
-                        {transfer.designatedEmployee?.name ?? '—'}
-                    </p>
-                    <p className="text-xs text-gray-500 italic">[Role Here]</p>
-                </div>
+                {(transfer.designatedEmployee?.name) && (
+                    <div className="text-center">
+                        <p className="font-semibold mb-8">Designated To:</p>
+                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                        <p className="font-bold text-gray-800">{transfer.designatedEmployee.name}</p>
+                        <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                    </div>
+                )}
 
-                <div className="text-center">
-                    <p className="font-semibold mb-8">Received By:</p>
-                    <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                    <p className="font-bold text-gray-800">
-                        {transfer.received_by ?? '—'}
-                    </p>
-                    <p className="text-xs text-gray-500 italic">[Role Here]</p>
-                </div>
+                {(transfer.received_by) && (
+                    <div className="text-center">
+                        <p className="font-semibold mb-8">Received By:</p>
+                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                        <p className="font-bold text-gray-800">{transfer.received_by}</p>
+                        <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                    </div>
+                )}
 
+                {/* Approved By */}
                 <div className="text-center">
                     <p className="font-semibold mb-8">Approved By:</p>
                     <div className="border-t border-black w-48 mx-auto mb-1"></div>
@@ -184,6 +185,7 @@ export default function TransferViewModal({
                     <p className="text-xs text-gray-500 italic">[Role Here]</p>
                 </div>
             </div>
+
             
             {/* Actions */}
             <div className="text-center print:hidden mt-1">
