@@ -1,3 +1,4 @@
+import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -19,23 +20,30 @@ type Props = {
     statusOptions?: string[];
 };
 
-export const EditInventorySchedulingModal = ({ schedule, onClose, buildings, buildingRooms, unitOrDepartments, users, statusOptions = ['completed', 'pending', 'overdue'],
+export const EditInventorySchedulingModal = ({
+    schedule,
+    onClose,
+    buildings,
+    buildingRooms,
+    unitOrDepartments,
+    users,
+    statusOptions = ['completed', 'pending', 'overdue'],
 }: Props) => {
-  const [form, setForm] = useState<InventorySchedulingFormData>({
-    building_id: schedule.building?.id || '',
-    building_room_id: schedule.building_room?.id || '',
-    unit_or_department_id: schedule.unit_or_department?.id || '',
-    user_id: schedule.user?.id || '',
-    designated_employee: schedule.designated_employee?.id || '',
-    assigned_by: schedule.assigned_by?.id || '',
-    inventory_schedule: schedule.inventory_schedule || '', // month-only string (e.g., "2025-08")
-    actual_date_of_inventory: schedule.actual_date_of_inventory || '', // full date (YYYY-MM-DD)
-    checked_by: schedule.checked_by || '',
-    verified_by: schedule.verified_by || '',
-    received_by: schedule.received_by || '',
-    scheduling_status: schedule.scheduling_status || statusOptions[0],
-    description: schedule.description || '',
-  });
+    const [form, setForm] = useState<InventorySchedulingFormData>({
+        building_id: schedule.building?.id || '',
+        building_room_id: schedule.building_room?.id || '',
+        unit_or_department_id: schedule.unit_or_department?.id || '',
+        user_id: schedule.user?.id || '',
+        designated_employee: schedule.designated_employee?.id || '',
+        assigned_by: schedule.assigned_by?.id || '',
+        inventory_schedule: schedule.inventory_schedule || '', // month-only string (e.g., "2025-08")
+        actual_date_of_inventory: schedule.actual_date_of_inventory || '', // full date (YYYY-MM-DD)
+        checked_by: schedule.checked_by || '',
+        verified_by: schedule.verified_by || '',
+        received_by: schedule.received_by || '',
+        scheduling_status: schedule.scheduling_status || statusOptions[0],
+        description: schedule.description || '',
+    });
 
     const handleChange = <K extends keyof InventorySchedulingFormData>(field: K, value: InventorySchedulingFormData[K]) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -182,23 +190,16 @@ export const EditInventorySchedulingModal = ({ schedule, onClose, buildings, bui
                         {/* Inventory Schedule (Month Only) */}
                         <div>
                             <Label>Inventory Schedule (Month)</Label>
-                            {/* Use type="month" for month-only picker; value format usually "YYYY-MM" */}
-                            <Input
-                                type="month"
-                                className="w-full rounded-lg border p-2"
-                                value={form.inventory_schedule}
-                                onChange={(e) => handleChange('inventory_schedule', e.target.value)}
-                            />
+                            <PickerInput type="month" value={form.inventory_schedule} onChange={(v) => handleChange('inventory_schedule', v)} />
                         </div>
 
                         {/* Actual Date of Schedule (Full Date) */}
                         <div>
                             <Label>Actual Date of Inventory</Label>
-                            <Input
+                            <PickerInput
                                 type="date"
-                                className="w-full rounded-lg border p-2"
                                 value={form.actual_date_of_inventory}
-                                onChange={(e) => handleChange('actual_date_of_inventory', e.target.value)}
+                                onChange={(v) => handleChange('actual_date_of_inventory', v)}
                             />
                         </div>
 
@@ -276,4 +277,4 @@ export const EditInventorySchedulingModal = ({ schedule, onClose, buildings, bui
             </form>
         </Dialog>
     );
-}
+};

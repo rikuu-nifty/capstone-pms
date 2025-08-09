@@ -134,6 +134,7 @@ class InventorySchedulingController extends Controller
      */
     public function destroy(InventoryScheduling $inventoryScheduling)
     {
-        //
+        $inventoryScheduling->delete();
+        return redirect()->back()->with('success', 'The Inventory Schedule Has Been Deleted Successfully.');
     }
 }

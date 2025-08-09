@@ -1,10 +1,11 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
-import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
+import { EditAssetModalForm } from '@/components/edit-asset-modal-form'
+import { ViewAssetModal } from '@/components/view-modal-form';
+import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -460,12 +461,7 @@ export default function InventoryListIndex({
                             {/* Middle Section */}
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Date Purchased</label>
-                                <input
-                                    type="date"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.date_purchased}
-                                    onChange={(e) => setData('date_purchased', e.target.value)}
-                                />
+                                <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
                                 {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                             </div>
 

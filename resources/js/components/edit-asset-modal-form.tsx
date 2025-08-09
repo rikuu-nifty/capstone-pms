@@ -1,3 +1,4 @@
+import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,6 @@ import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
-
 
 type Props = {
     asset: Asset;
@@ -140,12 +140,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                         {/* Date Purchased */}
                         <div>
                             <Label>Date Purchased</Label>
-                            <input
-                                type="date"
-                                className="w-full rounded-lg border p-2"
-                                value={form.date_purchased}
-                                onChange={(e) => handleChange('date_purchased', e.target.value)}
-                            />
+                            <PickerInput type="date" value={form.date_purchased} onChange={(v) => handleChange('date_purchased', v)} />
                         </div>
 
                         {/* Asset Type */}

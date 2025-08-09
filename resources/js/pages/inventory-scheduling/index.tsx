@@ -1,11 +1,14 @@
+import { DeleteScheduleModal } from '@/components/delete-inventory-scheduling';
 import { EditInventorySchedulingModal } from '@/components/edit-inventory-scheduling';
+import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ViewScheduleModal } from '@/components/view-inventory-scheduling';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -115,20 +118,29 @@ export default function InventorySchedulingIndex({
 
     const [selectedSchedule, setSelectedSchedule] = useState<Scheduled | null>(null);
 
-    // For Edit Modal
+    // For Modal (Edit)
     const [editModalVisible, setEditModalVisible] = useState(false);
 
-    // Date
-    const handleActualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const d = e.target.value; // "YYYY-MM-DD"
-        setData('actual_date_of_inventory', d);
+    // For Modal (Delete)
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
+    // For Modal (View)
+    const [viewModalVisible, setViewModalVisible] = useState(false);
+
+    const handleActualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const d = e.target.value;
+        setData('actual_date_of_inventory', d);
         if (d) {
             const [yyyy, mm] = d.split('-');
-            setData('inventory_schedule', `${yyyy}-${mm}`); // "YYYY-MM"
+            setData('inventory_schedule', `${yyyy}-${mm}`);
         } else {
             setData('inventory_schedule', '');
         }
+    };
+
+    // Adapter for PickerInput (string -> event)
+    const setActualDateFromValue = (d: string) => {
+        handleActualDateChange({ target: { value: d } } as unknown as React.ChangeEvent<HTMLInputElement>);
     };
     //Date Format for Month Only
     const formatMonth = (ym?: string) => {
@@ -257,10 +269,26 @@ export default function InventorySchedulingIndex({
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
-                                            <Button size="icon" variant="ghost">
+
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setSelectedSchedule(item);
+                                                    setDeleteModalVisible(true);
+                                                }}
+                                            >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
-                                            <Button size="icon" variant="ghost">
+
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setSelectedSchedule(item);
+                                                    setViewModalVisible(true);
+                                                }}
+                                            >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button>
                                         </div>
@@ -284,6 +312,38 @@ export default function InventorySchedulingIndex({
                     unitOrDepartments={unitOrDepartments}
                     users={users}
                     statusOptions={['Completed', 'Pending', 'Overdue']}
+                />
+            )}
+
+            {deleteModalVisible && selectedSchedule && (
+                <DeleteScheduleModal
+                    schedule={selectedSchedule}
+                    onClose={() => {
+                        setDeleteModalVisible(false);
+                        setSelectedSchedule(null);
+                    }}
+                    onDelete={(id) => {
+                        router.delete(`/inventory-scheduling/${id}`, {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setDeleteModalVisible(false);
+                                setSelectedSchedule(null);
+                            },
+                            onError: (err) => {
+                                console.error('Failed to delete schedule:', err);
+                            },
+                        });
+                    }}
+                />
+            )}
+
+            {viewModalVisible && selectedSchedule && (
+                <ViewScheduleModal
+                    schedule={selectedSchedule}
+                    onClose={() => {
+                        setViewModalVisible(false);
+                        setSelectedSchedule(null);
+                    }}
                 />
             )}
 
@@ -373,11 +433,10 @@ export default function InventorySchedulingIndex({
                                 {/* ACTUAL DATE OF SCHEDULE */}
                                 <div className="col-span-1 pt-0.5">
                                     <label className="mb-1 block font-medium">Actual Date of Inventory</label>
-                                    <input
+                                    <PickerInput
                                         type="date"
-                                        className="w-full rounded-lg border p-2"
                                         value={data.actual_date_of_inventory}
-                                        onChange={handleActualDateChange}
+                                        onChange={setActualDateFromValue} // <- passes a string
                                     />
                                     {errors.actual_date_of_inventory && (
                                         <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_inventory}</p>
@@ -387,12 +446,10 @@ export default function InventorySchedulingIndex({
                                 {/* INVENTORY SCHEDULE (month only) */}
                                 <div className="col-span-1 pt-0.5">
                                     <label className="mb-1 block font-medium">Inventory Schedule</label>
-                                    <input
+                                    <PickerInput
                                         type="month" // 👈 month picker
-                                        className="w-full rounded-lg border p-2"
-                                        placeholder="YYYY-MM"
                                         value={data.inventory_schedule || ''} // expects "YYYY-MM"
-                                        onChange={(e) => setData('inventory_schedule', e.target.value)}
+                                        onChange={(v) => setData('inventory_schedule', v)}
                                     />
                                     {errors.inventory_schedule && <p className="mt-1 text-xs text-red-500">{errors.inventory_schedule}</p>}
                                 </div>
@@ -493,11 +550,11 @@ export default function InventorySchedulingIndex({
                             <div className="col-span-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                                 {/* DESCRIPTION */}
                                 <div className="col-span-2">
-                                    <label className="mb-1 block font-medium">Description</label>
+                                    <label className="mb-1 block font-medium">Remarks</label>
                                     <textarea
                                         rows={10}
                                         className="w-full resize-none rounded-lg border p-2"
-                                        placeholder="Enter Description"
+                                        placeholder="Enter Remarks"
                                         value={data.description}
                                         onChange={(e) => setData('description', e.target.value)}
                                     />
