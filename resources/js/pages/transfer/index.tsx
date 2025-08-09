@@ -5,8 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Eye, Filter, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+
+import useDebouncedValue from '@/hooks/useDebouncedValue';
+import TransferFilterModal, { type TransferFilters } from '@/components/filters/TransferFilterModal';
+import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
 
 import { Transfer } from '@/types/transfer';
 import { TransferPageProps } from '@/types/page-props';
@@ -58,37 +62,136 @@ export default function TransferIndex({
     const { props } = usePage<TransferPageProps>();
     const successMessage = props.flash?.success;
 
-    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    // const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [showModal, setShowModal] = useState(false);
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [transferToDelete, setTransferToDelete] = useState<Transfer | null>(null);
 
-    const [search, setSearch] = useState('');
-    const [showAddTransfer, setShowAddTransfer] = useState(false);
+    // const [search, setSearch] = useState('');
 
+    const [showAddTransfer, setShowAddTransfer] = useState(false);
     const [showEditTransfer, setShowEditTransfer] = useState(false);
     const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
 
-    const filteredTransfers = transfers.filter((t) =>
-        `
+    const [rawSearch, setRawSearch] = useState('');
+    const search = useDebouncedValue(rawSearch, 200);
+
+    const [page, setPage] = useState(1);
+    const page_size = 20;
+
+    const [selected_status, setSelectedStatus] = useState('');
+    const [selected_building, setSelectedBuilding] = useState('');
+    const [selected_receiving_building, setSelectedReceivingBuilding] = useState('');
+    const [selected_org, setSelectedOrg] = useState('');
+
+    const [showFilterModal, setShowFilterModal] = useState(false);
+
+     const buildingCodes = useMemo(
+        () => Array.from(new Set(buildings.map((b: any) => b.code).filter(Boolean))).sort(),
+        [buildings]
+    );
+
+    const orgCodes = useMemo(
+        () => Array.from(new Set(unitOrDepartments.map((u: any) => u.code).filter(Boolean))).sort(),
+        [unitOrDepartments]
+    );
+
+    // const filteredTransfers = transfers.filter((t) =>
+    //     `
+    //         ${t.currentBuildingRoom?.building?.code ?? ''}
+    //         ${t.status} ${t.currentBuildingRoom?.room ?? ''}
+    //         ${t.receivingBuildingRoom?.building?.code ?? ''}
+    //         ${t.receivingBuildingRoom?.room ?? ''}
+    //         ${t.currentOrganization?.code ?? ''}
+    //         ${t.receivingOrganization?.code ?? ''}
+    //     `
+    //         .toLowerCase()
+    //         .includes(search.toLowerCase())
+    // );
+
+    // useEffect(() => {
+    //     if (successMessage) {
+    //         setShowModal(true);
+    //         setTimeout(() => setShowModal(false), 3000);
+    //     }
+    // }, [successMessage]);
+
+    useEffect(() => {
+        if (!successMessage) return;
+        setShowModal(true);
+        const id = window.setTimeout(() => setShowModal(false), 3000);
+        return () => window.clearTimeout(id);
+    }, [successMessage]);
+
+    useEffect(() => {
+    if (!successMessage) return;
+    setShowModal(true);
+    const id = window.setTimeout(() => setShowModal(false), 3000);
+    return () => window.clearTimeout(id);
+  }, [successMessage]);
+
+  // Filtering (memoized)
+    const filteredTransfers = useMemo(() => {
+        const term = search.trim().toLowerCase();
+        return transfers.filter((t) => {
+        const haystack = `
             ${t.currentBuildingRoom?.building?.code ?? ''}
             ${t.status} ${t.currentBuildingRoom?.room ?? ''}
             ${t.receivingBuildingRoom?.building?.code ?? ''}
             ${t.receivingBuildingRoom?.room ?? ''}
             ${t.currentOrganization?.code ?? ''}
             ${t.receivingOrganization?.code ?? ''}
-        `
-            .toLowerCase()
-            .includes(search.toLowerCase())
-    );
+        `.toLowerCase();
 
+        const matchesSearch = !term || haystack.includes(term);
+
+        const statusValue = (t.status || '').toString().toLowerCase();
+        const matchesStatus = !selected_status || statusValue === selected_status;
+
+        const currentBuilding = t.currentBuildingRoom?.building?.code ?? '';
+        const receivingBuilding = t.receivingBuildingRoom?.building?.code ?? '';
+        const matchesCurrentBuilding = !selected_building || currentBuilding === selected_building;
+        const matchesReceivingBuilding =
+            !selected_receiving_building || receivingBuilding === selected_receiving_building;
+
+        const currentOrg = t.currentOrganization?.code ?? '';
+        const receivingOrg = t.receivingOrganization?.code ?? '';
+        const matchesOrg =
+            !selected_org || currentOrg === selected_org || receivingOrg === selected_org;
+
+        return (
+            matchesSearch &&
+            matchesStatus &&
+            matchesCurrentBuilding &&
+            matchesReceivingBuilding &&
+            matchesOrg
+        );
+        });
+  }, [transfers, search, selected_status, selected_building, selected_receiving_building, selected_org]);
+
+  // Reset page when filters/search change
     useEffect(() => {
-        if (successMessage) {
-            setShowModal(true);
-            setTimeout(() => setShowModal(false), 3000);
-        }
-    }, [successMessage]);
+        setPage(1);
+    }, [search, selected_status, selected_building, selected_receiving_building, selected_org]);
+
+    const page_count = Math.max(1, Math.ceil(filteredTransfers.length / page_size));
+    const start = (page - 1) * page_size;
+    const page_items = filteredTransfers.slice(start, start + page_size);
+
+    const applyFilters = (f: TransferFilters) => {
+        setSelectedStatus(f.status);
+        setSelectedBuilding(f.building);
+        setSelectedReceivingBuilding(f.receiving_building);
+        setSelectedOrg(f.org);
+    };
+
+    const clearFilters = () => {
+        setSelectedStatus('');
+        setSelectedBuilding('');
+        setSelectedReceivingBuilding('');
+        setSelectedOrg('');
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -101,19 +204,50 @@ export default function TransferIndex({
                         <p className="text-sm text-muted-foreground">
                             List of scheduled and completed asset transfers across AUF departments.
                         </p>
-                        <Input
-                            type="text"
-                            placeholder="Search by status, room, or unit/dept..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="max-w-xs"
-                        />
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="text"
+                                placeholder="Search by status, room, or unit/dept..."
+                                value={search}
+                                onChange={(e) => setRawSearch(e.target.value)}
+                                className="max-w-xs"
+                            />
+                        </div>
+
+                    <div className="text-xs text-muted-foreground">
+                        Showing {filteredTransfers.length ? start + 1 : 0}–{Math.min(start + page_size, filteredTransfers.length)} of {filteredTransfers.length} filtered transfers
                     </div>
+
+                    {/* Active filter chips */}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        {selected_status && <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>}
+                        {selected_building && <Badge variant="darkOutline">Current: {selected_building}</Badge>}
+                        {selected_receiving_building && <Badge variant="darkOutline">Receiving: {selected_receiving_building}</Badge>}
+                        {selected_org && <Badge variant="darkOutline">Unit/Dept: {selected_org}</Badge>}
+                        {(selected_status || selected_building || selected_receiving_building || selected_org) && (
+                            <Button 
+                                size="sm" 
+                                variant="destructive" 
+                                onClick={clearFilters}
+                            >
+                                Clear filters
+                            </Button>
+                        )}
+                    </div>
+                </div>
                     
                     <div className="flex gap-2">
-                        <Button variant="outline">
-                            <Filter className="mr-1 h-4 w-4" /> Filter
-                        </Button>
+                        {/* <Filter className="mr-1 h-4 w-4" /> Filter */}
+                        <TransferFilterDropdown
+                            onApply={applyFilters}
+                            onClear={clearFilters}
+                            selected_status={selected_status}
+                            selected_building={selected_building}
+                            selected_receiving_building={selected_receiving_building}
+                            selected_org={selected_org}
+                            buildings={buildings}
+                            unitOrDepartments={unitOrDepartments}
+                        />
                         <Button
                             onClick={() => {
                                 setShowAddTransfer(true);

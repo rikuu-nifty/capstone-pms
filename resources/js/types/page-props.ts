@@ -25,3 +25,30 @@ export type TransferViewPageProps = {
     transfer: Transfer;
     assets: InventoryList[];
 };
+
+export type FilterModalProps = {
+    open: boolean;
+    onClose: () => void;
+    onApply: (filters: {
+        status: string;
+        building: string;
+        receiving_building: string;
+        org: string;
+    }) => void;
+    onClear: () => void;
+
+    selected_status: string;
+    selected_building: string;
+    selected_receiving_building: string;
+    selected_org: string;
+
+    buildingCodes: string[];
+    orgCodes: string[];
+}
+
+export type TransferFilters = {
+    status: string;
+    building: string;
+    receiving_building: string;
+    org: string;
+};

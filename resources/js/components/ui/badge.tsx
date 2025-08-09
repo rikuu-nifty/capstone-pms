@@ -22,6 +22,8 @@ const badgeVariants = cva(
           'bg-black text-white',
         success:
           "border-transparent bg-green-500 text-white [a&]:hover:bg-green-600 focus-visible:ring-green-500/50",
+        darkOutline:
+          'bg-white text-black border border-black',
       },
     },
     defaultVariants: {
