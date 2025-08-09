@@ -263,9 +263,6 @@ export default function TransferIndex({
                                         <TableCell>{transfer.receivingBuildingRoom?.building?.code ?? '—'} ({transfer.receivingBuildingRoom?.room ?? '—'})</TableCell>
                                         <TableCell>{transfer.receivingOrganization?.code ?? '—'}</TableCell>
                                         <TableCell>{formatDate(transfer.scheduled_date)}</TableCell>
-                                        {/* <TableCell>
-                                            {transfer.actual_transfer_date ? formatDate(transfer.actual_transfer_date) : '—'}
-                                        </TableCell> */}
 
                                         <TableCell>
                                             <Badge 
@@ -342,7 +339,6 @@ export default function TransferIndex({
                     onClose={() => {
                         setShowEditTransfer(false);
                         setSelectedTransfer(null);
-                        // setTimeout(() => setSelectedTransfer(null), 3000);
                     }}
                     transfer={selectedTransfer}
                     currentUser={currentUser}

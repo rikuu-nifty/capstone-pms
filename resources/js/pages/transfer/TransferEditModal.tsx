@@ -140,7 +140,7 @@ export default function TransferEditModal({
         <EditModal
             show={show}
             onClose={onClose}
-            title="Edit Transfer"
+            title={`Edit Transfer – Transfer Record #${transfer.id}`}
             onSubmit={handleSubmit}
             processing={processing}
         >
