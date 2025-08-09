@@ -42,7 +42,7 @@ const inventoryNavItems = [
     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2 },
     { title: 'Transfer', href: '/transfers', icon: ArrowRightLeft },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList },
-    { title: 'Off-campus', href: '/off-campus', icon: School },
+    { title: 'Off-Campus', href: '/off-campus', icon: School },
     { title: 'Reports', href: '/reports', icon: Files },
 ];
 
