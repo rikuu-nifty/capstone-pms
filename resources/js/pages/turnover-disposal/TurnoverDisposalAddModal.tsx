@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import AddModal from "@/components/modals/AddModal";
 import { UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
+import { TurnoverDisposalFormData } from '@/types/turnover-disposal';
 
 interface TurnoverDisposalAddModalProps {
     show: boolean;
     onClose: () => void;
-    currentUser: User;
+    assignedBy: User;
     unitOrDepartments: UnitOrDepartment[];
     assets: InventoryList[];
 }
@@ -15,16 +16,20 @@ interface TurnoverDisposalAddModalProps {
 export default function TurnoverDisposalAddModal({
     show,
     onClose,
-    currentUser,
+    unitOrDepartments,
+    // assignedBy,
     // assets,
 }: TurnoverDisposalAddModalProps) {
 
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TurnoverDisposalFormData>({
+        issuing_office_id: 0,
         type: 'turnover',
-        currentUser: currentUser.id,
-        personnel_in_charge: '',
+        receiving_office_id: 0,
+        description: '',
+        personnel_in_charge_id: '',
         document_date: '',
         status: 'pending_review',
+        remarks: '',
         
         selected_assets: [],
     });
@@ -69,22 +74,25 @@ export default function TurnoverDisposalAddModal({
             onSubmit={handleSubmit}
             processing={processing}
         >
-            {/* Organization */}
+            {/* Issuing Office */}
             <div className="col-span-1">
-                <label className="mb-1 block font-medium">Unit/Dept/Lab</label>
+                <label className="mb-1 block font-medium">Issuing Office</label>
                 <select
                     className="w-full rounded-lg border p-2"
-                    value={data.current_organization}
-                    onChange={(e) => setData('current_organization', Number(e.target.value))}
+                    value={data.issuing_office_id}
+                    onChange={(e) => setData('issuing_office_id', Number(e.target.value))}
                 >
-                    <option value="">Select Unit/Dept</option>
+                    <option value={0}>Select Unit/Dept/Lab</option>
                     {unitOrDepartments.map((unit) => (
                         <option key={unit.id} value={unit.id}>
-                            {unit.code} - {unit.name}
+                        {unit.code} - {unit.name}
                         </option>
                     ))}
                 </select>
-                {errors.current_organization && <p className="mt-1 text-xs text-red-500">{errors.current_organization}</p>}
+
+                {errors.issuing_office_id && (
+                    <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
+                )}
             </div>
         </AddModal>
     );

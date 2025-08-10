@@ -7,7 +7,7 @@ import { type BreadcrumbItem} from '@/types';
 // import { Head, router, usePage } from '@inertiajs/react';
 import { Head } from '@inertiajs/react';
 // import { useState, useMemo, useEffect } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
@@ -33,20 +33,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 // ] as const;
 
 // type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
-
-// const filtered = (turnoverDisposals ?? []).filter(td => {
-//     const okStatus = !selected_status || td.status === selected_status;
-//     const okType = !selected_type || td.type === selected_type;
-
-//     // match by code (e.g., 'MISS', 'PSO'); adjust to .name if you prefer by name
-//     const issuingCode = td.issuing_office?.code ?? '';
-//     const receivingCode = td.receiving_office?.code ?? '';
-
-//     const okIssuing = !selected_issuing_office || issuingCode === selected_issuing_office;
-//     const okReceiving = !selected_receiving_office || receivingCode === selected_receiving_office;
-
-//     return okStatus && okType && okIssuing && okReceiving;
-// });
 
 export default function TurnoverDisposalsIndex({
     turnoverDisposals,
@@ -79,6 +65,12 @@ export default function TurnoverDisposalsIndex({
     //     selected_issuing_office, 
     //     selected_receiving_office
     // ]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [
+        search,
+    ]);
 
     // const [showAddTurnoverDisposals, setShowAddTurnoverDisposals] = useState(false);
 

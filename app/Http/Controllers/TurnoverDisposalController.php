@@ -19,8 +19,6 @@ class TurnoverDisposalController extends Controller
      */
     public function index()
     {
-        $assigned_by = Auth::user();
-
         $turnoverDisposals = TurnoverDisposal::with([
             'turnoverDisposalAssets',
             'issuingOffice',
@@ -42,7 +40,6 @@ class TurnoverDisposalController extends Controller
         return Inertia::render('turnover-disposal/index', [
             'turnoverDisposals' => $turnoverDisposals,
             'turnoverDisposalAssets' => $turnoverDisposalAssets,            
-            'assignedBy' => $assigned_by,
         ]);
 
     }

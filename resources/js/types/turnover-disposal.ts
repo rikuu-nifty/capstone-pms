@@ -22,7 +22,7 @@ export type TurnoverDisposalFormData = {
     type: 'turnover' | 'disposal';
     receiving_office_id: number;
     description: string | null;
-    personnel_in_charge: string;
+    personnel_in_charge_id: string;
     document_date: string;
     status: 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed';
     remarks: string | null;
