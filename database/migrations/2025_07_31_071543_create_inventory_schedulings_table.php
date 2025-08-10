@@ -40,6 +40,13 @@ return new class extends Migration
                   ->on('users')
                   ->onDelete('set null');
 
+        //         // Link to accounts table
+        //     $table->unsignedBigInteger('account_id')->nullable();
+        //    $table->foreign('account_id')
+        //         ->references('id') // table name
+        //         ->on('accounts')
+        //         ->onDelete('set null');
+
             $table->unsignedBigInteger('designated_employee')->nullable(); // FK Users_Table (Designated Employee)
             $table->foreign('designated_employee')                         // e.g. the one who will do the inventory
                 ->references('id')

@@ -46,6 +46,15 @@ export type User = {
     email: string;
 };
 
+// export type Account = {
+//     id: number;
+//     user_id: number;
+//     fname: string;
+//     lname: string;
+//     email: string;
+// };
+
+
 export type Scheduled = {
     id: number;
     building: Building | null;
