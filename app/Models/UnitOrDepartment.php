@@ -24,4 +24,19 @@ class UnitOrDepartment extends Model
     {
         return $this->hasMany(InventoryScheduling::class);
     }
+
+    public function issuingOffice()
+    {
+        return $this->hasMany(TurnoverDisposal::class, 'issuing_office');
+    }
+
+    public function receivingOffice()
+    {
+        return $this->hasMany(TurnoverDisposal::class, 'receiving_office');
+    }
+
+    public function assetAssignment()
+    {
+        return $this->hasMany(AssetAssignment::class, 'unit_or_department_id');
+    }
 }

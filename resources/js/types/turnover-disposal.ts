@@ -1,26 +1,30 @@
-import { User } from "./custom-index";
+import { TurnoverDisposalAssets, UnitOrDepartment } from "./custom-index";
 
 export type TurnoverDisposals = {
     id: number;
+    issuing_office_id: number;
     type: 'turnover' | 'disposal';
+    receiving_office_id: number;
     description: string | null;
     personnel_in_charge: string;
     document_date: string;
     status: 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed';
-    issued_by: number;
     remarks: string | null;
     asset_count: number;
 
-    issuedBy?: User; //single object
+    issuing_office?: UnitOrDepartment;
+    receiving_office?: UnitOrDepartment;
+    turnover_disposal_assets?: TurnoverDisposalAssets[];
 };
 
 export type TurnoverDisposalFormData = {
+    issuing_office_id: number;
     type: 'turnover' | 'disposal';
+    receiving_office_id: number;
     description: string | null;
     personnel_in_charge: string;
     document_date: string;
     status: 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed';
-    issued_by: number;
     remarks: string | null;
 
     selected_assets: number[];

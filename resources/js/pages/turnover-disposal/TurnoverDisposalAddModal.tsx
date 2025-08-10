@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import Select from 'react-select';
+// import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from "@/components/modals/AddModal";
-import { TransferFormData } from '@/types/transfer';
 import { UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
 
 interface TurnoverDisposalAddModalProps {
@@ -17,8 +16,7 @@ export default function TurnoverDisposalAddModal({
     show,
     onClose,
     currentUser,
-    unitOrDepartments,
-    assets,
+    // assets,
 }: TurnoverDisposalAddModalProps) {
 
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TurnoverDisposalFormData>({

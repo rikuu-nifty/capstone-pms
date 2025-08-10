@@ -1,4 +1,4 @@
-import { InventoryList } from "./inventory-list";
+import { InventoryList } from "./custom-index";
 
 export type TurnoverDisposalAssets = {
     id: number;

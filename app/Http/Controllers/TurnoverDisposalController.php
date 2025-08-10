@@ -19,18 +19,18 @@ class TurnoverDisposalController extends Controller
      */
     public function index()
     {
-        $issuedBy = Auth::user();
+        $assigned_by = Auth::user();
 
         $turnoverDisposals = TurnoverDisposal::with([
             'turnoverDisposalAssets',
-            'issuedBy',
+            'issuingOffice',
+            'receivingOffice',
         ])
         ->latest()
         ->get();
 
-        $unitOrDepartments = UnitOrDepartment::all();
         $turnoverDisposalAssets = TurnoverDisposalAsset::with([
-            'assets.assetModel.category'
+            'assets.assetModel.category',
         ])
         ->whereHas('turnoverDisposal', function ($query) {
             $query->where('status', '!=', 'disposed');
@@ -42,8 +42,7 @@ class TurnoverDisposalController extends Controller
         return Inertia::render('turnover-disposal/index', [
             'turnoverDisposals' => $turnoverDisposals,
             'turnoverDisposalAssets' => $turnoverDisposalAssets,            
-            'issuedBy' => $issuedBy,
-            'unitOrDepartments' => $unitOrDepartments,
+            'assignedBy' => $assigned_by,
             'asset_count' => $asset_count,
         ]);
 

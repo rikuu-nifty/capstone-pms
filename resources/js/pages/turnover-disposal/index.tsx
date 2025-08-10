@@ -11,9 +11,10 @@ import { useState, useEffect } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
 
 import { TurnoverDisposalPageProps } from '@/types/page-props';
-import { formatDate, formatStatusLabel, statusVariantMap } from '@/types/custom-index';
+import { formatStatusLabel, statusVariantMap, formatEnums } from '@/types/custom-index';
 // import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -23,19 +24,32 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const turnoverSortOptions = [
+    { value: 'id', label: 'Record ID' },
+    { value: 'document_date', label: 'Document Date' },
+    { value: 'asset_count', label: 'Asset Count' },
+] as const;
+
+type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
+
+
+
 export default function TurnoverDisposalsIndex({
     turnoverDisposals,
     // turnoverDisposalAssets,
-    // issuedBy,
+    // assignedBy,
     // unitOrDepartments,
     asset_count,
     
 }: TurnoverDisposalPageProps) {
 
+    const [selected_status, setSelectedStatus] = useState('');
+    const [selected_org, setSelectedOrg] = useState('');
+    const [sortKey, setSortKey] = useState<SortKey>('id');
+        const [sortDir, setSortDir] = useState<SortDir>('desc');
+
     const [page, setPage] = useState(1);
     const page_size = 20;
-
-    
 
     const start = (page - 1) * page_size;
     const page_items = turnoverDisposals.slice(start, start + page_size);
@@ -47,10 +61,10 @@ export default function TurnoverDisposalsIndex({
             setPage(1);
         }, [
             search, 
-            // selected_status, 
-            // selected_org, 
-            // sortKey, 
-            // sortDir
+            selected_status, 
+            selected_org, 
+            sortKey, 
+            sortDir
         ]
     );
     // const [showAddTurnoverDisposals, setShowAddTurnoverDisposals] = useState(false);
@@ -104,11 +118,14 @@ export default function TurnoverDisposalsIndex({
                     <div className="flex gap-2">
                         {/* <Filter className="mr-1 h-4 w-4" /> Filter */}
 
-                        {/* <TransferSortDropdown
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
-                        /> */}
+                        <SortDropdown<TurnoverSortKey>
+                            sortKey="document_date"
+                            sortDir="asc"
+                            options={turnoverSortOptions}
+                            onChange={(key, dir) => {
+                                console.log('Sorting turnover/disposals by', key, dir);
+                            }}
+                        />
 
                         {/* <TransferFilterDropdown
                             onApply={applyFilters}
@@ -135,12 +152,12 @@ export default function TurnoverDisposalsIndex({
                     <Table>
                         <TableHeader >
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="text-center">ID</TableHead>
+                                <TableHead className="text-center">ID</TableHead> {/* 1 */}
+                                <TableHead className="text-center">Issuing Office</TableHead>
                                 <TableHead className="text-center">Type</TableHead>
-                                <TableHead className="text-center">Current Unit/Dept</TableHead>
-                                <TableHead className="text-center">Unit/Dept/Lab</TableHead>
+                                <TableHead className="text-center">Receiving Office</TableHead>
+                                <TableHead className="text-center">Description</TableHead>
                                 <TableHead className="text-center">Asset Count</TableHead>
-                                <TableHead className="text-center">Document Date</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
@@ -149,12 +166,16 @@ export default function TurnoverDisposalsIndex({
                             {page_items.length > 0 ? (
                                 page_items.map((turnoverDisposals) => (
                                     <TableRow key={turnoverDisposals.id}>
-                                        <TableCell>{turnoverDisposals.id}</TableCell>
-                                        <TableCell>{turnoverDisposals.type ?? '—'}</TableCell>
+                                        <TableCell>{turnoverDisposals.id}</TableCell> {/* 1 */}
+                                        <TableCell>
+                                            {turnoverDisposals.issuing_office?.code}
+                                        </TableCell>
+                                        <TableCell>{formatEnums(turnoverDisposals.type)}</TableCell>
+                                        <TableCell>
+                                            {turnoverDisposals.receiving_office?.code}
+                                        </TableCell>
+                                        <TableCell>{ turnoverDisposals.description ?? '—'}</TableCell>
                                         <TableCell>{asset_count}</TableCell>
-                                        <TableCell>{turnoverDisposals.issuedBy?.name ?? '—'}</TableCell>
-                                        <TableCell>{formatDate(turnoverDisposals.document_date)}</TableCell>
-
                                         <TableCell>
                                             <Badge 
                                                 variant={statusVariantMap[turnoverDisposals.status.toLowerCase()] ?? 'secondary'}

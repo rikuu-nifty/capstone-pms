@@ -58,7 +58,24 @@ export type TransferFilters = {
 export type TurnoverDisposalPageProps = {
     turnoverDisposals: TurnoverDisposals[];
     turnoverDisposalAssets: TurnoverDisposalAssets[];
-    issuedBy: User;
+    assignedBy: User;
     unitOrDepartments: UnitOrDepartment[];
     asset_count: number;
 }
+
+export type TurnoverFilterProps = {
+    onApply: (filters: {
+        status: string;
+        type: string;
+        issuing_office: string;
+        receiving_office: string;
+    }) => void;
+    onClear: () => void;
+
+    selected_status: string;
+    selected_type: string;
+    selected_issuing_office: string;
+    selected_receiving_office: string;
+
+    unitOrDepartments: UnitOrDepartment[];
+};

@@ -1,6 +1,5 @@
 // import { Asset } from "@/pages/inventory-list";
-import type { AssetModel } from "./asset-model";
-import type { Category } from "./category";
+import { UnitOrDepartment, AssetModel, Category } from "./custom-index";
 
 export type InventoryList = {
     id: number;
@@ -22,4 +21,5 @@ export type InventoryList = {
 
     assetModel?: AssetModel;
     category?: Category;
+    unitOrDepartment?: UnitOrDepartment;
 }

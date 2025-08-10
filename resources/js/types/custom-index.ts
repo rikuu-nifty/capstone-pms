@@ -17,6 +17,16 @@ export const formatDate = (dateStr?: string) =>
 export const formatStatusLabel = (status: string) =>
      status.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 
+export const formatEnums = (value?: string) => {
+    if (!value) return '';
+    return value
+        .replace(/([a-z])([A-Z])/g, '$1 $2') 
+        .replace(/[_-]+/g, ' ')             
+        .split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+};
+
 export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'> = {
     upcoming: 'secondary',
     in_progress: 'success',
