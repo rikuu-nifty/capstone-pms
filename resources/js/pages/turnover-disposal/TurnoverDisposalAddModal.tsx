@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-// import Select from 'react-select';
+import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from "@/components/modals/AddModal";
 import { UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
@@ -18,7 +18,7 @@ export default function TurnoverDisposalAddModal({
     onClose,
     unitOrDepartments,
     // assignedBy,
-    // assets,
+    assets,
 }: TurnoverDisposalAddModalProps) {
 
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TurnoverDisposalFormData>({
@@ -26,7 +26,7 @@ export default function TurnoverDisposalAddModal({
         type: 'turnover',
         receiving_office_id: 0,
         description: '',
-        personnel_in_charge_id: '',
+        personnel_in_charge_id: 0,
         document_date: '',
         status: 'pending_review',
         remarks: '',
@@ -92,6 +92,76 @@ export default function TurnoverDisposalAddModal({
 
                 {errors.issuing_office_id && (
                     <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
+                )}                
+            </div>
+
+            {/* Selected Assets */}
+            <div className="col-span-2 flex flex-col gap-4">
+                <label className="block font-medium">Assets to Transfer</label>
+
+                {data.selected_assets.map((assetId, index) => {
+                    const selectedAsset = assets.find((a) => a.id === assetId);
+
+                    return (
+                        <div key={index} className="flex items-center gap-2">
+                            <span className="text-sm text-blue-800">
+                                {selectedAsset
+                                    ? ` ${selectedAsset.asset_name} (${selectedAsset.serial_no})`
+                                    : 'Asset not found'}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const updated = [...data.selected_assets];
+                                    updated.splice(index, 1);
+                                    setData('selected_assets', updated);
+
+                                    setShowAssetDropdown((prev) => {
+                                        const newState = [...prev];
+                                        newState.splice(index, 1);
+                                        return newState;
+                                    });
+                                }}
+                                className="text-red-500 text-xs hover:underline cursor-pointer"
+                            >
+                                Remove
+                            </button>
+                            
+                        </div>
+                    );
+                })}
+
+                {showAssetDropdown.map((visible, index) => (
+                    visible && (
+                        <div key={`dropdown-${index}`} className="flex items-center gap-2">
+                            <Select
+                                className="w-full"
+                                options={assets
+                                    .filter((asset) => !data.selected_assets.includes(asset.id))
+                                    .map((asset) => ({
+                                    value: asset.id,
+                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                    }))
+                                }
+                                placeholder="Select asset for transfer..."
+                                onChange={(selectedOption) => {
+                                    if (selectedOption && !data.selected_assets.includes(selectedOption.value)) {
+                                    setData('selected_assets', [...data.selected_assets, selectedOption.value]);
+
+                                    setShowAssetDropdown((prev) => {
+                                        const updated = [...prev];
+                                        updated[index] = false;
+                                        return [...updated, true];
+                                    });
+                                    }
+                                }}
+                            />
+                        </div>
+                    )
+                ))}
+                
+                {errors.selected_assets && (
+                    <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
                 )}
             </div>
         </AddModal>

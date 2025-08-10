@@ -60,6 +60,8 @@ export type TurnoverDisposalPageProps = {
     turnoverDisposalAssets: TurnoverDisposalAssets[];
     assignedBy: User;
     unitOrDepartments: UnitOrDepartment[];
+    assets: InventoryList[];
+
     asset_count: number;
 }
 

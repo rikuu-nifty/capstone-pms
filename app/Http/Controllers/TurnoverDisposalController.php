@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 
-use App\Models\User;
 use App\Models\InventoryList;
 use App\Models\TurnoverDisposal;
 use App\Models\UnitOrDepartment;
@@ -19,14 +19,19 @@ class TurnoverDisposalController extends Controller
      */
     public function index()
     {
+        $assignedBy = Auth::user();
+
+        $unitOrDepartments = UnitOrDepartment::all();
+
         $turnoverDisposals = TurnoverDisposal::with([
             'turnoverDisposalAssets',
             'issuingOffice',
             'receivingOffice',
         ])
-        ->withCount('turnoverDisposalAssets as asset_count')
-        ->latest()
-        ->get();
+            ->withCount('turnoverDisposalAssets as asset_count')
+            ->latest()
+            ->get()
+        ;
 
         $turnoverDisposalAssets = TurnoverDisposalAsset::with([
             'assets.assetModel.category',
@@ -36,10 +41,16 @@ class TurnoverDisposalController extends Controller
         })
         ->get();
 
+        $assets = InventoryList::with(['assetModel.category'])
+            ->get();
+
 
         return Inertia::render('turnover-disposal/index', [
             'turnoverDisposals' => $turnoverDisposals,
-            'turnoverDisposalAssets' => $turnoverDisposalAssets,            
+            'turnoverDisposalAssets' => $turnoverDisposalAssets,
+            'assets' => $assets,
+            'unitOrDepartments' => $unitOrDepartments,
+            'assignedBy' => $assignedBy,         
         ]);
 
     }
@@ -81,7 +92,19 @@ class TurnoverDisposalController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'issuing_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type' => ['required', Rule::in(['turnover', 'disposal'])],
+            'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description' => ['nullable', 'string'],
+            'personnel_in_charge_id' => ['nullable', 'string'],
+            'document_date' => ['required', 'date'],
+            'status' => [
+                'required', 
+                Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'cancelled'])
+            ],
+            'remarks' => ['nullable', 'string'],
+        ]);
     }
 
     /**

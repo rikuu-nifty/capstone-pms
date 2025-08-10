@@ -9,6 +9,7 @@ export type { TransferFormData } from './transfer';
 export type { AssetModel } from './asset-model';
 export type { TurnoverDisposals } from './turnover-disposal';
 export type { TurnoverDisposalAssets } from './turnover-disposal-assets';
+export type { AssetAssignment } from './asset-assignment';
 export * from './page-props';
 
 export const formatDate = (dateStr?: string) =>

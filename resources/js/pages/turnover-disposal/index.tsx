@@ -17,7 +17,7 @@ import useDebouncedValue from '@/hooks/useDebouncedValue';
 // import { TurnoverDisposalPageProps, TurnoverDisposalFilters } from '@/types/page-props';
 import { TurnoverDisposalPageProps } from '@/types/page-props';
 import { formatDate, formatStatusLabel, statusVariantMap, formatEnums } from '@/types/custom-index';
-// import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
+import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -37,8 +37,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function TurnoverDisposalsIndex({
     turnoverDisposals,
     // turnoverDisposalAssets,
-    // assignedBy,
-    // unitOrDepartments,
+    assets,
+    assignedBy,
+    unitOrDepartments,
     
 }: TurnoverDisposalPageProps) {
 
@@ -72,7 +73,7 @@ export default function TurnoverDisposalsIndex({
         search,
     ]);
 
-    // const [showAddTurnoverDisposals, setShowAddTurnoverDisposals] = useState(false);
+    const [showAddTurnoverDisposals, setShowAddTurnoverDisposals] = useState(false);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -143,9 +144,9 @@ export default function TurnoverDisposalsIndex({
                         /> */}
 
                         <Button
-                            // onClick={() => {
-                            //     setShowAddTurnoverDisposals(true);
-                            // }}
+                            onClick={() => {
+                                setShowAddTurnoverDisposals(true);
+                            }}
                             className="cursor-pointer"
                         >
                             <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Turnover/Disposal
@@ -172,7 +173,7 @@ export default function TurnoverDisposalsIndex({
                             {page_items.length > 0 ? (
                                 page_items.map((turnoverDisposals) => (
                                     <TableRow key={turnoverDisposals.id}>
-                                        <TableCell>{turnoverDisposals.id}</TableCell> {/* 1 */}
+                                        <TableCell>{turnoverDisposals.id}</TableCell>
                                         <TableCell>
                                             {turnoverDisposals.issuing_office?.code}
                                         </TableCell>
@@ -239,7 +240,13 @@ export default function TurnoverDisposalsIndex({
                 </div>
             </div>
 
-            
+            <TurnoverDisposalAddModal
+                show={showAddTurnoverDisposals}
+                onClose={() => setShowAddTurnoverDisposals(false)}
+                assignedBy={assignedBy}
+                unitOrDepartments={unitOrDepartments}
+                assets={assets}
+            />
         </AppLayout>
     );
 }

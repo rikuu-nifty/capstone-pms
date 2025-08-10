@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class TurnoverDisposal extends Model
 {
     protected $fillable = [
+        'issuing_office_id',
         'type',
+        'receiving_office_id',
         'description',
-        'personnel_in_charge',
+        'personnel_in_charge_id',
         'document_date',
         'status',
         'remarks',
@@ -24,11 +26,13 @@ class TurnoverDisposal extends Model
         return $this->hasMany(TurnoverDisposalAsset::class, 'turnover_disposal_id');
     }
 
-    public function issuingOffice() {
+    public function issuingOffice() 
+    {
         return $this->belongsTo(UnitOrDepartment::class, 'issuing_office_id');
     }
 
-    public function receivingOffice() {
+    public function receivingOffice() 
+    {
         return $this->belongsTo(UnitOrDepartment::class, 'receiving_office_id');
     }
 }
