@@ -4,6 +4,7 @@ use App\Http\Controllers\InventoryListController;
 use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TransferController;
+use App\Http\Controllers\Auth\EmailOtpController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -12,6 +13,31 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
+
+//     // ----- Email OTP verification (must be logged in, but NOT necessarily verified) -----
+//     Route::middleware('auth')->group(function () {
+//     Route::get('/verify-email', [EmailOtpController::class, 'show'])->name('verification.notice');
+//     Route::post('/verify-email/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
+//     Route::post('/verify-email/resend', [EmailOtpController::class, 'resend'])->middleware('throttle:60,1')->name('verification.resend');
+// });
+
+// // Email OTP verification (must be logged in, but not verified yet)
+//     Route::middleware('auth')->group(function () {
+//     Route::get('/verify-email-otp', [EmailOtpController::class, 'show'])->name('verification.notice');
+//     Route::post('/verify-email-otp/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
+//     Route::post('/verify-email-otp/resend', [EmailOtpController::class, 'resend'])
+//         ->middleware('throttle:60,1')
+//         ->name('verification.resend');
+// });
+
+// OTP flow (guest; uses a session key, not auth)
+Route::middleware('guest')->group(function () {
+    Route::get('/verify-email-otp',    [EmailOtpController::class, 'showGuest'])->name('otp.notice');
+    Route::post('/verify-email-otp/verify',  [EmailOtpController::class, 'verifyGuest'])->name('otp.verify');
+    Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
+});
+
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
