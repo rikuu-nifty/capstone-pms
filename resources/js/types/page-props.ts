@@ -4,6 +4,8 @@ import { Building } from './building';
 import { BuildingRoom } from './building-room';
 import { UnitOrDepartment } from './unit-or-department';
 import { User } from './user';
+import { TurnoverDisposals } from './turnover-disposal';
+import { TurnoverDisposalAssets } from './turnover-disposal-assets';
 
 export type TransferPageProps = {
     transfers: Transfer[];
@@ -52,3 +54,11 @@ export type TransferFilters = {
     receiving_building: string;
     org: string;
 };
+
+export type TurnoverDisposalPageProps = {
+    turnoverDisposals: TurnoverDisposals[];
+    turnoverDisposalAssets: TurnoverDisposalAssets[];
+    issuedBy: User;
+    unitOrDepartments: UnitOrDepartment[];
+    asset_count: number;
+}

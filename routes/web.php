@@ -5,6 +5,8 @@ use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
+use App\Http\Controllers\TurnoverDisposalController;
+use App\Models\TurnoverDisposal;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -78,6 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
     Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
     Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfer.destroy');
+
+    // TURNOVER-DISPOSAL
+    Route::get('/turnover-disposal', [TurnoverDisposalController::class, 'index'])->name('turnover-disposal.index');
     
     // INSTITUTIONAL SETUP - BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');

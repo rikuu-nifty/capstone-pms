@@ -13,8 +13,7 @@ import { type TransferFilters } from '@/components/filters/TransferFilterModal';
 import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
 import TransferSortDropdown, { type SortKey, type SortDir } from '@/components/filters/TransferSortDropdown';
 
-import { Transfer, statusVariantMap, formatDate, formatStatusLabel } from '@/types/transfer';
-import { InventoryList } from '@/types/inventory-list';
+import { Transfer, InventoryList, statusVariantMap, formatDate, formatStatusLabel } from '@/types/custom-index';
 
 import { TransferPageProps } from '@/types/page-props';
 import TransferAddModal from './TransferAddModal';

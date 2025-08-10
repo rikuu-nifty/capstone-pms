@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('turnover_disposals', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('asset_id');
             $table->enum('type', ['turnover', 'disposal']);
             $table->text('description')->nullable(); // keep to describe reason
             $table->string('personnel_in_charge'); //who the asset was assigned to
@@ -25,7 +24,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->foreign('asset_id')->references('id')->on('inventory_lists')->onDelete('cascade');
             $table->foreign('issued_by')->references('id')->on('users')->onDelete('cascade');
         });
     }
@@ -36,7 +34,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('turnover_disposals', function (Blueprint $table) {
-            $table->dropForeign(['asset_id']);
             $table->dropForeign(['issued_by']);
         });
 

@@ -45,4 +45,9 @@ class InventoryList extends Model
         return $this->belongsTo(BuildingRoom::class);
     }
 
+    public function turnoverDisposalAsset()
+    {
+        return $this->hasMany(TurnoverDisposalAsset::class, 'asset_id');
+    }
+
 }
