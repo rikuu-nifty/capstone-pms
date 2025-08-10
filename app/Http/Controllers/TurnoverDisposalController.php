@@ -26,6 +26,7 @@ class TurnoverDisposalController extends Controller
             'issuingOffice',
             'receivingOffice',
         ])
+        ->withCount('turnoverDisposalAssets as asset_count')
         ->latest()
         ->get();
 
@@ -37,13 +38,11 @@ class TurnoverDisposalController extends Controller
         })
         ->get();
 
-        $asset_count = $turnoverDisposalAssets->count();
 
         return Inertia::render('turnover-disposal/index', [
             'turnoverDisposals' => $turnoverDisposals,
             'turnoverDisposalAssets' => $turnoverDisposalAssets,            
             'assignedBy' => $assigned_by,
-            'asset_count' => $asset_count,
         ]);
 
     }
