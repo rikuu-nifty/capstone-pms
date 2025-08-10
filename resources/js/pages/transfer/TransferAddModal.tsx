@@ -52,7 +52,11 @@ export default function TransferAddModal({
             clearErrors();
             setShowAssetDropdown([true]);
         }
-    }, [show, reset, clearErrors]);
+    }, [
+        show, 
+        reset, 
+        clearErrors
+    ]);
 
     const filteredCurrentRooms = buildingRooms.filter(
         (room) => Number(room.building_id) === Number(data.current_building_id)
@@ -84,7 +88,7 @@ export default function TransferAddModal({
                 clearErrors();
                 setShowAssetDropdown([true]);
             }}
-            title="Create Transfer"
+            title="Create New Transfer"
             onSubmit={handleSubmit}
             processing={processing}
         >
