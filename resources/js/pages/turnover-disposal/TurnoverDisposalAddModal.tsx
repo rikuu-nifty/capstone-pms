@@ -54,7 +54,7 @@ export default function TurnoverDisposalAddModal({
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post('/turnover-disposals', {
+        post('/turnover-disposal', {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
@@ -86,7 +86,7 @@ export default function TurnoverDisposalAddModal({
                 clearErrors();
                 setShowAssetDropdown([true]);
             }}
-            title="Create New Turnover/Disposal"
+            title="Create New Record"
             onSubmit={handleSubmit}
             processing={processing}
         >
@@ -230,7 +230,7 @@ export default function TurnoverDisposalAddModal({
 
             {/* Selected Assets */}
             <div className="col-span-2 flex flex-col gap-4">
-                <label className="block font-medium">Assets to Transfer</label>
+                <label className="block font-medium">Assets Covered</label>
 
                 {data.selected_assets.map((assetId, index) => {
                     const selectedAsset = assets.find((a) => a.id === assetId);
@@ -277,13 +277,13 @@ export default function TurnoverDisposalAddModal({
                                 }))}
                                 placeholder={
                                 data.issuing_office_id
-                                    ? 'Select Asset(s) for Transfer...'
-                                    : 'Select an issuing office'
+                                    ? 'Select Asset(s) Covered...'
+                                    : 'Select an Issuing Office first'
                                 }
                                 noOptionsMessage={() =>
                                 data.issuing_office_id
                                     ? 'No Assets Found for this Unit/Dept/Lab'
-                                    : 'Select an issuing office'
+                                    : 'Select an Issuing Office first'
                                 }
                                 onChange={(opt) => {
                                     if (opt && !data.selected_assets.includes(opt.value)) {

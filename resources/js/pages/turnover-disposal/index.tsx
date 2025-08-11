@@ -240,6 +240,8 @@ export default function TurnoverDisposalsIndex({
                 </div>
             </div>
 
+            {/* <pre>{JSON.stringify(turnoverDisposals, null, 2)}</pre> */}
+
             <TurnoverDisposalAddModal
                 show={showAddTurnoverDisposals}
                 onClose={() => setShowAddTurnoverDisposals(false)}

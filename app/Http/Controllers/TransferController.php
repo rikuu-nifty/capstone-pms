@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Transfer;
 use App\Models\Building;
@@ -104,9 +105,11 @@ class TransferController extends Controller
             'status' => 'required|in:upcoming,in_progress,completed,overdue',
             'remarks' => 'nullable|string',
 
-            'selected_assets' => 'nullable|array|min:1',
+            'selected_assets' => 'required|array|min:1',
             'selected_assets.*' => 'integer|exists:inventory_lists,id',
         ]);
+
+        $assetIds = $validated['selected_assets'];
 
         unset(
             $validated['current_building_id'],
@@ -114,17 +117,31 @@ class TransferController extends Controller
             $validated['selected_assets']
         );
 
-        $transfer = Transfer::create($validated);
+        $transfer = DB::transaction(function () use ($validated, $assetIds) {
+            $transfer = Transfer::create($validated);
 
-        if ($request->has('selected_assets') && is_array($request->selected_assets)) {
-            foreach ($request->selected_assets as $assetId) {
+            // Create pivot/junction rows
+            foreach ($assetIds as $assetId) {
                 $transfer->transferAssets()->create([
                     'asset_id' => $assetId,
                 ]);
             }
-        }
 
-        return back()->with('success', 'Transfer created successfully.');
+            return $transfer;
+        });
+
+
+        // $transfer = Transfer::create($validated);
+
+        // if ($request->has('selected_assets') && is_array($request->selected_assets)) {
+        //     foreach ($request->selected_assets as $assetId) {
+        //         $transfer->transferAssets()->create([
+        //             'asset_id' => $assetId,
+        //         ]);
+        //     }
+        // }
+
+        return back()->with('success', "Transfer #{$transfer->id} created successfully.");
     }
 
     /**

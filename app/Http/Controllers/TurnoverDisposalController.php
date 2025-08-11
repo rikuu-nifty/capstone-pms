@@ -11,7 +11,8 @@ use App\Models\InventoryList;
 use App\Models\TurnoverDisposal;
 use App\Models\UnitOrDepartment;
 use App\Models\TurnoverDisposalAsset;
-use App\Models\AssetAssignment;
+// use App\Models\AssetAssignment;
+use Illuminate\Support\Facades\DB;
 
 class TurnoverDisposalController extends Controller
 {
@@ -21,9 +22,6 @@ class TurnoverDisposalController extends Controller
     public function index()
     {
         $assignedBy = Auth::user();
-
-        $assetAssignment = AssetAssignment::all();
-
         $unitOrDepartments = UnitOrDepartment::all();
 
         $turnoverDisposals = TurnoverDisposal::with([
@@ -47,7 +45,6 @@ class TurnoverDisposalController extends Controller
         $assets = InventoryList::with(['assetModel.category'])
             ->get();
 
-
         return Inertia::render('turnover-disposal/index', [
             'turnoverDisposals' => $turnoverDisposals,
             'turnoverDisposalAssets' => $turnoverDisposalAssets,
@@ -55,7 +52,6 @@ class TurnoverDisposalController extends Controller
             'unitOrDepartments' => $unitOrDepartments,
             'assignedBy' => $assignedBy,         
         ]);
-
     }
 
     /**
@@ -71,7 +67,66 @@ class TurnoverDisposalController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'issuing_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type' => ['required', Rule::in(['turnover', 'disposal'])],
+            'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description' => ['nullable', 'string'],
+            'personnel_in_charge' => ['nullable', 'string'],
+            'document_date' => ['required', 'date'],
+            'status' => [
+                'required', 
+                Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'cancelled'])
+            ],
+            'remarks' => ['nullable', 'string'],
+
+            'selected_assets'     => ['required','array','min:1'],
+            'selected_assets.*'   => [
+                'integer','distinct',
+                Rule::exists('inventory_lists','id')
+                    ->where(fn ($q) => $q
+                    ->where('unit_or_department_id', (int) $request->issuing_office_id)),
+            ],
+        ]);
+
+        $ids = $validated['selected_assets'] ?? [];
+        $matchCount = InventoryList::whereIn('id', $ids)
+            ->where('unit_or_department_id', $validated['issuing_office_id'])
+            ->count();
+
+        if ($matchCount !== count($ids)) {
+            return back()
+                ->withErrors(['selected_assets' => 'All selected assets must belong to the issuing office.'])
+                ->withInput();
+        }
+
+        unset($validated['selected_assets']);
+
+        $turnoverDisposal = DB::transaction(function () use ($validated, $ids) {
+            
+            $td = TurnoverDisposal::create($validated);
+            $now = now();
+            
+            $rows = array_map(fn ($assetId) => [
+                'turnover_disposal_id' => $td->id,
+                'asset_id'             => $assetId,
+                'created_at'           => $now,
+                'updated_at'           => $now,
+            ], 
+                $ids
+            );
+
+            DB::table('turnover_disposal_assets')->insert($rows);
+
+            if ($td->type === 'disposal') {
+                InventoryList::whereIn('id', $ids)
+                    ->update(['status' => 'archived']);
+            }
+
+            return $td;
+        });
+
+        return back()->with('success', "Record #{$turnoverDisposal->id} created.");
     }
 
     /**
@@ -100,7 +155,7 @@ class TurnoverDisposalController extends Controller
             'type' => ['required', Rule::in(['turnover', 'disposal'])],
             'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
             'description' => ['nullable', 'string'],
-            'personnel_in_charge_id' => ['nullable', 'string'],
+            'personnel_in_charge' => ['nullable', 'string'],
             'document_date' => ['required', 'date'],
             'status' => [
                 'required', 
