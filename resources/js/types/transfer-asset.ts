@@ -1,4 +1,4 @@
-import type { InventoryList } from './inventory-list';
+import type { InventoryList } from './custom-index';
 
 export type TransferAsset = {
     id: number;

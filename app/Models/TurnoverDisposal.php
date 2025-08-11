@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class TurnoverDisposal extends Model
 {
     protected $fillable = [
-        'issuing_office_id',
+        'issuing_office_id', //added
         'type',
         'receiving_office_id',
         'description',

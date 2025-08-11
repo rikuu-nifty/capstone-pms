@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from "@/components/modals/AddModal";
-import { UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
+import { UnitOrDepartment, User, InventoryList, formatEnums } from '@/types/custom-index';
 import { TurnoverDisposalFormData } from '@/types/turnover-disposal';
 
 interface TurnoverDisposalAddModalProps {
@@ -12,6 +12,8 @@ interface TurnoverDisposalAddModalProps {
     unitOrDepartments: UnitOrDepartment[];
     assets: InventoryList[];
 }
+
+const typeOptions = [ 'turnover', 'disposal' ];
 
 export default function TurnoverDisposalAddModal({
     show,
@@ -74,6 +76,29 @@ export default function TurnoverDisposalAddModal({
             onSubmit={handleSubmit}
             processing={processing}
         >
+            {/* Type */}
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">Type</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.type}
+                    onChange={(e) => 
+                        setData('type', e.target.value as 'turnover' | 'disposal')
+                    }
+                >
+                    <option value="">Select Type of Record</option>
+                    {typeOptions.map((type) => (
+                        <option key={type} value={type}>
+                            {formatEnums(type)}
+                        </option>
+                    ))}
+                </select>
+
+                {errors.type && (
+                    <p className="mt-1 text-xs text-red-500">{errors.type}</p>
+                )}                
+            </div>
+
             {/* Issuing Office */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Issuing Office</label>
@@ -93,6 +118,40 @@ export default function TurnoverDisposalAddModal({
                 {errors.issuing_office_id && (
                     <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
                 )}                
+            </div>
+
+            {/* Receiving Office */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Receiving Office</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.receiving_office_id}
+                    onChange={(e) => setData('receiving_office_id', Number(e.target.value))}
+                >
+                    <option value={0}>Select Unit/Dept/Lab</option>
+                    {unitOrDepartments.map((unit) => (
+                        <option key={unit.id} value={unit.id}>
+                        {unit.code} - {unit.name}
+                        </option>
+                    ))}
+                </select>
+
+                {errors.receiving_office_id && (
+                    <p className="mt-1 text-xs text-red-500">{errors.receiving_office_id}</p>
+                )}                
+            </div>
+
+            {/* Description */}
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">Description</label>
+                <textarea
+                    placeholder="Enter description of the record (e.g., reason for turnover or disposal)"
+                    rows={3}
+                    className="w-full resize-none rounded-lg border p-2"
+                    value={data.description ?? ''}
+                    onChange={(e) => setData('description', e.target.value)}
+                />
+                {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
             </div>
 
             {/* Selected Assets */}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
+import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList, formatEnums } from '@/types/custom-index';
 import AddModal from "@/components/modals/AddModal";
 import { TransferFormData } from '@/types/transfer';
-import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
 
 interface TransferAddModalProps {
     show: boolean;
@@ -15,6 +15,8 @@ interface TransferAddModalProps {
     users: User[];
     assets: InventoryList[];
 }
+
+const statusOptions = [ 'upcoming', 'in_progress', 'completed', 'overdue' ];
 
 export default function TransferAddModal({
     show,
@@ -265,10 +267,16 @@ export default function TransferAddModal({
                     }
                 >
                     <option value="">Select Status</option>
-                    <option value="upcoming">Upcoming</option>
+                    {/* <option value="upcoming">Upcoming</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
-                    <option value="overdue">Overdue</option>
+                    <option value="overdue">Overdue</option> */}
+                    
+                    {statusOptions.map((status) => (
+                        <option key={status} value={status}>
+                            {formatEnums(status)}
+                        </option>
+                    ))}
                 </select>
                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
