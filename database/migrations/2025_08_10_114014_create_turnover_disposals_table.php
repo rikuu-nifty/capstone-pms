@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('type', ['turnover', 'disposal']);
             $table->unsignedBigInteger('receiving_office_id');
             $table->text('description')->nullable(); // keep to describe reason
-            $table->unsignedBigInteger('personnel_in_charge_id'); //who the asset was assigned to
+            $table->string('personnel_in_charge'); //who the asset was assigned to
             $table->date('document_date'); // date written on the signed form
             $table->enum('status', ['pending_review', 'approved', 'rejected', 'cancelled', 'completed']);
             $table->text('remarks')->nullable(); //use for ongoing notes or updates
@@ -27,7 +27,6 @@ return new class extends Migration
 
             $table->foreign('issuing_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
             $table->foreign('receiving_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
-            $table->foreign('personnel_in_charge_id')->references('id')->on('asset_assignments')->onDelete('cascade');
         });
     }
 
@@ -39,7 +38,6 @@ return new class extends Migration
         Schema::table('turnover_disposals', function (Blueprint $table) {
             $table->dropForeign(['issuing_office_id']);
             $table->dropForeign(['receiving_office_id']);
-            $table->dropForeign(['personnel_in_charge_id']);
         });
 
         Schema::dropIfExists('turnover_disposals');

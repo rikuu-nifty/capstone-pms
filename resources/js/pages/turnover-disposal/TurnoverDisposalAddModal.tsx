@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from "@/components/modals/AddModal";
@@ -29,7 +29,7 @@ export default function TurnoverDisposalAddModal({
         type: 'turnover',
         receiving_office_id: 0,
         description: '',
-        personnel_in_charge_id: 0,
+        personnel_in_charge: '',
         document_date: '',
         status: 'pending_review',
         remarks: '',
@@ -39,16 +39,17 @@ export default function TurnoverDisposalAddModal({
 
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
 
-    useEffect(() => {
-        if (show) {
-            reset();
-            clearErrors();
-            setShowAssetDropdown([true]);
-        }
+    const filteredAssets = useMemo(() => {
+        if (!data.issuing_office_id) return [];
+
+        const selected = new Set(data.selected_assets);
+        return assets.filter(
+            (a) => a.unit_or_department_id === data.issuing_office_id && !selected.has(a.id)
+        );
     }, [
-        show, 
-        reset, 
-        clearErrors
+        assets,
+        data.issuing_office_id,
+        data.selected_assets,
     ]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -64,6 +65,18 @@ export default function TurnoverDisposalAddModal({
         });
     };
 
+    useEffect(() => {
+        if (show) {
+            reset();
+            clearErrors();
+            setShowAssetDropdown([true]);
+        }
+    }, [
+        show, 
+        reset, 
+        clearErrors
+    ]);
+    
     return (
         <AddModal
             show={show}
@@ -78,7 +91,7 @@ export default function TurnoverDisposalAddModal({
             processing={processing}
         >
             {/* Type */}
-            <div className="col-span-2">
+            <div className="col-span-1">
                 <label className="mb-1 block font-medium">Type</label>
                 <select
                     className="w-full rounded-lg border p-2"
@@ -87,10 +100,35 @@ export default function TurnoverDisposalAddModal({
                         setData('type', e.target.value as 'turnover' | 'disposal')
                     }
                 >
-                    <option value="">Select type of record</option>
+                    <option value="">Select Record Type</option>
                     {typeOptions.map((type) => (
                         <option key={type} value={type}>
                             {formatEnums(type)}
+                        </option>
+                    ))}
+                </select>
+
+                {errors.type && (
+                    <p className="mt-1 text-xs text-red-500">{errors.type}</p>
+                )}                
+            </div>
+
+            {/* Status */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Status</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.status}
+                    onChange={(e) => 
+                        setData('status', e.target.value as 
+                            'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed'
+                        )
+                    }
+                >
+                    <option value="">Select Status</option>
+                    {statusOptions.map((status) => (
+                        <option key={status} value={status}>
+                            {formatEnums(status)}
                         </option>
                     ))}
                 </select>
@@ -106,7 +144,15 @@ export default function TurnoverDisposalAddModal({
                 <select
                     className="w-full rounded-lg border p-2"
                     value={data.issuing_office_id}
-                    onChange={(e) => setData('issuing_office_id', Number(e.target.value))}
+                    // onChange={(e) => 
+                    //     setData('issuing_office_id', Number(e.target.value))
+                    // }
+                    onChange={(e) => {
+                        const id = Number(e.target.value);
+                        setData('issuing_office_id', id);
+                        setData('selected_assets', []);
+                        setShowAssetDropdown([true]);
+                    }}
                 >
                     <option value={0}>Select Unit/Dept/Lab</option>
                     {unitOrDepartments.map((unit) => (
@@ -146,13 +192,28 @@ export default function TurnoverDisposalAddModal({
             <div className="col-span-2">
                 <label className="mb-1 block font-medium">Description</label>
                 <textarea
-                    placeholder="Enter description of the record (e.g., reason for turnover or disposal)"
+                    placeholder="Enter description of the record (e.g., reason for turnover or disposal"
                     rows={3}
                     className="w-full resize-none rounded-lg border p-2"
                     value={data.description ?? ''}
                     onChange={(e) => setData('description', e.target.value)}
                 />
                 {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
+            </div>
+
+            {/* Personnel In Charge*/}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Personnel in Charge</label>
+                <input
+                    placeholder="Enter the full name of the personnel"
+                    type="text"
+                    className="w-full rounded-lg border p-2"
+                    value={data.personnel_in_charge ?? ''}
+                    onChange={(e) => setData('personnel_in_charge', e.target.value)}
+                />
+                {errors.personnel_in_charge && (
+                    <p className="mt-1 text-xs text-red-500">{errors.personnel_in_charge}</p>
+                )}              
             </div>
 
             {/* Document Date */}
@@ -165,29 +226,6 @@ export default function TurnoverDisposalAddModal({
                     onChange={(e) => setData('document_date', e.target.value)}
                 />
                 {errors.document_date && <p className="mt-1 text-xs text-red-500">{errors.document_date}</p>}
-            </div>
-
-            {/* Status */}
-            <div className="col-span-1">
-                <label className="mb-1 block font-medium">Status</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.status}
-                    onChange={(e) => 
-                        setData('status', e.target.value as 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed')
-                    }
-                >
-                    <option value="">Select Status</option>
-                    {typeOptions.map((status) => (
-                        <option key={status} value={status}>
-                            {formatEnums(status)}
-                        </option>
-                    ))}
-                </select>
-
-                {errors.type && (
-                    <p className="mt-1 text-xs text-red-500">{errors.type}</p>
-                )}                
             </div>
 
             {/* Selected Assets */}
@@ -226,38 +264,58 @@ export default function TurnoverDisposalAddModal({
                     );
                 })}
 
-                {showAssetDropdown.map((visible, index) => (
+                {showAssetDropdown.map((visible, index) =>
                     visible && (
                         <div key={`dropdown-${index}`} className="flex items-center gap-2">
                             <Select
+                                key={`asset-${data.issuing_office_id}-${index}-${data.selected_assets.length}`}
                                 className="w-full"
-                                options={assets
-                                    .filter((asset) => !data.selected_assets.includes(asset.id))
-                                    .map((asset) => ({
+                                isDisabled={!data.issuing_office_id}
+                                options={filteredAssets.map((asset) => ({
                                     value: asset.id,
                                     label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
-                                    }))
+                                }))}
+                                placeholder={
+                                data.issuing_office_id
+                                    ? 'Select Asset(s) for Transfer...'
+                                    : 'Select an issuing office'
                                 }
-                                placeholder="Select asset for transfer..."
-                                onChange={(selectedOption) => {
-                                    if (selectedOption && !data.selected_assets.includes(selectedOption.value)) {
-                                    setData('selected_assets', [...data.selected_assets, selectedOption.value]);
-
-                                    setShowAssetDropdown((prev) => {
-                                        const updated = [...prev];
-                                        updated[index] = false;
-                                        return [...updated, true];
-                                    });
+                                noOptionsMessage={() =>
+                                data.issuing_office_id
+                                    ? 'No Assets Found for this Unit/Dept/Lab'
+                                    : 'Select an issuing office'
+                                }
+                                onChange={(opt) => {
+                                    if (opt && !data.selected_assets.includes(opt.value)) {
+                                        setData('selected_assets', [...data.selected_assets, opt.value]);
+                                        setShowAssetDropdown((prev) => {
+                                            const updated = [...prev];
+                                            updated[index] = false;
+                                            return [...updated, true];
+                                        });
                                     }
                                 }}
                             />
                         </div>
                     )
-                ))}
+                )}
                 
                 {errors.selected_assets && (
                     <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
                 )}
+            </div>
+
+            {/* Remarks */}
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">Remarks</label>
+                <textarea
+                    placeholder="Provide notes, clarifications, or other relevant information"
+                    rows={3}
+                    className="w-full resize-none rounded-lg border p-2"
+                    value={data.remarks ?? ''}
+                    onChange={(e) => setData('remarks', e.target.value)}
+                />
+                {errors.remarks && <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>}
             </div>
 
         </AddModal>

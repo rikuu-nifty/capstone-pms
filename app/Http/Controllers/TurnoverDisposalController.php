@@ -11,6 +11,7 @@ use App\Models\InventoryList;
 use App\Models\TurnoverDisposal;
 use App\Models\UnitOrDepartment;
 use App\Models\TurnoverDisposalAsset;
+use App\Models\AssetAssignment;
 
 class TurnoverDisposalController extends Controller
 {
@@ -20,6 +21,8 @@ class TurnoverDisposalController extends Controller
     public function index()
     {
         $assignedBy = Auth::user();
+
+        $assetAssignment = AssetAssignment::all();
 
         $unitOrDepartments = UnitOrDepartment::all();
 
