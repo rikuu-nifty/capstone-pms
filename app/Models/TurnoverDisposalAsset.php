@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class TurnoverDisposalAsset extends Model
 {
+    protected $fillable = [
+        'turnover_disposal_id', 
+        'asset_id'
+    ];
+
+    public $timestamps = true;
+
     public function turnoverDisposal()
     {
         return $this->belongsTo(TurnoverDisposal::class, 'turnover_disposal_id');

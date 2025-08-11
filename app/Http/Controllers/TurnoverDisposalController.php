@@ -11,8 +11,6 @@ use App\Models\InventoryList;
 use App\Models\TurnoverDisposal;
 use App\Models\UnitOrDepartment;
 use App\Models\TurnoverDisposalAsset;
-// use App\Models\AssetAssignment;
-use Illuminate\Support\Facades\DB;
 
 class TurnoverDisposalController extends Controller
 {
@@ -55,78 +53,37 @@ class TurnoverDisposalController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'issuing_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'type' => ['required', Rule::in(['turnover', 'disposal'])],
+            'issuing_office_id'   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type'                => ['required', Rule::in(['turnover', 'disposal'])],
             'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'description' => ['nullable', 'string'],
-            'personnel_in_charge' => ['nullable', 'string'],
-            'document_date' => ['required', 'date'],
-            'status' => [
-                'required', 
-                Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'cancelled'])
-            ],
-            'remarks' => ['nullable', 'string'],
+            'description'         => ['nullable', 'string'],
+            'personnel_in_charge' => ['required', 'string'],
+            'document_date'       => ['required', 'date'],
+            'status'              => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
+            'remarks'             => ['nullable', 'string'],
 
-            'selected_assets'     => ['required','array','min:1'],
+            'selected_assets'     => ['required', 'array', 'min:1'],
             'selected_assets.*'   => [
                 'integer','distinct',
                 Rule::exists('inventory_lists','id')
-                    ->where(fn ($q) => $q
-                    ->where('unit_or_department_id', (int) $request->issuing_office_id)),
+                ->where(function ($q) use ($request) {
+                    $q->where('unit_or_department_id', (int) $request->issuing_office_id);
+                }),
             ],
         ]);
 
-        $ids = $validated['selected_assets'] ?? [];
-        $matchCount = InventoryList::whereIn('id', $ids)
-            ->where('unit_or_department_id', $validated['issuing_office_id'])
-            ->count();
-
-        if ($matchCount !== count($ids)) {
-            return back()
-                ->withErrors(['selected_assets' => 'All selected assets must belong to the issuing office.'])
-                ->withInput();
-        }
-
+        $assetIds = $validated['selected_assets'];
         unset($validated['selected_assets']);
 
-        $turnoverDisposal = DB::transaction(function () use ($validated, $ids) {
-            
-            $td = TurnoverDisposal::create($validated);
-            $now = now();
-            
-            $rows = array_map(fn ($assetId) => [
-                'turnover_disposal_id' => $td->id,
-                'asset_id'             => $assetId,
-                'created_at'           => $now,
-                'updated_at'           => $now,
-            ], 
-                $ids
-            );
+        $td = TurnoverDisposal::createWithAssets($validated, $assetIds);
+        $recordType = ucwords($td->type);
 
-            DB::table('turnover_disposal_assets')->insert($rows);
-
-            if ($td->type === 'disposal') {
-                InventoryList::whereIn('id', $ids)
-                    ->update(['status' => 'archived']);
-            }
-
-            return $td;
-        });
-
-        return back()->with('success', "Record #{$turnoverDisposal->id} created.");
+        return back()->with('success', "{$recordType} Record #{$td->id} created.");
     }
 
     /**
@@ -138,31 +95,36 @@ class TurnoverDisposalController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, TurnoverDisposal $turnoverDisposal)
     {
         $validated = $request->validate([
-            'issuing_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'type' => ['required', Rule::in(['turnover', 'disposal'])],
-            'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'description' => ['nullable', 'string'],
-            'personnel_in_charge' => ['nullable', 'string'],
-            'document_date' => ['required', 'date'],
-            'status' => [
-                'required', 
-                Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'cancelled'])
+            'issuing_office_id'     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type'                  => ['required', Rule::in(['turnover', 'disposal'])],
+            'receiving_office_id'   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description'           => ['nullable', 'string'],
+            'personnel_in_charge'   => ['required', 'string'],
+            'document_date'         => ['required', 'date'],
+            'status'                => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
+            'remarks'               => ['nullable', 'string'],
+
+            'selected_assets'       => ['required','array','min:1'],
+            'selected_assets.*'     => [
+                'integer','distinct', 
+                Rule::exists('inventory_lists','id')
+                ->where(function ($q) use ($request) {
+                    $q->where('unit_or_department_id', (int) $request->input('issuing_office_id'));
+                }),
             ],
-            'remarks' => ['nullable', 'string'],
         ]);
+        
+        $assetIds = $validated['selected_assets']; 
+        unset($validated['selected_assets']);
+
+        $td = $turnoverDisposal->updateWithAssets($validated, $assetIds);
+
+        return back()->with('success', "Record #{$td->id} has been updated.");
     }
 
     /**

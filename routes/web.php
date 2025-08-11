@@ -84,7 +84,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // TURNOVER-DISPOSAL
     Route::get('/turnover-disposal', [TurnoverDisposalController::class, 'index'])->name('turnover-disposal.index');
     Route::post('/turnover-disposal', [TurnoverDisposalController::class, 'store'])->name('turnover-disposal.store');
-    
+    Route::put('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'update'])->name('turnover-disposal.update');
+
     // INSTITUTIONAL SETUP - BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
     

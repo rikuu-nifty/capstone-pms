@@ -6,7 +6,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
 // import { Head, router, usePage } from '@inertiajs/react';
 import { Head } from '@inertiajs/react';
-// import { useState, useMemo, useEffect } from 'react';
 import { useEffect, useState } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
@@ -16,8 +15,9 @@ import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 // import { TurnoverDisposalPageProps, TurnoverDisposalFilters } from '@/types/page-props';
 import { TurnoverDisposalPageProps } from '@/types/page-props';
-import { formatDate, formatStatusLabel, statusVariantMap, formatEnums } from '@/types/custom-index';
+import { formatDate, formatStatusLabel, statusVariantMap, formatEnums, TurnoverDisposals } from '@/types/custom-index';
 import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
+import TurnoverDisposalEditModal from './TurnoverDisposalEditModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -74,6 +74,10 @@ export default function TurnoverDisposalsIndex({
     ]);
 
     const [showAddTurnoverDisposals, setShowAddTurnoverDisposals] = useState(false);
+    const [showEditTurnoverDisposals, setShowEditTurnoverDisposals] = useState(false);
+
+    const [selectedTurnoverDisposals, setSelectedTurnoverDisposals] = useState<TurnoverDisposals | null>(null);
+    // const [selectedAssets, setSelectedAssets] = useState<InventoryList[]>([]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -196,10 +200,10 @@ export default function TurnoverDisposalsIndex({
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                // onClick={() => {
-                                                //     setSelectedTransfer(transfer);
-                                                //     setShowEditTransfer(true);
-                                                // }}
+                                                onClick={() => {
+                                                    setSelectedTurnoverDisposals(turnoverDisposals);
+                                                    setShowEditTurnoverDisposals(true);
+                                                }}
                                                 className="cursor-pointer"
                                             >
                                                 <Pencil className="h-4 w-4" />
@@ -249,6 +253,19 @@ export default function TurnoverDisposalsIndex({
                 unitOrDepartments={unitOrDepartments}
                 assets={assets}
             />
+
+            {selectedTurnoverDisposals && (
+                <TurnoverDisposalEditModal
+                    show={showEditTurnoverDisposals}
+                    onClose={() => {
+                        setShowEditTurnoverDisposals(false);
+                        setSelectedTurnoverDisposals(null);
+                    }}
+                    turnoverDisposal={selectedTurnoverDisposals}
+                    unitOrDepartments={unitOrDepartments}
+                    assets={assets}
+                />
+            )}
         </AppLayout>
     );
 }
