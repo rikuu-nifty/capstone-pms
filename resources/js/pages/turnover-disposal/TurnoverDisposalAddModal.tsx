@@ -14,6 +14,7 @@ interface TurnoverDisposalAddModalProps {
 }
 
 const typeOptions = [ 'turnover', 'disposal' ];
+const statusOptions = [ 'pending_review', 'approved', 'rejected', 'cancelled', 'completed' ];
 
 export default function TurnoverDisposalAddModal({
     show,
@@ -86,7 +87,7 @@ export default function TurnoverDisposalAddModal({
                         setData('type', e.target.value as 'turnover' | 'disposal')
                     }
                 >
-                    <option value="">Select Type of Record</option>
+                    <option value="">Select type of record</option>
                     {typeOptions.map((type) => (
                         <option key={type} value={type}>
                             {formatEnums(type)}
@@ -152,6 +153,41 @@ export default function TurnoverDisposalAddModal({
                     onChange={(e) => setData('description', e.target.value)}
                 />
                 {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
+            </div>
+
+            {/* Document Date */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Document Date</label>
+                <input
+                    type="date"
+                    className="w-full rounded-lg border p-2 uppercase "
+                    value={data.document_date}
+                    onChange={(e) => setData('document_date', e.target.value)}
+                />
+                {errors.document_date && <p className="mt-1 text-xs text-red-500">{errors.document_date}</p>}
+            </div>
+
+            {/* Status */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Status</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.status}
+                    onChange={(e) => 
+                        setData('status', e.target.value as 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed')
+                    }
+                >
+                    <option value="">Select Status</option>
+                    {typeOptions.map((status) => (
+                        <option key={status} value={status}>
+                            {formatEnums(status)}
+                        </option>
+                    ))}
+                </select>
+
+                {errors.type && (
+                    <p className="mt-1 text-xs text-red-500">{errors.type}</p>
+                )}                
             </div>
 
             {/* Selected Assets */}
@@ -223,6 +259,7 @@ export default function TurnoverDisposalAddModal({
                     <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
                 )}
             </div>
+
         </AddModal>
     );
 }
