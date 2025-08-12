@@ -1,9 +1,13 @@
-import { Transfer } from './transfer';
-import { InventoryList } from './inventory-list';
-import { Building } from './building';
-import { BuildingRoom } from './building-room';
-import { UnitOrDepartment } from './unit-or-department';
-import { User } from './user';
+import { 
+    Transfer, 
+    InventoryList, 
+    Building, 
+    BuildingRoom, 
+    UnitOrDepartment, 
+    User, 
+    TurnoverDisposals, 
+    TurnoverDisposalAssets 
+} from './custom-index';
 
 export type TransferPageProps = {
     transfers: Transfer[];
@@ -51,4 +55,31 @@ export type TransferFilters = {
     building: string;
     receiving_building: string;
     org: string;
+};
+
+export type TurnoverDisposalPageProps = {
+    turnoverDisposals: TurnoverDisposals[];
+    turnoverDisposalAssets: TurnoverDisposalAssets[];
+    assignedBy: User;
+    unitOrDepartments: UnitOrDepartment[];
+    assets: InventoryList[];
+
+    asset_count: number;
+}
+
+export type TurnoverFilterProps = {
+    onApply: (filters: {
+        status: string;
+        type: string;
+        issuing_office: string;
+        receiving_office: string;
+    }) => void;
+    onClear: () => void;
+
+    selected_status: string;
+    selected_type: string;
+    selected_issuing_office: string;
+    selected_receiving_office: string;
+
+    unitOrDepartments: UnitOrDepartment[];
 };

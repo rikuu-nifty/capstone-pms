@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import { Building } from '@/types/building';
+import AddBuildingModal from './AddBuildingModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -23,6 +24,8 @@ export default function BuildingIndex({
     buildings: Building[] 
 }) {
     const [search, setSearch] = useState('');
+
+    const [showAddBuilding, setShowAddBuilding] = useState(false);
 
     const filteredBuildings = buildings.filter((b) =>
         `${b.name} ${b.code} ${b.description}`.toLowerCase().includes(search.toLowerCase())
@@ -47,8 +50,16 @@ export default function BuildingIndex({
                             className="max-w-xs"
                         />
                     </div>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Building
+                    <Button 
+                        className="cursor-pointer"
+                        onClick={() => {
+                            setShowAddBuilding(true);
+                        }}
+                    >
+                        <PlusCircle 
+                            className="mr-2 h-4 w-4" 
+                        /> 
+                        Add Building
                     </Button>
                 </div>
 
@@ -56,7 +67,6 @@ export default function BuildingIndex({
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                {/* <TableHead>ID</TableHead> */}
                                 <TableHead className="text-center">Building Code</TableHead>
                                 <TableHead className="text-center">Building Name</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
@@ -68,22 +78,33 @@ export default function BuildingIndex({
                             {filteredBuildings.length > 0 ? (
                                 filteredBuildings.map((building) => (
                                     <TableRow className="text-center" key={building.id}>
-                                        {/* <TableCell>{building.id}</TableCell> */}
                                         <TableCell>{building.code}</TableCell>
                                         <TableCell>{building.name}</TableCell>
                                         <TableCell>{building.description || '—'}</TableCell>
                                         <TableCell>{building.building_rooms_count || '—'}</TableCell>
                                         
-                                        <TableCell className="flex gap-2">
-                                            <Button variant="ghost" size="icon">
+                                        <TableCell className="flex gap-2 justify-center">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon"
+                                                className="cursor-pointer"
+                                            >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
 
-                                            <Button size="icon" variant="ghost">
+                                            <Button 
+                                                size="icon" 
+                                                variant="ghost"
+                                                className="cursor-pointer"
+                                            >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
 
-                                            <Button size="icon" variant="ghost">
+                                            <Button 
+                                                size="icon" 
+                                                variant="ghost"
+                                                className="cursor-pointer"
+                                            >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button>
 
@@ -102,6 +123,14 @@ export default function BuildingIndex({
                     </Table>
                 </div>
             </div>
+
+            <AddBuildingModal
+                show = {showAddBuilding}
+                onClose={() => 
+                    setShowAddBuilding(false)
+                }
+            />
+
         </AppLayout>
     );
 }

@@ -395,7 +395,7 @@ export default function TransferEditModal({
                             <div key={`dropdown-${index}`} className="flex items-center gap-2">
                                 <Select
                                     className="w-full"
-                                    placeholder="Select asset for transfer"
+                                    placeholder="Select Asset(s) for Transfer"
                                     options={assets
                                         .filter((asset) => !data.selected_assets.includes(asset.id))
                                         .map((asset) => ({

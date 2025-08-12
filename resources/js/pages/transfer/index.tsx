@@ -13,8 +13,7 @@ import { type TransferFilters } from '@/components/filters/TransferFilterModal';
 import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
 import TransferSortDropdown, { type SortKey, type SortDir } from '@/components/filters/TransferSortDropdown';
 
-import { Transfer, statusVariantMap, formatDate, formatStatusLabel } from '@/types/transfer';
-import { InventoryList } from '@/types/inventory-list';
+import { Transfer, InventoryList, statusVariantMap, formatDate, formatStatusLabel } from '@/types/custom-index';
 
 import { TransferPageProps } from '@/types/page-props';
 import TransferAddModal from './TransferAddModal';
@@ -119,17 +118,30 @@ export default function TransferIndex({
     );
 
     const sortedTransfers = useMemo(() => {
-    const get = sortValue[sortKey];
-    const dir = sortDir === 'asc' ? 1 : -1;
-    return [...filteredTransfers].sort((a, b) => {
-        const d = get(a) - get(b);
-        return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
-    });
-    }, [filteredTransfers, sortKey, sortDir, sortValue]);
+        const get = sortValue[sortKey];
+        const dir = sortDir === 'asc' ? 1 : -1;
+        return [...filteredTransfers].sort((a, b) => {
+            const d = get(a) - get(b);
+            return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
+        });
+    }, [
+        filteredTransfers, 
+        sortKey, 
+        sortDir, 
+        sortValue
+    ]);
 
     useEffect(() => {
         setPage(1);
-    }, [search, selected_status, selected_building, selected_receiving_building, selected_org, sortKey, sortDir]);
+    }, [
+        search, 
+        selected_status, 
+        selected_building, 
+        selected_receiving_building, 
+        selected_org, 
+        sortKey, 
+        sortDir
+    ]);
 
     const start = (page - 1) * page_size;
     const page_items = sortedTransfers.slice(start, start + page_size);

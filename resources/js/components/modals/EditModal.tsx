@@ -28,37 +28,31 @@ const EditModal: React.FC<EditModalProps> = ({
 }) => {
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
-            <form onSubmit={onSubmit}>
-                <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
-                    <DialogHeader>
-                        <DialogTitle>{title}</DialogTitle>
-                    </DialogHeader>
+            <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
 
-                    <div className="grid grid-cols-2 gap-4 py-4 text-sm">
-                        {children}
-                    </div>
+                <form onSubmit={onSubmit} className="grid grid-cols-2 gap-4 py-4 text-sm">
+                    {children}
 
-                    <DialogFooter>
+                    <DialogFooter className="col-span-2">
                         <DialogClose asChild>
-                            <Button 
-                                variant="destructive" 
-                                type="button" 
+                            <Button
+                                variant="destructive"
+                                type="button"
                                 onClick={onClose}
-                                className='cursor-pointer'
+                                className="cursor-pointer"
                             >
                                 Cancel
                             </Button>
                         </DialogClose>
-                        <Button 
-                            type="submit"
-                            disabled={processing}
-                            className='cursor-pointer'
-                        >
+                        <Button type="submit" disabled={processing} className="cursor-pointer">
                             Save Changes
                         </Button>
                     </DialogFooter>
-                </DialogContent>
-            </form>
+                </form>
+            </DialogContent>
         </Dialog>
     );
 };

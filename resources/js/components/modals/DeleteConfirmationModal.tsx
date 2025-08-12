@@ -41,13 +41,16 @@ const DeleteConfirmationModal = ({
                 <DialogFooter>
                     <div className="flex w-full justify-center gap-4">
                         <DialogClose asChild>
-                            <Button variant="outline" className="px-6">
+                            <Button 
+                                variant="outline" 
+                                className="px-6 cursor-pointer"
+                            >
                                 Cancel
                             </Button>
                         </DialogClose>
                         <Button
                             variant="destructive"
-                            className="px-6"
+                            className="px-6 cursor-pointer"
                             onClick={onConfirm}
                         >
                             Delete

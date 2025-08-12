@@ -5,6 +5,8 @@ use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
+use App\Http\Controllers\TurnoverDisposalController;
+use App\Models\TurnoverDisposal;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -73,12 +75,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // INVENTORY-SCHEDULING
 
     // TRANSFERS
-    Route::get('/transfers', [TransferController::class, 'index'])->name('transfer.index');
-    Route::post('/transfers', [TransferController::class, 'store'])->name('transfer.store');
+    Route::get('/transfers', [TransferController::class, 'index'])->name('transfers.index');
+    Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
     Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
     Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
     Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfer.destroy');
-    
+
+    // TURNOVER-DISPOSAL
+    Route::get('/turnover-disposal', [TurnoverDisposalController::class, 'index'])->name('turnover-disposal.index');
+    Route::post('/turnover-disposal', [TurnoverDisposalController::class, 'store'])->name('turnover-disposal.store');
+    Route::put('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'update'])->name('turnover-disposal.update');
+    Route::get('/turnover-disposal/{turnoverDisposal}/view', [TurnoverDisposalController::class, 'show'])->name('turnover-disposal.view');
+    Route::delete('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'destroy'])->name('turnover-disposal.destroy');
+
     // INSTITUTIONAL SETUP - BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
     
