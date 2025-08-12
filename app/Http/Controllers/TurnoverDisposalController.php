@@ -131,7 +131,7 @@ class TurnoverDisposalController extends Controller
             'turnoverDisposalAssets.assets.assetModel.category',
         ]);
 
-        return Inertia::render('turnover-disposals/index', array_merge(
+        return Inertia::render('turnover-disposal/index', array_merge(
             $this->indexProps(),                 
             ['viewing' => $turnoverDisposal],
         ));

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState, useMemo } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
@@ -34,12 +34,19 @@ const turnoverSortOptions = [
 
 type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
 
+type PageProps = TurnoverDisposalPageProps & {
+    viewing?: TurnoverDisposals; // set in Controller@show
+};
+
 export default function TurnoverDisposalsIndex({
     turnoverDisposals = [],
     assets= [],
     assignedBy,
     unitOrDepartments = [],
 }: TurnoverDisposalPageProps ) {
+
+    const { props } = usePage<PageProps>();
+    const viewing = props.viewing;
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [turnoverDisposalToDelete, setTurnoverDisposalToDelete] = useState<TurnoverDisposals | null>(null);
@@ -61,10 +68,21 @@ export default function TurnoverDisposalsIndex({
         setShowViewTurnoverDisposals(true);
     };
 
+    useEffect(() => {
+        if (!viewing) return;
+        openViewTurnoverDisposal(viewing);
+    }, [
+        viewing
+    ]);
+
     const closeViewTurnoverDisposal = () => {
         setShowViewTurnoverDisposals(false);
         setSelectedTurnoverDisposals(null);
         setSelectedTurnoverDisposalAssets([]);
+
+        if (/\/turnover-disposal\/\d+\/view$/.test(window.location.pathname)) {
+            history.back();
+        }
     };
 
     const [rawSearch, setRawSearch] = useState('');
@@ -294,7 +312,7 @@ export default function TurnoverDisposalsIndex({
                                             >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
-                                            <Button 
+                                            {/* <Button 
                                                 variant="ghost" 
                                                 size="icon"
                                                 className="cursor-pointer"
@@ -303,7 +321,20 @@ export default function TurnoverDisposalsIndex({
                                                 }
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Button> */}
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                asChild 
+                                                className="cursor-pointer">
+                                                <Link 
+                                                    href={`/turnover-disposal/${turnoverDisposals.id}/view`} 
+                                                    preserveScroll
+                                                >
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
                                             </Button>
+
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -356,7 +387,7 @@ export default function TurnoverDisposalsIndex({
                 onCancel={() => setShowDeleteModal(false)}
                 onConfirm={() => {
                     if (turnoverDisposalToDelete) {
-                        router.delete(route('turnover-disposal.destroy', turnoverDisposalToDelete.id), {
+                        router.delete(`/turnover-disposal/${turnoverDisposalToDelete.id}`, {
                             preserveScroll: true,
                             onSuccess: () => {
                                 setShowDeleteModal(false);

@@ -129,7 +129,7 @@ export default function TurnoverDisposalViewModal({
             </div>
             
             {/* Assets */}
-            <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+            <div className="mt-4 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                 <table className="w-full text-sm text-center">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
@@ -160,14 +160,25 @@ export default function TurnoverDisposalViewModal({
                 )}
             </div> */}
 
+            <div className="h-2" />
+
+            {/* Description */}
+            <div className="flex justify-between items-start mb-1 mt-1">
+                <h4 className="text-sm font-semibold text-gray-800">Description:</h4>
+                <p className="text-sm font-medium text-gray-800">
+                    <strong>Total Assets:</strong> {assets.length}
+                </p>
+            </div>
+
+            {turnoverDisposal.description && (
+                <p className="text-sm italic text-blue-700 mt-2 w-200 ml-15">{turnoverDisposal.description?.trim() || '—'}</p>
+            )}
+
             {/* Remarks */}
             <div className="h-4" />
 
             <div className="flex justify-between items-start mb-1 mt-1">
                 <h4 className="text-sm font-semibold text-gray-800">Remarks:</h4>
-                <p className="text-sm font-medium text-gray-800">
-                    <strong>Total Assets:</strong> {assets.length}
-                </p>
             </div>
 
             {turnoverDisposal.remarks && (
@@ -177,7 +188,7 @@ export default function TurnoverDisposalViewModal({
             <div className="h-4" />
 
             {/* Signatures */}
-            <div className="grid grid-cols-2 gap-x-5 gap-y-8 mt-5 text-sm mb-8">
+            <div className="grid grid-cols-2 gap-x-5 gap-y-8 mt-2 text-sm mb-8">
                 {(turnoverDisposal.personnel_in_charge) && (
                     <div className="text-center">
                         <p className="font-semibold mb-8">Personnel In Charge:</p>
