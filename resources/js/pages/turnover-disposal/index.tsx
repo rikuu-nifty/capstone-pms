@@ -233,10 +233,10 @@ export default function TurnoverDisposalsIndex({
                                             <Button 
                                                 variant="ghost" 
                                                 size="icon"
-                                                // onClick={() => {
-                                                //     setTransferToDelete(transfer);
-                                                //     setShowDeleteModal(true);
-                                                // }}
+                                                onClick={() => {
+                                                    setTurnoverDisposalToDelete(turnoverDisposals);
+                                                    setShowDeleteModal(true);
+                                                }}
                                                 className="cursor-pointer"
                                             >
                                                 <Trash2 className="h-4 w-4 text-destructive" />

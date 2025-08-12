@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-// use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class TurnoverDisposal extends Model
 {
-    // use SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'issuing_office_id',
@@ -100,8 +101,8 @@ class TurnoverDisposal extends Model
                 ->count();
 
             ($toRemoveCount <= 50)
-            ? $this->removeUnlinkedAssetsWithAudit($assetIds) //if less 
-            : $this->removeUnlinkedAssetsBulk($assetIds); // more than 50 records
+            ? $this->removeUnlinkedAssetsWithAudit($assetIds)
+            : $this->removeUnlinkedAssetsBulk($assetIds);
 
             $this->addAssetsByIds($assetIds);
             $this->archiveAssetsIfDisposal($assetIds);
@@ -144,5 +145,20 @@ class TurnoverDisposal extends Model
         }
 
         InventoryList::whereIn('id', $assetIds)->update(['status' => 'archived']);
+    }
+
+    public function softDeleteRelatedAssets(): void
+    {
+        $count = $this->turnoverDisposalAssets()->count();
+
+        if ($count <= 50) {
+            $this->turnoverDisposalAssets()
+                ->get()
+                ->each
+                ->delete();
+        } else {
+            $this->turnoverDisposalAssets()
+                ->update(['deleted_at' => Carbon::now()]);
+        }
     }
 }

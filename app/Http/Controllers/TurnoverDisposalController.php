@@ -11,6 +11,7 @@ use App\Models\InventoryList;
 use App\Models\TurnoverDisposal;
 use App\Models\UnitOrDepartment;
 use App\Models\TurnoverDisposalAsset;
+use Illuminate\Support\Facades\DB;
 
 class TurnoverDisposalController extends Controller
 {
@@ -141,7 +142,11 @@ class TurnoverDisposalController extends Controller
      */
     public function destroy(TurnoverDisposal $turnoverDisposal)
     {
-        $turnoverDisposal->delete();
-        return redirect()->route('turnover-disposal.index')->with('success', 'Record deleted successfully');
+        $td = DB::transaction(function () use ($turnoverDisposal) {
+            $turnoverDisposal->softDeleteRelatedAssets();
+            $turnoverDisposal->delete();
+        });
+
+        return redirect()->route('turnover-disposal.index')->with('success', "Record deleted successfully");
     }
 }
