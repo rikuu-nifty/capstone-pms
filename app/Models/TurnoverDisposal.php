@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+// use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TurnoverDisposal extends Model
 {
+    // use SoftDeletes;
+
     protected $fillable = [
         'issuing_office_id',
         'type',

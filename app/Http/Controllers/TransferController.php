@@ -140,6 +140,7 @@ class TransferController extends Controller
         //         ]);
         //     }
         // }
+        
 
         return back()->with('success', "Transfer #{$transfer->id} created successfully.");
     }
@@ -188,7 +189,7 @@ class TransferController extends Controller
         })->values();
 
 
-        return Inertia::render('transfer/view', [
+        return Inertia::render('transfer/TransferViewModal', [
             'transfer' => $array,
             'assets' => $assets,
         ]);

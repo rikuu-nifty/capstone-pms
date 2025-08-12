@@ -14,42 +14,45 @@ use App\Models\TurnoverDisposalAsset;
 
 class TurnoverDisposalController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    private function indexProps(): array
     {
         $assignedBy = Auth::user();
+
         $unitOrDepartments = UnitOrDepartment::all();
 
         $turnoverDisposals = TurnoverDisposal::with([
-            'turnoverDisposalAssets',
+            'turnoverDisposalAssets.assets.assetModel.category',
             'issuingOffice',
             'receivingOffice',
         ])
             ->withCount('turnoverDisposalAssets as asset_count')
             ->latest()
-            ->get()
-        ;
+            ->get();
 
         $turnoverDisposalAssets = TurnoverDisposalAsset::with([
             'assets.assetModel.category',
         ])
-        ->whereHas('turnoverDisposal', function ($query) {
-            $query->where('status', '!=', 'disposed');
-        })
-        ->get();
-
-        $assets = InventoryList::with(['assetModel.category'])
+            ->whereHas('turnoverDisposal', function ($q) {
+                $q->where('status', '!=', 'disposed');
+            })
             ->get();
 
-        return Inertia::render('turnover-disposal/index', [
-            'turnoverDisposals' => $turnoverDisposals,
+        $assets = InventoryList::with(['assetModel.category'])->get();
+
+        return [
+            'turnoverDisposals'      => $turnoverDisposals,
             'turnoverDisposalAssets' => $turnoverDisposalAssets,
-            'assets' => $assets,
-            'unitOrDepartments' => $unitOrDepartments,
-            'assignedBy' => $assignedBy,         
-        ]);
+            'assets'                 => $assets,
+            'unitOrDepartments'      => $unitOrDepartments,
+            'assignedBy'             => $assignedBy,
+        ];
+}
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        return Inertia::render('turnover-disposal/index', $this->indexProps());
     }
 
     /**
@@ -87,14 +90,6 @@ class TurnoverDisposalController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, TurnoverDisposal $turnoverDisposal)
@@ -127,11 +122,26 @@ class TurnoverDisposalController extends Controller
         return back()->with('success', "Record #{$td->id} has been updated.");
     }
 
+    public function show(TurnoverDisposal $turnoverDisposal)
+    {
+        $turnoverDisposal->load([
+            'issuingOffice',
+            'receivingOffice',
+            'turnoverDisposalAssets.assets.assetModel.category',
+        ]);
+
+        return Inertia::render('turnover-disposals/index', array_merge(
+            $this->indexProps(),                 
+            ['viewing' => $turnoverDisposal],
+        ));
+    }
+
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(TurnoverDisposal $turnoverDisposal)
     {
-        //
+        $turnoverDisposal->delete();
+        return redirect()->route('turnover-disposal.index')->with('success', 'Record deleted successfully');
     }
 }

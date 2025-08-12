@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
 // import { Head, router, usePage } from '@inertiajs/react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
@@ -18,11 +18,13 @@ import { TurnoverDisposalPageProps } from '@/types/page-props';
 import { formatDate, formatStatusLabel, statusVariantMap, formatEnums, TurnoverDisposals } from '@/types/custom-index';
 import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
 import TurnoverDisposalEditModal from './TurnoverDisposalEditModal';
+import TurnoverDisposalViewModal, { InventoryListWithSnake } from './TurnoverDisposalViewModal';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Turnover and Disposals',
-        href: '/turnover-disposals',
+        href: '/turnover-disposal',
     },
 ];
 
@@ -73,11 +75,31 @@ export default function TurnoverDisposalsIndex({
         search,
     ]);
 
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [turnoverDisposalToDelete, setTurnoverDisposalToDelete] = useState<TurnoverDisposals | null>(null);
+
     const [showAddTurnoverDisposals, setShowAddTurnoverDisposals] = useState(false);
     const [showEditTurnoverDisposals, setShowEditTurnoverDisposals] = useState(false);
+    const [showViewTurnoverDisposals, setShowViewTurnoverDisposals] = useState(false);
 
     const [selectedTurnoverDisposals, setSelectedTurnoverDisposals] = useState<TurnoverDisposals | null>(null);
-    // const [selectedAssets, setSelectedAssets] = useState<InventoryList[]>([]);
+    const [selectedTurnoverDisposalAssets, setSelectedTurnoverDisposalAssets] = useState<InventoryListWithSnake[]>([]);
+
+    const openViewTurnoverDisposal = (td: TurnoverDisposals) => {
+        setSelectedTurnoverDisposals(td);
+        setSelectedTurnoverDisposalAssets(
+            (td.turnover_disposal_assets ?? [])
+            .map(ta => ta.assets)
+            .filter(Boolean) as InventoryListWithSnake[]
+        );
+        setShowViewTurnoverDisposals(true);
+    };
+
+    const closeViewTurnoverDisposal = () => {
+        setShowViewTurnoverDisposals(false);
+        setSelectedTurnoverDisposals(null);
+        setSelectedTurnoverDisposalAssets([]);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -223,9 +245,9 @@ export default function TurnoverDisposalsIndex({
                                                 variant="ghost" 
                                                 size="icon"
                                                 className="cursor-pointer"
-                                                // onClick={() => 
-                                                //     openViewTransfer(transfer)
-                                                // }
+                                                onClick={() => 
+                                                    openViewTurnoverDisposal(turnoverDisposals)
+                                                }
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button>
@@ -266,6 +288,31 @@ export default function TurnoverDisposalsIndex({
                     assets={assets}
                 />
             )}
+
+            {selectedTurnoverDisposals && (
+                <TurnoverDisposalViewModal
+                    open={showViewTurnoverDisposals}
+                    onClose={closeViewTurnoverDisposal}
+                    turnoverDisposal={selectedTurnoverDisposals}
+                    assets={selectedTurnoverDisposalAssets}
+                />
+            )}
+
+            <DeleteConfirmationModal
+                show={showDeleteModal}
+                onCancel={() => setShowDeleteModal(false)}
+                onConfirm={() => {
+                    if (turnoverDisposalToDelete) {
+                        router.delete(route('turnover-disposal.destroy', turnoverDisposalToDelete.id), {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDeleteModal(false);
+                                setTurnoverDisposalToDelete(null);
+                            },
+                        });
+                    }
+                }}
+            />
         </AppLayout>
     );
 }
