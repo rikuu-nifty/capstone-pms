@@ -4,16 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
-// import { Head, router, usePage } from '@inertiajs/react';
 import { Head, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
-// import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
-// import TurnoverDisposalFilterDropdown from '@/components/filters/TurnoverDisposalFilterDropdown';
+import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
+import TurnoverDisposalFilterDropdown, { type TurnoverDisposalFilters } from '@/components/filters/TurnoverDisposalFilterDropdown';
 
-// import { TurnoverDisposalPageProps, TurnoverDisposalFilters } from '@/types/page-props';
 import { TurnoverDisposalPageProps } from '@/types/page-props';
 import { formatDate, formatStatusLabel, statusVariantMap, formatEnums, TurnoverDisposals } from '@/types/custom-index';
 import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
@@ -28,52 +26,20 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// const turnoverSortOptions = [
-//     { value: 'id', label: 'Record ID' },
-//     { value: 'document_date', label: 'Document Date' },
-//     { value: 'asset_count', label: 'Asset Count' },
-// ] as const;
+const turnoverSortOptions = [
+    { value: 'id', label: 'Record ID' },
+    { value: 'document_date', label: 'Document Date' },
+    { value: 'asset_count', label: 'Asset Count' },
+] as const;
 
-// type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
+type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
 
 export default function TurnoverDisposalsIndex({
-    turnoverDisposals,
-    // turnoverDisposalAssets,
-    assets,
+    turnoverDisposals = [],
+    assets= [],
     assignedBy,
-    unitOrDepartments,
-    
-}: TurnoverDisposalPageProps) {
-
-    // const [selected_status, setSelected_status] = useState('');
-    // const [selected_type, setSelected_type] = useState('');
-    // const [selected_issuing_office, setSelected_issuing_office] = useState('');
-    // const [selected_receiving_office, setSelected_receiving_office] = useState('');
-    
-    // const [sortKey, setSortKey] = useState<SortKey>('id');
-    // const [sortDir, setSortDir] = useState<SortDir>('desc');
-
-    const [page, setPage] = useState(1);
-    const page_size = 20;
-
-    const start = (page - 1) * page_size;
-    const page_items = turnoverDisposals.slice(start, start + page_size);
-
-    const [rawSearch, setRawSearch] = useState('');
-    const search = useDebouncedValue(rawSearch, 200);
-
-    // useEffect(() => setPage(1), [
-    //     selected_status, 
-    //     selected_type, 
-    //     selected_issuing_office, 
-    //     selected_receiving_office
-    // ]);
-
-    useEffect(() => {
-        setPage(1);
-    }, [
-        search,
-    ]);
+    unitOrDepartments = [],
+}: TurnoverDisposalPageProps ) {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [turnoverDisposalToDelete, setTurnoverDisposalToDelete] = useState<TurnoverDisposals | null>(null);
@@ -101,6 +67,99 @@ export default function TurnoverDisposalsIndex({
         setSelectedTurnoverDisposalAssets([]);
     };
 
+    const [rawSearch, setRawSearch] = useState('');
+    const search = useDebouncedValue(rawSearch, 200);
+
+    const [selected_status, setSelected_status] = useState('');
+    const [selected_type, setSelected_type] = useState('');
+    const [selected_issuing_office, setSelected_issuing_office] = useState('');
+
+    const clearFilters = () => {
+        setSelected_status('');
+        setSelected_type('');
+        setSelected_issuing_office('');
+    };
+    
+    const applyFilters = (f: TurnoverDisposalFilters) => {
+        setSelected_status(f.status);
+        setSelected_type(f.type);
+        setSelected_issuing_office(f.issuing_office_id);
+    };
+
+    const [sortKey, setSortKey] = useState<TurnoverSortKey>('id');
+    const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+    const [page, setPage] = useState(1);
+    const page_size = 20;
+
+    useEffect(() => { 
+        setPage(1); 
+    }, [
+        search,
+        selected_status,
+        selected_type,
+        selected_issuing_office,
+        sortKey,
+        sortDir,
+    ]);
+
+    const filteredTurnoverDisposals = useMemo(() => {
+        const term = search.trim().toLowerCase();
+
+        return turnoverDisposals.filter((td) => {
+        const haystack = `
+            ${td.issuing_office?.code ?? ''}
+            ${td.status ?? ''}
+            ${td.type ?? ''}
+            ${td.description ?? ''}
+        `.toLowerCase();
+
+        const matchesSearch = !term || haystack.includes(term);
+
+        const statusValue = (td.status || '').toString().toLowerCase();
+        const typeValue = (td.type || '').toString().toLowerCase();
+        const issuingCode = td.issuing_office?.code ?? '';
+
+        const matchesStatus = !selected_status || statusValue === selected_status;
+        const matchesType = !selected_type || typeValue === selected_type;
+        const matchesIssuing = !selected_issuing_office || issuingCode === selected_issuing_office;
+
+        return matchesSearch && matchesStatus && matchesType && matchesIssuing;
+        });
+    }, [
+        turnoverDisposals,
+        search,
+        selected_status,
+        selected_type,
+        selected_issuing_office,
+    ]);
+
+    const sortValue = useMemo<Record<TurnoverSortKey, (td: TurnoverDisposals) => number>>(() => (
+        {
+            id: (td) => Number(td.id) || 0,
+            document_date: (td) => Date.parse(td.document_date ?? '') || 0,
+            asset_count: (td) => Number(td.asset_count) || 0,
+        }),
+        []
+    );
+
+    const sortedTurnoverDisposals = useMemo(() => {
+        const get = sortValue[sortKey];
+        const dir = sortDir === 'asc' ? 1 : -1;
+        return [...filteredTurnoverDisposals].sort((a, b) => {
+        const d = get(a) - get(b);
+        return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
+        });
+    }, [
+        filteredTurnoverDisposals, 
+        sortKey, 
+        sortDir, 
+        sortValue
+    ]);
+
+    const start = (page - 1) * page_size;
+    const page_items = sortedTurnoverDisposals.slice(start, start + page_size);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title = "Turnover / Disposals" />
@@ -110,64 +169,58 @@ export default function TurnoverDisposalsIndex({
                     <div className="flex flex-col gap-2">
                         <h1 className="text-2xl font-semibold">Turnover/Disposals</h1>
                         <p className="text-sm text-muted-foreground">
-                            List of scheduled and completed turnover/disposal records.
+                            List of turnover/disposal records.
                         </p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-96">
                             <Input
                                 type="text"
-                                placeholder="Search by status or unit/dept..."
+                                placeholder="Search by status, type, or office..."
                                 value={rawSearch}
                                 onChange={(e) => setRawSearch(e.target.value)}
                                 className="max-w-xs"
                             />
                         </div>
 
-                    {/* <div className="text-xs text-muted-foreground">
-                        Showing {sortedTurnoverDisposals.length ? start + 1 : 0}–
-                        {Math.min(start + page_size, filteredTurnoverDisposals.length)} of{" "}
-                        {filteredTurnoverDisposals.length} filtered records
-                    </div> */}
+                        <div className="text-xs text-muted-foreground">
+                            Showing {sortedTurnoverDisposals.length ? start + 1 : 0}–
+                            {Math.min(start + page_size, filteredTurnoverDisposals.length)} of {filteredTurnoverDisposals.length} filtered records
+                        </div>
 
-                    {/* Active filter chips */}
-                    {/* <div className="flex flex-wrap gap-2 pt-1">
-                        {selected_status && <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>}
-                        {selected_building && <Badge variant="darkOutline">Current: {selected_building}</Badge>}
-                        {selected_receiving_building && <Badge variant="darkOutline">Receiving: {selected_receiving_building}</Badge>}
-                        {selected_org && <Badge variant="darkOutline">Unit/Dept: {selected_org}</Badge>}
-                        {(selected_status || selected_building || selected_receiving_building || selected_org) && (
-                            <Button 
-                                size="sm" 
-                                variant="destructive" 
-                                onClick={clearFilters}
-                                className="cursor-pointer"
-                            >
-                                Clear filters
-                            </Button>
-                        )}
-                    </div> */}
-                </div>
+                        {/* Active filter chips */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {selected_status && <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>}
+                            {selected_type && <Badge variant="darkOutline">Type: {formatEnums(selected_type)}</Badge>}
+                            {selected_issuing_office && <Badge variant="darkOutline">Issuing: {selected_issuing_office}</Badge>}
+
+                            {(selected_status || selected_type || selected_issuing_office) && (
+                                <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={clearFilters}
+                                    className="cursor-pointer"
+                                >
+                                    Clear filters
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                     
                     <div className="flex gap-2">
-                        {/* <Filter className="mr-1 h-4 w-4" /> Filter */}
+                        <SortDropdown<TurnoverSortKey>
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        options={turnoverSortOptions}
+                        onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+                    />
 
-                        {/* <SortDropdown<TurnoverSortKey>
-                            sortKey="document_date"
-                            sortDir="asc"
-                            options={turnoverSortOptions}
-                            onChange={(key, dir) => {
-                                console.log('Sorting turnover/disposals by', key, dir);
-                            }}
-                        /> */}
-
-                        {/* <TurnoverDisposalFilterDropdown
+                        <TurnoverDisposalFilterDropdown
                             onApply={applyFilters}
                             onClear={clearFilters}
                             selected_status={selected_status}
                             selected_type={selected_type}
                             selected_issuing_office={selected_issuing_office}
-                            selected_receiving_office={selected_receiving_office}
                             unitOrDepartments={unitOrDepartments}
-                        /> */}
+                        />
 
                         <Button
                             onClick={() => {

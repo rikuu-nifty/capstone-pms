@@ -282,7 +282,7 @@ export default function TurnoverDisposalAddModal({
                                 }
                                 noOptionsMessage={() =>
                                 data.issuing_office_id
-                                    ? 'No Assets Found for this Unit/Dept/Lab'
+                                    ? 'No Assets Available'
                                     : 'Select an Issuing Office first'
                                 }
                                 onChange={(opt) => {
