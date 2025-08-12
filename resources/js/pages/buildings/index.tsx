@@ -63,7 +63,7 @@ export default function BuildingIndex({
                     </Button>
                 </div>
 
-                <div className="rounded-lg overflow-x-auto border">
+                <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
