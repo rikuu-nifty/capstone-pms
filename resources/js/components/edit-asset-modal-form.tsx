@@ -66,7 +66,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
             <form onSubmit={handleSubmit}>
                 <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
                     <DialogHeader>
-                        <DialogTitle>Update Asset</DialogTitle>
+                        <DialogTitle>Update Asset - Asset Record #{asset.id}</DialogTitle>
                     </DialogHeader>
 
                     <div className="grid grid-cols-2 gap-4 py-4">

@@ -50,4 +50,10 @@ class InventoryList extends Model
         return $this->hasMany(TurnoverDisposalAsset::class, 'asset_id');
     }
 
+    
+    public function offCampusAsset() // NEED LAGAY
+    {
+        return $this->hasMany(offCampusAsset::class, 'asset_id');
+    }
+
 }

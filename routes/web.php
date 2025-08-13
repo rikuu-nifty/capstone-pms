@@ -50,6 +50,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('calendar');
     })->name('calendar');
 
+    // REMOVE PUT PANGET DAW SABI NI MARK NOT RECOMMEND
+
     // Route::resource('inventory-list', InventoryListController::class); // DEFAULT ROUTE
     // Route::resource('inventory-scheduling', InventorySchedulingController::class); // DEFAULT ROUTE
     // Route::resource('buildings', BuildingController::class);
