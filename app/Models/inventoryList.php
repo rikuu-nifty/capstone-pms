@@ -27,7 +27,7 @@ class InventoryList extends Model
     // 🔗 Relationships and eto na yun FK Relationships
     public function assetModel()
     {
-        return $this->belongsTo(AssetModel::class);
+        return $this->belongsTo(AssetModel::class, 'asset_model_id');
     }
 
     public function unitOrDepartment()

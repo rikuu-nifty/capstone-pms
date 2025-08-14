@@ -20,12 +20,12 @@ class AssetModel extends Model
     //  Relationship: AssetModel belongs to a Category
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     // ✅ (Optional) Relationship: AssetModel has many InventoryList entries
     public function inventoryLists()
     {
-        return $this->hasMany(InventoryList::class);
+        return $this->hasMany(InventoryList::class, 'asset_model_id');
     }
 }

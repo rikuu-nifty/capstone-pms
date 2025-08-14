@@ -1,21 +1,40 @@
 <?php
 
 namespace App\Http\Controllers;
-// use App\Http\Requests\InventoryListAddNewAssetFormRequest;
+
 use Inertia\Inertia;
-use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+
+use App\Models\Category;
+use App\Models\AssetModel;
 
 
 class CategoryController extends Controller
 {
+
+    private function indexProps(): array
+    {
+        // $createdBy = Auth::user();
+        // $updatedBy = Auth::user();
+        
+        $categories = Category::withModelsAndCounts()->get();
+        $totals = Category::getTotals();
+
+        return [
+            // 'createdBy'     =>  $createdBy,
+            'categories' => $categories,
+            'totals' => $totals
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        return Inertia::render('categories/index', $this->indexProps());
     }
 
     /**
