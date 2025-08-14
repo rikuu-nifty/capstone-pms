@@ -32,7 +32,7 @@ export default function TurnoverDisposalEditModal({
     assets,
 }: TurnoverDisposalEditModalProps) {
 
-    const { data, setData, put, processing, errors, reset, clearErrors } = useForm<TurnoverDisposalFormData>({
+    const { data, setData, put, processing, errors, clearErrors } = useForm<TurnoverDisposalFormData>({
         issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
         type: turnoverDisposal.type,
         receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
@@ -69,7 +69,7 @@ export default function TurnoverDisposalEditModal({
     // ]);
 
     useEffect(() => {
-        if (show) {
+        if (!show) 
             setData({
                issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
                type: turnoverDisposal.type,
@@ -85,11 +85,10 @@ export default function TurnoverDisposalEditModal({
             });
             clearErrors();
             setShowAssetDropdown([true]);
-        }
-    }, [
+        }, [
         show,
         clearErrors,
-        reset, //remove this later
+        // reset,
         setData,
         turnoverDisposal,
     ]);

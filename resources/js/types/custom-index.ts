@@ -16,13 +16,17 @@ export const formatDate = (dateStr?: string) =>
     !dateStr ? '' : new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 export const formatDateLong = (d?: string | null) => {
-        if (!d) return '—';
-        const dt = new Date(d);
-        return isNaN(dt.getTime()) ? d : dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    };
+    if (!d) return '—';
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? d : dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
 
 export const formatStatusLabel = (status: string) =>
-     status.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+    status.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+
+export function formatLabel(v: string): string {
+    return v.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
 
 export const formatEnums = (value?: string) => {
     if (!value) return '';

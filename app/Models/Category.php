@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
+    use SoftDeletes;
+    
     protected $fillable = [
         'name',
         'description',
@@ -21,7 +25,7 @@ class Category extends Model
 
     public function assets(): HasManyThrough
     {
-        return $this-> hasManyThrough(
+        return $this->hasManyThrough(
             InventoryList::class, //final model
             AssetModel::class, //through model
             'category_id', //FK on asset_models pointing to Category
@@ -34,17 +38,23 @@ class Category extends Model
     public function scopeWithModelsAndCounts($query)
     {
         return $query->with([
-                'assetModels' => function ($q) {
-                    $q->withCount('assets')
-                      ->orderBy('name')
-                      ->orderBy('model');
-                },
-            ])
-            ->withCount([
-                'assetModels as total_models',
-                'assets as total_assets',
-            ])
-            ->orderBy('name');
+            'assetModels' => function ($q) {
+                $q->with('category:id,name')
+                    ->withCount('assets')
+                    ->orderBy('brand')
+                    ->orderBy('model');
+            },
+        ])
+        ->withCount([
+            'assetModels as models_count',
+            'assets as assets_count',
+            'assetModels as brands_count' => function ($q) {
+                $q->select(DB::raw("COUNT(DISTINCT NULLIF(TRIM(brand), ''))"))
+                  ->whereNotNull('brand')
+                  ->where('brand', '<>', '');
+            },
+        ])
+        ->orderBy('id', 'asc');
     }
 
     public function scopeCategoryCounts($query)
@@ -57,6 +67,7 @@ class Category extends Model
             ]);
     }
 
+    //for future KPI totals overall
     public static function getTotals(): array
     {
         return [
@@ -64,6 +75,12 @@ class Category extends Model
             'asset_models'  => AssetModel::count(),
             'assets'        => InventoryList::count(),
         ];
+    }
+
+    //single row modal deep-link
+    public static function findForView(int $id): self
+    {
+        return static::withModelsAndCounts()->findOrFail($id);
     }
 
 }
