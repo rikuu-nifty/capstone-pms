@@ -15,7 +15,7 @@ return new class extends Migration
         $table->id();
 
         $table->string('brand', 255)->nullable();
-        $table->text('model')->nullable();
+        $table->string('model')->nullable();
 
         $table->unsignedBigInteger('category_id')->nullable();
         $table->foreign('category_id')
@@ -28,8 +28,8 @@ return new class extends Migration
         $table->timestamps();
         $table->softDeletes();
         
-        $table->index(['category_id', 'brand'], 'asset_models_category_id_brand_index');
-        //adds index to brand
+        $table->index(['category_id', 'deleted_at'], 'asset_models_category_deleted_idx');  //models_count per category + soft deletes
+        $table->index(['category_id', 'brand', 'model'], 'asset_models_cat_brand_model_idx'); //eager-loading + ORDER BY brand, model within a category
     });
 }
 
@@ -37,6 +37,8 @@ return new class extends Migration
     {
         Schema::table('asset_models', function (Blueprint $table) {
             $table->dropForeign(['category_id']);
+            $table->dropIndex('asset_models_cat_brand_model_idx');
+            $table->dropIndex('asset_models_category_deleted_idx');
         });
         
         Schema::dropIfExists('asset_models');

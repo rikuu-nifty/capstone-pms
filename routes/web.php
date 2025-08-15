@@ -82,7 +82,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
     Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
     Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
-    Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfer.destroy');
+    Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfers.destroy');
 
     // TURNOVER-DISPOSAL
     Route::get('/turnover-disposal', [TurnoverDisposalController::class, 'index'])->name('turnover-disposal.index');
