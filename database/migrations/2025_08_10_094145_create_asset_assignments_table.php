@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('asset_id')->references('id')->on('inventory_lists')->onDelete('cascade');
             $table->foreign('unit_or_department_id')->references('id')->on('unit_or_departments')->onDelete('cascade');

@@ -12,12 +12,12 @@ return new class extends Migration
    public function up(): void
 {
     Schema::create('asset_models', function (Blueprint $table) {
-        $table->id(); // Primary Key (auto-increment)
+        $table->id();
 
         $table->string('brand', 255)->nullable();
         $table->text('model')->nullable();
 
-        $table->unsignedBigInteger('category_id')->nullable(); // Define the column first 
+        $table->unsignedBigInteger('category_id')->nullable();
         $table->foreign('category_id')
               ->references('id')
               ->on('categories')
@@ -26,16 +26,20 @@ return new class extends Migration
         $table->enum('status', ['active', 'is_archived'])->default('active');
 
         $table->timestamps();
+        $table->softDeletes();
+        
+        $table->index(['category_id', 'brand'], 'asset_models_category_id_brand_index');
+        //adds index to brand
     });
 }
 
     public function down(): void
-{
+    {
         Schema::table('asset_models', function (Blueprint $table) {
-            $table->dropForeign(['category_id']); // Drop the FK first
+            $table->dropForeign(['category_id']);
         });
         
-        Schema::dropIfExists('asset_models'); // Then drop the table
-}
+        Schema::dropIfExists('asset_models');
+    }
 
 };

@@ -12,16 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('unit_or_departments', function (Blueprint $table) {
-            $table->id(); // Primary Key
+            $table->id();
 
             // $table->unsignedBigInteger('inventory_schedule_id'); // Will add FK later
 
             $table->string('name', 255);
             $table->string('code', 20);
             $table->text('description')->nullable();
-            // $table->string('unit_head', 255);
+            $table->string('unit_head', 255);
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

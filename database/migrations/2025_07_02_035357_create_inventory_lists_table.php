@@ -55,7 +55,8 @@ return new class extends Migration
             $table->timestamps();
             // $table->string('brand')->nullable(); ASSETMODEL Table
             // $table->string('unit_or_department')->nullable(); // Delete muna to dapat kasi tawagin yun fk na yun para siya yun lumabas UNIT_OR_DEPARTMENT Table
-            // $table->enum('status', ['active', 'archived'])->default('active'); // DONE
+            
+            $table->softDeletes();
         });
     }
 

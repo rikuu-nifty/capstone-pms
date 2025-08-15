@@ -24,6 +24,7 @@ return new class extends Migration
             $table->text('remarks')->nullable(); //use for ongoing notes or updates
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('issuing_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
             $table->foreign('receiving_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
@@ -38,6 +39,7 @@ return new class extends Migration
         Schema::table('turnover_disposals', function (Blueprint $table) {
             $table->dropForeign(['issuing_office_id']);
             $table->dropForeign(['receiving_office_id']);
+            $table->dropSoftDeletes();
         });
 
         Schema::dropIfExists('turnover_disposals');

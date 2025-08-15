@@ -12,9 +12,9 @@
         public function up(): void
         {
             Schema::create('building_rooms', function (Blueprint $table) {
-                $table->id(); // Primary Key (auto-increment)
+                $table->id();
 
-                $table->unsignedBigInteger('building_id'); // FK to buildings.id
+                $table->unsignedBigInteger('building_id');
                 $table->foreign('building_id')
                     ->references('id')
                     ->on('buildings')
@@ -24,6 +24,7 @@
                 $table->text('description')->nullable();
 
                 $table->timestamps();
+                $table->softDeletes();
             });
         }
 
@@ -33,9 +34,9 @@
         public function down(): void
         {
             Schema::table('building_rooms', function (Blueprint $table) {
-                $table->dropForeign(['building_id']); // Drop the FK first
+                $table->dropForeign(['building_id']);
             });
 
-            Schema::dropIfExists('building_rooms');  // Then drop the table
+            Schema::dropIfExists('building_rooms');
         }
     };
