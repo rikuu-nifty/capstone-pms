@@ -31,9 +31,12 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         memorandum_no: asset.memorandum_no || '', // or asset.memorandum_no if available
         transfer_status: asset.transfer_status || '',
         description: asset.description || '',
-        category_id: asset.category_id ?? '',
 
-        asset_type: asset.asset_model?.category?.name || '', // or map from asset_model.category.name if needed
+        // ✅ ensure we have the FK even if only relation is loaded
+        category_id: (asset.category_id ?? asset.asset_model?.category_id ?? asset.asset_model?.category?.id ?? '') as number | '',
+
+        // ✅ read from the row, not from category name
+        asset_type: (asset.asset_type ?? '') as '' | 'fixed' | 'not_fixed',
         brand: asset.asset_model?.brand || '',
         asset_model_id: asset.asset_model?.id || '',
         unit_or_department_id: asset.unit_or_department?.id || '',
