@@ -5,6 +5,7 @@ use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TurnoverDisposalController;
 use App\Models\TurnoverDisposal;
 use Illuminate\Support\Facades\Route;
@@ -93,9 +94,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // INSTITUTIONAL SETUP - BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
     
-
-
-
+    // CATEGORIES
+    ROUTE::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::get('/categories/view/{category}', [CategoryController::class, 'show'])->name('categories.view');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
 });
 

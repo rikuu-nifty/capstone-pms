@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AssetModel extends Model
 {
-    // Optional: Define the table name explicitly if you used a different name
-    // protected $table = 'tbl_asset_model';
-
-    // Define fillable fields for mass assignment
+    use SoftDeletes;
+    
     protected $fillable = [
         'brand',
         'model',
@@ -20,12 +19,12 @@ class AssetModel extends Model
     //  Relationship: AssetModel belongs to a Category
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     // ✅ (Optional) Relationship: AssetModel has many InventoryList entries
-    public function inventoryLists()
+    public function assets()
     {
-        return $this->hasMany(InventoryList::class);
+        return $this->hasMany(InventoryList::class, 'asset_model_id');
     }
 }
