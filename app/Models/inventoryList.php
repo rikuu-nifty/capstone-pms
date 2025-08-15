@@ -14,6 +14,7 @@ class InventoryList extends Model
         'unit_or_department_id',
         'building_id',
         'building_room_id',
+        'category_id',
         'serial_no',
         'supplier',
         'unit_cost',
@@ -23,6 +24,7 @@ class InventoryList extends Model
         'transfer_status',
         'status',
     ];
+
 
     // 🔗 Relationships and eto na yun FK Relationships
     public function assetModel()
@@ -49,6 +51,11 @@ class InventoryList extends Model
     {
         return $this->hasMany(TurnoverDisposalAsset::class, 'asset_id');
     }
+
+    public function category()
+{
+    return $this->belongsTo(Category::class);
+}
 
     
     // public function offCampusAsset() // NEED LAGAY
