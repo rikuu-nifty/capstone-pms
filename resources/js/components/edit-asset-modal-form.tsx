@@ -65,7 +65,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <form onSubmit={handleSubmit}>
-                <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
+                <DialogContent className="max-h-[90vh] w-[98vw] max-w-none overflow-y-auto p-6 sm:w-[90vw] sm:max-w-none md:w-[85vw] lg:w-[80vw] xl:w-[1200px]">
                     <DialogHeader>
                         <DialogTitle>Update Asset - Asset Record #{asset.id}</DialogTitle>
                     </DialogHeader>
@@ -150,15 +150,31 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             <select
                                 className="w-full rounded-lg border p-2"
                                 value={form.asset_type}
-                                onChange={(e) => handleChange('asset_type', e.target.value)}
+                                onChange={(e) => handleChange('asset_type', e.target.value as 'fixed' | 'not_fixed' | '')}
+                            >
+                                <option value="">Select Asset Type</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="not_fixed">Not Fixed</option>
+                            </select>
+                            {/* {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>} */}
+                        </div>
+
+                        {/* Asset Category */}
+                        <div>
+                            <Label>Asset Category</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.category_id ?? ''} // FK on the row
+                                onChange={(e) => handleChange('category_id', e.target.value === '' ? '' : Number(e.target.value))}
                             >
                                 <option value="">Select Asset Category</option>
                                 {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.name}>
+                                    <option key={cat.id} value={cat.id}>
                                         {cat.name}
                                     </option>
                                 ))}
                             </select>
+                            {/* {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>} */}
                         </div>
 
                         {/* Asset Name */}
