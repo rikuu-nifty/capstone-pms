@@ -87,7 +87,7 @@ export default function CategoryViewModal({
                         <th className="px-3 py-2 text-center font-medium">Brand</th>
                         <th className="px-3 py-2 text-center font-medium">Model</th>
                         {/* <th className="px-3 py-2 text-center font-medium">Status</th> */}
-                        <th className="px-3 py-2 text-center font-medium">Total Related Assets</th>
+                        <th className="px-3 py-2 text-center font-medium">Asset Count</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -118,7 +118,7 @@ export default function CategoryViewModal({
                 {/* LEFT: brands + description */}
                 <div>
                     <p className="text-sm font-medium text-gray-800">
-                    <strong>Total Associated Brands:</strong> {category.brands_count}
+                    <strong>Distinct Brands:</strong> {category.brands_count}
                     </p>
 
                     <h4 className="mt-2 text-sm font-semibold text-gray-800">Description:</h4>
@@ -133,7 +133,7 @@ export default function CategoryViewModal({
                 {/* RIGHT: models (top-aligned) */}
                 <div className="text-right">
                     <p className="text-sm font-medium text-gray-800">
-                    <strong>Total Related Models:</strong> {category.models_count}
+                    <strong>Total Models:</strong> {category.models_count}
                     </p>
                 </div>
             </div>

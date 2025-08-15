@@ -17,10 +17,10 @@ class Category extends Model
         'description',
     ];
 
-    // A Category has many Asset Models
     public function assetModels(): HasMany
     {
-        return $this->hasMany(AssetModel::class, 'category_id');
+        return $this->hasMany(AssetModel::class, 'category_id')
+            ->whereNull('asset_models.deleted_at');
     }
 
     public function assets(): HasManyThrough
@@ -32,7 +32,9 @@ class Category extends Model
             'asset_model_id', //FK on inventory_lists pointing to asset_models
             'id', //local key on category
             'id', //local key on asset model
-        );
+        )
+        ->whereNull('asset_models.deleted_at')
+        ->whereNull('inventory_lists.deleted_at');;
     }
 
     public function scopeWithModelsAndCounts($query)
@@ -40,16 +42,16 @@ class Category extends Model
         return $query->with([
             'assetModels' => function ($q) {
                 $q->with('category:id,name')
-                    ->withCount('assets')
+                    ->withCount('assets') //assets per model
                     ->orderBy('brand')
                     ->orderBy('model');
             },
         ])
         ->withCount([
-            'assetModels as models_count',
-            'assets as assets_count',
-            'assetModels as brands_count' => function ($q) {
-                $q->select(DB::raw("COUNT(DISTINCT NULLIF(TRIM(brand), ''))"))
+            'assetModels as models_count',  //total models per category
+            'assets as assets_count',       //total assets per category (overall)
+            'assetModels as brands_count' => function ($q) {    //distinct brand count per category
+                $q->select(DB::raw("COUNT(DISTINCT LOWER(NULLIF(TRIM(brand), '')))"))
                   ->whereNotNull('brand')
                   ->where('brand', '<>', '');
             },
@@ -64,6 +66,11 @@ class Category extends Model
             ->withCount([
                 'assetModels as total_models',
                 'assets as total_assets',
+                'assetModels as total_brands' => function ($q) {
+                    $q->select(DB::raw("COUNT(DISTINCT LOWER(NULLIF(TRIM(brand), '')))"))
+                        ->whereNotNull('brand')
+                        ->where('brand', '<>', '');
+                }
             ]);
     }
 

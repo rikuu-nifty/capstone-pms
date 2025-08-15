@@ -11,14 +11,14 @@ import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import type { BreadcrumbItem } from '@/types';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
-import type { CategoriesPageProps, CategoryWithModels, CategoryFilters } from '@/types/category';
+import type { CategoriesPageProps, CategoryWithModels } from '@/types/category';
 import { formatStatusLabel } from '@/types/custom-index';
 
 import AddCategoryModal from './AddCategory';
 import EditCategoryModal from './EditCategory';
 import ViewCategoryModal from './ViewCategory';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
-import CategoryFilterDropdown from '@/components/filters/CategoryFilterDropdown';
+// import CategoryFilterDropdown from '@/components/filters/CategoryFilterDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -89,9 +89,9 @@ export default function CategoriesIndex({
         setSelected_status('');
     };
 
-    const applyFilters = (f: CategoryFilters) => {
-        setSelected_status(f.status);
-    };
+    // const applyFilters = (f: CategoryFilters) => {
+    //     setSelected_status(f.status);
+    // };
 
     const [sortKey, setSortKey] = useState<CategorySortKey>('id');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -99,8 +99,6 @@ export default function CategoriesIndex({
     // Pagination
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 10;
-
-    
 
     useEffect(() => { 
         setPage(1); 
@@ -213,11 +211,11 @@ export default function CategoriesIndex({
                             }}
                         />
 
-                        <CategoryFilterDropdown
+                        {/* <CategoryFilterDropdown
                             onApply={applyFilters}
                             onClear={clearFilters}
                             selected_status={selected_status}
-                        />
+                        /> */}
 
                         <Button 
                             onClick={() => {
@@ -238,9 +236,9 @@ export default function CategoriesIndex({
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Name</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
-                                <TableHead className="text-center">Associated Brands</TableHead>
-                                <TableHead className="text-center">Related Models</TableHead>
-                                <TableHead className="text-center">Total Assets</TableHead>
+                                <TableHead className="text-center">Distinct Brands</TableHead>
+                                <TableHead className="text-center">Total Models per Category</TableHead>
+                                <TableHead className="text-center">Asset Count</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
