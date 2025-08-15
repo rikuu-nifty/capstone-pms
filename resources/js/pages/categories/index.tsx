@@ -11,7 +11,7 @@ import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import type { BreadcrumbItem } from '@/types';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
-import type { CategoriesPageProps, CategoryWithModels, CategoryFilters, AssetModelRow } from '@/types/category';
+import type { CategoriesPageProps, CategoryWithModels, CategoryFilters } from '@/types/category';
 import { formatStatusLabel } from '@/types/custom-index';
 
 import AddCategoryModal from './AddCategory';
@@ -19,6 +19,7 @@ import EditCategoryModal from './EditCategory';
 import ViewCategoryModal from './ViewCategory';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import CategoryFilterDropdown from '@/components/filters/CategoryFilterDropdown';
+import Pagination, { PageInfo } from '@/components/Pagination';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { 
@@ -36,7 +37,6 @@ const categorySortOptions = [
 ] as const;
 
 type CategorySortKey = (typeof categorySortOptions)[number]['value'];
-type ModelSortKey = 'brand' | 'model' | 'assets_count' | 'status' | 'id';
 
 type PageProps = CategoriesPageProps & {
     viewing?: CategoryWithModels;
@@ -98,7 +98,9 @@ export default function CategoriesIndex({
 
     // Pagination
     const [page, setPage] = useState(1);
-    const page_size = 10;
+    const PAGE_SIZE = 10;
+
+    
 
     useEffect(() => { 
         setPage(1); 
@@ -154,177 +156,10 @@ export default function CategoriesIndex({
         sortDir
     ]);
 
-    const start = (page - 1) * page_size;
-    const page_items = sorted.slice(start, start + page_size);
-
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-    const [modelSearchRaw, setModelSearchRaw] = useState('');
-    const modelSearch = useDebouncedValue(modelSearchRaw, 200).trim().toLowerCase();
-    const [modelStatus, setModelStatus] = useState<string>(''); // '', 'active', 'is_archived', etc.
-    const [modelSortKey, setModelSortKey] = useState<ModelSortKey>('brand');
-    const [modelSortDir, setModelSortDir] = useState<SortDir>('asc');
-    const [modelPage, setModelPage] = useState(1);
-    const MODEL_PAGE_SIZE = 10;
 
-    // Flatten all models so the right table can render independently
-    const allModels: AssetModelRow[] = useMemo(() => {
-    return (categories ?? []).flatMap((c) => {
-        const list = (c.asset_models ?? []);
-        return list.map((m) => ({
-        id: Number(m.id),
-        brand: m.brand ?? null,
-        model: m.model ?? null,
-        status: m.status ?? null,
-        category_id: Number(c.id),
-        category_name: c.name ?? null,
-        assets_count: Number(m.assets_count ?? 0),
-        }));
-    });
-    }, [categories]);
-
-    // Reset model page when filters/sort change
-    useEffect(() => {
-        setModelPage(1);
-    }, [modelSearch, modelStatus, modelSortKey, modelSortDir, selectedCategoryId]);
-
-    const clearCategoryFilter = () => setSelectedCategoryId(null);
-
-    const filteredModels = useMemo(() => {
-    return allModels.filter((m) => {
-        if (selectedCategoryId && m.category_id !== selectedCategoryId) return false;
-        if (modelStatus && (m.status ?? '') !== modelStatus) return false;
-        if (!modelSearch) return true;
-
-        const hay = `${m.id} ${m.brand ?? ''} ${m.model ?? ''} ${m.category_name ?? ''}`.toLowerCase();
-        return hay.includes(modelSearch);
-    });
-    }, [allModels, selectedCategoryId, modelStatus, modelSearch]);
-
-    const sortedModels = useMemo(() => {
-    const dir = modelSortDir === 'asc' ? 1 : -1;
-    return [...filteredModels].sort((a, b) => {
-        const safe = (v: unknown) => (v ?? '') as string;
-
-        if (modelSortKey === 'assets_count') {
-        const d = (Number(a.assets_count) || 0) - (Number(b.assets_count) || 0);
-        return (d !== 0 ? d : (a.id - b.id)) * dir;
-        }
-        if (modelSortKey === 'id') {
-        const d = a.id - b.id;
-        return d * dir;
-        }
-        if (modelSortKey === 'status') {
-        const d = safe(a.status).localeCompare(safe(b.status));
-        return (d !== 0 ? d : (a.id - b.id)) * dir;
-        }
-        if (modelSortKey === 'brand') {
-        const d = safe(a.brand).localeCompare(safe(b.brand));
-        return (d !== 0 ? d : safe(a.model).localeCompare(safe(b.model))) * dir;
-        }
-        // 'model'
-        const d = safe(a.model).localeCompare(safe(b.model));
-        return (d !== 0 ? d : safe(a.brand).localeCompare(safe(b.brand))) * dir;
-    });
-    }, [filteredModels, modelSortKey, modelSortDir]);
-
-    const modelStart = (modelPage - 1) * MODEL_PAGE_SIZE;
-    const modelPageItems = sortedModels.slice(modelStart, modelStart + MODEL_PAGE_SIZE);
-
-    function Pager({
-    page,
-    total,
-    pageSize,
-    onChange,
-    }: {
-    page: number;
-    total: number;
-    pageSize: number;
-    onChange: (p: number) => void;
-    }) {
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    if (totalPages <= 1) return null;
-
-    const go = (p: number) => onChange(Math.min(totalPages, Math.max(1, p)));
-
-    // create a compact window of page numbers around the current page
-    const windowSize = 5;
-    const half = Math.floor(windowSize / 2);
-    let start = Math.max(1, page - half);
-    let end = Math.min(totalPages, start + windowSize - 1);
-    start = Math.max(1, end - windowSize + 1);
-
-    const nums = [];
-    for (let i = start; i <= end; i++) nums.push(i);
-
-    const Btn = ({
-        children,
-        disabled,
-        onClick,
-        isActive,
-        title,
-    }: {
-        children: React.ReactNode;
-        disabled?: boolean;
-        onClick?: () => void;
-        isActive?: boolean;
-        title?: string;
-    }) => (
-        <button
-        type="button"
-        title={title}
-        disabled={disabled}
-        onClick={onClick}
-        className={[
-            'px-3 py-1 rounded-md text-sm border',
-            isActive
-            ? 'bg-primary text-primary-foreground border-primary'
-            : 'bg-background hover:bg-muted border-input',
-            disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-        ].join(' ')}
-        >
-        {children}
-        </button>
-    );
-
-    return (
-        <div className="flex items-center gap-2">
-        <Btn title="First page" disabled={page === 1} onClick={() => go(1)}>
-            «
-        </Btn>
-        <Btn title="Previous page" disabled={page === 1} onClick={() => go(page - 1)}>
-            ‹
-        </Btn>
-
-        {start > 1 && (
-            <>
-            <Btn onClick={() => go(1)}>1</Btn>
-            {start > 2 && <span className="px-1">…</span>}
-            </>
-        )}
-
-        {nums.map((n) => (
-            <Btn key={n} isActive={n === page} onClick={() => go(n)}>
-            {n}
-            </Btn>
-        ))}
-
-        {end < totalPages && (
-            <>
-            {end < totalPages - 1 && <span className="px-1">…</span>}
-            <Btn onClick={() => go(totalPages)}>{totalPages}</Btn>
-            </>
-        )}
-
-        <Btn title="Next page" disabled={page === totalPages} onClick={() => go(page + 1)}>
-            ›
-        </Btn>
-        <Btn title="Last page" disabled={page === totalPages} onClick={() => go(totalPages)}>
-            »
-        </Btn>
-        </div>
-    );
-}
-
+    const start = (page - 1) * PAGE_SIZE;
+    const page_items = sorted.slice(start, start + PAGE_SIZE);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -435,47 +270,6 @@ export default function CategoriesIndex({
                                     <TableCell>{cat.brands_count}</TableCell>
                                     <TableCell>{cat.models_count}</TableCell>
                                     <TableCell>{cat.assets_count}</TableCell>
-                                    {/* <TableCell className="flex justify-center items-center gap-2">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                                setSelectedCategory(cat);
-                                                setShowEditCategory(true);
-                                            }}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                setCategoryToDelete(cat);
-                                                setShowDeleteCategoryModal(true);
-                                            }}
-                                            className="cursor-pointer"
-                                        >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            asChild
-                                            className="cursor-pointer"
-                                        >
-                                            <Link
-                                                href={`/categories/view/${cat.id}`}
-                                                preserveScroll
-                                            >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Link>
-                                            
-                                        </Button>
-                                        
-                                    </TableCell> */}
                                     <TableCell className="h-full">
                                         <div className="flex justify-center items-center gap-2 h-full">
                                             <Button 
@@ -528,11 +322,15 @@ export default function CategoriesIndex({
                         </TableBody>
                     </Table>
                 </div>
+                
                 <div className="flex items-center justify-between">
-                    <div className="text-xs text-muted-foreground">
-                        Showing {sorted.length ? start + 1 : 0} – {Math.min(start + page_size, sorted.length)} of <strong>{sorted.length}</strong> records
-                    </div>
-                    <Pager page={page} total={sorted.length} pageSize={page_size} onChange={setPage} />
+                    <PageInfo page={page} total={sorted.length} pageSize={PAGE_SIZE} label="categories" />
+                    <Pagination
+                        page={page}
+                        total={sorted.length}
+                        pageSize={PAGE_SIZE}
+                        onPageChange={setPage}
+                    />
                 </div>
             </div>
 
