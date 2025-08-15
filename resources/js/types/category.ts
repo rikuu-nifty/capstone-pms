@@ -33,3 +33,13 @@ export type CategoryFormData = {
 export type CategoryFilters = {
     status: string;
 };
+
+export type AssetModelRow = {
+    id: number;
+    brand: string | null;
+    model: string | null;
+    status: 'active' | 'is_archived';
+    category_id: number;
+    category_name?: string | null;
+    assets_count?: number; //from withCount ('assets')
+};

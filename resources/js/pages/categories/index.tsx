@@ -391,7 +391,7 @@ export default function CategoriesIndex({
             </div>
 
             {/* ASSET MODELS Table */}
-            <div className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-4 p-4 mt-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
