@@ -24,6 +24,7 @@ class InventoryListController extends Controller
     {
         $assets = InventoryList::with([
             'assetModel.category',
+            'category',
             'unitOrDepartment',
             'building',
             'buildingRoom'

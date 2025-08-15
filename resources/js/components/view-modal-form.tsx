@@ -1,5 +1,6 @@
 import type { Asset } from '@/pages/inventory-list/index';
 
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,14 +30,7 @@ export const ViewAssetModal = ({ asset, onClose }: ViewAssetModalProps) => {
   const formatLabel = (s?: string | null) =>
     s ? s.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ') : '—';
 
-  // ✅ prefer related category name; otherwise show the id or fallback
-  const categoryName =
-    asset.asset_model?.category?.name ??
-    (asset.category_id != null
-      ? String(asset.category_id)
-      : asset.asset_model?.category_id != null
-      ? String(asset.asset_model.category_id)
-      : '—');
+
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -60,7 +54,7 @@ export const ViewAssetModal = ({ asset, onClose }: ViewAssetModalProps) => {
 
             <div>
               <Label>Category</Label>
-              <Input value={categoryName} readOnly />
+              <Input value={asset.category_id ?? asset.asset_model?.category_id ?? '—' } readOnly />
             </div>
 
             <div>

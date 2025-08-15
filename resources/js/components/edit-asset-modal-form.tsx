@@ -33,7 +33,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         description: asset.description || '',
 
         // ✅ ensure we have the FK even if only relation is loaded
-        category_id: (asset.category_id ?? asset.asset_model?.category_id ?? asset.asset_model?.category?.id ?? '') as number | '',
+       category_id: (asset.category_id ?? asset.asset_model?.category_id ?? '') as number | '',
 
         // ✅ read from the row, not from category name
         asset_type: (asset.asset_type ?? '') as '' | 'fixed' | 'not_fixed',
@@ -169,7 +169,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             <select
                                 className="w-full rounded-lg border p-2"
                                 value={form.category_id ?? ''} // FK on the row
-                                onChange={(e) => handleChange('category_id', e.target.value === '' ? '' : Number(e.target.value))}
+                                onChange={(e) => handleChange('category_id', Number(e.target.value))}
                             >
                                 <option value="">Select Asset Category</option>
                                 {categories.map((cat) => (
