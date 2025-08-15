@@ -31,6 +31,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         memorandum_no: asset.memorandum_no || '', // or asset.memorandum_no if available
         transfer_status: asset.transfer_status || '',
         description: asset.description || '',
+        category_id: asset.category_id ?? '',
 
         asset_type: asset.asset_model?.category?.name || '', // or map from asset_model.category.name if needed
         brand: asset.asset_model?.brand || '',

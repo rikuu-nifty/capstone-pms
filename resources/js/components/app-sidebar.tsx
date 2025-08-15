@@ -48,7 +48,7 @@ const inventoryNavItems = [
 
 const assetsNavItems = [
     { title: 'Categories', href: '/categories', icon: Blocks },
-    { title: 'Models', href: '/models', icon: PackageCheck },
+    // { title: 'Models', href: '/models', icon: PackageCheck },
     { title: 'Assignment', href: '/assignment', icon: PackageCheck },
 ];
 

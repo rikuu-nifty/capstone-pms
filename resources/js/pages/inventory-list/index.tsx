@@ -1,11 +1,11 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
-import { EditAssetModalForm } from '@/components/edit-asset-modal-form'
-import { ViewAssetModal } from '@/components/view-modal-form';
+import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
 import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -59,8 +59,10 @@ export type Asset = {
     memorandum_no: number | string;
     asset_model: AssetModel | null;
     asset_name: string;
+    asset_type: string;
     description: string;
     status: 'active' | 'archived';
+    category_id: number;
     unit_or_department: UnitOrDepartment | null;
     building: Building | null;
     building_room?: BuildingRoom | null;
@@ -68,10 +70,8 @@ export type Asset = {
     supplier: string;
     unit_cost: number | string;
     date_purchased: string;
-    asset_type: string;
     quantity: number;
     transfer_status: string;
-
     brand: string;
 };
 
@@ -89,6 +89,7 @@ export type AssetFormData = {
     unit_cost: number | string; // can be number or string
     date_purchased: string;
     asset_type: string;
+    category_id: number | '';
     quantity: number | string; // can be number or string
     brand: string;
     transfer_status: string;
@@ -114,7 +115,7 @@ export default function InventoryListIndex({
         unit_or_department_id: '',
         building_room_id: '',
         date_purchased: '',
-        // category: '',
+        category_id: '',
         asset_type: '',
         asset_name: '',
         brand: '',
@@ -261,16 +262,17 @@ export default function InventoryListIndex({
                             {filteredData.map((item) => (
                                 <TableRow key={item.id}>
                                     {/* <TableCell>{item.id}</TableCell> */}
-                                    <TableCell >{item.asset_name}</TableCell>
-                                    <TableCell >{item.asset_model?.brand ?? '—'}</TableCell>
+                                    <TableCell>{item.asset_name}</TableCell>
+                                    <TableCell>{item.asset_model?.brand ?? '—'}</TableCell>
                                     <TableCell>{formatDate(item.date_purchased)}</TableCell>
-                                    <TableCell>{item.asset_model?.category?.name ?? '—'}</TableCell>
+                                    <TableCell>
+                                        {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
+                                    </TableCell>
                                     <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
                                     <TableCell>{item.building?.name ?? '—'}</TableCell>
                                     <TableCell>
                                         {/* {item.unit_or_department ? `${item.unit_or_department.code}` : '—'} */}
-                                         {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
-                                        
+                                        {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
@@ -476,14 +478,30 @@ export default function InventoryListIndex({
                                     value={data.asset_type}
                                     onChange={(e) => setData('asset_type', e.target.value)}
                                 >
+                                    <option value="">Select Asset Type</option>
+                                    <option value="fixed">Fixed</option>
+                                    <option value="not_fixed">Not Fixed</option>
+                                </select>
+                                {/* {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>} */}
+                            </div>
+
+                            <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Asset Category</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.category_id ?? ''} // <-- FK
+                                    onChange={(e) => setData('category_id', e.target.value === '' ? '' : Number(e.target.value))}
+                                >
                                     <option value="">Select Asset Category</option>
-                                    {categories.map((category) => (
-                                        <option key={category.id} value={category.name}>
-                                            {category.name}
+                                    {categories.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {' '}
+                                            {/* <-- send id */}
+                                            {c.name}
                                         </option>
                                     ))}
                                 </select>
-                                {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
+                                {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
@@ -610,7 +628,7 @@ export default function InventoryListIndex({
                                 </select>
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div>
-                            <div className="col-span-1 pt-0.5">
+                            <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Total Cost</label>
                                 <input
                                     type="text"
