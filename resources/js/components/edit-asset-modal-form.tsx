@@ -36,7 +36,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         category_id: (asset.category_id ?? asset.asset_model?.category_id ?? asset.asset_model?.category?.id ?? '') as number | '',
 
         // ✅ read from the row, not from category name
-        asset_type: (asset.asset_type ?? '') as '' | 'fixed' | 'not_fixed',
+        category_id: form.category_id === '' ? null : Number(form.category_id),
         brand: asset.asset_model?.brand || '',
         asset_model_id: asset.asset_model?.id || '',
         unit_or_department_id: asset.unit_or_department?.id || '',
