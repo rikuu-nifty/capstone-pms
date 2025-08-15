@@ -11,7 +11,7 @@ import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import type { BreadcrumbItem } from '@/types';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
-import type { CategoriesPageProps, CategoryWithModels, CategoryFilters, AssetModelRow } from '@/types/category';
+import type { CategoriesPageProps, CategoryWithModels, CategoryFilters,} from '@/types/category';
 import { formatStatusLabel } from '@/types/custom-index';
 
 import AddCategoryModal from './AddCategory';
@@ -37,6 +37,16 @@ const categorySortOptions = [
 
 type CategorySortKey = (typeof categorySortOptions)[number]['value'];
 type ModelSortKey = 'brand' | 'model' | 'assets_count' | 'status' | 'id';
+
+export type AssetModelRow = {
+  id: number;
+  brand: string | null;
+  model: string | null;
+  status: string | null;          // or narrow if you have an enum/union
+  category_id: number;
+  category_name: string | null;
+  assets_count: number;
+};
 
 type PageProps = CategoriesPageProps & {
     viewing?: CategoryWithModels;
