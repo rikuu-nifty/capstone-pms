@@ -51,9 +51,9 @@ class InventoryList extends Model
     }
 
     
-    public function offCampusAsset() // NEED LAGAY
-    {
-        return $this->hasMany(offCampusAsset::class, 'asset_id');
-    }
+    // public function offCampusAsset() // NEED LAGAY
+    // {
+    //     return $this->hasMany(offCampusAsset::class, 'asset_id');
+    // }
 
 }

@@ -240,40 +240,44 @@ export default function InventoryListIndex({
                     </div>
                 </div>
 
-                <div className="rounded-lg-lg x-auto border">
+                <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="w-[180px]">Asset Name</TableHead>
-                                <TableHead className="w-[140px]">Brand</TableHead>
-                                <TableHead className="w-[160px]">Date Purchased</TableHead>
-                                <TableHead className="w-[150px]">Asset Type</TableHead>
-                                <TableHead className="w-[100px]">Quantity</TableHead>
-                                <TableHead className="w-[180px]">Building</TableHead>
-                                <TableHead className="w-[220px]">Unit/Department</TableHead>
-                                <TableHead className="w-[120px]">Status</TableHead>
-                                <TableHead className="w-[120px] text-center">Action</TableHead>
+                                {/* <TableHead className="text-center">ID</TableHead> */}
+                                <TableHead className="text-center">Asset Name</TableHead>
+                                <TableHead className="text-center">Brand</TableHead>
+                                <TableHead className="text-center">Date Purchased</TableHead>
+                                <TableHead className="text-center">Asset Type</TableHead>
+                                <TableHead className="text-center">Quantity</TableHead>
+                                <TableHead className="text-center">Building</TableHead>
+                                <TableHead className="text-center">Unit/Department</TableHead>
+                                <TableHead className="text-center">Status</TableHead>
+                                <TableHead className="text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
 
-                        <TableBody>
+                        <TableBody className="text-center">
                             {filteredData.map((item) => (
                                 <TableRow key={item.id}>
-                                    <TableCell className="w-[180px]">{item.asset_name}</TableCell>
-                                    <TableCell className="w-[140px]">{item.asset_model?.brand ?? '—'}</TableCell>
-                                    <TableCell className="w-[160px]">{formatDate(item.date_purchased)}</TableCell>
-                                    <TableCell className="w-[150px]">{item.asset_model?.category?.name ?? '—'}</TableCell>
-                                    <TableCell className="w-[100px]">{String(item.quantity).padStart(2, '0')}</TableCell>
-                                    <TableCell className="w-[180px]">{item.building?.name ?? '—'}</TableCell>
-                                    <TableCell className="w-[220px]">
-                                        {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
+                                    {/* <TableCell>{item.id}</TableCell> */}
+                                    <TableCell >{item.asset_name}</TableCell>
+                                    <TableCell >{item.asset_model?.brand ?? '—'}</TableCell>
+                                    <TableCell>{formatDate(item.date_purchased)}</TableCell>
+                                    <TableCell>{item.asset_model?.category?.name ?? '—'}</TableCell>
+                                    <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
+                                    <TableCell>{item.building?.name ?? '—'}</TableCell>
+                                    <TableCell>
+                                        {/* {item.unit_or_department ? `${item.unit_or_department.code}` : '—'} */}
+                                         {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
+                                        
                                     </TableCell>
-                                    <TableCell className="w-[120px]">
+                                    <TableCell className="text-center">
                                         <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
                                             {item.status === 'active' ? 'Active' : 'Archived'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="flex w-[120px] justify-center gap-2">
+                                    <TableCell className="text-center">
                                         <Button
                                             size="icon"
                                             variant="ghost"

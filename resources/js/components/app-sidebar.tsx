@@ -4,30 +4,30 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Link } from '@inertiajs/react';
 import {
-    ClipboardList,
-    Network,
-    Building2,
+    ArrowRightLeft,
     Blocks,
-    Files,
-    FileCheck2,
-    Package2,
+    Building2,
+    Calendar,
     CalendarCheck2,
+    ClipboardList,
+    File,
+    FileCheck2,
+    Files,
     LayoutGrid,
+    Network,
+    Package2,
     PackageCheck,
+    School,
     Settings,
     User,
-    ArrowRightLeft,
-    Calendar,
-    School,
-    File,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -63,9 +63,7 @@ const userNavItems = [
     { title: 'Profile', href: '/profile', icon: User },
 ];
 
-const configNavItems = [
-    { title: 'Settings', href: '/settings', icon: Settings },
-];
+const configNavItems = [{ title: 'Settings', href: '/settings', icon: Settings }];
 
 export function AppSidebar() {
     return (
@@ -83,33 +81,29 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="overflow-hidden">
-                {/* Group: Dashboard */}
-                <NavMain items={dashboardNavItems}>
+                {/* Dashboard — flat, unchanged */}
+                <NavMain items={dashboardNavItems} mode="flat">
                     <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
                 </NavMain>
 
-                {/* Group: Inventory */}
-                <NavMain items={inventoryNavItems}>
-                    <SidebarGroupLabel>Inventory</SidebarGroupLabel>
+                {/* Inventory — add mt-1 so it can't overlap Dashboard */}
+                <NavMain items={inventoryNavItems} mode="collapsible">
+                    Inventory
                 </NavMain>
 
-                {/* Group: Assets */}
-                <NavMain items={assetsNavItems}>
-                    <SidebarGroupLabel>Assets</SidebarGroupLabel>
+                <NavMain items={assetsNavItems} mode="collapsible">
+                    Assets
                 </NavMain>
 
-                {/* Group: Institutional Setup */}
-                <NavMain items={institutionalSetUpNavItems}>
-                    <SidebarGroupLabel>Institutional Setup</SidebarGroupLabel>
+                <NavMain items={institutionalSetUpNavItems} mode="collapsible">
+                    Institutional Setup
                 </NavMain>
 
-                {/* Group: User */}
-                <NavMain items={userNavItems}>
-                    <SidebarGroupLabel>User</SidebarGroupLabel>
+                <NavMain items={userNavItems} mode="collapsible">
+                    User
                 </NavMain>
-
-                {/* Group: Configuration */}
-                <NavMain items={configNavItems}>
+                {/* Configuration — flat, unchanged */}
+                <NavMain items={configNavItems} mode="flat" className="mt-1">
                     <SidebarGroupLabel>Configuration</SidebarGroupLabel>
                 </NavMain>
             </SidebarContent>
