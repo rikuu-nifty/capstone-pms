@@ -44,6 +44,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         building_room_id: asset.building_room?.id || '',
         status: asset.status || 'archived',
     });
+    
 
     const handleChange = <K extends keyof AssetFormData>(field: K, value: AssetFormData[K]) => {
         setForm((prev) => ({ ...prev, [field]: value }));
