@@ -98,7 +98,7 @@ export default function CategoriesIndex({
 
     // Pagination
     const [page, setPage] = useState(1);
-    const page_size = 20;
+    const page_size = 10;
 
     useEffect(() => { 
         setPage(1); 
@@ -164,7 +164,7 @@ export default function CategoriesIndex({
     const [modelSortKey, setModelSortKey] = useState<ModelSortKey>('brand');
     const [modelSortDir, setModelSortDir] = useState<SortDir>('asc');
     const [modelPage, setModelPage] = useState(1);
-    const MODEL_PAGE_SIZE = 20;
+    const MODEL_PAGE_SIZE = 10;
 
     // Flatten all models so the right table can render independently
     const allModels: AssetModelRow[] = useMemo(() => {
@@ -229,6 +229,102 @@ export default function CategoriesIndex({
 
     const modelStart = (modelPage - 1) * MODEL_PAGE_SIZE;
     const modelPageItems = sortedModels.slice(modelStart, modelStart + MODEL_PAGE_SIZE);
+
+    function Pager({
+    page,
+    total,
+    pageSize,
+    onChange,
+    }: {
+    page: number;
+    total: number;
+    pageSize: number;
+    onChange: (p: number) => void;
+    }) {
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (totalPages <= 1) return null;
+
+    const go = (p: number) => onChange(Math.min(totalPages, Math.max(1, p)));
+
+    // create a compact window of page numbers around the current page
+    const windowSize = 5;
+    const half = Math.floor(windowSize / 2);
+    let start = Math.max(1, page - half);
+    let end = Math.min(totalPages, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
+
+    const nums = [];
+    for (let i = start; i <= end; i++) nums.push(i);
+
+    const Btn = ({
+        children,
+        disabled,
+        onClick,
+        isActive,
+        title,
+    }: {
+        children: React.ReactNode;
+        disabled?: boolean;
+        onClick?: () => void;
+        isActive?: boolean;
+        title?: string;
+    }) => (
+        <button
+        type="button"
+        title={title}
+        disabled={disabled}
+        onClick={onClick}
+        className={[
+            'px-3 py-1 rounded-md text-sm border',
+            isActive
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-background hover:bg-muted border-input',
+            disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+        ].join(' ')}
+        >
+        {children}
+        </button>
+    );
+
+    return (
+        <div className="flex items-center gap-2">
+        <Btn title="First page" disabled={page === 1} onClick={() => go(1)}>
+            «
+        </Btn>
+        <Btn title="Previous page" disabled={page === 1} onClick={() => go(page - 1)}>
+            ‹
+        </Btn>
+
+        {start > 1 && (
+            <>
+            <Btn onClick={() => go(1)}>1</Btn>
+            {start > 2 && <span className="px-1">…</span>}
+            </>
+        )}
+
+        {nums.map((n) => (
+            <Btn key={n} isActive={n === page} onClick={() => go(n)}>
+            {n}
+            </Btn>
+        ))}
+
+        {end < totalPages && (
+            <>
+            {end < totalPages - 1 && <span className="px-1">…</span>}
+            <Btn onClick={() => go(totalPages)}>{totalPages}</Btn>
+            </>
+        )}
+
+        <Btn title="Next page" disabled={page === totalPages} onClick={() => go(page + 1)}>
+            ›
+        </Btn>
+        <Btn title="Last page" disabled={page === totalPages} onClick={() => go(totalPages)}>
+            »
+        </Btn>
+        </div>
+    );
+}
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -315,24 +411,31 @@ export default function CategoriesIndex({
                         </TableHeader>
 
                         <TableBody className="text-center">
-                            {page_items.length > 0 ? page_items.map((cat) => {
-                                return (
+                            {page_items.length > 0 ? page_items.map((cat) => (
                                 <TableRow
                                     key={cat.id}
                                     onClick={() => 
-                                        // setSelectedCategoryId(Number(cat.id))
-                                        setSelectedCategoryId((prev) => (prev === Number(cat.id) ? null : Number(cat.id)))
+                                        setSelectedCategoryId(Number(cat.id))
+                                        // setSelectedCategoryId((prev) => (prev === Number(cat.id) ? null : Number(cat.id)))
                                     }
                                     className={`cursor-pointer ${selectedCategoryId === Number(cat.id) ? 'bg-muted/50' : ''}`}
                                     title="Click to filter asset models by this category (click again to show all)"
                                 >
                                     <TableCell>{cat.id}</TableCell>
                                     <TableCell className="font-medium">{cat.name}</TableCell>
-                                    <TableCell>{cat.description ?? '—'}</TableCell>
+                                    <TableCell 
+                                        className={`max-w-[250px] whitespace-normal break-words ${
+                                            cat.description && cat.description !== '-' 
+                                            ? 'text-justify' 
+                                            : 'text-center'
+                                        }`}
+                                    >
+                                        {cat.description ?? '—'}
+                                    </TableCell>
                                     <TableCell>{cat.brands_count}</TableCell>
                                     <TableCell>{cat.models_count}</TableCell>
                                     <TableCell>{cat.assets_count}</TableCell>
-                                    <TableCell className="flex justify-center items-center gap-2">
+                                    {/* <TableCell className="flex justify-center items-center gap-2">
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
@@ -372,10 +475,50 @@ export default function CategoriesIndex({
                                             
                                         </Button>
                                         
+                                    </TableCell> */}
+                                    <TableCell className="h-full">
+                                        <div className="flex justify-center items-center gap-2 h-full">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedCategory(cat);
+                                                    setShowEditCategory(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    setCategoryToDelete(cat);
+                                                    setShowDeleteCategoryModal(true);
+                                                }}
+                                                className="cursor-pointer"
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                asChild
+                                                className="cursor-pointer"
+                                            >
+                                                <Link
+                                                    href={`/categories/view/${cat.id}`}
+                                                    preserveScroll
+                                                >
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
-                                );
-                            }) : (
+                            )) : (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                                         No categories found.
@@ -385,141 +528,11 @@ export default function CategoriesIndex({
                         </TableBody>
                     </Table>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                    Showing {sorted.length ? start + 1 : 0} – {Math.min(start + page_size, sorted.length)} of <strong>{sorted.length}</strong> records
-                </div>
-            </div>
-
-            {/* ASSET MODELS Table */}
-            <div className="flex flex-col gap-4 p-4">
-                {/* Header */}
                 <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                        <h2 className="text-2xl font-semibold">Asset Models</h2>
-                        <p className="text-sm text-muted-foreground">List of asset models across categories.</p>
-
-                        <div className="flex items-center gap-2 w-96">
-                            <Input
-                                type="text"
-                                placeholder="Search by id, brand, model, or category..."
-                                value={modelSearchRaw}
-                                onChange={(e) => setModelSearchRaw(e.target.value)}
-                                className="max-w-xs"
-                            />
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 pt-1">
-                            {modelStatus && (
-                            <Badge variant="darkOutline">Status: {formatStatusLabel(modelStatus)}</Badge>
-                            )}
-
-                            {modelStatus && (
-                            <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => setModelStatus('')}
-                                className="cursor-pointer"
-                            >
-                                Clear filters
-                            </Button>
-                            )}
-                        </div>
+                    <div className="text-xs text-muted-foreground">
+                        Showing {sorted.length ? start + 1 : 0} – {Math.min(start + page_size, sorted.length)} of <strong>{sorted.length}</strong> records
                     </div>
-
-                    <div className="flex gap-2">
-                        {selectedCategoryId !== null && (
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={clearCategoryFilter}
-                                className="cursor-pointer"
-                                title="Show all models"
-                            >
-                                <Eye className="mr-1 h-4 w-4" />
-                                Show all models
-                            </Button>
-                        )}
-                        
-                        <SortDropdown<ModelSortKey>
-                            sortKey={modelSortKey}
-                            sortDir={modelSortDir}
-                            options={[
-                            { value: 'id', label: 'ID' },
-                            { value: 'brand', label: 'Brand' },
-                            { value: 'model', label: 'Model' },
-                            { value: 'assets_count', label: 'Total Assets' },
-                            { value: 'status', label: 'Status' },
-                            ] as const}
-                            onChange={(key, dir) => { setModelSortKey(key); setModelSortDir(dir); }}
-                        />
-
-                    {/* Status filter (simple select to match your look-and-feel) */}
-                        <select
-                            className="border rounded px-2 py-1 text-sm"
-                            value={modelStatus}
-                            onChange={(e) => setModelStatus(e.target.value)}
-                            title="Filter by status"
-                        >
-                            <option value="">All statuses</option>
-                            <option value="active">Active</option>
-                            <option value="is_archived">Archived</option>
-                            {/* add other statuses if you use them */}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Table */}
-                <div className="rounded-lg-lg overflow-x-auto border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
-                            <TableHead className="text-center">ID</TableHead>
-                            <TableHead className="text-center">Brand</TableHead>
-                            <TableHead className="text-center">Model</TableHead>
-                            <TableHead className="text-center">Category</TableHead>
-                            <TableHead className="text-center">Status</TableHead>
-                            <TableHead className="text-center">Total Assets</TableHead>
-                            <TableHead className="text-center">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody className="text-center">
-                            {modelPageItems.length > 0 ? (
-                            modelPageItems.map((m) => (
-                                <TableRow key={m.id}>
-                                    <TableCell>{m.id}</TableCell>
-                                    <TableCell className="font-medium">{m.brand ?? '—'}</TableCell>
-                                    <TableCell>{m.model ?? '—'}</TableCell>
-                                    <TableCell>{m.category_name ?? `#${m.category_id}`}</TableCell>
-                                    <TableCell>{m.status ? formatStatusLabel(m.status) : '—'}</TableCell>
-                                    <TableCell>{m.assets_count ?? 0}</TableCell>
-                                    <TableCell className="flex justify-center items-center gap-2">
-                                        {/* Wire these to your Asset Model modals/routes when ready */}
-                                        <Button variant="ghost" size="icon" className="cursor-pointer">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="cursor-pointer">
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="cursor-pointer">
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                            ) : (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                                    No asset models found.
-                                </TableCell>
-                            </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                <div className="text-xs text-muted-foreground">
-                    Showing {sortedModels.length ? modelStart + 1 : 0} – {Math.min(modelStart + MODEL_PAGE_SIZE, sortedModels.length)} of <strong>{sortedModels.length}</strong> models
+                    <Pager page={page} total={sorted.length} pageSize={page_size} onChange={setPage} />
                 </div>
             </div>
 
