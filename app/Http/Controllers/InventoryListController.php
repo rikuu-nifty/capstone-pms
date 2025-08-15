@@ -144,7 +144,7 @@ public function update(Request $request, InventoryList $inventoryList): Redirect
         'unit_cost' => 'nullable|numeric|min:0',
         'quantity' => 'nullable|integer|min:1',
         'asset_type' => 'nullable|string|max:255',
-        'category_id' => 'nullable|integer|exists:categories,id',
+        // 'category_id' => 'nullable|integer|exists:categories,id', //KABIT TO IF MERON TAYONG COLUMN FOR CATEGORY ID PERO WALA KASE CINACALL NATIN THROUGH MODEL
         'brand' => 'nullable|string|max:255',
         'memorandum_no' => 'nullable|numeric|min:0',
         'description' => 'nullable|string|max:1000',
