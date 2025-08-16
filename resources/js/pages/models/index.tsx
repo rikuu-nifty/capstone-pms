@@ -320,31 +320,42 @@ export default function AssetModelsIndex({
                     setShowDeleteAssetModel(false);
                     setAssetModelToDelete(null);
                 }}
-                title="Delete Asset Model"
-                message={
-                    assetModelToDelete
-                    ? `Are you sure you want to delete “${assetModelToDelete.brand ?? '—'} ${assetModelToDelete.model ?? ''}” (ID ${assetModelToDelete.id})?`
-                    : 'Are you sure you want to delete this asset model?'
-                }
+                // title="Delete Asset Model"
+                // message={
+                //     assetModelToDelete
+                //     ? `Are you sure you want to delete “${assetModelToDelete.brand ?? '—'} ${assetModelToDelete.model ?? ''}” (ID ${assetModelToDelete.id})?`
+                //     : 'Are you sure you want to delete this asset model?'
+                // }
+                // onConfirm={() => {
+                //     if (!assetModelToDelete) return;
+
+                //     if ((assetModelToDelete.assets_count ?? 0) > 0) {
+                //         alert('This model has related assets. Please reassign or remove those assets before deleting this model.');
+                //         return;
+                //     }
+
+                //     router.delete(`/models/${assetModelToDelete.id}`, {
+                //     preserveScroll: true,
+                //     onSuccess: () => {
+                //         setShowDeleteAssetModel(false);
+                //         setAssetModelToDelete(null);
+                //     },
+                //     onFinish: () => {
+                //         setSelectedModel(null);
+                //         setShowEditModel(false);
+                //     },
+                //     });
+                // }}
                 onConfirm={() => {
-                    if (!assetModelToDelete) return;
-
-                    if ((assetModelToDelete.assets_count ?? 0) > 0) {
-                        alert('This model has related assets. Please reassign or remove those assets before deleting this model.');
-                        return;
+                    if (assetModelToDelete) {
+                        router.delete(`/models/${assetModelToDelete.id}`, {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDeleteAssetModel(false);
+                                setAssetModelToDelete(null);
+                            },
+                        });
                     }
-
-                    router.delete(`/models/${assetModelToDelete.id}`, {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        setShowDeleteAssetModel(false);
-                        setAssetModelToDelete(null);
-                    },
-                    onFinish: () => {
-                        setSelectedModel(null);
-                        setShowEditModel(false);
-                    },
-                    });
                 }}
             />
         </AppLayout>
