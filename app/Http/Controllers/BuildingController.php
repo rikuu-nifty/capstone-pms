@@ -20,6 +20,10 @@ class BuildingController extends Controller
             'total_rooms' => $buildings->sum('building_rooms_count'),
             'total_assets' => $buildings->sum('assets_count'),
         ];
+        
+        $totals['avg_assets_per_building'] = $totals['total_buildings'] > 0
+            ? round($totals['total_assets'] / $totals['total_buildings'], 2)
+            : 0;
 
         return [
             'buildings' => $buildings,

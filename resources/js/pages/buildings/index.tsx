@@ -157,29 +157,31 @@ export default function BuildingIndex({
                     )} */}
 
                     {totals && (
-                    <div className="flex flex-wrap justify-between">
-                        <KPIStatCard
-                        label="Total Buildings"
-                        value={formatNumber(totals.total_buildings)}
-                        icon={Building2}
-                        barColor="bg-orange-400"
-                        className="w-[500px] h-[140px]"
-                        />
-                        <KPIStatCard
-                        label="Total Rooms"
-                        value={formatNumber(totals.total_rooms)}
-                        icon={DoorOpen}
-                        barColor="bg-sky-400"
-                        className="w-[500px] h-[140px]"
-                        />
-                        <KPIStatCard
-                        label="Average Assets per Building"
-                        value="To be added"
-                        icon={Boxes}
-                        barColor="bg-teal-400"
-                        className="w-[500px] h-[140px]"
-                        />
-                    </div>
+                        <div className="flex flex-wrap justify-between">
+                            <KPIStatCard
+                                label="Total Buildings"
+                                value={formatNumber(totals.total_buildings)}
+                                icon={Building2}
+                                barColor="bg-orange-400"
+                                className="w-[500px] h-[140px]"
+                            />
+                            <KPIStatCard
+                                label="Total Rooms"
+                                value={formatNumber(totals.total_rooms)}
+                                icon={DoorOpen}
+                                barColor="bg-sky-400"
+                                className="w-[500px] h-[140px]"
+                            />
+                            <KPIStatCard
+                                label="Average Assets per Building"
+                                value={totals.avg_assets_per_building !== undefined
+                                ? formatNumber(Number(totals.avg_assets_per_building.toFixed(2)))
+                                : '0.00'}
+                                icon={Boxes}
+                                barColor="bg-teal-400"
+                                className="w-[500px] h-[140px]"
+                            />
+                        </div>
                      )}
 
                     {/* Controls row */}

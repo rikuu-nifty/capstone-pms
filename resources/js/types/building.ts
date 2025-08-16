@@ -22,6 +22,7 @@ export type Totals = {
     total_buildings: number;
     total_rooms: number;
     total_assets: number;
+    avg_assets_per_building: number;
 }
 
 export type PageProps = {
