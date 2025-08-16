@@ -82,16 +82,12 @@ export default function EditBuildingModal({
                     className="w-full rounded-lg border p-2"
                     placeholder="Enter building name"
                     value={data.name}
-                    onChange={(e) => setData('name', e.target.value.slice(0, NAME_MAX))}
+                    onChange={(e) => 
+                        setData('name', e.target.value.slice(0, NAME_MAX))
+                    }
                     required
-                    aria-invalid={!!errors.name}
-                    aria-describedby={errors.name ? 'edit-building-name-error' : undefined}
                 />
-                {errors.name && (
-                <p id="edit-building-name-error" className="mt-1 text-xs text-red-500">
-                    {errors.name}
-                </p>
-                )}
+                {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
 
             {/* Code */}
@@ -100,7 +96,6 @@ export default function EditBuildingModal({
                     Code
                 </label>
                 <input
-                    id="edit-building-code"
                     type="text"
                     className="w-full rounded-lg border p-2 uppercase"
                     placeholder="e.g., MH, LIB"
@@ -108,14 +103,8 @@ export default function EditBuildingModal({
                     onChange={(e) =>
                         setData('code', e.target.value.toUpperCase().slice(0, CODE_MAX))
                     }
-                    aria-invalid={!!errors.code}
-                    aria-describedby={errors.code ? 'edit-building-code-error' : undefined}
                 />
-                {errors.code && (
-                <p id="edit-building-code-error" className="mt-1 text-xs text-red-500">
-                    {errors.code}
-                </p>
-                )}
+                {errors.code && <p className="mt-1 text-xs text-red-500">{errors.code}</p>}
             </div>
 
             {/* Description */}
@@ -132,16 +121,8 @@ export default function EditBuildingModal({
                     onChange={(e) =>
                         setData('description', e.target.value.slice(0, DESC_MAX))
                     }
-                    aria-invalid={!!errors.description}
-                    aria-describedby={
-                        errors.description ? 'edit-building-description-error' : undefined
-                    }
                 />
-                {errors.description && (
-                <p id="edit-building-description-error" className="mt-1 text-xs text-red-500">
-                    {errors.description}
-                </p>
-                )}
+                {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
             </div>
         </EditModal>
     );

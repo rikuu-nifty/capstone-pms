@@ -62,7 +62,13 @@ class BuildingController extends Controller
      */
     public function show(Building $building)
     {
-        //
+
+        return Inertia::render('buildings/index', array_merge(
+            $this->indexProps(),
+            [
+                'viewing' => Building::showPropsById($building->id),
+            ],
+        ));
     }
 
     /**
@@ -95,6 +101,8 @@ class BuildingController extends Controller
      */
     public function destroy(Building $building)
     {
-        //
+        $building->delete();
+
+        return redirect()->route('buildings.index')->with('success', 'Building record was successfully deleted');
     }
 }

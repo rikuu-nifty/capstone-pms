@@ -39,7 +39,7 @@ class Building extends Model
         return static::query()
             ->select('id', 'name', 'code', 'description')
             ->withCount(['buildingRooms', 'assets']) //automatically creates fields building_rooms_count and assets_count
-            ->orderBy('code')
+            ->orderBy('id', 'desc')
             ->get();
     }
 
@@ -50,7 +50,7 @@ class Building extends Model
             ->withCount(['buildingRooms', 'assets'])
             ->with([
                 'buildingRooms:id,building_id,room',
-                'buildingRooms:assets:id,building_room_id,serial_no,unit_or_department_id'
+                'buildingRooms.assets:id,building_room_id,serial_no,unit_or_department_id',
             ])
             ->findOrFail($id);
     }

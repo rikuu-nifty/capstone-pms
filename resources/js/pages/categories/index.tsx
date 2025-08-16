@@ -76,7 +76,6 @@ export default function CategoriesIndex({
         viewing
     ]);
 
-    // Delete confirm state
     const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<CategoryWithModels | null>(null);
 
@@ -252,7 +251,6 @@ export default function CategoriesIndex({
                                         // setSelectedCategoryId((prev) => (prev === Number(cat.id) ? null : Number(cat.id)))
                                     }
                                     className={`cursor-pointer ${selectedCategoryId === Number(cat.id) ? 'bg-muted/50' : ''}`}
-                                    title="Click to filter asset models by this category (click again to show all)"
                                 >
                                     <TableCell>{cat.id}</TableCell>
                                     <TableCell className="font-medium">{cat.name}</TableCell>

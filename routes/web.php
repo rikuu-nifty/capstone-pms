@@ -95,7 +95,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
     Route::post('/buildings', [BuildingController::class, 'store'])->name('buildings.store');
-
+    Route::put('/buildings/{building}', [BuildingController::class, 'update'])->name('buildings.update');
+    Route::get('/buildings/view/{building}', [BuildingController::class, 'show'])->name('buildings.view');
+    Route::delete('/buildings/{building}', [BuildingController::class, 'destroy'])->name('buildings.destroy');
 
     // CATEGORIES
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');

@@ -9,7 +9,7 @@ export type Building = {
     building_rooms_count: number;
     assets_count: number;
 
-    buildingRooms?: BuildingRoom[];
+    building_rooms?: BuildingRoom[];
 };
 
 export type BuildingFormData = {
@@ -23,3 +23,9 @@ export type Totals = {
     total_rooms: number;
     total_assets: number;
 }
+
+export type PageProps = {
+  buildings: Building[];
+  totals?: Totals;
+  viewing?: Building;
+};

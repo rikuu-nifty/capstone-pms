@@ -12,16 +12,15 @@ class BuildingRoom extends Model
         'description',
     ];
 
-    // Each room belongs to a building
     public function building()
     {
         return $this->belongsTo(Building::class);
     }
 
-    // 🔁 Each room can be linked to inventory assets
-    public function inventoryLists()
+    public function assets()
     {
-        return $this->hasMany(InventoryList::class);
+        return $this->hasMany(InventoryList::class, 'building_room_id', 'id')
+            ->whereNull('inventory_lists.deleted_at');
     }
 
      // Relationship: BuildingRooms has many inventory schedulings
