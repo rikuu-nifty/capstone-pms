@@ -92,9 +92,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/turnover-disposal/{turnoverDisposal}/view', [TurnoverDisposalController::class, 'show'])->name('turnover-disposal.view');
     Route::delete('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'destroy'])->name('turnover-disposal.destroy');
 
-    // INSTITUTIONAL SETUP - BUILDINGS
+    // BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
-    
+    Route::post('/buildings', [BuildingController::class, 'store'])->name('buildings.store');
+
+
     // CATEGORIES
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');

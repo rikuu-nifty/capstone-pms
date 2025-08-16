@@ -5,9 +5,11 @@ export type Building = {
     name: string;
     code: string;
     description: string;
-    building_rooms_count: number;
 
-    buildingRooms: BuildingRoom[];
+    building_rooms_count: number;
+    assets_count: number;
+
+    buildingRooms?: BuildingRoom[];
 };
 
 export type BuildingFormData = {
@@ -15,3 +17,9 @@ export type BuildingFormData = {
     code: string;
     description: string | null;
 };
+
+export type Totals = {
+    total_buildings: number;
+    total_rooms: number;
+    total_assets: number;
+}

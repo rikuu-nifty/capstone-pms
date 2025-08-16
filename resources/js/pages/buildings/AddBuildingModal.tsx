@@ -23,6 +23,15 @@ export default function AddBuildingModal({
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        const payload: BuildingFormData = {
+            name: (data.name ?? '').trim(),
+            code: (data.code ?? '').trim().toUpperCase(),
+            description: (data.description ?? '').trim() || null,
+        };
+
+        setData(payload);
+
         post('/buildings', {
             preserveScroll: true,
             onSuccess: () => {
@@ -60,10 +69,14 @@ export default function AddBuildingModal({
             <div>
                 <label className="mb-1 block font-medium">Building Name</label>
                 <Input
-                    placeholder="Enter building name"
+                    type="text"
+                    placeholder="Enter building name (e.g., Main Building)"
                     value={data.name}
-                    onChange={(e) => setData('name', e.target.value)}
+                    onChange={(e) => 
+                        setData('name', e.target.value)
+                    }
                     className="cursor-text w-full rounded-lg border p-2"
+                    required
                 />
                 {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
@@ -73,8 +86,11 @@ export default function AddBuildingModal({
                 <label className="mb-1 block font-medium">Code</label>
                 <Input
                     value={data.code}
-                    onChange={(e) => setData('code', e.target.value)}
-                    placeholder="Enter building code"
+                    onChange={(e) => 
+                        setData('code', e.target.value)
+                    }
+                    placeholder="Enter building code (e.g., MB, AUF-MB)"
+                    required
                 />
                 {errors.code && <p className="mt-1 text-xs text-red-500">{errors.code}</p>}
             </div>
@@ -83,6 +99,7 @@ export default function AddBuildingModal({
             <div className="col-span-2">
                 <label className="mb-1 block font-medium">Description</label>
                 <textarea
+                    rows={5}
                     value={data.description ?? ''}
                     onChange={(e) => setData('description', e.target.value)}
                     placeholder="Enter description"

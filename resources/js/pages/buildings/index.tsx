@@ -4,11 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 // import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
-import { Building } from '@/types/building';
+import { Building, Totals } from '@/types/building';
+import { formatNumber } from '@/types/custom-index';
 import AddBuildingModal from './AddBuildingModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -19,22 +20,29 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function BuildingIndex({ 
-    buildings = [] 
+    buildings = [],
+    totals,
 }: { 
-    buildings: Building[] 
+    buildings: Building[];
+    totals?: Totals;
 }) {
     const [search, setSearch] = useState('');
 
     const [showAddBuilding, setShowAddBuilding] = useState(false);
 
-    const filteredBuildings = buildings.filter((b) =>
-        `${b.name} ${b.code} ${b.description}`.toLowerCase().includes(search.toLowerCase())
+    const filteredBuildings = useMemo(() =>
+        buildings.filter((b) =>
+            `${b.name} ${b.code} ${b.description}`.toLowerCase().includes(search.toLowerCase())
+        ), [
+            buildings, 
+            search
+        ]
     );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
+            
             <Head title="Buildings" />
-
             <div className="flex flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
@@ -59,7 +67,7 @@ export default function BuildingIndex({
                         <PlusCircle 
                             className="mr-2 h-4 w-4" 
                         /> 
-                        Add Building
+                        Add New Building
                     </Button>
                 </div>
 
@@ -71,6 +79,7 @@ export default function BuildingIndex({
                                 <TableHead className="text-center">Building Name</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
                                 <TableHead className="text-center">Room Count</TableHead>
+                                <TableHead className="text-center">Assets Count</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -80,8 +89,9 @@ export default function BuildingIndex({
                                     <TableRow className="text-center" key={building.id}>
                                         <TableCell>{building.code}</TableCell>
                                         <TableCell>{building.name}</TableCell>
-                                        <TableCell>{building.description || '—'}</TableCell>
-                                        <TableCell>{building.building_rooms_count || '—'}</TableCell>
+                                        <TableCell>{building.description ?? '—'}</TableCell>
+                                        <TableCell>{building.building_rooms_count ?? '—'}</TableCell>
+                                        <TableCell>{building.assets_count ?? '—'}</TableCell>
                                         
                                         <TableCell className="flex gap-2 justify-center">
                                             <Button 
@@ -114,7 +124,7 @@ export default function BuildingIndex({
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                                         No buildings found.
                                     </TableCell>
                                 </TableRow>
@@ -122,6 +132,24 @@ export default function BuildingIndex({
                         </TableBody>
                     </Table>
                 </div>
+
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div className="rounded-2xl border p-4">
+                            <div className="text-sm text-muted-foreground">Total Buildings</div>
+                            <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_buildings)}</div>
+                        </div>
+                        <div className="rounded-2xl border p-4">
+                            <div className="text-sm text-muted-foreground">Average Assets per Building</div>
+                            <div className="mt-1 text-2xl font-semibold">TBA</div>
+                        </div>
+                        <div className="rounded-2xl border p-4">
+                            <div className="text-sm text-muted-foreground">Total Assets Across All Buildings</div>
+                            <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_assets)}</div>
+                        </div>
+                    </div>
+                )}
+
             </div>
 
             <AddBuildingModal

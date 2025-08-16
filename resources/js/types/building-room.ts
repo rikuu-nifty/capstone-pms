@@ -1,4 +1,4 @@
-import type { Building } from './building';
+import type { Building, InventoryList } from './custom-index';
 
 export type BuildingRoom = {
     id: number;
@@ -7,4 +7,5 @@ export type BuildingRoom = {
     description: string;
 
     building?: Building;
+    assets?: InventoryList[];
 };

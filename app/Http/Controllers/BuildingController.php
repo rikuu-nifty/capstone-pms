@@ -4,32 +4,32 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Building;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 
 
 class BuildingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    
+    private function indexProps(): array
     {
-        $buildings = Building::withCount([
-            'buildingRooms'
-        ])->orderBy('code')->get();
+        $buildings = Building::indexProps();
+        
+        $totals = [
+            'total_buildings' => $buildings->count(),
+            'total_rooms' => $buildings->sum('building_rooms_count'),
+            'total_assets' => $buildings->sum('assets_count'),
+        ];
 
-
-        return Inertia::render('buildings/index', [
-            'buildings' => $buildings
-        ]);
+        return [
+            'buildings' => $buildings,
+            'totals' => $totals,
+        ];
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index()
     {
-        //
+        return Inertia::render('buildings/index', $this->indexProps());
     }
 
     /**
@@ -37,7 +37,24 @@ class BuildingController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:50',
+                Rule::unique('buildings', 'code')
+                ->whereNull('deleted_at'),
+            ],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $payload = [
+            'name' => ucwords(trim($validated['name'])),
+            'code' => strtoupper(trim($validated['code'])),
+            'description' => $validated['description'] ? trim($validated['description']) : null,
+        ];
+
+        $building = Building::create($payload);
+
+        return redirect()->route('buildings.index')->with('success', "Building {$building->name} was successfully created.");
     }
 
     /**
@@ -49,19 +66,28 @@ class BuildingController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Building $building)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Building $building)
     {
-        //
+         $validated = $request->validate([
+            'name' => ['required','string','max:255'],
+            'code' => ['required','string','max:50', Rule::unique('buildings', 'code')
+                ->whereNull('deleted_at')
+                ->ignore($building->id),
+            ],
+            'description' => ['nullable','string','max:1000'],
+        ]);
+
+        $payload = [
+            'name' => ucwords(trim($validated['name'])),
+            'code' => strtoupper(trim($validated['code'])),
+            'description' => $validated['description'] ? trim($validated['description']) : null,
+        ];
+
+        $building->update($payload);
+
+        return redirect()->route('buildings.index')->with('success', 'Record was successfully updated');
     }
 
     /**

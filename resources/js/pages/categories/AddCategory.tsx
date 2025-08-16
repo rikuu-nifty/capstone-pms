@@ -59,7 +59,9 @@ export default function AddCategoryModal({ show, onClose }: Props) {
                     className="w-full rounded-lg border p-2"
                     placeholder="e.g., Computers"
                     value={data.name}
-                    onChange={(e) => setData('name', e.target.value)}
+                    onChange={(e) => 
+                        setData('name', e.target.value)
+                    }
                     required
                 />
                 {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
