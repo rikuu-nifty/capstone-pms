@@ -45,3 +45,10 @@ export type AssetModelFilters = {
     brand?: string;
     model?: string;
 };
+
+export type AssetModelFormData = {
+    brand: string;
+    model: string;
+    category_id: number;
+    status: '' | 'active' | 'is_archived';
+};

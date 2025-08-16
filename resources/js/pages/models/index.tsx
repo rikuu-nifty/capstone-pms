@@ -17,6 +17,8 @@ import type { BreadcrumbItem } from '@/types';
 import type { AssetModelsPageProps, AssetModelWithCounts, AssetModelFilters, StatusOption } from '@/types/asset-model';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
+import AddAssetModelModal from './AddAssetModel';
+
 const breadcrumbs: BreadcrumbItem[] = [
   { 
     title: 'Asset Models', 
@@ -49,6 +51,8 @@ export default function AssetModelsIndex({
 
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
     const [selected_status, setSelected_status] = useState<StatusOption>('');
+
+    const [showAddModel, setShowAddModel] = useState(false);
     
     const clearFilters = () => {
         setSelectedCategoryId('');
@@ -109,7 +113,7 @@ export default function AssetModelsIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Asset Models" />
+            <Head title="Asset Models" />
 
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
@@ -125,7 +129,9 @@ export default function AssetModelsIndex({
                                 type="text"
                                 placeholder="Search by id, brand, model, or category..."
                                 value={rawSearch}
-                                onChange={(e) => setRawSearch(e.target.value)}
+                                onChange={(e) => 
+                                    setRawSearch(e.target.value)
+                                }
                                 className="max-w-xs"
                             />
                         </div>
@@ -160,7 +166,12 @@ export default function AssetModelsIndex({
                             sortKey={sortKey}
                             sortDir={sortDir}
                             options={sortOptions}
-                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+                            onChange={
+                                (key, dir) => { 
+                                    setSortKey(key); 
+                                    setSortDir(dir); 
+                                }
+                            }
                         />
 
                         <AssetModelFilterDropdown
@@ -173,7 +184,7 @@ export default function AssetModelsIndex({
 
                         <Button
                             onClick={() => {
-                                /* open Add modal */
+                                setShowAddModel(true);
                             }}
                             className="cursor-pointer"
                         >
@@ -182,8 +193,8 @@ export default function AssetModelsIndex({
                     </div>
                 </div>
 
-                    {/* MODELS Table */}
-                    <div className="rounded-lg-lg overflow-x-auto border">
+                {/* MODELS Table */}
+                <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
                         <TableHeader>
                         <TableRow className="bg-muted text-foreground">
@@ -249,13 +260,21 @@ export default function AssetModelsIndex({
                         )}
                         </TableBody>
                     </Table>
-                    </div>
+                </div>
 
-                    <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                     <PageInfo page={page} total={sorted.length} pageSize={PAGE_SIZE} label="models" />
                     <Pagination page={page} total={sorted.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
-                    </div>
+                </div>
             </div>
+
+            <AddAssetModelModal
+                show={showAddModel}
+                onClose={() => 
+                    setShowAddModel(false)
+                }
+                categories={categories}
+            />
         </AppLayout>
     );
 }

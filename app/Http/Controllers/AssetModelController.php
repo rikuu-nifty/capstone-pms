@@ -25,17 +25,11 @@ class AssetModelController extends Controller
         ];
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         return Inertia::render('models/index', $this->indexProps());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -64,9 +58,6 @@ class AssetModelController extends Controller
             redirect()->route('asset-models.index')->with('success', "Record #{$recId} was successfully created");
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(AssetModel $assetModel)
     {
         $viewing = AssetModel::withCountsAndCategory()->findOrFail($assetModel->id);
@@ -77,9 +68,6 @@ class AssetModelController extends Controller
         ));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, AssetModel $assetModel)
     {
         $validated = $request->validate([
@@ -109,9 +97,6 @@ class AssetModelController extends Controller
             ->with('success', 'Record was successfully updated');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(AssetModel $assetModel)
     {
        $assetModel->delete();
