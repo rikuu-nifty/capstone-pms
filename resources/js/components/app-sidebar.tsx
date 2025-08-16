@@ -21,6 +21,7 @@ import {
     File,
     FileCheck2,
     Files,
+    Landmark,
     LayoutGrid,
     Network,
     Package2,
@@ -53,7 +54,8 @@ const assetsNavItems = [
 ];
 
 const institutionalSetUpNavItems = [
-    { title: 'Buildings', href: '/buildings', icon: Building2 },
+    { title: 'Buildings', href: '/buildings', icon: Landmark },
+    { title: 'Building Rooms', href: '/building-rooms', icon: Building2 },
     { title: 'Organizations', href: '/organizations', icon: Network },
 ];
 
