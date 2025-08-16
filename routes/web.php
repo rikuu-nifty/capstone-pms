@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssetModelController;
 use App\Http\Controllers\InventoryListController;
 use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
@@ -95,11 +96,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
     
     // CATEGORIES
-    ROUTE::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::get('/categories/view/{category}', [CategoryController::class, 'show'])->name('categories.view');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+    //ASSET MODELS
+    Route::get('/models', [AssetModelController::class, 'index'])->name('asset-model.index');
+
 
 });
 
