@@ -18,6 +18,7 @@ import type { AssetModelsPageProps, AssetModelWithCounts, AssetModelFilters, Sta
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 import AddAssetModelModal from './AddAssetModel';
+import EditAssetModelModal from './EditAssetModel';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { 
@@ -53,6 +54,8 @@ export default function AssetModelsIndex({
     const [selected_status, setSelected_status] = useState<StatusOption>('');
 
     const [showAddModel, setShowAddModel] = useState(false);
+    const [showEditModel, setShowEditModel] = useState(false);
+    const [selectedModel, setSelectedModel] = useState<AssetModelWithCounts | null>(null);
     
     const clearFilters = () => {
         setSelectedCategoryId('');
@@ -224,7 +227,8 @@ export default function AssetModelsIndex({
                                             size="icon" 
                                             className="cursor-pointer" 
                                             onClick={() => {
-                                                /* open edit modal */
+                                                setSelectedModel(m);
+                                                setShowEditModel(true);
                                             }}
                                         >
                                             <Pencil className="h-4 w-4" />
@@ -263,7 +267,7 @@ export default function AssetModelsIndex({
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <PageInfo page={page} total={sorted.length} pageSize={PAGE_SIZE} label="models" />
+                    <PageInfo page={page} total={sorted.length} pageSize={PAGE_SIZE} label="asset models" />
                     <Pagination page={page} total={sorted.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
                 </div>
             </div>
@@ -275,6 +279,20 @@ export default function AssetModelsIndex({
                 }
                 categories={categories}
             />
+
+            {selectedModel && (
+                <EditAssetModelModal
+                    key={selectedModel.id}
+                    show={showEditModel}
+                    onClose={() => 
+                        setShowEditModel(false)
+                    }
+                    model={selectedModel}
+                    categories={categories}
+                />
+            )}
+
+
         </AppLayout>
     );
 }

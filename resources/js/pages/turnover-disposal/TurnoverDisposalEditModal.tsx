@@ -19,11 +19,6 @@ interface TurnoverDisposalEditModalProps {
 const typeOptions = ['turnover', 'disposal'] as const;
 const statusOptions = ['pending_review', 'approved', 'rejected', 'cancelled', 'completed'] as const;
 
-// function extractId(value: number | { id: number } | undefined): number {
-//     if (typeof value === 'object' && value !== null) return value.id;
-//     return value ?? 0;
-// }
-
 export default function TurnoverDisposalEditModal({
     show,
     onClose,
@@ -69,10 +64,11 @@ export default function TurnoverDisposalEditModal({
     // ]);
 
     useEffect(() => {
-        if (!show) 
-            setData({
-               issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
-               type: turnoverDisposal.type,
+        if (show) 
+            setData(prev => ({
+                ...prev,
+                issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
+                type: turnoverDisposal.type,
                 receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
                 description: turnoverDisposal.description ?? '',
                 personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
@@ -82,13 +78,12 @@ export default function TurnoverDisposalEditModal({
                 selected_assets: (
                     turnoverDisposal.turnover_disposal_assets ?? []
                 ).map(a => a.asset_id)
-            });
+            }));
             clearErrors();
             setShowAssetDropdown([true]);
         }, [
         show,
         clearErrors,
-        // reset,
         setData,
         turnoverDisposal,
     ]);

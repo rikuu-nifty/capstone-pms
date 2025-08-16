@@ -91,14 +91,16 @@ class AssetModelController extends Controller
             'status'      => ['required', Rule::in(['active', 'is_archived'])],
         ]);
 
-        // Unique combo, ignoring current record + soft-deleted rows
         $request->validate([
             'model' => [
                 Rule::unique('asset_models', 'model')
                     ->ignore($assetModel->id)
                     ->where(fn ($q) => $q
                         ->where('category_id', $request->integer('category_id'))
-                        ->where('brand', $request->input('brand'))
+                        ->when($request->filled('brand'),
+                            fn($q) => $q->where('brand', $request->input('brand')),
+                            fn($q) => $q->whereNull('brand')
+                        )
                         ->whereNull('deleted_at')
                     ),
             ],
@@ -106,9 +108,7 @@ class AssetModelController extends Controller
 
         $assetModel->update($validated);
 
-        return redirect()
-            ->route('asset-models.index')
-            ->with('success', 'Record was successfully updated');
+        return redirect()->route('asset-models.index')->with('success', 'Record was successfully updated');
     }
 
     public function destroy(AssetModel $assetModel)

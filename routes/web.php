@@ -105,7 +105,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //ASSET MODELS
     Route::get('/models', [AssetModelController::class, 'index'])->name('asset-models.index');
     Route::post('/models', [AssetModelController::class, 'store'])->name('asset-models.store');
-
+    Route::put('/models/{assetModel}', [AssetModelController::class, 'update'])->name('asset-models.update');
+    Route::get('/models/view/{model}', [AssetModelController::class, 'show'])->name('asset-models.view');
 
 });
 
