@@ -10,6 +10,7 @@ export type AssetModel = {
     created_at?: string | null;
     updated_at?: string | null;
     deleted_at?: string | null;
+    assets_count?: number;
     
     assets?: InventoryList[];
     category?:{ 
