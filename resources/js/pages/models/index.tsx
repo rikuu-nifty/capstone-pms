@@ -14,6 +14,7 @@ import AssetModelFilterDropdown from '@/components/filters/AssetModelFilterDropd
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import type { BreadcrumbItem } from '@/types';
+import { formatNumber } from '@/types/custom-index';
 import type { AssetModelsPageProps, AssetModelWithCounts, AssetModelFilters, StatusOption } from '@/types/asset-model';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
@@ -26,7 +27,7 @@ const breadcrumbs: BreadcrumbItem[] = [
   { 
     title: 'Asset Models', 
     href: '/models' 
-},
+    },
 ];
 
 const sortOptions = [
@@ -45,9 +46,15 @@ type PageProps = AssetModelsPageProps;
 export default function AssetModelsIndex({
     asset_models = [],
     categories = [],
+    totals,
 }: AssetModelsPageProps) {
     const { props } = usePage<PageProps>();
     const viewing = props.viewing;
+
+    const totalAssets = totals?.assets ?? 0;
+    const activeAssets = totals?.active_assets ?? 0;
+    const inactiveAssets = Math.max(totalAssets - activeAssets, 0);
+    const activeRate = totalAssets > 0 ? (activeAssets / totalAssets) * 100 : 0;
 
     const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase();
@@ -200,6 +207,41 @@ export default function AssetModelsIndex({
                     </div>
                 </div>
 
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                        <div className="rounded-2xl border p-4">
+                        <div className="text-sm text-muted-foreground">Total Models</div>
+                        <div className="mt-1 text-2xl font-semibold">
+                            {formatNumber(totals.asset_models)}
+                        </div>
+                        </div>
+
+                        <div className="rounded-2xl border p-4">
+                        <div className="text-sm text-muted-foreground">Distinct Brands</div>
+                        <div className="mt-1 text-2xl font-semibold">
+                            {formatNumber(totals.distinct_brands)}
+                        </div>
+                        </div>
+
+                        <div className="rounded-2xl border p-4">
+                        <div className="text-sm text-muted-foreground">Total Assets (All Models)</div>
+                        <div className="mt-1 text-2xl font-semibold">
+                            {formatNumber(totalAssets)}
+                        </div>
+                        </div>
+
+                        <div className="rounded-2xl border p-4">
+                        <div className="text-sm text-muted-foreground">Active Assets</div>
+                        <div className="mt-1 text-2xl font-semibold">
+                            {formatNumber(activeAssets)}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                            {formatNumber(inactiveAssets)} inactive • {activeRate.toFixed(1)}% active
+                        </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* MODELS Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
@@ -320,32 +362,6 @@ export default function AssetModelsIndex({
                     setShowDeleteAssetModel(false);
                     setAssetModelToDelete(null);
                 }}
-                // title="Delete Asset Model"
-                // message={
-                //     assetModelToDelete
-                //     ? `Are you sure you want to delete “${assetModelToDelete.brand ?? '—'} ${assetModelToDelete.model ?? ''}” (ID ${assetModelToDelete.id})?`
-                //     : 'Are you sure you want to delete this asset model?'
-                // }
-                // onConfirm={() => {
-                //     if (!assetModelToDelete) return;
-
-                //     if ((assetModelToDelete.assets_count ?? 0) > 0) {
-                //         alert('This model has related assets. Please reassign or remove those assets before deleting this model.');
-                //         return;
-                //     }
-
-                //     router.delete(`/models/${assetModelToDelete.id}`, {
-                //     preserveScroll: true,
-                //     onSuccess: () => {
-                //         setShowDeleteAssetModel(false);
-                //         setAssetModelToDelete(null);
-                //     },
-                //     onFinish: () => {
-                //         setSelectedModel(null);
-                //         setShowEditModel(false);
-                //     },
-                //     });
-                // }}
                 onConfirm={() => {
                     if (assetModelToDelete) {
                         router.delete(`/models/${assetModelToDelete.id}`, {

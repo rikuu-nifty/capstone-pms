@@ -126,220 +126,220 @@ export default function BuildingIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Buildings" />
+            <Head title="Buildings" />
 
-        <div className="flex flex-col gap-4 p-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl font-semibold">Buildings</h1>
-                    <p className="text-sm text-muted-foreground">List of AUF buildings.</p>
+            <div className="flex flex-col gap-4 p-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                        <h1 className="text-2xl font-semibold">Buildings</h1>
+                        <p className="text-sm text-muted-foreground">List of AUF buildings.</p>
 
-                    <div className="flex items-center gap-2 w-96">
-                    <Input
-                        type="text"
-                        placeholder="Search by id, code, name, or description..."
-                        value={rawSearch}
-                        onChange={(e) => setRawSearch(e.target.value)}
-                        className="max-w-xs"
-                    />
+                        <div className="flex items-center gap-2 w-96">
+                        <Input
+                            type="text"
+                            placeholder="Search by id, code, name, or description..."
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
+                            className="max-w-xs"
+                        />
+                        </div>
+
+                        {/* Example filter badges (enable when you add filters)
+                        <div className="flex flex-wrap gap-2 pt-1">
+                        {selected_status && (
+                            <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>
+                        )}
+                        {selected_status && (
+                            <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setSelected_status('')}
+                            className="cursor-pointer"
+                            >
+                            Clear filters
+                            </Button>
+                        )}
+                        </div>
+                        */}
                     </div>
 
-                    {/* Example filter badges (enable when you add filters)
-                    <div className="flex flex-wrap gap-2 pt-1">
-                    {selected_status && (
-                        <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>
-                    )}
-                    {selected_status && (
+                    <div className="flex gap-2">
+                        <SortDropdown<BuildingSortKey>
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            options={buildingSortOptions}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
+                        />
+
                         <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => setSelected_status('')}
-                        className="cursor-pointer"
+                            onClick={() => setShowAddBuilding(true)}
+                            className="cursor-pointer"
                         >
-                        Clear filters
+                            <PlusCircle className="mr-1 h-4 w-4" /> Add New Building
                         </Button>
-                    )}
                     </div>
-                    */}
                 </div>
 
-                <div className="flex gap-2">
-                    <SortDropdown<BuildingSortKey>
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        options={buildingSortOptions}
-                        onChange={(key, dir) => {
-                            setSortKey(key);
-                            setSortDir(dir);
-                        }}
-                    />
+                {/* KPI cards (optional; shown if totals exists) */}
+                {totals && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border p-4">
+                    <div className="text-sm text-muted-foreground">Total Buildings</div>
+                    <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_buildings)}</div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                    <div className="text-sm text-muted-foreground">Total Rooms</div>
+                    <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_rooms)}</div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                    <div className="text-sm text-muted-foreground">Average Assets per Building</div>
+                    <div className="mt-1 text-2xl font-semibold">To Be Added later</div>
+                    </div>
+                </div>
+                )}
 
-                    <Button
-                        onClick={() => setShowAddBuilding(true)}
-                        className="cursor-pointer"
-                    >
-                        <PlusCircle className="mr-1 h-4 w-4" /> Add New Building
-                    </Button>
+                {/* BUILDINGS Table */}
+                <div className="rounded-lg-lg overflow-x-auto border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted text-foreground">
+                                <TableHead className="text-center">ID</TableHead>
+                                <TableHead className="text-center">Code</TableHead>
+                                <TableHead className="text-center">Name</TableHead>
+                                <TableHead className="text-center">Description</TableHead>
+                                <TableHead className="text-center">Room Count</TableHead>
+                                <TableHead className="text-center">Assets Count</TableHead>
+                                <TableHead className="text-center">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+
+                        <TableBody className="text-center">
+                        {page_items.length > 0 ? page_items.map((b) => (
+                            <TableRow
+                                key={b.id}
+                                onClick={() => 
+                                    setSelectedBuildingId(Number(b.id))
+                                }
+                                className={`cursor-pointer ${selectedBuildingId === Number(b.id) ? 'bg-muted/50' : ''}`}
+                            >
+                                <TableCell>{b.id}</TableCell>
+                                <TableCell className="font-medium">{b.code}</TableCell>
+                                <TableCell>{b.name}</TableCell>
+                                <TableCell
+                                    className={`max-w-[250px] whitespace-normal break-words ${
+                                    b.description && b.description !== '-' ? 'text-justify' : 'text-center'
+                                    }`}
+                                >
+                                    {b.description ?? '—'}
+                                </TableCell>
+                                <TableCell>{b.building_rooms_count ?? 0}</TableCell>
+                                <TableCell>{b.assets_count ?? 0}</TableCell>
+                                <TableCell className="h-full">
+                                    <div className="flex justify-center items-center gap-2 h-full">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="cursor-pointer"
+                                            onClick={() => {
+                                                setSelectedBuilding(b);
+                                                setShowEditBuilding(true);
+                                            }}
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                                setToDelete(b);
+                                                setShowDeleteModal(true);
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            asChild 
+                                            className="cursor-pointer"
+                                        >
+                                            <Link 
+                                                href={`/buildings/view/${b.id}`} 
+                                                preserveScroll
+                                            >
+                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        )) : (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                    No buildings found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                <div className="flex items-center justify-between">
+                    <PageInfo page={page} total={sorted.length} pageSize={PAGE_SIZE} label="buildings" />
+                    <Pagination page={page} total={sorted.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
                 </div>
             </div>
 
-            {/* KPI cards (optional; shown if totals exists) */}
-            {totals && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border p-4">
-                <div className="text-sm text-muted-foreground">Total Buildings</div>
-                <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_buildings)}</div>
-                </div>
-                <div className="rounded-2xl border p-4">
-                <div className="text-sm text-muted-foreground">Total Rooms</div>
-                <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_rooms)}</div>
-                </div>
-                <div className="rounded-2xl border p-4">
-                <div className="text-sm text-muted-foreground">Average Assets per Building</div>
-                <div className="mt-1 text-2xl font-semibold">To Be Added later</div>
-                </div>
-            </div>
+            <AddBuildingModal
+                show={showAddBuilding}
+                onClose={() => 
+                    setShowAddBuilding(false)
+                } 
+            />
+
+            {selectedBuilding && (
+                <EditBuildingModal
+                    show={showEditBuilding}
+                    onClose={() => {
+                        setShowEditBuilding(false);
+                        setSelectedBuilding(null);
+                    }}
+                    building={selectedBuilding}
+                />
             )}
 
-            {/* BUILDINGS Table */}
-            <div className="rounded-lg-lg overflow-x-auto border">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-muted text-foreground">
-                            <TableHead className="text-center">ID</TableHead>
-                            <TableHead className="text-center">Code</TableHead>
-                            <TableHead className="text-center">Name</TableHead>
-                            <TableHead className="text-center">Description</TableHead>
-                            <TableHead className="text-center">Room Count</TableHead>
-                            <TableHead className="text-center">Assets Count</TableHead>
-                            <TableHead className="text-center">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-
-                    <TableBody className="text-center">
-                    {page_items.length > 0 ? page_items.map((b) => (
-                        <TableRow
-                            key={b.id}
-                            onClick={() => 
-                                setSelectedBuildingId(Number(b.id))
-                            }
-                            className={`cursor-pointer ${selectedBuildingId === Number(b.id) ? 'bg-muted/50' : ''}`}
-                        >
-                            <TableCell>{b.id}</TableCell>
-                            <TableCell className="font-medium">{b.code}</TableCell>
-                            <TableCell>{b.name}</TableCell>
-                            <TableCell
-                                className={`max-w-[250px] whitespace-normal break-words ${
-                                b.description && b.description !== '-' ? 'text-justify' : 'text-center'
-                                }`}
-                            >
-                                {b.description ?? '—'}
-                            </TableCell>
-                            <TableCell>{b.building_rooms_count ?? 0}</TableCell>
-                            <TableCell>{b.assets_count ?? 0}</TableCell>
-                            <TableCell className="h-full">
-                                <div className="flex justify-center items-center gap-2 h-full">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="cursor-pointer"
-                                        onClick={() => {
-                                            setSelectedBuilding(b);
-                                            setShowEditBuilding(true);
-                                        }}
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => {
-                                            setToDelete(b);
-                                            setShowDeleteModal(true);
-                                        }}
-                                        className="cursor-pointer"
-                                    >
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        asChild 
-                                        className="cursor-pointer"
-                                    >
-                                        <Link 
-                                            href={`/buildings/view/${b.id}`} 
-                                            preserveScroll
-                                        >
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    )) : (
-                        <TableRow>
-                            <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                                No buildings found.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
-            </div>
-
-            <div className="flex items-center justify-between">
-                <PageInfo page={page} total={sorted.length} pageSize={PAGE_SIZE} label="buildings" />
-                <Pagination page={page} total={sorted.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
-            </div>
-        </div>
-
-        <AddBuildingModal
-            show={showAddBuilding}
-            onClose={() => 
-                setShowAddBuilding(false)
-            } 
-        />
-
-        {selectedBuilding && (
-            <EditBuildingModal
-                show={showEditBuilding}
-                onClose={() => {
-                    setShowEditBuilding(false);
-                    setSelectedBuilding(null);
-                }}
-                building={selectedBuilding}
-            />
-        )}
-
-        <DeleteConfirmationModal
-            show={showDeleteModal}
-            onCancel={() => 
-                setShowDeleteModal(false)
-            }
-            onConfirm={() => {
-                if (toDelete) {
-                    router.delete(`/buildings/${toDelete.id}`, {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            setShowDeleteModal(false);
-                            setToDelete(null);
-                        },
-                    });
+            <DeleteConfirmationModal
+                show={showDeleteModal}
+                onCancel={() => 
+                    setShowDeleteModal(false)
                 }
-            }}
-        />
-
-        {viewBuilding && (
-            <ViewBuildingModal
-                open={showViewBuilding}
-                onClose={closeViewBuilding}
-                building={viewBuilding}
+                onConfirm={() => {
+                    if (toDelete) {
+                        router.delete(`/buildings/${toDelete.id}`, {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDeleteModal(false);
+                                setToDelete(null);
+                            },
+                        });
+                    }
+                }}
             />
-        )}
+
+            {viewBuilding && (
+                <ViewBuildingModal
+                    open={showViewBuilding}
+                    onClose={closeViewBuilding}
+                    building={viewBuilding}
+                />
+            )}
       </AppLayout>
     );
 }
