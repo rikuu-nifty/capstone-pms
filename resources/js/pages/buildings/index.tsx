@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, Building2, DoorOpen, Boxes } from 'lucide-react';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 import SortDropdown, {type SortDir} from '@/components/filters/SortDropdown';
@@ -17,6 +17,7 @@ import AddBuildingModal from './AddBuildingModal';
 import EditBuildingModal from './EditBuildingModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import ViewBuildingModal from './ViewBuildingModal';
+import KPIStatCard from '@/components/statistics/KPIStatCard';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -129,78 +130,90 @@ export default function BuildingIndex({
             <Head title="Buildings" />
 
             <div className="flex flex-col gap-4 p-4">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
+                {/* Header + KPIs + Controls */}
+                <div className="flex flex-col gap-4">
+                    {/* Title & subtitle */}
+                    <div>
                         <h1 className="text-2xl font-semibold">Buildings</h1>
                         <p className="text-sm text-muted-foreground">List of AUF buildings.</p>
+                    </div>
 
+                    {/* KPI cards */}
+                    {/* {totals && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <div className="rounded-2xl border p-4">
+                                <div className="text-sm text-muted-foreground">Total Buildings</div>
+                                <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_buildings)}</div>
+                            </div>
+                            <div className="rounded-2xl border p-4">
+                                <div className="text-sm text-muted-foreground">Total Rooms</div>
+                                <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_rooms)}</div>
+                            </div>
+                            <div className="rounded-2xl border p-4">
+                                <div className="text-sm text-muted-foreground">Average Assets per Building</div>
+                                <div className="mt-1 text-2xl font-semibold">To Be Added later</div>
+                            </div>
+                        </div>
+                    )} */}
+
+                    {totals && (
+                    <div className="flex flex-wrap justify-between">
+                        <KPIStatCard
+                        label="Total Buildings"
+                        value={formatNumber(totals.total_buildings)}
+                        icon={Building2}
+                        barColor="bg-orange-400"
+                        className="w-[500px] h-[140px]"
+                        />
+                        <KPIStatCard
+                        label="Total Rooms"
+                        value={formatNumber(totals.total_rooms)}
+                        icon={DoorOpen}
+                        barColor="bg-sky-400"
+                        className="w-[500px] h-[140px]"
+                        />
+                        <KPIStatCard
+                        label="Average Assets per Building"
+                        value="To be added"
+                        icon={Boxes}
+                        barColor="bg-teal-400"
+                        className="w-[500px] h-[140px]"
+                        />
+                    </div>
+                     )}
+
+                    {/* Controls row */}
+                    <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 w-96">
-                        <Input
-                            type="text"
-                            placeholder="Search by id, code, name, or description..."
-                            value={rawSearch}
-                            onChange={(e) => setRawSearch(e.target.value)}
-                            className="max-w-xs"
-                        />
+                            <Input
+                                type="text"
+                                placeholder="Search by id, code, name, or description..."
+                                value={rawSearch}
+                                onChange={(e) => setRawSearch(e.target.value)}
+                                className="max-w-xs"
+                            />
                         </div>
 
-                        {/* Example filter badges (enable when you add filters)
-                        <div className="flex flex-wrap gap-2 pt-1">
-                        {selected_status && (
-                            <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>
-                        )}
-                        {selected_status && (
+                        <div className="flex gap-2">
+                            <SortDropdown<BuildingSortKey>
+                                sortKey={sortKey}
+                                sortDir={sortDir}
+                                options={buildingSortOptions}
+                                onChange={(key, dir) => {
+                                    setSortKey(key);
+                                    setSortDir(dir);
+                                }}
+                            />
+
                             <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => setSelected_status('')}
-                            className="cursor-pointer"
+                                onClick={() => setShowAddBuilding(true)}
+                                className="cursor-pointer"
                             >
-                            Clear filters
+                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Building
                             </Button>
-                        )}
                         </div>
-                        */}
-                    </div>
-
-                    <div className="flex gap-2">
-                        <SortDropdown<BuildingSortKey>
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            options={buildingSortOptions}
-                            onChange={(key, dir) => {
-                                setSortKey(key);
-                                setSortDir(dir);
-                            }}
-                        />
-
-                        <Button
-                            onClick={() => setShowAddBuilding(true)}
-                            className="cursor-pointer"
-                        >
-                            <PlusCircle className="mr-1 h-4 w-4" /> Add New Building
-                        </Button>
                     </div>
                 </div>
-
-                {/* KPI cards (optional; shown if totals exists) */}
-                {totals && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border p-4">
-                    <div className="text-sm text-muted-foreground">Total Buildings</div>
-                    <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_buildings)}</div>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                    <div className="text-sm text-muted-foreground">Total Rooms</div>
-                    <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_rooms)}</div>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                    <div className="text-sm text-muted-foreground">Average Assets per Building</div>
-                    <div className="mt-1 text-2xl font-semibold">To Be Added later</div>
-                    </div>
-                </div>
-                )}
 
                 {/* BUILDINGS Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">
@@ -218,75 +231,73 @@ export default function BuildingIndex({
                         </TableHeader>
 
                         <TableBody className="text-center">
-                        {page_items.length > 0 ? page_items.map((b) => (
-                            <TableRow
-                                key={b.id}
-                                onClick={() => 
-                                    setSelectedBuildingId(Number(b.id))
-                                }
-                                className={`cursor-pointer ${selectedBuildingId === Number(b.id) ? 'bg-muted/50' : ''}`}
-                            >
-                                <TableCell>{b.id}</TableCell>
-                                <TableCell className="font-medium">{b.code}</TableCell>
-                                <TableCell>{b.name}</TableCell>
-                                <TableCell
-                                    className={`max-w-[250px] whitespace-normal break-words ${
-                                    b.description && b.description !== '-' ? 'text-justify' : 'text-center'
-                                    }`}
+                            {page_items.length > 0 ? page_items.map((b) => (
+                                <TableRow
+                                    key={b.id}
+                                    onClick={() => setSelectedBuildingId(Number(b.id))}
+                                    className={`cursor-pointer ${selectedBuildingId === Number(b.id) ? 'bg-muted/50' : ''}`}
                                 >
-                                    {b.description ?? '—'}
-                                </TableCell>
-                                <TableCell>{b.building_rooms_count ?? 0}</TableCell>
-                                <TableCell>{b.assets_count ?? 0}</TableCell>
-                                <TableCell className="h-full">
-                                    <div className="flex justify-center items-center gap-2 h-full">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                                setSelectedBuilding(b);
-                                                setShowEditBuilding(true);
-                                            }}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                                setToDelete(b);
-                                                setShowDeleteModal(true);
-                                            }}
-                                            className="cursor-pointer"
-                                        >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            asChild 
-                                            className="cursor-pointer"
-                                        >
-                                            <Link 
-                                                href={`/buildings/view/${b.id}`} 
-                                                preserveScroll
+                                    <TableCell>{b.id}</TableCell>
+                                    <TableCell className="font-medium">{b.code}</TableCell>
+                                    <TableCell>{b.name}</TableCell>
+                                    <TableCell
+                                        className={`max-w-[250px] whitespace-normal break-words ${
+                                            b.description && b.description !== '-' ? 'text-justify' : 'text-center'
+                                        }`}
+                                    >
+                                        {b.description ?? '—'}
+                                    </TableCell>
+                                    <TableCell>{b.building_rooms_count ?? 0}</TableCell>
+                                    <TableCell>{b.assets_count ?? 0}</TableCell>
+                                    <TableCell className="h-full">
+                                        <div className="flex justify-center items-center gap-2 h-full">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedBuilding(b);
+                                                    setShowEditBuilding(true);
+                                                }}
                                             >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        )) : (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                                    No buildings found.
-                                </TableCell>
-                            </TableRow>
-                        )}
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    setToDelete(b);
+                                                    setShowDeleteModal(true);
+                                                }}
+                                                className="cursor-pointer"
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                asChild 
+                                                className="cursor-pointer"
+                                            >
+                                                <Link 
+                                                    href={`/buildings/view/${b.id}`} 
+                                                    preserveScroll
+                                                >
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                        No buildings found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </div>
@@ -299,9 +310,7 @@ export default function BuildingIndex({
 
             <AddBuildingModal
                 show={showAddBuilding}
-                onClose={() => 
-                    setShowAddBuilding(false)
-                } 
+                onClose={() => setShowAddBuilding(false)} 
             />
 
             {selectedBuilding && (
@@ -317,9 +326,7 @@ export default function BuildingIndex({
 
             <DeleteConfirmationModal
                 show={showDeleteModal}
-                onCancel={() => 
-                    setShowDeleteModal(false)
-                }
+                onCancel={() => setShowDeleteModal(false)}
                 onConfirm={() => {
                     if (toDelete) {
                         router.delete(`/buildings/${toDelete.id}`, {
