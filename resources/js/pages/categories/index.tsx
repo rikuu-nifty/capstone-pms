@@ -12,7 +12,7 @@ import type { BreadcrumbItem } from '@/types';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 import type { CategoriesPageProps, CategoryWithModels } from '@/types/category';
-import { formatStatusLabel } from '@/types/custom-index';
+import { formatStatusLabel, formatNumber } from '@/types/custom-index';
 
 import AddCategoryModal from './AddCategory';
 import EditCategoryModal from './EditCategory';
@@ -44,7 +44,7 @@ type PageProps = CategoriesPageProps & {
 
 export default function CategoriesIndex({ 
     categories = [], 
-    // totals 
+    totals,
 }: CategoriesPageProps) {
 
     const { props } = usePage<PageProps>();
@@ -54,6 +54,13 @@ export default function CategoriesIndex({
     const [showEditCategory, setShowEditCategory] = useState(false);
     const [showViewCategory, setShowViewCategory] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<CategoryWithModels | null>(null);
+
+    const totalCats = totals?.categories ?? 0;
+    const totalModels = totals?.asset_models ?? 0;
+    const totalAssets = totals?.assets ?? 0;
+
+    const avgModelsPerCat = totalCats > 0 ? totalModels / totalCats : 0;
+    const avgAssetsPerCat = totalCats > 0 ? totalAssets / totalCats : 0;
 
     const openViewCategory = (cat: CategoryWithModels) => {
         setSelectedCategory(cat);
@@ -226,6 +233,41 @@ export default function CategoriesIndex({
                         </Button>
                     </div>
                 </div>
+
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                        <div className="rounded-2xl border p-4">
+                            <div className="text-sm text-muted-foreground">Total Categories</div>
+                            <div className="mt-1 text-2xl font-semibold">
+                                {formatNumber(totalCats)}
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border p-4">
+                            <div className="text-sm text-muted-foreground">Total Models</div>
+                            <div className="mt-1 text-2xl font-semibold">
+                                {formatNumber(totalModels)}
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border p-4">
+                            <div className="text-sm text-muted-foreground">Total Assets</div>
+                            <div className="mt-1 text-2xl font-semibold">
+                                {formatNumber(totalAssets)}
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border p-4">
+                            <div className="text-sm text-muted-foreground">Averages per Category</div>
+                            <div className="mt-1 text-2xl font-semibold">
+                                {avgModelsPerCat.toFixed(1)} models
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground">
+                                {avgAssetsPerCat.toFixed(1)} assets (avg)
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* CATEGORIES Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">
