@@ -200,7 +200,7 @@ export default function AssetModelsIndex({
                         <TableRow className="bg-muted text-foreground">
                             <TableHead className="text-center">ID</TableHead>
                             <TableHead className="text-center">Brand</TableHead>
-                            <TableHead className="text-center">Model</TableHead>
+                            <TableHead className="text-center">Model / Specification</TableHead>
                             <TableHead className="text-center">Category</TableHead>
                             <TableHead className="text-center">Active Assets</TableHead>
                             <TableHead className="text-center">Total Assets</TableHead>

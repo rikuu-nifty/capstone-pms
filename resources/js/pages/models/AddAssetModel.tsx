@@ -84,8 +84,6 @@ export default function AddAssetModelModal({
                 {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
             </div>
 
-            
-
             {/* Brand */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Brand</label>
@@ -101,7 +99,7 @@ export default function AddAssetModelModal({
 
             {/* Model */}
             <div className="col-span-1">
-                <label className="mb-1 block font-medium">Model</label>
+                <label className="mb-1 block font-medium">Model / Specifications</label>
                 <input
                 type="text"
                 placeholder="e.g., ThinkPad T480"
@@ -123,8 +121,11 @@ export default function AddAssetModelModal({
                     }
                 >
                     {statusOptions.map((s) => (
-                        <option key={s || 'all'} value={s}>
-                        {s ? formatEnums(s) : '—'}
+                        <option 
+                            key={s || 'all'} 
+                            value={s}
+                        >
+                            {s === 'is_archived' ? 'Archived' : formatEnums(s)}
                         </option>
                     ))}
                 </select>

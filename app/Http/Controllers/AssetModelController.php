@@ -32,30 +32,44 @@ class AssetModelController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'brand'       => ['nullable', 'string', 'max:255'],
-            'model'       => ['required', 'string', 'max:255'],
-            'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'status'      => ['required', Rule::in(['active', 'is_archived'])],
+        $brand = trim((string) $request->input('brand', ''));
+
+        $request->merge([
+            'brand'  => $brand === '' ? null : $brand,
+            'model'  => trim($request->input('model', '')),
+            'status' => $request->input('status', 'active'),
         ]);
 
-        // Enforce unique (category_id, brand, model) while ignoring soft-deleted rows
-        $request->validate([
-            'model' => [
-                Rule::unique('asset_models', 'model')
-                    ->where(fn ($q) => $q
-                        ->where('category_id', $request->integer('category_id'))
-                        ->where('brand', $request->input('brand'))
-                        ->whereNull('deleted_at')
-                    ),
+        $input['brand'] = trim((string) ($input['brand'] ?? ''));
+        $input['brand'] = $input['brand'] === '' ? null : $input['brand'];
+        $input['model'] = trim((string) ($input['model'] ?? ''));
+        $input['status'] = $input['status'] ?? 'active';
+
+        $validated = $request->validate([
+            'brand' => ['nullable', 'string', 'max:255'],
+            'model' => ['required', 'string', 'max:255',
+                Rule::unique('asset_models', 'model')->where(function ($q) use ($request) {
+                    $q->where('category_id', $request->integer('category_id'))
+                    ->whereNull('deleted_at');
+
+                    if ($request->filled('brand')) {
+                        $q->where('brand', $request->input('brand'));
+                    } else {
+                        $q->whereNull('brand');
+                    }
+                }),
             ],
+            'category_id' => ['required', 'integer',
+                Rule::exists('categories', 'id')->whereNull('deleted_at'),
+            ],
+            'status' => ['required', Rule::in(['active', 'is_archived'])],
+        ], [
+            'model.unique' => 'This brand/model already exists in the selected category.',
         ]);
 
         $model = AssetModel::create($validated);
-        $recId = $model->id;
 
-        return 
-            redirect()->route('asset-models.index')->with('success', "Record #{$recId} was successfully created");
+        return redirect()->route('asset-models.index')->with('success', "Asset Model #{$model->id} was successfully created");
     }
 
     public function show(AssetModel $assetModel)

@@ -103,7 +103,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
     //ASSET MODELS
-    Route::get('/models', [AssetModelController::class, 'index'])->name('asset-model.index');
+    Route::get('/models', [AssetModelController::class, 'index'])->name('asset-models.index');
+    Route::post('/models', [AssetModelController::class, 'store'])->name('asset-models.store');
 
 
 });
