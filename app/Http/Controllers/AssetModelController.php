@@ -13,15 +13,10 @@ class AssetModelController extends Controller
 {
     private function indexProps(): array
     {
-        $models = AssetModel::withCategoryAndCounts()->get();
-        $totals = AssetModel::getTotals();
-
-        $categories = AssetModel::categoriesForDropdown();
-
         return [
-            'asset_models' => $models,
-            'totals' => $totals,
-            'categories' => $categories,
+            'asset_models' => AssetModel::forIndex(),
+            'totals' => AssetModel::getTotals(),
+            'categories' => AssetModel::categoriesForDropdown(),
         ];
     }
 
@@ -74,9 +69,9 @@ class AssetModelController extends Controller
 
     public function show(AssetModel $assetModel)
     {
-        $viewing = AssetModel::withCountsAndCategory()->findOrFail($assetModel->id);
+       $viewing = AssetModel::findForView($assetModel->id);
 
-        return Inertia::render('asset-models/index', array_merge(
+        return Inertia::render('models/index', array_merge(
             $this->indexProps(),
             ['viewing' => $viewing],
         ));

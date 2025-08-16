@@ -4,9 +4,9 @@ import type { CategoryWithModels } from '@/types/category';
 // import { formatStatusLabel } from '@/types/custom-index';
 
 interface  CategoryViewProps {
-  open: boolean;
-  onClose: () => void;
-  category: CategoryWithModels;
+    open: boolean;
+    onClose: () => void;
+    category: CategoryWithModels;
 };
 
 export default function CategoryViewModal({ 

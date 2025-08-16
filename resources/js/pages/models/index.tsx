@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 import AddAssetModelModal from './AddAssetModel';
 import EditAssetModelModal from './EditAssetModel';
+import ViewAssetModelModal from './ViewAssetModel';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { 
@@ -56,6 +58,8 @@ export default function AssetModelsIndex({
     const [showAddModel, setShowAddModel] = useState(false);
     const [showEditModel, setShowEditModel] = useState(false);
     const [selectedModel, setSelectedModel] = useState<AssetModelWithCounts | null>(null);
+    const [showDeleteAssetModel, setShowDeleteAssetModel] = useState(false);
+    const [assetModelToDelete, setAssetModelToDelete] = useState<AssetModelWithCounts | null>(null);
     
     const clearFilters = () => {
         setSelectedCategoryId('');
@@ -238,7 +242,8 @@ export default function AssetModelsIndex({
                                             size="icon" 
                                             className="cursor-pointer" 
                                             onClick={() => {
-                                                /* open edit modal */
+                                                setAssetModelToDelete(m);
+                                                setShowDeleteAssetModel(true);
                                             }}
                                         >
                                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -247,8 +252,12 @@ export default function AssetModelsIndex({
                                             variant="ghost" 
                                             size="icon" 
                                             asChild 
-                                            className="cursor-pointer">
-                                            <Link href={`/asset-models/view/${m.id}`} preserveScroll>
+                                            className="cursor-pointer"
+                                        >
+                                            <Link 
+                                                href={`/models/view/${m.id}`} 
+                                                preserveScroll
+                                            >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Link>
                                         </Button>
@@ -284,15 +293,60 @@ export default function AssetModelsIndex({
                 <EditAssetModelModal
                     key={selectedModel.id}
                     show={showEditModel}
-                    onClose={() => 
+                    onClose={() => {
                         setShowEditModel(false)
-                    }
+                        setSelectedModel(null)
+                    }}
                     model={selectedModel}
                     categories={categories}
                 />
             )}
 
+            {viewing && (
+                <ViewAssetModelModal
+                    open={!!viewing}
+                    model={viewing}
+                    onClose={() => router.visit(route('asset-models.index'), {
+                            preserveScroll: true,
+                            preserveState: true,
+                        })
+                    }
+                />
+            )}
 
+            <DeleteConfirmationModal
+                show={showDeleteAssetModel}
+                onCancel={() => {
+                    setShowDeleteAssetModel(false);
+                    setAssetModelToDelete(null);
+                }}
+                title="Delete Asset Model"
+                message={
+                    assetModelToDelete
+                    ? `Are you sure you want to delete “${assetModelToDelete.brand ?? '—'} ${assetModelToDelete.model ?? ''}” (ID ${assetModelToDelete.id})?`
+                    : 'Are you sure you want to delete this asset model?'
+                }
+                onConfirm={() => {
+                    if (!assetModelToDelete) return;
+
+                    if ((assetModelToDelete.assets_count ?? 0) > 0) {
+                        alert('This model has related assets. Please reassign or remove those assets before deleting this model.');
+                        return;
+                    }
+
+                    router.delete(`/models/${assetModelToDelete.id}`, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setShowDeleteAssetModel(false);
+                        setAssetModelToDelete(null);
+                    },
+                    onFinish: () => {
+                        setSelectedModel(null);
+                        setShowEditModel(false);
+                    },
+                    });
+                }}
+            />
         </AppLayout>
     );
 }

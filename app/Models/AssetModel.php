@@ -17,14 +17,12 @@ class AssetModel extends Model
         'status',
     ];
 
-    //  Relationship: AssetModel belongs to a Category
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id')
             ->whereNull('categories.deleted_at');
     }
 
-    // ✅ (Optional) Relationship: AssetModel has many InventoryList entries
     public function assets()
     {
         return $this->hasMany(InventoryList::class, 'asset_model_id')
@@ -40,7 +38,32 @@ class AssetModel extends Model
                     $q->where('status', 'active');
                 },
             ])
-            ->orderBy('id', 'desc');
+            ->orderByDesc('id');
+    }
+
+    public function scopeWithAssetsMinimal($query)
+    {
+        return $query->with([
+            'assets' => function ($q) {
+                $q->select('id', 'asset_model_id', 'asset_name', 'serial_no', 'supplier')
+                    ->whereNull('deleted_at');
+            },
+        ]);
+    }
+
+    public static function forIndex()
+    {
+        return static::withCategoryAndCounts()->get();
+    }
+
+    public static function findForView($id)
+    {
+        return static::forViewing()->findOrFail($id);
+    }
+
+    public function scopeForViewing($query)
+    {
+        return $query->withCategoryAndCounts()->withAssetsMinimal();
     }
 
     //KPIs

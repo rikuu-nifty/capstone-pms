@@ -62,7 +62,7 @@ export default function TurnoverDisposalViewModal({
             size="xl" 
             contentClassName=
                 "relative max-h-[80vh] overflow-y-auto print:overflow-x-hidden"
-            >
+        >
             {/* Header */}
             <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-">
