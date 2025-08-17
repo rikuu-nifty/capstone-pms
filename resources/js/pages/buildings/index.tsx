@@ -60,7 +60,7 @@ export default function BuildingIndex({
     const [sortDir, setSortDir] = useState<SortDir>('asc');
 
     const [page, setPage] = useState(1);
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 5;
 
     useEffect(() => {
         setPage(1);
@@ -138,24 +138,6 @@ export default function BuildingIndex({
                         <p className="text-sm text-muted-foreground">List of AUF buildings.</p>
                     </div>
 
-                    {/* KPI cards */}
-                    {/* {totals && (
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                            <div className="rounded-2xl border p-4">
-                                <div className="text-sm text-muted-foreground">Total Buildings</div>
-                                <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_buildings)}</div>
-                            </div>
-                            <div className="rounded-2xl border p-4">
-                                <div className="text-sm text-muted-foreground">Total Rooms</div>
-                                <div className="mt-1 text-2xl font-semibold">{formatNumber(totals.total_rooms)}</div>
-                            </div>
-                            <div className="rounded-2xl border p-4">
-                                <div className="text-sm text-muted-foreground">Average Assets per Building</div>
-                                <div className="mt-1 text-2xl font-semibold">To Be Added later</div>
-                            </div>
-                        </div>
-                    )} */}
-
                     {totals && (
                         <div className="flex flex-wrap justify-between">
                             <KPIStatCard
@@ -163,14 +145,14 @@ export default function BuildingIndex({
                                 value={formatNumber(totals.total_buildings)}
                                 icon={Building2}
                                 barColor="bg-orange-400"
-                                className="w-[500px] h-[140px]"
+                                className="w-[450px] h-[140px]"
                             />
                             <KPIStatCard
                                 label="Total Rooms"
                                 value={formatNumber(totals.total_rooms)}
                                 icon={DoorOpen}
                                 barColor="bg-sky-400"
-                                className="w-[500px] h-[140px]"
+                                className="w-[450px] h-[140px]"
                             />
                             <KPIStatCard
                                 label="Average Assets per Building"
@@ -179,7 +161,7 @@ export default function BuildingIndex({
                                 : '0.00'}
                                 icon={Boxes}
                                 barColor="bg-teal-400"
-                                className="w-[500px] h-[140px]"
+                                className="w-[450px] h-[140px]"
                             />
                         </div>
                      )}

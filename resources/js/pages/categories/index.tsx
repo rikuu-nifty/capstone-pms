@@ -258,7 +258,7 @@ export default function CategoriesIndex({
                         </div>
 
                         <div className="rounded-2xl border p-4">
-                            <div className="text-sm text-muted-foreground">Averages per Category</div>
+                            <div className="text-sm text-muted-foreground">Average Models per Category</div>
                             <div className="mt-1 text-2xl font-semibold">
                                 {avgModelsPerCat.toFixed(1)} models
                             </div>
