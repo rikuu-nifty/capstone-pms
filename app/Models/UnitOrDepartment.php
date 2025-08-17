@@ -39,4 +39,10 @@ class UnitOrDepartment extends Model
     {
         return $this->hasMany(AssetAssignment::class, 'unit_or_department_id');
     }
+
+    // Relationship to OffCampus table (via college_or_unit_id FK)
+    public function offCampuses()
+    {
+        return $this->hasMany(OffCampus::class, 'college_or_unit_id');
+    }
 }

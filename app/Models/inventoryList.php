@@ -52,9 +52,15 @@ class InventoryList extends Model
         return $this->hasMany(TurnoverDisposalAsset::class, 'asset_id');
     }
 
-public function category() {
-  return $this->belongsTo(Category::class, 'category_id');
-}
+    public function category() 
+    {
+         return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function offCampuses()
+    {
+         return $this->hasMany(OffCampus::class, 'asset_id');
+    }
 
     
     // public function offCampusAsset() // NEED LAGAY

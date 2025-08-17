@@ -7,7 +7,9 @@ use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TurnoverDisposalController;
-use App\Models\TurnoverDisposal;
+use App\Http\Controllers\OffCampusController;
+use App\Http\Controllers\OffCampusAssetController;
+use App\Models\TurnoverDisposal;    
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -90,6 +92,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'update'])->name('turnover-disposal.update');
     Route::get('/turnover-disposal/{turnoverDisposal}/view', [TurnoverDisposalController::class, 'show'])->name('turnover-disposal.view');
     Route::delete('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'destroy'])->name('turnover-disposal.destroy');
+
+
+    // OFF-CAMPUS
+    Route::get('/off-campus', [OffCampusController::class, 'index'])->name('off-campus.index');
+    Route::post('/off-campus', [OffCampusController::class, 'store'])->name('off-campus.store');
+    Route::get('/off-campus/create', [OffCampusController::class, 'create'])->name('off-campus.create');
+    Route::get('/off-campus/{off_campus}', [OffCampusController::class, 'show'])->name('off-campus.show');
+    Route::put('/off-campus/{off_campus}', [OffCampusController::class, 'update'])->name('off-campus.update');
+    Route::get('/off-campus/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('off-campus.edit');
+    Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy'); // archive
+    Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])->name('off-campus.restore');
+    Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])->name('off-campus.forceDelete'); // optional
+
+    // Route::delete('/off-campus/{off_campus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy');
+
 
     // INSTITUTIONAL SETUP - BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');

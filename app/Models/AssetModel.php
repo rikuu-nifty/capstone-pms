@@ -27,4 +27,16 @@ class AssetModel extends Model
     {
         return $this->hasMany(InventoryList::class, 'asset_model_id');
     }
+
+        // AssetModel.php // Relationship to OffCampus table (via asset_model_id FK)
+    public function offCampuses()
+    {
+        return $this->hasMany(OffCampus::class, 'asset_model_id');
+    }
+
+    // // User.php
+    // public function issuedOffCampuses()
+    // {
+    //     return $this->hasMany(OffCampus::class, 'issued_by_id');
+    // }
 }

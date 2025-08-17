@@ -66,4 +66,10 @@ public function emailVerificationCodes()
     return $this->hasMany(EmailVerificationCode::class);
 }
 
+public function issuedOffCampuses()
+{
+    return $this->hasMany(OffCampus::class, 'issued_by_id');
+}
+
+
 }
