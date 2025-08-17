@@ -94,16 +94,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'destroy'])->name('turnover-disposal.destroy');
 
 
-    // OFF-CAMPUS
-    Route::get('/off-campus', [OffCampusController::class, 'index'])->name('off-campus.index');
-    Route::post('/off-campus', [OffCampusController::class, 'store'])->name('off-campus.store');
-    Route::get('/off-campus/create', [OffCampusController::class, 'create'])->name('off-campus.create');
-    Route::get('/off-campus/{off_campus}', [OffCampusController::class, 'show'])->name('off-campus.show');
-    Route::put('/off-campus/{off_campus}', [OffCampusController::class, 'update'])->name('off-campus.update');
-    Route::get('/off-campus/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('off-campus.edit');
-    Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy'); // archive
-    Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])->name('off-campus.restore');
-    Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])->name('off-campus.forceDelete'); // optional
+    /// OFF-CAMPUS
+Route::prefix('off-campus')->name('off-campus.')->group(function () {
+    Route::get('/', [OffCampusController::class, 'index'])->name('index');
+    Route::post('/', [OffCampusController::class, 'store'])->name('store');
+    Route::get('/create', [OffCampusController::class, 'create'])->name('create');
+    Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
+    Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
+    Route::get('/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('edit');
+
+    // archive / restore / hard delete
+    Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])
+        ->whereNumber('offCampus')->name('destroy');
+
+    Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])
+        ->whereNumber('id')->name('restore');
+
+    Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
+        ->whereNumber('id')->name('forceDelete');
+});
+
 
     // Route::delete('/off-campus/{off_campus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy');
 
