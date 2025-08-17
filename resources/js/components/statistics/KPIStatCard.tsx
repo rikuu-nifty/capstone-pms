@@ -31,7 +31,7 @@ export default function KPIStatCard({
         <div className={cn('h-1.5 w-full', barColor)} />
 
             {/* Content */}
-            <div className="flex items-center gap-3 h-full p-4">
+            <div className="flex items-center gap-3 h-full p-6">
                 {/* Icon bubble */}
                 <div className="rounded-full p-3 bg-white/10 flex items-center justify-center">
                     <Icon className="h-8 w-8 text-white/90" />
@@ -40,7 +40,7 @@ export default function KPIStatCard({
                 {/* Texts */}
                 <div className="flex flex-col justify-center">
                     <div className="text-sm text-white/80">{label}</div>
-                    <div className="mt-1 text-2xl font-semibold leading-none tracking-tight text-white">
+                    <div className="mt-2 text-2xl font-semibold leading-none tracking-tight text-white">
                         {value}
                     </div>
                 </div>

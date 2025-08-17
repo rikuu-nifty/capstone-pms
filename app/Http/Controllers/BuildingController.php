@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Building;
+use App\Models\BuildingRoom;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
@@ -23,17 +24,39 @@ class BuildingController extends Controller
         
         $totals['avg_assets_per_building'] = $totals['total_buildings'] > 0
             ? round($totals['total_assets'] / $totals['total_buildings'], 2)
-            : 0;
+            : 0
+        ;
+
+        $totals['avg_assets_per_room'] = $totals['total_rooms'] > 0
+            ? round($totals['total_assets'] / $totals['total_rooms'], 2)
+            : 0
+        ;
+        
+        $rooms = BuildingRoom::listAllRooms();
+        $rooms->each(fn ($r) =>
+            $r->asset_share = $totals['total_assets'] > 0
+                ? round(((int) ($r->assets_count ?? 0)) / (int) $totals['total_assets'] * 100, 2)
+                : 0.00
+        );
 
         return [
             'buildings' => $buildings,
             'totals' => $totals,
+            'rooms' => $rooms,
         ];
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return Inertia::render('buildings/index', $this->indexProps());
+        $indexProps = array_merge(
+            $this->indexProps(),
+            [
+                'rooms' => BuildingRoom::listAllRooms(),
+                'selectedBuilding' => $request->integer('selected'),
+            ]
+        );
+
+        return Inertia::render('buildings/index', $indexProps);
     }
 
     /**

@@ -23,10 +23,14 @@ export type Totals = {
     total_rooms: number;
     total_assets: number;
     avg_assets_per_building: number;
+    avg_assets_per_room: number;
 }
 
 export type PageProps = {
   buildings: Building[];
   totals?: Totals;
   viewing?: Building;
+
+  rooms?: BuildingRoom[];
+  selected?: number | null;
 };

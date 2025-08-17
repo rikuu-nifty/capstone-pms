@@ -1,4 +1,4 @@
-import type { Building, InventoryList } from './custom-index';
+import type { InventoryList } from './custom-index';
 
 export type BuildingRoom = {
     id: number;
@@ -6,6 +6,13 @@ export type BuildingRoom = {
     room: string;
     description: string;
 
-    building?: Building;
+    building?: {
+        id: number;
+        code: string;
+        name: string;
+    };
+
     assets?: InventoryList[];
+    assets_count?: number;
+    asset_share?: number;
 };
