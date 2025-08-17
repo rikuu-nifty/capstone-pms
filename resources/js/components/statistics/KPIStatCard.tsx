@@ -32,12 +32,10 @@ export default function KPIStatCard({
 
             {/* Content */}
             <div className="flex items-center gap-3 h-full p-6">
-                {/* Icon bubble */}
                 <div className="rounded-full p-3 bg-white/10 flex items-center justify-center">
                     <Icon className="h-8 w-8 text-white/90" />
                 </div>
 
-                {/* Texts */}
                 <div className="flex flex-col justify-center">
                     <div className="text-sm text-white/80">{label}</div>
                     <div className="mt-2 text-2xl font-semibold leading-none tracking-tight text-white">
