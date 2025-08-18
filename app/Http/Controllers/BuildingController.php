@@ -7,6 +7,9 @@ use App\Models\BuildingRoom;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\StoreBuildingRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 
 
 class BuildingController extends Controller
@@ -62,26 +65,87 @@ class BuildingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => ['required', 'string', 'max:255'],
+    //         'code' => ['required', 'string', 'max:50',
+    //             Rule::unique('buildings', 'code')
+    //             ->whereNull('deleted_at'),
+    //         ],
+    //         'description' => ['nullable', 'string', 'max:1000'],
+    //     ]);
+
+    //     $payload = [
+    //         'name' => ucwords(trim($validated['name'])),
+    //         'code' => strtoupper(trim($validated['code'])),
+    //         'description' => $validated['description'] ? trim($validated['description']) : null,
+    //     ];
+
+    //     $building = Building::create($payload);
+
+    //     return redirect()->route('buildings.index')->with('success', "Building {$building->name} was successfully created.");
+    // }
+
+    public function store(StoreBuildingRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50',
-                Rule::unique('buildings', 'code')
-                ->whereNull('deleted_at'),
-            ],
-            'description' => ['nullable', 'string', 'max:1000'],
-        ]);
+        $validated = $request->validated();
 
-        $payload = [
-            'name' => ucwords(trim($validated['name'])),
-            'code' => strtoupper(trim($validated['code'])),
-            'description' => $validated['description'] ? trim($validated['description']) : null,
-        ];
+        try {
+            DB::beginTransaction();
 
-        $building = Building::create($payload);
+            // Create building
+            $building = Building::create([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'description' => $validated['description'] ?? null,
+            ]);
 
-        return redirect()->route('buildings.index')->with('success', "Building {$building->name} was successfully created.");
+            // Insert rooms if provided
+            if (!empty($validated['rooms'])) {
+                $now = now();
+
+                // (Safety) Ensure uniqueness inside the batch by room (after trimming)
+                // though the 'distinct' rule already handles it
+                $roomsBatch = collect($validated['rooms'])
+                    ->unique(fn ($r) => mb_strtolower($r['room']))
+                    ->map(fn ($r) => [
+                        'building_id' => $building->id,
+                        'room' => $r['room'],
+                        'description' => $r['description'] ?? null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ])
+                    ->values()
+                    ->all();
+
+                if (!empty($roomsBatch)) {
+                    BuildingRoom::insert($roomsBatch);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->back()
+                ->with('success', 'Building created successfully.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+
+            // Handle unique constraint violations gracefully
+            // MySQL error code 1062 = duplicate entry
+            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
+                // We don’t know whether it’s the building code or a room collision.
+                // Return a generic message + keep old input; you can inspect $e->getMessage() to customize.
+                return back()
+                    ->withErrors([
+                        'code' => 'The building code or one of the room names already exists.',
+                    ])
+                    ->withInput();
+            }
+
+            throw $e; // bubble up anything else
+        }
     }
 
     /**

@@ -12,10 +12,17 @@ export type Building = {
     building_rooms?: BuildingRoom[];
 };
 
+export type NewRoomPayload = {
+    room:string;
+    description?: string | null;
+}
+
 export type BuildingFormData = {
     name: string;
     code: string;
     description: string | null;
+
+    rooms?: NewRoomPayload[];
 };
 
 export type Totals = {
