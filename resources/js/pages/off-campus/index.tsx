@@ -4,17 +4,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import type { Paginator } from '@/types/paginatorOffCampus';
-import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Pencil, PlusCircle, Grid, Filter, Trash2 } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import OffCampusAddModal from './OffCampusAddModal';
 import OffCampusEditModal from './OffCampusEditModal';
+import OffCampusViewModal from './OffCampusViewModal';
 
 // -------------------- TYPES --------------------
 
-type OffCampusAsset = {
+export type OffCampusAsset = {
     id: number;
     asset_id: number;
     asset_model_id: number | null;
@@ -28,7 +29,7 @@ type OffCampusAsset = {
     } | null;
 };
 
-type OffCampus = {
+export type OffCampus = {
     id: number;
     requester_name: string;
     college_or_unit_id: number | null;
@@ -49,10 +50,10 @@ type OffCampus = {
     issued_by?: { id: number; name: string } | null;
 };
 
-type Asset = { id: number; asset_model_id: number | null; asset_name: string; serial_no: string | null };
-type AssetModel = { id: number; brand: string; model: string };
-type User = { id: number; name: string };
-type UnitOrDepartment = { id: number; name: string; code: string };
+export type Asset = { id: number; asset_model_id: number | null; asset_name: string; serial_no: string | null };
+export type AssetModel = { id: number; brand: string; model: string };
+export type User = { id: number; name: string };
+export type UnitOrDepartment = { id: number; name: string; code: string };
 
 type Props = {
     offCampuses: Paginator<OffCampus>;
@@ -92,8 +93,10 @@ export default function OffCampusIndex({
     const rows = offCampuses.data;
     const [search, setSearch] = useState('');
     const [selectedOffCampus, setSelectedOffCampus] = useState<OffCampus | null>(null);
+
     const [showAddOffCampus, setShowAddOffCampus] = useState(false);
     const [editModalVisible, setEditModalVisible] = useState(false);
+    const [showViewOffCampus, setShowViewOffCampus] = useState(false);
 
     // 🔻 delete (archive) modal state
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -160,20 +163,18 @@ export default function OffCampusIndex({
                         />
                     </div>
 
-
-                          <div className="flex gap-2">
+                    <div className="flex gap-2">
                         <Button variant="outline">
                             <Grid className="mr-1 h-4 w-4" /> Category
                         </Button>
                         <Button variant="outline">
                             <Filter className="mr-1 h-4 w-4" /> Filter
                         </Button>
-                    <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Off Campus
-                    </Button>
+                        <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Off Campus
+                        </Button>
                     </div>
-
                 </div>
 
                 {/* Table */}
@@ -181,6 +182,7 @@ export default function OffCampusIndex({
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
+                                <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">College/Unit</TableHead>
                                 <TableHead className="text-center">Requester Name</TableHead>
                                 <TableHead className="text-center">Date Issued</TableHead>
@@ -196,6 +198,7 @@ export default function OffCampusIndex({
                             {filtered.length > 0 ? (
                                 filtered.map((row) => (
                                     <TableRow className="text-center" key={row.id}>
+                                        <TableCell>{row.id || '—'}</TableCell>
                                         <TableCell>
                                             {row.college_or_unit ? `${row.college_or_unit.name} (${row.college_or_unit.code})` : '—'}
                                         </TableCell>
@@ -230,11 +233,17 @@ export default function OffCampusIndex({
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
 
-                                            <Link href={`/off-campus/${row.id}`}>
-                                                <Button size="icon" variant="ghost" className="cursor-pointer">
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                </Button>
-                                            </Link>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedOffCampus(row);
+                                                    setShowViewOffCampus(true);
+                                                }}
+                                            >
+                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -272,6 +281,18 @@ export default function OffCampusIndex({
                         assets={assets}
                         assetModels={assetModels}
                         users={users}
+                    />
+                )}
+
+                {/* View Modal */}
+                {showViewOffCampus && selectedOffCampus && (
+                    <OffCampusViewModal
+                        open={showViewOffCampus}
+                        onClose={() => {
+                            setShowViewOffCampus(false);
+                            setSelectedOffCampus(null);
+                        }}
+                        offCampus={selectedOffCampus}
                     />
                 )}
 

@@ -20,8 +20,8 @@ class OffCampus extends Model
         'return_date',
         'quantity',
         'units',
-        'asset_id',
-        'asset_model_id',
+        // 'asset_id',
+        // 'asset_model_id',
         'comments',
         'remarks',
         'approved_by',
@@ -40,16 +40,16 @@ class OffCampus extends Model
     public function scopeOnlyArchived($query) { return $query->onlyTrashed(); }
     public function scopeWithArchived($query) { return $query->withTrashed(); }
 
-    protected static function booted()
+     protected static function booted()
     {
-        // When archiving the parent, archive children too
+        // Archive children with parent
         static::deleting(function (OffCampus $offCampus) {
             if (! $offCampus->isForceDeleting()) {
                 $offCampus->assets()->get()->each->delete();
             }
         });
 
-        // When restoring the parent, restore children too
+        // Restore children with parent
         static::restoring(function (OffCampus $offCampus) {
             $offCampus->assets()->withTrashed()->get()->each->restore();
         });
@@ -57,15 +57,18 @@ class OffCampus extends Model
 
 
 
-    public function asset() // inventory_lists
-    {
-        return $this->belongsTo(InventoryList::class, 'asset_id');
-    }
+    // public function asset() // inventory_lists
+    // {
+    //     return $this->belongsTo(InventoryList::class, 'asset_id');
+    // }
 
     // public function assets() // To select mutiple assets
     // {
     //     return $this->hasMany(OffCampusAsset::class);
     // }
+
+
+
  public function assets()
     {
         return $this->hasMany(OffCampusAsset::class, 'off_campus_id');

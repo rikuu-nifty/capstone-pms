@@ -18,7 +18,7 @@ class OffCampusController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+   public function index(Request $request)
 {
     // Accept ?status=active|archived|all
     $status = $request->string('status')->toString();
@@ -28,16 +28,12 @@ class OffCampusController extends Controller
         ->when($status === 'all', fn ($q) => $q->withTrashed())
         ->with([
             'assets' => function ($q) {
-                $q->withTrashed() // include archived children
-                  ->select('id','off_campus_id','asset_id','asset_model_id','deleted_at') 
-                  ->with([
-                      'asset:id,asset_model_id,asset_name,description,serial_no',
-                      'asset.assetModel:id,brand,model',
-                  ]);
-            },
-            // 'asset:id,asset_model_id,asset_name,description,serial_no',
-            // 'asset.assetModel:id,brand,model',
-            // 'assetModel:id,brand,model',
+    $q->select('id','off_campus_id','asset_id','asset_model_id') 
+      ->with([
+          'asset:id,asset_model_id,asset_name,description,serial_no',
+          'asset.assetModel:id,brand,model',
+      ]);
+},
             'collegeOrUnit:id,name,code',
             'issuedBy:id,name',
         ])
@@ -54,6 +50,7 @@ class OffCampusController extends Controller
         'users'              => User::select('id','name')->orderBy('name')->get(),
     ]);
 }
+
 
 
     /**
