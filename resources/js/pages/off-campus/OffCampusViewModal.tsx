@@ -10,6 +10,14 @@ interface OffCampusViewModalProps {
 
 export default function OffCampusViewModal({ open, onClose, offCampus }: OffCampusViewModalProps) {
     const recordNo = String(offCampus.id).padStart(2, '0');
+    const humanizeRemarks = (remarks?: string | null) => {
+  if (!remarks) return '—';
+  const map: Record<string, string> = {
+    official_use: 'Official Use',
+    repair: 'For Repair',
+  };
+  return map[remarks] ?? remarks.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
 
     const formatDateLong = (d?: string | null) => {
         if (!d) return '—';
@@ -40,10 +48,10 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
                         <span className="text-gray-600 dark:text-gray-400">Off-Campus Record #:</span>{' '}
                         <span className="font-semibold">{recordNo}</span>
                     </p>
-                    <p className="mt-1">
-                        <span className="text-gray-600 dark:text-gray-400">Remarks:</span>{' '}
-                        <span className="font-semibold">{offCampus.remarks ?? '—'}</span>
-                    </p>
+<p className="mt-1">
+  <span className="text-gray-600 dark:text-gray-400">Remarks:</span>{' '}
+  <span className="font-semibold">{humanizeRemarks(offCampus.remarks)}</span>
+</p>
                 </div>
             </div>
 
