@@ -10,14 +10,6 @@ interface OffCampusViewModalProps {
 
 export default function OffCampusViewModal({ open, onClose, offCampus }: OffCampusViewModalProps) {
     const recordNo = String(offCampus.id).padStart(2, '0');
-    const humanizeRemarks = (remarks?: string | null) => {
-        if (!remarks) return '—';
-        const map: Record<string, string> = {
-            official_use: 'Official Use',
-            repair: 'For Repair',
-        };
-        return map[remarks] ?? remarks.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    };
 
     const formatDateLong = (d?: string | null) => {
         if (!d) return '—';
@@ -33,7 +25,7 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
 
     return (
         <ViewModal open={open} onClose={onClose} size="xl" contentClassName="relative max-h-[80vh] overflow-y-auto print:overflow-x-hidden">
-            {/* Header */}
+            {/* ---------- Header (kept same as your old UI) ---------- */}
             <div className="relative flex items-center justify-between">
                 <div className="flex items-center">
                     <img src="https://www.auf.edu.ph/home/images/mascot/GEN.png" alt="Logo" className="h-20 opacity-90" />
@@ -50,87 +42,100 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
                     </p>
                     <p className="mt-1">
                         <span className="text-gray-600 dark:text-gray-400">Remarks:</span>{' '}
-                        <span className="font-semibold">{humanizeRemarks(offCampus.remarks)}</span>
+                        <span className="font-semibold">
+                            {offCampus.remarks === 'official_use' ? 'Official Use' : offCampus.remarks === 'repair' ? 'Repair' : '—'}
+                        </span>
                     </p>
                 </div>
             </div>
 
-            {/* Request Info */}
-            <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
-                <section>
-                    <h3 className="mb-2 text-base font-semibold">Request Information</h3>
-                    <p className="text-sm">
-                        <span className="font-semibold">Requester:</span> {offCampus.requester_name}
-                    </p>
-                    <p className="text-sm">
-                        <span className="font-semibold">College/Unit:</span>{' '}
-                        {offCampus.college_or_unit ? `${offCampus.college_or_unit.name} (${offCampus.college_or_unit.code})` : '—'}
-                    </p>
-                    <p className="text-sm">
-                        <span className="font-semibold">Purpose:</span> {offCampus.purpose ?? '—'}
-                    </p>
-                </section>
-                <section className="md:text-right print:justify-self-end print:text-right">
-                    <h3 className="mb-2 text-base font-semibold">Issuance Details</h3>
-                    <p className="text-sm">
-                        <span className="font-semibold">Date Issued:</span> {formatDateLong(offCampus.date_issued)}
-                    </p>
-                    <p className="text-sm">
-                        <span className="font-semibold">Return Date:</span> {formatDateLong(offCampus.return_date)}
-                    </p>
-                    <p className="text-sm">
-                        <span className="font-semibold">Issued By:</span> {offCampus.issued_by?.name ?? '—'}
-                    </p>
-                </section>
+            {/* ---------- Authorization Line (new) ---------- */}
+            <div className="mt-4 text-sm">
+                <p>
+                    This is to authorize Mr./Mrs. <span className="font-semibold">{offCampus.requester_name }</span>,{' '} College/Unit 
+                    <span className="font-semibold"> 
+                        {offCampus.college_or_unit ? `${offCampus.college_or_unit.name} (${offCampus.college_or_unit.code})` : 'College/Unit _______'}
+                    </span>
+                    , to bring in / take out from the Angeles University Foundation premises the following properties/equipment described as follows:
+                </p>
             </div>
 
-            {/* Assets */}
+            {/* ---------- Asset Table (like the paper form) ---------- */}
             <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                 <table className="w-full text-center text-sm">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                            <th className="px-3 py-2 text-center font-medium">Brand</th>
-                            <th className="px-3 py-2 text-center font-medium">Model</th>
-                            <th className="px-3 py-2 text-center font-medium">Asset Name</th>
-                            <th className="px-3 py-2 text-center font-medium">Serial No.</th>
+                            <th className="px-3 py-2 font-medium">QTY</th>
+                            <th className="px-3 py-2 font-medium">UNITS</th>
+                            <th className="px-3 py-2 font-medium">ITEMS/DESCRIPTION</th>
+                            <th className="px-3 py-2 font-medium">COMMENTS</th>
                         </tr>
                     </thead>
                     <tbody>
                         {offCampus.assets?.map((a) => (
                             <tr key={a.id} className="border-t">
-                                <td className="px-3 py-2">{a.asset?.asset_model?.brand ?? '—'}</td>
-                                <td className="px-3 py-2">{a.asset?.asset_model?.model ?? '—'}</td>
-                                <td className="px-3 py-2">{a.asset?.asset_name ?? '—'}</td>
-                                <td className="px-3 py-2">{a.asset?.serial_no ?? '—'}</td>
+                                <td className="px-3 py-2">{offCampus.quantity ?? 1}</td>
+                                <td className="px-3 py-2">{offCampus.units ?? '—'}</td>
+                                <td className="px-3 py-2 text-center">
+                                    Item: {a.asset?.asset_name ?? '—'} <br />
+                                    Brand: {a.asset?.asset_model?.brand ?? '—'} <br />
+                                    Model: {a.asset?.asset_model?.model ?? '—'} <br />
+                                    Serial No: {a.asset?.serial_no ?? '—'}
+                                </td>
+                                <td className="px-3 py-2">{offCampus.comments ?? '—'}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
 
-            {/* Comments */}
-            {offCampus.comments && <p className="mt-4 text-sm text-blue-700 italic">{offCampus.comments.trim()}</p>}
-
-            {/* Signatures */}
-            <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 text-sm">
-                {offCampus.checked_by && (
-                    <div className="text-center">
-                        <p className="mb-8 font-semibold">Checked By:</p>
-                        <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                        <p className="font-bold text-gray-700">{offCampus.checked_by}</p>
-                    </div>
-                )}
-
-                {offCampus.approved_by && (
-                    <div className="text-center">
-                        <p className="mb-8 font-semibold">Approved By:</p>
-                        <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                        <p className="font-bold text-gray-700">{offCampus.approved_by}</p>
-                    </div>
-                )}
+            {/* ---------- Purpose ---------- */}
+            <div className="mt-4 border border-gray-200 p-2 dark:border-gray-800">
+                <p className="text-sm">
+                    <span className="font-semibold">Purpose:</span> {offCampus.purpose ?? '—'}
+                </p>
             </div>
 
-            {/* Actions */}
+            {/* ---------- Return Responsibility Note ---------- */}
+            <p className="mt-4 text-xs text-gray-600 italic">
+                Above item shall be returned to the University on or before {formatDateLong(offCampus.return_date)}. The requester will be responsible
+                for any damages incurred while the items are in his/her possession.
+            </p>
+
+            {/* ---------- Remarks (checkbox style) ---------- */}
+            <div className="mt-4">
+                <p className="text-sm font-semibold">Remarks: Approved for release for</p>
+                <p className="text-sm">
+                    [ {offCampus.remarks === 'official_use' ? '✔' : ' '} ] OFFICIAL USE &nbsp;&nbsp; [ {offCampus.remarks === 'repair' ? '✔' : ' '}{' '}
+                    ] REPAIR
+                </p>
+            </div>
+
+            {/* ---------- Signatures (reordered per paper form) ---------- */}
+            <div className="mt-6 grid grid-cols-2 gap-6 text-sm">
+                <div className="text-center">
+                    <p className="mb-8 font-semibold">Requester (Name of Personnel)</p>
+                    <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                    <p className="font-bold text-gray-700">{offCampus.requester_name}</p>
+                </div>
+                <div className="text-center">
+                    <p className="mb-8 font-semibold">Issued By (Head, PMO)</p>
+                    <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                    <p className="font-bold text-gray-700">{offCampus.issued_by?.name ?? '—'}</p>
+                </div>
+                <div className="text-center">
+                    <p className="mb-8 font-semibold">Checked By (Chief, Security Service)</p>
+                    <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                    <p className="font-bold text-gray-700">{offCampus.checked_by ?? '—'}</p>
+                </div>
+                <div className="text-center">
+                    <p className="mb-8 font-semibold">Approved By (Dean/Head Concerned)</p>
+                    <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                    <p className="font-bold text-gray-700">{offCampus.approved_by ?? '—'}</p>
+                </div>
+            </div>
+
+            {/* ---------- Actions ---------- */}
             <div className="mt-6 text-center print:hidden">
                 <a
                     onClick={onClose}
