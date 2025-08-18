@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 // import Select, { type MultiValue } from 'react-select';
 import Select from 'react-select';
 
@@ -91,13 +91,17 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
     // - Prefer offCampus.assets[] (child rows) if present
     // - Else fall back to legacy header asset_id/asset_model_id
     const initialSelected = ((): { asset_id: number; asset_model_id?: number | null }[] => {
+        let selected: { asset_id: number; asset_model_id?: number | null }[] = [];
+
         if (offCampus.assets && offCampus.assets.length) {
-            return offCampus.assets.filter((r) => r.asset_id).map((r) => ({ asset_id: r.asset_id, asset_model_id: r.asset_model_id ?? null }));
+            selected = offCampus.assets.filter((r) => r.asset_id).map((r) => ({ asset_id: r.asset_id, asset_model_id: r.asset_model_id ?? null }));
+        } else if (offCampus.asset_id) {
+            selected = [{ asset_id: offCampus.asset_id, asset_model_id: offCampus.asset_model_id ?? null }];
         }
-        if (offCampus.asset_id) {
-            return [{ asset_id: offCampus.asset_id, asset_model_id: offCampus.asset_model_id ?? null }];
-        }
-        return [];
+
+        // ✅ Trim down to quantity limit
+        const max = Number(offCampus.quantity) || 0;
+        return max > 0 ? selected.slice(0, max) : selected;
     })();
 
     const { data, setData, put, processing, errors } = useForm({
@@ -122,13 +126,52 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
         selected_assets: initialSelected as { asset_id: number; asset_model_id?: number | null }[],
     });
 
+    useEffect(() => {
+        let selected = offCampus.assets
+            ? offCampus.assets
+                  .filter((r) => !('deleted_at' in r && r.deleted_at)) // ignore soft-deleted rows
+                  .map((r) => ({
+                      asset_id: r.asset_id,
+                      asset_model_id: r.asset_model_id ?? null,
+                  }))
+            : [];
+
+        // ✅ Trim down to match quantity
+        const max = Number(offCampus.quantity) || 0;
+        if (max > 0 && selected.length > max) {
+            selected = selected.slice(0, max);
+        }
+
+        setData({
+            requester_name: offCampus.requester_name ?? '',
+            college_or_unit_id: (offCampus.college_or_unit_id ?? '') as number | '',
+            purpose: offCampus.purpose ?? '',
+            date_issued: offCampus.date_issued ? offCampus.date_issued.substring(0, 10) : '',
+            return_date: offCampus.return_date ? offCampus.return_date.substring(0, 10) : '',
+            quantity: (offCampus.quantity ?? '') as number | '',
+            units: offCampus.units ?? 'pcs',
+            remarks: (offCampus.remarks ?? 'official_use') as 'official_use' | 'repair',
+            approved_by: offCampus.approved_by ?? '',
+            issued_by_id: (offCampus.issued_by_id ?? '') as number | '',
+            checked_by: offCampus.checked_by ?? '',
+            comments: offCampus.comments ?? '',
+            asset_id: (offCampus.asset_id ?? '') as number | '',
+            asset_model_id: (offCampus.asset_model_id ?? '') as number | '',
+            selected_assets: selected,
+        });
+    }, [setData, offCampus]);
+
     // limit for multi-select equals header quantity
     const maxSelectable = Number(data.quantity) || 0;
 
     const handleAssetsChange = (assetsSelected: AssetOption[]) => {
-        const prevLen = data.selected_assets.length;
         const maxSelectable = Number(data.quantity) || 0;
-        const limited = maxSelectable ? assetsSelected.slice(0, maxSelectable) : assetsSelected;
+
+        // ✅ Trim the selected assets if more than allowed by quantity
+        let limited = assetsSelected;
+        if (maxSelectable > 0 && assetsSelected.length > maxSelectable) {
+            limited = assetsSelected.slice(0, maxSelectable);
+        }
 
         // update array
         setData(
@@ -148,9 +191,8 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
             setData('asset_model_id', '');
         }
 
-        // ✅ Only decrease quantity when user actually removed assets
-        //    (new count < previous count), and don't set quantity below 1
-        if (limited.length < prevLen && limited.length >= 1 && Number(data.quantity) > limited.length) {
+        // ✅ Keep quantity in sync when assets shrink
+        if (limited.length < data.selected_assets.length) {
             setData('quantity', limited.length);
         }
     };
@@ -303,51 +345,22 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                                 className="text-sm"
                                 isClearable
                                 isOptionDisabled={isOptionDisabled}
-                                closeMenuOnSelect={false} // 👈 keep menu open; disabled options enforce the cap
+                                closeMenuOnSelect={false}
                                 value={selectedValue}
                                 onChange={(selected) => {
                                     const arr = (selected ?? []) as AssetOption[];
                                     handleAssetsChange(arr);
                                 }}
+                                isDisabled={!data.quantity || Number(data.quantity) <= 0}
                             />
+                            {(!data.quantity || Number(data.quantity) <= 0) && (
+                                <p className="mt-1 text-xs text-muted-foreground">Please enter a quantity first to select assets.</p>
+                            )}
                             {errors.selected_assets && <p className="mt-1 text-xs text-red-500">{String(errors.selected_assets)}</p>}
+
                             {maxSelectable > 0 && data.selected_assets.length >= maxSelectable && (
                                 <p className="mt-1 text-xs text-muted-foreground">You have reached your limit based on your chosen quantity.</p>
                             )}
-
-                            {/* 👇 Manual remove list */}
-                            {/* {data.selected_assets.length > 0 && (
-                                <div className="mt-3 space-y-2">
-                                    {data.selected_assets.map((sel) => {
-                                        const opt = assetOptions.find((o) => o.value === sel.asset_id);
-                                        return (
-                                            <div key={sel.asset_id} className="flex items-center justify-between rounded border p-2 text-sm">
-                                                <span>{opt?.label ?? `Asset #${sel.asset_id}`}</span>
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => {
-                                                        const updated = data.selected_assets.filter((a) => a.asset_id !== sel.asset_id);
-                                                        setData('selected_assets', updated);
-
-                                                        // mirror legacy
-                                                        if (updated.length > 0) {
-                                                            setData('asset_id', updated[0].asset_id);
-                                                            setData('asset_model_id', updated[0].asset_model_id ?? '');
-                                                        } else {
-                                                            setData('asset_id', '');
-                                                            setData('asset_model_id', '');
-                                                        }
-                                                    }}
-                                                >
-                                                    Remove
-                                                </Button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )} */}
                         </div>
 
                         {/* Remarks */}

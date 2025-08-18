@@ -56,7 +56,7 @@ class OffCampusAssetController extends Controller
 
 \DB::transaction(function () use ($data) {
     $off = OffCampus::create(collect($data)->except('assets')->toArray());
-    foreach ($data['assets'] as $row) {
+    foreach ($data['selected_assets'] as $row) {
         $off->assets()->create($row);
     }
 });

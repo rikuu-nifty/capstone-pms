@@ -160,7 +160,7 @@ class OffCampusController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, OffCampus $offCampus)
+public function update(Request $request, OffCampus $offCampus)
 {
     $data = $request->validate([
         'requester_name'      => ['required','string','max:255'],
@@ -169,6 +169,7 @@ class OffCampusController extends Controller
         'date_issued'         => ['required','date'],
         'return_date'         => ['nullable','date','after_or_equal:date_issued'],
         'quantity'            => ['required','integer','min:1'],
+
         'units'               => ['required','string','max:50'],
         'comments'            => ['nullable','string'],
         'remarks'             => ['required','in:official_use,repair'],
@@ -176,8 +177,17 @@ class OffCampusController extends Controller
         'issued_by_id'        => ['nullable','exists:users,id'],
         'checked_by'          => ['nullable','string','max:255'],
 
-        // child rows
-        'selected_assets'                  => ['required','array','min:1'],
+        // child rows with custom rule inline
+        'selected_assets' => [
+            'required',
+            'array',
+            'min:1',
+            function ($attr, $value, $fail) use ($request) {
+                if (count($value) !== (int) $request->quantity) {
+                    $fail("You set the quantity to {$request->quantity} but selected " . count($value) . " assets.");
+                }
+            },
+        ],
         'selected_assets.*.asset_id'       => ['required','exists:inventory_lists,id'],
         'selected_assets.*.asset_model_id' => ['nullable','exists:asset_models,id'],
     ]);
@@ -185,7 +195,6 @@ class OffCampusController extends Controller
     DB::transaction(function () use ($offCampus, $data) {
         // ✅ update parent first
         $offCampus->update(collect($data)->except('selected_assets')->toArray());
-        
 
         // ✅ clear old children
         $offCampus->assets()->delete();
@@ -204,6 +213,7 @@ class OffCampusController extends Controller
 
     return redirect()->route('off-campus.index')->with('success', 'Off-campus record updated successfully.');
 }
+
 
     /**
      * Remove the specified resource from storage.
