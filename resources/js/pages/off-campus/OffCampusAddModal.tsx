@@ -94,29 +94,27 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data.asset_id, assets]);
 
+    const handleAssetsChange = (assetsSelected: AssetOption[]) => {
+        const maxSelectable = Number(data.quantity) || 0;
 
-const handleAssetsChange = (assetsSelected: AssetOption[]) => {
-    const maxSelectable = Number(data.quantity) || 0;
+        // Enforce trimming if user tries to exceed quantity
+        let limited = assetsSelected;
+        if (maxSelectable > 0 && assetsSelected.length > maxSelectable) {
+            limited = assetsSelected.slice(0, maxSelectable);
+        }
 
-    // Enforce trimming if user tries to exceed quantity
-    let limited = assetsSelected;
-    if (maxSelectable > 0 && assetsSelected.length > maxSelectable) {
-        limited = assetsSelected.slice(0, maxSelectable);
-    }
+        // Update selected_assets only
+        setData(
+            'selected_assets',
+            limited.map((a) => ({
+                asset_id: a.value,
+                asset_model_id: a.model_id ?? null,
+            })),
+        );
 
-    // Update selected_assets only
-    setData(
-        'selected_assets',
-        limited.map((a) => ({
-            asset_id: a.value,
-            asset_model_id: a.model_id ?? null,
-        }))
-    );
-
-    // ❌ DO NOT override quantity here!
-    // Keep quantity as the user entered value
-};
-
+        // ❌ DO NOT override quantity here!
+        // Keep quantity as the user entered value
+    };
 
     const assetOptions: AssetOption[] = assets.map((a) => {
         const model = assetModels.find((m) => m.id === a.asset_model_id);
@@ -136,7 +134,6 @@ const handleAssetsChange = (assetsSelected: AssetOption[]) => {
     const isOptionDisabled = (opt: AssetOption) =>
         data.selected_assets.length >= maxSelectable && !data.selected_assets.some((sa) => sa.asset_id === opt.value);
 
-    
     // const [submitAttempted, setSubmitAttempted] = useState(false);
     const [quantityError, setQuantityError] = useState<string | null>(null);
 
@@ -144,16 +141,11 @@ const handleAssetsChange = (assetsSelected: AssetOption[]) => {
         e.preventDefault();
         // setSubmitAttempted(true); // mark that user tried to save
 
-if (
-    Number(data.quantity) > 0 &&
-    data.selected_assets.length !== Number(data.quantity)
-  ) {
-    setQuantityError(
-      `You set the quantity to ${data.quantity}, but selected ${data.selected_assets.length}. They must match before saving.`
-    );
-    return; // stop submit
-  }
-  setQuantityError(null); // clear any previous errors
+        if (Number(data.quantity) > 0 && data.selected_assets.length !== Number(data.quantity)) {
+            setQuantityError(`You set the quantity to ${data.quantity}, but selected ${data.selected_assets.length}. They must match before saving.`);
+            return; // stop submit
+        }
+        setQuantityError(null); // clear any previous errors
         post('/off-campus', {
             preserveScroll: true,
             onSuccess: () => {
@@ -288,46 +280,37 @@ if (
                             {errors.units && <p className="mt-1 text-xs text-red-500">{errors.units}</p>}
                         </div>
 
-<div className="col-span-2">
-  <label className="mb-1 block font-medium">Assets Covered</label>
-  <Select<AssetOption, true>
-    isMulti
-    options={assetOptions}
-    placeholder="Select one or more assets..."
-    className="text-sm"
-    isClearable
-    isOptionDisabled={isOptionDisabled}
-    closeMenuOnSelect={data.selected_assets.length + 1 >= maxSelectable}
-    value={assetOptions.filter((opt) =>
-      data.selected_assets.some((sa) => sa.asset_id === opt.value)
-    )}
-    onChange={(selected) => {
-      const picked = (selected ?? []) as AssetOption[];
-      const limited = maxSelectable ? picked.slice(0, maxSelectable) : picked;
-      handleAssetsChange(limited);
-    }}
-    isDisabled={!data.quantity || Number(data.quantity) <= 0}
-  />
+                        <div className="col-span-2">
+                            <label className="mb-1 block font-medium">Assets Covered</label>
+                            <Select<AssetOption, true>
+                                isMulti
+                                options={assetOptions}
+                                placeholder="Select one or more assets..."
+                                className="text-sm"
+                                isClearable
+                                isOptionDisabled={isOptionDisabled}
+                                closeMenuOnSelect={data.selected_assets.length + 1 >= maxSelectable}
+                                value={assetOptions.filter((opt) => data.selected_assets.some((sa) => sa.asset_id === opt.value))}
+                                onChange={(selected) => {
+                                    const picked = (selected ?? []) as AssetOption[];
+                                    const limited = maxSelectable ? picked.slice(0, maxSelectable) : picked;
+                                    handleAssetsChange(limited);
+                                }}
+                                isDisabled={!data.quantity || Number(data.quantity) <= 0}
+                            />
 
-  {/* 🔴 Inline error (only after save attempt) */}
-  {quantityError && (
-    <p className="mt-1 text-xs text-red-500">{quantityError}</p>
-  )}
+                            {/* 🔴 Inline error (only after save attempt) */}
+                            {quantityError && <p className="mt-1 text-xs text-red-500">{quantityError}</p>}
 
-  {/* Helper / limit message */}
-  {maxSelectable > 0 && (
-    <p className="mt-1 text-xs text-muted-foreground">
-      {data.selected_assets.length >= maxSelectable
-        ? "You have reached your limit based on your chosen quantity."
-        : `You can select up to ${maxSelectable} asset${
-            maxSelectable > 1 ? "s" : ""
-          }.`}
-    </p>
-  )}
-</div>
-
-
-
+                            {/* Helper / limit message */}
+                            {maxSelectable > 0 && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {data.selected_assets.length >= maxSelectable
+                                        ? 'You have reached your limit based on your chosen quantity.'
+                                        : `You can select up to ${maxSelectable} asset${maxSelectable > 1 ? 's' : ''}.`}
+                                </p>
+                            )}
+                        </div>
 
                         {/* Remarks */}
                         <div className="col-span-1">
