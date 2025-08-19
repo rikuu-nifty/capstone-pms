@@ -7,10 +7,10 @@ use App\Models\BuildingRoom;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
-use App\Http\Requests\StoreBuildingRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 
+use App\Http\Requests\StoreBuildingRequest;
 
 class BuildingController extends Controller
 {
@@ -51,15 +51,10 @@ class BuildingController extends Controller
 
     public function index(Request $request)
     {
-        $indexProps = array_merge(
-            $this->indexProps(),
-            [
-                'rooms' => BuildingRoom::listAllRooms(),
-                'selectedBuilding' => $request->integer('selected'),
-            ]
-        );
+        $props = $this->indexProps();
+        $props['selectedBuilding'] = $request->integer('selected');
 
-        return Inertia::render('buildings/index', $indexProps);
+        return Inertia::render('buildings/index', $props);
     }
 
     /**
@@ -101,12 +96,9 @@ class BuildingController extends Controller
                 'description' => $validated['description'] ?? null,
             ]);
 
-            // Insert rooms if provided
             if (!empty($validated['rooms'])) {
                 $now = now();
 
-                // (Safety) Ensure uniqueness inside the batch by room (after trimming)
-                // though the 'distinct' rule already handles it
                 $roomsBatch = collect($validated['rooms'])
                     ->unique(fn ($r) => mb_strtolower($r['room']))
                     ->map(fn ($r) => [
@@ -132,11 +124,8 @@ class BuildingController extends Controller
         } catch (QueryException $e) {
             DB::rollBack();
 
-            // Handle unique constraint violations gracefully
-            // MySQL error code 1062 = duplicate entry
             if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
-                // We don’t know whether it’s the building code or a room collision.
-                // Return a generic message + keep old input; you can inspect $e->getMessage() to customize.
+                
                 return back()
                     ->withErrors([
                         'code' => 'The building code or one of the room names already exists.',
@@ -144,7 +133,7 @@ class BuildingController extends Controller
                     ->withInput();
             }
 
-            throw $e; // bubble up anything else
+            throw $e;
         }
     }
 

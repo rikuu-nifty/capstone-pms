@@ -1,17 +1,20 @@
-// index.tsx (refactored)
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { type BreadcrumbItem } from '@/types';
-// import { Button } from '@/components/ui/button';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+
 import AddBuildingModal from './AddBuildingModal';
+import AddBuildingRoomModal from './AddBuildingRoomModal';
+
 import EditBuildingModal from './EditBuildingModal';
+import EditBuildingRoomModal from './EditBuildingRoomModal';
 import ViewBuildingModal from './ViewBuildingModal';
 import BuildingKPISection from './sections/building-kpi-section';
 import BuildingToolbar from './sections/building-toolbar';
 import BuildingsTable from './sections/buildings-table';
 import RoomsSection from './sections/rooms-section';
+
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { type SortDir } from '@/components/filters/SortDropdown';
 import { type Building, type PageProps } from '@/types/building';
@@ -26,46 +29,52 @@ export default function BuildingIndex({
     buildings = [], 
     totals 
 }: PageProps) {
-const { props } = usePage<PageProps>();
+    const { props } = usePage<PageProps>();
 
-const rooms = useMemo(() => props.rooms ?? [], [props.rooms]);
+    const rooms = useMemo(() => props.rooms ?? [], [props.rooms]);
 
-const [rawSearch, setRawSearch] = useState(''); // building
-const search = useDebouncedValue(rawSearch, 200);
+    const [rawSearch, setRawSearch] = useState(''); // building
+    const search = useDebouncedValue(rawSearch, 200);
 
-const [sortKey, setSortKey] = useState<BuildingSortKey>('id');
-const [sortDir, setSortDir] = useState<SortDir>('asc');
+    const [sortKey, setSortKey] = useState<BuildingSortKey>('id');
+    const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
-const [showAddBuilding, setShowAddBuilding] = useState(false);
-const [showEditBuilding, setShowEditBuilding] = useState(false);
-const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
-const [showViewBuilding, setShowViewBuilding] = useState(false);
-const [viewBuilding, setViewBuilding] = useState<Building | null>(null);
+    const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+    const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+    
+    const [showAddBuilding, setShowAddBuilding] = useState(false);
+    const [showAddRoom, setShowAddRoom] = useState(false);
 
-const [showDeleteModal, setShowDeleteModal] = useState(false);
-const [toDelete, setToDelete] = useState<Building | null>(null);
+    const [showEditBuilding, setShowEditBuilding] = useState(false);
+    const [showEditRoom, setShowEditRoom] = useState(false);
+    const [roomToEdit, setRoomToEdit] = useState<BuildingRoom | null>(null);
+    
+    const [showViewBuilding, setShowViewBuilding] = useState(false);
+    const [viewBuilding, setViewBuilding] = useState<Building | null>(null);
 
-useEffect(() => {
-    if (props.selected) setSelectedBuildingId(Number(props.selected));
-}, [props.selected]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [toDelete, setToDelete] = useState<Building | null>(null);
 
-useEffect(() => {
-    if (props.viewing) {
-        setViewBuilding(props.viewing);
-        setShowViewBuilding(true);
-    }
-}, [props.viewing]);
+    useEffect(() => {
+        if (props.selected) setSelectedBuildingId(Number(props.selected));
+    }, [props.selected]);
 
-const closeViewBuilding = () => {
-    setShowViewBuilding(false);
-    setViewBuilding(null);
-    if (/^\/?buildings\/view\/\d+\/?$/.test(window.location.pathname)) {
-        history.back();
-    }
-};
+    useEffect(() => {
+        if (props.viewing) {
+            setViewBuilding(props.viewing);
+            setShowViewBuilding(true);
+        }
+    }, [props.viewing]);
 
-return (
+    const closeViewBuilding = () => {
+        setShowViewBuilding(false);
+        setViewBuilding(null);
+        if (/^\/?buildings\/view\/\d+\/?$/.test(window.location.pathname)) {
+            history.back();
+        }
+    };
+
+    return (
         <AppLayout breadcrumbs={
             breadcrumbs as BreadcrumbItem[]
         }>
@@ -118,7 +127,15 @@ return (
                     buildings={buildings}
                     rooms={rooms as BuildingRoom[]}
                     selectedBuildingId={selectedBuildingId}
-                    onClearSelectedBuilding={() => setSelectedBuildingId(null)}
+                    onClearSelectedBuilding={() => 
+                        setSelectedBuildingId(null)
+                    }
+                    onAddRoomClick={() => 
+                        setShowAddRoom(true)
+                    }
+                    onEditRoomClick={(room) => { 
+                        setRoomToEdit(room); setShowEditRoom(true); 
+                    }}
                 />
             </div>
 
@@ -163,6 +180,26 @@ return (
                     building={viewBuilding}
                 />
             )}
+
+            <AddBuildingRoomModal
+                show={showAddRoom}
+                onClose={() => 
+                    setShowAddRoom(false)
+                }
+                buildings={buildings}
+                defaultBuildingId={selectedBuildingId ?? null}
+                lockBuildingSelect={selectedBuildingId !== null}
+            />
+
+            <EditBuildingRoomModal
+                show={showEditRoom}
+                onClose={() => { 
+                    setShowEditRoom(false); 
+                    setRoomToEdit(null);
+                }}
+                buildings={buildings}
+                room={roomToEdit}
+            />
         </AppLayout>
     );
 }

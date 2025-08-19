@@ -4,6 +4,7 @@ use App\Http\Controllers\AssetModelController;
 use App\Http\Controllers\InventoryListController;
 use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\BuildingRoomController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
 use App\Http\Controllers\CategoryController;
@@ -98,6 +99,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/buildings/{building}', [BuildingController::class, 'update'])->name('buildings.update');
     Route::get('/buildings/view/{building}', [BuildingController::class, 'show'])->name('buildings.view');
     Route::delete('/buildings/{building}', [BuildingController::class, 'destroy'])->name('buildings.destroy');
+
+    //BUILDING ROOMS
+    Route::post('/building-rooms', [BuildingRoomController::class, 'store'])->name('building-rooms.store');
+    Route::put('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'update'])->name('building-rooms.update');
+    Route::delete('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'destroy'])->name('building-rooms.destroy');
 
     // CATEGORIES
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');

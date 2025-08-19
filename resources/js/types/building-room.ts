@@ -16,3 +16,9 @@ export type BuildingRoom = {
     assets_count?: number;
     asset_share?: number;
 };
+
+export type BuildingRoomFormData = {
+    building_id: number | ''; 
+    room: string;
+    description: string | null;
+};
