@@ -295,74 +295,74 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
 
                         {/* Asset Image */}
                         <div>
-                            <Label>Asset Image</Label>
+                            <Label>Asset Image (Before & After)</Label>
 
-                            <div className="relative">
-                                {/* Hidden real file input */}
-                                <input
-                                    id="asset-image-edit"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        if (e.target.files?.[0]) {
-                                            handleChange('image', e.target.files[0]); // ✅ store File object
-                                        }
-                                    }}
-                                    className="absolute inset-0 cursor-pointer opacity-0"
-                                />
-
-                                {/* Styled fake input */}
-                                <label
-                                    htmlFor="asset-image-edit"
-                                    className="flex w-full cursor-pointer items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition hover:border-gray-400 hover:bg-gray-50"
-                                >
-                                    {form.image ? (
-                                        <span className="truncate text-gray-800">{(form.image as File).name}</span>
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Before (current DB image) */}
+                                <div className="rounded-lg border bg-gray-50 p-3 text-center">
+                                    <p className="mb-2 text-sm font-medium text-gray-600">Current Image</p>
+                                    {asset.image_path ? (
+                                        <img
+                                            src={`/storage/${asset.image_path}`}
+                                            alt={asset.asset_name}
+                                            className="mx-auto h-24 w-24 rounded-md border object-cover"
+                                        />
                                     ) : (
-                                        <span className="text-gray-400">Choose File</span>
+                                        <span className="text-sm text-gray-400">No image available</span>
                                     )}
-                                    <span className="ml-2 rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-200">
-                                        Browse
-                                    </span>
-                                </label>
-                            </div>
+                                </div>
 
-                            {/* Preview section */}
-                            {asset.image_path && !form.image && (
-                                <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
-                                    <img
-                                        src={`/storage/${asset.image_path}`}
-                                        alt={asset.asset_name}
-                                        className="h-20 w-20 rounded-md border object-cover"
+                                {/* After (upload new) */}
+                                <div className="rounded-lg border bg-gray-50 p-3 text-center">
+                                    <p className="mb-2 text-sm font-medium text-gray-600">Update Image</p>
+
+                                    {/* Hidden real file input */}
+                                    <input
+                                        id="asset-image-edit"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            if (e.target.files?.[0]) {
+                                                handleChange('image', e.target.files[0]); // ✅ new File
+                                            }
+                                        }}
+                                        className="absolute inset-0 cursor-pointer opacity-0"
                                     />
-                                    <div className="flex flex-col">
-                                        <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">Current Image</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleChange('image', null)}
-                                            className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
 
-                            {form.image && (
-                                <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
-                                    <img src={URL.createObjectURL(form.image)} alt="Preview" className="h-20 w-20 rounded-md border object-cover" />
-                                    <div className="flex flex-col">
-                                        <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">{(form.image as File).name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleChange('image', null)}
-                                            className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
+                                    {/* Styled fake input */}
+                                    <label
+                                        htmlFor="asset-image-edit"
+                                        className="flex w-full cursor-pointer items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition hover:border-gray-400 hover:bg-gray-50"
+                                    >
+                                        {form.image ? (
+                                            <span className="truncate text-gray-800">{(form.image as File).name}</span>
+                                        ) : (
+                                            <span className="text-gray-400">Choose File</span>
+                                        )}
+                                        <span className="ml-2 rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-200">
+                                            Browse
+                                        </span>
+                                    </label>
+
+                                    {/* Preview newly selected image */}
+                                    {form.image && (
+                                        <div className="mt-3 flex flex-col items-center gap-2">
+                                            <img
+                                                src={URL.createObjectURL(form.image)}
+                                                alt="Preview"
+                                                className="h-24 w-24 rounded-md border object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleChange('image', null)}
+                                                className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
                         </div>
 
                         {/* Total Cost */}
