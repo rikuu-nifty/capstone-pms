@@ -10,6 +10,8 @@ import AddBuildingRoomModal from './AddBuildingRoomModal';
 import EditBuildingModal from './EditBuildingModal';
 import EditBuildingRoomModal from './EditBuildingRoomModal';
 import ViewBuildingModal from './ViewBuildingModal';
+import ViewRoomModal from './sections/ViewRoomModal';
+
 import BuildingKPISection from './sections/building-kpi-section';
 import BuildingToolbar from './sections/building-toolbar';
 import BuildingsTable from './sections/buildings-table';
@@ -17,19 +19,23 @@ import RoomsSection from './sections/rooms-section';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { type SortDir } from '@/components/filters/SortDropdown';
-import { type Building, type PageProps } from '@/types/building';
+import { type Building, type PageProps as BasePageProps } from '@/types/building';
 import { BuildingRoom } from '@/types/custom-index';
 
-import {
-    breadcrumbs,
-    type BuildingSortKey,
-} from './sections/building-index.helpers';
+import { breadcrumbs, type BuildingSortKey, } from './sections/building-index.helpers';
+import { RoomWithAssets } from '@/types/building-room';
+
+type BuildingIndexPageProps = BasePageProps & {
+    viewingRoom?: RoomWithAssets;
+};
 
 export default function BuildingIndex({ 
     buildings = [], 
-    totals 
-}: PageProps) {
-    const { props } = usePage<PageProps>();
+    totals,
+    viewingRoom
+}: BuildingIndexPageProps) {
+
+    const { props } = usePage<BuildingIndexPageProps>();
 
     const rooms = useMemo(() => props.rooms ?? [], [props.rooms]);
 
@@ -51,6 +57,8 @@ export default function BuildingIndex({
     
     const [showViewBuilding, setShowViewBuilding] = useState(false);
     const [viewBuilding, setViewBuilding] = useState<Building | null>(null);
+    const [showViewRoom, setShowViewRoom] = useState(false);
+    const [roomView, setRoomView] = useState<RoomWithAssets | null>(null);
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [toDelete, setToDelete] = useState<Building | null>(null);
@@ -67,6 +75,23 @@ export default function BuildingIndex({
             setShowViewBuilding(true);
         }
     }, [props.viewing]);
+
+    useEffect(() => {
+        if (viewingRoom) {
+            setRoomView(viewingRoom);
+            setShowViewRoom(true);
+        }
+    }, [
+        viewingRoom
+    ]);
+
+    const closeViewRoom = () => {
+        setShowViewRoom(false);
+        setRoomView(null);
+        if (/^\/?buildings\/rooms\/view\/\d+\/?$/.test(window.location.pathname)) {
+            history.back();
+        }
+    };
 
     const closeViewBuilding = () => {
         setShowViewBuilding(false);
@@ -222,6 +247,14 @@ export default function BuildingIndex({
                     }
                 }}
             />
+
+            {roomView && (
+                <ViewRoomModal 
+                    open={showViewRoom} 
+                    onClose={closeViewRoom} 
+                    room={roomView} 
+                />
+            )}
         </AppLayout>
     );
 }

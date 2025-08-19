@@ -99,6 +99,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/building-rooms', [BuildingRoomController::class, 'store'])->name('building-rooms.store');
     Route::put('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'update'])->name('building-rooms.update');
     Route::delete('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'destroy'])->name('building-rooms.destroy');
+    Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])->name('building-rooms.view');
 
     // CATEGORIES
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');

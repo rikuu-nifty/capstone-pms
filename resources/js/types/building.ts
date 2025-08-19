@@ -1,4 +1,4 @@
-import { BuildingRoom } from "./building-room";
+import { BuildingRoom, RoomWithAssets } from "./building-room";
 
 export type Building = {
     id: number;
@@ -34,10 +34,11 @@ export type Totals = {
 }
 
 export type PageProps = {
-  buildings: Building[];
-  totals?: Totals;
-  viewing?: Building;
+    buildings: Building[];
+    totals?: Totals;
+    viewing?: Building;
 
-  rooms?: BuildingRoom[];
-  selected?: number | null;
+    rooms?: BuildingRoom[];
+    selected?: number | null;
+    viewingRoom?: RoomWithAssets;
 };

@@ -25,11 +25,9 @@ class InventoryList extends Model
         'status',
     ];
 
-
-    // 🔗 Relationships and eto na yun FK Relationships
     public function assetModel()
     {
-        return $this->belongsTo(AssetModel::class, 'asset_model_id');
+        return $this->belongsTo(AssetModel::class, 'asset_model_id')->whereNull('asset_models.deleted_at');
     }
 
     public function unitOrDepartment()
@@ -53,9 +51,9 @@ class InventoryList extends Model
     }
 
     public function category()
-{
-    return $this->belongsTo(Category::class);
-}
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     
     // public function offCampusAsset() // NEED LAGAY

@@ -155,8 +155,9 @@ export default function RoomsSection({
                             </TableCell>
                             <TableCell className="font-medium">{r.assets_count}</TableCell>
                             <TableCell>
-                            {(r.assets_count ?? 0).toLocaleString()}{' '}
-                            <span className="text-muted-foreground">({(r.asset_share ?? 0).toFixed(2)}%)</span>
+                                {/* {(r.assets_count ?? 0).toLocaleString()}{' '} */}
+                                {/* <span className="text-muted-foreground">({(r.asset_share ?? 0).toFixed(2)}%)</span> */}
+                                {(r.asset_share ?? 0).toFixed(2)}%
                             </TableCell>
                             <TableCell className="h-full">
                                 <div className="flex justify-center items-center gap-2 h-full">
@@ -189,7 +190,7 @@ export default function RoomsSection({
                                                 e.stopPropagation()
                                             }>
                                             <Link 
-                                                href={`/buildings/view/${r.id}`} 
+                                                href={`/buildings/rooms/view/${r.id}`}
                                                 preserveScroll
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />

@@ -35,12 +35,7 @@ class BuildingController extends Controller
             : 0
         ;
         
-        $rooms = BuildingRoom::listAllRooms();
-        $rooms->each(fn ($r) =>
-            $r->asset_share = $totals['total_assets'] > 0
-                ? round(((int) ($r->assets_count ?? 0)) / (int) $totals['total_assets'] * 100, 2)
-                : 0.00
-        );
+        $rooms = \App\Models\BuildingRoom::listAllRoomsWithAssetShare((int) $totals['total_assets']);
 
         return [
             'buildings' => $buildings,
@@ -185,4 +180,23 @@ class BuildingController extends Controller
 
         return redirect()->route('buildings.index')->with('success', 'Building record was successfully deleted');
     }
+
+    public function showRoom(BuildingRoom $buildingRoom)
+    {
+        $props = $this->indexProps();
+
+        $totalAssets = (int) ($props['totals']['total_assets'] ?? 0);
+
+        $room = BuildingRoom::viewPropsByIdWithAssetShare($buildingRoom->id, $totalAssets);
+
+        return Inertia::render('buildings/index', array_merge(
+            $this->indexProps(),
+            [
+                'viewingRoom' => $room,
+                'selected'    => (int) $room->building_id,
+            ],
+        ));
+    }
+
+    
 }
