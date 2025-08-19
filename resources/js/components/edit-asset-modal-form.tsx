@@ -54,19 +54,22 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
     const filteredModels = assetModels.filter((model) => model.brand === form.brand);
 
-const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
 
-    router.post(`/inventory-list/${asset.id}`, {
-        ...form,
-        _method: 'put', // ✅ Laravel will interpret this as a PUT
-    }, {
-        forceFormData: true, // ✅ ensures File objects get sent as FormData
-        onSuccess: () => onClose(),
-        onError: (errors) => console.error(errors),
-    });
-};
-
+        router.post(
+            `/inventory-list/${asset.id}`,
+            {
+                ...form,
+                _method: 'put', // ✅ Laravel will interpret this as a PUT
+            },
+            {
+                forceFormData: true, // ✅ ensures File objects get sent as FormData
+                onSuccess: () => onClose(),
+                onError: (errors) => console.error(errors),
+            },
+        );
+    };
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -293,28 +296,71 @@ const handleSubmit = (e: React.FormEvent) => {
                         {/* Asset Image */}
                         <div>
                             <Label>Asset Image</Label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    if (e.target.files?.[0]) {
-                                        handleChange('image', e.target.files[0]); // ✅ store the File object
-                                    }
-                                }}
-                                className="w-full rounded-lg border p-2"
-                            />
 
-                            {/* Preview existing image (from DB) */}
+                            <div className="relative">
+                                {/* Hidden real file input */}
+                                <input
+                                    id="asset-image-edit"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            handleChange('image', e.target.files[0]); // ✅ store File object
+                                        }
+                                    }}
+                                    className="absolute inset-0 cursor-pointer opacity-0"
+                                />
+
+                                {/* Styled fake input */}
+                                <label
+                                    htmlFor="asset-image-edit"
+                                    className="flex w-full cursor-pointer items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition hover:border-gray-400 hover:bg-gray-50"
+                                >
+                                    {form.image ? (
+                                        <span className="truncate text-gray-800">{(form.image as File).name}</span>
+                                    ) : (
+                                        <span className="text-gray-400">Choose File</span>
+                                    )}
+                                    <span className="ml-2 rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-200">
+                                        Browse
+                                    </span>
+                                </label>
+                            </div>
+
+                            {/* Preview section */}
                             {asset.image_path && !form.image && (
-                                <div className="mt-2">
-                                    <img src={`/storage/${asset.image_path}`} alt={asset.asset_name} className="h-32 rounded border object-cover" />
+                                <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
+                                    <img
+                                        src={`/storage/${asset.image_path}`}
+                                        alt={asset.asset_name}
+                                        className="h-20 w-20 rounded-md border object-cover"
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">Current Image</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleChange('image', null)}
+                                            className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
-                            {/* Preview newly selected image */}
                             {form.image && (
-                                <div className="mt-2">
-                                    <img src={URL.createObjectURL(form.image)} alt="Preview" className="h-32 rounded border object-cover" />
+                                <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
+                                    <img src={URL.createObjectURL(form.image)} alt="Preview" className="h-20 w-20 rounded-md border object-cover" />
+                                    <div className="flex flex-col">
+                                        <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">{(form.image as File).name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleChange('image', null)}
+                                            className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -328,8 +374,6 @@ const handleSubmit = (e: React.FormEvent) => {
                                 disabled
                             />
                         </div>
-
-                        
 
                         {/* Description */}
                         <div className="col-span-2">

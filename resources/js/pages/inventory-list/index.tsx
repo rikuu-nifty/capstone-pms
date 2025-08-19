@@ -63,7 +63,7 @@ export type Asset = {
     description: string;
     status: 'active' | 'archived';
     category_id: number;
-    category?: Category | null;  
+    category?: Category | null;
     unit_or_department: UnitOrDepartment | null;
     building: Building | null;
     building_room?: BuildingRoom | null;
@@ -74,7 +74,7 @@ export type Asset = {
     quantity: number;
     transfer_status: string;
     brand: string;
-    image_path?: string | null;  // ✅ new field
+    image_path?: string | null; // ✅ new field
 };
 
 export type AssetFormData = {
@@ -272,7 +272,7 @@ export default function InventoryListIndex({
                                             <img
                                                 src={`/storage/${item.image_path}`}
                                                 alt={item.asset_name}
-                                                className="max-h-24 w-auto rounded object-cover mx-auto"
+                                                className="mx-auto max-h-24 w-auto rounded object-cover"
                                             />
                                         ) : (
                                             'No Image Uploaded'
@@ -644,21 +644,66 @@ export default function InventoryListIndex({
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div>
 
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Asset Image</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        if (e.target.files?.[0]) {
-                                            setData('image', e.target.files[0]); // ✅ add to form data
-                                        }
-                                    }}
-                                    className="w-full rounded-lg border p-2"
-                                />
-                                {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
-                            </div>
-                            
+<div className="col-span-1">
+  <label className="mb-1 block font-medium">Asset Image</label>
+
+  <div className="relative">
+    {/* Hidden real file input */}
+    <input
+      id="asset-image"
+      type="file"
+      accept="image/*"
+      onChange={(e) => {
+        if (e.target.files?.[0]) {
+          setData('image', e.target.files[0]); // ✅ store the File object
+        }
+      }}
+      className="absolute inset-0 cursor-pointer opacity-0"
+    />
+
+    {/* Styled input with file name */}
+    <label
+      htmlFor="asset-image"
+      className="flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm text-gray-500 shadow-sm hover:border-gray-400 hover:bg-gray-50 cursor-pointer transition"
+    >
+      {data.image ? (
+        <span className="truncate text-gray-800">{(data.image as File).name}</span>
+      ) : (
+        <span className="text-gray-400">Choose File</span>
+      )}
+      <span className="ml-2 rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-200">
+        Browse
+      </span>
+    </label>
+  </div>
+
+  {/* Preview + Remove */}
+  {data.image && (
+    <div className="mt-3 flex items-center gap-3 rounded-lg border p-2 shadow-sm bg-gray-50">
+      <img
+        src={URL.createObjectURL(data.image as File)}
+        alt="Preview"
+        className="h-20 w-20 rounded-md border object-cover"
+      />
+      <div className="flex flex-col">
+        <span className="text-sm text-gray-700 font-medium truncate max-w-[140px]">
+          {(data.image as File).name}
+        </span>
+        <button
+          type="button"
+          onClick={() => setData('image', null)}
+          className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600 transition"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  )}
+
+  {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
+</div>
+
+
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Total Cost</label>
                                 <input
@@ -669,8 +714,6 @@ export default function InventoryListIndex({
                                     disabled
                                 />
                             </div>
-
-                        
 
                             <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Description</label>
