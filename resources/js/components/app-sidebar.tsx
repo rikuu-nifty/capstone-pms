@@ -14,7 +14,6 @@ import { Link } from '@inertiajs/react';
 import {
     ArrowRightLeft,
     Blocks,
-    Building2,
     Calendar,
     CalendarCheck2,
     ClipboardList,
@@ -55,7 +54,6 @@ const assetsNavItems = [
 
 const institutionalSetUpNavItems = [
     { title: 'Buildings', href: '/buildings', icon: Landmark },
-    { title: 'Building Rooms', href: '/building-rooms', icon: Building2 },
     { title: 'Organizations', href: '/organizations', icon: Network },
 ];
 
