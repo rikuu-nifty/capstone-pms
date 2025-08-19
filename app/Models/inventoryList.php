@@ -23,6 +23,7 @@ class InventoryList extends Model
         'quantity',
         'transfer_status',
         'status',
+        'image_path',   // ✅ new field
     ];
 
 

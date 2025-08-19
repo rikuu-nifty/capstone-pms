@@ -63,6 +63,7 @@ export type Asset = {
     description: string;
     status: 'active' | 'archived';
     category_id: number;
+    category?: Category | null;  
     unit_or_department: UnitOrDepartment | null;
     building: Building | null;
     building_room?: BuildingRoom | null;
@@ -73,6 +74,7 @@ export type Asset = {
     quantity: number;
     transfer_status: string;
     brand: string;
+    image_path?: string | null;  // ✅ new field
 };
 
 export type AssetFormData = {
@@ -93,6 +95,7 @@ export type AssetFormData = {
     quantity: number | string; // can be number or string
     brand: string;
     transfer_status: string;
+    image?: File | null; // ✅ add this
 };
 
 export default function InventoryListIndex({
@@ -247,6 +250,7 @@ export default function InventoryListIndex({
                             <TableRow className="bg-muted text-foreground">
                                 {/* <TableHead className="text-center">ID</TableHead> */}
                                 <TableHead className="text-center">Asset Name</TableHead>
+                                <TableHead className="text-center">Image</TableHead>
                                 <TableHead className="text-center">Brand</TableHead>
                                 <TableHead className="text-center">Date Purchased</TableHead>
                                 <TableHead className="text-center">Asset Type</TableHead>
@@ -263,6 +267,17 @@ export default function InventoryListIndex({
                                 <TableRow key={item.id}>
                                     {/* <TableCell>{item.id}</TableCell> */}
                                     <TableCell>{item.asset_name}</TableCell>
+                                    <TableCell>
+                                        {item.image_path ? (
+                                            <img
+                                                src={`/storage/${item.image_path}`}
+                                                alt={item.asset_name}
+                                                className="max-h-24 w-auto rounded object-cover mx-auto"
+                                            />
+                                        ) : (
+                                            'No Image Uploaded'
+                                        )}
+                                    </TableCell>
                                     <TableCell>{item.asset_model?.brand ?? '—'}</TableCell>
                                     <TableCell>{formatDate(item.date_purchased)}</TableCell>
                                     <TableCell>
@@ -628,7 +643,23 @@ export default function InventoryListIndex({
                                 </select>
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div>
-                            <div className="col-span-2">
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Asset Image</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            setData('image', e.target.files[0]); // ✅ add to form data
+                                        }
+                                    }}
+                                    className="w-full rounded-lg border p-2"
+                                />
+                                {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
+                            </div>
+                            
+                            <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Total Cost</label>
                                 <input
                                     type="text"
@@ -638,6 +669,8 @@ export default function InventoryListIndex({
                                     disabled
                                 />
                             </div>
+
+                        
 
                             <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Description</label>

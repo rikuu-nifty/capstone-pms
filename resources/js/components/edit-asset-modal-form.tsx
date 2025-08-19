@@ -33,7 +33,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         description: asset.description || '',
 
         // ✅ ensure we have the FK even if only relation is loaded
-       category_id: (asset.category_id ?? asset.asset_model?.category_id ?? '') as number | '',
+        category_id: (asset.category_id ?? asset.asset_model?.category_id ?? '') as number | '',
 
         // ✅ read from the row, not from category name
         asset_type: (asset.asset_type ?? '') as '' | 'fixed' | 'not_fixed',
@@ -43,8 +43,9 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         building_id: asset.building?.id || '',
         building_room_id: asset.building_room?.id || '',
         status: asset.status || 'archived',
+        // ✅ new field
+        image: null,
     });
-    
 
     const handleChange = <K extends keyof AssetFormData>(field: K, value: AssetFormData[K]) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -53,18 +54,19 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
     const filteredModels = assetModels.filter((model) => model.brand === form.brand);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
 
-        router.put(`/inventory-list/${asset.id}`, form, {
-            onSuccess: () => {
-                onClose(); // Closes the modal after successful save
-            },
-            onError: (errors) => {
-                console.error(errors); // Optional: log any validation errors
-            },
-        });
-    };
+    router.post(`/inventory-list/${asset.id}`, {
+        ...form,
+        _method: 'put', // ✅ Laravel will interpret this as a PUT
+    }, {
+        forceFormData: true, // ✅ ensures File objects get sent as FormData
+        onSuccess: () => onClose(),
+        onError: (errors) => console.error(errors),
+    });
+};
+
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -288,6 +290,35 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             </select>
                         </div>
 
+                        {/* Asset Image */}
+                        <div>
+                            <Label>Asset Image</Label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    if (e.target.files?.[0]) {
+                                        handleChange('image', e.target.files[0]); // ✅ store the File object
+                                    }
+                                }}
+                                className="w-full rounded-lg border p-2"
+                            />
+
+                            {/* Preview existing image (from DB) */}
+                            {asset.image_path && !form.image && (
+                                <div className="mt-2">
+                                    <img src={`/storage/${asset.image_path}`} alt={asset.asset_name} className="h-32 rounded border object-cover" />
+                                </div>
+                            )}
+
+                            {/* Preview newly selected image */}
+                            {form.image && (
+                                <div className="mt-2">
+                                    <img src={URL.createObjectURL(form.image)} alt="Preview" className="h-32 rounded border object-cover" />
+                                </div>
+                            )}
+                        </div>
+
                         {/* Total Cost */}
                         <div>
                             <Label>Total Cost</Label>
@@ -297,6 +328,8 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 disabled
                             />
                         </div>
+
+                        
 
                         {/* Description */}
                         <div className="col-span-2">

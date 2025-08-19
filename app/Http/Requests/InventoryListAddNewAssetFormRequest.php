@@ -44,6 +44,10 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'memorandum_no' =>  'required|numeric|min:0',
             'status' => 'nullable|in:active,archived',
 
+            // ✅ New: Image upload
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+
+
         ];
     }
 
@@ -113,6 +117,11 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'memorandum_no.required' => 'Please provide the memorandum number.',            // REQUIRED
             'memorandum_no.numeric' => 'The memorandum number must be a valid number.',
             'memorandum_no.min' => 'The memorandum number must be at least 0.',
+
+            // ✅ Image messages
+            'image.image' => 'The uploaded file must be an image.',
+            'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif.',
+            'image.max' => 'The image may not be greater than 5MB.',
         ];
     }
 

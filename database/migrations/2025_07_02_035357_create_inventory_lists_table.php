@@ -23,6 +23,7 @@ return new class extends Migration
                   ->onDelete('cascade');   // ->onDelete('set null'); 
 
             $table->string('asset_name');
+            $table->string('image_path')->nullable();
             $table->text('description')->nullable();
             $table->enum('status', ['active', 'archived'])->default('archived');
 
@@ -44,6 +45,11 @@ return new class extends Migration
                   ->on('building_rooms')
                   ->onDelete('set null');
 
+            $table->foreignId('category_id')
+                  ->nullable()
+                  ->constrained('categories')
+                  ->nullOnDelete();
+    
             $table->text('serial_no');  
             $table->string('supplier');
             $table->decimal('unit_cost', 10, 2);

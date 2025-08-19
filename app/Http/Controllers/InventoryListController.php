@@ -97,6 +97,12 @@ class InventoryListController extends Controller
         // Get validated input
         $data = $request->validated();
 
+         // Handle image upload if provided
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('assets', 'public'); 
+        $data['image_path'] = $path;
+    }
+
          // Save to database
         $asset = InventoryList::create($data);
 
@@ -156,8 +162,13 @@ public function update(Request $request, InventoryList $inventoryList): Redirect
         'building_room_id' => 'nullable|exists:building_rooms,id',
         'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
         'status' => 'nullable|string|in:active,archived',
-
+         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // ✅ image validation
     ]);
+      // Handle image upload if provided
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('assets', 'public'); 
+        $data['image_path'] = $path;
+    }
 
     $inventoryList->update($data);
 
