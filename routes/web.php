@@ -9,11 +9,8 @@ use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TurnoverDisposalController;
-use App\Models\TurnoverDisposal;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
-
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -41,8 +38,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/verify-email-otp/verify',  [EmailOtpController::class, 'verifyGuest'])->name('otp.verify');
     Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
 });
-
-
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {

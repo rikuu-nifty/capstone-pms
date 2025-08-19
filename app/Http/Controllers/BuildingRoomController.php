@@ -48,17 +48,13 @@ class BuildingRoomController extends Controller
                 : null,
         ]);
 
-        return redirect()
-            ->route('buildings.index')
-            ->with('success', "Room “{$buildingRoom->room}” was successfully updated.");
+        return redirect()->route('buildings.index')->with('success', "Room “{$buildingRoom->room}” was successfully updated.");
     }
 
-    public function destroy(BuildingRoom $buildingRoom): RedirectResponse
+    public function destroy(BuildingRoom $buildingRoom)
     {
         $buildingRoom->delete();
 
-        return redirect()
-            ->route('buildings.index')
-            ->with('success', 'Room was successfully deleted.');
+        return redirect()->route('buildings.index')->with('success', 'Room was successfully deleted.');
     }
 }

@@ -24,6 +24,7 @@ type Props = {
     onClearSelectedBuilding: () => void;
     onAddRoomClick: () => void;
     onEditRoomClick: (room: BuildingRoom) => void;
+    onDeleteRoomClick: (room: BuildingRoom) => void;
 };
 
 export default function RoomsSection({
@@ -33,6 +34,7 @@ export default function RoomsSection({
     onClearSelectedBuilding,
     onAddRoomClick,
     onEditRoomClick,
+    onDeleteRoomClick,
 }: Props) {
     const [roomSearch, setRoomSearch] = useState('');
     const [roomSortKey, setRoomSortKey] = useState<RoomSortKey>('id');
@@ -172,7 +174,7 @@ export default function RoomsSection({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        // onClick={}
+                                        onClick={() => onDeleteRoomClick(r)}
                                         className="cursor-pointer"
                                     >
                                         <Trash2 className="h-4 w-4 text-destructive" />

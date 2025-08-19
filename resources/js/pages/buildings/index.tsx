@@ -54,6 +54,8 @@ export default function BuildingIndex({
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [toDelete, setToDelete] = useState<Building | null>(null);
+    const [showDeleteRoomModal, setShowDeleteRoomModal] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState<BuildingRoom | null>(null);
 
     useEffect(() => {
         if (props.selected) setSelectedBuildingId(Number(props.selected));
@@ -136,6 +138,10 @@ export default function BuildingIndex({
                     onEditRoomClick={(room) => { 
                         setRoomToEdit(room); setShowEditRoom(true); 
                     }}
+                    onDeleteRoomClick={(room) => { 
+                        setRoomToDelete(room); 
+                        setShowDeleteRoomModal(true); 
+                    }}
                 />
             </div>
 
@@ -199,6 +205,22 @@ export default function BuildingIndex({
                 }}
                 buildings={buildings}
                 room={roomToEdit}
+            />
+
+            <DeleteConfirmationModal
+                show={showDeleteRoomModal}
+                onCancel={() => setShowDeleteRoomModal(false)}
+                onConfirm={() => {
+                    if (roomToDelete) {
+                        router.delete(`/building-rooms/${roomToDelete.id}`, {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDeleteRoomModal(false);
+                                setRoomToDelete(null);
+                            },
+                        });
+                    }
+                }}
             />
         </AppLayout>
     );
