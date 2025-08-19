@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -153,6 +153,8 @@ export default function InventoryListIndex({
 
     // For Modal (View)
     const [viewModalVisible, setViewModalVisible] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     // For Date Format
     const formatDate = (dateStr: string) => {
@@ -644,65 +646,50 @@ export default function InventoryListIndex({
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div>
 
-<div className="col-span-1">
-  <label className="mb-1 block font-medium">Asset Image</label>
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Asset Image</label>
 
-  <div className="relative">
-    {/* Hidden real file input */}
-    <input
-      id="asset-image"
-      type="file"
-      accept="image/*"
-      onChange={(e) => {
-        if (e.target.files?.[0]) {
-          setData('image', e.target.files[0]); // ✅ store the File object
-        }
-      }}
-      className="absolute inset-0 cursor-pointer opacity-0"
-    />
+                                {/* Styled file input */}
+                                <input
+                                    ref={fileInputRef} // ✅ attach ref
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            setData('image', e.target.files[0]); // ✅ store the File object
+                                        }
+                                    }}
+                                    className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                />
 
-    {/* Styled input with file name */}
-    <label
-      htmlFor="asset-image"
-      className="flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm text-gray-500 shadow-sm hover:border-gray-400 hover:bg-gray-50 cursor-pointer transition"
-    >
-      {data.image ? (
-        <span className="truncate text-gray-800">{(data.image as File).name}</span>
-      ) : (
-        <span className="text-gray-400">Choose File</span>
-      )}
-      <span className="ml-2 rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-200">
-        Browse
-      </span>
-    </label>
-  </div>
-
-  {/* Preview + Remove */}
-  {data.image && (
-    <div className="mt-3 flex items-center gap-3 rounded-lg border p-2 shadow-sm bg-gray-50">
-      <img
-        src={URL.createObjectURL(data.image as File)}
-        alt="Preview"
-        className="h-20 w-20 rounded-md border object-cover"
-      />
-      <div className="flex flex-col">
-        <span className="text-sm text-gray-700 font-medium truncate max-w-[140px]">
-          {(data.image as File).name}
-        </span>
-        <button
-          type="button"
-          onClick={() => setData('image', null)}
-          className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600 transition"
-        >
-          Remove
-        </button>
-      </div>
-    </div>
-  )}
-
-  {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
-</div>
-
+                                {/* Preview + Remove */}
+                                {data.image && (
+                                    <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
+                                        <img
+                                            src={URL.createObjectURL(data.image as File)}
+                                            alt="Preview"
+                                            className="h-20 w-20 rounded-md border object-cover"
+                                        />
+                                        <div className="flex flex-col">
+                                            <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">
+                                                {(data.image as File).name}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setData('image', null); // clear from form state
+                                                    if (fileInputRef.current) {
+                                                        fileInputRef.current.value = ''; // ✅ clear filename from input
+                                                    }
+                                                }}
+                                                className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Total Cost</label>

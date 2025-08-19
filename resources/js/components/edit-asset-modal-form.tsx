@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
 
@@ -53,6 +53,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
 
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
     const filteredModels = assetModels.filter((model) => model.brand === form.brand);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -316,33 +317,18 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 <div className="rounded-lg border bg-gray-50 p-3 text-center">
                                     <p className="mb-2 text-sm font-medium text-gray-600">Update Image</p>
 
-                                    {/* Hidden real file input */}
+                                    {/* Styled file input */}
                                     <input
-                                        id="asset-image-edit"
+                                        ref={fileInputRef}
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => {
                                             if (e.target.files?.[0]) {
-                                                handleChange('image', e.target.files[0]); // ✅ new File
+                                                handleChange('image', e.target.files[0]); // ✅ store File
                                             }
                                         }}
-                                        className="absolute inset-0 cursor-pointer opacity-0"
+                                        className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                     />
-
-                                    {/* Styled fake input */}
-                                    <label
-                                        htmlFor="asset-image-edit"
-                                        className="flex w-full cursor-pointer items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition hover:border-gray-400 hover:bg-gray-50"
-                                    >
-                                        {form.image ? (
-                                            <span className="truncate text-gray-800">{(form.image as File).name}</span>
-                                        ) : (
-                                            <span className="text-gray-400">Choose File</span>
-                                        )}
-                                        <span className="ml-2 rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-200">
-                                            Browse
-                                        </span>
-                                    </label>
 
                                     {/* Preview newly selected image */}
                                     {form.image && (
@@ -354,7 +340,12 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => handleChange('image', null)}
+                                                onClick={() => {
+                                                    handleChange('image', null); // clear from form state
+                                                    if (fileInputRef.current) {
+                                                        fileInputRef.current.value = ''; // ✅ reset the actual input
+                                                    }
+                                                }}
                                                 className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
                                             >
                                                 Remove
