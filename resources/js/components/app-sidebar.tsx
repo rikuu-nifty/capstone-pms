@@ -125,9 +125,9 @@ export function AppSidebar() {
                     <SidebarMenu>
                         {items.map((item) => (
                             <SidebarMenuItem key={item.href}>
-                                <SidebarMenuButton asChild className="pl-9 py-1">
-                                    <Link href={item.href} className="flex items-center space-x-2">
-                                        <item.icon className="h-4 w-4" />
+                                <SidebarMenuButton asChild className="pl-8">
+                                    <Link href={item.href} className="flex items-center space-x-1">
+                                        <item.icon/>
                                         <span>{item.title}</span>
                                     </Link>
                                 </SidebarMenuButton>

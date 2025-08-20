@@ -1,4 +1,5 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
+import { ChooseViewModal } from './chooseViewModal';
 import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
 import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
@@ -153,6 +154,8 @@ export default function InventoryListIndex({
 
     // For Modal (View)
     const [viewModalVisible, setViewModalVisible] = useState(false);
+
+    const [chooseViewVisible, setChooseViewVisible] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -324,7 +327,7 @@ export default function InventoryListIndex({
                                             variant="ghost"
                                             onClick={() => {
                                                 setSelectedAsset(item);
-                                                setViewModalVisible(true);
+                                                setChooseViewVisible(true);
                                             }}
                                         >
                                             <Eye className="h-4 w-4 text-muted-foreground" />
@@ -373,6 +376,26 @@ export default function InventoryListIndex({
                     }}
                 />
             )}
+
+            {chooseViewVisible && selectedAsset && (
+  <ChooseViewModal
+    open={chooseViewVisible}
+    onClose={() => {
+      setChooseViewVisible(false);
+      setSelectedAsset(null);
+    }}
+    asset={selectedAsset}
+    onViewAsset={() => {
+      setChooseViewVisible(false);
+      setViewModalVisible(true); // opens your existing ViewAssetModal
+    }}
+    onViewMemo={() => {
+      setChooseViewVisible(false);
+      // Example: redirect to memorandum receipt page
+      router.visit(`/memorandum/${selectedAsset.id}`);
+    }}
+  />
+)}
 
             {viewModalVisible && selectedAsset && (
                 <ViewAssetModal
