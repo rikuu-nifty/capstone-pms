@@ -1,4 +1,3 @@
-import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -10,13 +9,14 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRightLeft,
     Blocks,
     Building2,
     Calendar,
     CalendarCheck2,
+    ChevronRight,
     ClipboardList,
     File,
     FileCheck2,
@@ -29,9 +29,10 @@ import {
     Settings,
     User,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
-// Grouped nav items
+// ------------------ NAV ITEMS ------------------
 const dashboardNavItems = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
     { title: 'Calendar', href: '/calendar', icon: Calendar },
@@ -48,7 +49,6 @@ const inventoryNavItems = [
 
 const assetsNavItems = [
     { title: 'Categories', href: '/categories', icon: Blocks },
-    // { title: 'Models', href: '/models', icon: PackageCheck },
     { title: 'Assignment', href: '/assignment', icon: PackageCheck },
 ];
 
@@ -65,7 +65,75 @@ const userNavItems = [
 
 const configNavItems = [{ title: 'Settings', href: '/settings', icon: Settings }];
 
+// ------------------ COMPONENT ------------------
 export function AppSidebar() {
+    const { url } = usePage();
+    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+    // Auto-open groups that contain the active route
+    useEffect(() => {
+        if (inventoryNavItems.some((item) => url.startsWith(item.href))) {
+            setOpenGroups((prev) => ({ ...prev, Inventory: true }));
+        }
+        if (assetsNavItems.some((item) => url.startsWith(item.href))) {
+            setOpenGroups((prev) => ({ ...prev, Assets: true }));
+        }
+        if (institutionalSetUpNavItems.some((item) => url.startsWith(item.href))) {
+            setOpenGroups((prev) => ({ ...prev, 'Institutional Setup': true }));
+        }
+        if (userNavItems.some((item) => url.startsWith(item.href))) {
+            setOpenGroups((prev) => ({ ...prev, User: true }));
+        }
+    }, [url]);
+
+    const toggleGroup = (group: string) => {
+        setOpenGroups((prev) => ({
+            ...prev,
+            [group]: !prev[group], // ✅ toggle independently
+        }));
+    };
+
+    const renderCollapsible = (
+        label: string,
+        Icon: React.ComponentType<{ className?: string }>,
+        items: { title: string; href: string; icon: React.ComponentType<{ className?: string }> }[],
+    ) => {
+        const isOpen = openGroups[label] ?? false;
+
+        return (
+            <SidebarMenuItem>
+                {/* Parent button */}
+                <SidebarMenuButton onClick={() => toggleGroup(label)} className="flex items-center justify-between rounded-md py-2 transition-colors">
+                    <div className="flex items-center space-x-2">
+                        <Icon className="h-4 w-4" />
+                        <span>{label}</span>
+                    </div>
+                    <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`} />
+                </SidebarMenuButton>
+
+             {/* Submenu */}
+<div
+    className={`overflow-hidden transition-all duration-300 ease-in-out ${
+        isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+    }`}
+>
+                    <SidebarMenu>
+                        {items.map((item) => (
+                            <SidebarMenuItem key={item.href}>
+                                <SidebarMenuButton asChild className="ml-4 rounded px-2 py-1">
+                                    <Link href={item.href} className="flex items-center space-x-2">
+                                        <item.icon className="text-black-500 h-4 w-4" />
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </div>
+            </SidebarMenuItem>
+        );
+    };
+
     return (
         <Sidebar collapsible="icon" variant="inset" className="h-screen overflow-hidden">
             <SidebarHeader>
@@ -81,31 +149,43 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="overflow-hidden">
-                {/* Dashboard — flat, unchanged */}
-                <NavMain items={dashboardNavItems} mode="flat">
-                    <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
-                </NavMain>
+                <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
+                <SidebarMenu>
+                    {/* Flat items (Dashboard, Calendar) */}
+                    {dashboardNavItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <SidebarMenuButton asChild>
+                                <Link href={item.href}>
+                                    <item.icon className="mr-2 h-4 w-4" />
+                                    {item.title}
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
 
-                {/* Inventory — add mt-1 so it can't overlap Dashboard */}
-                <NavMain items={inventoryNavItems} mode="collapsible">
-                    Inventory
-                </NavMain>
+                    {/* Collapsible groups */}
+                    {renderCollapsible('Inventory', Package2, inventoryNavItems)}
+                    {renderCollapsible('Assets', Blocks, assetsNavItems)}
+                    {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
+                    {renderCollapsible('User', User, userNavItems)}
+                </SidebarMenu>
 
-                <NavMain items={assetsNavItems} mode="collapsible">
-                    Assets
-                </NavMain>
-
-                <NavMain items={institutionalSetUpNavItems} mode="collapsible">
-                    Institutional Setup
-                </NavMain>
-
-                <NavMain items={userNavItems} mode="collapsible">
-                    User
-                </NavMain>
-                {/* Configuration — flat, unchanged */}
-                <NavMain items={configNavItems} mode="flat" className="mt-1">
+                {/* Configuration section */}
+                <div className="mt-1">
                     <SidebarGroupLabel>Configuration</SidebarGroupLabel>
-                </NavMain>
+                    <SidebarMenu>
+                        {configNavItems.map((item) => (
+                            <SidebarMenuItem key={item.href}>
+                                <SidebarMenuButton asChild>
+                                    <Link href={item.href}>
+                                        <item.icon className="mr-2 h-4 w-4" />
+                                        {item.title}
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </div>
             </SidebarContent>
 
             <SidebarFooter>
