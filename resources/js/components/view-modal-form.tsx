@@ -45,7 +45,9 @@ export const ViewAssetModal = ({ asset, onClose }: ViewAssetModalProps) => {
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <form>
-                <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
+               
+                    <DialogContent className="w-full max-w-[900px] p-6 sm:max-w-[1000px] max-h-[85vh] overflow-y-auto">
+
                     <DialogHeader>
                         <DialogTitle>View Asset</DialogTitle>
                         <DialogDescription>Here are the details of the selected asset.</DialogDescription>
