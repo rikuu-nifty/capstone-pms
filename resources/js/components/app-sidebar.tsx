@@ -89,7 +89,7 @@ export function AppSidebar() {
     const toggleGroup = (group: string) => {
         setOpenGroups((prev) => ({
             ...prev,
-            [group]: !prev[group], // ✅ toggle independently
+            [group]: !prev[group],
         }));
     };
 
@@ -102,27 +102,32 @@ export function AppSidebar() {
 
         return (
             <SidebarMenuItem>
-                {/* Parent button */}
-                <SidebarMenuButton onClick={() => toggleGroup(label)} className="flex items-center justify-between rounded-md py-2 transition-colors">
-                    <div className="flex items-center space-x-2">
-                        <Icon className="h-4 w-4" />
-                        <span>{label}</span>
-                    </div>
-                    <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`} />
+                {/* Parent button (aligned with Dashboard/Calendar) */}
+                <SidebarMenuButton
+                    onClick={() => toggleGroup(label)}
+                    className="flex items-center rounded-md px-3 py-2 transition-colors space-x-2"
+                >
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                    <ChevronRight
+                        className={`ml-auto h-4 w-4 transition-transform duration-300 ${
+                            isOpen ? 'rotate-90' : ''
+                        }`}
+                    />
                 </SidebarMenuButton>
 
-             {/* Submenu */}
-<div
-    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-        isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-    }`}
->
+                {/* Submenu */}
+                <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                >
                     <SidebarMenu>
                         {items.map((item) => (
                             <SidebarMenuItem key={item.href}>
-                                <SidebarMenuButton asChild className="ml-4 rounded px-2 py-1">
+                                <SidebarMenuButton asChild className="pl-9 py-1">
                                     <Link href={item.href} className="flex items-center space-x-2">
-                                        <item.icon className="text-black-500 h-4 w-4" />
+                                        <item.icon className="h-4 w-4" />
                                         <span>{item.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
@@ -154,10 +159,10 @@ export function AppSidebar() {
                     {/* Flat items (Dashboard, Calendar) */}
                     {dashboardNavItems.map((item) => (
                         <SidebarMenuItem key={item.href}>
-                            <SidebarMenuButton asChild>
-                                <Link href={item.href}>
-                                    <item.icon className="mr-2 h-4 w-4" />
-                                    {item.title}
+                            <SidebarMenuButton asChild className="px-3 py-2">
+                                <Link href={item.href} className="flex items-center space-x-2">
+                                    <item.icon className="h-4 w-4" />
+                                    <span>{item.title}</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -176,10 +181,10 @@ export function AppSidebar() {
                     <SidebarMenu>
                         {configNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
-                                <SidebarMenuButton asChild>
-                                    <Link href={item.href}>
-                                        <item.icon className="mr-2 h-4 w-4" />
-                                        {item.title}
+                                <SidebarMenuButton asChild className="px-3 py-2">
+                                    <Link href={item.href} className="flex items-center space-x-2">
+                                        <item.icon className="h-4 w-4" />
+                                        <span>{item.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
