@@ -13,12 +13,14 @@ import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 import type { CategoriesPageProps, CategoryWithModels } from '@/types/category';
 import { formatStatusLabel, formatNumber } from '@/types/custom-index';
+import KPIStatCard from '@/components/statistics/KPIStatCard';
+import { Boxes, Tags, ListChecks } from 'lucide-react';
+
 
 import AddCategoryModal from './AddCategory';
 import EditCategoryModal from './EditCategory';
 import ViewCategoryModal from './ViewCategory';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
-// import CategoryFilterDropdown from '@/components/filters/CategoryFilterDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,7 +62,7 @@ export default function CategoriesIndex({
     const totalAssets = totals?.assets ?? 0;
 
     const avgModelsPerCat = totalCats > 0 ? totalModels / totalCats : 0;
-    const avgAssetsPerCat = totalCats > 0 ? totalAssets / totalCats : 0;
+    // const avgAssetsPerCat = totalCats > 0 ? totalAssets / totalCats : 0;
 
     const openViewCategory = (cat: CategoryWithModels) => {
         setSelectedCategory(cat);
@@ -104,7 +106,7 @@ export default function CategoriesIndex({
 
     // Pagination
     const [page, setPage] = useState(1);
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 5;
 
     useEffect(() => { 
         setPage(1); 
@@ -170,41 +172,76 @@ export default function CategoriesIndex({
             <Head title="Categories" />
 
             <div className="flex flex-col gap-4 p-4">
-                {/* Header */}
+                
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold">Categories</h1>
+                    <p className="text-sm text-muted-foreground">List of asset categories.</p>
+                </div>
+
+                {totals && (
+                    <div className="flex flex-wrap justify-between gap-3">
+                        <KPIStatCard
+                            label="Total Categories"
+                            value={formatNumber(totalCats)}
+                            icon={Tags}
+                            barColor="bg-orange-400"
+                            className="w-[350px] h-[140px]"
+                        />
+                        <KPIStatCard
+                            label="Total Models"
+                            value={formatNumber(totalModels)}
+                            icon={ListChecks}
+                            barColor="bg-sky-400"
+                            className="w-[350px] h-[140px]"
+                        />
+                        <KPIStatCard
+                            label="Total Assets"
+                            value={formatNumber(totalAssets)}
+                            icon={Boxes}
+                            barColor="bg-teal-400"
+                            className="w-[350px] h-[140px]"
+                        />
+                        <KPIStatCard
+                            label="Models per Category"
+                            value={
+                                <>
+                                {avgModelsPerCat.toFixed(1)}
+                                </>
+                            }
+                            icon={Boxes}
+                            barColor="bg-purple-400"
+                            className="w-[350px] h-[140px]"
+                        />
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Categories</h1>
-                        <p className="text-sm text-muted-foreground">List of asset categories.</p>
-
                         <div className="flex items-center gap-2 w-96">
                             <Input
                                 type="text"
                                 placeholder="Search by id, name or description..."
                                 value={rawSearch}
-                                onChange={(e) => 
-                                    setRawSearch(e.target.value)
-                                }
+                                onChange={(e) => setRawSearch(e.target.value)}
                                 className="max-w-xs"
                             />
                         </div>
-                        
+
                         <div className="flex flex-wrap gap-2 pt-1">
                             {selected_status && (
                                 <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>
                             )}
-                            
                             {(selected_status) && (
                                 <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={clearFilters}
-                                    className="cursor-pointer"
+                                size="sm"
+                                variant="destructive"
+                                onClick={clearFilters}
+                                className="cursor-pointer"
                                 >
-                                    Clear filters
+                                Clear filters
                                 </Button>
                             )}
                         </div>
-                        
                     </div>
 
                     <div className="flex gap-2">
@@ -212,21 +249,11 @@ export default function CategoriesIndex({
                             sortKey={sortKey}
                             sortDir={sortDir}
                             options={categorySortOptions}
-                            onChange={(key, dir) => { 
-                                setSortKey(key); setSortDir(dir); 
-                            }}
+                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
                         />
 
-                        {/* <CategoryFilterDropdown
-                            onApply={applyFilters}
-                            onClear={clearFilters}
-                            selected_status={selected_status}
-                        /> */}
-
-                        <Button 
-                            onClick={() => {
-                                setShowAddCategory(true);
-                            }}
+                        <Button
+                            onClick={() => { setShowAddCategory(true); }}
                             className="cursor-pointer"
                         >
                             <PlusCircle className="mr-1 h-4 w-4" /> Add New Category
@@ -234,42 +261,6 @@ export default function CategoriesIndex({
                     </div>
                 </div>
 
-                {totals && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        <div className="rounded-2xl border p-4">
-                            <div className="text-sm text-muted-foreground">Total Categories</div>
-                            <div className="mt-1 text-2xl font-semibold">
-                                {formatNumber(totalCats)}
-                            </div>
-                        </div>
-
-                        <div className="rounded-2xl border p-4">
-                            <div className="text-sm text-muted-foreground">Total Models</div>
-                            <div className="mt-1 text-2xl font-semibold">
-                                {formatNumber(totalModels)}
-                            </div>
-                        </div>
-
-                        <div className="rounded-2xl border p-4">
-                            <div className="text-sm text-muted-foreground">Total Assets</div>
-                            <div className="mt-1 text-2xl font-semibold">
-                                {formatNumber(totalAssets)}
-                            </div>
-                        </div>
-
-                        <div className="rounded-2xl border p-4">
-                            <div className="text-sm text-muted-foreground">Average Models per Category</div>
-                            <div className="mt-1 text-2xl font-semibold">
-                                {avgModelsPerCat.toFixed(1)} models
-                            </div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                                {avgAssetsPerCat.toFixed(1)} assets (avg)
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* CATEGORIES Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
                         <TableHeader>
