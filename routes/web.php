@@ -9,6 +9,8 @@ use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TurnoverDisposalController;
+use App\Http\Controllers\UnitOrDepartmentController;
+use App\Models\UnitOrDepartment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -115,6 +117,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/models/view/{assetModel}', [AssetModelController::class, 'show'])->name('asset-models.view');
     Route::delete('/models/{assetModel}', [AssetModelController::class, 'destroy'])->name('asset-models.destroy');
 
+    // UNIT OR DEPARTMENTS
+    Route::get('/unit-or-departments', [UnitOrDepartmentController::class, 'index'])->name('unit_or_departments.index');
+    Route::post('/unit-or-departments', [UnitOrDepartmentController::class, 'store'])->name('unit_or_departments.store');
+    Route::put('/unit-or-departments/{unit}', [UnitOrDepartmentController::class, 'update'])->name('unit_or_departments.update');
+    Route::get('/unit-or-departments/view/{unit}', [UnitOrDepartmentController::class, 'show'])->name('unit_or_departments.view');
+    Route::delete('/unit-or-departments/{unit}', [UnitOrDepartmentController::class, 'destroy'])->name('unit_or_departments.destroy');
 
 });
 

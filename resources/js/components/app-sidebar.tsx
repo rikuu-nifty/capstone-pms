@@ -54,7 +54,7 @@ const assetsNavItems = [
 
 const institutionalSetUpNavItems = [
     { title: 'Buildings', href: '/buildings', icon: Landmark },
-    { title: 'Organizations', href: '/organizations', icon: Network },
+    { title: 'Organizations', href: '/unit-or-departments', icon: Network },
 ];
 
 const userNavItems = [

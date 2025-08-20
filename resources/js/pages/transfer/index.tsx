@@ -324,7 +324,7 @@ export default function TransferIndex({
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                    <TableCell colSpan={10} className="text-center text-sm text-muted-foreground">
                                         No transfers found.
                                     </TableCell>
                                 </TableRow>
