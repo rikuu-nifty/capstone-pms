@@ -13,6 +13,9 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import ViewMemorandumReceiptModal from './ViewMemorandumReceipt';
+
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Inventory List',
@@ -158,6 +161,8 @@ export default function InventoryListIndex({
     const [chooseViewVisible, setChooseViewVisible] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+       const [receiptModalVisible, setReceiptModalVisible] = useState(false);
 
     // For Date Format
     const formatDate = (dateStr: string) => {
@@ -379,7 +384,7 @@ export default function InventoryListIndex({
                 />
             )}
 
-            {chooseViewVisible && selectedAsset && (
+{chooseViewVisible && selectedAsset && (
   <ChooseViewModal
     open={chooseViewVisible}
     onClose={() => {
@@ -393,11 +398,11 @@ export default function InventoryListIndex({
     }}
     onViewMemo={() => {
       setChooseViewVisible(false);
-      // Example: redirect to memorandum receipt page
-      router.visit(`/memorandum/${selectedAsset.id}`);
+      setReceiptModalVisible(true); // ✅ show the ViewMemorandumReceiptModal
     }}
   />
 )}
+
 
             {viewModalVisible && selectedAsset && (
                 <ViewAssetModal
@@ -407,6 +412,17 @@ export default function InventoryListIndex({
                         setSelectedAsset(null);
                     }}
                 />
+            )}
+
+            {receiptModalVisible && selectedAsset && (
+                <ViewMemorandumReceiptModal
+                    open={receiptModalVisible}
+                    onClose={() => {
+                    setReceiptModalVisible(false);
+                    setSelectedAsset(null);
+                    }}
+                    asset={selectedAsset}
+            />
             )}
 
             {/* Side Panel Modal with Slide Effect */}
