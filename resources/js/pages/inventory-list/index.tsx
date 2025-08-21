@@ -9,10 +9,8 @@ import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2, FileText } from 'lucide-react';
+import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-import ViewMemorandumReceiptModal from './ViewMemorandumReceipt';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -152,8 +150,6 @@ export default function InventoryListIndex({
 
     // For Modal (View)
     const [viewModalVisible, setViewModalVisible] = useState(false);
-
-    const [receiptModalVisible, setReceiptModalVisible] = useState(false);
 
     // For Date Format
     const formatDate = (dateStr: string) => {
@@ -316,19 +312,6 @@ export default function InventoryListIndex({
                                         >
                                             <Eye className="h-4 w-4 text-muted-foreground" />
                                         </Button>
-
-                                        <Button
-                                            className="cursor-pointer"
-                                            size="icon"
-                                            variant="ghost"
-                                            onClick={() => {
-                                                setSelectedAsset(item);
-                                                setReceiptModalVisible(true);
-                                            }}
-                                            title="Memorandum Receipt"
-                                        >
-                                            <FileText className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -383,18 +366,6 @@ export default function InventoryListIndex({
                     }}
                 />
             )}
-
-            {receiptModalVisible && selectedAsset && (
-                <ViewMemorandumReceiptModal
-                    open={receiptModalVisible}
-                    onClose={() => {
-                    setReceiptModalVisible(false);
-                    setSelectedAsset(null);
-                    }}
-                    asset={selectedAsset}
-            />
-            )}
-
 
             {/* Side Panel Modal with Slide Effect */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddAsset ? 'visible' : 'invisible'}`}>
