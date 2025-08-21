@@ -61,7 +61,11 @@ return new class extends Migration
             $table->timestamps();
             // $table->string('brand')->nullable(); ASSETMODEL Table
             // $table->string('unit_or_department')->nullable(); // Delete muna to dapat kasi tawagin yun fk na yun para siya yun lumabas UNIT_OR_DEPARTMENT Table
-            // $table->enum('status', ['active', 'archived'])->default('active'); // DONE
+            
+            $table->softDeletes();
+
+            //index for fast query inventory_lists table - asset_model_id and deleted_at
+            $table->index(['asset_model_id', 'deleted_at'], 'inventory_lists_assetmodel_deleted_idx');
         });
     }
 
@@ -75,6 +79,7 @@ return new class extends Migration
             $table->dropForeign(['unit_or_department_id']);    // Drop FK for unit/department
             $table->dropForeign(['building_id']);              // Drop FK for building
             $table->dropForeign(['building_room_id']);         // Drop FK for building room
+            $table->dropIndex('inventory_lists_assetmodel_deleted_idx');
         });
 
         Schema::dropIfExists('inventory_lists'); // Then drop the table

@@ -28,6 +28,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('current_building_room')->references('id')->on('building_rooms')->onDelete('cascade');
             $table->foreign('current_organization')->references('id')->on('unit_or_departments')->onDelete('cascade');

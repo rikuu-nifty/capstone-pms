@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\AssetModelController;
 use App\Http\Controllers\InventoryListController;
 use App\Http\Controllers\InventorySchedulingController;
 use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\BuildingRoomController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Auth\EmailOtpController;
 use App\Http\Controllers\CategoryController;
@@ -12,8 +14,6 @@ use App\Http\Controllers\OffCampusAssetController;
 use App\Models\TurnoverDisposal;    
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
-
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -41,8 +41,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/verify-email-otp/verify',  [EmailOtpController::class, 'verifyGuest'])->name('otp.verify');
     Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
 });
-
-
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -84,7 +82,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
     Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
     Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
-    Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfer.destroy');
+    Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfers.destroy');
 
     // TURNOVER-DISPOSAL
     Route::get('/turnover-disposal', [TurnoverDisposalController::class, 'index'])->name('turnover-disposal.index');
@@ -118,15 +116,64 @@ Route::prefix('off-campus')->name('off-campus.')->group(function () {
     // Route::delete('/off-campus/{off_campus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy');
 
 
-    // INSTITUTIONAL SETUP - BUILDINGS
+
+    /// OFF-CAMPUS
+Route::prefix('off-campus')->name('off-campus.')->group(function () {
+    Route::get('/', [OffCampusController::class, 'index'])->name('index');
+    Route::post('/', [OffCampusController::class, 'store'])->name('store');
+    Route::get('/create', [OffCampusController::class, 'create'])->name('create');
+    Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
+    Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
+    Route::get('/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('edit');
+
+    // archive / restore / hard delete
+    Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])
+        ->whereNumber('offCampus')->name('destroy');
+
+    Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])
+        ->whereNumber('id')->name('restore');
+
+    Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
+        ->whereNumber('id')->name('forceDelete');
+});
+
+
+    // Route::delete('/off-campus/{off_campus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy');
+
+
+    // BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
-    
+    Route::post('/buildings', [BuildingController::class, 'store'])->name('buildings.store');
+    Route::put('/buildings/{building}', [BuildingController::class, 'update'])->name('buildings.update');
+    Route::get('/buildings/view/{building}', [BuildingController::class, 'show'])->name('buildings.view');
+    Route::delete('/buildings/{building}', [BuildingController::class, 'destroy'])->name('buildings.destroy');
+
+    //BUILDING ROOMS
+    Route::post('/building-rooms', [BuildingRoomController::class, 'store'])->name('building-rooms.store');
+    Route::put('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'update'])->name('building-rooms.update');
+    Route::delete('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'destroy'])->name('building-rooms.destroy');
+    Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])->name('building-rooms.view');
+
     // CATEGORIES
-    ROUTE::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::get('/categories/view/{category}', [CategoryController::class, 'show'])->name('categories.view');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+    //ASSET MODELS
+    Route::get('/models', [AssetModelController::class, 'index'])->name('asset-models.index');
+    Route::post('/models', [AssetModelController::class, 'store'])->name('asset-models.store');
+    Route::put('/models/{assetModel}', [AssetModelController::class, 'update'])->name('asset-models.update');
+    Route::get('/models/view/{assetModel}', [AssetModelController::class, 'show'])->name('asset-models.view');
+    Route::delete('/models/{assetModel}', [AssetModelController::class, 'destroy'])->name('asset-models.destroy');
+
+    // UNIT OR DEPARTMENTS
+    Route::get('/unit-or-departments', [UnitOrDepartmentController::class, 'index'])->name('unit_or_departments.index');
+    Route::post('/unit-or-departments', [UnitOrDepartmentController::class, 'store'])->name('unit_or_departments.store');
+    Route::put('/unit-or-departments/{unit}', [UnitOrDepartmentController::class, 'update'])->name('unit_or_departments.update');
+    Route::get('/unit-or-departments/view/{unit}', [UnitOrDepartmentController::class, 'show'])->name('unit_or_departments.view');
+    Route::delete('/unit-or-departments/{unit}', [UnitOrDepartmentController::class, 'destroy'])->name('unit_or_departments.destroy');
 
 });
 

@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id(); // Primary Key (auto-increment)
             $table->enum('role', ['PMO Staff', 'PMO Head', 'Vice President for Administration'])->default('PMO Staff');
             $table->text('description')->nullable();
+
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

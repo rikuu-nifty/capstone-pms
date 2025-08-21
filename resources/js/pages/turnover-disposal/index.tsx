@@ -18,6 +18,8 @@ import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
 import TurnoverDisposalEditModal from './TurnoverDisposalEditModal';
 import TurnoverDisposalViewModal, { InventoryListWithSnake } from './TurnoverDisposalViewModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import Pagination, { PageInfo } from '@/components/Pagination';
+
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -347,7 +349,24 @@ export default function TurnoverDisposalsIndex({
                             )}
                         </TableBody>
                     </Table>
+                    
                 </div>
+                <div className="flex items-center justify-between mt-3">
+                <PageInfo
+                    page={page}
+                    total={sortedTurnoverDisposals.length}
+                    pageSize={page_size}
+                    label="turnover/disposal records"
+                />
+                <Pagination
+                    page={page}
+                    total={sortedTurnoverDisposals.length}
+                    pageSize={page_size}
+                    onPageChange={setPage}
+                />
+                </div>
+
+
             </div>
 
             {/* <pre>{JSON.stringify(turnoverDisposals, null, 2)}</pre> */}

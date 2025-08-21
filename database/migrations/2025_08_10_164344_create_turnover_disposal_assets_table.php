@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('asset_id');
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('turnover_disposal_id')->references('id')->on('turnover_disposals')->onDelete('cascade');
             $table->foreign('asset_id')->references('id')->on('inventory_lists')->onDelete('cascade');
@@ -32,6 +33,8 @@ return new class extends Migration
         Schema::table('turnover_disposal_assets', function (Blueprint $table) {
             $table->dropForeign(['turnover_disposal_id']);
             $table->dropForeign(['asset_id']);
+            $table->dropForeign(['asset_id']);
+            $table->dropSoftDeletes();
         });
 
         Schema::dropIfExists('turnover_disposal_assets');

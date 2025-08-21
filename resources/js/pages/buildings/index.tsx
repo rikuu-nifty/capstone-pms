@@ -1,136 +1,260 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { useState } from 'react';
-// import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
-import { Building } from '@/types/building';
 import AddBuildingModal from './AddBuildingModal';
+import AddBuildingRoomModal from './AddBuildingRoomModal';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Buildings',
-        href: '/buildings',
-    },
-];
+import EditBuildingModal from './EditBuildingModal';
+import EditBuildingRoomModal from './EditBuildingRoomModal';
+import ViewBuildingModal from './ViewBuildingModal';
+import ViewRoomModal from './sections/ViewRoomModal';
+
+import BuildingKPISection from './sections/building-kpi-section';
+import BuildingToolbar from './sections/building-toolbar';
+import BuildingsTable from './sections/buildings-table';
+import RoomsSection from './sections/rooms-section';
+
+import useDebouncedValue from '@/hooks/useDebouncedValue';
+import { type SortDir } from '@/components/filters/SortDropdown';
+import { type Building, type PageProps as BasePageProps } from '@/types/building';
+import { BuildingRoom } from '@/types/custom-index';
+
+import { breadcrumbs, type BuildingSortKey, } from './sections/building-index.helpers';
+import { RoomWithAssets } from '@/types/building-room';
+
+type BuildingIndexPageProps = BasePageProps & {
+    viewingRoom?: RoomWithAssets;
+};
 
 export default function BuildingIndex({ 
-    buildings = [] 
-}: { 
-    buildings: Building[] 
-}) {
-    const [search, setSearch] = useState('');
+    buildings = [], 
+    totals,
+    viewingRoom
+}: BuildingIndexPageProps) {
 
+    const { props } = usePage<BuildingIndexPageProps>();
+
+    const rooms = useMemo(() => props.rooms ?? [], [props.rooms]);
+
+    const [rawSearch, setRawSearch] = useState(''); // building
+    const search = useDebouncedValue(rawSearch, 200);
+
+    const [sortKey, setSortKey] = useState<BuildingSortKey>('id');
+    const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+    const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+    const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+    
     const [showAddBuilding, setShowAddBuilding] = useState(false);
+    const [showAddRoom, setShowAddRoom] = useState(false);
 
-    const filteredBuildings = buildings.filter((b) =>
-        `${b.name} ${b.code} ${b.description}`.toLowerCase().includes(search.toLowerCase())
-    );
+    const [showEditBuilding, setShowEditBuilding] = useState(false);
+    const [showEditRoom, setShowEditRoom] = useState(false);
+    const [roomToEdit, setRoomToEdit] = useState<BuildingRoom | null>(null);
+    
+    const [showViewBuilding, setShowViewBuilding] = useState(false);
+    const [viewBuilding, setViewBuilding] = useState<Building | null>(null);
+    const [showViewRoom, setShowViewRoom] = useState(false);
+    const [roomView, setRoomView] = useState<RoomWithAssets | null>(null);
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [toDelete, setToDelete] = useState<Building | null>(null);
+    const [showDeleteRoomModal, setShowDeleteRoomModal] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState<BuildingRoom | null>(null);
+
+    useEffect(() => {
+        if (props.selected) setSelectedBuildingId(Number(props.selected));
+    }, [props.selected]);
+
+    useEffect(() => {
+        if (props.viewing) {
+            setViewBuilding(props.viewing);
+            setShowViewBuilding(true);
+        }
+    }, [props.viewing]);
+
+    useEffect(() => {
+        if (viewingRoom) {
+            setRoomView(viewingRoom);
+            setShowViewRoom(true);
+        }
+    }, [
+        viewingRoom
+    ]);
+
+    const closeViewRoom = () => {
+        setShowViewRoom(false);
+        setRoomView(null);
+        if (/^\/?buildings\/rooms\/view\/\d+\/?$/.test(window.location.pathname)) {
+            history.back();
+        }
+    };
+
+    const closeViewBuilding = () => {
+        setShowViewBuilding(false);
+        setViewBuilding(null);
+        if (/^\/?buildings\/view\/\d+\/?$/.test(window.location.pathname)) {
+            history.back();
+        }
+    };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={
+            breadcrumbs as BreadcrumbItem[]
+        }>
             <Head title="Buildings" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-4">
+                    <div>
                         <h1 className="text-2xl font-semibold">Buildings</h1>
-                        <p className="text-sm text-muted-foreground">
-                            List of all registered AUF buildings.
-                        </p>
-                        <Input
-                            type="text"
-                            placeholder="Search by name or code..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="max-w-xs"
-                        />
+                        <p className="text-sm text-muted-foreground">List of AUF buildings.</p>
                     </div>
-                    <Button 
-                        className="cursor-pointer"
-                        onClick={() => {
-                            setShowAddBuilding(true);
+
+                    <BuildingKPISection totals={totals} />
+
+                    <BuildingToolbar
+                        search={search}
+                        onSearchChange={setRawSearch}
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSortChange={(key, dir) => { 
+                            setSortKey(key); 
+                            setSortDir(dir); 
                         }}
-                    >
-                        <PlusCircle 
-                            className="mr-2 h-4 w-4" 
-                        /> 
-                        Add Building
-                    </Button>
+                        onAdd={() => 
+                            setShowAddBuilding(true)
+                        }
+                    />
                 </div>
 
-                <div className="rounded-lg-lg overflow-x-auto border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
-                                <TableHead className="text-center">Building Code</TableHead>
-                                <TableHead className="text-center">Building Name</TableHead>
-                                <TableHead className="text-center">Description</TableHead>
-                                <TableHead className="text-center">Room Count</TableHead>
-                                <TableHead className="text-center">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredBuildings.length > 0 ? (
-                                filteredBuildings.map((building) => (
-                                    <TableRow className="text-center" key={building.id}>
-                                        <TableCell>{building.code}</TableCell>
-                                        <TableCell>{building.name}</TableCell>
-                                        <TableCell>{building.description || '—'}</TableCell>
-                                        <TableCell>{building.building_rooms_count || '—'}</TableCell>
-                                        
-                                        <TableCell className="flex gap-2 justify-center">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon"
-                                                className="cursor-pointer"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                {/* Buildings table */}
+                <BuildingsTable
+                    buildings={buildings}
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    search={search}
+                    selectedBuildingId={selectedBuildingId}
+                    onSelect={setSelectedBuildingId}
+                    onEdit={(b) => {
+                        setSelectedBuilding(b); 
+                        setShowEditBuilding(true); 
+                    }}
+                    onDelete={(b) => { 
+                        setToDelete(b); 
+                        setShowDeleteModal(true); 
+                    }}
+                />
 
-                                            <Button 
-                                                size="icon" 
-                                                variant="ghost"
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-
-                                            <Button 
-                                                size="icon" 
-                                                variant="ghost"
-                                                className="cursor-pointer"
-                                            >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-
-                                        </TableCell>
-
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
-                                        No buildings found.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                {/* Rooms section */}
+                <RoomsSection
+                    buildings={buildings}
+                    rooms={rooms as BuildingRoom[]}
+                    selectedBuildingId={selectedBuildingId}
+                    onClearSelectedBuilding={() => 
+                        setSelectedBuildingId(null)
+                    }
+                    onAddRoomClick={() => 
+                        setShowAddRoom(true)
+                    }
+                    onEditRoomClick={(room) => { 
+                        setRoomToEdit(room); setShowEditRoom(true); 
+                    }}
+                    onDeleteRoomClick={(room) => { 
+                        setRoomToDelete(room); 
+                        setShowDeleteRoomModal(true); 
+                    }}
+                />
             </div>
 
             <AddBuildingModal
-                show = {showAddBuilding}
+                show={showAddBuilding}
                 onClose={() => 
                     setShowAddBuilding(false)
                 }
             />
 
+            {selectedBuilding && (
+                <EditBuildingModal
+                    show={showEditBuilding}
+                    onClose={() => { 
+                        setShowEditBuilding(false); 
+                        setSelectedBuilding(null); 
+                    }}
+                    building={selectedBuilding}
+                />
+            )}
+
+            <DeleteConfirmationModal
+                show={showDeleteModal}
+                onCancel={() => setShowDeleteModal(false)}
+                onConfirm={() => {
+                    if (toDelete) {
+                        router.delete(`/buildings/${toDelete.id}`, {
+                            preserveScroll: true,
+                            onSuccess: () => { 
+                                setShowDeleteModal(false); 
+                                setToDelete(null); 
+                            },
+                        });
+                    }
+                }}
+            />
+
+            {viewBuilding && (
+                <ViewBuildingModal
+                    open={showViewBuilding}
+                    onClose={closeViewBuilding}
+                    building={viewBuilding}
+                />
+            )}
+
+            <AddBuildingRoomModal
+                show={showAddRoom}
+                onClose={() => 
+                    setShowAddRoom(false)
+                }
+                buildings={buildings}
+                defaultBuildingId={selectedBuildingId ?? null}
+                lockBuildingSelect={selectedBuildingId !== null}
+            />
+
+            <EditBuildingRoomModal
+                show={showEditRoom}
+                onClose={() => { 
+                    setShowEditRoom(false); 
+                    setRoomToEdit(null);
+                }}
+                buildings={buildings}
+                room={roomToEdit}
+            />
+
+            <DeleteConfirmationModal
+                show={showDeleteRoomModal}
+                onCancel={() => setShowDeleteRoomModal(false)}
+                onConfirm={() => {
+                    if (roomToDelete) {
+                        router.delete(`/building-rooms/${roomToDelete.id}`, {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDeleteRoomModal(false);
+                                setRoomToDelete(null);
+                            },
+                        });
+                    }
+                }}
+            />
+
+            {roomView && (
+                <ViewRoomModal 
+                    open={showViewRoom} 
+                    onClose={closeViewRoom} 
+                    room={roomView} 
+                />
+            )}
         </AppLayout>
     );
 }

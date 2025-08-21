@@ -13,14 +13,15 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowRightLeft,
     Blocks,
-    Building2,
     Calendar,
     CalendarCheck2,
+    Building2,
     ChevronRight,
     ClipboardList,
     File,
     FileCheck2,
     Files,
+    Landmark,
     LayoutGrid,
     Network,
     Package2,
@@ -49,12 +50,13 @@ const inventoryNavItems = [
 
 const assetsNavItems = [
     { title: 'Categories', href: '/categories', icon: Blocks },
+    { title: 'Models', href: '/models', icon: PackageCheck },
     { title: 'Assignment', href: '/assignment', icon: PackageCheck },
 ];
 
 const institutionalSetUpNavItems = [
-    { title: 'Buildings', href: '/buildings', icon: Building2 },
-    { title: 'Organizations', href: '/organizations', icon: Network },
+    { title: 'Buildings', href: '/buildings', icon: Landmark },
+    { title: 'Organizations', href: '/unit-or-departments', icon: Network },
 ];
 
 const userNavItems = [

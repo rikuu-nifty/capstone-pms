@@ -19,9 +19,9 @@ type Props = {
 };
 
 export type TurnoverDisposalFilters = {
-  status: string;
-  type: string;
-  issuing_office_id: string;
+    status: string;
+    type: string;
+    issuing_office_id: string;
 };
 
 const DEFAULT_STATUS = ['pending_review', 'approved', 'rejected', 'cancelled', 'completed'];

@@ -26,11 +26,9 @@ class InventoryList extends Model
         'image_path',   // ✅ new field
     ];
 
-
-    // 🔗 Relationships and eto na yun FK Relationships
     public function assetModel()
     {
-        return $this->belongsTo(AssetModel::class, 'asset_model_id');
+        return $this->belongsTo(AssetModel::class, 'asset_model_id')->whereNull('asset_models.deleted_at');
     }
 
     public function unitOrDepartment()
@@ -61,7 +59,14 @@ class InventoryList extends Model
     public function offCampuses()
     {
          return $this->hasMany(OffCampus::class, 'asset_id');
+
     }
+
+
+    // public function category()
+    // {
+    //     return $this->belongsTo(Category::class);
+    // }
 
     
     // public function offCampusAsset() // NEED LAGAY

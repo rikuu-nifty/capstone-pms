@@ -3,41 +3,133 @@
 namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Building;
+use App\Models\BuildingRoom;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 
+use App\Http\Requests\StoreBuildingRequest;
 
 class BuildingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    
+    private function indexProps(): array
     {
-        $buildings = Building::withCount([
-            'buildingRooms'
-        ])->orderBy('code')->get();
+        $buildings = Building::indexProps();
+        
+        $totals = [
+            'total_buildings' => $buildings->count(),
+            'total_rooms' => $buildings->sum('building_rooms_count'),
+            'total_assets' => $buildings->sum('assets_count'),
+        ];
+        
+        $totals['avg_assets_per_building'] = $totals['total_buildings'] > 0
+            ? round($totals['total_assets'] / $totals['total_buildings'], 2)
+            : 0
+        ;
 
+        $totals['avg_assets_per_room'] = $totals['total_rooms'] > 0
+            ? round($totals['total_assets'] / $totals['total_rooms'], 2)
+            : 0
+        ;
+        
+        $rooms = \App\Models\BuildingRoom::listAllRoomsWithAssetShare((int) $totals['total_assets']);
 
-        return Inertia::render('buildings/index', [
-            'buildings' => $buildings
-        ]);
+        return [
+            'buildings' => $buildings,
+            'totals' => $totals,
+            'rooms' => $rooms,
+        ];
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(Request $request)
     {
-        //
+        $props = $this->indexProps();
+        $props['selectedBuilding'] = $request->integer('selected');
+
+        return Inertia::render('buildings/index', $props);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => ['required', 'string', 'max:255'],
+    //         'code' => ['required', 'string', 'max:50',
+    //             Rule::unique('buildings', 'code')
+    //             ->whereNull('deleted_at'),
+    //         ],
+    //         'description' => ['nullable', 'string', 'max:1000'],
+    //     ]);
+
+    //     $payload = [
+    //         'name' => ucwords(trim($validated['name'])),
+    //         'code' => strtoupper(trim($validated['code'])),
+    //         'description' => $validated['description'] ? trim($validated['description']) : null,
+    //     ];
+
+    //     $building = Building::create($payload);
+
+    //     return redirect()->route('buildings.index')->with('success', "Building {$building->name} was successfully created.");
+    // }
+
+    public function store(StoreBuildingRequest $request): RedirectResponse
     {
-        //
+        $validated = $request->validated();
+
+        try {
+            DB::beginTransaction();
+
+            // Create building
+            $building = Building::create([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'description' => $validated['description'] ?? null,
+            ]);
+
+            if (!empty($validated['rooms'])) {
+                $now = now();
+
+                $roomsBatch = collect($validated['rooms'])
+                    ->unique(fn ($r) => mb_strtolower($r['room']))
+                    ->map(fn ($r) => [
+                        'building_id' => $building->id,
+                        'room' => $r['room'],
+                        'description' => $r['description'] ?? null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ])
+                    ->values()
+                    ->all();
+
+                if (!empty($roomsBatch)) {
+                    BuildingRoom::insert($roomsBatch);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->back()
+                ->with('success', 'Building created successfully.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+
+            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
+                
+                return back()
+                    ->withErrors([
+                        'code' => 'The building code or one of the room names already exists.',
+                    ])
+                    ->withInput();
+            }
+
+            throw $e;
+        }
     }
 
     /**
@@ -45,15 +137,13 @@ class BuildingController extends Controller
      */
     public function show(Building $building)
     {
-        //
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Building $building)
-    {
-        //
+        return Inertia::render('buildings/index', array_merge(
+            $this->indexProps(),
+            [
+                'viewing' => Building::showPropsById($building->id),
+            ],
+        ));
     }
 
     /**
@@ -61,7 +151,24 @@ class BuildingController extends Controller
      */
     public function update(Request $request, Building $building)
     {
-        //
+         $validated = $request->validate([
+            'name' => ['required','string','max:255'],
+            'code' => ['required','string','max:50', Rule::unique('buildings', 'code')
+                ->whereNull('deleted_at')
+                ->ignore($building->id),
+            ],
+            'description' => ['nullable','string','max:1000'],
+        ]);
+
+        $payload = [
+            'name' => ucwords(trim($validated['name'])),
+            'code' => strtoupper(trim($validated['code'])),
+            'description' => $validated['description'] ? trim($validated['description']) : null,
+        ];
+
+        $building->update($payload);
+
+        return redirect()->route('buildings.index')->with('success', 'Record was successfully updated');
     }
 
     /**
@@ -69,6 +176,27 @@ class BuildingController extends Controller
      */
     public function destroy(Building $building)
     {
-        //
+        $building->delete();
+
+        return redirect()->route('buildings.index')->with('success', 'Building record was successfully deleted');
     }
+
+    public function showRoom(BuildingRoom $buildingRoom)
+    {
+        $props = $this->indexProps();
+
+        $totalAssets = (int) ($props['totals']['total_assets'] ?? 0);
+
+        $room = BuildingRoom::viewPropsByIdWithAssetShare($buildingRoom->id, $totalAssets);
+
+        return Inertia::render('buildings/index', array_merge(
+            $this->indexProps(),
+            [
+                'viewingRoom' => $room,
+                'selected'    => (int) $room->building_id,
+            ],
+        ));
+    }
+
+    
 }

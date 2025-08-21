@@ -23,6 +23,7 @@ export type CategoriesPageProps = {
         asset_models: number;
         assets: number;
     };
+    viewing?: CategoryWithModels;
 };
 
 export type CategoryFormData = {

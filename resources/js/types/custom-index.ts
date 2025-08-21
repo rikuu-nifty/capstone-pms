@@ -44,3 +44,6 @@ export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'su
     overdue: 'destructive',
     completed: 'primary',
 };
+
+export const formatNumber = (n?: number | null) =>
+    typeof n === 'number' ? n.toLocaleString() : '—';
