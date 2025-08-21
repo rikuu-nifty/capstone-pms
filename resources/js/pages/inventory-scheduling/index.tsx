@@ -54,7 +54,6 @@ export type User = {
 //     email: string;
 // };
 
-
 export type Scheduled = {
     id: number;
     building: Building | null;
@@ -261,9 +260,9 @@ export default function InventorySchedulingIndex({
                                     <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell>
 
                                     <TableCell className="w-[120px] text-center align-middle">
-                                        {item.scheduling_status === 'Completed' && <Badge variant="default">Completed</Badge>}
-                                        {item.scheduling_status === 'Pending' && <Badge variant="secondary">Pending</Badge>}
-                                        {item.scheduling_status === 'Overdue' && <Badge variant="destructive">Overdue</Badge>}
+                                        {item.scheduling_status === 'Completed' && <Badge variant="completed">Completed</Badge>}
+                                        {item.scheduling_status === 'Pending' && <Badge variant="pending">Pending</Badge>}
+                                        {item.scheduling_status === 'Overdue' && <Badge variant="overdue">Overdue</Badge>}
                                     </TableCell>
 
                                     <TableCell className="w-[160px]">

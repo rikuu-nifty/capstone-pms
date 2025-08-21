@@ -294,11 +294,13 @@ export default function InventoryListIndex({
                                         {/* {item.unit_or_department ? `${item.unit_or_department.code}` : '—'} */}
                                         {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
                                     </TableCell>
-                                    <TableCell className="text-center">
-                                        <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
-                                            {item.status === 'active' ? 'Active' : 'Archived'}
-                                        </Badge>
-                                    </TableCell>
+                                 <TableCell className="text-center">
+  <Badge variant={item.status as "active" | "archived"}>
+    {item.status === "active" ? "Active" : "Archived"}
+  </Badge>
+</TableCell>
+
+
                                     <TableCell className="text-center">
                                         <Button
                                             size="icon"
