@@ -1,5 +1,4 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
-import { ChooseViewModal } from './chooseViewModal';
 import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
 import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
@@ -12,9 +11,9 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { ChooseViewModal } from './chooseViewModal';
 
 import ViewMemorandumReceiptModal from './ViewMemorandumReceipt';
-
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -162,7 +161,7 @@ export default function InventoryListIndex({
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-       const [receiptModalVisible, setReceiptModalVisible] = useState(false);
+    const [receiptModalVisible, setReceiptModalVisible] = useState(false);
 
     // For Date Format
     const formatDate = (dateStr: string) => {
@@ -299,12 +298,11 @@ export default function InventoryListIndex({
                                         {/* {item.unit_or_department ? `${item.unit_or_department.code}` : '—'} */}
                                         {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
                                     </TableCell>
-                                 <TableCell className="text-center">
-  <Badge variant={item.status as "active" | "archived"}>
-    {item.status === "active" ? "Active" : "Archived"}
-  </Badge>
-</TableCell>
-
+                                    <TableCell className="text-center">
+                                        <Badge variant={item.status as 'active' | 'archived'}>
+                                            {item.status === 'active' ? 'Active' : 'Archived'}
+                                        </Badge>
+                                    </TableCell>
 
                                     <TableCell className="text-center">
                                         <Button
@@ -384,25 +382,24 @@ export default function InventoryListIndex({
                 />
             )}
 
-{chooseViewVisible && selectedAsset && (
-  <ChooseViewModal
-    open={chooseViewVisible}
-    onClose={() => {
-      setChooseViewVisible(false);
-      setSelectedAsset(null);
-    }}
-    asset={selectedAsset}
-    onViewAsset={() => {
-      setChooseViewVisible(false);
-      setViewModalVisible(true); // opens your existing ViewAssetModal
-    }}
-    onViewMemo={() => {
-      setChooseViewVisible(false);
-      setReceiptModalVisible(true); // ✅ show the ViewMemorandumReceiptModal
-    }}
-  />
-)}
-
+            {chooseViewVisible && selectedAsset && (
+                <ChooseViewModal
+                    open={chooseViewVisible}
+                    onClose={() => {
+                        setChooseViewVisible(false);
+                        setSelectedAsset(null);
+                    }}
+                    asset={selectedAsset}
+                    onViewAsset={() => {
+                        setChooseViewVisible(false);
+                        setViewModalVisible(true); // opens your existing ViewAssetModal
+                    }}
+                    onViewMemo={() => {
+                        setChooseViewVisible(false);
+                        setReceiptModalVisible(true); // ✅ show the ViewMemorandumReceiptModal
+                    }}
+                />
+            )}
 
             {viewModalVisible && selectedAsset && (
                 <ViewAssetModal
@@ -418,11 +415,11 @@ export default function InventoryListIndex({
                 <ViewMemorandumReceiptModal
                     open={receiptModalVisible}
                     onClose={() => {
-                    setReceiptModalVisible(false);
-                    setSelectedAsset(null);
+                        setReceiptModalVisible(false);
+                        setSelectedAsset(null);
                     }}
                     asset={selectedAsset}
-            />
+                />
             )}
 
             {/* Side Panel Modal with Slide Effect */}
