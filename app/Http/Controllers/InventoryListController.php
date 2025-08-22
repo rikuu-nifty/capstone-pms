@@ -20,31 +20,51 @@ class InventoryListController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {
-        $assets = InventoryList::with([
-            'assetModel.category',
-            'category',
-            'unitOrDepartment',
-            'building',
-            'buildingRoom'
-        ])->latest()->get();
+public function index(Request $request)
+{
+    return Inertia::render('inventory-list/index', $this->pageProps());
+}
 
-        $assetModels = AssetModel::all();
-        $unitOrDepartment = UnitOrDepartment::all();
-        $buildings = Building::all();
-        $buildingRooms = BuildingRoom::all();
-        $categories = Category::all();
+public function view(Request $request, InventoryList $inventory_list)
+{
+    $inventory_list->load([
+        'assetModel.category',
+        'category',
+        'unitOrDepartment',
+        'building',
+        'buildingRoom'
+    ]);
 
-        return Inertia::render('inventory-list/index', [
-            'assets' => $assets,
-            'assetModels' => $assetModels,
-            'unitOrDepartments' => $unitOrDepartment,
-            'buildings' => $buildings,
-            'buildingRooms' => $buildingRooms,
-            'categories' => $categories,
-        ]);
-    }
+    return Inertia::render('inventory-list/index', array_merge(
+        $this->pageProps(),
+        [
+            'show_view_modal' => true,
+            'viewing_asset'   => $inventory_list,
+        ]
+    ));
+}
+
+// 🔹 Extracted so you don’t repeat code
+private function pageProps(): array
+{
+    $assets = InventoryList::with([
+        'assetModel.category',
+        'category',
+        'unitOrDepartment',
+        'building',
+        'buildingRoom'
+    ])->latest()->get();
+
+    return [
+        'assets' => $assets,
+        'assetModels' => AssetModel::all(),
+        'unitOrDepartments' => UnitOrDepartment::all(),
+        'buildings' => Building::all(),
+        'buildingRooms' => BuildingRoom::all(),
+        'categories' => Category::all(),
+    ];
+}
+
 
 
 

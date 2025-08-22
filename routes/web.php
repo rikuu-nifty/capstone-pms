@@ -66,6 +66,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/inventory-list/{inventory_list}', [InventoryListController::class, 'update'])->name('inventory-list.update');
         Route::get('/inventory-list/{inventory_list}/edit', [InventoryListController::class, 'edit'])->name('inventory-list.edit');
         Route::delete('/inventory-list/{inventory_list}', [InventoryListController::class, 'destroy'])->name('inventory-list.destroy');
+
+        // Deep-linkable "view asset" route (modal)
+        Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
+            ->name('inventory-list.view');
+
+
+
     // INVENTORY-LIST 
 
     // INVENTORY-SCHEDULING

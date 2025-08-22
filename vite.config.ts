@@ -22,4 +22,14 @@ export default defineConfig({
             'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
         },
     },
+
+    // REMOVE THIS FOR DEFAULT
+    // ✅ add this so your phone can load assets
+    server: {
+        host: '0.0.0.0',     // listen on all interfaces
+        port: 5173,          // default Vite port
+        hmr: {
+            host: '192.168.100.60', // 👈 your PC’s LAN IP
+        },
+    },
 });

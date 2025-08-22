@@ -1,164 +1,169 @@
 import type { Asset } from '@/pages/inventory-list/index';
-
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Package,
+  Info,
+  CreditCard,
+  Home,
+  ShieldCheck,
 
-type ViewAssetModalProps = {
-    asset: Asset;
-    onClose: () => void;
+} from 'lucide-react';
+
+// -------------------- HELPERS --------------------
+const humanize = (value?: string | number | null): string =>
+  !value || value === ''
+    ? 'Not Available'
+    : typeof value === 'number'
+    ? value.toLocaleString()
+    : value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+const currencyFormat = (amount?: string | number | null): string => {
+  if (!amount) return 'Not Available';
+  const num = Number(amount);
+  return isNaN(num)
+    ? 'Not Available'
+    : `₱ ${num.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 };
 
-export const ViewAssetModal = ({ asset, onClose }: ViewAssetModalProps) => {
-    const totalCost = asset.unit_cost && asset.quantity ? `₱ ${(Number(asset.unit_cost) * Number(asset.quantity)).toFixed(2)}` : '—';
+const dateFormat = (dateStr?: string | null): string =>
+  dateStr
+    ? new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : 'Not Available';
 
-    // ✅ fix typo + keep simple formatter for asset_type
-    const formatLabel = (s?: string | null) =>
-        s
-            ? s
-                  .split('_')
-                  .map((w) => w[0].toUpperCase() + w.slice(1))
-                  .join(' ')
-            : '—';
+const StatusBadge = ({ status }: { status?: string | null }) => {
+  let color = 'bg-gray-200 text-gray-700';
+  if (status?.toLowerCase() === 'active') color = 'bg-green-100 text-green-700';
+  if (status?.toLowerCase() === 'inactive') color = 'bg-red-100 text-red-700';
+  if (status?.toLowerCase().includes('pending'))
+    color = 'bg-yellow-100 text-yellow-700';
+  
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${color}`}>
+      {humanize(status)}
+    </span>
+  );
+};
 
-    const formatDate = (dateStr?: string | null) => {
-        if (!dateStr) return '—';
-        return new Date(dateStr).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
+// -------------------- COMPONENT --------------------
+export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () => void }) => {
+  const totalCost =
+    asset.unit_cost && asset.quantity
+      ? Number(asset.unit_cost) * Number(asset.quantity)
+      : null;
 
-    const humanizeTransferStatus = (status?: string | null) => {
-        if (!status) return '—';
-        const map: Record<string, string> = {
-            not_transferred: 'Not Transferred',
-            transferred: 'Transferred',
-            pending: 'Pending',
-        };
-        return map[status] ?? status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    };
+  const InfoCard = ({ label, value }: { label: string; value: string }) => (
+    <div className="flex flex-col rounded-xl bg-white border border-gray-200 shadow-sm p-4 hover:shadow-md transition">
+      <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
+      <p className="text-base font-semibold text-gray-900">{value}</p>
+    </div>
+  );
 
-    return (
-        <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <form>
-               
-                    <DialogContent className="w-full max-w-[900px] p-6 sm:max-w-[1000px] max-h-[85vh] overflow-y-auto">
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="animate-in fade-in-50 zoom-in-95 w-full sm:max-w-[1100px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0 bg-gray-50">
+        
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-[#1e3999] to-[#162b73] text-white p-10 rounded-t-2xl text-center">
+          {asset.image_path ? (
+            <img
+              src={`/storage/${asset.image_path}`}
+              alt={asset.asset_name}
+              className="max-h-48 sm:max-h-64 w-auto rounded-lg object-contain shadow-lg mx-auto"
+            />
+          ) : (
+            <div className="max-h-48 sm:max-h-64 w-48 flex items-center justify-center rounded-lg bg-white/20 shadow-lg mx-auto">
+              <Package size={48} className="text-white" />
+            </div>
+          )}
 
-                    <DialogHeader>
-                        <DialogTitle>View Asset</DialogTitle>
-                        <DialogDescription>Here are the details of the selected asset.</DialogDescription>
-                    </DialogHeader>
+          <h2 className="mt-4 text-2xl font-bold">{humanize(asset.asset_name)}</h2>
+          <p className="text-gray-200">
+            {humanize(asset.asset_model?.brand)} {humanize(asset.asset_model?.model)}
+          </p>
+          <div className="mt-2">
+            <StatusBadge status={asset.status} />
+          </div>
+        </div>
 
-                    {asset.image_path && (
-                        <div className="mb-4 flex justify-center">
-                            <img src={`/storage/${asset.image_path}`} alt={asset.asset_name} className="max-h-64 rounded shadow" />
-                        </div>
-                    )}
+        {/* Body */}
+        <div className="p-10 space-y-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            
+            {/* General Info */}
+            <div>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-[#1e3999] border-b pb-2 mb-4">
+                <Info size={18} /> General Information
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InfoCard label="Type" value={humanize(asset.asset_type)} />
+                <InfoCard label="Category" value={humanize(asset.asset_model?.category?.name ?? asset.category?.name)} />
+                <InfoCard label="Brand" value={humanize(asset.asset_model?.brand)} />
+                <InfoCard label="Model" value={humanize(asset.asset_model?.model)} />
+                <InfoCard label="Serial Number" value={humanize(asset.serial_no)} />
+                <InfoCard label="Description" value={humanize(asset.description)} />
+              </div>
+            </div>
 
-                    <div className="grid grid-cols-2 gap-2 py-2">
-                        <div className="col-span-2">
-                            <Label>Asset Name</Label>
-                            <Input value={asset.asset_name ?? '—'} readOnly />
-                        </div>
+            {/* Financial */}
+            <div>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-green-700 border-b pb-2 mb-4">
+                <CreditCard size={18} /> Financial
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InfoCard label="Quantity" value={humanize(asset.quantity)} />
+                <InfoCard label="Unit Cost" value={currencyFormat(asset.unit_cost)} />
+                <InfoCard label="Total Cost" value={currencyFormat(totalCost) || '—'} />
+                <InfoCard label="Supplier" value={humanize(asset.supplier)} />
+                <InfoCard label="Memorandum No." value={humanize(asset.memorandum_no)} />
+              </div>
+            </div>
 
-                        <div>
-                            <Label>Asset Type</Label>
-                            <Input value={formatLabel(asset.asset_type)} readOnly />
-                        </div>
+            {/* Location */}
+            <div>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-purple-700 border-b pb-2 mb-4">
+                <Home size={18} /> Location
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InfoCard label="Building" value={humanize(asset.building?.name)} />
+                <InfoCard label="Room" value={humanize(asset.building_room?.room)} />
+                <InfoCard label="Unit / Department" value={humanize(asset.unit_or_department?.name)} />
+              </div>
+            </div>
 
-                        <div>
-                            <Label>Category</Label>
-                            <Input value={asset.asset_model?.category?.name ?? asset.category?.name ?? '—'} readOnly />
-                        </div>
+            {/* Status */}
+            <div>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-orange-600 border-b pb-2 mb-4">
+                <ShieldCheck size={18} /> Status
+              </h3>
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <InfoCard label="Transfer Status" value={humanize(asset.transfer_status)} />
+  <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
+  <InfoCard label="Date Purchased" value={dateFormat(asset.date_purchased)} />
+</div>
 
-                        <div>
-                            <Label>Brand</Label>
-                            <Input value={asset.asset_model?.brand ?? '—'} readOnly />
-                        </div>
+            </div>
+          </div>
+        </div>
 
-                        <div>
-                            <Label>Model</Label>
-                            <Input value={asset.asset_model?.model ?? '—'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Quantity</Label>
-                            <Input value={asset.quantity?.toString() ?? '—'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Unit Cost</Label>
-                            <Input value={asset.unit_cost?.toString() ?? '—'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Total Cost</Label>
-                            <Input value={totalCost} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Serial Number</Label>
-                            <Input value={asset.serial_no ?? '—'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Supplier</Label>
-                            <Input value={asset.supplier ?? '—'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Date Purchased</Label>
-                            <Input value={formatDate(asset.date_purchased)} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Building</Label>
-                            <Input value={asset.building?.name ?? '—'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Room</Label>
-                            <Input value={(asset.building_room?.room ?? '—').toString()} readOnly />
-                        </div>
-
-                        <div className="col-span-2">
-                            <Label>Unit / Department</Label>
-                            <Input value={asset.unit_or_department?.name ?? '—'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Transfer Status</Label>
-                            <Input value={humanizeTransferStatus(asset.transfer_status)} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Status</Label>
-                            <Input value={asset.status === 'active' ? 'Active' : 'Archived'} readOnly />
-                        </div>
-
-                        <div>
-                            <Label>Memorandum Number</Label>
-                            <Input value={asset.memorandum_no?.toString() ?? '—'} readOnly />
-                        </div>
-
-                        <div className="col-span-2">
-                            <Label>Description</Label>
-                            {/* keep Textarea controlled with a string */}
-                            <Textarea value={asset.description ?? ''} readOnly />
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Close</Button>
-                        </DialogClose>
-                    </DialogFooter>
-                </DialogContent>
-            </form>
-        </Dialog>
-    );
+        {/* Footer */}
+        <DialogFooter className="bg-gray-100 px-10 py-6 rounded-b-2xl flex flex-wrap gap-3 justify-between">
+          <DialogClose asChild>
+            <Button className="bg-[#1e3999] text-white hover:bg-[#162b73] shadow-md">
+              Close
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 };

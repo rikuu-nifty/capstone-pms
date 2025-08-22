@@ -108,6 +108,8 @@ export default function InventoryListIndex({
     buildingRooms = [],
     unitOrDepartments = [],
     categories = [],
+    show_view_modal = false, // ✅ new
+    viewing_asset = null, // ✅ new
 }: {
     assets: Asset[];
     assetModels: AssetModel[];
@@ -115,6 +117,8 @@ export default function InventoryListIndex({
     buildingRooms: BuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
     categories: Category[];
+    show_view_modal?: boolean; // ✅ new
+    viewing_asset?: Asset | null; // ✅ new
 }) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<AssetFormData>({
         building_id: '',
@@ -155,7 +159,34 @@ export default function InventoryListIndex({
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
     // For Modal (View)
-    const [viewModalVisible, setViewModalVisible] = useState(false);
+    // const [viewModalVisible, setViewModalVisible] = useState(false);
+
+    const [isViewOpen, setIsViewOpen] = useState<boolean>(!!show_view_modal);
+
+    useEffect(() => {
+        setIsViewOpen(!!show_view_modal);
+    }, [show_view_modal]);
+
+    const openView = (id: number) => {
+        router.get(
+            route('inventory-list.view', id), // points to /inventory-list/{id}/viewAssetDetails
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                only: ['show_view_modal', 'viewing_asset'], // only fetch these props
+            },
+        );
+    };
+
+    const closeView = () => {
+        setIsViewOpen(false);
+        router.visit(route('inventory-list.index'), {
+            replace: true, // keeps history clean
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
 
     const [chooseViewVisible, setChooseViewVisible] = useState(false);
 
@@ -327,16 +358,17 @@ export default function InventoryListIndex({
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
 
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            onClick={() => {
-                                                setSelectedAsset(item);
-                                                setChooseViewVisible(true);
-                                            }}
-                                        >
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
+<Button
+    size="icon"
+    variant="ghost"
+    onClick={() => {
+        setSelectedAsset(item);     // ✅ set the current asset
+        setChooseViewVisible(true); // ✅ open ChooseViewModal
+    }}
+>
+    <Eye className="h-4 w-4 text-muted-foreground" />
+</Button>
+
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -391,9 +423,12 @@ export default function InventoryListIndex({
                     }}
                     asset={selectedAsset}
                     onViewAsset={() => {
-                        setChooseViewVisible(false);
-                        setViewModalVisible(true); // opens your existing ViewAssetModal
-                    }}
+    setChooseViewVisible(false);
+    if (selectedAsset) {
+        openView(selectedAsset.id); // ✅ deep link route
+    }
+}}
+
                     onViewMemo={() => {
                         setChooseViewVisible(false);
                         setReceiptModalVisible(true); // ✅ show the ViewMemorandumReceiptModal
@@ -401,15 +436,14 @@ export default function InventoryListIndex({
                 />
             )}
 
-            {viewModalVisible && selectedAsset && (
-                <ViewAssetModal
-                    asset={selectedAsset}
-                    onClose={() => {
-                        setViewModalVisible(false);
-                        setSelectedAsset(null);
-                    }}
-                />
-            )}
+{isViewOpen && viewing_asset && (
+  <ViewAssetModal
+    asset={viewing_asset}
+    onClose={closeView}
+  />
+)}
+
+
 
             {receiptModalVisible && selectedAsset && (
                 <ViewMemorandumReceiptModal
