@@ -14,6 +14,7 @@ use App\Http\Controllers\OffCampusAssetController;
 use App\Http\Controllers\UnitOrDepartmentController;
 use App\Models\TurnoverDisposal;    
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FormApprovalController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -176,6 +177,14 @@ Route::prefix('off-campus')->name('off-campus.')->group(function () {
     Route::get('/unit-or-departments/view/{unit}', [UnitOrDepartmentController::class, 'show'])->name('unit_or_departments.view');
     Route::delete('/unit-or-departments/{unit}', [UnitOrDepartmentController::class, 'destroy'])->name('unit_or_departments.destroy');
 
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/approvals', [FormApprovalController::class, 'index'])->name('approvals.index');
+
+        Route::post('/approvals/{approval}/approve', [FormApprovalController::class, 'approve'])
+            ->name('approvals.approve');
+        Route::post('/approvals/{approval}/reject', [FormApprovalController::class, 'reject'])
+            ->name('approvals.reject');
+    });
 });
 
 require __DIR__.'/settings.php';

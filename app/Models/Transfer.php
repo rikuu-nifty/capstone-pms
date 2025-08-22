@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasFormApproval;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class Transfer extends Model
 {
     use SoftDeletes;
+    use  HasFormApproval;
 
     protected $fillable = [
         'current_building_id',
@@ -67,4 +70,23 @@ class Transfer extends Model
         // return $this->hasMany(TransferAsset::class, 'transfer_id')->with('inventoryList);
         /* this will allow us to show each asset detail */
     }
+
+    public function approvalFormTitle(): string
+    {
+        return 'Transfer -  #' . $this->id;
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (Transfer $t) {
+            $t->created_by_id ??= Auth::id();
+        });
+
+        static::created(function (Transfer $t) {
+            if ($t->created_by_id) {
+                $t->openApproval($t->created_by_id);
+            }
+        });
+    }
+
 }

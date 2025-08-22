@@ -61,7 +61,7 @@ const institutionalSetUpNavItems = [
 
 const userNavItems = [
     { title: 'Audit Log', href: '/audit-log', icon: File },
-    { title: 'Form Approval', href: '/form-approval', icon: FileCheck2 },
+    { title: 'Form Approval', href: '/approvals', icon: FileCheck2 },
     { title: 'Profile', href: '/profile', icon: User },
 ];
 

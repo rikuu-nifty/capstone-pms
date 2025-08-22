@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasFormApproval;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class TurnoverDisposal extends Model
 {
     use SoftDeletes;
+    use HasFormApproval;
 
     protected $fillable = [
         'issuing_office_id',
@@ -160,5 +163,23 @@ class TurnoverDisposal extends Model
             $this->turnoverDisposalAssets()
                 ->update(['deleted_at' => Carbon::now()]);
         }
+    }
+
+    public function approvalFormTitle(): string
+    {
+        return 'Turnover/Disposal -  #' . $this->id;
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (TurnoverDisposal $td) {
+            $td->created_by_id ??= Auth::id();
+        });
+
+        static::created(function (TurnoverDisposal $td) {
+            if ($td->created_by_id) {
+                $td->openApproval($td->created_by_id);
+            }
+        });
     }
 }
