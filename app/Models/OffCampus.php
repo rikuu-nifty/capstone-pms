@@ -1,15 +1,19 @@
 <?php
 
 namespace App\Models;
+
+use App\Models\Concerns\HasFormApproval;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 // use App\Models\OffCampusAsset;
+use Illuminate\Support\Facades\Auth;
 
 
 class OffCampus extends Model
 {
 
     use SoftDeletes;
+    use HasFormApproval;
 
     protected $fillable = [
 
@@ -53,6 +57,8 @@ class OffCampus extends Model
         static::restoring(function (OffCampus $offCampus) {
             $offCampus->assets()->withTrashed()->get()->each->restore();
         });
+
+        
     }
 
 
@@ -87,6 +93,24 @@ class OffCampus extends Model
     public function issuedBy() // users
     {
         return $this->belongsTo(User::class, 'issued_by_id');
+    }
+
+    public function approvalFormTitle(): string
+    {
+        return 'Off Campus -  #' . $this->id;
+    }
+
+    protected static function bootedForm(): void
+    {
+        static::created(function (OffCampus $oc) {
+            $oc->created_by_id ??= Auth::id();
+        });
+
+        static::created(function (OffCampus $oc) {
+            if ($oc->created_by_id) {
+                $oc->openApproval($oc->created_by_id);
+            }
+        });
     }
 
 }
