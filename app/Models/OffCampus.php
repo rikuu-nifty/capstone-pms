@@ -46,6 +46,16 @@ class OffCampus extends Model
 
      protected static function booted()
     {
+        static::created(function (OffCampus $oc) {
+            $oc->created_by_id ??= Auth::id();
+        });
+
+        static::created(function (OffCampus $oc) {
+            if ($oc->created_by_id) {
+                $oc->openApproval($oc->created_by_id);
+            }
+        });
+
         // Archive children with parent
         static::deleting(function (OffCampus $offCampus) {
             if (! $offCampus->isForceDeleting()) {
@@ -61,8 +71,6 @@ class OffCampus extends Model
         
     }
 
-
-
     // public function asset() // inventory_lists
     // {
     //     return $this->belongsTo(InventoryList::class, 'asset_id');
@@ -72,7 +80,6 @@ class OffCampus extends Model
     // {
     //     return $this->hasMany(OffCampusAsset::class);
     // }
-
 
 
  public function assets()
@@ -98,19 +105,6 @@ class OffCampus extends Model
     public function approvalFormTitle(): string
     {
         return 'Off Campus -  #' . $this->id;
-    }
-
-    protected static function bootedForm(): void
-    {
-        static::created(function (OffCampus $oc) {
-            $oc->created_by_id ??= Auth::id();
-        });
-
-        static::created(function (OffCampus $oc) {
-            if ($oc->created_by_id) {
-                $oc->openApproval($oc->created_by_id);
-            }
-        });
     }
 
 }

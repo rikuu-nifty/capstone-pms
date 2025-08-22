@@ -75,6 +75,17 @@ return new class extends Migration
 
             $table->timestamps();
         });
+
+        Schema::table('inventory_schedulings', function (Blueprint $table) {
+            if (!Schema::hasColumn('inventory_schedulings', 'created_by_id')) {
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->foreign('created_by_id')
+                    ->references('id')
+                    ->on('users')
+                    ->nullOnDelete()
+                ;
+            }
+        });
     }
 
     /**
@@ -89,7 +100,7 @@ return new class extends Migration
             $table->dropForeign(['user_id']);                 // Drop FK for users
             $table->dropForeign(['designated_employee']);
             $table->dropForeign(['assigned_by']);
-            
+            $table->dropForeign(['created_by_id']);
         });
 
         Schema::dropIfExists('inventory_schedulings');
