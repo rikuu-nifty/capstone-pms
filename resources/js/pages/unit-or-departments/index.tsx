@@ -190,7 +190,7 @@ export default function UnitOrDepartmentsIndex({
                                     <TableCell className="font-medium">{u.code ?? '—'}</TableCell>
                                     <TableCell>{u.name ?? '—'}</TableCell>
                                     <TableCell
-                                        className={`max-w-[250px] whitespace-normal break-words ${
+                                        className={`max-w-[250px] whitespace-normal break-words text-center${
                                         u.description && u.description !== '-' ? 'text-justify' : 'text-center'
                                         }`}
                                     >
