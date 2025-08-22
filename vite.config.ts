@@ -29,7 +29,7 @@ export default defineConfig({
         host: '0.0.0.0',     // listen on all interfaces
         port: 5173,          // default Vite port
         hmr: {
-            host: '192.168.100.60', // 👈 your PC’s LAN IP
+            host: '192.168.1.3', // 👈 your PC’s LAN IP
         },
     },
 });
