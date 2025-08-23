@@ -69,4 +69,24 @@ class FormApprovalController extends Controller
 
         return back()->with('success', 'Form rejected.');
     }
+
+    public function reset(FormApproval $approval, Request $request)
+    {
+        $this->authorize('review', $approval);
+
+        // If it’s already pending, do nothing (idempotent)
+        if ($approval->status !== ApprovalStatus::PENDING_REVIEW->value) {
+            $approval->update([
+                'status'          => ApprovalStatus::PENDING_REVIEW->value,
+                'review_notes'    => null,
+                'reviewed_by_id'  => null,
+                'reviewed_at'     => null,
+            ]);
+
+            // If your approvable record mirrors status, optionally also:
+            // $approval->approvable?->update(['status' => ApprovalStatus::PENDING->value]);
+        }
+
+        return back()->with('success', 'Moved back to Pending Review.');
+    }
 }

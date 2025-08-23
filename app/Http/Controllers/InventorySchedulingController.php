@@ -83,9 +83,33 @@ class InventorySchedulingController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(InventoryScheduling $inventoryScheduling)
+    public function show(InventoryScheduling $inventory_scheduling)
     {
-        //
+        $schedules = InventoryScheduling::with([
+            'building',
+            'buildingRoom',
+            'unitOrDepartment',
+            'user',
+            'designatedEmployee',
+            'assignedBy',
+        ])->latest()->get();
+
+        $buildings         = Building::all();
+        $buildingRooms     = BuildingRoom::with('building')->get();
+        $unitOrDepartments = UnitOrDepartment::all();
+        $users             = User::all();
+
+        $viewing = InventoryScheduling::findForView($inventory_scheduling->id);
+
+        return Inertia::render('inventory-scheduling/index', [
+            'schedules'         => $schedules, 
+            'buildings'         => $buildings,
+            'buildingRooms'     => $buildingRooms,
+            'unitOrDepartments' => $unitOrDepartments,
+            'users'             => $users,
+
+            'viewing' => $viewing,
+        ]);
     }
 
     /**

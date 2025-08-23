@@ -80,4 +80,21 @@ class InventoryScheduling extends Model
         });
     }
 
+    public function scopeWithViewRelations($q)
+    {
+        return $q->with([
+            'building',
+            'buildingRoom',
+            'unitOrDepartment',
+            'user',
+            'designatedEmployee',
+            'assignedBy',
+        ]);
+    }
+
+    public static function findForView(int $id): self
+    {
+        return static::query()->withViewRelations()->findOrFail($id);
+    }
+
 }

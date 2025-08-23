@@ -107,4 +107,19 @@ class OffCampus extends Model
         return 'Off Campus -  #' . $this->id;
     }
 
+    public function scopeWithViewRelations($q)
+    {
+        return $q->with([
+            'assets.asset:id,asset_model_id,asset_name,description,serial_no',
+            'assets.asset.assetModel:id,brand,model',
+            'collegeOrUnit:id,name,code',
+            'issuedBy:id,name',
+        ]);
+    }
+
+    public static function findForView(int $id): self
+    {
+        return static::query()->withViewRelations()->findOrFail($id);
+    }
+
 }

@@ -8,9 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ViewScheduleModal } from '@/components/view-inventory-scheduling';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, Link, usePage } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -135,6 +135,31 @@ export default function InventorySchedulingIndex({
     // For Modal (View)
     const [viewModalVisible, setViewModalVisible] = useState(false);
 
+    type PagePropsWithViewing = {
+        viewing?: Scheduled | null;
+    };
+
+    const { props } = usePage<PagePropsWithViewing>();
+
+    useEffect(() => {
+        if (!props.viewing) return;
+        setSelectedSchedule(props.viewing);
+        setViewModalVisible(true);
+    }, [props.viewing]);
+
+    const closeView = () => {
+        setViewModalVisible(false);
+        setSelectedSchedule(null);
+
+        if (/^\/?inventory-scheduling\/\d+\/view\/?$/.test(window.location.pathname)) {
+            if (window.history.length > 1) {
+                history.back();
+            } else {
+                router.visit(route('inventory-scheduling.index'), { replace: true, preserveScroll: true });
+            }
+        }
+    };
+
     const handleActualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const d = e.target.value;
         setData('actual_date_of_inventory', d);
@@ -146,7 +171,6 @@ export default function InventorySchedulingIndex({
         }
     };
 
-    // Adapter for PickerInput (string -> event)
     const setActualDateFromValue = (d: string) => {
         handleActualDateChange({ target: { value: d } } as unknown as React.ChangeEvent<HTMLInputElement>);
     };
@@ -289,7 +313,7 @@ export default function InventorySchedulingIndex({
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
 
-                                            <Button
+                                            {/* <Button
                                                 size="icon"
                                                 variant="ghost"
                                                 onClick={() => {
@@ -298,6 +322,12 @@ export default function InventorySchedulingIndex({
                                                 }}
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Button> */}
+
+                                            <Button size="icon" variant="ghost" asChild>
+                                                <Link href={route('inventory-scheduling.view', item.id)} preserveScroll>
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -345,13 +375,20 @@ export default function InventorySchedulingIndex({
                 />
             )}
 
-            {viewModalVisible && selectedSchedule && (
+            {/* {viewModalVisible && selectedSchedule && (
                 <ViewScheduleModal
                     schedule={selectedSchedule}
                     onClose={() => {
                         setViewModalVisible(false);
                         setSelectedSchedule(null);
                     }}
+                />
+            )} */}
+
+            {viewModalVisible && selectedSchedule && (
+                <ViewScheduleModal
+                    schedule={selectedSchedule}
+                    onClose={closeView}
                 />
             )}
 

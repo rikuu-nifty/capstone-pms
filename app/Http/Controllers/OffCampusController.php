@@ -19,37 +19,37 @@ class OffCampusController extends Controller
      * Display a listing of the resource.
      */
    public function index(Request $request)
-{
-    // Accept ?status=active|archived|all
-    $status = $request->string('status')->toString();
+    {
+        // Accept ?status=active|archived|all
+        $status = $request->string('status')->toString();
 
-    $rows = OffCampus::query()
-        ->when($status === 'archived', fn ($q) => $q->onlyTrashed())
-        ->when($status === 'all', fn ($q) => $q->withTrashed())
+        $rows = OffCampus::query()
+            ->when($status === 'archived', fn ($q) => $q->onlyTrashed())
+            ->when($status === 'all', fn ($q) => $q->withTrashed())
+            ->with([
+                'assets' => function ($q) {
+        $q->select('id','off_campus_id','asset_id','asset_model_id') 
         ->with([
-            'assets' => function ($q) {
-    $q->select('id','off_campus_id','asset_id','asset_model_id') 
-      ->with([
-          'asset:id,asset_model_id,asset_name,description,serial_no',
-          'asset.assetModel:id,brand,model',
-      ]);
-},
-            'collegeOrUnit:id,name,code',
-            'issuedBy:id,name',
-        ])
-        ->latest('date_issued')
-        ->paginate(20)
-        ->withQueryString();
+            'asset:id,asset_model_id,asset_name,description,serial_no',
+            'asset.assetModel:id,brand,model',
+        ]);
+    },
+                'collegeOrUnit:id,name,code',
+                'issuedBy:id,name',
+            ])
+            ->latest('date_issued')
+            ->paginate(20)
+            ->withQueryString();
 
-    return Inertia::render('off-campus/index', [
-        'offCampuses'        => $rows,
-        'filters'            => ['status' => $status ?: 'active'],
-        'unitOrDepartments'  => UnitOrDepartment::select('id','name','code')->orderBy('name')->get(),
-        'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no')->orderBy('asset_name')->get(),
-        'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
-        'users'              => User::select('id','name')->orderBy('name')->get(),
-    ]);
-}
+        return Inertia::render('off-campus/index', [
+            'offCampuses'        => $rows,
+            'filters'            => ['status' => $status ?: 'active'],
+            'unitOrDepartments'  => UnitOrDepartment::select('id','name','code')->orderBy('name')->get(),
+            'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no')->orderBy('asset_name')->get(),
+            'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
+            'users'              => User::select('id','name')->orderBy('name')->get(),
+        ]);
+    }
 
 
 
@@ -110,9 +110,34 @@ class OffCampusController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(OffCampus $offCampus)
+    public function show(int $id)
     {
-        //
+        $offCampuses       = OffCampus::with([
+            'assets.asset:id,asset_model_id,asset_name,description,serial_no',
+            'assets.asset.assetModel:id,brand,model',
+            'collegeOrUnit:id,name,code',
+            'issuedBy:id,name',
+        ])
+        ->latest()
+        ->paginate(20);
+
+        $unitOrDepartments = UnitOrDepartment::select('id','name','code')->orderBy('name')->get();
+        $assets            = InventoryList::select('id','asset_model_id','asset_name','serial_no')->orderBy('asset_name')->get();
+        $assetModels       = AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get();
+        $users             = User::select('id','name')->orderBy('name')->get();
+
+        $viewing = OffCampus::findForView($id);
+
+        return Inertia::render('off-campus/index', [
+            'offCampuses'       => $offCampuses,
+            'unitOrDepartments' => $unitOrDepartments,
+            'assets'            => $assets,
+            'assetModels'       => $assetModels,
+            'users'             => $users,
+
+            // 👇 deep-link props
+            'viewing'           => $viewing,
+        ]);
     }
 
     /**

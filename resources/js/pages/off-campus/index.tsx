@@ -4,9 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import type { Paginator } from '@/types/paginatorOffCampus';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import OffCampusAddModal from './OffCampusAddModal';
@@ -102,6 +102,18 @@ export default function OffCampusIndex({
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [offCampusToDelete, setOffCampusToDelete] = useState<Pick<OffCampus, 'id'> | null>(null);
 
+    type PagePropsWithViewing = Props & {
+    viewing?: OffCampus | null;
+    };
+
+    const { props } = usePage<PagePropsWithViewing>();
+
+    useEffect(() => {
+    if (!props.viewing) return;
+    setSelectedOffCampus(props.viewing);
+    setShowViewOffCampus(true);
+    }, [props.viewing]);
+    
     const confirmDelete = () => {
         if (!offCampusToDelete) return;
         router.delete(route('off-campus.destroy', offCampusToDelete.id), {
@@ -112,6 +124,20 @@ export default function OffCampusIndex({
             },
         });
     };
+
+    const onCloseView = () => {
+        setShowViewOffCampus(false);
+        setSelectedOffCampus(null);
+
+        if (/^\/?off-campus\/\d+\/view\/?$/.test(window.location.pathname)) {
+            if (window.history.length > 1) {
+            history.back();
+            } else {
+            router.visit(route('off-campus.index'), { replace: true, preserveScroll: true });
+            }
+        }
+    };
+
 
     const filtered = useMemo(() => {
         const q = search.toLowerCase().trim();
@@ -233,7 +259,7 @@ export default function OffCampusIndex({
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
 
-                                            <Button
+                                            {/* <Button
                                                 size="icon"
                                                 variant="ghost"
                                                 className="cursor-pointer"
@@ -243,6 +269,19 @@ export default function OffCampusIndex({
                                                 }}
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Button> */}
+                                            <Button 
+                                                size="icon" 
+                                                variant="ghost" 
+                                                asChild 
+                                                className="cursor-pointer"
+                                            >
+                                                <Link 
+                                                    href={route('off-campus.view', row.id)} 
+                                                    preserveScroll
+                                                >
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -285,13 +324,21 @@ export default function OffCampusIndex({
                 )}
 
                 {/* View Modal */}
-                {showViewOffCampus && selectedOffCampus && (
+                {/* {showViewOffCampus && selectedOffCampus && (
                     <OffCampusViewModal
                         open={showViewOffCampus}
                         onClose={() => {
                             setShowViewOffCampus(false);
                             setSelectedOffCampus(null);
                         }}
+                        offCampus={selectedOffCampus}
+                    />
+                )} */}
+
+                {showViewOffCampus && selectedOffCampus && (
+                    <OffCampusViewModal
+                        open={showViewOffCampus}
+                        onClose={onCloseView}
                         offCampus={selectedOffCampus}
                     />
                 )}

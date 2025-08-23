@@ -80,7 +80,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/inventory-scheduling', [InventorySchedulingController::class, 'index'])->name('inventory-scheduling.index');
         Route::post('/inventory-scheduling', [InventorySchedulingController::class, 'store'])->name('inventory-scheduling.store');
         Route::get('/inventory-scheduling/create', [InventorySchedulingController::class, 'create'])->name('inventory-scheduling.create');
-        Route::get('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'show'])->name('inventory-scheduling.show');
+        // Route::get('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'show'])->name('inventory-scheduling.show');
+        Route::get('/inventory-scheduling/{inventory_scheduling}/view', [InventorySchedulingController::class, 'show'])
+            ->name('inventory-scheduling.view');
+
         Route::put('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'update'])->name('inventory-scheduling.update');
         Route::get('/inventory-scheduling/{inventory_scheduling}/edit', [InventorySchedulingController::class, 'edit'])->name('inventory-scheduling.edit');
         Route::delete('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'destroy'])->name('inventory-scheduling.destroy');
@@ -103,53 +106,48 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     /// OFF-CAMPUS
-Route::prefix('off-campus')->name('off-campus.')->group(function () {
-    Route::get('/', [OffCampusController::class, 'index'])->name('index');
-    Route::post('/', [OffCampusController::class, 'store'])->name('store');
-    Route::get('/create', [OffCampusController::class, 'create'])->name('create');
-    Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
-    Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
-    Route::get('/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('edit');
+    Route::prefix('off-campus')->name('off-campus.')->group(function () {
+        Route::get('/', [OffCampusController::class, 'index'])->name('index');
+        Route::post('/', [OffCampusController::class, 'store'])->name('store');
+        Route::get('/create', [OffCampusController::class, 'create'])->name('create');
+        // Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
+         Route::get('/{off_campus}/view', [OffCampusController::class, 'show'])
+            ->whereNumber('off_campus')
+            ->name('view');
+        Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
+        Route::get('/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('edit');
 
-    // archive / restore / hard delete
-    Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])
-        ->whereNumber('offCampus')->name('destroy');
+        // archive / restore / hard delete
+        Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])
+            ->whereNumber('offCampus')->name('destroy');
 
-    Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])
-        ->whereNumber('id')->name('restore');
+        Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])
+            ->whereNumber('id')->name('restore');
 
-    Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
-        ->whereNumber('id')->name('forceDelete');
-});
-
-
-    // Route::delete('/off-campus/{off_campus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy');
-
+        Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
+            ->whereNumber('id')->name('forceDelete');
+    });
 
 
     /// OFF-CAMPUS
-Route::prefix('off-campus')->name('off-campus.')->group(function () {
-    Route::get('/', [OffCampusController::class, 'index'])->name('index');
-    Route::post('/', [OffCampusController::class, 'store'])->name('store');
-    Route::get('/create', [OffCampusController::class, 'create'])->name('create');
-    Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
-    Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
-    Route::get('/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('edit');
+    // Route::prefix('off-campus')->name('off-campus.')->group(function () {
+    //     Route::get('/', [OffCampusController::class, 'index'])->name('index');
+    //     Route::post('/', [OffCampusController::class, 'store'])->name('store');
+    //     Route::get('/create', [OffCampusController::class, 'create'])->name('create');
+    //     Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
+    //     Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
+    //     Route::get('/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('edit');
 
-    // archive / restore / hard delete
-    Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])
-        ->whereNumber('offCampus')->name('destroy');
+    //     // archive / restore / hard delete
+    //     Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])
+    //         ->whereNumber('offCampus')->name('destroy');
 
-    Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])
-        ->whereNumber('id')->name('restore');
+    //     Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])
+    //         ->whereNumber('id')->name('restore');
 
-    Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
-        ->whereNumber('id')->name('forceDelete');
-});
-
-
-    // Route::delete('/off-campus/{off_campus}', [OffCampusController::class, 'destroy'])->name('off-campus.destroy');
-
+    //     Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
+    //         ->whereNumber('id')->name('forceDelete');
+    // });
 
     // BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
@@ -192,6 +190,8 @@ Route::prefix('off-campus')->name('off-campus.')->group(function () {
             ->name('approvals.approve');
         Route::post('/approvals/{approval}/reject', [FormApprovalController::class, 'reject'])
             ->name('approvals.reject');
+        Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
+            ->name('approvals.reset');    
     });
 });
 
