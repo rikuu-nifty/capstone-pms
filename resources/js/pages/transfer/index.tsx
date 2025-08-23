@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
@@ -28,6 +28,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+type PagePropsWithViewing = TransferPageProps & {
+    viewing?: Transfer | null;
+    viewing_assets?: InventoryList[] | null;
+};
+
 export default function TransferIndex({
     transfers = [],
     assets = [],
@@ -39,7 +44,9 @@ export default function TransferIndex({
 
 }: TransferPageProps) {
 
-    const { props } = usePage<TransferPageProps>();
+    // const { props } = usePage<TransferPageProps>();
+
+    const { props } = usePage<PagePropsWithViewing>();
     const successMessage = props.flash?.success;
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -168,10 +175,23 @@ export default function TransferIndex({
         setShowViewTransfer(true);
     };
 
+    useEffect(() => {
+        if (!props.viewing) return;
+        openViewTransfer(props.viewing);
+
+        if (props.viewing_assets && props.viewing_assets.length) {
+            setSelectedAssets(props.viewing_assets);
+        }
+    }, [props.viewing, props.viewing_assets]);
+
     const closeViewTransfer = () => {
         setShowViewTransfer(false);
         setSelectedTransfer(null);
         setSelectedAssets([]);
+
+        if (/^\/?transfers\/\d+\/view\/?$/.test(window.location.pathname)) {
+            history.back();
+        }
     };
 
     return (
@@ -309,7 +329,7 @@ export default function TransferIndex({
                                             >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
-                                            <Button 
+                                            {/* <Button 
                                                 variant="ghost" 
                                                 size="icon"
                                                 className="cursor-pointer"
@@ -318,6 +338,19 @@ export default function TransferIndex({
                                                 }
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Button> */}
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                asChild 
+                                                className="cursor-pointer"
+                                            >
+                                                <Link 
+                                                    href={`/transfers/${transfer.id}/view`} 
+                                                    preserveScroll
+                                                >
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
                                             </Button>
                                         </TableCell>
                                     </TableRow>

@@ -19,7 +19,7 @@ class TransferController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(?int $id = null)
     {
         $currentUser = Auth::user();
 
@@ -120,7 +120,6 @@ class TransferController extends Controller
         $transfer = DB::transaction(function () use ($validated, $assetIds) {
             $transfer = Transfer::create($validated);
 
-            // Create pivot/junction rows
             foreach ($assetIds as $assetId) {
                 $transfer->transferAssets()->create([
                     'asset_id' => $assetId,
@@ -148,52 +147,135 @@ class TransferController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Transfer $transfer)
+    // public function show(Transfer $transfer)
+    // {
+    //     $transfer->load([
+    //         'currentBuildingRoom.building',
+    //         'receivingBuildingRoom.building',
+    //         'currentOrganization',
+    //         'receivingOrganization',
+    //         'designatedEmployee',
+    //         'assignedBy',
+    //         'transferAssets.asset.assetModel.category',
+    //     ]);
+
+    //     $array = $transfer->toArray();
+    //     $array['currentBuildingRoom'] = $array['current_building_room'];
+    //     $array['currentOrganization'] = $array['current_organization'];
+    //     $array['receivingBuildingRoom'] = $array['receiving_building_room'];
+    //     $array['receivingOrganization'] = $array['receiving_organization'];
+    //     $array['designatedEmployee'] = $array['designated_employee'];
+    //     $array['assignedBy'] = $array['assigned_by'];
+    //     $array['receivedBy'] = $array['received_by'];
+    //     $array['status'] = ucfirst($transfer->status);
+
+    //     $array['transferAssets'] = $transfer->transferAssets->map(function ($ta) {
+    //         return [
+    //             'id' => $ta->id,
+    //             'transfer_id' => $ta->transfer_id,
+    //             'asset_id' => $ta->asset_id,
+    //             'asset' => $ta->asset,
+    //         ];
+    //     });
+
+    //     $array['asset_count'] = $transfer->transferAssets->count();
+
+    //     $assets = $transfer->transferAssets->pluck('asset')->map(function ($asset) {
+    //         $arr = $asset->toArray();
+    //         $arr['assetModel'] = $arr['asset_model'];
+    //         $arr['category'] = $arr['asset_model']['category'] ?? null;
+    //         return $arr;
+    //     })->values();
+
+
+    //     return Inertia::render('transfer/TransferViewModal', [
+    //         'transfer' => $array,
+    //         'assets' => $assets,
+    //     ]);
+    // }
+
+    public function show(int $id)
     {
-        $transfer->load([
+        $currentUser = Auth::user();
+
+        $transfers = Transfer::with([
+            'currentBuildingRoom',
             'currentBuildingRoom.building',
-            'receivingBuildingRoom.building',
             'currentOrganization',
+            'receivingBuildingRoom',
+            'receivingBuildingRoom.building',
             'receivingOrganization',
             'designatedEmployee',
             'assignedBy',
             'transferAssets.asset.assetModel.category',
-        ]);
+        ])->latest()->get();
 
-        $array = $transfer->toArray();
-        $array['currentBuildingRoom'] = $array['current_building_room'];
-        $array['currentOrganization'] = $array['current_organization'];
-        $array['receivingBuildingRoom'] = $array['receiving_building_room'];
-        $array['receivingOrganization'] = $array['receiving_organization'];
-        $array['designatedEmployee'] = $array['designated_employee'];
-        $array['assignedBy'] = $array['assigned_by'];
-        $array['receivedBy'] = $array['received_by'];
-        $array['status'] = ucfirst($transfer->status);
+        $buildings = Building::all();
+        $buildingRooms = BuildingRoom::with('building')->get();
+        $unitOrDepartments = UnitOrDepartment::all();
+        $users = User::all();
+        $assets = InventoryList::with(['assetModel.category'])->where('status', 'active')->get();
 
-        $array['transferAssets'] = $transfer->transferAssets->map(function ($ta) {
-            return [
-                'id' => $ta->id,
-                'transfer_id' => $ta->transfer_id,
-                'asset_id' => $ta->asset_id,
-                'asset' => $ta->asset,
-            ];
-        });
+        $viewingModel = Transfer::findForView($id);
+        $viewing_assets = $viewingModel->viewingAssets();
 
-        $array['asset_count'] = $transfer->transferAssets->count();
+        $viewing = (function ($t) {
+            $array = $t->toArray();
+            $array['currentBuildingRoom']   = $array['current_building_room'];
+            $array['currentOrganization']   = $array['current_organization'];
+            $array['receivingBuildingRoom'] = $array['receiving_building_room'];
+            $array['receivingOrganization'] = $array['receiving_organization'];
+            $array['designatedEmployee']    = $array['designated_employee'];
+            $array['assignedBy']            = $array['assigned_by'];
+            $array['status']                = ucfirst($t->status);
 
-        $assets = $transfer->transferAssets->pluck('asset')->map(function ($asset) {
-            $arr = $asset->toArray();
-            $arr['assetModel'] = $arr['asset_model'];
-            $arr['category'] = $arr['asset_model']['category'] ?? null;
-            return $arr;
-        })->values();
+            $array['transferAssets'] = $t->transferAssets->map(function ($ta) {
+                return [
+                    'id'          => $ta->id,
+                    'transfer_id' => $ta->transfer_id,
+                    'asset_id'    => $ta->asset_id,
+                    'asset'       => $ta->asset,
+                ];
+            })->values();
 
+            $array['asset_count'] = $t->transferAssets->count();
 
-        return Inertia::render('transfer/TransferViewModal', [
-            'transfer' => $array,
-            'assets' => $assets,
+            return $array;
+        })($viewingModel);
+
+        return Inertia::render('transfer/index', [
+            'transfers' => $transfers->map(function ($transfer) {
+                $array = $transfer->toArray();
+                $array['currentBuildingRoom']   = $array['current_building_room'];
+                $array['currentOrganization']   = $array['current_organization'];
+                $array['receivingBuildingRoom'] = $array['receiving_building_room'];
+                $array['receivingOrganization'] = $array['receiving_organization'];
+                $array['designatedEmployee']    = $array['designated_employee'];
+                $array['assignedBy']            = $array['assigned_by'];
+                $array['status']                = ucfirst($transfer->status);
+                $array['transferAssets']        = $transfer->transferAssets->map(function ($ta) {
+                    return [
+                        'id'          => $ta->id,
+                        'transfer_id' => $ta->transfer_id,
+                        'asset_id'    => $ta->asset_id,
+                        'asset'       => $ta->asset,
+                    ];
+                })->values();
+                $array['asset_count'] = $transfer->transferAssets->count();
+                return $array;
+            }),
+            'buildings'         => $buildings,
+            'buildingRooms'     => $buildingRooms,
+            'unitOrDepartments' => $unitOrDepartments,
+            'users'             => $users,
+            'currentUser'       => $currentUser,
+            'assets'            => $assets,
+
+            'viewing'        => $viewing,
+            'viewing_assets' => $viewing_assets,
         ]);
     }
+
 
     /**
      * Show the form for editing the specified resource.

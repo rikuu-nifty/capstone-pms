@@ -89,4 +89,46 @@ class Transfer extends Model
         });
     }
 
+    public function scopeWithViewRelations($query)
+    {
+        return $query->with([
+            'currentBuildingRoom.building',
+            'receivingBuildingRoom.building',
+            'currentOrganization',
+            'receivingOrganization',
+            'designatedEmployee',
+            'assignedBy',
+            'transferAssets.asset.assetModel.category',
+        ]);
+    }
+
+    public static function findForView(int $id): self
+    {
+        return static::query()->withViewRelations()->findOrFail($id);
+    }
+
+    public function viewingAssets(): array
+    {
+        $this->loadMissing('transferAssets.asset.assetModel.category');
+
+        return $this->transferAssets
+            ->map(function ($ta) {
+                $a  = $ta->asset;
+                $am = optional($a)->assetModel;
+
+                return [
+                    'id'          => optional($a)->id,
+                    'asset_name'  => optional($a)->asset_name,
+                    'serial_no'   => optional($a)->serial_no,
+                    'asset_model' => [
+                        'brand'    => optional($am)->brand,
+                        'category' => [
+                            'name' => optional(optional($am)->category)->name,
+                        ],
+                    ],
+                ];
+            })
+            ->values()
+            ->all();
+    }
 }

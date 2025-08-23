@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import ViewModal from '@/components/modals/ViewModal';
-import { Transfer, InventoryList, AssetModel } from '@/types/custom-index';
+import { Transfer, InventoryList, AssetModel, formatLabel } from '@/types/custom-index';
 
 interface TransferViewModalProps {
     open: boolean;
@@ -116,9 +116,9 @@ export default function TransferViewModal({
                         {assets.map((asset) => (
                             <tr key={asset.id} className="border-t">
                                 <td className="px-3 py-2">{asset.asset_model?.brand ?? '—'}</td>
-                                <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td>
-                                <td className="px-3 py-2">{asset.asset_name ?? '—'}</td>
-                                <td className="px-3 py-2">{asset.serial_no ?? '—'}</td>
+                                <td className="px-3 py-2">{(asset.asset_model?.category?.name ?? '—')}</td>
+                                <td className="px-3 py-2">{formatLabel(asset.asset_name ?? '—')}</td>
+                                <td className="px-3 py-2">{(asset.serial_no ?? '—').toUpperCase()}</td>
                             </tr>
                         ))}
                     </tbody>

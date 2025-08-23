@@ -90,7 +90,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/transfers', [TransferController::class, 'index'])->name('transfers.index');
     Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
     Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
-    Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
+    // Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
+    Route::get('/transfers/{id}/view', [TransferController::class, 'show'])->name('transfers.view');
     Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfers.destroy');
 
     // TURNOVER-DISPOSAL

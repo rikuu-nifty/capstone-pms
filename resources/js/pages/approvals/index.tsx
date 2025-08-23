@@ -3,9 +3,21 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Eye, Check, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import Pagination from '@/components/Pagination';
-import { useMemo, useState } from 'react';
+// import Pagination from '@/components/Pagination';
+import { useState } from 'react';
+
+const viewPath = (formType: string, id?: number | null) => {
+    if (!id) return '#';
+    const map: Record<string, (id: number) => string> = {
+        transfer:               (id) => `/transfers/${id}/view`,
+        turnover_disposal:      (id) => `/turnover-disposals/${id}/view`,
+        off_campus:             (id) => `/off-campus/${id}/view`,
+        inventory_scheduling:   (id) => `/inventory-scheduling/${id}/view`,
+    };
+    return (map[formType]?.(id)) ?? '#';
+};
 
 type ApprovalItem = {
     id: number;
@@ -98,14 +110,14 @@ export default function ApprovalsIndex() {
             <div className="overflow-x-auto rounded-lg border">
             <Table>
                 <TableHeader>
-                <TableRow className="bg-muted">
-                    <TableHead className="text-center">FORM TITLE</TableHead>
-                    <TableHead className="text-center">CREATED AT</TableHead>
-                    <TableHead className="text-center">UPDATED AT</TableHead>
-                    <TableHead className="text-center">REQUESTED BY</TableHead>
-                    <TableHead className="text-center">STATUS</TableHead>
-                    <TableHead className="text-center">ACTION</TableHead>
-                </TableRow>
+                    <TableRow className="bg-muted">
+                        <TableHead className="text-center">FORM TITLE</TableHead>
+                        <TableHead className="text-center">CREATED AT</TableHead>
+                        <TableHead className="text-center">UPDATED AT</TableHead>
+                        <TableHead className="text-center">REQUESTED BY</TableHead>
+                        <TableHead className="text-center">STATUS</TableHead>
+                        <TableHead className="text-center">ACTION</TableHead>
+                    </TableRow>
                 </TableHeader>
                 <TableBody className="text-center">
                 {pageData.data.length ? pageData.data.map(a => (
@@ -119,20 +131,33 @@ export default function ApprovalsIndex() {
                         <div className="flex items-center justify-center gap-2">
                         {a.status === 'pending_review' ? (
                             <>
+                            <Link href={viewPath(a.form_type, a.approvable?.id)}>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="cursor-pointer"
+                                >
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </Link>
                             <Button
-                                className="cursor-pointer bg-emerald-600 hover:bg-emerald-700"
+                                variant="ghost"
+                                size="icon"
+                                className="cursor-pointer"
                                 onClick={() => router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })}
                             >
-                                Approve
+                                <Check className="h-4 w-4 text-green-600 dark:text-green-500" />
                             </Button>
                             <Button
-                                className="cursor-pointer bg-red-600 hover:bg-red-700"
+                                variant="ghost"
+                                size="icon"
+                                className="cursor-pointer"
                                 onClick={() => {
-                                const notes = prompt('Optional notes for rejection:') ?? '';
-                                router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
+                                    const notes = prompt('Optional notes for rejection:') ?? '';
+                                    router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
                                 }}
                             >
-                                Reject
+                                <X className="h-4 w-4 text-destructive" />
                             </Button>
                             </>
                         ) : (
