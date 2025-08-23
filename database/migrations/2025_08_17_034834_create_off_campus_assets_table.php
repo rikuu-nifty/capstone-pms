@@ -31,6 +31,9 @@ return new class extends Migration
             $table->string('units', 50)->default('pcs');
             $table->text('comments')->nullable();
 
+            $table->softDeletes();
+            $table->index('deleted_at');
+
             $table->timestamps();
         });
     }
@@ -40,6 +43,13 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('off_campus_assets', function (Blueprint $table) {
+            $table->dropForeign('off_campus_id');
+            $table->dropForeign('asset_id');
+            $table->dropForeign('asset_model_id');
+            $table->dropIndex('deleted_at');
+        });
+
         Schema::dropIfExists('off_campus_assets');
     }
 };

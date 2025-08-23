@@ -33,7 +33,6 @@ return new class extends Migration
         Schema::table('turnover_disposal_assets', function (Blueprint $table) {
             $table->dropForeign(['turnover_disposal_id']);
             $table->dropForeign(['asset_id']);
-            $table->dropForeign(['asset_id']);
             $table->dropSoftDeletes();
         });
 

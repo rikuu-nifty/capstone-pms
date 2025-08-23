@@ -15,16 +15,16 @@ return new class extends Migration
             $table->id();
             $table->string('requester_name');
 
-            $table->unsignedBigInteger('college_or_unit_id')->nullable(); // Done FK UNIT_OR_DEPARTMENT Table
+            $table->unsignedBigInteger('college_or_unit_id')->nullable(); 
             $table->foreign('college_or_unit_id')
                   ->references('id')
                   ->on('unit_or_departments')
-                  ->onDelete('set null'); // The onDelete('set null') ensures that if a unit is deleted, the value becomes null instead of breaking the reference.
-            $table->index('college_or_unit_id'); // add index for faster joins
+                  ->onDelete('set null');
+            $table->index('college_or_unit_id');
 
             $table->text('purpose');
-            $table->date('date_issued'); // MM-DD-YYYY
-            $table->date('return_date')->nullable(); // MM-DD-YYYY  // often not known at creation
+            $table->date('date_issued');
+            $table->date('return_date')->nullable();
 
             $table->unsignedInteger('quantity'); // use unsigned to prevent negatives
             $table->string('units'); // PCS, SETS, UNIT, PAIR, DOZEN etc.
@@ -49,7 +49,7 @@ return new class extends Migration
             $table->text('comments')->nullable();
             $table->enum('remarks', ['official_use', 'repair'])->default('official_use');
            
-            $table->string('approved_by')->nullable(); // Dean/Head Concerned  // can be filled later
+            $table->string('approved_by')->nullable();
 
             // Pwede to kahit walang column na issued_by sa users table
             // Always PMO Head
@@ -60,8 +60,11 @@ return new class extends Migration
                   ->onDelete('set null');
             $table->index('issued_by_id'); // add index
 
-            // Chief,Security Serivce
-            $table->string('checked_by')->nullable(); // can be filled later
+            $table->string('checked_by')->nullable(); // Chief,Security Serivce
+
+            $table->softDeletes();
+            $table->index('deleted_at');
+            $table->foreignId('deleted_by_id')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();
         });
@@ -73,7 +76,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('off_campuses', function (Blueprint $table) {
-            // drop FKs first (your approach is correct)
             $table->dropForeign(['college_or_unit_id']);    // Drop FK for unit/department
             // $table->dropForeign(['asset_id']);              // Drop FK for inventory_list
             // $table->dropForeign(['asset_model_id']);        // Drop FK for asset model
@@ -84,8 +86,11 @@ return new class extends Migration
             // $table->dropIndex(['asset_id']);
             // $table->dropIndex(['asset_model_id']);
             $table->dropIndex(['issued_by_id']);
+
+            $table->dropForeign('deleted_by_id');
+            $table->dropIndex('deleted_at');
         });
 
-        Schema::dropIfExists('off_campuses'); // Then drop the table
+        Schema::dropIfExists('off_campuses');
     }
 };
