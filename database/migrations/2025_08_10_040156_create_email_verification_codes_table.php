@@ -10,19 +10,13 @@ return new class extends Migration {
             $table->id();
 
             // If you want FK now (recommended for auth): 
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 
             // For OTP verification, I’d recommend cascadeOnDelete, 
             // because OTPs are short-lived and tied to active users only:
 
-            // If you prefer to add FK later, replace the above with:
-            // $table->unsignedBigInteger('user_id');
-            
-
-            $table->string('code_hash', 255);         // bcrypt/argon hash of 6-digit OTP
-            $table->timestamp('expires_at');          // now()->addMinutes(10)
+            $table->string('code_hash', 255);       // bcrypt/argon hash of 6-digit OTP
+            $table->timestamp('expires_at');        // now()->addMinutes(10)
             $table->unsignedTinyInteger('max_attempts')->default(5);
             $table->unsignedTinyInteger('attempts')->default(0);
             $table->timestamp('consumed_at')->nullable();
@@ -36,7 +30,7 @@ return new class extends Migration {
 
             // Helpful indexes
             $table->index(['user_id', 'consumed_at', 'expires_at'], 'evc_user_state_idx');
-            $table->index(['expires_at'], 'evc_expires_idx');
+            $table->index('expires_at', 'evc_expires_idx');
 
             // If you didn’t add the FK above and still want referential integrity later:
             // $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
@@ -45,9 +39,12 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('email_verification_codes');
-        Schema::table('email_verification_codes', function (Blueprint $table) {
-    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
-});
-    }
-};
+            Schema::table('email_verification_codes', function (Blueprint $table) {
+                $table->dropForeign(['user_id']);
+                $table->dropIndex('evc_user_state_idx');
+                $table->dropIndex('evc_expires_idx');
+            });
+
+            Schema::dropIfExists('email_verification_codes');
+        }
+    };

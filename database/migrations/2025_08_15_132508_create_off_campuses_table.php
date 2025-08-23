@@ -29,42 +29,22 @@ return new class extends Migration
             $table->unsignedInteger('quantity'); // use unsigned to prevent negatives
             $table->string('units'); // PCS, SETS, UNIT, PAIR, DOZEN etc.
 
-            // Asset Name, Description, Serial Number
-            // Pwede to kahit walang column na asset sa inventory_list table
-            // $table->unsignedBigInteger('asset_id')->nullable(); // Done FK Inventory List Table
-            // $table->foreign('asset_id')
-            //       ->references('id')
-            //       ->on('inventory_lists')
-            //       ->onDelete('set null');
-            // $table->index('asset_id'); // add index
-
-            // // Brand and Model
-            // $table->unsignedBigInteger('asset_model_id')->nullable(); // Done FK ASSET MODEL Table  // must be nullable if set null
-            // $table->foreign('asset_model_id')
-            //       ->references('id')
-            //       ->on('asset_models')
-            //       ->onDelete('set null');   // ->onDelete('set null'); 
-            // $table->index('asset_model_id'); // add index
-
             $table->text('comments')->nullable();
             $table->enum('remarks', ['official_use', 'repair'])->default('official_use');
            
             $table->string('approved_by')->nullable();
 
-            // Pwede to kahit walang column na issued_by sa users table
             // Always PMO Head
             $table->unsignedBigInteger('issued_by_id')->nullable(); // FK Users_Table // Dito mo kukunin yun ISSUED_BY (pmo employees)
-            $table->foreign('issued_by_id')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('set null');
+            $table->foreign('issued_by_id')->references('id')->on('users')->onDelete('set null');
             $table->index('issued_by_id'); // add index
 
             $table->string('checked_by')->nullable(); // Chief,Security Serivce
 
             $table->softDeletes();
             $table->index('deleted_at');
-            $table->foreignId('deleted_by_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->unsignedBigInteger('deleted_by_id')->nullable();
+            $table->foreign('deleted_by_id')->references('id')->on('users')->onDelete('set null');
 
             $table->timestamps();
         });
@@ -87,8 +67,8 @@ return new class extends Migration
             // $table->dropIndex(['asset_model_id']);
             $table->dropIndex(['issued_by_id']);
 
-            $table->dropForeign('deleted_by_id');
-            $table->dropIndex('deleted_at');
+            $table->dropForeign(['deleted_by_id']);
+            $table->dropIndex(['deleted_at']);
         });
 
         Schema::dropIfExists('off_campuses');
