@@ -68,12 +68,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/inventory-list/{inventory_list}/edit', [InventoryListController::class, 'edit'])->name('inventory-list.edit');
         Route::delete('/inventory-list/{inventory_list}', [InventoryListController::class, 'destroy'])->name('inventory-list.destroy');
 
-        // Deep-linkable "view asset" route (modal)
         Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
             ->name('inventory-list.view');
-
-
-
     // INVENTORY-LIST 
 
     // INVENTORY-SCHEDULING
@@ -127,27 +123,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
             ->whereNumber('id')->name('forceDelete');
     });
-
-
-    /// OFF-CAMPUS
-    // Route::prefix('off-campus')->name('off-campus.')->group(function () {
-    //     Route::get('/', [OffCampusController::class, 'index'])->name('index');
-    //     Route::post('/', [OffCampusController::class, 'store'])->name('store');
-    //     Route::get('/create', [OffCampusController::class, 'create'])->name('create');
-    //     Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
-    //     Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
-    //     Route::get('/{off_campus}/edit', [OffCampusController::class, 'edit'])->name('edit');
-
-    //     // archive / restore / hard delete
-    //     Route::delete('/{offCampus}', [OffCampusController::class, 'destroy'])
-    //         ->whereNumber('offCampus')->name('destroy');
-
-    //     Route::patch('/{id}/restore', [OffCampusController::class, 'restore'])
-    //         ->whereNumber('id')->name('restore');
-
-    //     Route::delete('/{id}/force-delete', [OffCampusController::class, 'forceDelete'])
-    //         ->whereNumber('id')->name('forceDelete');
-    // });
 
     // BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])->name('buildings.index');
