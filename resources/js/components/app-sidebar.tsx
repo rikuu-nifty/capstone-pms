@@ -29,6 +29,7 @@ import {
     School,
     Settings,
     User,
+    UserCheck2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
@@ -60,6 +61,7 @@ const institutionalSetUpNavItems = [
 ];
 
 const userNavItems = [
+    { title: 'Users', href: '/user-approvals', icon: UserCheck2 },
     { title: 'Audit Log', href: '/audit-log', icon: File },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2 },
     { title: 'Profile', href: '/profile', icon: User },

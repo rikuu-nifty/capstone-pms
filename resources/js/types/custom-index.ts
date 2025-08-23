@@ -21,6 +21,25 @@ export const formatDateLong = (d?: string | null) => {
     return isNaN(dt.getTime()) ? d : dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
+export const formatDateTime = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+
+    const date = d.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    });
+    const time = d.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+
+    return `${date} ${time}`;
+};
+
+
 export const formatStatusLabel = (status: string) =>
     status.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 

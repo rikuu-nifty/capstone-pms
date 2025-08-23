@@ -24,6 +24,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'status',
+        'approved_at',
+        'approval_notes',
     ];
 
     /**
@@ -51,7 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
- protected static function booted()
+    protected static function booted()
     {
         static::deleting(function ($user) {
             // Clean DB sessions if you're using the 'database' session driver
@@ -61,15 +64,29 @@ class User extends Authenticatable implements MustVerifyEmail
         });
     }
 
-public function emailVerificationCodes()
-{
-    return $this->hasMany(EmailVerificationCode::class);
-}
+    public function emailVerificationCodes()
+    {
+        return $this->hasMany(EmailVerificationCode::class);
+    }
 
-public function issuedOffCampuses()
-{
-    return $this->hasMany(OffCampus::class, 'issued_by_id');
-}
+    public function issuedOffCampuses()
+    {
+        return $this->hasMany(OffCampus::class, 'issued_by_id');
+    }
 
+    public function scopePending($q)
+    { 
+        return $q->where('status','pending'); 
+    }
+
+    public function scopeApproved($q)
+    { 
+        return $q->where('status','approved'); 
+    }
+    
+    public function scopeDenied($q)
+    { 
+        return $q->where('status','denied'); 
+    }
 
 }

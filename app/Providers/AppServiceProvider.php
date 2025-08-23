@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use Inertia\Inertia;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Inertia::share('nav_metrics', function () {
+        return Cache::remember('nav_metrics', 30, function () {
+            return [
+                'pending_user_approvals' => User::where('status', 'pending')->count(),
+            ];
+        });
+    });
     }
 }

@@ -1,51 +1,63 @@
 <?php
 
-use App\Http\Controllers\AssetModelController;
-use App\Http\Controllers\InventoryListController;
-use App\Http\Controllers\InventorySchedulingController;
-use App\Http\Controllers\BuildingController;
-use App\Http\Controllers\BuildingRoomController;
-use App\Http\Controllers\TransferController;
-use App\Http\Controllers\Auth\EmailOtpController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\TurnoverDisposalController;
-use App\Http\Controllers\OffCampusController;
-use App\Http\Controllers\OffCampusAssetController;
-use App\Http\Controllers\UnitOrDepartmentController;
-use App\Models\TurnoverDisposal;    
-use Illuminate\Support\Facades\Route;
+    use Illuminate\Support\Facades\Route;
+    use Inertia\Inertia;
 
-use App\Http\Controllers\FormApprovalController;
-use Inertia\Inertia;
+    use App\Http\Controllers\AssetModelController;
+    use App\Http\Controllers\InventoryListController;
+    use App\Http\Controllers\InventorySchedulingController;
+    use App\Http\Controllers\BuildingController;
+    use App\Http\Controllers\BuildingRoomController;
+    use App\Http\Controllers\TransferController;
+    use App\Http\Controllers\Auth\EmailOtpController;
+    use App\Http\Controllers\CategoryController;
+    use App\Http\Controllers\TurnoverDisposalController;
+    use App\Http\Controllers\OffCampusController;
+    use App\Http\Controllers\UnitOrDepartmentController;
+    use App\Http\Controllers\FormApprovalController;
+    use App\Http\Controllers\UserApprovalController;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
 
-//     // ----- Email OTP verification (must be logged in, but NOT necessarily verified) -----
-//     Route::middleware('auth')->group(function () {
-//     Route::get('/verify-email', [EmailOtpController::class, 'show'])->name('verification.notice');
-//     Route::post('/verify-email/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
-//     Route::post('/verify-email/resend', [EmailOtpController::class, 'resend'])->middleware('throttle:60,1')->name('verification.resend');
-// });
+    Route::get('/', function () {
+        return Inertia::render('welcome');
+    })->name('home');
 
-// // Email OTP verification (must be logged in, but not verified yet)
-//     Route::middleware('auth')->group(function () {
-//     Route::get('/verify-email-otp', [EmailOtpController::class, 'show'])->name('verification.notice');
-//     Route::post('/verify-email-otp/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
-//     Route::post('/verify-email-otp/resend', [EmailOtpController::class, 'resend'])
-//         ->middleware('throttle:60,1')
-//         ->name('verification.resend');
-// });
+    Route::get('/approval-pending', function () {
+        return Inertia::render('auth/ApprovalPending', [
+            'message' => session('status') ?? 'Your account is awaiting admin approval.',
+        ]);
+    })->name('approval.pending');
 
-// OTP flow (guest; uses a session key, not auth)
-Route::middleware('guest')->group(function () {
-    Route::get('/verify-email-otp',    [EmailOtpController::class, 'showGuest'])->name('otp.notice');
-    Route::post('/verify-email-otp/verify',  [EmailOtpController::class, 'verifyGuest'])->name('otp.verify');
-    Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
-});
+    // USER APPROVAL
+    Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
+    Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])->name('user-approvals.approve');
+    Route::post('/user-approvals/{user}/deny', [UserApprovalController::class, 'deny'])->name('user-approvals.deny');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+
+    //     // ----- Email OTP verification (must be logged in, but NOT necessarily verified) -----
+    //     Route::middleware('auth')->group(function () {
+    //     Route::get('/verify-email', [EmailOtpController::class, 'show'])->name('verification.notice');
+    //     Route::post('/verify-email/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
+    //     Route::post('/verify-email/resend', [EmailOtpController::class, 'resend'])->middleware('throttle:60,1')->name('verification.resend');
+    // });
+
+    // // Email OTP verification (must be logged in, but not verified yet)
+    //     Route::middleware('auth')->group(function () {
+    //     Route::get('/verify-email-otp', [EmailOtpController::class, 'show'])->name('verification.notice');
+    //     Route::post('/verify-email-otp/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
+    //     Route::post('/verify-email-otp/resend', [EmailOtpController::class, 'resend'])
+    //         ->middleware('throttle:60,1')
+    //         ->name('verification.resend');
+    // });
+
+    // OTP flow (guest; uses a session key, not auth)
+    Route::middleware('guest')->group(function () {
+        Route::get('/verify-email-otp',    [EmailOtpController::class, 'showGuest'])->name('otp.notice');
+        Route::post('/verify-email-otp/verify',  [EmailOtpController::class, 'verifyGuest'])->name('otp.verify');
+        Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
+    });
+
+Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
