@@ -9,11 +9,12 @@ import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2, Boxes, Archive, HardDrive, Banknote } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ChooseViewModal } from './chooseViewModal';
 
 import ViewMemorandumReceiptModal from './ViewMemorandumReceipt';
+import KPIStatCard from '@/components/statistics/KPIStatCard';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -101,6 +102,15 @@ export type AssetFormData = {
     image?: File | null; // ✅ add this
 };
 
+type KPIs = {
+    total_assets: number;
+    total_inventory_sum: number;
+    active_pct: number; 
+    archived_pct: number; 
+    fixed_pct: number;
+    not_fixed_pct: number;
+};
+
 export default function InventoryListIndex({
     assets = [],
     assetModels = [],
@@ -108,8 +118,17 @@ export default function InventoryListIndex({
     buildingRooms = [],
     unitOrDepartments = [],
     categories = [],
-    show_view_modal = false, // ✅ new
-    viewing_asset = null, // ✅ new
+    show_view_modal = false,
+    viewing_asset = null,
+
+    kpis = {
+        total_assets: 0,
+        total_inventory_sum: 0,
+        active_pct: 0,
+        archived_pct: 0,
+        fixed_pct: 0,
+        not_fixed_pct: 0,
+    },
 }: {
     assets: Asset[];
     assetModels: AssetModel[];
@@ -118,7 +137,9 @@ export default function InventoryListIndex({
     unitOrDepartments: UnitOrDepartment[];
     categories: Category[];
     show_view_modal?: boolean; // ✅ new
-    viewing_asset?: Asset | null; // ✅ new
+    viewing_asset?: Asset | null;
+
+    kpis?: KPIs;
 }) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<AssetFormData>({
         building_id: '',
@@ -162,6 +183,9 @@ export default function InventoryListIndex({
     // const [viewModalVisible, setViewModalVisible] = useState(false);
 
     const [isViewOpen, setIsViewOpen] = useState<boolean>(!!show_view_modal);
+
+    const formatNumber = (n: number) => new Intl.NumberFormat().format(n);
+    const formatPeso = (n: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(n);
 
     useEffect(() => {
         setIsViewOpen(!!show_view_modal);
@@ -248,8 +272,8 @@ export default function InventoryListIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory List" />
 
-            <div className="flex flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
+            {/* <div className="flex flex-col gap-4 p-4"> */}
+                {/* <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
                         <h1 className="text-2xl font-semibold">Inventory List</h1>
                         <p className="text-sm text-muted-foreground">
@@ -282,7 +306,81 @@ export default function InventoryListIndex({
                             <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
                         </Button>
                     </div>
+                </div> */}
+
+                <div className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-semibold">Inventory List</h1>
+                <p className="text-sm text-muted-foreground">
+                Provides a comprehensive overview of all university assets to facilitate accurate tracking and auditing.
+                </p>
+            </div>
+
+            {/* KPI CARDS — below H1, above controls (search/buttons) */}
+            {kpis && (
+                <div className="flex flex-wrap justify-between gap-3">
+                <KPIStatCard
+                    label="Total Assets"
+                    value={formatNumber(kpis.total_assets)}
+                    icon={Boxes}
+                    barColor="bg-yellow-400"
+                    className="w-[350px] h-[140px]"
+                />
+                <KPIStatCard
+                    label="Active vs Archived Assets"
+                    value={`${kpis.active_pct}% vs ${kpis.archived_pct}%`}
+                    icon={Archive} // or CheckCircle2
+                    barColor="bg-emerald-400"
+                    className="w-[350px] h-[140px]"
+                />
+                <KPIStatCard
+                    label="Fixed vs Not Fixed Assets"
+                    value={`${kpis.fixed_pct}% vs ${kpis.not_fixed_pct}%`}
+                    icon={HardDrive}
+                    barColor="bg-indigo-400"
+                    className="w-[350px] h-[140px]"
+                />
+                <KPIStatCard
+                    label="Total Inventory Value"
+                    value={formatPeso(kpis.total_inventory_sum)}
+                    icon={Banknote}
+                    barColor="bg-orange-400"
+                    className="w-[350px] h-[140px]"
+                />
                 </div>
+            )}
+
+            {/* Controls row — search on the left, buttons on the right */}
+            <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2">
+                <Input
+                    type="text"
+                    placeholder="Search by asset name..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="max-w-xs"
+                />
+                </div>
+
+                <div className="flex gap-2">
+                <Button variant="outline">
+                    <Grid className="mr-1 h-4 w-4" /> Category
+                </Button>
+                <Button variant="outline">
+                    <Filter className="mr-1 h-4 w-4" /> Filter
+                </Button>
+                <Button
+                    onClick={() => {
+                    reset();
+                    clearErrors();
+                    setShowAddAsset(true);
+                    }}
+                    className="cursor-pointer"
+                >
+                    <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
+                </Button>
+                </div>
+            </div>
 
                 <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
@@ -294,7 +392,7 @@ export default function InventoryListIndex({
                                 <TableHead className="text-center">Brand</TableHead>
                                 <TableHead className="text-center">Date Purchased</TableHead>
                                 <TableHead className="text-center">Asset Type</TableHead>
-                                <TableHead className="text-center">Quantity</TableHead>
+                                {/* <TableHead className="text-center">Quantity</TableHead> */}
                                 <TableHead className="text-center">Building</TableHead>
                                 <TableHead className="text-center">Unit/Department</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
@@ -323,7 +421,7 @@ export default function InventoryListIndex({
                                     <TableCell>
                                         {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
                                     </TableCell>
-                                    <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell>
+                                    {/* <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell> */}
                                     <TableCell>{item.building?.name ?? '—'}</TableCell>
                                     <TableCell>
                                         {/* {item.unit_or_department ? `${item.unit_or_department.code}` : '—'} */}

@@ -20,57 +20,53 @@ class InventoryListController extends Controller
     /**
      * Display a listing of the resource.
      */
-public function index(Request $request)
-{
-    return Inertia::render('inventory-list/index', $this->pageProps());
-}
+    public function index(Request $request)
+    {
+        return Inertia::render('inventory-list/index', $this->pageProps());
+    }
 
-public function view(Request $request, InventoryList $inventory_list)
-{
-    $inventory_list->load([
-        'assetModel.category',
-        'category',
-        'unitOrDepartment',
-        'building',
-        'buildingRoom'
-    ]);
+    public function view(Request $request, InventoryList $inventory_list)
+    {
+        $inventory_list->load([
+            'assetModel.category',
+            'category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom'
+        ]);
 
-    return Inertia::render('inventory-list/index', array_merge(
-        $this->pageProps(),
-        [
-            'show_view_modal' => true,
-            'viewing_asset'   => $inventory_list,
-        ]
-    ));
-}
+        return Inertia::render('inventory-list/index', array_merge(
+            $this->pageProps(),
+            [
+                'show_view_modal' => true,
+                'viewing_asset'   => $inventory_list,
+            ]
+        ));
+    }
 
-// 🔹 Extracted so you don’t repeat code
-private function pageProps(): array
-{
-    $assets = InventoryList::with([
-        'assetModel.category',
-        'category',
-        'unitOrDepartment',
-        'building',
-        'buildingRoom'
-    ])->latest()->get();
+    // 🔹 Extracted so you don’t repeat code
+    private function pageProps(): array
+    {
+        $assets = InventoryList::with([
+            'assetModel.category',
+            'category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom'
+        ])->latest()->get();
 
-    return [
-        'assets' => $assets,
-        'assetModels' => AssetModel::all(),
-        'unitOrDepartments' => UnitOrDepartment::all(),
-        'buildings' => Building::all(),
-        'buildingRooms' => BuildingRoom::all(),
-        'categories' => Category::all(),
-    ];
-}
+        return [
+            'assets' => $assets,
+            'assetModels' => AssetModel::all(),
+            'unitOrDepartments' => UnitOrDepartment::all(),
+            'buildings' => Building::all(),
+            'buildingRooms' => BuildingRoom::all(),
+            'categories' => Category::all(),
+            'kpis' => InventoryList::kpis(),
+        ];
+    }
 
-
-
-
-
-
-    //    $assets = InventoryList::latest()->get();
+    //   $assets = InventoryList::latest()->get();
 
     //   $assets = inventoryList::with([
     //         'assetModel.category',
