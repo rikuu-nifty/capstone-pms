@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,45 +30,52 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-public function store(Request $request, EmailOtpService $otpService): RedirectResponse
-{
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-    ]);
+    public function store(Request $request, EmailOtpService $otpService): RedirectResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'password' => [
+                'required', 
+                'confirmed', 
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()     // has UPPER + lower
+                    ->numbers() 
+                    ->symbols(),
+            ],
+        ], [
+            'password.regex' => 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+        ]);
 
-    $user = User::create([
-        'name'              => $request->name,
-        'email'             => $request->email,
-        'password'          => Hash::make($request->password),
-        'email_verified_at' => null, // 🔹 Ensure new account is unverified
-    ]);
+        $user = User::create([
+            'name'              => $request->name,
+            'email'             => $request->email,
+            'password'          => Hash::make($request->password),
+            'email_verified_at' => null, // Ensure new account is unverified
+        ]);
 
         event(new Registered($user));
-
         Auth::login($user);
 
         // 🔹 Reset the session so no old session data can bypass verification
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            $request->session()->regenerate();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        $request->session()->regenerate();
 
         // 🔹 Issue OTP and send email
-            $otpService->issue($user, $request->ip(), $request->userAgent());
+        $otpService->issue($user, $request->ip(), $request->userAgent());
 
         // Save a "pending verification" user id in the session (guest flow)
-             $request->session()->put('pending_verification_user_id', $user->id);
+        $request->session()->put('pending_verification_user_id', $user->id);
 
         // IMPORTANT: make sure we stay as guest (no Auth::login here)
         // If any session exists from before, reset it
-             $request->session()->regenerate();
+        $request->session()->regenerate();
 
 
         // 🔹 Redirect to verification page, NOT dashboard
-            return redirect()->route('otp.notice');
-
-
+        return redirect()->route('otp.notice');
         // return redirect()->intended(route('dashboard', absolute: false));
     }
 }
