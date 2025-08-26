@@ -14,7 +14,7 @@ const viewPath = (formType: string, id?: number | null) => {
     if (!id) return '#';
     const map: Record<string, (id: number) => string> = {
         transfer:               (id) => `/transfers/${id}/view`,
-        turnover_disposal:      (id) => `/turnover-disposals/${id}/view`,
+        turnover_disposal:      (id) => `/turnover-disposal/${id}/view`,
         off_campus:             (id) => `/off-campus/${id}/view`,
         inventory_scheduling:   (id) => `/inventory-scheduling/${id}/view`,
     };
