@@ -38,7 +38,19 @@ export default function PublicAssetSummary({ asset }: { asset: Asset }) {
 
             <div className="w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl">
                 {/* Hero Section */}
-                <div className="bg-gradient-to-r from-[#1e3999] to-[#162b73] p-10 text-center text-white">
+               <div className="bg-gradient-to-r from-[#1d4ed8] to-[#3b82f6] p-10 text-center text-white relative">
+
+                
+
+                    {/* AUF Logo */}
+                    <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+                        <img
+                            src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
+                            alt="AUF Mascot"
+                            className="h-16 w-auto opacity-95 drop-shadow-lg sm:h-20 md:h-25"
+                        />
+                    </div>
+
                     {asset.image_path ? (
                         <img
                             src={`/storage/${asset.image_path}`}
@@ -71,9 +83,9 @@ export default function PublicAssetSummary({ asset }: { asset: Asset }) {
                     </div>
 
                     {/* CTA Button */}
-                    <div className="mt-10">
+                    <div className="mt-10 flex justify-center">
                         <Button
-                            className="w-full rounded-lg bg-[#1e3999] py-3 text-base font-medium shadow-md hover:bg-[#162b73]"
+                            className="rounded-full bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] px-8 py-3 font-semibold text-white shadow-md transition hover:from-[#2563eb] hover:to-[#1e40af]"
                             onClick={() => {
                                 // Redirect to login with intended asset view
                                 window.location.href = route('login') + '?redirect=' + encodeURIComponent(route('inventory-list.view', asset.id));
