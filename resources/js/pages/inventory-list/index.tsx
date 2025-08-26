@@ -9,12 +9,13 @@ import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2, Boxes, Archive, HardDrive, Banknote } from 'lucide-react';
+import { Archive, Banknote, Boxes, Eye, Filter, Grid, HardDrive, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { ChooseViewModal } from './chooseViewModal';
 
-import ViewMemorandumReceiptModal from './ViewMemorandumReceipt';
 import KPIStatCard from '@/components/statistics/KPIStatCard';
+import ViewMemorandumReceiptModal from './ViewMemorandumReceipt';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -105,8 +106,8 @@ export type AssetFormData = {
 type KPIs = {
     total_assets: number;
     total_inventory_sum: number;
-    active_pct: number; 
-    archived_pct: number; 
+    active_pct: number;
+    archived_pct: number;
     fixed_pct: number;
     not_fixed_pct: number;
 };
@@ -191,6 +192,8 @@ export default function InventoryListIndex({
         setIsViewOpen(!!show_view_modal);
     }, [show_view_modal]);
 
+    
+
     const openView = (id: number) => {
         router.get(
             route('inventory-list.view', id), // points to /inventory-list/{id}/viewAssetDetails
@@ -273,7 +276,7 @@ export default function InventoryListIndex({
             <Head title="Inventory List" />
 
             {/* <div className="flex flex-col gap-4 p-4"> */}
-                {/* <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
                         <h1 className="text-2xl font-semibold">Inventory List</h1>
                         <p className="text-sm text-muted-foreground">
@@ -308,79 +311,79 @@ export default function InventoryListIndex({
                     </div>
                 </div> */}
 
-                <div className="flex flex-col gap-4 p-4">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-semibold">Inventory List</h1>
-                <p className="text-sm text-muted-foreground">
-                Provides a comprehensive overview of all university assets to facilitate accurate tracking and auditing.
-                </p>
-            </div>
-
-            {/* KPI CARDS — below H1, above controls (search/buttons) */}
-            {kpis && (
-                <div className="flex flex-wrap justify-between gap-3">
-                <KPIStatCard
-                    label="Total Assets"
-                    value={formatNumber(kpis.total_assets)}
-                    icon={Boxes}
-                    barColor="bg-yellow-400"
-                    className="w-[350px] h-[140px]"
-                />
-                <KPIStatCard
-                    label="Active vs Archived Assets"
-                    value={`${kpis.active_pct}% vs ${kpis.archived_pct}%`}
-                    icon={Archive} // or CheckCircle2
-                    barColor="bg-emerald-400"
-                    className="w-[350px] h-[140px]"
-                />
-                <KPIStatCard
-                    label="Fixed vs Not Fixed Assets"
-                    value={`${kpis.fixed_pct}% vs ${kpis.not_fixed_pct}%`}
-                    icon={HardDrive}
-                    barColor="bg-indigo-400"
-                    className="w-[350px] h-[140px]"
-                />
-                <KPIStatCard
-                    label="Total Inventory Value"
-                    value={formatPeso(kpis.total_inventory_sum)}
-                    icon={Banknote}
-                    barColor="bg-orange-400"
-                    className="w-[350px] h-[140px]"
-                />
-                </div>
-            )}
-
-            {/* Controls row — search on the left, buttons on the right */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-2">
-                <Input
-                    type="text"
-                    placeholder="Search by asset name..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="max-w-xs"
-                />
+                    <h1 className="text-2xl font-semibold">Inventory List</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Provides a comprehensive overview of all university assets to facilitate accurate tracking and auditing.
+                    </p>
                 </div>
 
-                <div className="flex gap-2">
-                <Button variant="outline">
-                    <Grid className="mr-1 h-4 w-4" /> Category
-                </Button>
-                <Button variant="outline">
-                    <Filter className="mr-1 h-4 w-4" /> Filter
-                </Button>
-                <Button
-                    onClick={() => {
-                    reset();
-                    clearErrors();
-                    setShowAddAsset(true);
-                    }}
-                    className="cursor-pointer"
-                >
-                    <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
-                </Button>
+                {/* KPI CARDS — below H1, above controls (search/buttons) */}
+                {kpis && (
+                    <div className="flex flex-wrap justify-between gap-3">
+                        <KPIStatCard
+                            label="Total Assets"
+                            value={formatNumber(kpis.total_assets)}
+                            icon={Boxes}
+                            barColor="bg-yellow-400"
+                            className="h-[140px] w-[350px]"
+                        />
+                        <KPIStatCard
+                            label="Active vs Archived Assets"
+                            value={`${kpis.active_pct}% vs ${kpis.archived_pct}%`}
+                            icon={Archive} // or CheckCircle2
+                            barColor="bg-emerald-400"
+                            className="h-[140px] w-[350px]"
+                        />
+                        <KPIStatCard
+                            label="Fixed vs Not Fixed Assets"
+                            value={`${kpis.fixed_pct}% vs ${kpis.not_fixed_pct}%`}
+                            icon={HardDrive}
+                            barColor="bg-indigo-400"
+                            className="h-[140px] w-[350px]"
+                        />
+                        <KPIStatCard
+                            label="Total Inventory Value"
+                            value={formatPeso(kpis.total_inventory_sum)}
+                            icon={Banknote}
+                            barColor="bg-orange-400"
+                            className="h-[140px] w-[350px]"
+                        />
+                    </div>
+                )}
+
+                {/* Controls row — search on the left, buttons on the right */}
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                        <Input
+                            type="text"
+                            placeholder="Search by asset name..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="max-w-xs"
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button variant="outline">
+                            <Grid className="mr-1 h-4 w-4" /> Category
+                        </Button>
+                        <Button variant="outline">
+                            <Filter className="mr-1 h-4 w-4" /> Filter
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                reset();
+                                clearErrors();
+                                setShowAddAsset(true);
+                            }}
+                            className="cursor-pointer"
+                        >
+                            <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
+                        </Button>
+                    </div>
                 </div>
-            </div>
 
                 <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
@@ -396,6 +399,7 @@ export default function InventoryListIndex({
                                 <TableHead className="text-center">Building</TableHead>
                                 <TableHead className="text-center">Unit/Department</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
+                                <TableHead className="text-center">NFC Link</TableHead>
                                 <TableHead className="text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -432,6 +436,21 @@ export default function InventoryListIndex({
                                             {item.status === 'active' ? 'Active' : 'Archived'}
                                         </Badge>
                                     </TableCell>
+                                    <TableCell>
+                                        <button
+                                            onClick={() => {
+                                                const url = route('asset-summary.show', item.id);
+                                                navigator.clipboard.writeText(url).then(() => {
+                                                    toast.success('Link copied!', {
+                                                        description: 'The viewing link has been copied to your clipboard.',
+                                                    });
+                                                });
+                                            }}
+                                            className="cursor-pointer text-sm text-blue-600 underline hover:text-blue-800"
+                                        >
+                                            Get Viewing Link
+                                        </button>
+                                    </TableCell>
 
                                     <TableCell className="text-center">
                                         <Button
@@ -456,17 +475,16 @@ export default function InventoryListIndex({
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
 
-<Button
-    size="icon"
-    variant="ghost"
-    onClick={() => {
-        setSelectedAsset(item);     // ✅ set the current asset
-        setChooseViewVisible(true); // ✅ open ChooseViewModal
-    }}
->
-    <Eye className="h-4 w-4 text-muted-foreground" />
-</Button>
-
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSelectedAsset(item); // ✅ set the current asset
+                                                setChooseViewVisible(true); // ✅ open ChooseViewModal
+                                            }}
+                                        >
+                                            <Eye className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -521,12 +539,11 @@ export default function InventoryListIndex({
                     }}
                     asset={selectedAsset}
                     onViewAsset={() => {
-    setChooseViewVisible(false);
-    if (selectedAsset) {
-        openView(selectedAsset.id); // ✅ deep link route
-    }
-}}
-
+                        setChooseViewVisible(false);
+                        if (selectedAsset) {
+                            openView(selectedAsset.id); // ✅ deep link route
+                        }
+                    }}
                     onViewMemo={() => {
                         setChooseViewVisible(false);
                         setReceiptModalVisible(true); // ✅ show the ViewMemorandumReceiptModal
@@ -534,14 +551,7 @@ export default function InventoryListIndex({
                 />
             )}
 
-{isViewOpen && viewing_asset && (
-  <ViewAssetModal
-    asset={viewing_asset}
-    onClose={closeView}
-  />
-)}
-
-
+            {isViewOpen && viewing_asset && <ViewAssetModal asset={viewing_asset} onClose={closeView} />}
 
             {receiptModalVisible && selectedAsset && (
                 <ViewMemorandumReceiptModal

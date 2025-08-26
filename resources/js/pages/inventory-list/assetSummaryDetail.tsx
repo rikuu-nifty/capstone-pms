@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { Head } from '@inertiajs/react';
-import { Building2, Calendar, Package, Tag, Truck, Hash, type LucideIcon } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Building2, Calendar, Hash, Package, Tag, Truck, type LucideIcon } from 'lucide-react';
 import type { Asset } from './index';
 
 // -------------------- HELPERS --------------------
@@ -8,8 +8,8 @@ const humanize = (value?: string | number | null): string =>
     !value || value === ''
         ? 'Not Available'
         : typeof value === 'number'
-        ? value.toLocaleString()
-        : value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+          ? value.toLocaleString()
+          : value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 const dateFormat = (dateStr?: string | null): string =>
     dateStr
@@ -21,7 +21,10 @@ const dateFormat = (dateStr?: string | null): string =>
         : 'Not Available';
 
 // -------------------- COMPONENT --------------------
-export default function PublicAssetSummary({ asset }: { asset: Asset }) {
+export default function AssetSummaryDetail({ asset }: { asset: Asset }) {
+    // const { props } = usePage<{ auth: { isAuthenticated: boolean } }>();
+    // const isAuthenticated = props.auth?.isAuthenticated ?? false;
+
     const InfoCard = ({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) => (
         <div className="flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md">
             <div className="mb-2 flex items-center gap-2">
@@ -32,13 +35,28 @@ export default function PublicAssetSummary({ asset }: { asset: Asset }) {
         </div>
     );
 
+    const handleViewFullDetails = () => {
+        const viewUrl = route('inventory-list.view', asset.id);
+
+        router.visit(viewUrl, {
+            method: 'get',
+            preserveScroll: true,
+            preserveState: true,
+            onError: (err) => {
+                console.error('Inertia error:', err);
+                // As a final fallback you can still redirect to the same URL
+                window.location.assign(viewUrl);
+            },
+        });
+    };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
             <Head title="Asset Summary" />
 
             <div className="w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl">
                 {/* Hero Section */}
-                <div className="bg-gradient-to-r from-[#1d4ed8] to-[#3b82f6] p-10 text-center text-white relative">
+                <div className="relative bg-gradient-to-r from-[#1d4ed8] to-[#3b82f6] p-10 text-center text-white">
                     {/* AUF Logo */}
                     <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
                         <img
@@ -79,28 +97,22 @@ export default function PublicAssetSummary({ asset }: { asset: Asset }) {
                         <InfoCard icon={Truck} label="Supplier" value={humanize(asset.supplier)} />
                     </div>
 
-{/* 🔹 Serial Number Card (full width) */}
-<div className="mt-8">
-  <div className="flex w-full flex-col items-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md text-center">
-    <div className="mb-2 flex items-center gap-2">
-      <Hash size={18} className="text-gray-500" />
-      <span className="text-sm font-medium text-gray-500">Serial Number</span>
-    </div>
-    <p className="text-xl font-bold text-gray-900">{humanize(asset.serial_no)}</p>
-  </div>
-</div>
+                    {/* Serial Number Card */}
+                    <div className="mt-8 flex justify-center">
+                        <div className="flex w-full flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm transition hover:shadow-md">
+                            <div className="mb-2 flex items-center gap-2 text-gray-500">
+                                <Hash size={18} />
+                                <p className="text-sm font-medium">Serial Number</p>
+                            </div>
+                            <p className="text-lg font-bold text-gray-900">{humanize(asset.serial_no)}</p>
+                        </div>
+                    </div>
 
                     {/* CTA Button */}
                     <div className="mt-10 flex justify-center">
                         <Button
                             className="rounded-full bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] px-8 py-3 font-semibold text-white shadow-md transition hover:from-[#2563eb] hover:to-[#1e40af]"
-                            onClick={() => {
-                                // Redirect to login with intended asset view
-                                window.location.href =
-                                    route('login') +
-                                    '?redirect=' +
-                                    encodeURIComponent(route('inventory-list.view', asset.id));
-                            }}
+                            onClick={handleViewFullDetails}
                         >
                             View Full Details
                         </Button>

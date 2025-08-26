@@ -12,6 +12,14 @@
     /* padding: 5mm; */
 }
 
+/* Success toast check icon pastel green */
+.toaster [data-sonner-toast][data-type="success"] [data-icon] svg {
+  color: #01df52; /* pastel green */
+}
+
+
+
+
 @media print {
   .dark .print-force-light,
   .print-force-light {

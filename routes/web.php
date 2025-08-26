@@ -81,7 +81,7 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     // Route::resource('inventory-scheduling', InventorySchedulingController::class); // DEFAULT ROUTE
     // Route::resource('buildings', BuildingController::class);
 
-    // INVENTORY-LIST
+    // INVENTORY-LIST ORIGINAL
         Route::get('/inventory-list', [InventoryListController::class, 'index'])->name('inventory-list.index');
         Route::post('/inventory-list', [InventoryListController::class, 'store'])->name('inventory-list.store');
         // Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
@@ -93,7 +93,7 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
         Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
             ->name('inventory-list.view');
     // INVENTORY-LIST 
-
+    
     // INVENTORY-SCHEDULING
         Route::get('/inventory-scheduling', [InventorySchedulingController::class, 'index'])->name('inventory-scheduling.index');
         Route::post('/inventory-scheduling', [InventorySchedulingController::class, 'store'])->name('inventory-scheduling.store');

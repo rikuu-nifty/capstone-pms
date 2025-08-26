@@ -29,6 +29,9 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'remember' => ['boolean'],
+            'redirect' => ['nullable', 'string'], // ✅ allow redirect param
+
         ];
     }
 
