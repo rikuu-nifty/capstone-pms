@@ -170,16 +170,16 @@ class TurnoverDisposal extends Model
         return 'Turnover/Disposal -  #' . $this->id;
     }
 
-    protected static function booted(): void
-    {
-        static::created(function (TurnoverDisposal $td) {
-            $td->created_by_id ??= Auth::id();
-        });
+    // protected static function booted(): void
+    // {
+    //     static::created(function (TurnoverDisposal $td) {
+    //         $td->created_by_id ??= Auth::id();
+    //     });
 
-        static::created(function (TurnoverDisposal $td) {
-            if ($td->created_by_id) {
-                $td->openApproval($td->created_by_id);
-            }
-        });
-    }
+    //     static::created(function (TurnoverDisposal $td) {
+    //         if ($td->created_by_id) {
+    //             $td->openApproval($td->created_by_id);
+    //         }
+    //     });
+    // }
 }

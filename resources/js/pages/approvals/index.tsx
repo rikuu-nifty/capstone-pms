@@ -3,10 +3,13 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 // import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Eye, Check, X, RotateCcw  } from 'lucide-react';
+import { Eye, ThumbsUp, ThumbsDown, RotateCcw, FileSignature  } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 // import Pagination from '@/components/Pagination';
 import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const viewPath = (formType: string, id?: number | null) => {
     if (!id) return '#';
@@ -29,6 +32,8 @@ type ApprovalItem = {
     requested_by: { id:number; name:string }|null;
     reviewed_by: { id:number; name:string }|null;
     approvable: { id:number }|null;
+    current_step_label?: string | null;
+    current_step_is_external?: boolean;
 };
 
 type PageProps = {
@@ -62,6 +67,24 @@ export default function ApprovalsIndex() {
     const { props } = usePage<PageProps>();
     const [search, setSearch] = useState(props.q ?? '');
     
+    const [extFor, setExtFor] = useState<{ id:number; label?:string } | null>(null);
+    const [extName, setExtName] = useState('');
+    const [extTitle, setExtTitle] = useState('');
+    const [extNotes, setExtNotes] = useState('');
+
+    const openExternalModal = (approval: ApprovalItem) => {
+        setExtFor({ id: approval.id, label: approval.current_step_label ?? 'External Approval' });
+        setExtName(''); setExtTitle(''); setExtNotes('');
+    };
+
+    const submitExternal = () => {
+        if (!extFor) return;
+        router.post(route('approvals.external_approve', extFor.id), {
+            external_name: extName,
+            external_title: extTitle,
+            notes: extNotes,
+        }, { preserveScroll: true, onSuccess: () => setExtFor(null) });
+    };
 
     const onChangeTab = (key: string) => {
         router.get(route('approvals.index'), { tab: key, q: search }, { preserveState: true, preserveScroll: true });
@@ -127,7 +150,7 @@ export default function ApprovalsIndex() {
                             <TableCell>{a.reviewed_at  ? new Date(a.reviewed_at ).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}</TableCell>
                             <TableCell>{a.requested_by?.name ?? '—'}</TableCell>
                             <TableCell><StatusPill s={a.status} /></TableCell>
-                            <TableCell>
+                            {/* <TableCell>
                                 <div className="flex items-center justify-center gap-2">
                                     <Button
                                         variant="ghost"
@@ -179,7 +202,75 @@ export default function ApprovalsIndex() {
                                         </>
                                     )}
                                 </div>
-                            </TableCell>
+                            </TableCell> */}
+                            <TableCell>
+  <div className="flex items-center justify-center gap-2">
+    {/* View */}
+    <Button variant="ghost" size="icon" asChild className="cursor-pointer">
+      <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
+        <Eye className="h-4 w-4 text-muted-foreground" />
+      </Link>
+    </Button>
+
+    {a.status === 'pending_review' ? (
+      a.current_step_is_external ? (
+        // External step → open the modal (uses openExternalModal)
+        <Button
+          variant="ghost"
+          size="icon"
+          title={a.current_step_label ?? 'Record External Approval'}
+          className="cursor-pointer"
+          onClick={() => openExternalModal(a)}
+        >
+          <FileSignature className="h-4 w-4" />
+        </Button>
+      ) : (
+        <>
+          {/* Approve */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="cursor-pointer"
+            title="Approve"
+            onClick={() =>
+              router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })
+            }
+          >
+            <ThumbsUp className="h-4 w-4 text-green-600 dark:text-green-500" />
+          </Button>
+          {/* Reject */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="cursor-pointer"
+            title="Reject"
+            onClick={() => {
+              const notes = prompt('Optional notes for rejection:') ?? '';
+              router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
+            }}
+          >
+            <ThumbsDown className="h-4 w-4 text-destructive" />
+          </Button>
+        </>
+      )
+    ) : (
+      // Restore back to Pending
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Move back to Pending Review"
+        className="cursor-pointer"
+        onClick={() => {
+          if (!confirm('Move this back to Pending Review?')) return;
+          router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
+        }}
+      >
+        <RotateCcw className="h-4 w-4 text-green-600 dark:text-green-500" />
+      </Button>
+    )}
+  </div>
+</TableCell>
+
                         </TableRow>
                     )) : (
                         <TableRow><TableCell colSpan={6} className="text-sm text-muted-foreground">No items found.</TableCell></TableRow>
@@ -204,6 +295,38 @@ export default function ApprovalsIndex() {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={!!extFor} onOpenChange={(o) => !o && setExtFor(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                    <DialogTitle>{extFor?.label ?? 'External Approval'}</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-3">
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="extName">Signer Name (Dean/Head)</Label>
+                        <Input id="extName" value={extName} onChange={(e)=>setExtName(e.target.value)} placeholder="e.g., Dr. Juan Dela Cruz" />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="extTitle">Title / Position (optional)</Label>
+                        <Input id="extTitle" value={extTitle} onChange={(e)=>setExtTitle(e.target.value)} placeholder="e.g., Dean, College of Engineering" />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="extNotes">Notes (optional)</Label>
+                        <Textarea id="extNotes" value={extNotes} onChange={(e)=>setExtNotes(e.target.value)} placeholder="Any remarks..." />
+                    </div>
+                    </div>
+
+                    <DialogFooter className="gap-2">
+                    <DialogClose asChild>
+                        <Button variant="outline" className="cursor-pointer">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={submitExternal} className="cursor-pointer">Record Approval</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

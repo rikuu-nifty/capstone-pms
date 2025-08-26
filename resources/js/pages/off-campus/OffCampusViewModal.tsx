@@ -131,7 +131,7 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
                 <div className="text-center">
                     <p className="mb-8 font-semibold">Approved By (Dean/Head Concerned)</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                    <p className="font-bold text-gray-700">{offCampus.approved_by ?? '—'}</p>
+                    <p className="font-bold text-gray-700 capitalize">{offCampus.approved_by ?? '—'}</p>
                 </div>
             </div>
 

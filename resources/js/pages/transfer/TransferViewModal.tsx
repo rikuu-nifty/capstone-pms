@@ -181,12 +181,11 @@ export default function TransferViewModal({
                 <div className="text-center">
                     <p className="font-semibold mb-8">Approved By:</p>
                     <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                    <p className="font-bold text-gray-800 italic">(PMO Head name)</p>
+                    <p className="font-bold text-gray-800">{transfer.approved_by_name?? '—'}</p>
                     <p className="text-xs text-gray-500 italic">[Role Here]</p>
                 </div>
             </div>
 
-            
             {/* Actions */}
             <div className="text-center print:hidden mt-1">
                 <a

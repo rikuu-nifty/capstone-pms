@@ -208,6 +208,13 @@ class TransferController extends Controller
             'designatedEmployee',
             'assignedBy',
             'transferAssets.asset.assetModel.category',
+
+            'formApproval.steps' => 
+                fn($q) => 
+                    $q->where('code','approved_by')
+                        ->where('status','approved')
+                        ->orderByDesc('acted_at'),
+            'formApproval.steps.actor:id,name',
         ])->latest()->get();
 
         $buildings = Building::all();

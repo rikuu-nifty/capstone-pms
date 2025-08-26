@@ -67,18 +67,18 @@ class InventoryScheduling extends Model
         return 'Inventory Scheduling -  #' . $this->id;
     }
 
-    protected static function booted(): void
-    {
-        static::creating(function (InventoryScheduling $m) {
-            $m->created_by_id ??= Auth::id(); 
-        });
+    // protected static function booted(): void
+    // {
+    //     static::creating(function (InventoryScheduling $m) {
+    //         $m->created_by_id ??= Auth::id(); 
+    //     });
 
-        static::created(function (InventoryScheduling $m) {
-            if ($m->created_by_id) {
-                $m->openApproval($m->created_by_id);
-            }
-        });
-    }
+    //     static::created(function (InventoryScheduling $m) {
+    //         if ($m->created_by_id) {
+    //             $m->openApproval($m->created_by_id);
+    //         }
+    //     });
+    // }
 
     public function scopeWithViewRelations($q)
     {

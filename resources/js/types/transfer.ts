@@ -26,6 +26,7 @@ export type Transfer = {
     assignedBy?: User;
 
     transferAssets: TransferAsset[];
+    approved_by_name?: string | null;
 };
 
 export type TransferFormData = {
