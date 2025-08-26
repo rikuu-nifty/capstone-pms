@@ -62,20 +62,18 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
 
                     {/* Asset Image */}
                     {asset.image_path ? (
-<div className="mx-auto mb-6 max-w-[280px]">
-  <img
-    src={`/storage/${asset.image_path}`}
-    alt={asset.asset_name}
-    className="mx-auto max-h-64 w-auto rounded-xl object-cover shadow-lg sm:max-h-72"
-  />
-</div>
-
-) : (
-  <div className="mx-auto mb-6 flex h-48 w-48 items-center justify-center rounded-lg bg-white/20 shadow-lg">
-    <Package size={56} className="text-white" />
-  </div>
-)}
-
+                        <div className="mx-auto mb-6 max-w-[280px]">
+                            <img
+                                src={`/storage/${asset.image_path}`}
+                                alt={asset.asset_name}
+                                className="mx-auto max-h-64 w-auto rounded-xl object-cover shadow-lg sm:max-h-72"
+                            />
+                        </div>
+                    ) : (
+                        <div className="mx-auto mb-6 flex h-48 w-48 items-center justify-center rounded-lg bg-white/20 shadow-lg">
+                            <Package size={56} className="text-white" />
+                        </div>
+                    )}
 
                     {/* Asset Name + Subtitle */}
                     <h2 className="text-center text-3xl font-bold">{humanize(asset.asset_name)}</h2>
