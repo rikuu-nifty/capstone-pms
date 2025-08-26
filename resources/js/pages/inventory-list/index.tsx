@@ -234,6 +234,7 @@ export default function InventoryListIndex({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/inventory-list', {
+            forceFormData: true, // 👈 tell Inertia to send multipart/form-data
             onSuccess: () => {
                 reset();
                 setShowAddAsset(false);
