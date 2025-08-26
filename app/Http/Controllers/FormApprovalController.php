@@ -16,44 +16,46 @@ class FormApprovalController extends Controller
         $tab    = $request->string('tab', 'pending')->toString();
         $search = $request->string('q')->toString();
 
-        $base = FormApproval::with([
-                'requestedBy:id,name',
-                'reviewedBy:id,name',
-                'approvable',
-                'steps' => fn($q) => $q->where('status','pending')->orderBy('step_order'),
-            ])
-            ->when($tab === 'pending',  fn($q) => $q->where('status','pending_review'))
-            ->when($tab === 'approved', fn($q) => $q->where('status','approved'))
-            ->when($tab === 'rejected', fn($q) => $q->where('status','rejected'))
-            ->quickSearch($search)
-            ->latest('requested_at');
+        $approvals = FormApproval::with([
+            'requestedBy:id,name',
+            'reviewedBy:id,name',
+            'approvable',
+            'steps' => fn ($q) => $q->where('status', 'pending')->orderBy('step_order'),
+        ])
+        ->when($tab === 'pending',  fn ($q) => $q->where('status', 'pending_review'))
+        ->when($tab === 'approved', fn ($q) => $q->where('status', 'approved'))
+        ->when($tab === 'rejected', fn ($q) => $q->where('status', 'rejected'))
+        ->quickSearch($search)
+        ->latest('requested_at')
+        ->paginate(10)
+        ->withQueryString()
+        ->through(function (FormApproval $a) {
+            $step = $a->steps->first();
 
-        // Option A: using through()
-        $approvals = $base->paginate(10)->withQueryString()
-            ->through(function ($a) {
-                $step = $a->steps->first();
-                $a->setAttribute('current_step_label', $step?->label);
-                $a->setAttribute('current_step_is_external', (bool) ($step?->is_external));
-                $a->unsetRelation('steps'); // or setRelation('steps', collect())
-                return $a;
+            $a->setAttribute('current_step_label', $step?->label);
+            $a->setAttribute('current_step_is_external', (bool) ($step?->is_external));
+            $a->setAttribute('current_step_code', $step?->code);
+            $a->setAttribute('current_step_actor', match ($a->form_type . ':' . ($step?->code ?? '')) {
+                'inventory_scheduling:noted_by'     => 'PMO Head',
+                'inventory_scheduling:approved_by'  => 'VP Admin',
+                'off_campus:issued_by'              => 'PMO Head',
+                'off_campus:external_approved_by'   => 'Dean/Head',
+                'transfer:approved_by'              => 'PMO Head',
+                'turnover_disposal:noted_by'        => 'PMO Head',
+                default                              => null,
             });
 
-        // Option B (what you already have) — keep it if you prefer:
-        // $approvals = $base->paginate(10)->withQueryString();
-        // $approvals->getCollection()->transform(function ($a) {
-        //     $step = $a->steps->first();
-        //     $a->setAttribute('current_step_label', $step?->label);
-        //     $a->setAttribute('current_step_is_external', (bool) ($step?->is_external));
-        //     $a->unsetRelation('steps');
-        //     return $a;
-        // });
+                $a->unsetRelation('steps');
+
+                return $a;
+            });
 
         return Inertia::render('approvals/index', [
             'tab'       => $tab,
             'q'         => $search,
             'approvals' => $approvals,
         ]);
-}
+    }
 
 
     public function approve(FormApproval $approval, Request $request)

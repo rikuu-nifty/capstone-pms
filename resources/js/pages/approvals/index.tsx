@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Eye, ThumbsUp, ThumbsDown, RotateCcw, FileSignature  } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-// import Pagination from '@/components/Pagination';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -34,6 +33,8 @@ type ApprovalItem = {
     approvable: { id:number }|null;
     current_step_label?: string | null;
     current_step_is_external?: boolean;
+    current_step_code?: string | null;
+    current_step_actor?: string | null;
 };
 
 type PageProps = {
@@ -102,7 +103,6 @@ export default function ApprovalsIndex() {
             <Head title="Form Approval" />
 
             <div className="p-4">
-                {/* Tabs */}
                 <div className="mb-4 flex gap-2 rounded-md bg-muted p-2">
                 {tabs.map(t => (
                     <Button key={t.key}
@@ -116,171 +116,130 @@ export default function ApprovalsIndex() {
 
                 {/* Header */}
                 <div className="mb-4">
-                <h1 className="text-xl font-semibold">Form Approval</h1>
-                <p className="text-sm text-muted-foreground">
-                    Displays a complete list of forms awaiting review within the university to facilitate tracking & auditing.
-                </p>
+                    <h1 className="text-xl font-semibold">Form Approval</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Displays a complete list of forms awaiting review within the university to facilitate tracking & auditing.
+                    </p>
                 </div>
 
                 {/* Search */}
                 <div className="mb-3 w-80">
-                <Input placeholder="search for the date, title, or requester"
-                        value={search}
-                        onChange={(e) => onSearch(e.target.value)} />
+                    <Input placeholder="search for the date, title, or requester"
+                            value={search}
+                            onChange={(e) => onSearch(e.target.value)} />
                 </div>
 
                 {/* Table */}
                 <div className="overflow-x-auto rounded-lg border">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-muted">
-                            <TableHead className="text-center">FORM TITLE</TableHead>
-                            <TableHead className="text-center">CREATED AT</TableHead>
-                            <TableHead className="text-center">UPDATED AT</TableHead>
-                            <TableHead className="text-center">REQUESTED BY</TableHead>
-                            <TableHead className="text-center">STATUS</TableHead>
-                            <TableHead className="text-center">ACTION</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody className="text-center">
-                    {pageData.data.length ? pageData.data.map(a => (
-                        <TableRow key={a.id}>
-                            <TableCell className="font-medium">{a.form_title}</TableCell>
-                            <TableCell>{a.requested_at ? new Date(a.requested_at).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}</TableCell>
-                            <TableCell>{a.reviewed_at  ? new Date(a.reviewed_at ).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}</TableCell>
-                            <TableCell>{a.requested_by?.name ?? '—'}</TableCell>
-                            <TableCell><StatusPill s={a.status} /></TableCell>
-                            {/* <TableCell>
-                                <div className="flex items-center justify-center gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        asChild
-                                        className="cursor-pointer"
-                                    >
-                                        <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Link>
-                                    </Button>
-                                    {a.status === 'pending_review' ? (
-                                        <>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="cursor-pointer"
-                                            onClick={() => router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })}
-                                        >
-                                            <Check className="h-4 w-4 text-green-600 dark:text-green-500" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                                const notes = prompt('Optional notes for rejection:') ?? '';
-                                                router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
-                                            }}
-                                        >
-                                            <X className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                        </>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted">
+                                <TableHead className="text-center">FORM TITLE</TableHead>
+                                <TableHead className="text-center">CREATED AT</TableHead>
+                                <TableHead className="text-center">UPDATED AT</TableHead>
+                                <TableHead className="text-center">REQUESTED BY</TableHead>
+                                <TableHead className="text-center">STATUS</TableHead>
+                                <TableHead className="text-center">REQUIRES ACTION FROM</TableHead>
+                                <TableHead className="text-center">ACTION</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody className="text-center">
+                        {pageData.data.length ? pageData.data.map(a => (
+                            <TableRow key={a.id}>
+                                <TableCell className="font-medium">{a.form_title}</TableCell>
+                                <TableCell>{a.requested_at ? new Date(a.requested_at).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}</TableCell>
+                                <TableCell>{a.reviewed_at  ? new Date(a.reviewed_at ).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}</TableCell>
+                                <TableCell>{a.requested_by?.name ?? '—'}</TableCell>
+                                <TableCell><StatusPill s={a.status} /></TableCell>
+                                <TableCell className="text-center">
+                                    {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
+                                        <div className="leading-tight">
+                                        <span className="font-medium">{a.current_step_actor}</span>
+                                        {/* <span className="block text-[11px] text-muted-foreground">{a.current_step_label}</span> */}
+                                        </div>
                                     ) : (
-                                        // <Badge variant="secondary">No actions</Badge>
-                                        <>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            title="Move back to Pending Review"
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                                if (!confirm('Move this back to Pending Review?')) return;
-                                                router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
-                                            }}
-                                        >
-                                            <RotateCcw className="h-4 w-4 text-green-600 dark:text-green-500" />
-                                        </Button>
-                                        </>
+                                        '—'
                                     )}
-                                </div>
-                            </TableCell> */}
-                            <TableCell>
-  <div className="flex items-center justify-center gap-2">
-    {/* View */}
-    <Button variant="ghost" size="icon" asChild className="cursor-pointer">
-      <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
-        <Eye className="h-4 w-4 text-muted-foreground" />
-      </Link>
-    </Button>
+                                </TableCell>
 
-    {a.status === 'pending_review' ? (
-      a.current_step_is_external ? (
-        // External step → open the modal (uses openExternalModal)
-        <Button
-          variant="ghost"
-          size="icon"
-          title={a.current_step_label ?? 'Record External Approval'}
-          className="cursor-pointer"
-          onClick={() => openExternalModal(a)}
-        >
-          <FileSignature className="h-4 w-4" />
-        </Button>
-      ) : (
-        <>
-          {/* Approve */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-pointer"
-            title="Approve"
-            onClick={() =>
-              router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })
-            }
-          >
-            <ThumbsUp className="h-4 w-4 text-green-600 dark:text-green-500" />
-          </Button>
-          {/* Reject */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-pointer"
-            title="Reject"
-            onClick={() => {
-              const notes = prompt('Optional notes for rejection:') ?? '';
-              router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
-            }}
-          >
-            <ThumbsDown className="h-4 w-4 text-destructive" />
-          </Button>
-        </>
-      )
-    ) : (
-      // Restore back to Pending
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Move back to Pending Review"
-        className="cursor-pointer"
-        onClick={() => {
-          if (!confirm('Move this back to Pending Review?')) return;
-          router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
-        }}
-      >
-        <RotateCcw className="h-4 w-4 text-green-600 dark:text-green-500" />
-      </Button>
-    )}
-  </div>
-</TableCell>
 
-                        </TableRow>
-                    )) : (
-                        <TableRow><TableCell colSpan={6} className="text-sm text-muted-foreground">No items found.</TableCell></TableRow>
-                    )}
-                    </TableBody>
-                </Table>
+                                <TableCell>
+                                    <div className="flex items-center justify-center gap-2">
+                                        {/* View */}
+                                        <Button variant="ghost" size="icon" asChild className="cursor-pointer">
+                                            <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
+                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                            </Link>
+                                        </Button>
+
+                                        {a.status === 'pending_review' ? (
+                                            a.current_step_is_external ? (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title={a.current_step_label ?? 'Record External Approval'}
+                                                    className="cursor-pointer"
+                                                    onClick={() => openExternalModal(a)}
+                                                >
+                                                    <FileSignature className="h-4 w-4" />
+                                                </Button>
+                                            ) : (
+                                                <>
+                                                {/* Approve */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="cursor-pointer"
+                                                    title={`Approve — ${a.current_step_label ?? (a.current_step_actor ?? '')}`}
+                                                    onClick={() =>
+                                                        router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })
+                                                    }
+                                                >
+                                                    <ThumbsUp className="h-4 w-4 text-green-600 dark:text-green-500" />
+                                                </Button>
+
+                                                {/* Reject */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="cursor-pointer"
+                                                    title={`Reject — ${a.current_step_label ?? (a.current_step_actor ?? '')}`}
+                                                    onClick={() => {
+                                                        const notes = prompt('Optional notes for rejection:') ?? '';
+                                                        router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
+                                                    }}
+                                                >
+                                                    <ThumbsDown className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                                </>
+                                            )
+                                            ) : (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                title="Move back to Pending Review"
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                if (!confirm('Move this back to Pending Review?')) return;
+                                                    router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
+                                                }}
+                                            >
+                                                <RotateCcw className="h-4 w-4 text-green-600 dark:text-green-500" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        )) : (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-sm text-muted-foreground">No items found.</TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
                 </div>
 
                 <div className="mt-3 flex items-center justify-end">
-                {/* If you have your shared <Pagination /> component that accepts links, use it; otherwise link buttons: */}
                     <div className="flex gap-2">
                         {pageData.links.map((lnk, i) => (
                             <Button key={i}
