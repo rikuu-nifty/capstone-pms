@@ -206,10 +206,7 @@ export default function ViewMemorandumReceiptModal({ open, onClose, asset }: Pro
         </div>
 
         <div className="mt-6 text-[10px] text-gray-600 print:text-[10px]">
-            AUF-FORM-AS/PMO-41 •{' '}
-        {asset.created_at
-            ? new Date(asset.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-            : '—'} • Rev.0
+            AUF-FORM-AS/PMO-41 •{' '}Oct.01, 2014•Rev.0
         </div>
         </ViewModal>
     );

@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
@@ -14,6 +14,7 @@ type LoginForm = {
     email: string;
     password: string;
     remember: boolean;
+    redirect?: string; // ✅ add redirect
 };
 
 interface LoginProps {
@@ -22,10 +23,16 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
-    const { data, setData, post, processing, errors, reset } = useForm<Required<LoginForm>>({
+    // ✅ Get redirect param from URL
+    const { url } = usePage();
+    const searchParams = new URLSearchParams(url.split('?')[1]);
+    const redirectParam = searchParams.get('redirect') ?? '';
+
+    const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         email: '',
         password: '',
         remember: false,
+        redirect: redirectParam, // ✅ include redirect
     });
 
     const submit: FormEventHandler = (e) => {
@@ -90,16 +97,15 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <Label htmlFor="remember">Remember me</Label>
                     </div>
 
-<Button
-    type="submit"
-    className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
-    tabIndex={4}
-    disabled={processing}
->
-    {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-    Log in
-</Button>
-
+                    <Button
+                        type="submit"
+                        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        tabIndex={4}
+                        disabled={processing}
+                    >
+                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                        Log in
+                    </Button>
                 </div>
 
                 <div className="text-center text-sm text-muted-foreground">

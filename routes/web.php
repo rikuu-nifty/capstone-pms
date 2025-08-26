@@ -57,6 +57,15 @@
         Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
     });
 
+
+    // ✅ Public, no auth required
+    // Public Asset Summary (guest accessible via NFC scan)
+Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
+    ->name('asset-summary.show');
+
+
+
+    // 🔒 Everything below requires auth
 Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');

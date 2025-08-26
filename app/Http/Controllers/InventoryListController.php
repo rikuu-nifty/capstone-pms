@@ -20,6 +20,20 @@ class InventoryListController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    public function publicSummary(InventoryList $inventory_list)
+    {
+        $inventory_list->load([
+            'assetModel.category',
+            'category',
+            'unitOrDepartment',
+        ]);
+
+        return Inertia::render('inventory-list/assetSummaryDetail', [
+            'asset' => $inventory_list,
+        ]);
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('inventory-list/index', $this->pageProps());
