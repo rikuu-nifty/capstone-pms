@@ -70,7 +70,7 @@ export default function AssetSummaryDetail({ asset }: { asset: Asset }) {
                         <img
                             src={`/storage/${asset.image_path}`}
                             alt={asset.asset_name}
-                            className="mx-auto max-h-48 w-auto rounded-lg bg-white object-contain p-2 shadow-lg sm:max-h-64"
+                            className="mx-auto max-h-48 w-auto rounded-lg object-contain  shadow-lg sm:max-h-64"
                         />
                     ) : (
                         <div className="mx-auto flex h-48 w-48 items-center justify-center rounded-lg bg-white/20 shadow-lg">
