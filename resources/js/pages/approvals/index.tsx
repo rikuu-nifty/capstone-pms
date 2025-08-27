@@ -190,7 +190,7 @@ export default function ApprovalsIndex() {
                                                     variant="ghost"
                                                     size="icon"
                                                     className="cursor-pointer"
-                                                    title={`Approve — ${a.current_step_label ?? (a.current_step_actor ?? '')}`}
+                                                    title={`Approve as ${a.current_step_actor}`}
                                                     onClick={() =>
                                                         router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })
                                                     }
@@ -203,7 +203,7 @@ export default function ApprovalsIndex() {
                                                     variant="ghost"
                                                     size="icon"
                                                     className="cursor-pointer"
-                                                    title={`Reject — ${a.current_step_label ?? (a.current_step_actor ?? '')}`}
+                                                    title={`Reject as ${a.current_step_actor}`}
                                                     onClick={() => {
                                                         const notes = prompt('Optional notes for rejection:') ?? '';
                                                         router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });

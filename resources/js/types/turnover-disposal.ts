@@ -16,6 +16,9 @@ export type TurnoverDisposals = {
     receiving_office?: UnitOrDepartment;
     turnover_disposal_assets?: TurnoverDisposalAssets[];
     assetAssignment?: AssetAssignment[];
+
+    noted_by_name?: string | null;
+    noted_by_title?: string | null;
 };
 
 export type TurnoverDisposalFormData = {

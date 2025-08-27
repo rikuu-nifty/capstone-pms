@@ -26,9 +26,12 @@ class TurnoverDisposal extends Model
         'remarks',
     ];
 
-    protected $casts = [
+    protected $casts = 
+    [
         'document_date' => 'date',
     ];
+
+    // protected $appends = ['noted_by_name'];
 
     public function turnoverDisposalAssets() 
     {
@@ -170,16 +173,35 @@ class TurnoverDisposal extends Model
         return 'Turnover/Disposal -  #' . $this->id;
     }
 
-    // protected static function booted(): void
-    // {
-    //     static::created(function (TurnoverDisposal $td) {
-    //         $td->created_by_id ??= Auth::id();
-    //     });
+    public function getNotedByNameAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval') ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+                    ->where('status','approved')
+                    ->orderByDesc('acted_at'),
+                'steps.actor:id,name',
+            ])->first();
 
-    //     static::created(function (TurnoverDisposal $td) {
-    //         if ($td->created_by_id) {
-    //             $td->openApproval($td->created_by_id);
-    //         }
-    //     });
-    // }
+        $step = $fa?->steps->first();
+            return $step ? ($step->is_external ? ($step->external_name ?: null) : ($step->actor->name ?? null))
+                : null;
+    }
+
+    public function getNotedByTitleAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval') ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+                    ->where('status','approved')
+                    ->orderByDesc('acted_at'),
+                'steps.actor:id,name',
+            ])->first();
+
+        $step = $fa?->steps->first();
+
+        return $step ? ($step->is_external ? ($step->external_title ?: null) : null) : null;
+    }
+
+
 }

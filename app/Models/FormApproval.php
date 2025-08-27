@@ -153,6 +153,7 @@ class FormApproval extends Model
             // Turnover/Disposal: Staff prepares -> PMO Head notes
             'turnover_disposal' => [
                 ['prepared_by',  'Prepared By (PMO Staff)', false, true],
+                ['external_noted_by', 'Noted By (Dean/Head)', true, false],
                 ['noted_by',     'Noted By (PMO Head)',     false, false],
             ],
 

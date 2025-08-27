@@ -37,7 +37,7 @@ const turnoverSortOptions = [
 type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
 
 type PageProps = TurnoverDisposalPageProps & {
-    viewing?: TurnoverDisposals; // set in Controller@show
+    viewing?: TurnoverDisposals;
 };
 
 export default function TurnoverDisposalsIndex({
