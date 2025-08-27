@@ -10,6 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+import ApproveConfirmationModal from '@/components/modals/ApproveConfirmationModal';
+import RejectConfirmationModal from '@/components/modals/RejectConfirmationModal';
+
 const viewPath = (formType: string, id?: number | null) => {
     if (!id) return '#';
     const map: Record<string, (id: number) => string> = {
@@ -73,6 +76,12 @@ export default function ApprovalsIndex() {
     const [extTitle, setExtTitle] = useState('');
     const [extNotes, setExtNotes] = useState('');
 
+    const [showApprove, setShowApprove] = useState(false);
+    const [showReject, setShowReject] = useState(false);
+    const [selectedApprovalId, setSelectedApprovalId] = useState<number | null>(null);
+    const [selectedActor, setSelectedActor] = useState<string | null>(null);
+    const [selectedStepLabel, setSelectedStepLabel] = useState<string | null>(null);
+
     const openExternalModal = (approval: ApprovalItem) => {
         setExtFor({ id: approval.id, label: approval.current_step_label ?? 'External Approval' });
         setExtName(''); setExtTitle(''); setExtNotes('');
@@ -96,6 +105,33 @@ export default function ApprovalsIndex() {
         router.get(route('approvals.index'), { tab: props.tab, q: v }, { preserveState: true, preserveScroll: true, replace: true });
     };
 
+    const openApprove = (a: ApprovalItem) => {
+        setSelectedApprovalId(a.id);
+        setSelectedActor(a.current_step_actor ?? null);
+        setShowApprove(true);
+        setSelectedStepLabel(a.current_step_label ?? null);
+    };
+    const openReject = (a: ApprovalItem) => {
+        setSelectedApprovalId(a.id);
+        setSelectedActor(a.current_step_actor ?? null);
+        setShowReject(true);
+        setSelectedStepLabel(a.current_step_label ?? null);
+    };
+    const approve = () => {
+        if (!selectedApprovalId) return;
+        router.post(route('approvals.approve', selectedApprovalId), {}, {
+            preserveScroll: true,
+            onSuccess: () => setShowApprove(false),
+        });
+    };
+    const reject = (notes?: string) => {
+        if (!selectedApprovalId) return;
+        router.post(route('approvals.reject', selectedApprovalId), { notes }, {
+            preserveScroll: true,
+            onSuccess: () => setShowReject(false),
+        });
+    };
+
     const pageData = props.approvals;
 
     return (
@@ -106,10 +142,10 @@ export default function ApprovalsIndex() {
                 <div className="mb-4 flex gap-2 rounded-md bg-muted p-2">
                 {tabs.map(t => (
                     <Button key={t.key}
-                    variant={props.tab === t.key ? 'default' : 'ghost'}
-                    className="cursor-pointer"
-                    onClick={() => onChangeTab(t.key)}>
-                    {t.label}
+                        variant={props.tab === t.key ? 'default' : 'ghost'}
+                        className="cursor-pointer"
+                        onClick={() => onChangeTab(t.key)}>
+                        {t.label}
                     </Button>
                 ))}
                 </div>
@@ -124,9 +160,10 @@ export default function ApprovalsIndex() {
 
                 {/* Search */}
                 <div className="mb-3 w-80">
-                    <Input placeholder="search for the date, title, or requester"
-                            value={search}
-                            onChange={(e) => onSearch(e.target.value)} />
+                    <Input 
+                        placeholder="search for the date, title, or requester"
+                        value={search}
+                        onChange={(e) => onSearch(e.target.value)} />
                 </div>
 
                 {/* Table */}
@@ -191,9 +228,10 @@ export default function ApprovalsIndex() {
                                                     size="icon"
                                                     className="cursor-pointer"
                                                     title={`Approve as ${a.current_step_actor}`}
-                                                    onClick={() =>
-                                                        router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })
-                                                    }
+                                                    // onClick={() =>
+                                                    //     router.post(route('approvals.approve', a.id), {}, { preserveScroll: true })
+                                                    // }
+                                                    onClick={() => openApprove(a)}
                                                 >
                                                     <ThumbsUp className="h-4 w-4 text-green-600 dark:text-green-500" />
                                                 </Button>
@@ -204,10 +242,11 @@ export default function ApprovalsIndex() {
                                                     size="icon"
                                                     className="cursor-pointer"
                                                     title={`Reject as ${a.current_step_actor}`}
-                                                    onClick={() => {
-                                                        const notes = prompt('Optional notes for rejection:') ?? '';
-                                                        router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
-                                                    }}
+                                                    // onClick={() => {
+                                                    //     const notes = prompt('Optional notes for rejection:') ?? '';
+                                                    //     router.post(route('approvals.reject', a.id), { notes }, { preserveScroll: true });
+                                                    // }}
+                                                    onClick={() => openReject(a)}
                                                 >
                                                     <ThumbsDown className="h-4 w-4 text-destructive" />
                                                 </Button>
@@ -286,6 +325,23 @@ export default function ApprovalsIndex() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <ApproveConfirmationModal
+                show={showApprove}
+                onCancel={() => setShowApprove(false)}
+                onConfirm={approve}
+                actorLabel={selectedActor}
+                stepLabel={selectedStepLabel}
+            />
+
+            <RejectConfirmationModal
+                show={showReject}
+                onCancel={() => setShowReject(false)}
+                onConfirm={(notes) => reject(notes)}
+                actorLabel={selectedActor}
+                stepLabel={selectedStepLabel}
+                // requireNotes // ← uncomment if rejecting must include a reason
+            />
         </AppLayout>
     );
 }
