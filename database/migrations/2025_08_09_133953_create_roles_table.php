@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            
-            $table->enum('role', ['pmo_staff', 'pmo_head', 'vp_admin'])->default('pmo_staff');
+
+            $table->string('name')->unique(); // "PMO Head"
+            $table->string('code')->unique(); // "pmo_head"
             $table->text('description')->nullable();
 
             $table->timestamps();
@@ -35,7 +36,7 @@ return new class extends Migration
             $table->dropForeign(['role_id']);
             $table->dropColumn('role_id');
         });
-        
+
         Schema::dropIfExists('roles');
     }
 };
