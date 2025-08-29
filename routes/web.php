@@ -29,13 +29,14 @@
     })->name('approval.pending');
 
     // USER APPROVAL
-Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
-    Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])->name('user-approvals.approve');
-    Route::post('/user-approvals/{user}/deny', [UserApprovalController::class, 'deny'])->name('user-approvals.deny');
-    Route::post('/approvals/{approval}/external-approve', [FormApprovalController::class, 'externalApprove'])
-        ->name('approvals.external_approve');
-    Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
-        ->name('approvals.reset');
+    // Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
+    // Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])->name('user-approvals.approve');
+    // Route::post('/user-approvals/{user}/deny', [UserApprovalController::class, 'deny'])->name('user-approvals.deny');
+    
+    // Route::post('/approvals/{approval}/external-approve', [FormApprovalController::class, 'externalApprove'])
+    //     ->name('approvals.external_approve');
+    // Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
+    //     ->name('approvals.reset');
 
 
     //     // ----- Email OTP verification (must be logged in, but NOT necessarily verified) -----
@@ -74,38 +75,41 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::get('/user-approvals', [UserApprovalController::class, 'index'])
         ->middleware('can:view-users-page')
         ->name('user-approvals.index');
+    Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])
+        ->name('user-approvals.approve');
+    Route::post('/user-approvals/{user}/deny', [UserApprovalController::class, 'deny'])
+        ->name('user-approvals.deny');
 
     // INVENTORY-LIST
     Route::get('/inventory-list', [InventoryListController::class, 'index'])->name('inventory-list.index');
-        Route::post('/inventory-list', [InventoryListController::class, 'store'])->name('inventory-list.store');
-        // Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
-        Route::get('/inventory-list/{inventory_list}', [InventoryListController::class, 'show'])->name('inventory-list.show');
-        Route::put('/inventory-list/{inventory_list}', [InventoryListController::class, 'update'])->name('inventory-list.update');
-        Route::get('/inventory-list/{inventory_list}/edit', [InventoryListController::class, 'edit'])->name('inventory-list.edit');
-        Route::delete('/inventory-list/{inventory_list}', [InventoryListController::class, 'destroy'])->name('inventory-list.destroy');
+    Route::post('/inventory-list', [InventoryListController::class, 'store'])->name('inventory-list.store');
+    // Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
+    Route::get('/inventory-list/{inventory_list}', [InventoryListController::class, 'show'])->name('inventory-list.show');
+    Route::put('/inventory-list/{inventory_list}', [InventoryListController::class, 'update'])->name('inventory-list.update');
+    Route::get('/inventory-list/{inventory_list}/edit', [InventoryListController::class, 'edit'])->name('inventory-list.edit');
+    Route::delete('/inventory-list/{inventory_list}', [InventoryListController::class, 'destroy'])->name('inventory-list.destroy');
 
-        Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
-            ->name('inventory-list.view');
+    Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
+        ->name('inventory-list.view');
     // INVENTORY-LIST 
 
     // INVENTORY-SCHEDULING
-        Route::get('/inventory-scheduling', [InventorySchedulingController::class, 'index'])->name('inventory-scheduling.index');
-        Route::post('/inventory-scheduling', [InventorySchedulingController::class, 'store'])->name('inventory-scheduling.store');
-        Route::get('/inventory-scheduling/create', [InventorySchedulingController::class, 'create'])->name('inventory-scheduling.create');
-        // Route::get('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'show'])->name('inventory-scheduling.show');
-        Route::get('/inventory-scheduling/{inventory_scheduling}/view', [InventorySchedulingController::class, 'show'])
-            ->name('inventory-scheduling.view');
+    Route::get('/inventory-scheduling', [InventorySchedulingController::class, 'index'])->name('inventory-scheduling.index');
+    Route::post('/inventory-scheduling', [InventorySchedulingController::class, 'store'])->name('inventory-scheduling.store');
+    Route::get('/inventory-scheduling/create', [InventorySchedulingController::class, 'create'])->name('inventory-scheduling.create');
+    // Route::get('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'show'])->name('inventory-scheduling.show');
+    Route::get('/inventory-scheduling/{inventory_scheduling}/view', [InventorySchedulingController::class, 'show'])
+        ->name('inventory-scheduling.view');
 
-        Route::put('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'update'])->name('inventory-scheduling.update');
-        Route::get('/inventory-scheduling/{inventory_scheduling}/edit', [InventorySchedulingController::class, 'edit'])->name('inventory-scheduling.edit');
-        Route::delete('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'destroy'])->name('inventory-scheduling.destroy');
+    Route::put('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'update'])->name('inventory-scheduling.update');
+    Route::get('/inventory-scheduling/{inventory_scheduling}/edit', [InventorySchedulingController::class, 'edit'])->name('inventory-scheduling.edit');
+    Route::delete('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'destroy'])->name('inventory-scheduling.destroy');
     // INVENTORY-SCHEDULING
 
     // TRANSFERS
     Route::get('/transfers', [TransferController::class, 'index'])->name('transfers.index');
     Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
     Route::put('/transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
-    // Route::get('/transfers/{transfer}/view', [TransferController::class, 'show'])->name('transfers.view');
     Route::get('/transfers/{id}/view', [TransferController::class, 'show'])->name('transfers.view');
     Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfers.destroy');
 
@@ -116,14 +120,13 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::get('/turnover-disposal/{turnoverDisposal}/view', [TurnoverDisposalController::class, 'show'])->name('turnover-disposal.view');
     Route::delete('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'destroy'])->name('turnover-disposal.destroy');
 
-
     /// OFF-CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {
         Route::get('/', [OffCampusController::class, 'index'])->name('index');
         Route::post('/', [OffCampusController::class, 'store'])->name('store');
         Route::get('/create', [OffCampusController::class, 'create'])->name('create');
         // Route::get('/{off_campus}', [OffCampusController::class, 'show'])->name('show');
-         Route::get('/{off_campus}/view', [OffCampusController::class, 'show'])
+        Route::get('/{off_campus}/view', [OffCampusController::class, 'show'])
             ->whereNumber('off_campus')
             ->name('view');
         Route::put('/{off_campus}', [OffCampusController::class, 'update'])->name('update');
@@ -174,16 +177,14 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::get('/unit-or-departments/view/{unit}', [UnitOrDepartmentController::class, 'show'])->name('unit_or_departments.view');
     Route::delete('/unit-or-departments/{unit}', [UnitOrDepartmentController::class, 'destroy'])->name('unit_or_departments.destroy');
 
-    Route::middleware(['auth'])->group(function () {
-        Route::get('/approvals', [FormApprovalController::class, 'index'])->name('approvals.index');
-
-        Route::post('/approvals/{approval}/approve', [FormApprovalController::class, 'approve'])
-            ->name('approvals.approve');
-        Route::post('/approvals/{approval}/reject', [FormApprovalController::class, 'reject'])
-            ->name('approvals.reject');
-        Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
-            ->name('approvals.reset');    
-    });
+    // FORM APPROVALS
+    Route::get('/approvals', [FormApprovalController::class, 'index'])->name('approvals.index');
+    Route::post('/approvals/{approval}/approve', [FormApprovalController::class, 'approve'])
+        ->name('approvals.approve');
+    Route::post('/approvals/{approval}/reject', [FormApprovalController::class, 'reject'])
+        ->name('approvals.reject');
+    Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
+        ->name('approvals.reset');    
 });
 
 require __DIR__.'/settings.php';
