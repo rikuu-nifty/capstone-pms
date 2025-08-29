@@ -176,7 +176,7 @@ export function AppSidebar() {
                     {renderCollapsible('Inventory', Package2, inventoryNavItems)}
                     {renderCollapsible('Assets', Blocks, assetsNavItems)}
                     {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
-                    {renderCollapsible('User', User, userNavItems)}
+                    {renderCollapsible('User Management', User, userNavItems)}
                 </SidebarMenu>
 
                 {/* Configuration section */}
