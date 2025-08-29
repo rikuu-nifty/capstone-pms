@@ -2,59 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 use App\Notifications\UserApprovedNotification;
 use App\Notifications\UserDeniedNotification;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
+
+use App\Models\User;
+use App\Models\Role;
 
 class UserApprovalController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
-        $tab = $request->query('tab','all');
+        $tab = $request->string('tab')->toString() ?: 'system';
+        $filter = $request->string('filter')->toString() ?: 'pending';
 
-        $q = User::query();
-        if ($tab === 'approved') $q->approved();
-        elseif ($tab === 'pending') $q->pending();
-        elseif ($tab === 'denied') $q->denied();
+        if ($tab === 'system') {
+            // dd(
+            //     Auth::user()?->id,
+            //     Auth::user()?->email,
+            //     Auth::user()?->status,
+            //     Auth::user()?->role?->code
+            // );
 
-        $users = $q->latest()->paginate(10)->withQueryString();
+            // dd('[' . Auth::user()->role->code . ']');
 
-        return Inertia::render('approvals/users/index', [
-            'users' => $users,
-            'tab' => $tab,
-        ]);
+
+            // $this->authorize('view-users-page');
+
+            $users = User::with([
+                    'detail:id,user_id,first_name,last_name', 
+                    'role:id,name,code'
+                ])
+                ->approved()
+                ->paginate(10)
+            ;
+
+            return Inertia::render('users/index', [
+                'tab' => 'system',
+                'users' => $users,
+            ]);
+        }
+
+        if ($tab === 'approvals') {
+
+            // $this->authorize('view-users-page');
+
+            $users = User::fetchForApprovals($filter);
+
+            return Inertia::render('users/index', [
+                'tab' => 'approvals',
+                'filter' => $filter,
+                'users' => $users,
+            ]);
+        }
+
+        // abort(404);
     }
 
     public function approve(User $user, Request $request)
     {
-        if ($user->status !== 'approved') {
-            $user->update([
-                'status'         => 'approved',
-                'approved_at'    => now(),
-                'approval_notes' => $request->input('notes'),
-            ]);
+        $roleId = $request->input('role_id');
+        $role   = Role::findOrFail($roleId);
 
-            $user->notify(new UserApprovedNotification($request->input('notes')));
-        }
+        $this->authorize('assign-role', $role->code);
+
+        $user->approveWithRoleAndNotify($role, $request->input('notes'));
 
         return back()->with('status', "Approved {$user->email}");
     }
 
-    public function deny(User $user, Request $request)
+    public function reject(User $user, Request $request)
     {
-        if ($user->status !== 'denied') {
-            $user->update([
-                'status'         => 'denied',
-                'approved_at'    => null,
-                'approval_notes' => $request->input('notes'),
-            ]);
-
-            $user->notify(new UserDeniedNotification($request->input('notes')));
-        }
+        $user->rejectWithNotes($request->input('notes'));
 
         return back()->with('status', "Denied {$user->email}");
     }
+
+    // public function destroy(User $user)
+    // {
+    //     $this->authorize('view-users-page');
+    //     $user->delete();
+
+    //     return back()->with('status', "Deleted {$user->email}");
+    // }
 }

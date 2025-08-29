@@ -3,19 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Permission;
 
 class Role extends Model
 {
      protected $fillable = [
-        'role',
+        'name',
+        'code',
         'description',
     ];
 
-    /**
-     * Relationship: A role may belong to many users
-     */
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'role_has_permissions');
+    }
+
+    public static function findByIdOrFail(int $id): self
+    {
+        return static::findOrFail($id);
     }
 }
