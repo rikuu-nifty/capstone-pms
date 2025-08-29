@@ -29,7 +29,7 @@
     })->name('approval.pending');
 
     // USER APPROVAL
-    Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
+Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
     Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])->name('user-approvals.approve');
     Route::post('/user-approvals/{user}/deny', [UserApprovalController::class, 'deny'])->name('user-approvals.deny');
     Route::post('/approvals/{approval}/external-approve', [FormApprovalController::class, 'externalApprove'])
@@ -62,6 +62,7 @@
     });
 
 Route::middleware(['auth', 'verified', 'approved'])->group(function () {
+    
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
@@ -70,14 +71,12 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
         return Inertia::render('calendar');
     })->name('calendar');
 
-    // REMOVE PUT PANGET DAW SABI NI MARK NOT RECOMMEND
-
-    // Route::resource('inventory-list', InventoryListController::class); // DEFAULT ROUTE
-    // Route::resource('inventory-scheduling', InventorySchedulingController::class); // DEFAULT ROUTE
-    // Route::resource('buildings', BuildingController::class);
+    Route::get('/user-approvals', [UserApprovalController::class, 'index'])
+        ->middleware('can:view-users-page')
+        ->name('user-approvals.index');
 
     // INVENTORY-LIST
-        Route::get('/inventory-list', [InventoryListController::class, 'index'])->name('inventory-list.index');
+    Route::get('/inventory-list', [InventoryListController::class, 'index'])->name('inventory-list.index');
         Route::post('/inventory-list', [InventoryListController::class, 'store'])->name('inventory-list.store');
         // Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
         Route::get('/inventory-list/{inventory_list}', [InventoryListController::class, 'show'])->name('inventory-list.show');
