@@ -28,4 +28,9 @@ class Role extends Model
     {
         return static::findOrFail($id);
     }
+
+    public static function fetchForDropdown()
+    {
+        return static::select('id', 'name', 'code')->get();
+    }
 }

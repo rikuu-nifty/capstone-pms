@@ -20,49 +20,29 @@ class UserApprovalController extends Controller
     public function index(Request $request)
     {
         $tab = $request->string('tab')->toString() ?: 'system';
-        $filter = $request->string('filter')->toString() ?: 'pending';
+        $filter = $request->string('filter')->toString();
+        $q = $request->string('q')->toString();
 
         if ($tab === 'system') {
-            // dd(
-            //     Auth::user()?->id,
-            //     Auth::user()?->email,
-            //     Auth::user()?->status,
-            //     Auth::user()?->role?->code
-            // );
-
-            // dd('[' . Auth::user()->role->code . ']');
-
-
-            // $this->authorize('view-users-page');
-
-            $users = User::with([
-                    'detail:id,user_id,first_name,last_name', 
-                    'role:id,name,code'
-                ])
-                ->approved()
-                ->paginate(10)
-            ;
-
             return Inertia::render('users/index', [
-                'tab' => 'system',
-                'users' => $users,
+                'tab'    => 'system',
+                'users'  => User::fetchSystemUsers($q),
+                'totals' => User::fetchTotals(),
+                'roles'  => Role::all(['id', 'name', 'code']),
             ]);
         }
 
         if ($tab === 'approvals') {
-
-            // $this->authorize('view-users-page');
-
-            $users = User::fetchForApprovals($filter);
-
             return Inertia::render('users/index', [
-                'tab' => 'approvals',
+                'tab'    => 'approvals',
                 'filter' => $filter,
-                'users' => $users,
+                'users'  => User::fetchApprovals($filter, $q),
+                'totals' => User::fetchTotals(),
+                'roles'  => Role::all(['id', 'name', 'code']),
             ]);
         }
 
-        // abort(404);
+        abort(404);
     }
 
     public function approve(User $user, Request $request)
@@ -77,12 +57,24 @@ class UserApprovalController extends Controller
         return back()->with('status', "Approved {$user->email}");
     }
 
-    public function reject(User $user, Request $request)
+    public function deny(User $user, Request $request)
     {
         $user->rejectWithNotes($request->input('notes'));
 
         return back()->with('status', "Denied {$user->email}");
     }
+
+    public function reassignRole(User $user, Request $request)
+    {
+        $request->validate(['role_id' => 'required|exists:roles,id']);
+        $role = Role::findOrFail($request->role_id);
+        // $this->authorize('reassign-role', $role->code);
+
+        $user->reassignRoleWithNotify($role, $request->input('notes'));
+
+        return back()->with('status', "Reassigned role for {$user->email}");
+    }
+
 
     // public function destroy(User $user)
     // {

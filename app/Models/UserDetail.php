@@ -25,4 +25,18 @@ class UserDetail extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function getFullNameAttribute(): string
+    {
+        $first = $this->first_name;
+        $middle = $this->middle_name;
+        $last = $this->last_name;
+
+        if ($middle) {
+            $initial = strtoupper(substr($middle, 0, 1));
+            return "{$first} {$initial}. {$last}";
+        }
+
+        return "{$first} {$last}";
+    }
 }

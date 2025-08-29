@@ -108,19 +108,36 @@ class User extends Authenticatable implements MustVerifyEmail
         return $q->where('status','denied'); 
     }
 
-    public function scopeSearch($query, ?string $term)
+    public function scopeSearch($query, ?string $q)
     {
-        if (empty($term)) return $query;
-
-        return $query->where(function ($q) use ($term) {
-            $q->where('email', 'like', "%{$term}%")
-                ->orWhere('name', 'like', "%{$term}%");
-        });
+        if ($q !== '') {
+            $query->where(function ($w) use ($q) {
+                $w->where('email', 'like', "%{$q}%")
+                    ->orWhereHas('detail', fn($wd) =>
+                    $wd->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%"));
+            });
+        }
+        return $query;
     }
 
-    public function scopeByStatus($query, string $status)
+    public function scopeFilterStatus($query, ?string $filter)
     {
-        return $query->where('status', $status);
+        if (in_array($filter, ['pending', 'approved', 'denied'])) {
+            $query->where('status', $filter);
+        }
+        return $query;
+    }
+
+    public static function fetchSystemUsers(string $q = '', int $perPage = 10)
+    {
+        return static::with([
+                'detail:id,user_id,first_name,middle_name,last_name', 
+                'role:id,name,code'
+            ])
+            ->approved()
+            ->search($q)
+            ->paginate($perPage);
     }
 
     public function approveWithRoleAndNotify(Role $role, ?string $notes = null): void
@@ -173,17 +190,24 @@ class User extends Authenticatable implements MustVerifyEmail
         ));
     }
 
-    public static function fetchForApprovals(string $filter = 'pending', int $perPage = 10)
+    public static function fetchApprovals(string $filter = '', string $q = '', int $perPage = 10)
     {
-        $query = static::with([
-            'detail:id,user_id,first_name,last_name', 
-            'role:id,name,code'
-        ]);
+        return self::with([
+                'detail:id,user_id,first_name,middle_name,last_name', 
+                'role:id,name,code'
+            ])
+            ->filterStatus($filter)
+            ->search($q)
+            ->paginate($perPage);
+    }
 
-        if (in_array($filter, ['pending', 'approved', 'denied'])) {
-            $query->byStatus($filter);
-        }
-
-        return $query->paginate($perPage);
+    public static function fetchTotals(): array
+    {
+        return [
+            'users'    => static::count(),
+            'approved' => static::where('status', 'approved')->count(),
+            'pending'  => static::where('status', 'pending')->count(),
+            'denied'   => static::where('status', 'denied')->count(),
+        ];
     }
 }

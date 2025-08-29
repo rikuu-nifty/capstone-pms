@@ -28,17 +28,6 @@
         ]);
     })->name('approval.pending');
 
-    // USER APPROVAL
-    // Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
-    // Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])->name('user-approvals.approve');
-    // Route::post('/user-approvals/{user}/deny', [UserApprovalController::class, 'deny'])->name('user-approvals.deny');
-    
-    // Route::post('/approvals/{approval}/external-approve', [FormApprovalController::class, 'externalApprove'])
-    //     ->name('approvals.external_approve');
-    // Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
-    //     ->name('approvals.reset');
-
-
     //     // ----- Email OTP verification (must be logged in, but NOT necessarily verified) -----
     //     Route::middleware('auth')->group(function () {
     //     Route::get('/verify-email', [EmailOtpController::class, 'show'])->name('verification.notice');
