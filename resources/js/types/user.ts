@@ -8,8 +8,10 @@ export type User = {
     email_verified_at?: string | null;
     status: string;
     approved_at?: string | null;
+    approval_notes?: string | null;
     detail?: UserDetail | null;
     created_at?: string;
+    updated_at?: string;
 };
 
 export type UserPageProps = {
@@ -30,14 +32,14 @@ export type QueryParams = {
 
 export type UserStatus = '' | 'pending' | 'approved' | 'denied';
 
-export function formatFullName(
-    firstName: string,
-    middleName: string | null,
-    lastName: string
-): string {
-    if (middleName && middleName.trim().length > 0) {
-        const initial = middleName.trim().charAt(0).toUpperCase();
-        return `${firstName} ${initial}. ${lastName}`;
-    }
-    return `${firstName} ${lastName}`;
-}
+// export function formatFullName(
+//     firstName: string,
+//     middleName: string | null,
+//     lastName: string
+// ): string {
+//     if (middleName && middleName.trim().length > 0) {
+//         const initial = middleName.trim().charAt(0).toUpperCase();
+//         return `${firstName} ${initial}. ${lastName}`;
+//     }
+//     return `${firstName} ${lastName}`;
+// }

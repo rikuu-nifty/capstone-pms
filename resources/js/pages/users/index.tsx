@@ -4,12 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMemo, useState, useEffect } from 'react';
-import { formatDateTime, Role, User, QueryParams, formatStatusLabel, formatNumber } from '@/types/custom-index';
-import { formatFullName } from '@/types/user';
+import { formatDateTime, Role, User, QueryParams, formatStatusLabel, formatNumber, formatFullName } from '@/types/custom-index';
 
 import RoleAssignmentModal from '@/components/modals/RoleAssignmentModal';
 import ViewUserModal from '@/components/modals/ViewUserModal';
 import UserStatusFilterDropdown, { type UserStatus } from '@/components/filters/UserStatusFilterDropdown';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 import Pagination, { PageInfo } from '@/components/Pagination';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
@@ -55,6 +55,7 @@ export default function UserApprovals() {
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [showViewUser, setShowViewUser] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [showDelete, setShowDelete] = useState(false);
 
     const initialQ = useMemo(() => {
         const qs = url.includes('?') ? url.split('?')[1] : '';
@@ -243,11 +244,10 @@ export default function UserApprovals() {
                                                 <Button
                                                     variant="destructive"
                                                     className="cursor-pointer"
-                                                    onClick={() =>
-                                                        router.delete(route('user-approvals.destroy', u.id), {
-                                                        preserveScroll: true,
-                                                        })
-                                                    }
+                                                    onClick={() => {
+                                                        setSelectedUser(u);
+                                                        setShowDelete(true);
+                                                    }}
                                                 >
                                                     Delete
                                                 </Button>
@@ -266,27 +266,30 @@ export default function UserApprovals() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/40">
-                                    <TableHead className="text-center">Full Name</TableHead>
+                                    <TableHead className="text-center">Username</TableHead>
                                     <TableHead className="text-center">Email</TableHead>
-                                    <TableHead className="text-center">Created On</TableHead>
+                                    <TableHead className="text-center">Email Verified</TableHead>
+                                    <TableHead className="text-center">Date Applied</TableHead>
                                     <TableHead className="text-center">Status</TableHead>
                                     <TableHead className="text-center">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {props.users.data.map((u) => (
+                                {props.users.data.length > 0 ? props.users.data.map((u) => (
                                     <TableRow key={u.id} className="text-center">
                                         <TableCell>
-                                        {u.detail ? 
-                                            formatFullName(
-                                                u.detail.first_name,
-                                                u.detail.middle_name ?? '',
-                                                u.detail.last_name
-                                            )
-                                            : u.name
-                                        }
+                                            {/* {u.detail ? 
+                                                formatFullName(
+                                                    u.detail.first_name,
+                                                    u.detail.middle_name ?? '',
+                                                    u.detail.last_name
+                                                )
+                                                : u.name
+                                            } */}
+                                            {u.name}
                                         </TableCell>
                                         <TableCell>{u.email}</TableCell>
+                                        <TableCell>{u.email_verified_at ? 'Yes' : 'No'}</TableCell>
                                         <TableCell>
                                             {u.created_at ? formatDateTime(u.created_at) : '—'}
                                         </TableCell>
@@ -322,7 +325,13 @@ export default function UserApprovals() {
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )): (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
+                                            No users found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </div>
@@ -330,20 +339,20 @@ export default function UserApprovals() {
 
                 {/* Pagination */}
                 {props.users.data.length > 0 && (
-                <div className="flex items-center justify-between">
-                    <PageInfo
-                    page={props.users.current_page ?? 1}
-                    total={props.users.total ?? 0}
-                    pageSize={10}
-                    label="users"
-                    />
-                    <Pagination
-                    page={props.users.current_page ?? 1}
-                    total={props.users.total ?? 0}
-                    pageSize={10}
-                    onPageChange={(p) => go({ page: p })}
-                    />
-                </div>
+                    <div className="flex items-center justify-between">
+                        <PageInfo
+                            page={props.users.current_page ?? 1}
+                            total={props.users.total ?? 0}
+                            pageSize={10}
+                            label="users"
+                        />
+                        <Pagination
+                            page={props.users.current_page ?? 1}
+                            total={props.users.total ?? 0}
+                            pageSize={10}
+                            onPageChange={(p) => go({ page: p })}
+                        />
+                    </div>
                 )}
 
                 {/* Modals */}
@@ -361,6 +370,32 @@ export default function UserApprovals() {
                     user={selectedUser}
                     roles={props.roles}
                 />
+
+                {selectedUser && (
+                    <DeleteConfirmationModal
+                        show={showDelete}
+                        onCancel={() => setShowDelete(false)}
+                        onConfirm={() => {
+                            router.delete(route("user-approvals.destroy", selectedUser.id), {
+                                preserveScroll: true,
+                                onSuccess: () => setShowDelete(false),
+                            });
+                        }}
+                        title="Delete User"
+                        message={
+                            <>
+                                Are you sure you want to delete the user{" "}
+                                <strong>
+                                    {selectedUser.detail
+                                        ? `${selectedUser.detail.first_name} ${selectedUser.detail.last_name}`
+                                        : selectedUser.name}
+                                </strong>
+                                ?
+                            </>
+                        }
+                    />
+                )}
+
             </div>
         </AppLayout>
     );
