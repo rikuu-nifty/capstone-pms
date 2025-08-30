@@ -9,6 +9,14 @@ use Illuminate\Database\Seeder;
 use Database\Seeders\RolesTableSeeder;
 use Database\Seeders\PermissionsTableSeeder;
 use Database\Seeders\RoleHasPermissionsTableSeeder;
+use Database\Seeders\UsersTableSeeder;
+use Database\Seeders\UnitOrDepartmentsTableSeeder;
+use Database\Seeders\BuildingsTableSeeder;
+use Database\Seeders\BuildingRoomsTableSeeder;
+use Database\Seeders\CategoriesTableSeeder;
+use Database\Seeders\AssetModelsTableSeeder;
+use Database\Seeders\InventoryListsTableSeeder;
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,6 +36,13 @@ class DatabaseSeeder extends Seeder
             RolesTableSeeder::class,
             PermissionsTableSeeder::class,
             RoleHasPermissionsTableSeeder::class,
+            UsersTableSeeder::class,
+            UnitOrDepartmentsTableSeeder::class,
+            BuildingsTableSeeder::class,
+            BuildingRoomsTableSeeder::class,
+            CategoriesTableSeeder::class,
+            AssetModelsTableSeeder::class,
+            InventoryListsTableSeeder::class,
         ]);
     }
 }
