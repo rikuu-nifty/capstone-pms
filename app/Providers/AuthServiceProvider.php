@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use App\Models\Role;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -28,33 +29,35 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('view-users-page', function (User $user) {
-            Log::info('Gate check view-users-page', [
-                'user_id'   => $user->id,
-                'role_code' => $user->role?->code,
-                'status'    => $user->status,
-                'in_array'  => in_array($user->role?->code, ['vp_admin', 'pmo_head']),
-            ]);
-            $user->loadMissing('role');
-            return in_array($user->role?->code, ['vp_admin', 'pmo_head']);
+        Gate::before(function (User $user, string $ability) {
+            if ($user->role?->code === 'superuser') {
+                return true;
+            }
+            return $user->hasPermission($ability) ?: null;
         });
 
-        Gate::define('assign-role', function (User $user, string $targetRoleCode) {
+        Gate::define('view-users-page', function (User $user) {
+            return $user->hasPermission('view-users-page');
+        });
 
-            if ($user->role?->code === 'vp_admin') {
+        Gate::define('delete-role', function (User $authUser, Role $targetRole) {
+            if ($targetRole->code === 'superuser' || $targetRole->code === 'vp_admin') {
+                return false;
+            }
+
+            if ($authUser->role?->code === 'vp_admin') {
                 return true;
             }
 
-            if ($user->role?->code === 'pmo_head') {
-                return in_array($targetRoleCode, ['pmo_staff']);
+            // PMO Head can manage roles, but not delete them
+            if ($authUser->role?->code === 'pmo_head') {
+                return false;
             }
 
-            return false; // default deny
+            // fallback to DB permissions
+            return $authUser->hasPermission('delete-role');
         });
 
-        Gate::define('reassign-role', function (User $user, string $targetRoleCode) {
-            return Gate::forUser($user)->allows('assign-role', $targetRoleCode);
-        });
-        
+               
     }
 }

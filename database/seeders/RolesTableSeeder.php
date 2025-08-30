@@ -9,6 +9,10 @@ class RolesTableSeeder extends Seeder
 {
     public function run(): void
     {
+        Role::updateOrCreate(['code' => 'superuser'], [
+            'name' => 'Superuser',
+        ]);
+
         Role::updateOrCreate(['code' => 'vp_admin'], [
             'name' => 'VP Admin',
         ]);

@@ -62,7 +62,7 @@ const institutionalSetUpNavItems = [
 ];
 
 const userNavItems = [
-    { title: 'Users', href: '/user-approvals', icon: UserCheck2 },
+    { title: 'Users', href: '/users', icon: UserCheck2 },
     { title: 'Roles', href: '/role-management', icon: ShieldCheck },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2 },
     { title: 'Audit Log', href: '/audit-log', icon: File },

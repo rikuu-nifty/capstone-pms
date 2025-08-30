@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-use App\Notifications\UserApprovedNotification;
-use App\Notifications\UserDeniedNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use App\Notifications\RequestEmailChangeNotification;
+use App\Notifications\PasswordResetNotification;
 
 use App\Models\User;
 use App\Models\Role;
@@ -29,6 +31,7 @@ class UserApprovalController extends Controller
                 'users'  => User::fetchSystemUsers($q),
                 'totals' => User::fetchTotals(),
                 'roles'  => Role::all(['id', 'name', 'code']),
+                'filterRole' => $request->integer('filter_role') ?: '',
             ]);
         }
 
@@ -68,19 +71,24 @@ class UserApprovalController extends Controller
     {
         $request->validate(['role_id' => 'required|exists:roles,id']);
         $role = Role::findOrFail($request->role_id);
-        // $this->authorize('reassign-role', $role->code);
 
         $user->reassignRoleWithNotify($role, $request->input('notes'));
 
         return back()->with('status', "Reassigned role for {$user->email}");
     }
 
+    public function destroy(User $user)
+    {
+        $this->authorize('view-users-page');
+        $user->delete();
 
-    // public function destroy(User $user)
-    // {
-    //     $this->authorize('view-users-page');
-    //     $user->delete();
+        return back()->with('status', "Deleted {$user->email}");
+    }
 
-    //     return back()->with('status', "Deleted {$user->email}");
-    // }
+    public function requestEmailChange(User $user)
+    {
+        $user->notify(new RequestEmailChangeNotification());
+
+        return back()->with('status', "Email change request sent to {$user->email}");
+    }
 }

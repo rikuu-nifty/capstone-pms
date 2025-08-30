@@ -12,6 +12,7 @@ export type { TurnoverDisposalAssets } from './turnover-disposal-assets';
 export type { AssetAssignment } from './asset-assignment';
 export type { Role, RolePageProps } from './role';
 export type { UserDetail } from './user-detail';
+export type { Permission } from './permission';
 export * from './page-props';
 
 export const formatDate = (dateStr?: string) =>

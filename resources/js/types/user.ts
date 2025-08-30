@@ -12,6 +12,7 @@ export type User = {
     detail?: UserDetail | null;
     created_at?: string;
     updated_at?: string;
+    can_delete?: boolean;
 };
 
 export type UserPageProps = {

@@ -9,6 +9,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Gate;
+
 use App\Models\UserDetail;
 use App\Models\EmailVerificationCode;
 use App\Models\OffCampus;
@@ -23,6 +25,11 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     protected $with = ['role'];
+
+    protected $appends = [
+        'can_delete'
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -108,6 +115,21 @@ class User extends Authenticatable implements MustVerifyEmail
         return $q->where('status','denied'); 
     }
 
+    //to check if user has a specific permission
+    public function hasPermission(string $code): bool
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        if ($this->role->code === 'superuser') {
+            return true;
+        }
+
+        return $this->role->permissions()->where('code', $code)->exists()
+        ;
+    }
+
     public function scopeSearch($query, ?string $q)
     {
         if ($q !== '') {
@@ -129,15 +151,25 @@ class User extends Authenticatable implements MustVerifyEmail
         return $query;
     }
 
-    public static function fetchSystemUsers(string $q = '', int $perPage = 10)
+    public static function fetchSystemUsers(string $q = '', ?int $roleId = null, int $perPage = 10)
     {
-        return static::with([
+        return static::query()
+            ->with([
                 'detail:id,user_id,first_name,middle_name,last_name', 
                 'role:id,name,code'
             ])
             ->approved()
             ->search($q)
+            ->roleFilter($roleId)
             ->paginate($perPage);
+    }
+
+    public function scopeRoleFilter($query, ?int $roleId)
+    {
+        if ($roleId) {
+            $query->where('role_id', $roleId);
+        }
+        return $query;
     }
 
     public function approveWithRoleAndNotify(Role $role, ?string $notes = null): void
@@ -209,5 +241,10 @@ class User extends Authenticatable implements MustVerifyEmail
             'pending'  => static::where('status', 'pending')->count(),
             'denied'   => static::where('status', 'denied')->count(),
         ];
+    }
+
+    public function getCanDeleteAttribute()
+    {
+        return Gate::allows('delete-user', $this);
     }
 }

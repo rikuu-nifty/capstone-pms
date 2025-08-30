@@ -72,16 +72,26 @@ export default function ViewUserModal({ open, onClose, user, roles }: UserPagePr
                 </div>
 
                 {/* Actions */}
-                <div className="mt-8 flex flex-wrap gap-3 justify-end">
+                <div className="mt-8 flex flex-wrap gap-3 justify-center">
                     <Button
                         variant="outline"
                         className="cursor-pointer"
+                        onClick={() => {
+                            router.post(route("users.reset-password", user.id), 
+                            {}, 
+                            { preserveScroll: true });
+                        }}
                     >
                         Reset Password
                     </Button>
                     <Button 
                         variant="outline" 
                         className="cursor-pointer"
+                        onClick={() => {
+                            router.post(route("users.request-email-change", user.id),
+                            {}, 
+                            { preserveScroll: true });
+                        }}
                     >
                         Request Email Change
                     </Button>

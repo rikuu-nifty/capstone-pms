@@ -99,28 +99,28 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
 
     return (
         <AddModal
-        show={show}
-        onClose={() => {
-            onClose();
-            reset();
-            clearErrors();
-            setIsSubmitting(false);
-        }}
-        title="Add New Building"
-        onSubmit={handleSubmit}
-        // Pass the local flag if your modal uses it to disable buttons/spinners
-        processing={isSubmitting}
+            show={show}
+            onClose={() => {
+                onClose();
+                reset();
+                clearErrors();
+                setIsSubmitting(false);
+            }}
+            title="Add New Building"
+            onSubmit={handleSubmit}
+            // Pass the local flag if your modal uses it to disable buttons/spinners
+            processing={isSubmitting}
         >
         {/* Building Name */}
         <div>
             <label className="mb-1 block font-medium">Building Name</label>
             <Input
-            type="text"
-            placeholder="Enter building name (e.g., Main Building)"
-            value={data.name}
-            onChange={(e) => setData('name', e.target.value)}
-            className="cursor-text w-full rounded-lg border p-2"
-            required
+                type="text"
+                placeholder="Enter building name (e.g., Main Building)"
+                value={data.name}
+                onChange={(e) => setData('name', e.target.value)}
+                className="cursor-text w-full rounded-lg border p-2"
+                required
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
         </div>
