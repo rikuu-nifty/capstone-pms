@@ -13,6 +13,7 @@ import type { SharedData } from '@/types';
 
 import ApproveConfirmationModal from '@/components/modals/ApproveConfirmationModal';
 import RejectConfirmationModal from '@/components/modals/RejectConfirmationModal';
+import ResetConfirmationModal from '@/components/modals/ResetFormApprovalModal';
 
 const viewPath = (formType: string, id?: number | null) => {
     if (!id) return '#';
@@ -84,6 +85,8 @@ export default function ApprovalsIndex() {
 
     const [showApprove, setShowApprove] = useState(false);
     const [showReject, setShowReject] = useState(false);
+    const [showReset, setShowReset] = useState(false);
+
     const [selectedApprovalId, setSelectedApprovalId] = useState<number | null>(null);
     const [selectedActor, setSelectedActor] = useState<string | null>(null);
     const [selectedStepLabel, setSelectedStepLabel] = useState<string | null>(null);
@@ -280,9 +283,13 @@ export default function ApprovalsIndex() {
                                                     variant="destructive"
                                                     title="Move back to Pending Review"
                                                     className="cursor-pointer"
+                                                    // onClick={() => {
+                                                    //     if (!confirm('Move this back to Pending Review?')) return;
+                                                    //     router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
+                                                    // }}
                                                     onClick={() => {
-                                                        if (!confirm('Move this back to Pending Review?')) return;
-                                                        router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
+                                                        setSelectedApprovalId(a.id);
+                                                        setShowReset(true);
                                                     }}
                                                 >
                                                     Reset
@@ -364,6 +371,19 @@ export default function ApprovalsIndex() {
                 stepLabel={selectedStepLabel}
                 // requireNotes // ← uncomment if rejecting must include a reason
             />
+
+            <ResetConfirmationModal
+                show={showReset}
+                onCancel={() => setShowReset(false)}
+                onConfirm={() => {
+                    if (!selectedApprovalId) return;
+                    router.post(route('approvals.reset', selectedApprovalId), {}, {
+                    preserveScroll: true,
+                    onSuccess: () => setShowReset(false),
+                    });
+                }}
+            />
+
         </AppLayout>
     );
 }

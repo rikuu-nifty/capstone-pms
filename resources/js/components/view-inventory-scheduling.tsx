@@ -93,19 +93,19 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                         </section>
 
                        {/* Scheduling */}
-<section className="w-full text-right print:break-inside-avoid">
-  <h3 className="mb-2 text-base font-semibold text-gray-700 dark:text-gray-200">
-    Scheduling
-  </h3>
-  <p className="text-sm">
-    <span className="font-semibold">Inventory Month:</span>{" "}
-    {formatMonth(schedule.inventory_schedule)}
-  </p>
-  <p className="text-sm">
-    <span className="font-semibold">Actual Date:</span>{" "}
-    {formatDateLong(schedule.actual_date_of_inventory)}
-  </p>
-</section>
+                        <section className="w-full text-right print:break-inside-avoid">
+                        <h3 className="mb-2 text-base font-semibold text-gray-700 dark:text-gray-200">
+                            Scheduling
+                        </h3>
+                        <p className="text-sm">
+                            <span className="font-semibold">Inventory Month:</span>{" "}
+                            {formatMonth(schedule.inventory_schedule)}
+                        </p>
+                        <p className="text-sm">
+                            <span className="font-semibold">Actual Date:</span>{" "}
+                            {formatDateLong(schedule.actual_date_of_inventory)}
+                        </p>
+                        </section>
                     </div>
 
                     {/* People Table */}
@@ -149,9 +149,11 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
 
                     {/* Actions */}
                     <div className="mt-8 text-center print:hidden">
-                        <Button className="mr-2" variant="secondary" onClick={() => window.print()}>
+                        {(schedule.scheduling_status).toLowerCase() !== 'pending' && (
+                            <Button className="mr-2" variant="secondary" onClick={() => window.print()}>
                             🖨️ Print Form
                         </Button>
+                        )}
                         <DialogClose asChild>
                             <Button variant="outline">Close</Button>
                         </DialogClose>
