@@ -181,12 +181,11 @@ export default function TransferViewModal({
                 <div className="text-center">
                     <p className="font-semibold mb-8">Approved By:</p>
                     <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                    <p className="font-bold text-gray-800 italic">(PMO Head name)</p>
+                    <p className="font-bold text-gray-800">{transfer.approved_by_name?? '—'}</p>
                     <p className="text-xs text-gray-500 italic">[Role Here]</p>
                 </div>
             </div>
 
-            
             {/* Actions */}
             <div className="text-center print:hidden mt-1">
                 <a
@@ -195,12 +194,15 @@ export default function TransferViewModal({
                 >
                     ← Back to Transfers
                 </a>
-                <Button
-                    onClick={() => window.print()}
-                    className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
-                >
-                    🖨️ Print Form
-                </Button>
+                
+                {(transfer.status).toLowerCase() !== 'pending_review' && (
+                    <Button
+                        onClick={() => window.print()}
+                        className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                    >
+                        🖨️ Print Form
+                    </Button>
+                )}
             </div>
         </ViewModal>
     );

@@ -30,7 +30,9 @@ import {
     Settings,
     User,
     UserCheck2,
+    ShieldCheck,
 } from 'lucide-react';
+
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
@@ -41,36 +43,48 @@ const dashboardNavItems = [
 ];
 
 const inventoryNavItems = [
-    { title: 'Inventory List', href: '/inventory-list', icon: Package2 },
-    { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2 },
-    { title: 'Transfer', href: '/transfers', icon: ArrowRightLeft },
-    { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList },
-    { title: 'Off Campus', href: '/off-campus', icon: School },
-    { title: 'Reports', href: '/reports', icon: Files },
+    { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-inventory-list' },
+    { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
+    { title: 'Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
+    { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
+    { title: 'Off Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
+    { title: 'Reports', href: '/reports', icon: Files, permission: 'view-reports' },
 ];
 
 const assetsNavItems = [
-    { title: 'Categories', href: '/categories', icon: Blocks },
-    { title: 'Models', href: '/models', icon: PackageCheck },
+    { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
+    { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
     // { title: 'Assignment', href: '/assignment', icon: PackageCheck },
 ];
 
 const institutionalSetUpNavItems = [
-    { title: 'Buildings', href: '/buildings', icon: Landmark },
-    { title: 'Organizations', href: '/unit-or-departments', icon: Network },
+    { title: 'Buildings', href: '/buildings', icon: Landmark, permission: 'view-buildings' },
+    { title: 'Organizations', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
 ];
 
 const userNavItems = [
-    { title: 'Users', href: '/user-approvals', icon: UserCheck2 },
-    { title: 'Audit Log', href: '/audit-log', icon: File },
+    { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
+    { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2 },
+    { title: 'Audit Log', href: '/audit-log', icon: File },
     // { title: 'Profile', href: '/profile', icon: User },
 ];
 
-const configNavItems = [{ title: 'Settings', href: '/settings', icon: Settings }];
+const configNavItems = [
+    { title: 'Settings', href: '/settings', icon: Settings },
+];
+
+// ------------------ HELPERS ------------------
+function canView(item: any, permissions: string[]) {
+    if (!item.permission) return true;
+    return permissions.includes(item.permission);
+}
 
 // ------------------ COMPONENT ------------------
 export function AppSidebar() {
+    const page = usePage<{ auth: { permissions: string[] } }>();
+    const permissions = page.props.auth?.permissions ?? [];
+
     const { url } = usePage();
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
@@ -100,13 +114,14 @@ export function AppSidebar() {
     const renderCollapsible = (
         label: string,
         Icon: React.ComponentType<{ className?: string }>,
-        items: { title: string; href: string; icon: React.ComponentType<{ className?: string }> }[],
+        items: { title: string; href: string; icon: React.ComponentType<{ className?: string }>; permission?: string }[],
     ) => {
         const isOpen = openGroups[label] ?? false;
+        const visibleItems = items.filter((item) => canView(item, permissions));
+        if (visibleItems.length === 0) return null; // hide group if empty
 
         return (
             <SidebarMenuItem>
-                {/* Parent button (aligned with Dashboard/Calendar) */}
                 <SidebarMenuButton
                     onClick={() => toggleGroup(label)}
                     className="flex items-center rounded-md px-3 py-2 transition-colors space-x-2"
@@ -114,24 +129,21 @@ export function AppSidebar() {
                     <Icon className="h-4 w-4" />
                     <span>{label}</span>
                     <ChevronRight
-                        className={`ml-auto h-4 w-4 transition-transform duration-300 ${
-                            isOpen ? 'rotate-90' : ''
-                        }`}
+                        className={`ml-auto h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`}
                     />
                 </SidebarMenuButton>
 
-                {/* Submenu */}
                 <div
                     className={`overflow-hidden transition-all duration-300 ease-in-out ${
                         isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                     }`}
                 >
                     <SidebarMenu>
-                        {items.map((item) => (
+                        {visibleItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <SidebarMenuButton asChild className="pl-8">
                                     <Link href={item.href} className="flex items-center space-x-1">
-                                        <item.icon/>
+                                        <item.icon />
                                         <span>{item.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
@@ -161,29 +173,9 @@ export function AppSidebar() {
                 <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
                 <SidebarMenu>
                     {/* Flat items (Dashboard, Calendar) */}
-                    {dashboardNavItems.map((item) => (
-                        <SidebarMenuItem key={item.href}>
-                            <SidebarMenuButton asChild className="px-3 py-2">
-                                <Link href={item.href} className="flex items-center space-x-2">
-                                    <item.icon className="h-4 w-4" />
-                                    <span>{item.title}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    ))}
-
-                    {/* Collapsible groups */}
-                    {renderCollapsible('Inventory', Package2, inventoryNavItems)}
-                    {renderCollapsible('Assets', Blocks, assetsNavItems)}
-                    {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
-                    {renderCollapsible('User', User, userNavItems)}
-                </SidebarMenu>
-
-                {/* Configuration section */}
-                <div className="mt-1">
-                    <SidebarGroupLabel>Configuration</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {configNavItems.map((item) => (
+                    {dashboardNavItems
+                        .filter((item) => canView(item, permissions))
+                        .map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <SidebarMenuButton asChild className="px-3 py-2">
                                     <Link href={item.href} className="flex items-center space-x-2">
@@ -193,6 +185,30 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         ))}
+
+                    {/* Collapsible groups */}
+                    {renderCollapsible('Inventory', Package2, inventoryNavItems)}
+                    {renderCollapsible('Assets', Blocks, assetsNavItems)}
+                    {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
+                    {renderCollapsible('User Management', User, userNavItems)}
+                </SidebarMenu>
+
+                {/* Configuration section */}
+                <div className="mt-1">
+                    <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {configNavItems
+                            .filter((item) => canView(item, permissions))
+                            .map((item) => (
+                                <SidebarMenuItem key={item.href}>
+                                    <SidebarMenuButton asChild className="px-3 py-2">
+                                        <Link href={item.href} className="flex items-center space-x-2">
+                                            <item.icon className="h-4 w-4" />
+                                            <span>{item.title}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
                     </SidebarMenu>
                 </div>
             </SidebarContent>

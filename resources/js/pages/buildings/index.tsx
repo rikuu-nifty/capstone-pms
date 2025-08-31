@@ -39,7 +39,7 @@ export default function BuildingIndex({
 
     const rooms = useMemo(() => props.rooms ?? [], [props.rooms]);
 
-    const [rawSearch, setRawSearch] = useState(''); // building
+    const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200);
 
     const [sortKey, setSortKey] = useState<BuildingSortKey>('id');
@@ -185,6 +185,7 @@ export default function BuildingIndex({
                         setSelectedBuilding(null); 
                     }}
                     building={selectedBuilding}
+                    allRooms={rooms}
                 />
             )}
 

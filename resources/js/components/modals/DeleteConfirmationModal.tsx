@@ -7,7 +7,7 @@ interface DeleteConfirmationModalProps {
     onConfirm: () => void;
     onCancel: () => void;
     title?: string;
-    message?: string;
+    message?: React.ReactNode;
 }
 
 const DeleteConfirmationModal = ({

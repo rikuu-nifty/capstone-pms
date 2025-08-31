@@ -23,6 +23,8 @@ export type BuildingFormData = {
     description: string | null;
 
     rooms?: NewRoomPayload[];
+
+    selected_rooms?: number[];
 };
 
 export type Totals = {

@@ -16,8 +16,6 @@ type FormShape = BuildingFormData & {
 };
 
 export default function AddBuildingModal({ show, onClose }: AddBuildingModalProps) {
-    // We still use useForm to manage form state + errors,
-    // but we'll submit with router.post and manage isSubmitting manually.
     const { data, setData, reset, errors, clearErrors, setError } = useForm<FormShape>({
         name: '',
         code: '',
@@ -26,10 +24,8 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
         rooms: [],
     });
 
-    // Local submitting flag since useForm().processing won't update with router.post
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // ------- Helpers -------
     const addRoomRow = () => {
         setData('rooms', [...data.rooms, { room: '', description: '' }]);
     };
@@ -46,81 +42,74 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
         setData('rooms', copy);
     };
 
-    // ------- Submit -------
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        // Prepare the exact payload for backend (note: we omit addRoomsNow)
         const payload: Omit<BuildingFormData, 'addRoomsNow'> & { rooms?: NewRoomPayload[] } = {
-        name: (data.name ?? '').trim(),
-        code: (data.code ?? '').trim().toUpperCase(),
-        description: (data.description ?? '').trim() || null,
-        ...(data.addRoomsNow
-            ? {
-                rooms: data.rooms
-                .map((r) => ({
-                    room: (r.room ?? '').trim(),
-                    description: (r.description ?? '')?.trim() || null,
-                }))
-                .filter((r) => r.room.length > 0),
-            }
-            : {}),
+            name: (data.name ?? '').trim(),
+            code: (data.code ?? '').trim().toUpperCase(),
+            description: (data.description ?? '').trim() || null,
+            ...(data.addRoomsNow
+                ? {
+                    rooms: data.rooms
+                    .map((r) => ({
+                        room: (r.room ?? '').trim(),
+                        description: (r.description ?? '')?.trim() || null,
+                    }))
+                    .filter((r) => r.room.length > 0),
+                }
+                : {}),
         };
 
-        // Clear old errors before submit
         clearErrors();
 
         router.post('/buildings', payload, {
-        preserveScroll: true,
-        onStart: () => setIsSubmitting(true),
-        onError: (serverErrors: Record<string, string>) => {
-            // Map server errors into useForm error bag so they render under fields
-            Object.entries(serverErrors).forEach(([field, message]) => {
-            // field names like 'rooms.0.room' are fine
-            setError(field as keyof FormShape, message);
-            });
-        },
-        onSuccess: () => {
-            reset();
-            onClose();
-        },
-        onFinish: () => setIsSubmitting(false),
+            preserveScroll: true,
+            onStart: () => setIsSubmitting(true),
+            onError: (serverErrors: Record<string, string>) => {
+                Object.entries(serverErrors).forEach(([field, message]) => {
+                setError(field as keyof FormShape, message);
+                });
+            },
+            onSuccess: () => {
+                reset();
+                onClose();
+            },
+            onFinish: () => setIsSubmitting(false),
         });
     };
 
-    // Reset form whenever modal opens
     useEffect(() => {
         if (show) {
-        reset();
-        clearErrors();
-        setIsSubmitting(false);
+            reset();
+            clearErrors();
+            setIsSubmitting(false);
         }
     }, [show, reset, clearErrors]);
 
     return (
         <AddModal
-        show={show}
-        onClose={() => {
-            onClose();
-            reset();
-            clearErrors();
-            setIsSubmitting(false);
-        }}
-        title="Add New Building"
-        onSubmit={handleSubmit}
-        // Pass the local flag if your modal uses it to disable buttons/spinners
-        processing={isSubmitting}
+            show={show}
+            onClose={() => {
+                onClose();
+                reset();
+                clearErrors();
+                setIsSubmitting(false);
+            }}
+            title="Add New Building"
+            onSubmit={handleSubmit}
+            processing={isSubmitting}
         >
         {/* Building Name */}
         <div>
             <label className="mb-1 block font-medium">Building Name</label>
             <Input
-            type="text"
-            placeholder="Enter building name (e.g., Main Building)"
-            value={data.name}
-            onChange={(e) => setData('name', e.target.value)}
-            className="cursor-text w-full rounded-lg border p-2"
-            required
+                type="text"
+                placeholder="Enter building name (e.g., Main Building)"
+                value={data.name}
+                onChange={(e) => setData('name', e.target.value)}
+                className="cursor-text w-full rounded-lg border p-2"
+                required
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
         </div>
@@ -129,10 +118,10 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
         <div>
             <label className="mb-1 block font-medium">Code</label>
             <Input
-            value={data.code}
-            onChange={(e) => setData('code', e.target.value)}
-            placeholder="Enter building code (e.g., MB, AUF-MB)"
-            required
+                value={data.code}
+                onChange={(e) => setData('code', e.target.value)}
+                placeholder="Enter building code (e.g., MB, AUF-MB)"
+                required
             />
             {errors.code && <p className="mt-1 text-xs text-red-500">{errors.code}</p>}
         </div>
@@ -141,11 +130,11 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
         <div className="col-span-2">
             <label className="mb-1 block font-medium">Description</label>
             <textarea
-            rows={5}
-            value={data.description ?? ''}
-            onChange={(e) => setData('description', e.target.value)}
-            placeholder="Enter description"
-            className="w-full rounded-lg border p-2"
+                rows={5}
+                value={data.description ?? ''}
+                onChange={(e) => setData('description', e.target.value)}
+                placeholder="Enter description"
+                className="w-full rounded-lg border p-2"
             />
             {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
         </div>
@@ -153,10 +142,10 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
         {/* Add rooms toggle */}
         <div className="col-span-2 flex items-center justify-between">
             <div>
-            <label className="font-medium">Add building rooms now (optional)</label>
-            <p className="text-xs text-muted-foreground">
-                Add one or more rooms that will be saved under this building.
-            </p>
+                <label className="font-medium">Add building rooms now (optional)</label>
+                <p className="text-xs text-muted-foreground">
+                    Add one or more rooms that will be saved under this building.
+                </p>
             </div>
             <label className="inline-flex items-center gap-2">
             <input
@@ -171,50 +160,50 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
 
         {data.addRoomsNow && (
             <div className="col-span-2 space-y-3">
-            {data.rooms.map((r, idx) => (
-                <div key={idx} className="rounded-lg border p-3">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
-                    <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm font-medium">Room</label>
-                    <Input
-                        placeholder="e.g., 101, AVR, Lab A"
-                        value={r.room}
-                        onChange={(e) => updateRoomField(idx, 'room', e.target.value)}
-                    />
-                    {/* Handles nested validation like rooms.0.room */}
-                    {errors[`rooms.${idx}.room` as keyof typeof errors] && (
-                        <p className="mt-1 text-xs text-red-500">
-                        {errors[`rooms.${idx}.room` as keyof typeof errors] as unknown as string}
-                        </p>
-                    )}
-                    </div>
+                {data.rooms.map((r, idx) => (
+                    <div key={idx} className="rounded-lg border p-3">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
+                            <div className="md:col-span-2">
+                            <label className="mb-1 block text-sm font-medium">Room</label>
+                            <Input
+                                placeholder="e.g., 101, AVR, Lab A"
+                                value={r.room}
+                                onChange={(e) => updateRoomField(idx, 'room', e.target.value)}
+                            />
+                            {/* Handles nested validation like rooms.0.room */}
+                            {errors[`rooms.${idx}.room` as keyof typeof errors] && (
+                                <p className="mt-1 text-xs text-red-500">
+                                {errors[`rooms.${idx}.room` as keyof typeof errors] as unknown as string}
+                                </p>
+                            )}
+                            </div>
 
-                    <div className="md:col-span-3">
-                    <label className="mb-1 block text-sm font-medium">Room Description (optional)</label>
-                    <Input
-                        placeholder="e.g., Audio-Visual Room near lobby"
-                        value={r.description ?? ''}
-                        onChange={(e) => updateRoomField(idx, 'description', e.target.value)}
-                    />
-                    </div>
+                            <div className="md:col-span-3">
+                            <label className="mb-1 block text-sm font-medium">Room Description (optional)</label>
+                            <Input
+                                placeholder="e.g., Audio-Visual Room near lobby"
+                                value={r.description ?? ''}
+                                onChange={(e) => updateRoomField(idx, 'description', e.target.value)}
+                            />
+                            </div>
 
-                    <div className="md:col-span-1 flex items-end">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => removeRoomRow(idx)}
-                        disabled={isSubmitting}
-                    >
-                        Remove
-                    </Button>
+                            <div className="md:col-span-1 flex items-end">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => removeRoomRow(idx)}
+                                disabled={isSubmitting}
+                            >
+                                Remove
+                            </Button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                </div>
-            ))}
+                ))}
 
-            <Button type="button" onClick={addRoomRow} disabled={isSubmitting}>
-                Add another room
-            </Button>
+                <Button type="button" onClick={addRoomRow} disabled={isSubmitting}>
+                    Add another room
+                </Button>
             </div>
         )}
         </AddModal>

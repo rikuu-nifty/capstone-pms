@@ -40,6 +40,7 @@ return new class extends Migration
             $table->index('issued_by_id'); // add index
 
             $table->string('checked_by')->nullable(); // Chief,Security Serivce
+            $table->foreignId('created_by_id')->nullable()->constrained('users')->nullOnDelete();
 
             $table->softDeletes();
             $table->index('deleted_at');
@@ -69,6 +70,8 @@ return new class extends Migration
 
             $table->dropForeign(['deleted_by_id']);
             $table->dropIndex(['deleted_at']);
+
+            $table->dropForeign(['created_by_id']);
         });
 
         Schema::dropIfExists('off_campuses');

@@ -14,7 +14,7 @@ export type Transfer = {
     scheduled_date: string;
     actual_transfer_date: string | null;
     received_by: number | null;
-    status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
+    status: 'pending_review' | 'upcoming' | 'in_progress' | 'completed' | 'overdue' | 'cancelled';
     remarks: string | null;
     asset_count: number;
 
@@ -26,6 +26,7 @@ export type Transfer = {
     assignedBy?: User;
 
     transferAssets: TransferAsset[];
+    approved_by_name?: string | null;
 };
 
 export type TransferFormData = {
@@ -38,7 +39,7 @@ export type TransferFormData = {
     scheduled_date: string;
     actual_transfer_date: string | null;
     received_by: string | null;
-    status: 'upcoming' | 'in_progress' | 'completed' | 'overdue';
+    status: 'pending_review' | 'upcoming' | 'in_progress' | 'completed' | 'overdue' | 'cancelled';
     remarks: string | null;
 
     current_building_id: number;
@@ -47,11 +48,13 @@ export type TransferFormData = {
     selected_assets: number[];
 }
 
-export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'> = {
+export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'|'outline'> = {
+    pending_review: 'outline',
     upcoming: 'secondary',
     in_progress: 'success',
     overdue: 'destructive',
     completed: 'primary',
+    cancelled: 'outline',
 };
 
 export const formatDate = (dateStr?: string) =>

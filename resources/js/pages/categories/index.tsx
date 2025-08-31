@@ -13,7 +13,7 @@ import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 import type { CategoriesPageProps, CategoryWithModels } from '@/types/category';
 import { formatStatusLabel, formatNumber } from '@/types/custom-index';
-import KPIStatCard from '@/components/statistics/KPIStatCard';
+// import KPIStatCard from '@/components/statistics/KPIStatCard';
 import { Boxes, Tags, ListChecks } from 'lucide-react';
 
 
@@ -189,41 +189,61 @@ export default function CategoriesIndex({
                 </div>
 
                 {totals && (
-                    <div className="flex flex-wrap justify-between gap-3">
-                        <KPIStatCard
-                            label="Total Categories"
-                            value={formatNumber(totalCats)}
-                            icon={Tags}
-                            barColor="bg-orange-400"
-                            className="w-[350px] h-[140px]"
-                        />
-                        <KPIStatCard
-                            label="Total Models"
-                            value={formatNumber(totalModels)}
-                            icon={ListChecks}
-                            barColor="bg-sky-400"
-                            className="w-[350px] h-[140px]"
-                        />
-                        <KPIStatCard
-                            label="Total Assets"
-                            value={formatNumber(totalAssets)}
-                            icon={Boxes}
-                            barColor="bg-teal-400"
-                            className="w-[350px] h-[140px]"
-                        />
-                        <KPIStatCard
-                            label="Models per Category"
-                            value={
-                                <>
-                                {avgModelsPerCat.toFixed(1)}
-                                </>
-                            }
-                            icon={Boxes}
-                            barColor="bg-purple-400"
-                            className="w-[350px] h-[140px]"
-                        />
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                        {/* Total Categories */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                                <Tags className="h-7 w-7 text-orange-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Categories</div>
+                                <div className="text-3xl font-bold">
+                                    {formatNumber(totalCats)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Total Models */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                                <ListChecks className="h-7 w-7 text-sky-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Models</div>
+                                <div className="text-3xl font-bold">
+                                    {formatNumber(totalModels)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Total Assets */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
+                                <Boxes className="h-7 w-7 text-teal-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Assets</div>
+                                <div className="text-3xl font-bold">
+                                    {formatNumber(totalAssets)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Models per Category */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                                <Boxes className="h-7 w-7 text-purple-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Models per Category</div>
+                                <div className="text-3xl font-bold">
+                                    {avgModelsPerCat.toFixed(1)}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
+
 
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">

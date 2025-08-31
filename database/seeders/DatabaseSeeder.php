@@ -2,9 +2,21 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+// use App\Models\User;
+
+use Database\Seeders\RolesTableSeeder;
+use Database\Seeders\PermissionsTableSeeder;
+use Database\Seeders\RoleHasPermissionsTableSeeder;
+use Database\Seeders\UsersTableSeeder;
+use Database\Seeders\UnitOrDepartmentsTableSeeder;
+use Database\Seeders\BuildingsTableSeeder;
+use Database\Seeders\BuildingRoomsTableSeeder;
+use Database\Seeders\CategoriesTableSeeder;
+use Database\Seeders\AssetModelsTableSeeder;
+use Database\Seeders\InventoryListsTableSeeder;
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,9 +27,22 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+
+        $this->call([
+            RolesTableSeeder::class,
+            PermissionsTableSeeder::class,
+            RoleHasPermissionsTableSeeder::class,
+            UsersTableSeeder::class,
+            UnitOrDepartmentsTableSeeder::class,
+            BuildingsTableSeeder::class,
+            BuildingRoomsTableSeeder::class,
+            CategoriesTableSeeder::class,
+            AssetModelsTableSeeder::class,
+            InventoryListsTableSeeder::class,
         ]);
     }
 }

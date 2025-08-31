@@ -2,7 +2,7 @@ export type { Building } from './building';
 export type { BuildingRoom } from './building-room';
 export type { UnitOrDepartment } from './unit-or-department';
 export type { Category } from './category';
-export type { User } from './user';
+export type { User, UserPageProps, TabKey, QueryParams } from './user';
 export type { InventoryList } from './inventory-list';
 export type { Transfer } from './transfer';
 export type { TransferFormData } from './transfer';
@@ -10,6 +10,9 @@ export type { AssetModel } from './asset-model';
 export type { TurnoverDisposals } from './turnover-disposal';
 export type { TurnoverDisposalAssets } from './turnover-disposal-assets';
 export type { AssetAssignment } from './asset-assignment';
+export type { Role, RolePageProps } from './role';
+export type { UserDetail } from './user-detail';
+export type { Permission } from './permission';
 export * from './page-props';
 
 export const formatDate = (dateStr?: string) =>
@@ -39,7 +42,6 @@ export const formatDateTime = (iso: string) => {
     return `${date} ${time}`;
 };
 
-
 export const formatStatusLabel = (status: string) =>
     status.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 
@@ -66,3 +68,15 @@ export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'su
 
 export const formatNumber = (n?: number | null) =>
     typeof n === 'number' ? n.toLocaleString() : '—';
+
+export function formatFullName(
+    firstName: string,
+    middleName: string | null,
+    lastName: string
+): string {
+    if (middleName && middleName.trim().length > 0) {
+        const initial = middleName.trim().charAt(0).toUpperCase();
+        return `${firstName} ${initial}. ${lastName}`;
+    }
+    return `${firstName} ${lastName}`;
+}

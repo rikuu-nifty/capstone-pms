@@ -212,8 +212,8 @@ export default function TurnoverDisposalViewModal({
                 <div className="text-center">
                     <p className="font-semibold mb-8">Noted By:</p>
                     <div className="border-t border-black w-48 mx-auto mb-1" />
-                    <p className="font-bold text-gray-800">(Name)</p>
-                    <p className="text-xs text-gray-500 italic">Dean / Head</p>
+                    <p className="font-bold text-gray-800">{turnoverDisposal.noted_by_name ?? '—'}</p>
+                    <p className="text-xs text-gray-500 italic">{turnoverDisposal.noted_by_title ?? 'Dean / Head'}</p>
                 </div>
                 
                 <div className="text-center">

@@ -13,19 +13,66 @@ class FormApprovalController extends Controller
 
     public function index(Request $request)
     {
-        $this->authorize('viewInbox', FormApproval::class);
+        $user = $request->user();
+        $roleCode = $user?->role?->code;
 
-        $tab    = $request->string('tab', 'pending')->toString(); // pending|approved|rejected
+        $tab    = $request->string('tab', 'pending')->toString();
         $search = $request->string('q')->toString();
 
-        $base = FormApproval::with(['requestedBy','reviewedBy','approvable'])
-            ->when($tab === 'pending',  fn($q) => $q->pending())
-            ->when($tab === 'approved', fn($q) => $q->approved())
-            ->when($tab === 'rejected', fn($q) => $q->rejected())
-            ->quickSearch($search)
-            ->latest('requested_at');
+        $actorMap = [
+            'inventory_scheduling:noted_by'    => ['name' => 'PMO Head', 'code' => 'pmo_head'],
+            'inventory_scheduling:approved_by' => ['name' => 'VP Admin', 'code' => 'vp_admin'],
+            'off_campus:issued_by'             => ['name' => 'PMO Head', 'code' => 'pmo_head'],
+            'off_campus:external_approved_by'  => ['name' => 'Dean/Head', 'code' => 'external'],
+            'transfer:approved_by'             => ['name' => 'PMO Head', 'code' => 'pmo_head'],
+            'turnover_disposal:noted_by'       => ['name' => 'PMO Head', 'code' => 'pmo_head'],
+            'turnover_disposal:external_noted_by' => ['name' => 'Dean/Head', 'code' => 'external'],
+        ];
 
-        $approvals = $base->paginate(10)->withQueryString();
+        $approvals = FormApproval::with([
+            'requestedBy:id,name',
+            'reviewedBy:id,name',
+            'approvable',
+            'steps' => fn ($q) => $q->where('status', 'pending')->orderBy('step_order'),
+        ])
+        ->when($tab === 'pending',  fn ($q) => $q->where('status', 'pending_review'))
+        ->when($tab === 'approved', fn ($q) => $q->where('status', 'approved'))
+        ->when($tab === 'rejected', fn ($q) => $q->where('status', 'rejected'))
+        ->quickSearch($search)
+        ->latest('requested_at')
+        ->paginate(10)
+        ->withQueryString()
+        ->through(function (FormApproval $a) use ($actorMap, $roleCode) {
+            $step = $a->steps->first();
+
+            $key   = $a->form_type . ':' . ($step?->code ?? '');
+            $actor = $actorMap[$key] ?? null;
+
+            $a->setAttribute('current_step_label', $step?->label);
+            $a->setAttribute('current_step_is_external', (bool) ($step?->is_external));
+            $a->setAttribute('current_step_code', $step?->code);
+            $a->setAttribute('current_step_actor',       $actor['name'] ?? null);
+            $a->setAttribute('current_step_actor_code',  $actor['code'] ?? null);
+
+            $pending    = $a->status === 'pending_review';
+            $isExternal = (bool) ($step?->is_external) || (($actor['code'] ?? null) === 'external');
+
+            $canInternal = $pending && !$isExternal
+                && $roleCode !== null
+                && $actor && ($roleCode === ($actor['code'] ?? null) || $roleCode === 'superuser');
+
+            $canExternal = $pending && $isExternal
+                && in_array($roleCode, ['superuser', 'vp_admin', 'pmo_head'], true);
+
+            $a->setAttribute('can_approve', $canInternal || $canExternal ? 1 : 0);
+            $a->setAttribute('can_reject',  $canInternal || $canExternal ? 1 : 0);
+            $a->setAttribute('can_reset',   $a->status !== 'pending_review'
+                && in_array($roleCode, ['superuser', 'vp_admin'], true) ? 1 : 0
+            );
+                $a->unsetRelation('steps');
+
+                return $a;
+            });
 
         return Inertia::render('approvals/index', [
             'tab'       => $tab,
@@ -34,40 +81,50 @@ class FormApprovalController extends Controller
         ]);
     }
 
+
     public function approve(FormApproval $approval, Request $request)
     {
         $this->authorize('review', $approval);
 
-        $approval->update([
-            'status'       => ApprovalStatus::APPROVED->value,
-            'review_notes' => $request->string('notes')->toString() ?: null,
-            'reviewed_by_id' => $request->user()->id,
-            'reviewed_at'  => now(),
-        ]);
+        $approval->approveCurrentStep($request->string('notes')->toString() ?: null);
 
-        // Optionally: also flip the underlying record’s own status if you keep one
-        // $approval->approvable->update(['status' => ApprovalStatus::APPROVED->value]);
+        if ($approval->isFullyApproved()) {
+            $approval->updateParentFormStatus();
+        }
 
-        return back()->with('success', 'Form approved.');
+        return back()->with('success', 'Step approved.');
     }
 
     public function reject(FormApproval $approval, Request $request)
     {
         $this->authorize('review', $approval);
 
-        $request->validate(['notes' => ['nullable','string','max:1000']]);
+        $approval->rejectCurrentStep($request->string('notes')->toString() ?: null);
 
-        $approval->update([
-            'status'         => ApprovalStatus::REJECTED->value,
-            'review_notes'   => $request->string('notes')->toString() ?: null,
-            'reviewed_by_id' => $request->user()->id,
-            'reviewed_at'    => now(),
+        $approval->updateParentFormStatus('rejected');
+
+        return back()->with('success', 'Step rejected.');
+    }
+
+    public function externalApprove(FormApproval $approval, Request $request)
+    {
+        $data = $request->validate([
+            'external_name'  => ['required','string','max:255'],
+            'external_title' => ['nullable','string','max:255'],
+            'notes'          => ['nullable','string','max:1000'],
         ]);
 
-        // Optionally: also flip the underlying record’s own status
-        // $approval->approvable->update(['status' => ApprovalStatus::REJECTED->value]);
+        $approval->externalApproveCurrentStep(
+            $data['external_name'], 
+            $data['external_title'] ?? null, 
+            $data['notes'] ?? null)
+        ;
 
-        return back()->with('success', 'Form rejected.');
+        if ($approval->isFullyApproved()) {
+            $approval->updateParentFormStatus();
+        }
+
+        return back()->with('success', 'External approval recorded.');
     }
 
     public function reset(FormApproval $approval, Request $request)
@@ -75,17 +132,7 @@ class FormApprovalController extends Controller
         $this->authorize('review', $approval);
 
         // If it’s already pending, do nothing (idempotent)
-        if ($approval->status !== ApprovalStatus::PENDING_REVIEW->value) {
-            $approval->update([
-                'status'          => ApprovalStatus::PENDING_REVIEW->value,
-                'review_notes'    => null,
-                'reviewed_by_id'  => null,
-                'reviewed_at'     => null,
-            ]);
-
-            // If your approvable record mirrors status, optionally also:
-            // $approval->approvable?->update(['status' => ApprovalStatus::PENDING->value]);
-        }
+         $approval->resetToPending();
 
         return back()->with('success', 'Moved back to Pending Review.');
     }

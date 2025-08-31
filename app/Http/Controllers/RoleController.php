@@ -7,23 +7,24 @@ use Inertia\Inertia;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class RoleController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-    }
+        $q = $request->string('q')->toString();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return Inertia::render('roles/index', [
+            'roles' => Role::fetchRoles($q),
+            'permissions' => Role::fetchAllPermissions(),
+            'totals' => Role::fetchTotals(),
+        ]);
     }
 
     /**
@@ -31,15 +32,21 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $this->authorize('manage-roles');
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Role $role)
-    {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
+            'code' => ['required', 'string', 'max:255', 'unique:roles,code'],
+            'description' => ['nullable', 'string'],
+        ]);
+
+        $role = Role::createRole($validated);
+
+        if ($request->has('permissions')) {
+            $role->permissions()->sync($request->permissions);
+        }
+
+        return redirect()->route('role-management.index')->with('success', 'Role created successfully.');
     }
 
     /**
@@ -55,14 +62,41 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', "unique:roles,name,{$role->id}"],
+            'code' => ['required', 'string', 'max:255', "unique:roles,code,{$role->id}"],
+            'description' => ['nullable', 'string'],
+            'permissions' => ['array'],
+        ]);
+
+        Role::updateRole($role, $validated);
+
+        if ($request->has('permissions')) {
+            $role->permissions()->sync($request->permissions);
+        }
+
+        return redirect()->route('role-management.index')->with('success', 'Role updated successfully.');
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(Role $role)
     {
-        //
+        $this->authorize('destroy-role');
+        $role->delete();
+
+        return redirect()->route('role-management.index')->with('success', 'Role deleted successfully.');
+    }
+        
+    public function updatePermissions(Request $request, Role $role)
+    {
+        $this->authorize('manage-permissions');
+
+        $request->validate(['permissions' => 'array']);
+        $role->permissions()->sync($request->permissions ?? []);
+
+        return redirect()->route('role-management.index')->with('success', 'Permissions updated successfully.');
     }
 }

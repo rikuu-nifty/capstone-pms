@@ -26,17 +26,17 @@ class TurnoverDisposalController extends Controller
             'issuingOffice',
             'receivingOffice',
         ])
-            ->withCount('turnoverDisposalAssets as asset_count')
-            ->latest()
-            ->get();
+        ->withCount('turnoverDisposalAssets as asset_count')
+        ->latest()
+        ->get();
 
         $turnoverDisposalAssets = TurnoverDisposalAsset::with([
             'assets.assetModel.category',
         ])
-            ->whereHas('turnoverDisposal', function ($q) {
-                $q->where('status', '!=', 'disposed');
-            })
-            ->get();
+        ->whereHas('turnoverDisposal', function ($q) {
+            $q->where('status', '!=', 'disposed');
+        })
+        ->get();
 
         $assets = InventoryList::with(['assetModel.category'])->get();
 
@@ -129,6 +129,16 @@ class TurnoverDisposalController extends Controller
             'issuingOffice',
             'receivingOffice',
             'turnoverDisposalAssets.assets.assetModel.category',
+            'formApproval.steps' => fn($q) =>
+                $q->whereIn('code', ['external_noted_by','noted_by'])
+                ->whereIn('status', ['pending', 'approved'])
+                ->orderByDesc('step_order'),
+            'formApproval.steps.actor:id,name',
+        ]);
+
+        $turnoverDisposal->append([
+            'noted_by_name',
+            'noted_by_title'
         ]);
 
         return Inertia::render('turnover-disposal/index', array_merge(

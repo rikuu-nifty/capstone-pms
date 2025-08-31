@@ -2,59 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-use App\Notifications\UserApprovedNotification;
-use App\Notifications\UserDeniedNotification;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use App\Notifications\RequestEmailChangeNotification;
+use App\Notifications\PasswordResetNotification;
+
+use App\Models\User;
+use App\Models\Role;
 
 class UserApprovalController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
-        $tab = $request->query('tab','all');
+        $tab = $request->string('tab')->toString() ?: 'system';
+        $filter = $request->string('filter')->toString();
+        $q = $request->string('q')->toString();
 
-        $q = User::query();
-        if ($tab === 'approved') $q->approved();
-        elseif ($tab === 'pending') $q->pending();
-        elseif ($tab === 'denied') $q->denied();
+        if ($tab === 'system') {
+            return Inertia::render('users/index', [
+                'tab'    => 'system',
+                'users'  => User::fetchSystemUsers($q),
+                'totals' => User::fetchTotals(),
+                'roles'  => Role::all(['id', 'name', 'code']),
+                'filterRole' => $request->integer('filter_role') ?: '',
+            ]);
+        }
 
-        $users = $q->latest()->paginate(10)->withQueryString();
+        if ($tab === 'approvals') {
+            return Inertia::render('users/index', [
+                'tab'    => 'approvals',
+                'filter' => $filter,
+                'users'  => User::fetchApprovals($filter, $q),
+                'totals' => User::fetchTotals(),
+                'roles'  => Role::all(['id', 'name', 'code']),
+            ]);
+        }
 
-        return Inertia::render('approvals/users/index', [
-            'users' => $users,
-            'tab' => $tab,
-        ]);
+        abort(404);
     }
 
     public function approve(User $user, Request $request)
     {
-        if ($user->status !== 'approved') {
-            $user->update([
-                'status'         => 'approved',
-                'approved_at'    => now(),
-                'approval_notes' => $request->input('notes'),
-            ]);
+        $roleId = $request->input('role_id');
+        $role   = Role::findOrFail($roleId);
 
-            $user->notify(new UserApprovedNotification($request->input('notes')));
-        }
+        $this->authorize('assign-role', $role->code);
+
+        $user->approveWithRoleAndNotify($role, $request->input('notes'));
 
         return back()->with('status', "Approved {$user->email}");
     }
 
     public function deny(User $user, Request $request)
     {
-        if ($user->status !== 'denied') {
-            $user->update([
-                'status'         => 'denied',
-                'approved_at'    => null,
-                'approval_notes' => $request->input('notes'),
-            ]);
-
-            $user->notify(new UserDeniedNotification($request->input('notes')));
-        }
+        $user->rejectWithNotes($request->input('notes'));
 
         return back()->with('status', "Denied {$user->email}");
+    }
+
+    public function reassignRole(User $user, Request $request)
+    {
+        $request->validate(['role_id' => 'required|exists:roles,id']);
+        $role = Role::findOrFail($request->role_id);
+
+        $user->reassignRoleWithNotify($role, $request->input('notes'));
+
+        return back()->with('status', "Reassigned role for {$user->email}");
+    }
+
+    public function destroy(User $user)
+    {
+        $this->authorize('view-users-page');
+        $user->delete();
+
+        return back()->with('status', "Deleted {$user->email}");
+    }
+
+    public function requestEmailChange(User $user)
+    {
+        $user->notify(new RequestEmailChangeNotification());
+
+        return back()->with('status', "Email change request sent to {$user->email}");
     }
 }

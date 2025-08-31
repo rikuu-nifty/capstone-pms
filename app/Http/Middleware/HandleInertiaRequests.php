@@ -26,7 +26,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
-        return parent::version($request);
+        // return parent::version($request);
+        try {
+            return parent::version($request);
+        } catch (\Throwable $e) {
+            return 'dev'; // fallback value so version is never null
+        }
     }
 
     /**
@@ -46,6 +51,8 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),
+                'permissions' => $request->user()?->role?->permissions->pluck('code')->toArray() ?? [],
+                'role' => $request->user()?->role?->code,
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),

@@ -1,5 +1,3 @@
-// building-kpi-section.tsx
-import KPIStatCard from '@/components/statistics/KPIStatCard';
 import { Building2, DoorOpen, Boxes } from 'lucide-react';
 import { formatNumber } from '@/types/custom-index';
 
@@ -12,50 +10,66 @@ type Props = {
     };
 };
 
-export default function BuildingKPISection({ 
-  totals 
-}: Props) {
-
+export default function BuildingKPISection({ totals }: Props) {
     if (!totals) return null;
 
     return (
-        <div className="flex flex-wrap justify-between">
-            <KPIStatCard
-                label="Total Buildings"
-                value={formatNumber(totals.total_buildings)}
-                icon={Building2}
-                barColor="bg-orange-400"
-                className="w-[350px] h-[140px]"
-            />
-            <KPIStatCard
-                label="Average Assets per Building"
-                value={
-                  totals.avg_assets_per_building !== undefined
-                    ? formatNumber(Number(totals.avg_assets_per_building.toFixed(2)))
-                    : '0.00'
-                }
-                icon={Boxes}
-                barColor="bg-teal-400"
-                className="w-[350px] h-[140px]"
-            />
-            <KPIStatCard
-                label="Total Rooms"
-                value={formatNumber(totals.total_rooms)}
-                icon={DoorOpen}
-                barColor="bg-sky-400"
-                className="w-[350px] h-[140px]"
-            />
-            <KPIStatCard
-                label="Average Assets per Room"
-                value={
-                  totals.avg_assets_per_room !== undefined
-                    ? formatNumber(Number(totals.avg_assets_per_room.toFixed(2)))
-                    : '0.00'
-                }
-                icon={Boxes}
-                barColor="bg-teal-400"
-                className="w-[350px] h-[140px]"
-            />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            {/* Total Buildings */}
+            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                    <Building2 className="h-7 w-7 text-orange-600" />
+                </div>
+                <div>
+                    <div className="text-sm text-muted-foreground">Total Buildings</div>
+                    <div className="text-3xl font-bold">
+                        {formatNumber(totals.total_buildings)}
+                    </div>
+                </div>
+            </div>
+
+            {/* Average Assets per Building */}
+            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
+                    <Boxes className="h-7 w-7 text-teal-600" />
+                </div>
+                <div>
+                    <div className="text-sm text-muted-foreground">Avg Assets / Building</div>
+                    <div className="text-3xl font-bold">
+                        {totals.avg_assets_per_building !== undefined
+                            ? formatNumber(Number(totals.avg_assets_per_building.toFixed(2)))
+                            : '0.00'}
+                    </div>
+                </div>
+            </div>
+
+            {/* Total Rooms */}
+            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                    <DoorOpen className="h-7 w-7 text-sky-600" />
+                </div>
+                <div>
+                    <div className="text-sm text-muted-foreground">Total Rooms</div>
+                    <div className="text-3xl font-bold">
+                        {formatNumber(totals.total_rooms)}
+                    </div>
+                </div>
+            </div>
+
+            {/* Average Assets per Room */}
+            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
+                    <Boxes className="h-7 w-7 text-teal-600" />
+                </div>
+                <div>
+                    <div className="text-sm text-muted-foreground">Avg Assets / Room</div>
+                    <div className="text-3xl font-bold">
+                        {totals.avg_assets_per_room !== undefined
+                            ? formatNumber(Number(totals.avg_assets_per_room.toFixed(2)))
+                            : '0.00'}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

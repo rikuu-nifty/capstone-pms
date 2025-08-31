@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Str;
+
+use App\Models\User;
+
+use App\Notifications\PasswordResetNotification;
 
 class PasswordController extends Controller
 {
@@ -35,5 +40,21 @@ class PasswordController extends Controller
         ]);
 
         return back();
+    }
+
+    public function adminReset(Request $request, User $user): RedirectResponse
+    {
+        // $this->authorize('reset-user-password', $user);
+
+        $newPassword = Str::random(12);
+
+        $user->update([
+            'password' => Hash::make($newPassword),
+        ]);
+
+        // Notify user by email
+        $user->notify(new PasswordResetNotification($newPassword));
+
+        return back()->with('status', "Password for {$user->email} has been reset and emailed.");
     }
 }

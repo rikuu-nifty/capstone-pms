@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class Transfer extends Model
 {
     use SoftDeletes;
-    use  HasFormApproval;
+    use HasFormApproval;
 
     protected $fillable = [
         'current_building_id',
@@ -33,6 +33,8 @@ class Transfer extends Model
         'scheduled_date' => 'date',
         'actual_transfer_date' => 'date',
     ];
+
+    protected $appends = ['approved_by_name'];
     
     public function currentBuildingRoom()
     {
@@ -67,26 +69,6 @@ class Transfer extends Model
     public function transferAssets()
     {
         return $this->hasMany(TransferAsset::class, 'transfer_id');
-        // return $this->hasMany(TransferAsset::class, 'transfer_id')->with('inventoryList);
-        /* this will allow us to show each asset detail */
-    }
-
-    public function approvalFormTitle(): string
-    {
-        return 'Transfer -  #' . $this->id;
-    }
-
-    protected static function booted(): void
-    {
-        static::created(function (Transfer $t) {
-            $t->created_by_id ??= Auth::id();
-        });
-
-        static::created(function (Transfer $t) {
-            if ($t->created_by_id) {
-                $t->openApproval($t->created_by_id);
-            }
-        });
     }
 
     public function scopeWithViewRelations($query)
@@ -130,5 +112,33 @@ class Transfer extends Model
             })
             ->values()
             ->all();
+    }
+    
+    public function getApprovedByNameAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval')
+            ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) => 
+                    $q->where('code','approved_by')
+                    ->where('status','approved')
+                    ->orderByDesc('acted_at'),
+                    'steps.actor:id,name',
+            ])->first();
+
+        $step = $fa?->steps->first();
+        return $step
+            ? ($step->is_external ? ($step->external_name ?: null) : ($step->actor->name ?? null))
+            : null;
+    }
+
+    public function getCheckedByNameAttribute(): ?string
+    {
+        return $this->approved_by_name;
+    }
+    
+    public function approvalFormTitle(): string
+    {
+        return 'Transfer -  #' . $this->id;
     }
 }

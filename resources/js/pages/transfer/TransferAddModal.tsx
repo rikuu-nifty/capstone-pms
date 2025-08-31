@@ -16,7 +16,7 @@ interface TransferAddModalProps {
     assets: InventoryList[];
 }
 
-const statusOptions = [ 'upcoming', 'in_progress', 'completed', 'overdue' ];
+const statusOptions = [ 'pending_review', 'upcoming', 'in_progress', 'completed', 'overdue', 'cancelled'];
 
 export default function TransferAddModal({
     show,
@@ -41,7 +41,7 @@ export default function TransferAddModal({
         scheduled_date: '',
         actual_transfer_date: '',
         received_by: '',
-        status: 'upcoming',
+        status: 'pending_review',
         remarks: '',
         selected_assets: [],
     });
@@ -263,15 +263,11 @@ export default function TransferAddModal({
                     className="w-full rounded-lg border p-2"
                     value={data.status}
                     onChange={(e) =>
-                        setData('status', e.target.value as 'upcoming' | 'in_progress' | 'completed' | 'overdue')
+                        setData('status', e.target.value as 'pending_review' | 'upcoming' | 'in_progress' | 'completed' | 'overdue' | 'cancelled')
                     }
                 >
                     <option value="">Select Status</option>
-                    {/* <option value="upcoming">Upcoming</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="overdue">Overdue</option> */}
-                    
+
                     {statusOptions.map((status) => (
                         <option key={status} value={status}>
                             {formatEnums(status)}

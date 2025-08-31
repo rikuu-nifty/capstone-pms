@@ -8,10 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 // use App\Models\OffCampusAsset;
 use Illuminate\Support\Facades\Auth;
 
-
 class OffCampus extends Model
 {
-
     use SoftDeletes;
     use HasFormApproval;
 
@@ -33,29 +31,51 @@ class OffCampus extends Model
         'checked_by',
         'deleted_by',
     ];
-       protected $casts = [
+
+    protected $casts = [
         'date_issued' => 'date',
         'return_date' => 'date',
          'deleted_at' => 'datetime',
     ];
 
-        // Scopes for convenience (optional)
-    public function scopeActive($query)       { return $query->whereNull('deleted_at'); }
-    public function scopeOnlyArchived($query) { return $query->onlyTrashed(); }
-    public function scopeWithArchived($query) { return $query->withTrashed(); }
+    protected array $approvalStepToColumn = [
+        'external_approved_by' => 'approved_by',
+        // you can add more later, e.g. 'issued_by' => 'issued_by_name'
+    ];
+
+    public function applyApprovalStepSideEffects(FormApprovalSteps $step, FormApproval $approval): void
+    {
+        if ($step->code === 'external_approved_by' && $step->status === 'approved') {
+            // Choose your policy: overwrite always, or only if blank:
+            // $shouldWrite = blank($this->approved_by);   // write only if blank
+            $shouldWrite = true;                           // overwrite always
+
+            if ($shouldWrite) {
+                $this->forceFill([
+                    'approved_by' => $step->external_name,
+                ])->save();
+            }
+        }
+    }
+
+    // Scopes for convenience (optional)
+    public function scopeActive($query)       
+    { 
+        return $query->whereNull('deleted_at'); 
+    }
+
+    public function scopeOnlyArchived($query) 
+    { 
+        return $query->onlyTrashed(); 
+    }
+
+    public function scopeWithArchived($query) 
+    { 
+        return $query->withTrashed(); 
+    }
 
      protected static function booted()
     {
-        static::created(function (OffCampus $oc) {
-            $oc->created_by_id ??= Auth::id();
-        });
-
-        static::created(function (OffCampus $oc) {
-            if ($oc->created_by_id) {
-                $oc->openApproval($oc->created_by_id);
-            }
-        });
-
         // Archive children with parent
         static::deleting(function (OffCampus $offCampus) {
             if (! $offCampus->isForceDeleting()) {
@@ -67,8 +87,6 @@ class OffCampus extends Model
         static::restoring(function (OffCampus $offCampus) {
             $offCampus->assets()->withTrashed()->get()->each->restore();
         });
-
-        
     }
 
     // public function asset() // inventory_lists

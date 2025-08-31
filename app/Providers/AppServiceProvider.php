@@ -23,18 +23,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Inertia::share([
-            // ✅ Your existing nav metrics
-            'nav_metrics' => fn () =>
-                Cache::remember('nav_metrics', 30, fn () => [
+        Inertia::share('nav_metrics', function () {
+            return Cache::remember('nav_metrics', 30, function () {
+                return [
                     'pending_user_approvals' => User::where('status', 'pending')->count(),
-                ]),
-
-            // ✅ Add auth info for all pages
-            'auth' => fn () => [
-                'user' => Auth::user(),
-                'isAuthenticated' => Auth::check(),
-            ],
-        ]);
+                ];
+            });
+        });
+        
+      
     }
 }
