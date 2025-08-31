@@ -222,6 +222,7 @@ class FormApproval extends Model
     {
         $step = $this->currentStep();
         if (!$step) return;
+        
         if (!$step->requiresExternalInput()) {
             abort(422, 'This step does not accept external signatures.');
         }
@@ -282,5 +283,60 @@ class FormApproval extends Model
                 'review_notes'   => null,
             ])->save();
         });
+    }
+
+    public function isFullyApproved(): bool
+    {
+        return $this->steps()->where('status', '!=', 'approved')->count() === 0;
+    }
+
+    public function updateParentFormStatus(?string $status = null): void
+    {
+        $model = $this->approvable;
+
+        if (!$model) {
+            return;
+        }
+
+        $handlers = [
+            OffCampus::class => function ($model, $status, $approved) {
+                // OffCampus has no status column – do nothing or log
+            },
+            
+            InventoryScheduling::class => function ($model, $status, $approved) {
+                if ($status === 'reset') {
+                    $model->update(['scheduling_status' => 'Pending']);
+                } elseif ($approved) {
+                    $model->update(['scheduling_status' => 'Completed']);
+                }
+            },
+            
+            Transfer::class => function ($model, $status, $approved) {
+                if ($status === 'rejected') {
+                    $model->update(['status' => 'cancelled']);
+                } elseif ($status === 'reset') {
+                    $model->update(['status' => 'upcoming']);
+                } elseif ($approved) {
+                    $model->update(['status' === 'completed']);
+                }
+            },
+            
+            TurnoverDisposal::class => function ($model, $status, $approved) {
+                if ($status === 'rejected') {
+                    $model->update(['status' => 'rejected']);
+                } elseif ($status === 'reset') {
+                    $model->update(['status' => 'pending_review']);
+                } elseif ($approved) {
+                    $model->update(['status' => 'approved']);
+                }
+            },
+        ];
+
+        $class = get_class($model);
+        $approved = $this->isFullyApproved();
+
+        if (isset($handlers[$class])) {
+            $handlers[$class]($model, $status, $approved);
+        }
     }
 }

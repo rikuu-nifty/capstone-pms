@@ -24,11 +24,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Inertia::share('nav_metrics', function () {
-        return Cache::remember('nav_metrics', 30, function () {
-            return [
-                'pending_user_approvals' => User::where('status', 'pending')->count(),
-            ];
+            return Cache::remember('nav_metrics', 30, function () {
+                return [
+                    'pending_user_approvals' => User::where('status', 'pending')->count(),
+                ];
+            });
         });
-    });
+        
     }
 }
