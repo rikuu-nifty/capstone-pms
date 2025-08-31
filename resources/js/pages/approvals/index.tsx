@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 // import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Eye, ThumbsUp, ThumbsDown, RotateCcw, FileSignature  } from 'lucide-react';
+import { Eye, RotateCcw, FileSignature  } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -230,13 +230,12 @@ export default function ApprovalsIndex() {
                                         <div className="flex items-center justify-center gap-2">
                                             {/* View */}
                                             <Button 
-                                                variant="ghost" 
-                                                size="icon" 
+                                                variant="primary"
                                                 asChild 
                                                 className="cursor-pointer"
                                             >
                                                 <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                    View
                                                 </Link>
                                             </Button>
 
@@ -255,42 +254,39 @@ export default function ApprovalsIndex() {
                                                     <>
                                                     {/* Approve */}
                                                     <Button
-                                                        variant="ghost"
-                                                        size="icon"
+                                                        variant="blue"
                                                         className="cursor-pointer"
                                                         title={`Approve as ${a.current_step_actor}`}
                                                         disabled={!a.can_approve}
                                                         onClick={() => openApprove(a)}
                                                     >
                                                         {/* {Number(a.can_approve) ? 'true' : 'false'} */}
-                                                        <ThumbsUp className="h-4 w-4 text-green-600 dark:text-green-500" />
+                                                        Approve
                                                     </Button>
 
                                                     {/* Reject */}
                                                     <Button
-                                                        variant="ghost"
-                                                        size="icon"
+                                                        variant="destructive"
                                                         className="cursor-pointer"
                                                         title={`Reject as ${a.current_step_actor}`}
-                                                        // disabled={!canAct(a)}
+                                                        disabled={!a.can_approve}
                                                         onClick={() => openReject(a)}
                                                     >
-                                                        <ThumbsDown className="h-4 w-4 text-destructive" />
+                                                        Reject
                                                     </Button>
                                                     </>
                                                 )
                                                 ) : (
                                                 <Button
-                                                    variant="ghost"
-                                                    size="icon"
+                                                    variant="destructive"
                                                     title="Move back to Pending Review"
                                                     className="cursor-pointer"
                                                     onClick={() => {
-                                                    if (!confirm('Move this back to Pending Review?')) return;
+                                                        if (!confirm('Move this back to Pending Review?')) return;
                                                         router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
                                                     }}
                                                 >
-                                                    <RotateCcw className="h-4 w-4 text-green-600 dark:text-green-500" />
+                                                    Reset
                                                 </Button>
                                             )}
                                         </div>
