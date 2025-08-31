@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Auth\Access\AuthorizationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,19 +30,24 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (AuthorizationException $e, $request) {
-            // Inertia visit? Bounce back with a flash the layout will read
-            if ($request->inertia()) {
-                return back(303)->with(
-                    'unauthorized',
-                    $e->getMessage() ?: 'You are not authorized to perform this action.'
-                );
+        $exceptions->render(function (AuthorizationException|HttpException $e, $request) {
+            $status = $e instanceof HttpException ? $e->getStatusCode() : 403;
+
+            if ($status === 403) {
+                $message = $e->getMessage() ?: 'You are not authorized to perform this action.';
+
+                // Inertia navigation → bounce back with flash
+                if ($request->inertia()) {
+                    return back(303)->with('unauthorized', $message);
+                }
+
+                // Non-Inertia (direct visit, hard refresh) → redirect somewhere safe
+                return redirect()
+                    ->route('unauthorized')   // optional: make a route/page for non-Inertia users
+                    ->with('unauthorized', $message);
             }
 
-            // Non-Inertia fallback (optional)
-            return redirect()
-                ->route('unauthorized')
-                ->with('unauthorized', $e->getMessage() ?: 'You are not authorized to perform this action.');
+            return null; // let Laravel handle other errors normally
         });
     })
     ->create();

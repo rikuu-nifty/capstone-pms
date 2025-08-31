@@ -26,7 +26,9 @@ class Role extends Model
             $msg = $role->deletionBlockReasonFor(Auth::user());
             if ($msg) {
                 // Forces 303 back + flash so your layout opens UnauthorizedModal
-                throw new HttpResponseException(back(303)->with('unauthorized', $msg));
+                throw new HttpResponseException(
+                    back(303)->with('unauthorized', $msg)
+                );
             }
         });
     }
