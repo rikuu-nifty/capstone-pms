@@ -1,13 +1,6 @@
-import { Head, usePage } from "@inertiajs/react";
+import { Head, usePage, router } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -265,8 +258,7 @@ export default function RoleManagement() {
                     onCancel={() => setShowDelete(false)}
                     onConfirm={() => {
                     if (deletingRole) {
-                        // Still call backend for deletion
-                        router.delete(route("roles.destroy", deletingRole.id), {
+                        router.delete(route("role-management.destroy", deletingRole.id), {
                         preserveScroll: true,
                         onSuccess: () => setShowDelete(false),
                         });

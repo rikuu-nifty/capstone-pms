@@ -46,7 +46,7 @@ export default function AddRoleModal({ show, onClose, permissions }: Props) {
         <AddModal
             show={show}
             onClose={onClose}
-            title="Add Role"
+            title="Add New Role"
             onSubmit={handleSubmit}
             processing={processing}
         >
@@ -93,11 +93,11 @@ export default function AddRoleModal({ show, onClose, permissions }: Props) {
 
             {/* Permissions */}
             <div className="col-span-2 space-y-3 max-h-[520px] overflow-y-auto rounded-lg border bg-muted/10 p-4 mt-4">
-                <Label className="font-medium block mb-2">Assign Permissions</Label>
+                <Label className="font-medium block mb-2">Assign View Permissions</Label>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {permissions
-                        .filter((perm) => perm.code.startsWith("view-")) // 👈 only views for now
+                        .filter((perm) => perm.code.startsWith("view-"))
                         .map((perm) => (
                             <div
                                 key={perm.id}
