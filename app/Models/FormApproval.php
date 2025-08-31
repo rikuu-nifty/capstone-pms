@@ -30,17 +30,15 @@ class FormApproval extends Model
 
     protected function applyStepSideEffects(FormApprovalSteps $step): void
     {
-        $model = $this->approvable;            // e.g., OffCampus instance
+        $model = $this->approvable; 
         if (!$model) return;
 
-        // Let the approvable model decide, if it implements a hook:
         if (method_exists($model, 'applyApprovalStepSideEffects')) {
             $step->loadMissing('actor');       // for internal approvers
             $model->applyApprovalStepSideEffects($step, $this);
             return;
         }
 
-        // Generic fallback: map step code → column on the approvable
         if (property_exists($model, 'approvalStepToColumn')) {
             $map = $model->approvalStepToColumn;
             if (isset($map[$step->code]) && $step->status === 'approved') {
@@ -125,13 +123,11 @@ class FormApproval extends Model
         $this->save();
     }
 
-    /** Seed default steps for the approvable type */
     public function seedDefaultSteps(): void
     {
         $type = $this->form_type;
 
         $defs = match ($type) {
-            // Inventory Scheduling: Staff -> PMO Head (Noted) -> VP Admin (Approved)
             'inventory_scheduling' => [
                 ['prepared_by',   'Prepared By (PMO Staff)', false, true],
                 ['noted_by',      'Noted By (PMO Head)',     false, false],
@@ -144,13 +140,11 @@ class FormApproval extends Model
                 ['external_approved_by',  'Approved By (Dean/Head)',          true,  false],
             ],
 
-            // Transfer: Staff prepares -> PMO Head checks -> PMO Head approves
             'transfer' => [
                 ['prepared_by',  'Prepared By (PMO Staff)',       false, true],
                 ['approved_by',  'Approved By (PMO Head)',        false, false],
             ],
 
-            // Turnover/Disposal: Staff prepares -> PMO Head notes
             'turnover_disposal' => [
                 ['prepared_by',  'Prepared By (PMO Staff)', false, true],
                 ['external_noted_by', 'Noted By (Dean/Head)', true, false],
@@ -179,7 +173,7 @@ class FormApproval extends Model
         $this->recomputeOverallStatus();
     }
 
-    /** Approve current step (user-based) */
+    //user-based
     public function approveCurrentStep(?string $notes = null): void
     {
         $step = $this->currentStep();
@@ -245,7 +239,7 @@ class FormApproval extends Model
             $this->loadMissing('steps', 'approvable');
 
             foreach ($this->steps as $step) {
-                // keep creator auto-approved step as approved (optional)
+                // keep creator auto-approved step as approved
                 if ($step->auto_approve_by_creator) continue;
 
                 // if $toStepOrder passed, only reset that step and those after it
@@ -262,7 +256,6 @@ class FormApproval extends Model
                     'acted_at'       => null,
                 ]);
 
-                // 🧹 Clear any mirrored column on the underlying record
                 if ($wasApproved && $this->approvable && property_exists($this->approvable, 'approvalStepToColumn')) {
                     $map = $this->approvable->approvalStepToColumn;
                     if (isset($map[$step->code])) {
@@ -275,7 +268,6 @@ class FormApproval extends Model
                 }
             }
 
-            // 🔁 Reset the parent approval back to "pending"
             $this->fill([
                 'status'         => 'pending_review',
                 'reviewed_by_id' => null,

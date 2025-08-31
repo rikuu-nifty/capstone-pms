@@ -1,11 +1,11 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Input } from '@/components/ui/input';
 import { Users, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { formatDateTime, Role, User, QueryParams, formatNumber, formatFullName } from '@/types/custom-index';
 
 import RoleAssignmentModal from '@/components/modals/RoleAssignmentModal';
@@ -43,20 +43,16 @@ type UserManagementPageProps = {
 export default function UserApprovals() {
     const { props, url } = usePage<UserManagementPageProps>();
     const currentTab = props.tab ?? 'approvals';
-    
-    const { version } = usePage();
 
     const currentFilter: UserStatus =
         props.filter === 'pending' ||
         props.filter === 'approved' ||
         props.filter === 'denied'
         ? (props.filter as UserStatus)
-        : ''
-    ;
+        : '';
 
     const currentRoleFilter = props.filter_role ? Number(props.filter_role) : "";
 
-    // ✅ State for modals
     const [showRoleModal, setShowRoleModal] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [showViewUser, setShowViewUser] = useState(false);
@@ -66,24 +62,19 @@ export default function UserApprovals() {
     const initialQ = useMemo(() => {
         const qs = url.includes('?') ? url.split('?')[1] : '';
         return new URLSearchParams(qs).get('q') ?? '';
-    }, [
-        url
-    ]);
+    }, [url]);
 
     const [rawSearch, setRawSearch] = useState(initialQ);
-    const search = useDebouncedValue(rawSearch, 200);
+    const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase();
 
-    useEffect(() => {
-        if (!version) return;
-
-        router.visit(route('users.index'), {
-            method: 'get',
-            data: { tab: currentTab, q: search || undefined },
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
+    const filteredUsers = useMemo(() => {
+        return props.users.data.filter((u) => {
+        const haystack = `${u.name ?? ""} ${u.email ?? ""} ${
+            u.detail ? `${u.detail.first_name} ${u.detail.middle_name ?? ""} ${u.detail.last_name}` : ""
+        }`.toLowerCase();
+        return !search || haystack.includes(search);
         });
-    }, [search, currentTab, version]);
+    }, [props.users.data, search]);
 
     const go = (params: QueryParams = {}) =>
         router.get(
@@ -108,60 +99,60 @@ export default function UserApprovals() {
                     <div>
                         <h1 className="text-2xl font-semibold">Users</h1>
                         <p className="text-sm text-muted-foreground">
-                        Manage system users and approve new registrations.
+                            Manage system users and approve new user registrations.
                         </p>
                     </div>
 
                     <div className="flex items-center justify-between w-full gap-2">
                         <div className="flex items-center gap-2">
-                            <Input
-                                type="text"
-                                placeholder="Search by name or email..."
-                                value={rawSearch}
-                                onChange={(e) => setRawSearch(e.target.value)}
-                                className="w-64"
+                        <Input
+                            type="text"
+                            placeholder="Search by name or email..."
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
+                            className="w-64"
+                        />
+
+                        {currentTab === "system" && (
+                            <UserRoleFilterDropdown
+                            roles={props.roles}
+                            selectedRoleId={currentRoleFilter}
+                            onApply={(roleId) =>
+                                router.get(
+                                route("users.index"),
+                                { tab: currentTab, q: search || undefined, filter_role: roleId || undefined },
+                                { preserveState: true, preserveScroll: true, replace: true }
+                                )
+                            }
+                            onClear={() =>
+                                router.get(
+                                route("users.index"),
+                                { tab: currentTab, q: search || undefined, filter_role: "" },
+                                { preserveState: true, preserveScroll: true, replace: true }
+                                )
+                            }
                             />
+                        )}
 
-                            {currentTab === "system" && (
-                                <UserRoleFilterDropdown
-                                    roles={props.roles}
-                                    selectedRoleId={currentRoleFilter}
-                                    onApply={(roleId) =>
-                                        router.get(
-                                            route("users.index"),
-                                            { tab: currentTab, q: search || undefined, filter_role: roleId || undefined },
-                                            { preserveState: true, preserveScroll: true, replace: true }
-                                        )
-                                    }
-                                    onClear={() =>
-                                        router.get(
-                                        route("users.index"),
-                                            { tab: currentTab, q: search || undefined, filter_role: "" },
-                                            { preserveState: true, preserveScroll: true, replace: true }
-                                        )
-                                    }
-                                />
-                            )}
-
-                            {currentTab === "approvals" && (
-                                <UserStatusFilterDropdown
-                                    selected_status={currentFilter}
-                                    onApply={(status) =>
-                                        router.get(
-                                        route("users.index"),
-                                            { tab: currentTab, q: search || undefined, filter: status },
-                                            { preserveState: true, preserveScroll: true, replace: true }
-                                        )
-                                    }
-                                    onClear={() =>
-                                        router.get(
-                                        route("users.index"),
-                                            { tab: currentTab, q: search || undefined, filter: "" },
-                                            { preserveState: true, preserveScroll: true, replace: true }
-                                        )
-                                    }
-                                />
-                            )}
+                        {currentTab === "approvals" && (
+                            <UserStatusFilterDropdown
+                            selected_status={currentFilter}
+                            onApply={(status) =>
+                                router.get(
+                                route("users.index"),
+                                { tab: currentTab, q: search || undefined, filter: status },
+                                { preserveState: true, preserveScroll: true, replace: true }
+                                )
+                            }
+                            onClear={() =>
+                                router.get(
+                                route("users.index"),
+                                { tab: currentTab, q: search || undefined, filter: "" },
+                                { preserveState: true, preserveScroll: true, replace: true }
+                                )
+                            }
+                            />
+                        )}
                         </div>
                     </div>
                 </div>
@@ -175,7 +166,7 @@ export default function UserApprovals() {
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Total Users</div>
-                                    <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
                                     {formatNumber(props.totals.users)}
                                 </div>
                             </div>
@@ -188,7 +179,7 @@ export default function UserApprovals() {
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Approved</div>
-                                    <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
                                     {formatNumber(props.totals.approved)}
                                 </div>
                             </div>
@@ -201,7 +192,7 @@ export default function UserApprovals() {
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Pending</div>
-                                    <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
                                     {formatNumber(props.totals.pending)}
                                 </div>
                             </div>
@@ -214,7 +205,7 @@ export default function UserApprovals() {
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Rejected</div>
-                                    <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
                                     {formatNumber(props.totals.denied)}
                                 </div>
                             </div>
@@ -224,26 +215,26 @@ export default function UserApprovals() {
 
                 {/* Tabs */}
                 <div className="flex gap-4 border-b pb-2">
-                    <button
-                        onClick={() => changeTab('system')}
-                        className={`cursor-pointer pb-2 text-sm ${
-                        currentTab === 'system'
-                            ? 'font-semibold text-foreground border-b-2 border-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        System Users
-                    </button>
-                    <button
-                        onClick={() => changeTab('approvals')}
-                        className={`cursor-pointer pb-2 text-sm ${
-                        currentTab === 'approvals'
-                            ? 'font-semibold text-foreground border-b-2 border-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        User Approvals
-                    </button>
+                <button
+                    onClick={() => changeTab('system')}
+                    className={`cursor-pointer pb-2 text-sm ${
+                    currentTab === 'system'
+                        ? 'font-semibold text-foreground border-b-2 border-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    System Users
+                </button>
+                <button
+                    onClick={() => changeTab('approvals')}
+                    className={`cursor-pointer pb-2 text-sm ${
+                    currentTab === 'approvals'
+                        ? 'font-semibold text-foreground border-b-2 border-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    User Approvals
+                </button>
                 </div>
 
                 {/* System Users Tab */}
@@ -261,83 +252,82 @@ export default function UserApprovals() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {props.users.data.length > 0 ? (
-                        props.users.data.map((u) => (
+                        {filteredUsers.length > 0 ? (
+                        filteredUsers.map((u) => (
                             <TableRow key={u.id} className="text-center">
-                                <TableCell>
-                                    {u.detail
-                                    ? formatFullName(
-                                        u.detail.first_name,
-                                        u.detail.middle_name ?? "",
-                                        u.detail.last_name
-                                        )
-                                    : u.name}
-                                </TableCell>
-                                <TableCell>{u.email}</TableCell>
+                            <TableCell>
+                                {u.detail
+                                ? formatFullName(
+                                    u.detail.first_name,
+                                    u.detail.middle_name ?? "",
+                                    u.detail.last_name
+                                    )
+                                : u.name}
+                            </TableCell>
+                            <TableCell>{u.email}</TableCell>
 
-                                <TableCell>
-                                    {u.role ? (
-                                        <Badge
-                                            variant={
-                                            u.role.code === "superuser"
-                                                ? "superuser"
-                                                : u.role.code === "vp_admin"
-                                                ? "vp_admin"
-                                                : u.role.code === "pmo_head"
-                                                ? "pmo_head"
-                                                : u.role.code === "pmo_staff"
-                                                ? "pmo_staff"
-                                                : "outline"
-                                            }
-                                            className="text-xs"
-                                        >
-                                            {u.role.name}
-                                        </Badge>
-                                    ) : (
-                                    "—"
-                                    )}
-                                </TableCell>
+                            <TableCell>
+                                {u.role ? (
+                                <Badge
+                                    variant={
+                                    u.role.code === "superuser"
+                                        ? "superuser"
+                                        : u.role.code === "vp_admin"
+                                        ? "vp_admin"
+                                        : u.role.code === "pmo_head"
+                                        ? "pmo_head"
+                                        : u.role.code === "pmo_staff"
+                                        ? "pmo_staff"
+                                        : "outline"
+                                    }
+                                    className="text-xs"
+                                >
+                                    {u.role.name}
+                                </Badge>
+                                ) : (
+                                "—"
+                                )}
+                            </TableCell>
 
-                                <TableCell>
-                                    {u.approved_at ? formatDateTime(u.approved_at) : "—"}
-                                </TableCell>
+                            <TableCell>
+                                {u.approved_at ? formatDateTime(u.approved_at) : "—"}
+                            </TableCell>
 
-                                <TableCell>
-                                    {u.updated_at ? formatDateTime(u.updated_at) : "N/A"}
-                                </TableCell>
+                            <TableCell>
+                                {u.updated_at ? formatDateTime(u.updated_at) : "N/A"}
+                            </TableCell>
 
-                                <TableCell>
-                                    <div className="flex justify-center gap-2">
-                                        <Button
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                                setSelectedUser(u);
-                                                setShowViewUser(true);
-                                            }}
-                                        >
-                                            View
-                                        </Button>
-                                        {u.can_delete && (
-                                            <Button
-                                                variant="destructive"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setSelectedUser(u);
-                                                    setShowDelete(true);
-                                                }}
-                                            >
-                                                Delete
-                                            </Button>
-                                        )}
-
-                                    </div>
-                                </TableCell>
+                            <TableCell>
+                                <div className="flex justify-center gap-2">
+                                <Button
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                    setSelectedUser(u);
+                                    setShowViewUser(true);
+                                    }}
+                                >
+                                    View
+                                </Button>
+                                {u.can_delete && (
+                                    <Button
+                                    variant="destructive"
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        setSelectedUser(u);
+                                        setShowDelete(true);
+                                    }}
+                                    >
+                                    Delete
+                                    </Button>
+                                )}
+                                </div>
+                            </TableCell>
                             </TableRow>
                         ))
                         ) : (
                         <TableRow>
                             <TableCell
-                            colSpan={5}
+                            colSpan={6}
                             className="text-center text-sm text-muted-foreground py-8"
                             >
                             No users found.
@@ -351,105 +341,93 @@ export default function UserApprovals() {
 
                 {/* User Approvals Tab */}
                 {currentTab === 'approvals' && (
-                    <div className="rounded-lg overflow-x-auto border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-muted/40">
-                                    <TableHead className="text-center">Username</TableHead>
-                                    <TableHead className="text-center">Email</TableHead>
-                                    <TableHead className="text-center">Email Verified</TableHead>
-                                    <TableHead className="text-center">Date Applied</TableHead>
-                                    <TableHead className="text-center">Status</TableHead>
-                                    <TableHead className="text-center">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {props.users.data.length > 0 ? props.users.data.map((u) => (
-                                    <TableRow key={u.id} className="text-center">
-                                        <TableCell>
-                                            {/* {u.detail ? 
-                                                formatFullName(
-                                                    u.detail.first_name,
-                                                    u.detail.middle_name ?? '',
-                                                    u.detail.last_name
-                                                )
-                                                : u.name
-                                            } */}
-                                            {u.name}
-                                        </TableCell>
-                                        <TableCell>{u.email}</TableCell>
-                                        <TableCell>{u.email_verified_at ? 'Yes' : 'No'}</TableCell>
-                                        <TableCell>
-                                            {u.created_at ? formatDateTime(u.created_at) : '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {u.status === "approved" && <Badge variant="success">Approved</Badge>}
-                                            {u.status === "pending" && <Badge variant="primary">Pending</Badge>}
-                                            {u.status === "denied" && <Badge variant="destructive">Rejected</Badge>}
-                                        </TableCell>
+                <div className="rounded-lg overflow-x-auto border">
+                    <Table>
+                    <TableHeader>
+                        <TableRow className="bg-muted/40">
+                        <TableHead className="text-center">Username</TableHead>
+                        <TableHead className="text-center">Email</TableHead>
+                        <TableHead className="text-center">Email Verified</TableHead>
+                        <TableHead className="text-center">Date Applied</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredUsers.length > 0 ? (
+                        filteredUsers.map((u) => (
+                            <TableRow key={u.id} className="text-center">
+                            <TableCell>{u.name}</TableCell>
+                            <TableCell>{u.email}</TableCell>
+                            <TableCell>{u.email_verified_at ? 'Yes' : 'No'}</TableCell>
+                            <TableCell>
+                                {u.created_at ? formatDateTime(u.created_at) : '—'}
+                            </TableCell>
+                            <TableCell>
+                                {u.status === "approved" && <Badge variant="success">Approved</Badge>}
+                                {u.status === "pending" && <Badge variant="primary">Pending</Badge>}
+                                {u.status === "denied" && <Badge variant="destructive">Rejected</Badge>}
+                            </TableCell>
 
-                                        <TableCell>
-                                            <div className="flex justify-center gap-2">
-                                                <>
-                                                    <Button
-                                                        className="cursor-pointer"
-                                                        onClick={() => {
-                                                            setSelectedUserId(u.id);
-                                                            setShowRoleModal(true);
-                                                        }}
-                                                        disabled={u.status == 'approved'}
-                                                    >
-                                                        Approve
-                                                    </Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        className="cursor-pointer"
-                                                        onClick={() =>
-                                                            router.post(
-                                                                route('user-approvals.deny', u.id),
-                                                                {},
-                                                                { preserveScroll: true }
-                                                            )
-                                                        }
-                                                        disabled={u.status == 'denied'}
-                                                    >
-                                                        Reject
-                                                    </Button>
-                                                </>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )): (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
-                                            No users found.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                            <TableCell>
+                                <div className="flex justify-center gap-2">
+                                <Button
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                    setSelectedUserId(u.id);
+                                    setShowRoleModal(true);
+                                    }}
+                                    disabled={u.status == 'approved'}
+                                >
+                                    Approve
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    className="cursor-pointer"
+                                    onClick={() =>
+                                    router.post(
+                                        route('user-approvals.deny', u.id),
+                                        {},
+                                        { preserveScroll: true }
+                                    )
+                                    }
+                                    disabled={u.status == 'denied'}
+                                >
+                                    Reject
+                                </Button>
+                                </div>
+                            </TableCell>
+                            </TableRow>
+                        ))
+                        ) : (
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                            No users found.
+                            </TableCell>
+                        </TableRow>
+                        )}
+                    </TableBody>
+                    </Table>
+                </div>
                 )}
 
-                {/* Pagination */}
                 {props.users.data.length > 0 && (
                     <div className="flex items-center justify-between">
                         <PageInfo
-                            page={props.users.current_page ?? 1}
-                            total={props.users.total ?? 0}
-                            pageSize={10}
-                            label="users"
+                        page={props.users.current_page ?? 1}
+                        total={filteredUsers.length}
+                        pageSize={10}
+                        label="users"
                         />
                         <Pagination
-                            page={props.users.current_page ?? 1}
-                            total={props.users.total ?? 0}
-                            pageSize={10}
-                            onPageChange={(p) => go({ page: p })}
+                        page={props.users.current_page ?? 1}
+                        total={filteredUsers.length}
+                        pageSize={10}
+                        onPageChange={(p) => go({ page: p })}
                         />
                     </div>
                 )}
 
-                {/* Modals */}
                 <RoleAssignmentModal
                     show={showRoleModal}
                     onClose={() => setShowRoleModal(false)}
@@ -470,26 +448,25 @@ export default function UserApprovals() {
                         show={showDelete}
                         onCancel={() => setShowDelete(false)}
                         onConfirm={() => {
-                            router.delete(route("user-approvals.destroy", selectedUser.id), {
-                                preserveScroll: true,
-                                onSuccess: () => setShowDelete(false),
-                            });
+                        router.delete(route("user-approvals.destroy", selectedUser.id), {
+                            preserveScroll: true,
+                            onSuccess: () => setShowDelete(false),
+                        });
                         }}
                         title="Delete User"
                         message={
-                            <>
-                                Are you sure you want to delete the user{" "}
-                                <strong>
-                                    {selectedUser.detail
-                                        ? `${selectedUser.detail.first_name} ${selectedUser.detail.last_name}`
-                                        : selectedUser.name}
-                                </strong>
-                                ?
-                            </>
+                        <>
+                            Are you sure you want to delete the user{" "}
+                            <strong>
+                            {selectedUser.detail
+                                ? `${selectedUser.detail.first_name} ${selectedUser.detail.last_name}`
+                                : selectedUser.name}
+                            </strong>
+                            ?
+                        </>
                         }
                     />
                 )}
-
             </div>
         </AppLayout>
     );
