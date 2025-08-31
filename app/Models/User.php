@@ -116,19 +116,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $q->where('status','denied'); 
     }
 
-    //to check if user has a specific permission
     public function hasPermission(string $code): bool
     {
-        if (!$this->role) {
-            return false;
-        }
+        if (!$this->role) return false;
+        if ($this->role->code === 'superuser') return true;
 
-        if ($this->role->code === 'superuser') {
-            return true;
-        }
+        $perms = $this->role->relationLoaded('permissions')
+            ? $this->role->permissions
+            : $this->role->permissions()->get(['code']);
 
-        return $this->role->permissions()->where('code', $code)->exists()
-        ;
+        return $perms->contains('code', $code);
     }
 
     public function scopeSearch($query, ?string $q)
