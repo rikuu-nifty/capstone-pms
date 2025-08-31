@@ -84,10 +84,14 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        $this->authorize('destroy-role');
+        if (Gate::denies('delete-role', $role)) {
+            return redirect()->route('unauthorized');
+        }
+
         $role->delete();
 
-        return redirect()->route('role-management.index')->with('success', 'Role deleted successfully.');
+        return redirect()->route('role-management.index')
+            ->with('success', 'Role deleted successfully.');
     }
         
     public function updatePermissions(Request $request, Role $role)

@@ -5,14 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Permission;
+use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class Role extends Model
 {
-     protected $fillable = [
+    use SoftDeletes; 
+    
+    protected $fillable = [
         'name',
         'code',
         'description',
     ];
+
+    protected static function booted()
+    {
+        static::deleting(function ($role) {
+            if (in_array($role->code, ['superuser', 'vp_admin'])) {
+                throw new HttpResponseException(
+                    back(303)->with('unauthorized', 'This role cannot be deleted.')
+                );
+            }
+        });
+    }
 
     public function users()
     {

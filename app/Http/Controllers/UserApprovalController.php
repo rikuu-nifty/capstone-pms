@@ -79,7 +79,6 @@ class UserApprovalController extends Controller
 
     public function destroy(User $user)
     {
-        $this->authorize('view-users-page');
         $user->delete();
 
         return back()->with('status', "Deleted {$user->email}");

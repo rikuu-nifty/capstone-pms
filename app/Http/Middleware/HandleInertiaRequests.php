@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Inertia\Inertia;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -62,6 +63,9 @@ class HandleInertiaRequests extends Middleware
             'metrics' => [
                 // Lazy evaluates only if referenced on the client
                 'pending_user_count' => fn () => User::where('status', 'pending')->count(),
+            ],
+            'flash' => [
+                'unauthorized' => fn() => $request->session()->get('unauthorized'),
             ],
         ];
     }

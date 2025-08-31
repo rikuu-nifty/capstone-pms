@@ -30,14 +30,18 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::before(function (User $user, string $ability) {
-            if ($user->role?->code === 'superuser') {
+            if ($ability !== 'delete-role' && $user->role?->code === 'superuser') {
                 return true;
             }
             return $user->hasPermission($ability) ?: null;
         });
 
         Gate::define('delete-role', function (User $authUser, Role $targetRole) {
-            if ($targetRole->code === 'superuser' || $targetRole->code === 'vp_admin') {
+            if (in_array($targetRole->code, ['superuser', 'vp_admin'])) {
+                return false;
+            }
+
+            if ($authUser->role_id === $targetRole->id) {
                 return false;
             }
 
@@ -45,13 +49,30 @@ class AuthServiceProvider extends ServiceProvider
                 return true;
             }
 
-            // PMO Head can manage roles, but not delete them
-            if ($authUser->role?->code === 'pmo_head') {
+            return $authUser->hasPermission('delete-role');
+        });
+
+        Gate::define('delete-users', function (User $authUser, User $targetUser) {
+            if ($targetUser->role?->code === 'superuser') {
                 return false;
             }
 
-            // fallback to DB permissions
-            return $authUser->hasPermission('delete-role');
+            // Prevent deleting yourself
+            if ($authUser->id === $targetUser->id) {
+                return false;
+            }
+
+            // Superuser can delete anyone (except themselves, already blocked)
+            if ($authUser->role?->code === 'superuser') {
+                return true;
+            }
+
+            // VP Admin can delete anyone else (except themselves & superuser)
+            if ($authUser->role?->code === 'vp_admin') {
+                return true;
+            }
+
+            return $authUser->hasPermission('delete-users');
         });
     }
 }
