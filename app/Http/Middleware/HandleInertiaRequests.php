@@ -26,7 +26,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
-        return parent::version($request);
+        // return parent::version($request);
+        try {
+            return parent::version($request);
+        } catch (\Throwable $e) {
+            return 'dev'; // fallback value so version is never null
+        }
     }
 
     /**

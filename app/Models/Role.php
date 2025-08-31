@@ -36,10 +36,12 @@ class Role extends Model
 
     public function scopeSearch($query, ?string $q)
     {
-        if ($q !== '') {
-            $query->where('name', 'like', "%{$q}%")
-                ->orWhere('code', 'like', "%{$q}%")
-                ->orWhere('description', 'like', "%{$q}%");
+        if (!empty($q)) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")
+                    ->orWhere('code', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%");
+            });
         }
         return $query;
     }
@@ -53,7 +55,8 @@ class Role extends Model
             ])
             ->withCount(['permissions', 'users'])
             ->search($q)
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->appends(['q' => $q]);
     }
 
     public static function createRole(array $data): Role
