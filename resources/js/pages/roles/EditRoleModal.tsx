@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "@inertiajs/react";
 import EditModal from "@/components/modals/EditModal";
 import { Input } from "@/components/ui/input";
@@ -13,27 +14,38 @@ type Props = {
 };
 
 export default function EditRoleModal({ show, onClose, role, permissions }: Props) {
-    const { data, setData, put, processing, reset, errors } = useForm({
+    const { data, setData, put, processing, errors } = useForm({
         name: role.name || "",
         code: role.code || "",
         description: role.description || "",
         permissions: role.permissions?.map((p) => p.id) ?? [],
     });
 
+    useEffect(() => {
+        if (show && role) {
+            setData({
+            name: role.name || "",
+            code: role.code || "",
+            description: role.description || "",
+            permissions: role.permissions?.map((p) => p.id) ?? [],
+            });
+        }
+    }, [show, role, setData]);
+
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
         put(route("role-management.update", role.id), {
             preserveScroll: true,
             onSuccess: () => {
-                reset();
                 onClose();
             },
         });
     };
 
     const togglePermission = (id: number) => {
-        setData(
-            "permissions",
+        setData("permissions",
             data.permissions.includes(id)
                 ? data.permissions.filter((p) => p !== id)
                 : [...data.permissions, id]
@@ -43,7 +55,9 @@ export default function EditRoleModal({ show, onClose, role, permissions }: Prop
     return (
         <EditModal
             show={show}
-            onClose={onClose}
+            onClose={() => {
+                onClose();
+            }}
             title="Edit Role"
             onSubmit={handleSubmit}
             processing={processing}
@@ -105,10 +119,11 @@ export default function EditRoleModal({ show, onClose, role, permissions }: Prop
                                     id={`perm-${perm.id}`}
                                     checked={data.permissions.includes(perm.id)}
                                     onCheckedChange={() => togglePermission(perm.id)}
+                                    className="cursor-pointer"
                                 />
                                 <Label
                                     htmlFor={`perm-${perm.id}`}
-                                    className="cursor-pointer leading-snug"
+                                    className="leading-snug"
                                 >
                                     <span className="block font-medium">{perm.name}</span>
                                     <span className="block text-xs text-muted-foreground">

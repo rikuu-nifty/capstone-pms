@@ -62,12 +62,18 @@ class RoleController extends Controller
             'name' => ['required', 'string', 'max:255', "unique:roles,name,{$role->id}"],
             'code' => ['required', 'string', 'max:255', "unique:roles,code,{$role->id}"],
             'description' => ['nullable', 'string'],
+            'permissions' => ['array'],
         ]);
 
         Role::updateRole($role, $validated);
 
+        if ($request->has('permissions')) {
+            $role->permissions()->sync($request->permissions);
+        }
+
         return redirect()->route('role-management.index')->with('success', 'Role updated successfully.');
     }
+
 
     /**
      * Remove the specified resource from storage.
