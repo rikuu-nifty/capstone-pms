@@ -1,7 +1,6 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
 import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
 import { PickerInput } from '@/components/picker-input';
-import KPIStatCard from '@/components/statistics/KPIStatCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +9,7 @@ import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Archive, Banknote, Boxes, Eye, Filter, Grid, HardDrive, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Banknote, Boxes, Eye, Filter, Grid, Pencil, PlusCircle, Trash2, FolderArchive, Pin } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
@@ -344,37 +343,59 @@ export default function InventoryListIndex({
                     </p>
                 </div>
 
-                {/* KPI CARDS — below H1, above controls (search/buttons) */}
                 {kpis && (
-                    <div className="flex flex-wrap justify-between gap-3">
-                        <KPIStatCard
-                            label="Total Assets"
-                            value={formatNumber(kpis.total_assets)}
-                            icon={Boxes}
-                            barColor="bg-yellow-400"
-                            className="h-[140px] w-[350px]"
-                        />
-                        <KPIStatCard
-                            label="Active vs Archived Assets"
-                            value={`${kpis.active_pct}% vs ${kpis.archived_pct}%`}
-                            icon={Archive} // or CheckCircle2
-                            barColor="bg-emerald-400"
-                            className="h-[140px] w-[350px]"
-                        />
-                        <KPIStatCard
-                            label="Fixed vs Not Fixed Assets"
-                            value={`${kpis.fixed_pct}% vs ${kpis.not_fixed_pct}%`}
-                            icon={HardDrive}
-                            barColor="bg-indigo-400"
-                            className="h-[140px] w-[350px]"
-                        />
-                        <KPIStatCard
-                            label="Total Inventory Value"
-                            value={formatPeso(kpis.total_inventory_sum)}
-                            icon={Banknote}
-                            barColor="bg-orange-400"
-                            className="h-[140px] w-[350px]"
-                        />
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                        {/* Total Assets */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+                            <Boxes className="h-6 w-6 text-yellow-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Total Assets</div>
+                            <div className="text-2xl font-semibold">
+                            {formatNumber(kpis.total_assets)}
+                            </div>
+                        </div>
+                        </div>
+
+                        {/* Active vs Archived */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
+                            <FolderArchive className="h-6 w-6 text-emerald-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Active vs Archived</div>
+                            <div className="text-2xl font-semibold">
+                            {kpis.active_pct}% vs {kpis.archived_pct}%
+                            </div>
+                        </div>
+                        </div>
+
+                        {/* Fixed vs Not Fixed */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+                            <Pin className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Fixed vs Not Fixed</div>
+                            <div className="text-2xl font-semibold">
+                            {kpis.fixed_pct}% vs {kpis.not_fixed_pct}%
+                            </div>
+                        </div>
+                        </div>
+
+                        {/* Total Inventory Value */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                            <Banknote className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Total Inventory Value</div>
+                            <div className="text-2xl font-semibold">
+                            {formatPeso(kpis.total_inventory_sum)}
+                            </div>
+                        </div>
+                        </div>
                     </div>
                 )}
 
