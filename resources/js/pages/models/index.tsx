@@ -11,7 +11,7 @@ import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import AssetModelFilterDropdown from '@/components/filters/AssetModelFilterDropdown';
 
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, ListChecks, Tags, Boxes, CheckCircle2 } from 'lucide-react';
 
 import type { BreadcrumbItem } from '@/types';
 import { formatNumber } from '@/types/custom-index';
@@ -208,39 +208,64 @@ export default function AssetModelsIndex({
                 </div>
 
                 {totals && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        <div className="rounded-2xl border p-4">
-                        <div className="text-sm text-muted-foreground">Total Models</div>
-                        <div className="mt-1 text-2xl font-semibold">
-                            {formatNumber(totals.asset_models)}
-                        </div>
-                        </div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        {/* Total Models */}
+        <div className="rounded-2xl border p-4 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                <ListChecks className="h-7 w-7 text-sky-600" />
+            </div>
+            <div>
+                <div className="text-sm text-muted-foreground">Total Models</div>
+                <div className="text-3xl font-bold">
+                    {formatNumber(totals.asset_models)}
+                </div>
+            </div>
+        </div>
 
-                        <div className="rounded-2xl border p-4">
-                        <div className="text-sm text-muted-foreground">Distinct Brands</div>
-                        <div className="mt-1 text-2xl font-semibold">
-                            {formatNumber(totals.distinct_brands)}
-                        </div>
-                        </div>
+        {/* Distinct Brands */}
+        <div className="rounded-2xl border p-4 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                <Tags className="h-7 w-7 text-indigo-600" />
+            </div>
+            <div>
+                <div className="text-sm text-muted-foreground">Distinct Brands</div>
+                <div className="text-3xl font-bold">
+                    {formatNumber(totals.distinct_brands)}
+                </div>
+            </div>
+        </div>
 
-                        <div className="rounded-2xl border p-4">
-                        <div className="text-sm text-muted-foreground">Total Assets (All Models)</div>
-                        <div className="mt-1 text-2xl font-semibold">
-                            {formatNumber(totalAssets)}
-                        </div>
-                        </div>
+        {/* Total Assets (All Models) */}
+        <div className="rounded-2xl border p-4 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
+                <Boxes className="h-7 w-7 text-teal-600" />
+            </div>
+            <div>
+                <div className="text-sm text-muted-foreground">Total Assets (All Models)</div>
+                <div className="text-3xl font-bold">
+                    {formatNumber(totalAssets)}
+                </div>
+            </div>
+        </div>
 
-                        <div className="rounded-2xl border p-4">
-                        <div className="text-sm text-muted-foreground">Active Assets</div>
-                        <div className="mt-1 text-2xl font-semibold">
-                            {formatNumber(activeAssets)}
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                            {formatNumber(inactiveAssets)} inactive • {activeRate.toFixed(1)}% active
-                        </div>
-                        </div>
-                    </div>
-                )}
+        {/* Active Assets */}
+        <div className="rounded-2xl border p-4 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                <CheckCircle2 className="h-7 w-7 text-green-600" />
+            </div>
+            <div>
+                <div className="text-sm text-muted-foreground">Active Assets</div>
+                <div className="text-3xl font-bold">
+                    {formatNumber(activeAssets)}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                    {formatNumber(inactiveAssets)} inactive • {activeRate.toFixed(1)}% active
+                </div>
+            </div>
+        </div>
+    </div>
+)}
+
 
                 {/* MODELS Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">

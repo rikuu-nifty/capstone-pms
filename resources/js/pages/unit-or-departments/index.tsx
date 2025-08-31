@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, Building2, Boxes } from 'lucide-react';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
@@ -148,22 +148,38 @@ export default function UnitOrDepartmentsIndex({
                     </div>
                 </div>
 
+                {/* KPIs */}
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-2xl border p-4">
-                        <div className="text-sm text-muted-foreground">Total Units / Departments</div>
-                        <div className="mt-1 text-2xl font-semibold">
-                            {Number(totals.total_units ?? 0).toLocaleString()}
+                        {/* Total Units / Departments */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                                {/* You can swap this icon if you prefer something else */}
+                                <Building2 className="h-7 w-7 text-indigo-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Units / Departments</div>
+                                <div className="text-3xl font-bold">
+                                    {Number(totals.total_units ?? 0).toLocaleString()}
+                                </div>
+                            </div>
                         </div>
-                        </div>
-                        <div className="rounded-2xl border p-4">
-                        <div className="text-sm text-muted-foreground">Total Assets (across all)</div>
-                        <div className="mt-1 text-2xl font-semibold">
-                            {Number(totals.total_assets ?? 0).toLocaleString()}
-                        </div>
+
+                        {/* Total Assets */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                <Boxes className="h-7 w-7 text-green-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Assets (across all)</div>
+                                <div className="text-3xl font-bold">
+                                    {Number(totals.total_assets ?? 0).toLocaleString()}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
+
 
                 {/* Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">
@@ -174,7 +190,7 @@ export default function UnitOrDepartmentsIndex({
                                 <TableHead className="text-center">Code</TableHead>
                                 <TableHead className="text-center">Name</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
-                                <TableHead className="text-center">Assets Count</TableHead>
+                                <TableHead className="text-center">Asset Count</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -187,11 +203,11 @@ export default function UnitOrDepartmentsIndex({
                                     className={`cursor-pointer ${selectedRowId === Number(u.id) ? 'bg-muted/50' : ''}`}
                                 >
                                     <TableCell>{u.id}</TableCell>
-                                    <TableCell className="font-medium">{u.code ?? '—'}</TableCell>
+                                    <TableCell className="font-medium">{(u.code ?? '—').toUpperCase()}</TableCell>
                                     <TableCell>{u.name ?? '—'}</TableCell>
                                     <TableCell
                                         className={`max-w-[250px] whitespace-normal break-words text-center${
-                                        u.description && u.description !== '-' ? 'text-justify' : 'text-center'
+                                            u.description && u.description !== '-' ? 'text-justify' : 'text-center'
                                         }`}
                                     >
                                         {u.description ?? '—'}
@@ -199,35 +215,35 @@ export default function UnitOrDepartmentsIndex({
                                     <TableCell>{u.assets_count ?? 0}</TableCell>
                                     <TableCell className="h-full">
                                         <div className="flex justify-center items-center gap-2 h-full">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                            setSelected(u);
-                                            setShowEdit(true);
-                                            }}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    setSelected(u);
+                                                    setShowEdit(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
 
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                            setToDelete(u);
-                                            setShowDelete(true);
-                                            }}
-                                            className="cursor-pointer"
-                                        >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                setToDelete(u);
+                                                setShowDelete(true);
+                                                }}
+                                                className="cursor-pointer"
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
 
-                                        <Button variant="ghost" size="icon" asChild className="cursor-pointer">
-                                            <Link href={`/unit-or-departments/view/${u.id}`} preserveScroll>
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Link>
-                                        </Button>
+                                            <Button variant="ghost" size="icon" asChild className="cursor-pointer">
+                                                <Link href={`/unit-or-departments/view/${u.id}`} preserveScroll>
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
+                                            </Button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
