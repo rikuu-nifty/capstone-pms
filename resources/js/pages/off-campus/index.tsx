@@ -7,11 +7,13 @@ import type { Paginator } from '@/types/paginatorOffCampus';
 import { Head, router, Link, usePage } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge'
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import OffCampusAddModal from './OffCampusAddModal';
 import OffCampusEditModal from './OffCampusEditModal';
 import OffCampusViewModal from './OffCampusViewModal';
+import { formatStatusLabel } from '@/types/custom-index';
 
 // -------------------- TYPES --------------------
 
@@ -39,6 +41,7 @@ export type OffCampus = {
     quantity: number;
     units: string;
     remarks: 'official_use' | 'repair';
+    status: 'pending_review' | 'pending_return' | 'returned' | 'overdue' | 'cancelled';
     comments?: string | null;
     approved_by?: string | null;
     issued_by_id?: number | null;
@@ -75,10 +78,27 @@ function formatDate(d?: string | null) {
     return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function humanizeRemarks(v: string) {
-    if (!v) return '—';
-    return v.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' | 'primary' {
+  switch (status) {
+    case 'returned':
+      return 'default'      // green
+    case 'overdue':
+      return 'destructive'  // red
+    case 'pending_review':
+      return 'secondary'    // gray/blue
+    case 'pending_return':
+      return 'primary'      // neutral outline
+    case 'cancelled':
+      return 'destructive'  // red as well
+    default:
+      return 'secondary'
+  }
 }
+
+// function humanizeRemarks(v: string) {
+//     if (!v) return '—';
+//     return v.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+// }
 
 // -------------------- COMPONENT --------------------
 
@@ -215,7 +235,7 @@ export default function OffCampusIndex({
                                 <TableHead className="text-center">Return Date</TableHead>
                                 <TableHead className="text-center">Qty</TableHead>
                                 <TableHead className="text-center">Unit</TableHead>
-                                <TableHead className="text-center">Remarks</TableHead>
+                                <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -233,7 +253,12 @@ export default function OffCampusIndex({
                                         <TableCell>{formatDate(row.return_date)}</TableCell>
                                         <TableCell>{row.quantity}</TableCell>
                                         <TableCell>{row.units}</TableCell>
-                                        <TableCell>{humanizeRemarks(row.remarks)}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={statusVariant(row.status)}>
+                                                {formatStatusLabel(row.status)}
+                                            </Badge>
+                                        </TableCell>
+
 
                                         <TableCell className="flex justify-center gap-2">
                                             <Button

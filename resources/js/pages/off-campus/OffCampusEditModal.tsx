@@ -35,6 +35,7 @@ type OffCampusRow = {
     college_or_unit_id: number | null;
     purpose: string;
     date_issued: string; // YYYY-MM-DD
+    status: 'pending_review' | 'pending_return' | 'returned' | 'overdue' | 'cancelled';
     return_date: string | null;
     quantity: number | ''; // header quantity (cap for selections)
     units: string;
@@ -109,6 +110,7 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
         college_or_unit_id: (offCampus.college_or_unit_id ?? '') as number | '',
         purpose: offCampus.purpose ?? '',
         date_issued: offCampus.date_issued ? offCampus.date_issued.substring(0, 10) : '',
+         status: offCampus.status ?? 'pending_review',
         return_date: offCampus.return_date ? offCampus.return_date.substring(0, 10) : '',
         quantity: (offCampus.quantity ?? '') as number | '',
         units: offCampus.units ?? 'pcs',
@@ -148,6 +150,7 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
             purpose: offCampus.purpose ?? '',
             date_issued: offCampus.date_issued ? offCampus.date_issued.substring(0, 10) : '',
             return_date: offCampus.return_date ? offCampus.return_date.substring(0, 10) : '',
+             status: offCampus.status ?? 'pending_review',
             quantity: (offCampus.quantity ?? '') as number | '',
             units: offCampus.units ?? 'pcs',
             remarks: (offCampus.remarks ?? 'official_use') as 'official_use' | 'repair',
@@ -261,6 +264,23 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                             <Label>Return Date</Label>
                             <PickerInput type="date" value={data.return_date} onChange={(e) => setData('return_date', e)} />
                             {errors.return_date && <p className="mt-1 text-xs text-red-500">{errors.return_date}</p>}
+                        </div>
+
+                        {/* Status */}
+                        <div>
+                            <Label>Status</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.status}
+                                onChange={(e) => setData('status', e.target.value as OffCampusRow['status'])}
+                            >
+                                <option value="pending_review">Pending Review</option>
+                                <option value="pending_return">Pending Return</option>
+                                <option value="returned">Returned</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                         </div>
 
                         {/* Purpose */}

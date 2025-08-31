@@ -27,7 +27,7 @@ export const EditInventorySchedulingModal = ({
     buildingRooms,
     unitOrDepartments,
     users,
-    statusOptions = ['completed', 'pending', 'overdue'],
+    statusOptions = ['pending_review', 'pending', 'completed', 'overdue', 'cancelled'],
 }: Props) => {
     const [form, setForm] = useState<InventorySchedulingFormData>({
         building_id: schedule.building?.id || '',

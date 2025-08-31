@@ -284,9 +284,12 @@ export default function InventorySchedulingIndex({
                                     <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell>
 
                                     <TableCell className="w-[120px] text-center align-middle">
-                                        {item.scheduling_status === 'Completed' && <Badge variant="completed">Completed</Badge>}
+                                        
+                                        {item.scheduling_status === 'Pending_Review' && <Badge variant="outline">Pending Review</Badge>}
                                         {item.scheduling_status === 'Pending' && <Badge variant="pending">Pending</Badge>}
+                                        {item.scheduling_status === 'Completed' && <Badge variant="completed">Completed</Badge>}
                                         {item.scheduling_status === 'Overdue' && <Badge variant="overdue">Overdue</Badge>}
+                                        {item.scheduling_status === 'Cancelled' && <Badge variant="primary">Cancelled</Badge>}
                                     </TableCell>
 
                                     <TableCell className="w-[160px]">
@@ -349,7 +352,7 @@ export default function InventorySchedulingIndex({
                     buildingRooms={buildingRooms}
                     unitOrDepartments={unitOrDepartments}
                     users={users}
-                    statusOptions={['Completed', 'Pending', 'Overdue']}
+                    statusOptions={['Completed', 'Pending', 'Overdue', 'Cancelled', 'Pending_Review']}
                 />
             )}
 
@@ -508,9 +511,11 @@ export default function InventorySchedulingIndex({
                                         onChange={(e) => setData('scheduling_status', e.target.value)}
                                     >
                                         <option value="">Select Status</option>
-                                        <option value="Completed">Completed</option>
+                                        <option value="Pending_Review">Pending Review</option>
                                         <option value="Pending">Pending</option>
+                                        <option value="Completed">Completed</option>
                                         <option value="Overdue">Overdue</option>
+                                        <option value="Cancelled">Cancelled</option>
                                     </select>
                                     {errors.scheduling_status && <p className="mt-1 text-xs text-red-500">{errors.scheduling_status}</p>}
                                 </div>

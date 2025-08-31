@@ -49,6 +49,10 @@ export function formatLabel(v: string): string {
     return v.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 }
 
+export function formatUnderscore(status: string): string {
+  return status.replace(/_/g, ' ');
+}
+
 export const formatEnums = (value?: string) => {
     if (!value) return '';
     return value

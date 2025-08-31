@@ -30,12 +30,13 @@ class OffCampus extends Model
         'issued_by_id',
         'checked_by',
         'deleted_by',
+        'status',
     ];
 
     protected $casts = [
         'date_issued' => 'date',
         'return_date' => 'date',
-         'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     protected array $approvalStepToColumn = [
