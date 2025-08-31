@@ -41,10 +41,14 @@ class InventoryList extends Model
         return $this->belongsTo(Building::class);
     }
 
+    // public function buildingRoom()
+    // {
+    //     return $this->belongsTo(BuildingRoom::class);
+    // }
     public function buildingRoom()
-    {
-        return $this->belongsTo(BuildingRoom::class);
-    }
+{
+    return $this->belongsTo(BuildingRoom::class, 'building_room_id');
+}
 
     public function turnoverDisposalAsset()
     {

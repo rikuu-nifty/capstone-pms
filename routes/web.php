@@ -16,11 +16,21 @@
     use App\Http\Controllers\UnitOrDepartmentController;
     use App\Http\Controllers\FormApprovalController;
     use App\Http\Controllers\UserApprovalController;
+    use App\Http\Controllers\DashboardController;
 
+
+
+    // Route::get('/', function () {
+    //     return Inertia::render('welcome');
+    // })->name('home');
 
     Route::get('/', function () {
-        return Inertia::render('welcome');
-    })->name('home');
+    if (Auth::check()) {
+        return redirect()->route('dashboard'); // change to your actual dashboard route
+    }
+
+    return redirect()->route('login'); // send guests to login
+})->name('home');
 
     Route::get('/approval-pending', function () {
         return Inertia::render('auth/ApprovalPending', [
@@ -66,10 +76,9 @@ Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, '
 
 
     // 🔒 Everything below requires auth
-Route::middleware(['auth', 'verified', 'approved'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::middleware(['auth', 'verified', 'approved'])->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     Route::get('calendar', function () {
         return Inertia::render('calendar');

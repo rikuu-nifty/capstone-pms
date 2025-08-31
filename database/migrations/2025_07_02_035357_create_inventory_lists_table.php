@@ -57,7 +57,7 @@ return new class extends Migration
             $table->date('date_purchased')->nullable();
             $table->string('asset_type');
             $table->integer('quantity');
-            $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->nullable();
+            $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->default('pending');
             $table->timestamps();
             // $table->string('brand')->nullable(); ASSETMODEL Table
             // $table->string('unit_or_department')->nullable(); // Delete muna to dapat kasi tawagin yun fk na yun para siya yun lumabas UNIT_OR_DEPARTMENT Table

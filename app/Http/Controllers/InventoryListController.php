@@ -34,6 +34,19 @@ class InventoryListController extends Controller
         ]);
     }
 
+    public function showMemorandumReceipt(InventoryList $inventoryList)
+{
+    $assets = InventoryList::with(['assetModel', 'unitOrDepartment', 'building', 'buildingRoom'])
+        ->where('memorandum_no', $inventoryList->memorandum_no)
+        ->get();
+
+    return Inertia::render('inventory-list/ViewMemorandumReceipt', [
+        'assets' => $assets,
+        'memo_no' => $inventoryList->memorandum_no,
+    ]);
+}
+
+
     public function index(Request $request)
     {
         return Inertia::render('inventory-list/index', $this->pageProps());
@@ -115,43 +128,61 @@ class InventoryListController extends Controller
      * @param InventoryListAddNewAssetFormRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(InventoryListAddNewAssetFormRequest $request): RedirectResponse
-    {
-        // dd($request->all()); 
-        // dd($data); // What made it through validation
+  public function store(InventoryListAddNewAssetFormRequest $request): RedirectResponse
+{
+    $data = $request->validated();
 
-        //  $data = $request->all();
-        //  InventoryList::create($data);
-        //  return redirect()->back()->with('success', 'Asset added successfully.');
-
-        // Get validated input
-        $data = $request->validated();
-
-         // Handle image upload if provided
+    // Handle image upload if provided
     if ($request->hasFile('image')) {
-        $path = $request->file('image')->store('assets', 'public'); 
+        $path = $request->file('image')->store('assets', 'public');
         $data['image_path'] = $path;
     }
 
-         // Save to database
-        $asset = InventoryList::create($data);
+    // 🚫 remove transfer_status so DB default applies
+    unset($data['transfer_status']);
 
-         // Load FK relationships
-        $asset->load([
-            'assetModel.category',
-            'unitOrDepartment',
-            'building',
-            'buildingRoom'
-        ]);
+    // ✅ Bulk mode
+    if ($request->input('mode') === 'bulk') {
+        $created = [];
+        $serialNumbers = $request->input('serial_numbers', []);
+        $qty = (int) $request->input('quantity', 1);
 
-        // Redirect back with success message and full asset
+        if (!empty($serialNumbers)) {
+            foreach ($serialNumbers as $serial) {
+                $newData = $data;
+                $newData['serial_no'] = $serial;
+                $newData['quantity'] = 1;
+                $created[] = InventoryList::create($newData);
+            }
+        } else {
+            for ($i = 0; $i < $qty; $i++) {
+                $newData = $data;
+                $newData['quantity'] = 1;
+                $created[] = InventoryList::create($newData);
+            }
+        }
+
         return redirect()->back()->with([
-            'success' => 'Asset added successfully.',
-            'newAsset' => $asset,
-            ]);
-
-
+            'success' => count($created) . ' bulk assets added successfully.',
+        ]);
     }
+
+    // ✅ Single mode
+    $asset = InventoryList::create($data);
+
+    $asset->load([
+        'assetModel.category',
+        'unitOrDepartment',
+        'building',
+        'buildingRoom'
+    ]);
+
+    return redirect()->back()->with([
+        'success' => 'Asset added successfully.',
+        'newAsset' => $asset,
+    ]);
+}
+    
 
     /**
      * Display the specified resource.

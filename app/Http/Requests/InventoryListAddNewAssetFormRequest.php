@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-
 class InventoryListAddNewAssetFormRequest extends FormRequest
 {
     /**
@@ -34,10 +33,20 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'asset_type' => 'nullable|in:fixed,not_fixed',
             'asset_name' =>  'required|string|max:255',
             'brand' =>       'required|string|max:255',
+
+            // ✅ Quantity is always required (bulk or single)
             'quantity' =>    'required|integer|min:1|max:1000',
+
             'supplier' =>    'required|string|max:255',
             'unit_cost' =>   'required|numeric|min:0|max:999999.99',
-            'serial_no' =>   'required|string|max:255',
+
+            // ✅ Single mode: serial_no is required; Bulk mode: can be nullable
+            'serial_no' =>   'nullable|string|max:255',
+
+            // ✅ Bulk mode: array of serials
+            'serial_numbers'   => 'array',
+            'serial_numbers.*' => 'nullable|string|max:255',
+
             'asset_model_id' =>  'required|integer|max:255',
             'transfer_status' => 'nullable|in:not_transferred,transferred,pending',
             'description' =>     'nullable|string|max:1000',
@@ -47,10 +56,10 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             // ✅ New: Image upload
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
 
-
+            // ✅ New: mode (single or bulk)
+            'mode' => 'nullable|string|in:single,bulk',
         ];
     }
-
 
     /**
      * Function: Messages
@@ -59,9 +68,8 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
     public function messages(): array 
     {
         return [
-
             // 'building_id.required' => 'Please select a building.',
-             'asset_model_id.required' => 'Please specify the model of the asset.',
+            'asset_model_id.required' => 'Please specify the model of the asset.',
 
             'building.string' => 'The building name must be a valid string.',
             'building.max' => 'The building name may not be greater than 255 characters.',
@@ -101,12 +109,15 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'unit_cost.min' => 'The unit cost must be at least 0.',
             'unit_cost.max' => 'The unit cost may not exceed 999,999.99.',
 
-            'serial_no.required' => 'Please provide the serial number.',                    // REQUIRED
-            'serial_no.numeric' => 'The serial number must be a valid number.',
-            'serial_no.min' => 'The serial number must be at least 0.',
+            // 🔹 serial_no is not always required anymore (bulk mode can skip it)
+            'serial_no.string' => 'The serial number must be a valid string.',
+            'serial_no.max' => 'The serial number may not be greater than 255 characters.',
+
+            'serial_numbers.array' => 'The serial numbers must be provided as an array.',
+            'serial_numbers.*.string' => 'Each serial number must be a valid string.',
+            'serial_numbers.*.max' => 'Each serial number may not be greater than 255 characters.',
 
             'asset_model_id.numeric' => 'The asset model must be a valid number.',
-            // 'asset_model.max' => 'The asset model may not be greater than 255 characters.',
 
             'transfer_status.string' => 'The transfer status must be a valid string.',
             'transfer_status.max' => 'The transfer status may not be greater than 255 characters.',
@@ -122,8 +133,9 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'image.image' => 'The uploaded file must be an image.',
             'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif.',
             'image.max' => 'The image may not be greater than 5MB.',
+
+            // ✅ Mode messages
+            'mode.in' => 'The mode must be either single or bulk.',
         ];
     }
-
-
 }

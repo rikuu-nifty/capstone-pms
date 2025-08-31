@@ -209,7 +209,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             />
                         </div>
 
-                        {/* Quantity */}
+                        {/* Quantity
                         <div>
                             <Label>Quantity</Label>
                             <Input
@@ -218,7 +218,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 value={form.quantity}
                                 onChange={(e) => handleChange('quantity', e.target.value)}
                             />
-                        </div>
+                        </div> */}
 
                         {/* Unit Cost */}
                         <div>
@@ -294,19 +294,29 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             </select>
                         </div>
 
-                        {/* Asset Image */}
+                        {/* Total Cost */}
                         <div>
-                            <Label>Asset Image (Before & After)</Label>
+                            <Label>Total Cost</Label>
+                            <Input
+                                value={form.quantity && form.unit_cost ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toFixed(2)}` : ''}
+                                readOnly
+                                disabled
+                            />
+                        </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                        {/* Asset Image */}
+                        <div className="col-span-2">
+                            <Label className="mb-4 block text-left text-base font-semibold">Asset Image (Before & After)</Label>
+
+                            <div className="flex justify-center gap-6">
                                 {/* Before (current DB image) */}
-                                <div className="rounded-lg border bg-gray-50 p-3 text-center">
-                                    <p className="mb-2 text-sm font-medium text-gray-600">Current Image</p>
+                                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                                    <p className="mb-3 text-sm font-medium text-gray-600">Current Image</p>
                                     {asset.image_path ? (
                                         <img
                                             src={`/storage/${asset.image_path}`}
                                             alt={asset.asset_name}
-                                            className="mx-auto h-24 w-24 rounded-md border object-cover"
+                                            className="max-h-64 w-auto rounded-md border object-contain"
                                         />
                                     ) : (
                                         <span className="text-sm text-gray-400">No image available</span>
@@ -314,36 +324,34 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 </div>
 
                                 {/* After (upload new) */}
-                                <div className="rounded-lg border bg-gray-50 p-3 text-center">
-                                    <p className="mb-2 text-sm font-medium text-gray-600">Update Image</p>
+                                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                                    <p className="mb-3 text-sm font-medium text-gray-600">Update Image</p>
 
-                                    {/* Styled file input */}
                                     <input
                                         ref={fileInputRef}
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => {
                                             if (e.target.files?.[0]) {
-                                                handleChange('image', e.target.files[0]); // ✅ store File
+                                                handleChange('image', e.target.files[0]);
                                             }
                                         }}
-                                        className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                        className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                     />
 
-                                    {/* Preview newly selected image */}
                                     {form.image && (
-                                        <div className="mt-3 flex flex-col items-center gap-2">
+                                        <div className="mt-4 flex flex-col items-center gap-3">
                                             <img
                                                 src={URL.createObjectURL(form.image)}
                                                 alt="Preview"
-                                                className="h-24 w-24 rounded-md border object-cover"
+                                                className="max-h-64 w-auto rounded-md border object-contain"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    handleChange('image', null); // clear from form state
+                                                    handleChange('image', null);
                                                     if (fileInputRef.current) {
-                                                        fileInputRef.current.value = ''; // ✅ reset the actual input
+                                                        fileInputRef.current.value = '';
                                                     }
                                                 }}
                                                 className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
@@ -354,16 +362,6 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                     )}
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Total Cost */}
-                        <div>
-                            <Label>Total Cost</Label>
-                            <Input
-                                value={form.quantity && form.unit_cost ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toFixed(2)}` : ''}
-                                readOnly
-                                disabled
-                            />
                         </div>
 
                         {/* Description */}

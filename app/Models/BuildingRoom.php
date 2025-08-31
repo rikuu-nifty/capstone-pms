@@ -14,6 +14,11 @@ class BuildingRoom extends Model
         'room',
         'description',
     ];
+public function inventoryLists()
+{
+    return $this->hasMany(InventoryList::class, 'building_room_id');
+}
+
 
     public function building()
     {

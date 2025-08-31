@@ -17,6 +17,11 @@ class Category extends Model
         'description',
     ];
 
+    public function inventoryLists()
+{
+    return $this->hasMany(InventoryList::class);
+}
+
     public function assetModels(): HasMany
     {
         return $this->hasMany(AssetModel::class, 'category_id')

@@ -52,7 +52,7 @@ const inventoryNavItems = [
 const assetsNavItems = [
     { title: 'Categories', href: '/categories', icon: Blocks },
     { title: 'Models', href: '/models', icon: PackageCheck },
-    { title: 'Assignment', href: '/assignment', icon: PackageCheck },
+    // { title: 'Assignment', href: '/assignment', icon: PackageCheck },
 ];
 
 const institutionalSetUpNavItems = [
@@ -64,7 +64,7 @@ const userNavItems = [
     { title: 'Users', href: '/user-approvals', icon: UserCheck2 },
     { title: 'Audit Log', href: '/audit-log', icon: File },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2 },
-    { title: 'Profile', href: '/profile', icon: User },
+    // { title: 'Profile', href: '/profile', icon: User },
 ];
 
 const configNavItems = [{ title: 'Settings', href: '/settings', icon: Settings }];

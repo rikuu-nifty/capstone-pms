@@ -67,11 +67,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <div className="grid gap-2">
                         <div className="flex items-center">
                             <Label htmlFor="password">Password</Label>
-                            {canResetPassword && (
-                                <TextLink href={route('password.request')} className="ml-auto text-sm" tabIndex={5}>
-                                    Forgot password?
-                                </TextLink>
-                            )}
                         </div>
                         <Input
                             id="password"
@@ -83,6 +78,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             onChange={(e) => setData('password', e.target.value)}
                             placeholder="Password"
                         />
+                        {canResetPassword && (
+                            <TextLink href={route('password.request')} className="ml-auto text-sm text-blue-600 hover:text-blue-800" tabIndex={5}>
+                                Forgot password?
+                            </TextLink>
+                        )}
+
                         <InputError message={errors.password} />
                     </div>
 
@@ -97,12 +98,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <Label htmlFor="remember">Remember me</Label>
                     </div>
 
-                    <Button
-                        type="submit"
-                        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
-                        tabIndex={4}
-                        disabled={processing}
-                    >
+                    <Button type="submit" className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>

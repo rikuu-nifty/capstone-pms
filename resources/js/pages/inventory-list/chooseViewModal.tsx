@@ -40,7 +40,7 @@ export function ChooseViewModal({ open, onClose, asset, onViewAsset, onViewMemo 
                     {/* Asset Details */}
                     <button
                         onClick={onViewAsset}
-                        className="flex flex-col items-center justify-center gap-3 rounded-xl bg-primary p-6 text-white shadow-sm transition hover:bg-primary/90 hover:shadow-md cursor-pointer"
+                        className="cursor-pointer flex flex-col items-center justify-center gap-3 rounded-xl bg-blue-600 p-6 text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md focus:outline-none"
                     >
                         <Package className="h-12 w-12" />
                         <div className="text-base font-semibold">Asset Details</div>

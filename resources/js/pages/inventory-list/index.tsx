@@ -1,6 +1,7 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
 import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
 import { PickerInput } from '@/components/picker-input';
+import KPIStatCard from '@/components/statistics/KPIStatCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +13,10 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { Archive, Banknote, Boxes, Eye, Filter, Grid, HardDrive, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AddBulkAssetModalForm } from './addBulkAssetModal';
+import { ChooseAddTypeModal } from './chooseAddTypeModal';
 import { ChooseViewModal } from './chooseViewModal';
-
-import KPIStatCard from '@/components/statistics/KPIStatCard';
-import ViewMemorandumReceiptModal from './ViewMemorandumReceipt';
+import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -59,6 +60,8 @@ export type UnitOrDepartment = {
     description: string;
 };
 
+export type TransferStatus = 'pending' | 'completed' | 'denied';
+
 export type Asset = {
     id: number;
     memorandum_no: number | string;
@@ -77,7 +80,7 @@ export type Asset = {
     unit_cost: number | string;
     date_purchased: string;
     quantity: number;
-    transfer_status: string;
+    transfer_status: TransferStatus; // ✅ strongly typed;
     brand: string;
     image_path?: string | null; // ✅ new field
 };
@@ -142,7 +145,7 @@ export default function InventoryListIndex({
 
     kpis?: KPIs;
 }) {
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<AssetFormData>({
+    const { data, setData, post, processing, errors, reset, clearErrors, transform } = useForm<AssetFormData>({
         building_id: '',
         unit_or_department_id: '',
         building_room_id: '',
@@ -151,7 +154,7 @@ export default function InventoryListIndex({
         asset_type: '',
         asset_name: '',
         brand: '',
-        quantity: '',
+        quantity: 1,
         supplier: '',
         unit_cost: '',
         serial_no: '',
@@ -192,8 +195,6 @@ export default function InventoryListIndex({
         setIsViewOpen(!!show_view_modal);
     }, [show_view_modal]);
 
-    
-
     const openView = (id: number) => {
         router.get(
             route('inventory-list.view', id), // points to /inventory-list/{id}/viewAssetDetails
@@ -221,6 +222,15 @@ export default function InventoryListIndex({
 
     const [receiptModalVisible, setReceiptModalVisible] = useState(false);
 
+    // For choose modal
+    const [chooseAddVisible, setChooseAddVisible] = useState(false);
+
+    // For bulk add modal
+    const [showAddBulkAsset, setShowAddBulkAsset] = useState(false);
+
+    const [receiptAssets, setReceiptAssets] = useState<Asset[]>([]);
+    const [receiptMemoNo, setReceiptMemoNo] = useState<string | number>('');
+
     // For Date Format
     const formatDate = (dateStr: string) => {
         if (!dateStr) return '';
@@ -233,6 +243,20 @@ export default function InventoryListIndex({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        transform((d) => ({
+            ...d,
+            // ensure numbers are numbers (or stay empty only when allowed)
+            building_id: d.building_id === '' ? '' : Number(d.building_id),
+            unit_or_department_id: d.unit_or_department_id === '' ? '' : Number(d.unit_or_department_id),
+            building_room_id: d.building_room_id === '' ? '' : Number(d.building_room_id),
+            category_id: d.category_id === '' ? '' : Number(d.category_id),
+            asset_model_id: d.asset_model_id === '' ? '' : Number(d.asset_model_id),
+            memorandum_no: d.memorandum_no === '' ? '' : Number(d.memorandum_no),
+            unit_cost: d.unit_cost === '' ? '' : Number(d.unit_cost),
+            quantity: d.quantity === '' ? 1 : Number(d.quantity), // 👈 safety net
+        }));
+
         post('/inventory-list', {
             forceFormData: true, // 👈 tell Inertia to send multipart/form-data
             onSuccess: () => {
@@ -377,7 +401,8 @@ export default function InventoryListIndex({
                             onClick={() => {
                                 reset();
                                 clearErrors();
-                                setShowAddAsset(true);
+                                setChooseAddVisible(true); // ✅ show choose modal first
+                                // setShowAddAsset(true);
                             }}
                             className="cursor-pointer"
                         >
@@ -390,7 +415,7 @@ export default function InventoryListIndex({
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                {/* <TableHead className="text-center">ID</TableHead> */}
+                                <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Asset Name</TableHead>
                                 <TableHead className="text-center">Image</TableHead>
                                 <TableHead className="text-center">Brand</TableHead>
@@ -408,7 +433,7 @@ export default function InventoryListIndex({
                         <TableBody className="text-center">
                             {filteredData.map((item) => (
                                 <TableRow key={item.id}>
-                                    {/* <TableCell>{item.id}</TableCell> */}
+                                    <TableCell>{item.id}</TableCell>
                                     <TableCell>{item.asset_name}</TableCell>
                                     <TableCell>
                                         {item.image_path ? (
@@ -545,23 +570,61 @@ export default function InventoryListIndex({
                             openView(selectedAsset.id); // ✅ deep link route
                         }
                     }}
-                    onViewMemo={() => {
-                        setChooseViewVisible(false);
-                        setReceiptModalVisible(true); // ✅ show the ViewMemorandumReceiptModal
-                    }}
+onViewMemo={() => {
+  setChooseViewVisible(false);
+
+  if (selectedAsset) {
+    const sameMemoAssets = assets.filter(a => a.memorandum_no === selectedAsset.memorandum_no);
+    setReceiptAssets(sameMemoAssets);
+    setReceiptMemoNo(selectedAsset.memorandum_no);
+    setReceiptModalVisible(true);
+  }
+}}
                 />
             )}
 
             {isViewOpen && viewing_asset && <ViewAssetModal asset={viewing_asset} onClose={closeView} />}
 
-            {receiptModalVisible && selectedAsset && (
-                <ViewMemorandumReceiptModal
-                    open={receiptModalVisible}
-                    onClose={() => {
-                        setReceiptModalVisible(false);
-                        setSelectedAsset(null);
+{receiptModalVisible && receiptAssets.length > 0 && (
+  <ViewMemorandumReceiptModal
+    open={receiptModalVisible}
+    onClose={() => {
+      setReceiptModalVisible(false);
+      setReceiptAssets([]);
+      setReceiptMemoNo('');
+    }}
+    assets={receiptAssets}        // ✅ now an array
+    memo_no={receiptMemoNo}       // ✅ shared memo number
+  />
+)}
+
+
+            {/* ✅ Choose Add Modal */}
+            {chooseAddVisible && (
+                <ChooseAddTypeModal
+                    open={chooseAddVisible}
+                    onClose={() => setChooseAddVisible(false)}
+                    onSingle={() => {
+                        setChooseAddVisible(false);
+                        setShowAddAsset(true); // ✅ open single modal
                     }}
-                    asset={selectedAsset}
+                    onBulk={() => {
+                        setChooseAddVisible(false);
+                        setShowAddBulkAsset(true); // ✅ open bulk modal
+                    }}
+                />
+            )}
+
+            {/* ✅ Bulk Add Modal */}
+            {showAddBulkAsset && (
+                <AddBulkAssetModalForm
+                    open={showAddBulkAsset}
+                    onClose={() => setShowAddBulkAsset(false)}
+                    buildings={buildings}
+                    unitOrDepartments={unitOrDepartments}
+                    buildingRooms={buildingRooms}
+                    categories={categories}
+                    assetModels={assetModels}
                 />
             )}
 
@@ -739,7 +802,7 @@ export default function InventoryListIndex({
                                 {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
                             </div>
 
-                            <div className="col-span-1 pt-0.5">
+                        {/* <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Quantity</label>
                                 <input
                                     type="number"
@@ -749,7 +812,7 @@ export default function InventoryListIndex({
                                     onChange={(e) => setData('quantity', e.target.value)}
                                 />
                                 {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
-                            </div>
+                            </div> */}
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Unit Cost</label>
@@ -828,6 +891,17 @@ export default function InventoryListIndex({
                             </div>
 
                             <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Total Cost</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.unit_cost ? `₱ ${(Number(data.unit_cost) * Number(data.quantity || 1)).toFixed(2)}` : ''}
+                                    readOnly
+                                    disabled
+                                />
+                            </div>
+
+                            <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Asset Image</label>
 
                                 {/* Styled file input */}
@@ -870,17 +944,6 @@ export default function InventoryListIndex({
                                         </div>
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Total Cost</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.quantity && data.unit_cost ? `₱ ${(Number(data.quantity) * Number(data.unit_cost)).toFixed(2)}` : ''}
-                                    readOnly
-                                    disabled
-                                />
                             </div>
 
                             <div className="col-span-2">

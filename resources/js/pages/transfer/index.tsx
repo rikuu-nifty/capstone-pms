@@ -8,6 +8,7 @@ import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
+
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { type TransferFilters } from '@/components/filters/TransferFilterModal';
 import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
@@ -20,6 +21,7 @@ import TransferAddModal from './TransferAddModal';
 import TransferEditModal from './TransferEditModal';
 import TransferViewModal from './TransferViewModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -409,7 +411,7 @@ export default function TransferIndex({
                 onCancel={() => setShowDeleteModal(false)}
                 onConfirm={() => {
                     if (transferToDelete) {
-                        router.delete(route('transfer.destroy', transferToDelete.id), {
+                        router.delete(route('transfers.destroy', transferToDelete.id), {
                             preserveScroll: true,
                             onSuccess: () => {
                                 setShowDeleteModal(false);

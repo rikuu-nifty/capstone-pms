@@ -16,7 +16,7 @@ export default function AppLogoIcon(props: React.ImgHTMLAttributes<HTMLImageElem
   return (
     <img
       {...props}
-      src="https://img.freepik.com/premium-vector/cool-blue-white-letter-t-is-blue-background_462839-1506.jpg" 
+      src="https://pbs.twimg.com/profile_images/1597042929629265921/K2Mj7_hh_400x400.jpg" 
       alt="App Logo"
       className="h-8 w-8" // adjust size
     />

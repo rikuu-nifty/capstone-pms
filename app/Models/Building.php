@@ -16,6 +16,11 @@ class Building extends Model
         'description',
     ];
 
+    public function inventoryLists()
+{
+    return $this->hasMany(InventoryList::class, 'building_id');
+}
+
     public function buildingRooms()
     {
         return $this->hasMany(BuildingRoom::class);
@@ -54,12 +59,7 @@ class Building extends Model
             ])
             ->findOrFail($id);
     }
-
-    public function inventoryLists()
-    {
-        return $this->hasMany(InventoryList::class);
-    }
-    
+  
      public function inventorySchedulings()
     {
         return $this->hasMany(InventoryScheduling::class);
