@@ -14,10 +14,11 @@ use App\Notifications\PasswordResetNotification;
 
 use App\Models\User;
 use App\Models\Role;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserApprovalController extends Controller
 {
-    use AuthorizesRequests;
+    use AuthorizesRequests, SoftDeletes;
 
     public function index(Request $request)
     {
@@ -79,6 +80,7 @@ class UserApprovalController extends Controller
 
     public function destroy(User $user)
     {
+        $this->authorize('delete-users', $user);
         $user->delete();
 
         return back()->with('status', "Deleted {$user->email}");

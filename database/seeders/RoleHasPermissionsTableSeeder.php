@@ -11,85 +11,180 @@ class RoleHasPermissionsTableSeeder extends Seeder
     public function run(): void
     {
         $matrix = [
-            // Superuser → all permissions
             'superuser' => Permission::pluck('id')->toArray(),
 
-            // VP Admin: view-only for most, full control on Users, Roles, Form Approval, Profile
             'vp_admin' => [
                 'view-inventory-scheduling',
+                'view-inventory-list',
                 'view-transfers',
                 'view-turnover-disposal',
                 'view-off-campus',
                 'view-reports',
                 'view-assignments',
                 'view-buildings',
+                'view-building-rooms',
+                'view-asset-models',
                 'view-unit-or-departments',
 
-                // full control
                 'view-users-page',
-                'manage-users',
+                'approve-users',
+                'reset-user-password',
+                'send-email-change-request',
                 'delete-users',
+
                 'view-roles-page',
                 'create-roles',
                 'update-roles',
-                'delete-roles',
+                'delete-role',
                 'update-permissions',
+
                 'view-form-approvals',
-                'manage-form-approvals',
+                'approve-form-approvals',
                 'delete-form-approvals',
+
                 'view-profile',
                 'manage-profile',
             ],
 
-            // PMO Head: full control on most pages, but cannot delete roles
             'pmo_head' => [
                 'view-inventory-scheduling',
-                'manage-inventory-scheduling',
+                'create-inventory-scheduling',
+                'update-inventory-scheduling',
+                'delete-inventory-scheduling',
+
+                'view-inventory-list',
+                'create-inventory-list',
+                'update-inventory-list',
+                'delete-inventory-list',
+
                 'view-transfers',
-                'manage-transfers',
+                'create-transfers',
+                'update-transfers',
+                'delete-transfers',
+
                 'view-turnover-disposal',
-                'manage-turnover-disposal',
+                'create-turnover-disposal',
+                'update-turnover-disposal',
+                'delete-turnover-disposal',
+
                 'view-off-campus',
-                'manage-off-campus',
-                'view-reports',
+                'create-off-campus',
+                'update-off-campus',
+                'delete-off-campus',
+                'restore-off-campus',
+
                 'view-assignments',
-                'manage-assignments',
+                'create-assignments',
+                'update-assignments',
+                'delete-assignments',
+
                 'view-buildings',
-                'manage-buildings',
+                'create-buildings',
+                'update-buildings',
+                'delete-buildings',
+
+                'view-building-rooms',
+                'create-building-rooms',
+                'update-building-rooms',
+                'delete-building-rooms',
+
+                'view-categories',
+                'create-categories',
+                'update-categories',
+                'delete-categories',
+
+                'view-asset-models',
+                'create-asset-models',
+                'update-asset-models',
+                'delete-asset-models',
+
                 'view-unit-or-departments',
-                'manage-unit-or-departments',
+                'create-unit-or-departments',
+                'update-unit-or-departments',
+                'delete-unit-or-departments',
+
                 'view-users-page',
-                'manage-users',
+                'approve-users',
+                'reset-user-password',
+                'send-email-change-request',
                 'delete-users',
+
                 'view-roles-page',
-                'manage-roles', // ❌ no delete-role
+                'create-roles',
+                'update-roles',
+                'update-permissions',
+
                 'view-form-approvals',
-                'manage-form-approvals',
+                'approve-form-approvals',
                 'delete-form-approvals',
+
                 'view-profile',
                 'manage-profile',
             ],
 
-            // PMO Staff → operational access, limited view-only in some areas
             'pmo_staff' => [
                 'view-inventory-scheduling',
-                'manage-inventory-scheduling',
+                'create-inventory-scheduling',
+                'update-inventory-scheduling',
+                'delete-inventory-scheduling',
+
+                'view-inventory-list',
+                'create-inventory-list',
+                'update-inventory-list',
+                'delete-inventory-list',
+
                 'view-transfers',
-                'manage-transfers',
+                'create-transfers',
+                'update-transfers',
+                'delete-transfers',
+
                 'view-turnover-disposal',
-                'manage-turnover-disposal',
+                'create-turnover-disposal',
+                'update-turnover-disposal',
+                'delete-turnover-disposal',
+
                 'view-off-campus',
-                'manage-off-campus',
-                'view-reports', // view-only
+                'create-off-campus',
+                'update-off-campus',
+                'delete-off-campus',
+                'restore-off-campus',
+
+                'view-reports',
+
                 'view-assignments',
-                'manage-assignments',
+                'create-assignments',
+                'update-assignments',
+                'delete-assignments',
+
                 'view-buildings',
-                'manage-buildings',
+                'create-buildings',
+                'update-buildings',
+                'delete-buildings',
+
+                'view-building-rooms',
+                'create-building-rooms',
+                'update-building-rooms',
+                'delete-building-rooms',
+
+                'view-categories',
+                'create-categories',
+                'update-categories',
+                'delete-categories',
+
+                'view-asset-models',
+                'create-asset-models',
+                'update-asset-models',
+                'delete-asset-models',
+
                 'view-unit-or-departments',
-                'manage-unit-or-departments',
-                'view-users',
-                'manage-users',
-                'view-form-approvals', // ❌ only view
+                'create-unit-or-departments',
+                'update-unit-or-departments',
+                'delete-unit-or-departments',
+
+                'view-users-page',
+
+                'view-form-approvals',
+
                 'view-profile',
                 'manage-profile',
             ],

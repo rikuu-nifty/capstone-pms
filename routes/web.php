@@ -105,7 +105,7 @@
         ->middleware('can:delete-users,user');
     Route::post('/users/{user}/reassign-role', [UserApprovalController::class, 'reassignRole'])
         ->name('users.reassignRole')
-        ->middleware('can:approve');
+        ->middleware('can:approve-users');
 
     //ROLES & PERMISSIONS
     Route::get('/role-management', [RoleController::class, 'index'])

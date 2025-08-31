@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Access\Response;
 use App\Models\Role;
+use App\Models\Permission;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -31,9 +32,25 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::before(function (User $user, string $ability) {
-            if ($ability !== 'delete-role' && $user->role?->code === 'superuser') {
+            if ($user->role?->code === 'superuser' && $ability !== 'delete-role') {
                 return true;
             }
+
+            $contextual = [
+                'delete-users',
+                'delete-role',
+                'approve-users',
+                'reset-user-password',
+                'send-email-change-request',
+                'approve-form-approvals',
+                'update-permissions',
+                'update-roles',
+            ];
+
+            if (in_array($ability, $contextual, true)) {
+                return null;
+            }
+
             return $user->hasPermission($ability) ?: null;
         });
 
@@ -52,26 +69,29 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Gate::define('delete-users', function (User $authUser, User $targetUser) {
-            if ($targetUser->role?->code === 'superuser') {
+            if (in_array($targetUser->role?->code, ['superuser', 'vp_admin', 'pmo_head'], true)) {
                 return false;
             }
 
-            // Prevent deleting yourself
             if ($authUser->id === $targetUser->id) {
                 return false;
             }
 
-            // Superuser can delete anyone (except themselves, already blocked)
             if ($authUser->role?->code === 'superuser') {
                 return true;
             }
 
-            // VP Admin can delete anyone else (except themselves & superuser)
             if ($authUser->role?->code === 'vp_admin') {
                 return true;
             }
 
             return $authUser->hasPermission('delete-users');
         });
+
+        foreach (Permission::pluck('code') as $code) {
+            Gate::define($code, function ($user) use ($code) {
+                return $user->role && $user->role->permissions->contains('code', $code);
+            });
+        }
     }
 }

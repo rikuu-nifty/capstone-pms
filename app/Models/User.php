@@ -246,6 +246,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getCanDeleteAttribute()
     {
-        return Gate::allows('delete-user', $this);
+        return Gate::allows('delete-users', $this);
     }
 }
