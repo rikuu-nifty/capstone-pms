@@ -35,16 +35,16 @@ class InventoryListController extends Controller
     }
 
     public function showMemorandumReceipt(InventoryList $inventoryList)
-{
-    $assets = InventoryList::with(['assetModel', 'unitOrDepartment', 'building', 'buildingRoom'])
-        ->where('memorandum_no', $inventoryList->memorandum_no)
-        ->get();
+    {
+        $assets = InventoryList::with(['assetModel', 'unitOrDepartment', 'building', 'buildingRoom'])
+            ->where('memorandum_no', $inventoryList->memorandum_no)
+            ->get();
 
-    return Inertia::render('inventory-list/ViewMemorandumReceipt', [
-        'assets' => $assets,
-        'memo_no' => $inventoryList->memorandum_no,
-    ]);
-}
+        return Inertia::render('inventory-list/ViewMemorandumReceipt', [
+            'assets' => $assets,
+            'memo_no' => $inventoryList->memorandum_no,
+        ]);
+    }
 
 
     public function index(Request $request)
@@ -128,60 +128,65 @@ class InventoryListController extends Controller
      * @param InventoryListAddNewAssetFormRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
-  public function store(InventoryListAddNewAssetFormRequest $request): RedirectResponse
-{
-    $data = $request->validated();
+    public function store(InventoryListAddNewAssetFormRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
 
-    // Handle image upload if provided
-    if ($request->hasFile('image')) {
-        $path = $request->file('image')->store('assets', 'public');
-        $data['image_path'] = $path;
-    }
-
-    // 🚫 remove transfer_status so DB default applies
-    unset($data['transfer_status']);
-
-    // ✅ Bulk mode
-    if ($request->input('mode') === 'bulk') {
-        $created = [];
-        $serialNumbers = $request->input('serial_numbers', []);
-        $qty = (int) $request->input('quantity', 1);
-
-        if (!empty($serialNumbers)) {
-            foreach ($serialNumbers as $serial) {
-                $newData = $data;
-                $newData['serial_no'] = $serial;
-                $newData['quantity'] = 1;
-                $created[] = InventoryList::create($newData);
-            }
-        } else {
-            for ($i = 0; $i < $qty; $i++) {
-                $newData = $data;
-                $newData['quantity'] = 1;
-                $created[] = InventoryList::create($newData);
-            }
+        // ✅ ensure maintenance_due_date is included
+        if ($request->filled('maintenance_due_date')) {
+            $data['maintenance_due_date'] = $request->input('maintenance_due_date');
         }
 
+        // Handle image upload if provided
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('assets', 'public');
+            $data['image_path'] = $path;
+        }
+
+        // 🚫 remove transfer_status so DB default applies
+        unset($data['transfer_status']);
+
+        // ✅ Bulk mode
+        if ($request->input('mode') === 'bulk') {
+            $created = [];
+            $serialNumbers = $request->input('serial_numbers', []);
+            $qty = (int) $request->input('quantity', 1);
+
+            if (!empty($serialNumbers)) {
+                foreach ($serialNumbers as $serial) {
+                    $newData = $data;
+                    $newData['serial_no'] = $serial;
+                    $newData['quantity'] = 1;
+                    $created[] = InventoryList::create($newData);
+                }
+            } else {
+                for ($i = 0; $i < $qty; $i++) {
+                    $newData = $data;
+                    $newData['quantity'] = 1;
+                    $created[] = InventoryList::create($newData);
+                }
+            }
+
+            return redirect()->back()->with([
+                'success' => count($created) . ' bulk assets added successfully.',
+            ]);
+        }
+
+        // ✅ Single mode
+        $asset = InventoryList::create($data);
+
+        $asset->load([
+            'assetModel.category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom'
+        ]);
+
         return redirect()->back()->with([
-            'success' => count($created) . ' bulk assets added successfully.',
+            'success' => 'Asset added successfully.',
+            'newAsset' => $asset,
         ]);
     }
-
-    // ✅ Single mode
-    $asset = InventoryList::create($data);
-
-    $asset->load([
-        'assetModel.category',
-        'unitOrDepartment',
-        'building',
-        'buildingRoom'
-    ]);
-
-    return redirect()->back()->with([
-        'success' => 'Asset added successfully.',
-        'newAsset' => $asset,
-    ]);
-}
     
 
     /**
@@ -203,38 +208,45 @@ class InventoryListController extends Controller
     /**
      * Update the specified resource in storage.
      */
-public function update(Request $request, InventoryList $inventoryList): RedirectResponse
-{
-    $data = $request->validate([
-        'asset_name' => 'nullable|string|max:255',
-        'supplier' => 'nullable|string|max:255',
-        'serial_no' => 'nullable|string|max:255',
-        'unit_cost' => 'nullable|numeric|min:0',
-        'quantity' => 'nullable|integer|min:1',
-        'asset_type' => 'nullable|string|max:255',
-        'category_id' => 'nullable|integer|exists:categories,id', //KABIT TO IF MERON TAYONG COLUMN FOR CATEGORY ID PERO WALA KASE CINACALL NATIN THROUGH MODEL
-        'brand' => 'nullable|string|max:255',
-        'memorandum_no' => 'nullable|numeric|min:0',
-        'description' => 'nullable|string|max:1000',
-        'date_purchased' => 'nullable|date',
-        'transfer_status' => 'nullable|string|in:not_transferred,transferred,pending',
-        'asset_model_id' => 'nullable|integer',
-        'building_id' => 'nullable|exists:buildings,id',
-        'building_room_id' => 'nullable|exists:building_rooms,id',
-        'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
-        'status' => 'nullable|string|in:active,archived',
-         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // ✅ image validation
-    ]);
-      // Handle image upload if provided
-    if ($request->hasFile('image')) {
-        $path = $request->file('image')->store('assets', 'public'); 
-        $data['image_path'] = $path;
+    public function update(Request $request, InventoryList $inventoryList): RedirectResponse
+    {
+        $data = $request->validate([
+            'asset_name' => 'nullable|string|max:255',
+            'supplier' => 'nullable|string|max:255',
+            'serial_no' => 'nullable|string|max:255',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'quantity' => 'nullable|integer|min:1',
+            'asset_type' => 'nullable|string|max:255',
+            'category_id' => 'nullable|integer|exists:categories,id', //KABIT TO IF MERON TAYONG COLUMN FOR CATEGORY ID PERO WALA KASE CINACALL NATIN THROUGH MODEL
+            'brand' => 'nullable|string|max:255',
+            'memorandum_no' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string|max:1000',
+            'date_purchased' => 'nullable|date',
+            'maintenance_due_date' => 'nullable|date', // ✅ added here
+            'transfer_status' => 'nullable|string|in:not_transferred,transferred,pending',
+            'asset_model_id' => 'nullable|integer',
+            'building_id' => 'nullable|exists:buildings,id',
+            'building_room_id' => 'nullable|exists:building_rooms,id',
+            'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
+            'status' => 'nullable|string|in:active,archived',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // ✅ image validation
+        ]);
+
+        // ✅ ensure maintenance_due_date is passed
+        if ($request->filled('maintenance_due_date')) {
+            $data['maintenance_due_date'] = $request->input('maintenance_due_date');
+        }
+
+        // Handle image upload if provided
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('assets', 'public'); 
+            $data['image_path'] = $path;
+        }
+
+        $inventoryList->update($data);
+
+        return redirect()->back()->with('success', 'Asset updated successfully.');
     }
-
-    $inventoryList->update($data);
-
-    return redirect()->back()->with('success', 'Asset updated successfully.');
-}
 
 
 

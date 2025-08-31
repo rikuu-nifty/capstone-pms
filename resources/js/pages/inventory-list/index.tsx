@@ -83,6 +83,7 @@ export type Asset = {
     transfer_status: TransferStatus; // ✅ strongly typed;
     brand: string;
     image_path?: string | null; // ✅ new field
+    maintenance_due_date: string; // ✅ new field
 };
 
 export type AssetFormData = {
@@ -104,6 +105,7 @@ export type AssetFormData = {
     brand: string;
     transfer_status: string;
     image?: File | null; // ✅ add this
+    maintenance_due_date: string; // ✅ new field
 };
 
 type KPIs = {
@@ -150,6 +152,7 @@ export default function InventoryListIndex({
         unit_or_department_id: '',
         building_room_id: '',
         date_purchased: '',
+        maintenance_due_date: '', // ✅ new default
         category_id: '',
         asset_type: '',
         asset_name: '',
@@ -262,6 +265,7 @@ export default function InventoryListIndex({
             onSuccess: () => {
                 reset();
                 setShowAddAsset(false);
+                router.reload({ only: ['notifications'] });
             },
         });
         console.log('Form Submitted', data);
@@ -731,6 +735,17 @@ onViewMemo={() => {
                                 <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
                                 {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                             </div>
+                            <div className="col-span-1 pt-0.5">
+  <label className="mb-1 block font-medium">Maintenance Due Date</label>
+  <PickerInput
+    type="date"
+    value={data.maintenance_due_date}
+    onChange={(v) => setData('maintenance_due_date', v)}
+  />
+  {errors.maintenance_due_date && (
+    <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>
+  )}
+</div>
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Type</label>

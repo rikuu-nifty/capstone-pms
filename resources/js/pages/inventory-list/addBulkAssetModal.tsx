@@ -20,6 +20,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
         unit_or_department_id: '',
         building_room_id: '',
         date_purchased: '',
+         maintenance_due_date: '', // ✅ new field
         category_id: '',
         asset_type: '',
         asset_name: '',
@@ -159,6 +160,15 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Date Purchased</label>
                             <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
+                        </div>
+                        {/* ✅ Maintenance Due Date */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Maintenance Due Date</label>
+                            <PickerInput
+                                type="date"
+                                value={data.maintenance_due_date}
+                                onChange={(v) => setData('maintenance_due_date', v)}
+                            />
                         </div>
 
                         <div className="col-span-1">

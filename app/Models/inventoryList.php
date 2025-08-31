@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+// ✅ Added imports for notifications
+use App\Models\User;
+use App\Notifications\MaintenanceDueNotification;
+use Carbon\Carbon;
 
 class InventoryList extends Model
 {
@@ -24,6 +28,7 @@ class InventoryList extends Model
         'transfer_status',
         'status',
         'image_path',
+        'maintenance_due_date',
     ];
 
     public function assetModel()
@@ -46,9 +51,9 @@ class InventoryList extends Model
     //     return $this->belongsTo(BuildingRoom::class);
     // }
     public function buildingRoom()
-{
-    return $this->belongsTo(BuildingRoom::class, 'building_room_id');
-}
+    {
+        return $this->belongsTo(BuildingRoom::class, 'building_room_id');
+    }
 
     public function turnoverDisposalAsset()
     {
@@ -124,5 +129,92 @@ class InventoryList extends Model
     // {
     //     return $this->hasMany(offCampusAsset::class, 'asset_id');
     // }
+
+
+    // ✅ Hook into model events for instant notifications
+    protected static function booted()
+    {
+        // When a new asset is created
+        static::created(function ($asset) {
+            self::checkAndNotify($asset);
+        });
+
+        // When an existing asset is updated
+        // static::updated(function ($asset) {
+        //     if ($asset->isDirty('maintenance_due_date')) {
+        //         self::checkAndNotify($asset);
+        //     }
+        // });
+
+        static::updated(function ($asset) {
+    if ($asset->maintenance_due_date && 
+        \Carbon\Carbon::parse($asset->maintenance_due_date)->isToday() || 
+        \Carbon\Carbon::parse($asset->maintenance_due_date)->isPast()
+    ) {
+        self::checkAndNotify($asset, true); // force notify
+    }
+});
+    }
+
+    /**
+     * ✅ Helper to check if due and send notifications
+     */protected static function checkAndNotify($asset)
+{
+    if ($asset->maintenance_due_date && (
+        \Carbon\Carbon::parse($asset->maintenance_due_date)->isToday() ||
+        \Carbon\Carbon::parse($asset->maintenance_due_date)->isPast()
+    )) {
+        $users = \App\Models\User::whereHas('role', function ($q) {
+            $q->where('code', '!=', 'vp_admin'); // 👈 exclude VP Admin
+        })->get();
+
+        foreach ($users as $user) {
+            // ✅ Always send a new notification, even if same asset already had one
+            $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
+        }
+    }
+}
+
+// IF WANT MO KASAMA PATI VP ADMIN UNCOMMENT MOTO
+//     protected static function checkAndNotify($asset)
+// {
+//     if ($asset->maintenance_due_date && (
+//         \Carbon\Carbon::parse($asset->maintenance_due_date)->isToday() ||
+//         \Carbon\Carbon::parse($asset->maintenance_due_date)->isPast()
+//     )) {
+//         $users = \App\Models\User::whereHas('role', function ($q) {
+//             $q->whereIn('code', ['pmo_staff', 'pmo_head', 'vp_admin', 'superuser']);
+//         })->get();
+
+//         foreach ($users as $user) {
+//             // ✅ Always send a new notification, even if same asset already had one
+//             $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
+//         }
+//     }
+// }
+
+//     protected static function checkAndNotify($asset)
+// {
+//     if ($asset->maintenance_due_date && (
+//         Carbon::parse($asset->maintenance_due_date)->isToday() ||
+//         Carbon::parse($asset->maintenance_due_date)->isPast()
+//     )) {
+//         $users = User::whereHas('role', function ($q) {
+//             $q->whereIn('code', ['pmo_staff', 'pmo_head', 'vp_admin', 'superuser']);
+//         })->get();
+
+//         foreach ($users as $user) {
+//             // Avoid duplicate notifications for the same asset + user
+//             $alreadySent = $user->notifications()
+//                 ->where('type', \App\Notifications\MaintenanceDueNotification::class)
+//                 ->where('data->asset_id', $asset->id)
+//                 ->exists();
+
+//             if (! $alreadySent) {
+//                 $user->notify(new MaintenanceDueNotification($asset));
+//             }
+//         }
+//     }
+// }
 
 }

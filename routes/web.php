@@ -17,6 +17,7 @@
     use App\Http\Controllers\FormApprovalController;
     use App\Http\Controllers\UserApprovalController;
     use App\Http\Controllers\DashboardController;
+    use App\Http\Controllers\NotificationController;
 
     use App\Http\Controllers\Settings\PasswordController;
     use App\Http\Controllers\RoleController;
@@ -80,6 +81,16 @@ Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, '
     Route::get('calendar', function () {
         return Inertia::render('calendar');
     })->name('calendar');
+    
+    //NOTIFICATIONS
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+    ->name('notifications.markAllRead');
+
+    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead'])
+    ->name('notifications.markRead');
+
+    Route::post('/notifications/{id}/dismiss', [NotificationController::class, 'dismiss'])
+    ->name('notifications.dismiss');
 
     //USER MANAGEMENT PAGE
     Route::get('/users', [UserApprovalController::class, 'index'])

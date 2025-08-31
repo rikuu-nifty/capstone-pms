@@ -25,6 +25,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         asset_name: asset.asset_name,
         supplier: asset.supplier,
         date_purchased: asset.date_purchased,
+        maintenance_due_date: asset.maintenance_due_date || '', // ✅ no `any`
         quantity: asset.quantity,
         serial_no: asset.serial_no || '', // or asset.serial_no if available
         unit_cost: asset.unit_cost || '', // or asset.unit_cost if available NAGKAKAEEROR KAPAG NILALAGAY KOTO
@@ -66,7 +67,13 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
             },
             {
                 forceFormData: true, // ✅ ensures File objects get sent as FormData
-                onSuccess: () => onClose(),
+
+                
+                onSuccess: () => {
+            onClose();
+            // 🔔 refresh notifications if due date was set to today/past
+            router.reload({ only: ['notifications'] });
+        },
                 onError: (errors) => console.error(errors),
             },
         );
@@ -153,6 +160,16 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             <Label>Date Purchased</Label>
                             <PickerInput type="date" value={form.date_purchased} onChange={(v) => handleChange('date_purchased', v)} />
                         </div>
+
+                        {/* Maintenance Due Date */}
+<div>
+  <Label>Maintenance Due Date</Label>
+  <PickerInput
+    type="date"
+    value={form.maintenance_due_date}
+    onChange={(v) => handleChange('maintenance_due_date', v)}
+  />
+</div>
 
                         {/* Asset Type */}
                         <div>

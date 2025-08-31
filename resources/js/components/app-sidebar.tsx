@@ -20,7 +20,7 @@ import {
     ClipboardList,
     File,
     FileCheck2,
-    Files,
+    // Files,
     Landmark,
     LayoutGrid,
     Network,
@@ -36,6 +36,14 @@ import {
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
+// Define type for nav items
+type NavItem = {
+  title: string
+  href: string
+  icon: React.ComponentType<Record<string, unknown>>
+  permission?: string
+}
+
 // ------------------ NAV ITEMS ------------------
 const dashboardNavItems = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
@@ -48,7 +56,7 @@ const inventoryNavItems = [
     { title: 'Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
-    { title: 'Reports', href: '/reports', icon: Files, permission: 'view-reports' },
+    // { title: 'Reports', href: '/reports', icon: Files, permission: 'view-reports' },
 ];
 
 const assetsNavItems = [
@@ -66,7 +74,7 @@ const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2 },
-    { title: 'Audit Log', href: '/audit-log', icon: File },
+    { title: 'Audit Log', href: '/audit-log', icon: File, permission: 'view-form-approvals' },
     // { title: 'Profile', href: '/profile', icon: User },
 ];
 
@@ -75,9 +83,9 @@ const configNavItems = [
 ];
 
 // ------------------ HELPERS ------------------
-function canView(item: any, permissions: string[]) {
-    if (!item.permission) return true;
-    return permissions.includes(item.permission);
+function canView(item: NavItem, permissions: string[]): boolean {
+  if (!item.permission) return true
+  return permissions.includes(item.permission)
 }
 
 // ------------------ COMPONENT ------------------
@@ -100,7 +108,7 @@ export function AppSidebar() {
             setOpenGroups((prev) => ({ ...prev, 'Institutional Setup': true }));
         }
         if (userNavItems.some((item) => url.startsWith(item.href))) {
-            setOpenGroups((prev) => ({ ...prev, User: true }));
+            setOpenGroups((prev) => ({ ...prev, 'User Management': true }));
         }
     }, [url]);
 

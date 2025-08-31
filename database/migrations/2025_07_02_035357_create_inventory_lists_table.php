@@ -55,6 +55,7 @@ return new class extends Migration
             $table->decimal('unit_cost', 10, 2);
 
             $table->date('date_purchased')->nullable();
+            $table->date('maintenance_due_date')->nullable();
             $table->string('asset_type');
             $table->integer('quantity');
             $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->default('pending');

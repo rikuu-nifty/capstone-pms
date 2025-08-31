@@ -96,12 +96,12 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "delete-form-approvals",
     ],
     "Reports": ["view-reports"],
-    "Assignments": [
-        "view-assignments",
-        "create-assignments",
-        "update-assignments",
-        "delete-assignments",
-    ],
+    // "Assignments": [
+    //     "view-assignments",
+    //     "create-assignments",
+    //     "update-assignments",
+    //     "delete-assignments",
+    // ],
     "Profile": ["view-profile", "manage-profile"],
 };
 
