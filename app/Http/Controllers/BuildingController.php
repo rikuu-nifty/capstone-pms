@@ -151,24 +151,55 @@ class BuildingController extends Controller
      */
     public function update(Request $request, Building $building)
     {
-         $validated = $request->validate([
-            'name' => ['required','string','max:255'],
-            'code' => ['required','string','max:50', Rule::unique('buildings', 'code')
-                ->whereNull('deleted_at')
-                ->ignore($building->id),
-            ],
-            'description' => ['nullable','string','max:1000'],
+        $validated = $request->validate([
+            'name'                => 'required|string|max:255',
+            'code'                => 'nullable|string|max:50',
+            'description'         => 'nullable|string|max:1000',
+            'selected_rooms'      => 'array',
+            'selected_rooms.*'    => 'integer|exists:building_rooms,id',
+            'rooms'               => 'array',
+            'rooms.*.room'        => 'required_with:rooms|string|max:255',
+            'rooms.*.description' => 'nullable|string|max:1000',
         ]);
 
-        $payload = [
-            'name' => ucwords(trim($validated['name'])),
-            'code' => strtoupper(trim($validated['code'])),
-            'description' => $validated['description'] ? trim($validated['description']) : null,
-        ];
+        DB::transaction(function () use ($validated, $building) {
+            $building->update([
+                'name'        => trim($validated['name']),
+                'code'        => strtoupper(trim($validated['code'] ?? '')),
+                'description' => $validated['description'] ?? null,
+            ]);
 
-        $building->update($payload);
+            $roomIds = collect($validated['selected_rooms'] ?? [])->unique()->values();
 
-        return redirect()->route('buildings.index')->with('success', 'Record was successfully updated');
+            if ($roomIds->isNotEmpty()) {
+                BuildingRoom::whereIn('id', $roomIds)
+                    ->where('building_id', $building->id)
+                    ->update(['building_id' => $building->id])
+                ;
+            }
+
+            if (!empty($validated['rooms'])) {
+                $now = now();
+
+                $newRooms = collect($validated['rooms'])
+                    ->unique(fn($r) => mb_strtolower($r['room']))
+                    ->map(fn($r) => [
+                        'building_id' => $building->id,
+                        'room'        => trim($r['room']),
+                        'description' => $r['description'] ?? null,
+                        'created_at'  => $now,
+                        'updated_at'  => $now,
+                    ])
+                    ->values()
+                    ->all();
+
+                if (!empty($newRooms)) {
+                    BuildingRoom::insert($newRooms);
+                }
+            }
+        });
+
+        return back()->with('success', 'Building updated successfully.');
     }
 
     /**

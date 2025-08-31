@@ -64,4 +64,35 @@ class Building extends Model
     {
         return $this->hasMany(InventoryScheduling::class);
     }
+
+    // app/Models/Building.php
+    public function syncRooms(array $rooms): void
+    {
+        $existingRoomIds = $this->buildingRooms()->pluck('id')->toArray();
+        $incomingIds = collect($rooms)->pluck('id')->filter()->toArray();
+
+        // Delete removed
+        $toDelete = array_diff($existingRoomIds, $incomingIds);
+        if (!empty($toDelete)) {
+            BuildingRoom::whereIn('id', $toDelete)->delete();
+        }
+
+        // Upsert
+        foreach ($rooms as $roomData) {
+            if (!empty($roomData['id'])) {
+                $room = BuildingRoom::find($roomData['id']);
+                if ($room) {
+                    $room->update([
+                        'room' => $roomData['room'],
+                        'description' => $roomData['description'] ?? null,
+                    ]);
+                }
+            } else {
+                $this->buildingRooms()->create([
+                    'room' => $roomData['room'],
+                    'description' => $roomData['description'] ?? null,
+                ]);
+            }
+        }
+    }
 }

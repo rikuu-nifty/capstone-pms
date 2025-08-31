@@ -77,7 +77,7 @@ export default function BuildingsTable({ buildings, sortKey, sortDir, search, se
                                     className={`cursor-pointer ${selectedBuildingId === Number(b.id) ? 'bg-muted/50' : ''}`}
                                 >
                                     <TableCell>{b.id}</TableCell>
-                                    <TableCell className="font-medium">{b.code}</TableCell>
+                                    <TableCell className="font-medium">{(b.code).toUpperCase()}</TableCell>
                                     <TableCell>{b.name}</TableCell>
                                     <TableCell className="max-w-[250px] text-center break-words whitespace-normal">{b.description ?? '—'}</TableCell>
                                     <TableCell>{b.building_rooms_count ?? 0}</TableCell>

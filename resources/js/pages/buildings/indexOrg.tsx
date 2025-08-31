@@ -14,7 +14,7 @@ import Pagination, { PageInfo } from '@/components/Pagination';
 import { Building, PageProps } from '@/types/building';
 import { formatNumber, BuildingRoom } from '@/types/custom-index';
 import AddBuildingModal from './AddBuildingModal';
-import EditBuildingModal from './EditBuildingModal';
+import EditBuildingModal from './EditBuildingModalORIG';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import ViewBuildingModal from './ViewBuildingModal';
 import KPIStatCard from '@/components/statistics/KPIStatCard';
