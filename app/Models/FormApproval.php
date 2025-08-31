@@ -294,7 +294,13 @@ class FormApproval extends Model
 
         $handlers = [
             OffCampus::class => function ($model, $status, $approved) {
-                // OffCampus has no status column – do nothing or log
+                if ($status === 'reset') {
+                    $model->update(['status' => 'pending_review']);
+                } elseif ($status === 'rejected') {
+                    $model->update(['status' => 'cancelled']);
+                } elseif ($approved) {
+                    $model->update(['status' => 'pending_return']);
+                }
             },
             
             InventoryScheduling::class => function ($model, $status, $approved) {
