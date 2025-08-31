@@ -27,10 +27,10 @@ const badgeVariants = cva(
         overdue: "border-transparent bg-red-100 text-red-700",
 
         // custom role variants
-        pmo_head: 'bg-blue-100 text-blue-700 border border-blue-200',
-        pmo_staff: 'bg-gray-100 text-gray-700 border border-gray-200',
-        vp_admin: 'bg-purple-100 text-purple-700 border border-purple-200',
-        superuser: 'bg-red-100 text-red-700 border border-red-200',
+        pmo_head: 'bg-blue-100 text-blue-700 border border-blue-200 font-medium',
+        pmo_staff: 'bg-gray-100 text-gray-700 border border-gray-200 font-medium',
+        vp_admin: 'bg-purple-100 text-purple-700 border border-purple-200 font-medium',
+        superuser: 'bg-red-100 text-red-700 border border-red-200 font-medium',
 
         // still keep these
         success:

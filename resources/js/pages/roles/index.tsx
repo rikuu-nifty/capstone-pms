@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 // import { Shield, Settings2, Users, KeyRound, Trash2 } from "lucide-react";
 import { Shield, Users, KeyRound, PlusCircle } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { formatNumber } from "@/types/custom-index";
 
 import Pagination, { PageInfo } from "@/components/Pagination";
@@ -41,20 +41,40 @@ export default function RoleManagement() {
     const [showDelete, setShowDelete] = useState(false);
     const [deletingRole, setDeletingRole] = useState<RoleWithCounts | null>(null);
 
-    const { version } = usePage();
+    // const { version } = usePage();
+
+    // useEffect(() => {
+    //     // if (!version) return;
+
+    //     router.visit(route('role-management.index'), {
+    //         method: 'get',
+    //         data: { q: search || undefined },
+    //         preserveState: true,
+    //         preserveScroll: true,
+    //         replace: true,
+    //     });
+    // }, [search, version]);
+
+    const page = usePage<RoleManagementPageProps>();
+    const version = page?.version ?? null;
+
+    const prevSearchRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (!version) return;
+        if (!version) return; // wait until version exists
 
-        router.visit(route('role-management.index'), {
-            method: 'get',
+        if (prevSearchRef.current === search) return; // prevent loop
+        prevSearchRef.current = search;
+
+        router.visit(route("role-management.index"), {
+            method: "get",
             data: { q: search || undefined },
             preserveState: true,
             preserveScroll: true,
             replace: true,
         });
     }, [search, version]);
-    
+
     const go = (params: Record<string, string | number | undefined> = {}) =>
         router.get(route("role-management.index"), 
         { ...params }, 
@@ -250,7 +270,7 @@ export default function RoleManagement() {
                     permissions={props.permissions} 
                 />
 
-                {editingRole && (
+                {editingRole && showEdit && (
                     <EditRoleModal
                         show={showEdit}
                         onClose={() => setShowEdit(false)}
@@ -280,7 +300,7 @@ export default function RoleManagement() {
                     />
                 )}
 
-                {editingRole && (
+                {editingRole && showManagePermissions && (
                     <ManagePermissionsModal
                         show={showManagePermissions}
                         onClose={() => setShowManagePermissions(false)}

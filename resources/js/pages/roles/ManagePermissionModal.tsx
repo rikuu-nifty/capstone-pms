@@ -111,15 +111,12 @@ export default function ManagePermissionsModal({
     role,
     permissions,
 }: Props) {
-    const { data, setData, put, processing, reset } = useForm<{
-        permissions: number[];
-    }>({
+    const { data, setData, put, processing, reset } = useForm<{permissions: number[];}>({
         permissions: role?.permissions?.map((p) => p.id) ?? [],
     });
 
     const [search, setSearch] = useState("");
 
-    // map {code -> Permission object}
     const permMap = useMemo(() => {
         const map: Record<string, Permission> = {};
         permissions.forEach((p) => {
@@ -156,7 +153,6 @@ export default function ManagePermissionsModal({
             onSubmit={handleSubmit}
             processing={processing}
         >
-            {/* 🔍 Search bar */}
             <div className="col-span-2 mb-4">
                 <Input
                     type="text"
@@ -189,7 +185,7 @@ export default function ManagePermissionsModal({
 
                     return (
                         <div key={group} className="space-y-2">
-                            {/* Group header with separator */}
+                            {/* Group header */}
                             <div className="flex items-center border-b pb-1 mb-2">
                                 <h3 className="text-sm font-semibold text-foreground/80">
                                     {group}
@@ -202,7 +198,6 @@ export default function ManagePermissionsModal({
                                     <div
                                         key={perm.id}
                                         className="flex items-center gap-2 rounded-md p-2 hover:bg-muted/30 transition"
-                                        onClick={() => togglePermission(perm.id)}
                                     >
                                         <Checkbox
                                             id={`perm-${perm.id}`}
@@ -210,7 +205,6 @@ export default function ManagePermissionsModal({
                                             onCheckedChange={() =>
                                                 togglePermission(perm.id)
                                             }
-                                            onClick={(e) => e.stopPropagation()}
                                         />
                                         <Label
                                             htmlFor={`perm-${perm.id}`}
