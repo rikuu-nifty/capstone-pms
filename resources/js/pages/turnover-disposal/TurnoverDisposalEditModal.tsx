@@ -249,86 +249,89 @@ export default function TurnoverDisposalEditModal({
             </div>
 
             {/* Selected Assets */}
-            <div className="col-span-2 flex flex-col gap-4">
-                <label className="block font-medium">Assets Covered</label>
+            <div className="col-span-2 flex flex-col gap-3">
+                <label className="block font-medium text-gray-800">Assets Covered</label>
 
-                {data.selected_assets.map((assetId, index) => {
-                const selectedAsset = assets.find(a => a.id === assetId);
-                return (
-                    <div key={`selected-${assetId}-${index}`} className="flex items-center gap-2">
-                    <span className="text-sm text-blue-800">
-                        {selectedAsset ? (
-                            <>
-                                <span className="text-red-600 font-semibold">[{selectedAsset.asset_type}]</span>{' '}
-                                <span className="text-blue-800">
-                                    {selectedAsset.asset_name ?? ''} - {selectedAsset.serial_no}                        
-                                </span>
-                            </>
-                        ) : (
-                            <span className="text-gray-500 italic">Asset not found</span>
-                        )}
-                    </span>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            const updated = [...data.selected_assets];
-                            updated.splice(index, 1);
-                            setData('selected_assets', updated);
-                            setShowAssetDropdown(prev => {
-                                const next = [...prev];
-                                next.splice(index, 1);
-                                return next.length ? next : [true];
-                            });
-                        }}
-                        className="text-red-500 text-xs hover:underline cursor-pointer"
-                    >
-                        Remove
-                    </button>
-                    </div>
-                );
-                })}
+                <div className="flex flex-wrap gap-2">
+                    {data.selected_assets.length > 0 ? (
+                        data.selected_assets.map((assetId, index) => {
+                            const selectedAsset = assets.find(a => a.id === assetId);
+                            return (
+                                <div
+                                    key={`selected-${assetId}-${index}`}
+                                    className="cursor-default flex items-center justify-between rounded-md border border-blue-200 bg-white px-3 py-2 shadow-sm hover:shadow-md transition w-fit"
+                                >
+                                    <span className="font-medium text-blue-700">
+                                    {selectedAsset
+                                        ? `${selectedAsset.asset_name ?? 'Unnamed'} (${selectedAsset.serial_no ?? 'N/A'})`
+                                        : 'Asset not found'}
+                                    </span>
+                                    <button
+                                    type="button"
+                                    onClick={() => {
+                                        const updated = [...data.selected_assets];
+                                        updated.splice(index, 1);
+                                        setData('selected_assets', updated);
+                                        setShowAssetDropdown(prev => {
+                                        const next = [...prev];
+                                        next.splice(index, 1);
+                                        return next.length ? next : [true];
+                                        });
+                                    }}
+                                    className="cursor-pointer ml-3 text-blue-400 hover:text-red-600 font-extrabold transition text-lg leading-none"
+                                    title="Remove asset"
+                                    >
+                                    ×
+                                    </button>
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <p className="text-xs text-gray-500 italic">No assets linked yet.</p>
+                    )}
+                </div>
 
                 {showAssetDropdown.map(
-                    (visible, index) =>
-                        visible && (
+                    (visible, index) => visible && (
                         <div key={`dropdown-${index}`} className="flex items-center gap-2">
                             <Select
-                            key={`asset-${data.issuing_office_id}-${index}-${data.selected_assets.length}`}
-                            className="w-full"
-                            isDisabled={!data.issuing_office_id}
-                            options={filteredAssets.map(asset => ({
-                                value: asset.id,
-                                label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
-                            }))}
-                            placeholder={
+                                key={`asset-${data.issuing_office_id}-${index}-${data.selected_assets.length}`}
+                                className="w-full text-sm"
+                                isDisabled={!data.issuing_office_id}
+                                options={filteredAssets.map(asset => ({
+                                    value: asset.id,
+                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                }))}
+                                placeholder={
                                 data.issuing_office_id
-                                ? 'Select asset(s) related to this record...'
-                                : 'Select an Issuing Office first'
-                            }
-                            noOptionsMessage={() =>
-                                data.issuing_office_id
-                                ? 'No assets found for this Unit/Dept/Lab'
-                                : 'Select an Issuing Office first'
-                            }
-                            onChange={opt => {
-                                if (opt && !data.selected_assets.includes(opt.value)) {
-                                setData('selected_assets', [...data.selected_assets, opt.value]);
-                                setShowAssetDropdown(prev => {
-                                    const updated = [...prev];
-                                    updated[index] = false;
-                                    return [...updated, true];
-                                });
+                                    ? 'Add an asset...'
+                                    : 'Select an Issuing Office first'
                                 }
-                            }}
+                                noOptionsMessage={() =>
+                                data.issuing_office_id
+                                    ? 'No available assets'
+                                    : 'Select an Issuing Office first'
+                                }
+                                onChange={opt => {
+                                if (opt && !data.selected_assets.includes(opt.value)) {
+                                    setData('selected_assets', [...data.selected_assets, opt.value]);
+                                    setShowAssetDropdown(prev => {
+                                        const updated = [...prev];
+                                        updated[index] = false;
+                                        return [...updated, true];
+                                    });
+                                }
+                                }}
                             />
                         </div>
-                        ),
+                    )
                 )}
 
                 {errors.selected_assets && (
-                <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
+                    <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
                 )}
             </div>
+
 
             {/* Remarks */}
             <div className="col-span-2">
