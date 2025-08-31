@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (AuthorizationException $e, $request) {
-            // ✅ Inertia visit: go back with a flash so the layout can show a modal
+            // Inertia visit? Bounce back with a flash the layout will read
             if ($request->inertia()) {
                 return back(303)->with(
                     'unauthorized',
@@ -38,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 );
             }
 
-            // ✅ Non-Inertia fallback (optional)
+            // Non-Inertia fallback (optional)
             return redirect()
                 ->route('unauthorized')
                 ->with('unauthorized', $e->getMessage() ?: 'You are not authorized to perform this action.');

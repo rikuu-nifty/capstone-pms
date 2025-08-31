@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Permission;
 use Illuminate\Database\Eloquent\SoftDeletes;
-// use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class Role extends Model
@@ -19,15 +20,36 @@ class Role extends Model
         'description',
     ];
 
-    protected static function booted()
+    protected static function booted(): void
     {
-        static::deleting(function ($role) {
-            if (in_array($role->code, ['superuser', 'vp_admin'])) {
-                throw new HttpResponseException(
-                    back(303)->with('unauthorized', 'This role cannot be deleted.')
-                );
+        static::deleting(function (Role $role) {
+            $msg = $role->deletionBlockReasonFor(Auth::user());
+            if ($msg) {
+                // Forces 303 back + flash so your layout opens UnauthorizedModal
+                throw new HttpResponseException(back(303)->with('unauthorized', $msg));
             }
         });
+    }
+
+    public function deletionBlockReasonFor(?\App\Models\User $actor = null): ?string
+    {
+        // Protected roles
+        if (in_array($this->code, ['superuser', 'vp_admin'])) {
+            return $this->code === 'superuser'
+                ? 'The “Superuser” role is protected and cannot be deleted.'
+                : 'The “VP Admin” role is protected and cannot be deleted.';
+        }
+
+        // If an actor was provided, don’t allow deleting your own current role
+        if ($actor && (int) $actor->role_id === (int) $this->id) {
+            $label = $this->name ?: Str::of($this->code ?? '')
+                ->replace('_', ' ')
+                ->title()
+                ->toString();
+            return "You cannot delete your own currently assigned role (“{$label}”).";
+        }
+
+        return null;
     }
 
     public function users()

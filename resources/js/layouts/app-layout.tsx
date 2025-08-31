@@ -33,7 +33,6 @@ export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
   const [showUnauthorized, setShowUnauthorized] = useState(false)
 
   useEffect(() => {
-    // open modal whenever a new unauthorized message appears
     if (unauthorizedMsg) setShowUnauthorized(true)
   }, [unauthorizedMsg])
 
@@ -46,7 +45,7 @@ export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
         message={unauthorizedMsg ?? undefined}
         onClose={() => setShowUnauthorized(false)}
       />
-
+      
       <Toaster
         richColors
         position="top-right"

@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Auth\Access\Response;
 use App\Models\Role;
 
 use Illuminate\Support\ServiceProvider;
@@ -37,19 +38,17 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Gate::define('delete-role', function (User $authUser, Role $targetRole) {
-            if (in_array($targetRole->code, ['superuser', 'vp_admin'])) {
-                return false;
-            }
-
-            if ($authUser->role_id === $targetRole->id) {
-                return false;
+            if ($msg = $targetRole->deletionBlockReasonFor($authUser)) {
+                return Response::deny($msg);
             }
 
             if ($authUser->role?->code === 'vp_admin') {
-                return true;
+                return Response::allow();
             }
 
-            return $authUser->hasPermission('delete-role');
+            return $authUser->hasPermission('delete-role')
+                ? Response::allow()
+                : Response::deny('You do not have permission to delete roles.');
         });
 
         Gate::define('delete-users', function (User $authUser, User $targetUser) {

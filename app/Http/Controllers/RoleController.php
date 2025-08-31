@@ -84,23 +84,26 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        if (Gate::denies('delete-role', $role)) {
-            return redirect()->route('unauthorized');
+        $resp = Gate::inspect('delete-role', $role);
+        if ($resp->denied()) {
+            return back(303)->with('unauthorized', $resp->message() ?: 'Not authorized.');
         }
 
         $role->delete();
 
-        return redirect()->route('role-management.index')
+        return redirect()
+            ->route('role-management.index')
             ->with('success', 'Role deleted successfully.');
     }
         
     public function updatePermissions(Request $request, Role $role)
     {
-        $this->authorize('manage-permissions');
+        $this->authorize('update-permissions');
 
         $request->validate(['permissions' => 'array']);
         $role->permissions()->sync($request->permissions ?? []);
 
-        return redirect()->route('role-management.index')->with('success', 'Permissions updated successfully.');
+        return redirect()->route('role-management.index')
+            ->with('success', 'Permissions updated successfully.');
     }
 }
