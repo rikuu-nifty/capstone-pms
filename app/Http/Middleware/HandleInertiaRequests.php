@@ -64,9 +64,18 @@ class HandleInertiaRequests extends Middleware
                 // Lazy evaluates only if referenced on the client
                 'pending_user_count' => fn () => User::where('status', 'pending')->count(),
             ],
+            // 'flash' => [
+            //     'unauthorized' => fn() => $request->session()->get('unauthorized'),
+            // ],
             'flash' => [
-                'unauthorized' => fn() => $request->session()->get('unauthorized'),
+                'unauthorized' => fn() => $request->session()->has('unauthorized')
+                    ? [
+                        'message' => $request->session()->get('unauthorized'),
+                        'time'    => now()->timestamp, // 🔑 makes each flash unique
+                    ]
+                    : null,
             ],
+
         ];
     }
 }

@@ -25,16 +25,27 @@ interface AppLayoutProps {
   breadcrumbs?: BreadcrumbItem[];
 }
 
+type UnauthorizedFlash = { message: string; time: number }
+
 export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
   // flash.unauthorized is set by bootstrap/app.php handler
-  const { flash } = usePage().props as { flash?: { unauthorized?: string } }
-  const unauthorizedMsg = flash?.unauthorized ?? null
+  // const { flash } = usePage().props as { flash?: { unauthorized?: string } }
+  const { flash } = usePage().props as { flash?: { unauthorized?: UnauthorizedFlash | null } }
+  const unauthorizedObj = flash?.unauthorized ?? null
 
   const [showUnauthorized, setShowUnauthorized] = useState(false)
+  const [unauthorizedMsg, setUnauthorizedMsg] = useState<string | null>(null)
+
+  // useEffect(() => {
+  //   if (unauthorizedMsg) setShowUnauthorized(true)
+  // }, [unauthorizedMsg])
 
   useEffect(() => {
-    if (unauthorizedMsg) setShowUnauthorized(true)
-  }, [unauthorizedMsg])
+    if (unauthorizedObj) {
+      setUnauthorizedMsg(unauthorizedObj.message)
+      setShowUnauthorized(true)
+    }
+  }, [unauthorizedObj])
 
   return (
     <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
@@ -44,6 +55,7 @@ export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
         show={showUnauthorized}
         message={unauthorizedMsg ?? undefined}
         onClose={() => setShowUnauthorized(false)}
+        
       />
       
       <Toaster
