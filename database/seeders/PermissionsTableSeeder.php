@@ -14,7 +14,6 @@ class PermissionsTableSeeder extends Seeder
             // USERS MANAGEMENT PAGE
             ['code' => 'view-users-page', 'name' => 'View Users Page'],
             ['code' => 'approve-users', 'name' => 'Approve Users'],
-            ['code' => 'update-users', 'name' => 'Update Users'],
             ['code' => 'reset-user-password', 'name' => 'Reset User Password'],
             ['code' => 'send-email-change-request', 'name' => 'Send Email Change Request'],
             ['code' => 'delete-users', 'name' => 'Delete Users'],

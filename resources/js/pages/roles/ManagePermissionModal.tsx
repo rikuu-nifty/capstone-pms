@@ -17,7 +17,6 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     "Users Management": [
         "view-users-page",
         "approve-users",
-        "update-users",
         "reset-user-password",
         "send-email-change-request",
         "delete-users",
