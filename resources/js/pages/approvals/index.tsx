@@ -218,7 +218,6 @@ export default function ApprovalsIndex() {
                                         {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
                                             <div className="leading-tight">
                                                 <span className="font-medium">{a.current_step_actor}</span>
-                                                {/* <span className="block text-[11px] text-muted-foreground">{a.current_step_label}</span> */}
                                             </div>
                                         ) : (
                                             '—'

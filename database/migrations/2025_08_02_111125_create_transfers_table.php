@@ -25,7 +25,7 @@ return new class extends Migration
             $table->date('scheduled_date');
             $table->date('actual_transfer_date')->nullable();
             $table->string('received_by')->nullable();
-            $table->enum('status', ['upcoming', 'in_progress', 'overdue', 'completed'])->default('upcoming');
+            $table->enum('status', ['pending_review', 'upcoming', 'in_progress', 'overdue', 'completed', 'cancelled'])->default('pending_review');
             $table->text('remarks')->nullable();
 
             $table->timestamps();

@@ -91,7 +91,7 @@ export default function UserApprovals() {
         );
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Users', href: '/user-approvals' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Users', href: '/users' }]}>
             <Head title="Users" />
 
             <div className="flex flex-col gap-4 p-4">
@@ -386,7 +386,7 @@ export default function UserApprovals() {
                                     className="cursor-pointer"
                                     onClick={() =>
                                     router.post(
-                                        route('user-approvals.deny', u.id),
+                                        route('users.deny', u.id),
                                         {},
                                         { preserveScroll: true }
                                     )
@@ -448,7 +448,7 @@ export default function UserApprovals() {
                         show={showDelete}
                         onCancel={() => setShowDelete(false)}
                         onConfirm={() => {
-                        router.delete(route("user-approvals.destroy", selectedUser.id), {
+                        router.delete(route("users.destroy", selectedUser.id), {
                             preserveScroll: true,
                             onSuccess: () => setShowDelete(false),
                         });

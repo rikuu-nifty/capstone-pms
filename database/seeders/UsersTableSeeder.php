@@ -21,7 +21,7 @@ class UsersTableSeeder extends Seeder
                 'name' => 'Root Superuser',
                 'password' => Hash::make('password'),
                 'status' => 'approved',
-                'role_id' => $superRole?->id, // ✅ dynamically linked
+                'role_id' => $superRole?->id,
             ]
         );
 
@@ -30,6 +30,48 @@ class UsersTableSeeder extends Seeder
             [
                 'first_name' => 'Root',
                 'last_name' => 'Superuser',
+                'middle_name' => null,
+            ]
+        );
+
+        // VP Admin
+        $vpRole = Role::where('code', 'vp_admin')->first();
+        $vpAdmin = User::updateOrCreate(
+            ['email' => 'vpadmin@example.com'],
+            [
+                'name' => 'VP Admin',
+                'password' => Hash::make('password'),
+                'status' => 'approved',
+                'role_id' => $vpRole?->id,
+            ]
+        );
+
+        UserDetail::updateOrCreate(
+            ['user_id' => $vpAdmin->id],
+            [
+                'first_name' => 'VP',
+                'last_name' => 'Admin',
+                'middle_name' => null,
+            ]
+        );
+
+        // PMO Head
+        $headRole = Role::where('code', 'pmo_head')->first();
+        $pmoHead = User::updateOrCreate(
+            ['email' => 'pmohead@example.com'],
+            [
+                'name' => 'PMO Head',
+                'password' => Hash::make('password'),
+                'status' => 'approved',
+                'role_id' => $headRole?->id,
+            ]
+        );
+
+        UserDetail::updateOrCreate(
+            ['user_id' => $pmoHead->id],
+            [
+                'first_name' => 'PMO',
+                'last_name' => 'Head',
                 'middle_name' => null,
             ]
         );

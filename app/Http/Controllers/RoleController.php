@@ -40,7 +40,11 @@ class RoleController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        Role::createRole($validated);
+        $role = Role::createRole($validated);
+
+        if ($request->has('permissions')) {
+            $role->permissions()->sync($request->permissions);
+        }
 
         return redirect()->route('role-management.index')->with('success', 'Role created successfully.');
     }

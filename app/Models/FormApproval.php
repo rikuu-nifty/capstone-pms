@@ -307,9 +307,9 @@ class FormApproval extends Model
                 if ($status === 'rejected') {
                     $model->update(['status' => 'cancelled']);
                 } elseif ($status === 'reset') {
-                    $model->update(['status' => 'upcoming']);
+                    $model->update(['status' => 'pending_review']);
                 } elseif ($approved) {
-                    $model->update(['status' === 'completed']);
+                    $model->update(['status' => 'upcoming']);
                 }
             },
             

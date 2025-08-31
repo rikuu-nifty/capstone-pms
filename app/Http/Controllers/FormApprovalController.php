@@ -26,6 +26,7 @@ class FormApprovalController extends Controller
             'off_campus:external_approved_by'  => ['name' => 'Dean/Head', 'code' => 'external'],
             'transfer:approved_by'             => ['name' => 'PMO Head', 'code' => 'pmo_head'],
             'turnover_disposal:noted_by'       => ['name' => 'PMO Head', 'code' => 'pmo_head'],
+            'turnover_disposal:external_noted_by' => ['name' => 'Dean/Head', 'code' => 'external'],
         ];
 
         $approvals = FormApproval::with([
@@ -68,16 +69,6 @@ class FormApprovalController extends Controller
             $a->setAttribute('can_reset',   $a->status !== 'pending_review'
                 && in_array($roleCode, ['superuser', 'vp_admin'], true) ? 1 : 0
             );
-            // $a->setAttribute('current_step_actor', 
-            //     match ($a->form_type . ':' . ($step?->code ?? '')) {
-            //         'inventory_scheduling:noted_by'     => 'PMO Head',
-            //         'inventory_scheduling:approved_by'  => 'VP Admin',
-            //         'off_campus:issued_by'              => 'PMO Head',
-            //         'off_campus:external_approved_by'   => 'Dean/Head',
-            //         'transfer:approved_by'              => 'PMO Head',
-            //         'turnover_disposal:noted_by'        => 'PMO Head',
-            //         default                              => null,
-            //     });
                 $a->unsetRelation('steps');
 
                 return $a;

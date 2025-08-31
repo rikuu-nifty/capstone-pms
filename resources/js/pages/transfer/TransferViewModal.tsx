@@ -194,12 +194,15 @@ export default function TransferViewModal({
                 >
                     ← Back to Transfers
                 </a>
-                <Button
-                    onClick={() => window.print()}
-                    className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
-                >
-                    🖨️ Print Form
-                </Button>
+                
+                {(transfer.status).toLowerCase() !== 'pending_review' && (
+                    <Button
+                        onClick={() => window.print()}
+                        className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                    >
+                        🖨️ Print Form
+                    </Button>
+                )}
             </div>
         </ViewModal>
     );

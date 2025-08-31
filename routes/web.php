@@ -80,8 +80,11 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
         ->name('users.request-email-change')
         ->middleware('can:send-email-change-request');
     Route::delete('/users/{user}', [UserApprovalController::class, 'destroy'])
-        ->name('user-approvals.destroy')
+        ->name('users.destroy')
         ->middleware('can:delete-users,user');
+    Route::post('/users/{user}/reassign-role', [UserApprovalController::class, 'reassignRole'])
+        ->name('users.reassignRole')
+        ->middleware('can:approve');
 
     //ROLES & PERMISSIONS
     Route::get('/role-management', [RoleController::class, 'index'])
@@ -310,7 +313,11 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
         ->middleware('can:approve-form-approvals');
     Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
         ->name('approvals.reset')
-        ->middleware('can:approve-form-approvals');    
+        ->middleware('can:approve-form-approvals');
+    Route::post('/approvals/{approval}/external-approve', [FormApprovalController::class, 'externalApprove'])
+        ->name('approvals.external_approve')
+        ->middleware('can:approve-form-approvals');
+
 
     //REPORTS
 

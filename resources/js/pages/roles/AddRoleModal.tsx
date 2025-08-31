@@ -24,7 +24,7 @@ export default function AddRoleModal({ show, onClose, permissions }: Props) {
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route("roles.store"), {
+        post(route("role-management.store"), {
             preserveScroll: true,
             onSuccess: () => {
                 reset();

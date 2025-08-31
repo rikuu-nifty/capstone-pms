@@ -54,7 +54,7 @@ export default function TransferEditModal({
             : ''
         ,
         received_by: String(transfer.received_by ?? ''),
-        status: (transfer.status?.toLowerCase() ?? 'upcoming') as TransferFormData['status'],
+        status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',
         selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
     });
@@ -98,7 +98,7 @@ export default function TransferEditModal({
                     : ''
                 ,
                 received_by: transfer.received_by ? String(transfer.received_by) : null,
-                status: (transfer.status?.toLowerCase() ?? 'upcoming') as TransferFormData['status'],
+                status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
                 remarks: transfer.remarks ?? '',
                 selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
             });
@@ -338,11 +338,12 @@ export default function TransferEditModal({
                 {!data.status && (
                     <option value="">Select Status</option>
                 )}
-
-                <option value="upcoming">Upcoming</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="overdue">Overdue</option>
+                    <option value="pending_review">Pending Review</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="cancelled">Cancelled</option>
                 </select>
                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>

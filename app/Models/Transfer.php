@@ -69,11 +69,7 @@ class Transfer extends Model
     public function transferAssets()
     {
         return $this->hasMany(TransferAsset::class, 'transfer_id');
-        // return $this->hasMany(TransferAsset::class, 'transfer_id')->with('inventoryList);
-        /* this will allow us to show each asset detail */
     }
-
-    
 
     public function scopeWithViewRelations($query)
     {

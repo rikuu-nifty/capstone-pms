@@ -36,10 +36,6 @@ class AuthServiceProvider extends ServiceProvider
             return $user->hasPermission($ability) ?: null;
         });
 
-        Gate::define('view-users-page', function (User $user) {
-            return $user->hasPermission('view-users-page');
-        });
-
         Gate::define('delete-role', function (User $authUser, Role $targetRole) {
             if ($targetRole->code === 'superuser' || $targetRole->code === 'vp_admin') {
                 return false;
@@ -57,7 +53,5 @@ class AuthServiceProvider extends ServiceProvider
             // fallback to DB permissions
             return $authUser->hasPermission('delete-role');
         });
-
-               
     }
 }

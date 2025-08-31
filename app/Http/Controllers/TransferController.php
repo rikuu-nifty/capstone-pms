@@ -102,7 +102,7 @@ class TransferController extends Controller
             'scheduled_date' => 'required|date',
             'actual_transfer_date' => 'nullable|date',
             'received_by' => 'nullable|string',
-            'status' => 'required|in:upcoming,in_progress,completed,overdue',
+            'status' => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
             'remarks' => 'nullable|string',
 
             'selected_assets' => 'required|array|min:1',
@@ -129,71 +129,12 @@ class TransferController extends Controller
             return $transfer;
         });
 
-
-        // $transfer = Transfer::create($validated);
-
-        // if ($request->has('selected_assets') && is_array($request->selected_assets)) {
-        //     foreach ($request->selected_assets as $assetId) {
-        //         $transfer->transferAssets()->create([
-        //             'asset_id' => $assetId,
-        //         ]);
-        //     }
-        // }
-        
-
         return back()->with('success', "Transfer #{$transfer->id} created successfully.");
     }
 
     /**
      * Display the specified resource.
      */
-    // public function show(Transfer $transfer)
-    // {
-    //     $transfer->load([
-    //         'currentBuildingRoom.building',
-    //         'receivingBuildingRoom.building',
-    //         'currentOrganization',
-    //         'receivingOrganization',
-    //         'designatedEmployee',
-    //         'assignedBy',
-    //         'transferAssets.asset.assetModel.category',
-    //     ]);
-
-    //     $array = $transfer->toArray();
-    //     $array['currentBuildingRoom'] = $array['current_building_room'];
-    //     $array['currentOrganization'] = $array['current_organization'];
-    //     $array['receivingBuildingRoom'] = $array['receiving_building_room'];
-    //     $array['receivingOrganization'] = $array['receiving_organization'];
-    //     $array['designatedEmployee'] = $array['designated_employee'];
-    //     $array['assignedBy'] = $array['assigned_by'];
-    //     $array['receivedBy'] = $array['received_by'];
-    //     $array['status'] = ucfirst($transfer->status);
-
-    //     $array['transferAssets'] = $transfer->transferAssets->map(function ($ta) {
-    //         return [
-    //             'id' => $ta->id,
-    //             'transfer_id' => $ta->transfer_id,
-    //             'asset_id' => $ta->asset_id,
-    //             'asset' => $ta->asset,
-    //         ];
-    //     });
-
-    //     $array['asset_count'] = $transfer->transferAssets->count();
-
-    //     $assets = $transfer->transferAssets->pluck('asset')->map(function ($asset) {
-    //         $arr = $asset->toArray();
-    //         $arr['assetModel'] = $arr['asset_model'];
-    //         $arr['category'] = $arr['asset_model']['category'] ?? null;
-    //         return $arr;
-    //     })->values();
-
-
-    //     return Inertia::render('transfer/TransferViewModal', [
-    //         'transfer' => $array,
-    //         'assets' => $assets,
-    //     ]);
-    // }
-
     public function show(int $id)
     {
         $currentUser = Auth::user();
@@ -307,7 +248,7 @@ class TransferController extends Controller
             'scheduled_date' => 'required|date',
             'actual_transfer_date' => 'nullable|date',
             'received_by' => 'nullable|string',
-            'status' => 'required|in:upcoming,in_progress,completed,overdue',
+            'status' => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
             'remarks' => 'nullable|string',
 
             'selected_assets' => 'nullable|array|min:1',

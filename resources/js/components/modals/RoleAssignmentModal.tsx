@@ -31,7 +31,7 @@ export default function RoleAssignmentModal({
 
         if (action === "approve") {
         router.post(
-            route("user-approvals.approve", userId),
+            route("users.approve", userId),
             { role_id: roleId, notes },
             {
             preserveScroll: true,
@@ -40,7 +40,7 @@ export default function RoleAssignmentModal({
         );
         } else if (action === "reassign") {
         router.post(
-            route("user-approvals.reassignRole", userId),
+            route("users.reassignRole", userId),
             { role_id: roleId, notes },
             {
             preserveScroll: true,
