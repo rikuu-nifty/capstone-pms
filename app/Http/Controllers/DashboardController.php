@@ -147,13 +147,22 @@ class DashboardController extends Controller
         return Inertia::render('dashboard/index', [
             'stats' => [
                 'totalAssets'        => InventoryList::count(),
-                'activeTransfers'    => Transfer::where('status', 'active')->count(),
-                'pendingRequests'    => TurnoverDisposal::where('status', 'pending')->count(),
+                'activeTransfers'    => Transfer::where('status', 'in_progress')->count(),
+                // 'pendingRequests'    => TurnoverDisposal::where('status', 'pending')->count(),
+                'pendingRequests' => TurnoverDisposal::where('type', 'turnover')
+                    ->whereIn('status', ['pending_review', 'approved'])
+                    ->count(),
+
                 'completedThisMonth' => Transfer::whereMonth('created_at', now()->month)
-                                                ->whereYear('created_at', now()->year)
-                                                ->where('status', 'completed')
-                                                ->count(),
-                'offCampusAssets'    => OffCampus::count(),
+                    ->whereYear('created_at', now()->year)
+                    ->where('status', 'completed')
+                    ->count(),
+                'offCampusAssets' => OffCampus::whereNotIn('status', 
+                    [
+                        'returned', 'cancelled',
+                    ]
+                )->count(),
+
             ],
 
             'recentTransfers' => Transfer::latest()
