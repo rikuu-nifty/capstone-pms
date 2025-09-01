@@ -92,7 +92,7 @@ export default function TurnoverDisposalEditModal({
         if (!data.issuing_office_id) return [];
         const selected = new Set(data.selected_assets);
         return assets.filter(
-        a => a.unit_or_department_id === data.issuing_office_id && !selected.has(a.id),
+            a => a.unit_or_department_id === data.issuing_office_id && !selected.has(a.id),
         );
     }, [
         assets, 
@@ -272,9 +272,9 @@ export default function TurnoverDisposalEditModal({
                                         updated.splice(index, 1);
                                         setData('selected_assets', updated);
                                         setShowAssetDropdown(prev => {
-                                        const next = [...prev];
-                                        next.splice(index, 1);
-                                        return next.length ? next : [true];
+                                            const next = [...prev];
+                                            next.splice(index, 1);
+                                            return next.length ? next : [true];
                                         });
                                     }}
                                     className="cursor-pointer ml-3 text-blue-400 hover:text-red-600 font-extrabold transition text-lg leading-none"

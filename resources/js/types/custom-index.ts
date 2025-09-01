@@ -69,11 +69,15 @@ export const formatEnums = (value?: string) => {
         .join(' ');
 };
 
-export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'> = {
+export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'|'outline'|'pending'|'completed'|'overdue'> = {
+    pending_review: 'pending',
     upcoming: 'secondary',
     in_progress: 'success',
-    overdue: 'destructive',
-    completed: 'primary',
+    overdue: 'overdue',
+    completed: 'completed',
+    approved: 'success',
+    rejected: 'destructive',
+    cancelled: 'secondary',
 };
 
 export const formatNumber = (n?: number | null) =>

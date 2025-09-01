@@ -258,10 +258,10 @@ export default function TurnoverDisposalsIndex({
                         <TableHeader >
                             <TableRow className="bg-muted text-foreground">
                                 <TableHead className="text-center">ID</TableHead>
-                                <TableHead className="text-center">Issuing Office</TableHead>
+                                <TableHead className="text-center">Issuing Office Code</TableHead>
                                 <TableHead className="text-center">Type</TableHead>
-                                <TableHead className="text-center">Receiving Office</TableHead>
-                                <TableHead className="text-center">Description</TableHead>
+                                <TableHead className="text-center">Receiving Office Code</TableHead>
+                                {/* <TableHead className="text-center">Description</TableHead> */}
                                 <TableHead className="text-center">Asset Count</TableHead>
                                 <TableHead className="text-center">Document Date</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
@@ -274,13 +274,13 @@ export default function TurnoverDisposalsIndex({
                                     <TableRow key={turnoverDisposals.id}>
                                         <TableCell>{turnoverDisposals.id}</TableCell>
                                         <TableCell>
-                                            {turnoverDisposals.issuing_office?.code}
+                                            {(formatEnums(turnoverDisposals.issuing_office?.code)).toUpperCase()}
                                         </TableCell>
                                         <TableCell>{formatEnums(turnoverDisposals.type)}</TableCell>
                                         <TableCell>
-                                            {turnoverDisposals.receiving_office?.code}
+                                            {(formatEnums(turnoverDisposals.receiving_office?.code).toUpperCase())}
                                         </TableCell>
-                                        <TableCell>{ turnoverDisposals.description ?? '—'}</TableCell>
+                                        {/* <TableCell>{ turnoverDisposals.description ?? '—'}</TableCell> */}
                                         <TableCell>{ turnoverDisposals.asset_count }</TableCell>
                                         <TableCell>{ formatDate(turnoverDisposals.document_date) }</TableCell>
                                         <TableCell>
