@@ -25,8 +25,8 @@ import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Transfers',
-        href: '/transfers',
+        title: 'Property Transfer',
+        href: '/property-transfer',
     },
 ];
 
@@ -203,7 +203,7 @@ export default function TransferIndex({
             <div className="flex flex-col gap-4 p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Transfers</h1>
+                        <h1 className="text-2xl font-semibold">Property Transfer</h1>
                         <p className="text-sm text-muted-foreground">
                             List of scheduled and completed asset transfers across AUF departments.
                         </p>

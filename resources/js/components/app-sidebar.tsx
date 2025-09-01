@@ -53,7 +53,7 @@ const dashboardNavItems = [
 const inventoryNavItems = [
     { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-inventory-list' },
     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
-    { title: 'Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
+    { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
     { title: 'Reports', href: '/reports', icon: Files, permission: 'view-reports' },
