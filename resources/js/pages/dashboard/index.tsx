@@ -65,12 +65,12 @@ export default function Dashboard() { //recentTransfers,
             icon={<ArrowRightLeft className="h-6 w-6 text-purple-500" />}
           />
           <KpiCard
-            title="Pending Requests"
+            title="Pending Turnover Requests"
             value={stats.pendingRequests}
             icon={<Clock className="h-6 w-6 text-amber-500" />}
           />
           <KpiCard
-            title="Completed This Month"
+            title="Transfers Completed This Month"
             value={stats.completedThisMonth}
             icon={<CheckCircle2 className="h-6 w-6 text-green-500" />}
           />
