@@ -40,13 +40,6 @@ return new class extends Migration
                   ->on('users')
                   ->onDelete('set null');
 
-        //         // Link to accounts table
-        //     $table->unsignedBigInteger('account_id')->nullable();
-        //    $table->foreign('account_id')
-        //         ->references('id') // table name
-        //         ->on('accounts')
-        //         ->onDelete('set null');
-
             $table->unsignedBigInteger('designated_employee')->nullable(); // FK Users_Table (Designated Employee)
             $table->foreign('designated_employee')                         // e.g. the one who will do the inventory
                 ->references('id')
@@ -66,7 +59,7 @@ return new class extends Migration
             $table->string('verified_by')->nullable();
             $table->string('received_by')->nullable();
                 
-            $table->enum('scheduling_status', ['Completed', 'Pending', 'Overdue'])->default('pending');
+            $table->enum('scheduling_status', ['Pending_Review', 'Pending', 'Completed', 'Overdue', 'Cancelled'])->default('Pending_Review');
             $table->text('description')->nullable();
 
 
@@ -74,6 +67,7 @@ return new class extends Migration
            // Not Sure It's Still Vague
 
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::table('inventory_schedulings', function (Blueprint $table) {

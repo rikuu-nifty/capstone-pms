@@ -23,6 +23,33 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
               });
     };
 
+    const StatusPill = ({ status }: { status?: string | null }) => {
+        const s = (status ?? '').toLowerCase().replace(/_/g, ' ');
+        const formattedStatus = s
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+        const cls =
+            s === 'returned'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+            : s === 'pending review'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+            : s === 'pending return'
+                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+            : s === 'overdue'
+                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+            : s === 'cancelled'
+                ? 'bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300'
+            : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
+
+        return (
+            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+                {status ? formattedStatus : '—'}
+            </span>
+        );
+    };
+
     return (
         <ViewModal open={open} onClose={onClose} size="xl" contentClassName="relative max-h-[80vh] overflow-y-auto print:overflow-x-hidden">
             {/* ---------- Header (kept same as your old UI) ---------- */}
@@ -45,6 +72,10 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
                         <span className="font-semibold">
                             {offCampus.remarks === 'official_use' ? 'Official Use' : offCampus.remarks === 'repair' ? 'Repair' : '—'}
                         </span>
+                    </p>
+                    <p className="mt-1 flex items-center justify-end gap-2">
+                        <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                        <StatusPill status={offCampus.status} />
                     </p>
                 </div>
             </div>
@@ -143,12 +174,14 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
                 >
                     ← Back to Off-Campus
                 </a>
-                <Button
-                    onClick={() => window.print()}
-                    className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
-                >
-                    🖨️ Print Form
-                </Button>
+                {(offCampus.status !== 'pending_review') && (
+                    <Button
+                        onClick={() => window.print()}
+                        className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                    >
+                        🖨️ Print Form
+                    </Button>
+                )}
             </div>
         </ViewModal>
     );

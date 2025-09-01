@@ -2,6 +2,7 @@
 
     use Illuminate\Support\Facades\Route;
     use Inertia\Inertia;
+    use Illuminate\Support\Facades\Auth;
 
     use App\Http\Controllers\AssetModelController;
     use App\Http\Controllers\InventoryListController;
@@ -28,12 +29,15 @@
     // })->name('home');
 
     Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect()->route('dashboard'); // change to your actual dashboard route
-    }
+        if (Auth::check()) {
+            return redirect()->route('dashboard'); // change to your actual dashboard route
+        }
+        return redirect()->route('login'); // send guests to login
+    })->name('home');
 
-    return redirect()->route('login'); // send guests to login
-})->name('home');
+    Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
+        'message' => session('unauthorized'),
+    ]))->name('unauthorized');
 
     Route::get('/approval-pending', function () {
         return Inertia::render('auth/ApprovalPending', [
@@ -64,11 +68,10 @@
         Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
     });
 
-
     // ✅ Public, no auth required
     // Public Asset Summary (guest accessible via NFC scan)
-Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
-    ->name('asset-summary.show');
+    Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
+        ->name('asset-summary.show');
 
 
 
@@ -113,7 +116,7 @@ Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, '
         ->middleware('can:delete-users,user');
     Route::post('/users/{user}/reassign-role', [UserApprovalController::class, 'reassignRole'])
         ->name('users.reassignRole')
-        ->middleware('can:approve');
+        ->middleware('can:approve-users');
 
     //ROLES & PERMISSIONS
     Route::get('/role-management', [RoleController::class, 'index'])
@@ -127,7 +130,7 @@ Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, '
         ->middleware('can:update-roles');
     Route::delete('/role-management/{role}', [RoleController::class, 'destroy'])
         ->name('role-management.destroy')
-        ->middleware('can:delete-role');
+        ->middleware('can:delete-role,role');
     Route::put('/role-management/{role}/permissions', [RoleController::class, 'updatePermissions'])
         ->name('role-management.permissions.update')
         ->middleware('can:update-permissions');

@@ -25,6 +25,7 @@ return new class extends Migration
             $table->text('purpose');
             $table->date('date_issued');
             $table->date('return_date')->nullable();
+            $table->enum('status', ['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled', 'missing']);
 
             $table->unsignedInteger('quantity'); // use unsigned to prevent negatives
             $table->string('units'); // PCS, SETS, UNIT, PAIR, DOZEN etc.
@@ -42,12 +43,12 @@ return new class extends Migration
             $table->string('checked_by')->nullable(); // Chief,Security Serivce
             $table->foreignId('created_by_id')->nullable()->constrained('users')->nullOnDelete();
 
-            $table->softDeletes();
             $table->index('deleted_at');
             $table->unsignedBigInteger('deleted_by_id')->nullable();
             $table->foreign('deleted_by_id')->references('id')->on('users')->onDelete('set null');
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

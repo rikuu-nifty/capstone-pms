@@ -19,10 +19,11 @@ use App\Models\Role;
 use App\Notifications\UserApprovedNotification;
 use App\Notifications\UserDeniedNotification;
 use App\Notifications\UserRoleReassignedNotification;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements MustVerifyEmail  
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $with = ['role'];
 
@@ -115,19 +116,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $q->where('status','denied'); 
     }
 
-    //to check if user has a specific permission
     public function hasPermission(string $code): bool
     {
-        if (!$this->role) {
-            return false;
-        }
+        if (!$this->role) return false;
+        if ($this->role->code === 'superuser') return true;
 
-        if ($this->role->code === 'superuser') {
-            return true;
-        }
+        $perms = $this->role->relationLoaded('permissions')
+            ? $this->role->permissions
+            : $this->role->permissions()->get(['code']);
 
-        return $this->role->permissions()->where('code', $code)->exists()
-        ;
+        return $perms->contains('code', $code);
     }
 
     public function scopeSearch($query, ?string $q)
@@ -245,6 +243,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getCanDeleteAttribute()
     {
-        return Gate::allows('delete-user', $this);
+        return Gate::allows('delete-users', $this);
     }
 }

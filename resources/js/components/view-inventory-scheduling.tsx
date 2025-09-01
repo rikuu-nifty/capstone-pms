@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
+import { formatUnderscore } from '@/types/custom-index';
 
 const formatMonth = (ym?: string | null) => {
     if (!ym) return '—';
@@ -16,7 +17,7 @@ const formatDateLong = (d?: string | null) => {
 };
 
 const StatusPill = ({ status }: { status?: string | null }) => {
-    const s = (status ?? '').toLowerCase();
+    const s = formatUnderscore(status ?? '');
     const cls =
         s === 'completed'
             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
@@ -93,19 +94,19 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                         </section>
 
                        {/* Scheduling */}
-<section className="w-full text-right print:break-inside-avoid">
-  <h3 className="mb-2 text-base font-semibold text-gray-700 dark:text-gray-200">
-    Scheduling
-  </h3>
-  <p className="text-sm">
-    <span className="font-semibold">Inventory Month:</span>{" "}
-    {formatMonth(schedule.inventory_schedule)}
-  </p>
-  <p className="text-sm">
-    <span className="font-semibold">Actual Date:</span>{" "}
-    {formatDateLong(schedule.actual_date_of_inventory)}
-  </p>
-</section>
+                        <section className="w-full text-right print:break-inside-avoid">
+                        <h3 className="mb-2 text-base font-semibold text-gray-700 dark:text-gray-200">
+                            Scheduling
+                        </h3>
+                        <p className="text-sm">
+                            <span className="font-semibold">Inventory Month:</span>{" "}
+                            {formatMonth(schedule.inventory_schedule)}
+                        </p>
+                        <p className="text-sm">
+                            <span className="font-semibold">Actual Date:</span>{" "}
+                            {formatDateLong(schedule.actual_date_of_inventory)}
+                        </p>
+                        </section>
                     </div>
 
                     {/* People Table */}
@@ -149,9 +150,11 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
 
                     {/* Actions */}
                     <div className="mt-8 text-center print:hidden">
-                        <Button className="mr-2" variant="secondary" onClick={() => window.print()}>
+                        {(schedule.scheduling_status).toLowerCase() !== 'pending_review' && (
+                            <Button className="mr-2" variant="secondary" onClick={() => window.print()}>
                             🖨️ Print Form
                         </Button>
+                        )}
                         <DialogClose asChild>
                             <Button variant="outline">Close</Button>
                         </DialogClose>

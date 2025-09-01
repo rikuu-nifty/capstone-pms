@@ -54,6 +54,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
         college_or_unit_id: '' as number | '',
         purpose: '',
         date_issued: '',
+        status: 'pending_review',
         return_date: '',
         quantity: '' as number | '',
         units: 'pcs',
@@ -223,6 +224,25 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                             <PickerInput type="date" value={data.return_date ?? ''} onChange={(e) => setData('return_date', e)} />
                             {errors.return_date && <p className="mt-1 text-xs text-red-500">{errors.return_date}</p>}
                         </div>
+
+                        {/* Status */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Status</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.status}
+                                onChange={(e) => setData('status', e.target.value as typeof data.status)}
+                            >
+                                <option value="pending_review">Pending Review</option>
+                                <option value="pending_return">Pending Return</option>
+                                <option value="returned">Returned</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+                        </div>
+
+
 
                         {/* Purpose */}
                         <div className="col-span-2">

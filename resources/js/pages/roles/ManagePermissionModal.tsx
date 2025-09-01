@@ -17,7 +17,6 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     "Users Management": [
         "view-users-page",
         "approve-users",
-        "update-users",
         "reset-user-password",
         "send-email-change-request",
         "delete-users",
@@ -205,10 +204,11 @@ export default function ManagePermissionsModal({
                                             onCheckedChange={() =>
                                                 togglePermission(perm.id)
                                             }
+                                            className="cursor-pointer"
                                         />
                                         <Label
                                             htmlFor={`perm-${perm.id}`}
-                                            className="cursor-pointer flex-1"
+                                            className="flex-1"
                                         >
                                             {perm.name}
                                             <span className="ml-1 text-xs text-muted-foreground">

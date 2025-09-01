@@ -310,12 +310,12 @@ export default function UserApprovals() {
                                 </Button>
                                 {u.can_delete && (
                                     <Button
-                                    variant="destructive"
-                                    className="cursor-pointer"
-                                    onClick={() => {
-                                        setSelectedUser(u);
-                                        setShowDelete(true);
-                                    }}
+                                        variant="destructive"
+                                        className="cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedUser(u);
+                                            setShowDelete(true);
+                                        }}
                                     >
                                     Delete
                                     </Button>

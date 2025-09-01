@@ -10,6 +10,7 @@ use App\Models\UnitOrDepartment;
 use App\Models\User;
 use App\Models\InventoryList;
 use Inertia\Inertia;
+use Illuminate\Validation\Rule;
 
 use Illuminate\Http\Request;
 
@@ -71,6 +72,7 @@ class OffCampusController extends Controller
             'college_or_unit_id'  => ['nullable','exists:unit_or_departments,id'],
             'purpose'             => ['required','string'],
             'date_issued'         => ['required','date'],
+            'status'             => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled'])],
             'return_date'         => ['nullable','date','after_or_equal:date_issued'],
             'quantity'            => ['required','integer','min:1'],
             'units'               => ['required','string','max:50'],
@@ -88,24 +90,24 @@ class OffCampusController extends Controller
             'selected_assets.*.asset_model_id' => ['nullable','exists:asset_models,id'],
         ]);
 
- DB::transaction(function () use ($data) {
-        // Create parent
-        $offCampus = OffCampus::create(collect($data)->except('selected_assets')->toArray());
+        $data['status'] = $data['status'] ?? 'pending_review';
 
-        // Create children
-        foreach ($data['selected_assets'] as $row) {
-            $offCampus->assets()->create([
-                'asset_id'       => $row['asset_id'],
-                'asset_model_id' => $row['asset_model_id'] ?? null,
-                'quantity'       => 1,       // or pass per-asset qty if UI supports
-                'units'          => $data['units'] ?? 'pcs',
-                'comments'       => $data['comments'] ?? null,
-            ]);
-        }
-    });
+        DB::transaction(function () use ($data) {
+            $offCampus = OffCampus::create(collect($data)->except('selected_assets')->toArray());
 
-    return redirect()->route('off-campus.index')->with('success', 'Off-campus record created successfully.');
-}
+            foreach ($data['selected_assets'] as $row) {
+                $offCampus->assets()->create([
+                    'asset_id'       => $row['asset_id'],
+                    'asset_model_id' => $row['asset_model_id'] ?? null,
+                    'quantity'       => 1,
+                    'units'          => $data['units'] ?? 'pcs',
+                    'comments'       => $data['comments'] ?? null,
+                ]);
+            }
+        });
+
+        return redirect()->route('off-campus.index')->with('success', 'Off-campus record created successfully.');
+    }
 
     /**
      * Display the specified resource.
@@ -182,59 +184,62 @@ class OffCampusController extends Controller
     /**
      * Update the specified resource in storage.
      */
-public function update(Request $request, OffCampus $offCampus)
-{
-    $data = $request->validate([
-        'requester_name'      => ['required','string','max:255'],
-        'college_or_unit_id'  => ['nullable','exists:unit_or_departments,id'],
-        'purpose'             => ['required','string'],
-        'date_issued'         => ['required','date'],
-        'return_date'         => ['nullable','date','after_or_equal:date_issued'],
-        'quantity'            => ['required','integer','min:1'],
+    public function update(Request $request, OffCampus $offCampus)
+    {
+        $data = $request->validate([
+            'requester_name'      => ['required','string','max:255'],
+            'college_or_unit_id'  => ['nullable','exists:unit_or_departments,id'],
+            'purpose'             => ['required','string'],
+            'date_issued'         => ['required','date'],
+            'status'              => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled'])],
+            'return_date'         => ['nullable','date','after_or_equal:date_issued'],
+            'quantity'            => ['required','integer','min:1'],
 
-        'units'               => ['required','string','max:50'],
-        'comments'            => ['nullable','string'],
-        'remarks'             => ['required','in:official_use,repair'],
-        'approved_by'         => ['nullable','string','max:255'],
-        'issued_by_id'        => ['nullable','exists:users,id'],
-        'checked_by'          => ['nullable','string','max:255'],
+            'units'               => ['required','string','max:50'],
+            'comments'            => ['nullable','string'],
+            'remarks'             => ['required','in:official_use,repair'],
+            'approved_by'         => ['nullable','string','max:255'],
+            'issued_by_id'        => ['nullable','exists:users,id'],
+            'checked_by'          => ['nullable','string','max:255'],
 
-        // child rows with custom rule inline
-        'selected_assets' => [
-            'required',
-            'array',
-            'min:1',
-            function ($attr, $value, $fail) use ($request) {
-                if (count($value) !== (int) $request->quantity) {
-                    $fail("You set the quantity to {$request->quantity} but selected " . count($value) . " assets.");
-                }
-            },
-        ],
-        'selected_assets.*.asset_id'       => ['required','exists:inventory_lists,id'],
-        'selected_assets.*.asset_model_id' => ['nullable','exists:asset_models,id'],
-    ]);
+            // child rows with custom rule inline
+            'selected_assets' => [
+                'required',
+                'array',
+                'min:1',
+                function ($attr, $value, $fail) use ($request) {
+                    if (count($value) !== (int) $request->quantity) {
+                        $fail("You set the quantity to {$request->quantity} but selected " . count($value) . " assets.");
+                    }
+                },
+            ],
+            'selected_assets.*.asset_id'       => ['required','exists:inventory_lists,id'],
+            'selected_assets.*.asset_model_id' => ['nullable','exists:asset_models,id'],
+        ]);
 
-    DB::transaction(function () use ($offCampus, $data) {
-        // ✅ update parent first
-        $offCampus->update(collect($data)->except('selected_assets')->toArray());
+        $data['status'] = $data['status'] ?? 'pending_review';
 
-        // ✅ clear old children
-        $offCampus->assets()->delete();
+        DB::transaction(function () use ($offCampus, $data) {
+            // ✅ update parent first
+            $offCampus->update(collect($data)->except('selected_assets')->toArray());
 
-        // ✅ re-insert new children
-        foreach ($data['selected_assets'] as $row) {
-            $offCampus->assets()->create([
-                'asset_id'       => $row['asset_id'],
-                'asset_model_id' => $row['asset_model_id'] ?? null,
-                'quantity'       => 1,
-                'units'          => $data['units'] ?? 'pcs',
-                'comments'       => $data['comments'] ?? null,
-            ]);
-        }
-    });
+            // ✅ clear old children
+            $offCampus->assets()->delete();
 
-    return redirect()->route('off-campus.index')->with('success', 'Off-campus record updated successfully.');
-}
+            // ✅ re-insert new children
+            foreach ($data['selected_assets'] as $row) {
+                $offCampus->assets()->create([
+                    'asset_id'       => $row['asset_id'],
+                    'asset_model_id' => $row['asset_model_id'] ?? null,
+                    'quantity'       => 1,
+                    'units'          => $data['units'] ?? 'pcs',
+                    'comments'       => $data['comments'] ?? null,
+                ]);
+            }
+        });
+
+        return redirect()->route('off-campus.index')->with('success', 'Off-campus record updated successfully.');
+    }
 
 
     /**

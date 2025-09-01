@@ -16,51 +16,69 @@
 import { Toaster } from '@/components/ui/sonner'; // ✅ import Toaster
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem } from '@/types';
-import { type ReactNode } from 'react';
-
+import { type ReactNode, useEffect, useState } from 'react'
+import { usePage } from '@inertiajs/react'
+import UnauthorizedModal from '@/components/modals/UnauthorizedModal'
 
 interface AppLayoutProps {
-    children: ReactNode;
-    breadcrumbs?: BreadcrumbItem[];
+  children: ReactNode;
+  breadcrumbs?: BreadcrumbItem[];
 }
 
-export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
+type UnauthorizedFlash = { message: string; time: number }
+
+export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {
+  // flash.unauthorized is set by bootstrap/app.php handler
+  // const { flash } = usePage().props as { flash?: { unauthorized?: string } }
+  const { flash } = usePage().props as { flash?: { unauthorized?: UnauthorizedFlash | null } }
+  const unauthorizedObj = flash?.unauthorized ?? null
+
+  const [showUnauthorized, setShowUnauthorized] = useState(false)
+  const [unauthorizedMsg, setUnauthorizedMsg] = useState<string | null>(null)
+
+  // useEffect(() => {
+  //   if (unauthorizedMsg) setShowUnauthorized(true)
+  // }, [unauthorizedMsg])
+
+  useEffect(() => {
+    if (unauthorizedObj) {
+      setUnauthorizedMsg(unauthorizedObj.message)
+      setShowUnauthorized(true)
+    }
+  }, [unauthorizedObj])
+
+  return (
     <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
-        {children}
+      {children}
 
-        {/* ✅ Toast Provider */}
-        <Toaster
-  richColors
-  position="top-right"
-  style={
-    {
-      /* ✅ Success — soft mint */
-      "--success-bg": "#ecfdf5",     // minty pastel background
-      "--success-text": "#065f46",  // emerald-900 for contrast
-      "--success-border": "#6ee7b7", // light emerald accent
-
-      /* ⚠️ Warning — soft amber */
-      "--warning-bg": "#fffbeb",
-      "--warning-text": "#92400e",  // amber-900
-      "--warning-border": "#fcd34d",
-
-      /* ❌ Error — soft rose */
-      "--error-bg": "#fef2f2",
-      "--error-text": "#991b1b",    // rose-900
-      "--error-border": "#fca5a5",
-
-      /* ℹ️ Info — soft sky */
-      "--info-bg": "#eff6ff",
-      "--info-text": "#1e3a8a",     // blue-900
-      "--info-border": "#93c5fd",
-
-      /* ✨ Neutral / default */
-      "--normal-bg": "#f9fafb",
-      "--normal-text": "#111827",
-      "--normal-border": "#e5e7eb",
-    } as React.CSSProperties
-  }
-/>
-
+      <UnauthorizedModal
+        show={showUnauthorized}
+        message={unauthorizedMsg ?? undefined}
+        onClose={() => setShowUnauthorized(false)}
+        
+      />
+      
+      <Toaster
+        richColors
+        position="top-right"
+        style={{
+          "--success-bg": "#ecfdf5",
+          "--success-text": "#065f46",
+          "--success-border": "#6ee7b7",
+          "--warning-bg": "#fffbeb",
+          "--warning-text": "#92400e",
+          "--warning-border": "#fcd34d",
+          "--error-bg": "#fef2f2",
+          "--error-text": "#991b1b",
+          "--error-border": "#fca5a5",
+          "--info-bg": "#eff6ff",
+          "--info-text": "#1e3a8a",
+          "--info-border": "#93c5fd",
+          "--normal-bg": "#f9fafb",
+          "--normal-text": "#111827",
+          "--normal-border": "#e5e7eb",
+        } as React.CSSProperties}
+      />
     </AppLayoutTemplate>
-);
+  )
+}

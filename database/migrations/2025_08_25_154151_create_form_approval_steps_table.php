@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('external_name')->nullable(); //non-users
             $table->string('external_title')->nullable();
 
-            $table->enum('status', ['pending', 'approved', 'rejected', 'skipped'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected', 'skipped', 'reset'])->default('pending');
             $table->text('notes')->nullable();
             $table->timestamp('acted_at')->nullable();
 

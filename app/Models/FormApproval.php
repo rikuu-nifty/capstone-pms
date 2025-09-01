@@ -275,6 +275,8 @@ class FormApproval extends Model
                 'review_notes'   => null,
             ])->save();
         });
+
+        $this->updateParentFormStatus('reset');
     }
 
     public function isFullyApproved(): bool
@@ -292,14 +294,22 @@ class FormApproval extends Model
 
         $handlers = [
             OffCampus::class => function ($model, $status, $approved) {
-                // OffCampus has no status column – do nothing or log
+                if ($status === 'reset') {
+                    $model->update(['status' => 'pending_review']);
+                } elseif ($status === 'rejected') {
+                    $model->update(['status' => 'cancelled']);
+                } elseif ($approved) {
+                    $model->update(['status' => 'pending_return']);
+                }
             },
             
             InventoryScheduling::class => function ($model, $status, $approved) {
                 if ($status === 'reset') {
-                    $model->update(['scheduling_status' => 'Pending']);
+                    $model->update(['scheduling_status' => 'Pending_Review']);
+                } elseif ($status === 'rejected') {
+                    $model->update(['scheduling_status' => 'Cancelled']);
                 } elseif ($approved) {
-                    $model->update(['scheduling_status' => 'Completed']);
+                    $model->update(['scheduling_status' => 'Pending']);
                 }
             },
             
