@@ -113,7 +113,7 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <InfoCard label="Unit Cost" value={currencyFormat(asset.unit_cost)} />
                                 <InfoCard label="Total Cost" value={currencyFormat(totalCost) || '—'} />
                                 <InfoCard label="Supplier" value={humanize(asset.supplier)} />
-                                <InfoCard label="Memorandum No." value={humanize(asset.memorandum_no)} />
+                                <InfoCard label="Memorandum No." value={humanize(asset.memorandum_no).replace(/,/g, '')} />
                             </div>
                         </div>
 
