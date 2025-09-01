@@ -49,6 +49,12 @@ export function formatLabel(v: string): string {
     return v.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 }
 
+export function ucwords(str: string) {
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export function formatUnderscore(status: string): string {
   return status.replace(/_/g, ' ');
 }
