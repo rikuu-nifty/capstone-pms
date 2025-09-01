@@ -20,7 +20,7 @@ import {
     ClipboardList,
     File,
     FileCheck2,
-    // Files,
+    Files,
     Landmark,
     LayoutGrid,
     Network,
@@ -56,13 +56,13 @@ const inventoryNavItems = [
     { title: 'Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
-    // { title: 'Reports', href: '/reports', icon: Files, permission: 'view-reports' },
+    { title: 'Reports', href: '/reports', icon: Files, permission: 'view-reports' },
 ];
 
 const assetsNavItems = [
     { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
     { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
-    // { title: 'Assignment', href: '/assignment', icon: PackageCheck },
+    { title: 'Assignment', href: '/assignment', icon: PackageCheck, permission: 'view-assignments' },
 ];
 
 const institutionalSetUpNavItems = [
@@ -73,9 +73,9 @@ const institutionalSetUpNavItems = [
 const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
-    { title: 'Form Approval', href: '/approvals', icon: FileCheck2 },
-    { title: 'Audit Log', href: '/audit-log', icon: File, permission: 'view-form-approvals' },
-    // { title: 'Profile', href: '/profile', icon: User },
+    { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals'},
+    { title: 'Audit Log', href: '/audit-log', icon: File, permission: 'view-audit-logs' },
+    { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
 ];
 
 const configNavItems = [

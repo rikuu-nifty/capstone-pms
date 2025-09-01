@@ -94,6 +94,9 @@ class PermissionsTableSeeder extends Seeder
             // REPORTS
             ['code' => 'view-reports', 'name' => 'View Reports'],
 
+            // AUDIT LOG
+            ['code' => 'view-audit-logs', 'name' => 'View Audit Logs'],
+
             // ASSIGNMENTS
             ['code' => 'view-assignments', 'name' => 'View Assignments'],
             ['code' => 'create-assignments', 'name' => 'Create Assignments'],
