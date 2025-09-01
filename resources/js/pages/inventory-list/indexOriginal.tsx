@@ -16,7 +16,6 @@ import { AddBulkAssetModalForm } from './addBulkAssetModal';
 import { ChooseAddTypeModal } from './chooseAddTypeModal';
 import { ChooseViewModal } from './chooseViewModal';
 import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
-import Pagination, { PageInfo } from '@/components/Pagination';
 import { ucwords } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -307,17 +306,6 @@ export default function InventoryListIndex({
         );
     });
 
-    const [page, setPage] = useState(1);
-    const pageSize = 10;
-
-    const total = filteredData.length;
-    const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
-
-    useEffect(() => {
-        setPage(1);
-    }, [search]);
-
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory List" />
@@ -475,7 +463,7 @@ export default function InventoryListIndex({
                         </TableHeader>
 
                         <TableBody className="text-center">
-                            {paginatedData.map((item) => (
+                            {filteredData.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.id}</TableCell>
                                     <TableCell>{ucwords(item.asset_name)}</TableCell>
@@ -596,16 +584,6 @@ export default function InventoryListIndex({
                             ))}
                         </TableBody>
                     </Table>
-                    <div className="flex items-center justify-between p-3">
-                        <PageInfo page={page} total={total} pageSize={pageSize} />
-                        <Pagination
-                            page={page}
-                            total={total}
-                            pageSize={pageSize}
-                            onPageChange={setPage}
-                        />
-                    </div>
-
                 </div>
             </div>
 
