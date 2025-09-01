@@ -16,6 +16,7 @@ import { AddBulkAssetModalForm } from './addBulkAssetModal';
 import { ChooseAddTypeModal } from './chooseAddTypeModal';
 import { ChooseViewModal } from './chooseViewModal';
 import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
+import { ucwords } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -50,6 +51,8 @@ export type BuildingRoom = {
     building_id: number;
     room: string | number;
     description: string;
+
+    building?: Building;
 };
 
 export type UnitOrDepartment = {
@@ -74,6 +77,9 @@ export type Asset = {
     unit_or_department: UnitOrDepartment | null;
     building: Building | null;
     building_room?: BuildingRoom | null;
+
+    room_building?: Building | null;
+    
     serial_no: string;
     supplier: string;
     unit_cost: number | string;
@@ -83,6 +89,7 @@ export type Asset = {
     brand: string;
     image_path?: string | null; // ✅ new field
     maintenance_due_date: string; // ✅ new field
+
 };
 
 export type AssetFormData = {
@@ -459,7 +466,7 @@ export default function InventoryListIndex({
                             {filteredData.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.id}</TableCell>
-                                    <TableCell>{item.asset_name}</TableCell>
+                                    <TableCell>{ucwords(item.asset_name)}</TableCell>
                                     <TableCell>
                                         {item.image_path ? (
                                             <img
@@ -471,24 +478,30 @@ export default function InventoryListIndex({
                                             'No Image Uploaded'
                                         )}
                                     </TableCell>
-                                    <TableCell>{item.asset_model?.brand ?? '—'}</TableCell>
+                                    <TableCell>{ucwords(item.asset_model?.brand ?? '—')}</TableCell>
                                     <TableCell>{formatDate(item.date_purchased)}</TableCell>
                                     <TableCell>
                                         {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
                                     </TableCell>
-                                    {/* <TableCell>{String(item.quantity).padStart(2, '0')}</TableCell> */}
-                                    <TableCell>{item.building?.name ?? '—'}</TableCell>
                                     <TableCell>
-                                        {/* {item.unit_or_department ? `${item.unit_or_department.code}` : '—'} */}
-                                        {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
+                                        {item.room_building && item.building_room
+                                            ? `${item.room_building.name} (${item.building_room.room})`
+                                            : '—'
+                                        }
+                                    </TableCell>
+                                    <TableCell>
+                                        {item.unit_or_department?.code 
+                                            ? String(item.unit_or_department.code).toUpperCase() 
+                                            : '—'
+                                        }
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Badge variant={item.status as 'active' | 'archived'}>
                                             {item.status === 'active' ? 'Active' : 'Archived'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>
-                                        <button
+                                    {/* <TableCell>
+                                        <Button
                                             onClick={() => {
                                                 const url = route('asset-summary.show', item.id);
                                                 navigator.clipboard.writeText(url).then(() => {
@@ -497,10 +510,40 @@ export default function InventoryListIndex({
                                                     });
                                                 });
                                             }}
-                                            className="cursor-pointer text-sm text-blue-600 underline hover:text-blue-800"
+                                            className="cursor-pointer"
                                         >
                                             Get Viewing Link
-                                        </button>
+                                        </Button>
+                                    </TableCell> */}
+                                    <TableCell className="text-center">
+                                        <div className="flex justify-center gap-2">
+                                            <Button
+                                                onClick={() => {
+                                                const url = route('asset-summary.show', item.id);
+                                                window.open(url, '_blank');
+                                                }}
+                                                    className="cursor-pointer"
+                                                    // size="sm"
+                                            >
+                                                View
+                                            </Button>
+                                            
+                                            <Button
+                                                onClick={() => {
+                                                const url = route('asset-summary.show', item.id);
+                                                    navigator.clipboard.writeText(url).then(() => {
+                                                        toast.success('Link copied!', {
+                                                        description: 'The viewing link has been copied to your clipboard.',
+                                                        });
+                                                    });
+                                                }}
+                                                className="cursor-pointer"
+                                                variant="primary"
+                                                // size="sm"
+                                            >
+                                                Copy
+                                            </Button>
+                                        </div>
                                     </TableCell>
 
                                     <TableCell className="text-center">
@@ -595,34 +638,33 @@ export default function InventoryListIndex({
                             openView(selectedAsset.id); // ✅ deep link route
                         }
                     }}
-onViewMemo={() => {
-  setChooseViewVisible(false);
+                    onViewMemo={() => {
+                    setChooseViewVisible(false);
 
-  if (selectedAsset) {
-    const sameMemoAssets = assets.filter(a => a.memorandum_no === selectedAsset.memorandum_no);
-    setReceiptAssets(sameMemoAssets);
-    setReceiptMemoNo(selectedAsset.memorandum_no);
-    setReceiptModalVisible(true);
-  }
-}}
+                    if (selectedAsset) {
+                        const sameMemoAssets = assets.filter(a => a.memorandum_no === selectedAsset.memorandum_no);
+                        setReceiptAssets(sameMemoAssets);
+                        setReceiptMemoNo(selectedAsset.memorandum_no);
+                        setReceiptModalVisible(true);
+                    }
+                    }}
                 />
             )}
 
             {isViewOpen && viewing_asset && <ViewAssetModal asset={viewing_asset} onClose={closeView} />}
 
-{receiptModalVisible && receiptAssets.length > 0 && (
-  <ViewMemorandumReceiptModal
-    open={receiptModalVisible}
-    onClose={() => {
-      setReceiptModalVisible(false);
-      setReceiptAssets([]);
-      setReceiptMemoNo('');
-    }}
-    assets={receiptAssets}        // ✅ now an array
-    memo_no={receiptMemoNo}       // ✅ shared memo number
-  />
-)}
-
+            {receiptModalVisible && receiptAssets.length > 0 && (
+            <ViewMemorandumReceiptModal
+                open={receiptModalVisible}
+                onClose={() => {
+                setReceiptModalVisible(false);
+                setReceiptAssets([]);
+                setReceiptMemoNo('');
+                }}
+                assets={receiptAssets}        // ✅ now an array
+                memo_no={receiptMemoNo}       // ✅ shared memo number
+            />
+            )}
 
             {/* ✅ Choose Add Modal */}
             {chooseAddVisible && (
@@ -757,16 +799,16 @@ onViewMemo={() => {
                                 {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                             </div>
                             <div className="col-span-1 pt-0.5">
-  <label className="mb-1 block font-medium">Maintenance Due Date</label>
-  <PickerInput
-    type="date"
-    value={data.maintenance_due_date}
-    onChange={(v) => setData('maintenance_due_date', v)}
-  />
-  {errors.maintenance_due_date && (
-    <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>
-  )}
-</div>
+                                <label className="mb-1 block font-medium">Maintenance Due Date</label>
+                                <PickerInput
+                                    type="date"
+                                    value={data.maintenance_due_date}
+                                    onChange={(v) => setData('maintenance_due_date', v)}
+                                />
+                                {errors.maintenance_due_date && (
+                                    <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>
+                                )}
+                            </div>
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Type</label>

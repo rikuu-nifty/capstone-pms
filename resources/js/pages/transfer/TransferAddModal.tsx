@@ -103,6 +103,8 @@ export default function TransferAddModal({
                     onChange={(e) => {
                         setData('current_building_id', Number(e.target.value));
                         setData('current_building_room', 0);
+                        setData('selected_assets', []);
+                        setShowAssetDropdown([true]);
                     }}
                 >
                     <option value="">Select Building</option>
@@ -121,7 +123,11 @@ export default function TransferAddModal({
                 <select
                     className="w-full rounded-lg border p-2"
                     value={data.current_building_room}
-                    onChange={(e) => setData('current_building_room', Number(e.target.value))}
+                    onChange={(e) => {
+                        setData('current_building_room', Number(e.target.value))
+                        setData('selected_assets', []);
+                        setShowAssetDropdown([true]);
+                    }}
                     disabled={!data.current_building_id}
                 >
                     <option value="">Select Room</option>
@@ -319,13 +325,32 @@ export default function TransferAddModal({
                             <Select
                                 className="w-full"
                                 options={assets
-                                    .filter((asset) => !data.selected_assets.includes(asset.id))
+                                    .filter((asset) => {
+                                        const matchesBuilding = data.current_building_id
+                                            ? asset.building_id === data.current_building_id
+                                            : true;
+
+                                        const matchesRoom = data.current_building_room
+                                            ? asset.building_room_id === data.current_building_room
+                                            : true;
+
+                                        return (
+                                            matchesBuilding &&
+                                            matchesRoom &&
+                                            !data.selected_assets.includes(asset.id)
+                                        );
+                                    })
                                     .map((asset) => ({
                                     value: asset.id,
                                     label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
                                     }))
                                 }
-                                placeholder="Select asset for transfer..."
+                                placeholder={
+                                    data.current_building_id && data.current_building_room
+                                    ? "Select Asset(s) for Transfer..."
+                                    : "Select Current Building and Room first"
+                                }
+                                isDisabled={!data.current_building_id || !data.current_building_room}
                                 onChange={(selectedOption) => {
                                     if (selectedOption && !data.selected_assets.includes(selectedOption.value)) {
                                     setData('selected_assets', [...data.selected_assets, selectedOption.value]);

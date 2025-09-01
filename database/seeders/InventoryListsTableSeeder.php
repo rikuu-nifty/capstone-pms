@@ -19,7 +19,7 @@ class InventoryListsTableSeeder extends Seeder
         $assetModel = AssetModel::first();
         $category = Category::first();
 
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 40; $i++) {
             InventoryList::updateOrCreate(
                 ['serial_no' => "SN-000{$i}"], // unique key
                 [

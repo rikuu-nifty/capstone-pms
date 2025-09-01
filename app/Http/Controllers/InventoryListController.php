@@ -79,7 +79,8 @@ class InventoryListController extends Controller
             'category',
             'unitOrDepartment',
             'building',
-            'buildingRoom'
+            'buildingRoom.building',
+            'roomBuilding',
         ])->latest()->get();
 
         return [

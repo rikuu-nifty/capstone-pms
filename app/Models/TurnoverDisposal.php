@@ -150,8 +150,14 @@ class TurnoverDisposal extends Model
             return;
         }
 
-        InventoryList::whereIn('id', $assetIds)->update(['status' => 'archived']);
+        if ($this->status === 'completed') {
+            InventoryList::whereIn('id', $assetIds)->update(['status' => 'archived']);
+        } else {
+            InventoryList::whereIn('id', $assetIds)->update(['status' => 'active']);
+        }
     }
+
+
 
     public function softDeleteRelatedAssets(): void
     {

@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import ViewModal from '@/components/modals/ViewModal';
 import { TurnoverDisposals, InventoryList, AssetModel, formatEnums  } from '@/types/custom-index';
+import { DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface TurnoverDisposalViewModalProps {
     open: boolean;
@@ -63,6 +65,9 @@ export default function TurnoverDisposalViewModal({
             contentClassName=
                 "relative max-h-[80vh] overflow-y-auto print:overflow-x-hidden"
         >
+            <VisuallyHidden>
+                <DialogTitle>Turnover / Disposal Record #{recordNo}</DialogTitle>
+            </VisuallyHidden>
             {/* Header */}
             <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-">

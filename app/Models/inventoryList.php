@@ -46,10 +46,18 @@ class InventoryList extends Model
         return $this->belongsTo(Building::class);
     }
 
-    // public function buildingRoom()
-    // {
-    //     return $this->belongsTo(BuildingRoom::class);
-    // }
+    public function roomBuilding()
+    {
+        return $this->hasOneThrough(
+            Building::class,
+            BuildingRoom::class,
+            'id',
+            'id',
+            'building_room_id',
+            'building_id',
+        );
+    }
+
     public function buildingRoom()
     {
         return $this->belongsTo(BuildingRoom::class, 'building_room_id');

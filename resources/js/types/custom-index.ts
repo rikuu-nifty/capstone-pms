@@ -49,6 +49,12 @@ export function formatLabel(v: string): string {
     return v.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 }
 
+export function ucwords(str: string) {
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export function formatUnderscore(status: string): string {
   return status.replace(/_/g, ' ');
 }
@@ -63,11 +69,15 @@ export const formatEnums = (value?: string) => {
         .join(' ');
 };
 
-export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'> = {
+export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'|'outline'|'pending'|'completed'|'overdue'> = {
+    pending_review: 'pending',
     upcoming: 'secondary',
     in_progress: 'success',
-    overdue: 'destructive',
-    completed: 'primary',
+    overdue: 'overdue',
+    completed: 'completed',
+    approved: 'success',
+    rejected: 'destructive',
+    cancelled: 'secondary',
 };
 
 export const formatNumber = (n?: number | null) =>
@@ -84,3 +94,10 @@ export function formatFullName(
     }
     return `${firstName} ${lastName}`;
 }
+
+export const formatForInputDate = (dateStr?: string | null) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+};

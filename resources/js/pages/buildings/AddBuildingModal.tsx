@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import AddModal from '@/components/modals/AddModal';
 import { useForm, router } from '@inertiajs/react';
 import { BuildingFormData, NewRoomPayload } from '@/types/building';
+import { ucwords } from '@/types/custom-index';
 
 interface AddBuildingModalProps {
   show: boolean;
@@ -107,7 +108,7 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
                 type="text"
                 placeholder="Enter building name (e.g., Main Building)"
                 value={data.name}
-                onChange={(e) => setData('name', e.target.value)}
+                onChange={(e) => setData('name', ucwords(e.target.value))}
                 className="cursor-text w-full rounded-lg border p-2"
                 required
             />
@@ -119,7 +120,7 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
             <label className="mb-1 block font-medium">Code</label>
             <Input
                 value={data.code}
-                onChange={(e) => setData('code', e.target.value)}
+                onChange={(e) => setData('code', (e.target.value).toUpperCase())}
                 placeholder="Enter building code (e.g., MB, AUF-MB)"
                 required
             />
