@@ -322,45 +322,23 @@ export default function TransferAddModal({
                 {showAssetDropdown.map((visible, index) => (
                     visible && (
                         <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                            {/* <Select
-                                className="w-full"
-                                options={assets
-                                    .filter((asset) => !data.selected_assets.includes(asset.id))
-                                    .map((asset) => ({
-                                    value: asset.id,
-                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
-                                    }))
-                                }
-                                placeholder="Select asset for transfer..."
-                                onChange={(selectedOption) => {
-                                    if (selectedOption && !data.selected_assets.includes(selectedOption.value)) {
-                                    setData('selected_assets', [...data.selected_assets, selectedOption.value]);
-
-                                    setShowAssetDropdown((prev) => {
-                                        const updated = [...prev];
-                                        updated[index] = false;
-                                        return [...updated, true];
-                                    });
-                                    }
-                                }}
-                            /> */}
                             <Select
                                 className="w-full"
                                 options={assets
                                     .filter((asset) => {
-                                    const matchesBuilding = data.current_building_id
-                                        ? asset.building_id === data.current_building_id
-                                        : true;
+                                        const matchesBuilding = data.current_building_id
+                                            ? asset.building_id === data.current_building_id
+                                            : true;
 
-                                    const matchesRoom = data.current_building_room
-                                        ? asset.building_room_id === data.current_building_room
-                                        : true;
+                                        const matchesRoom = data.current_building_room
+                                            ? asset.building_room_id === data.current_building_room
+                                            : true;
 
-                                    return (
-                                        matchesBuilding &&
-                                        matchesRoom &&
-                                        !data.selected_assets.includes(asset.id)
-                                    );
+                                        return (
+                                            matchesBuilding &&
+                                            matchesRoom &&
+                                            !data.selected_assets.includes(asset.id)
+                                        );
                                     })
                                     .map((asset) => ({
                                     value: asset.id,
