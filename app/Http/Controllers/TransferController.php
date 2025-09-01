@@ -126,6 +126,8 @@ class TransferController extends Controller
                 ]);
             }
 
+            $this->syncAssetLocations($transfer, null);
+
             return $transfer;
         });
 
@@ -250,21 +252,24 @@ class TransferController extends Controller
             'received_by' => 'nullable|string',
             'status' => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
             'remarks' => 'nullable|string',
-
             'selected_assets' => 'nullable|array|min:1',
             'selected_assets.*' => 'integer|exists:inventory_lists,id',
         ]);
 
-        $transfer->update($validated);
+        DB::transaction(function () use ($transfer, $request, $validated) {
+            $oldStatus = $transfer->status;
+            $transfer->update($validated);
 
-        // Sync assets
-        $transfer->transferAssets()->delete();
-
-        if ($request->has('selected_assets')) {
-            foreach ($request->selected_assets as $assetId) {
-                $transfer->transferAssets()->create(['asset_id' => $assetId]);
+            // Sync assets
+            $transfer->transferAssets()->delete();
+            if ($request->has('selected_assets')) {
+                foreach ($request->selected_assets as $assetId) {
+                    $transfer->transferAssets()->create(['asset_id' => $assetId]);
+                }
             }
-        }
+
+            $this->syncAssetLocations($transfer, $oldStatus);
+        });
 
         return back()->with('success', 'Transfer updated successfully.');
     }
@@ -276,5 +281,34 @@ class TransferController extends Controller
     {
         $transfer->delete(); //soft delete lang
         return redirect()->route('transfers.index')->with('success', 'Transfer record deleted successfully.');
+    }
+
+    private function syncAssetLocations(Transfer $transfer, ?string $oldStatus): void
+    {
+        if ($transfer->status === 'completed' && $oldStatus !== 'completed') {
+            foreach ($transfer->transferAssets as $ta) {
+                $asset = $ta->asset;
+                if ($asset) {
+                    $asset->update([
+                        'building_id'            => $transfer->receivingBuildingRoom->building_id,
+                        'building_room_id'          => $transfer->receiving_building_room,
+                        'unit_or_department_id'  => $transfer->receiving_organization,
+                    ]);
+                }
+            }
+        }
+
+        if ($oldStatus === 'completed' && $transfer->status !== 'completed') {
+            foreach ($transfer->transferAssets as $ta) {
+                $asset = $ta->asset;
+                if ($asset) {
+                    $asset->update([
+                        'building_id'            => $transfer->currentBuildingRoom->building_id,
+                        'building_room_id'          => $transfer->current_building_room,
+                        'unit_or_department_id'  => $transfer->current_organization,
+                    ]);
+                }
+            }
+        }
     }
 }
