@@ -4,7 +4,7 @@ import { useForm } from '@inertiajs/react';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import EditModal from '@/components/modals/EditModal';
-import { UnitOrDepartment, InventoryList, formatEnums } from '@/types/custom-index';
+import { UnitOrDepartment, InventoryList, formatEnums, ucwords, formatForInputDate } from '@/types/custom-index';
 import { TurnoverDisposalFormData, TurnoverDisposals } from '@/types/turnover-disposal';
 
 interface TurnoverDisposalEditModalProps {
@@ -72,7 +72,7 @@ export default function TurnoverDisposalEditModal({
                 receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
                 description: turnoverDisposal.description ?? '',
                 personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
-                document_date: turnoverDisposal.document_date ?? '',
+                document_date: formatForInputDate(turnoverDisposal.document_date) ?? '',
                 status: turnoverDisposal.status,
                 remarks: turnoverDisposal.remarks ?? '',
                 selected_assets: (
@@ -171,17 +171,16 @@ export default function TurnoverDisposalEditModal({
                 onChange={e => {
                     const id = Number(e.target.value);
                     setData('issuing_office_id', id);
-                    // Reset asset selections when issuing office changes
                     setData('selected_assets', []);
                     setShowAssetDropdown([true]);
                 }}
                 >
                 <option value={0}>Select Unit/Dept/Lab</option>
-                {unitOrDepartments.map(unit => (
-                    <option key={unit.id} value={unit.id}>
-                    {unit.code} - {unit.name}
-                    </option>
-                ))}
+                    {unitOrDepartments.map(unit => (
+                        <option key={unit.id} value={unit.id}>
+                            {(unit.code).toUpperCase()} - {unit.name}
+                        </option>
+                    ))}
                 </select>
                 {errors.issuing_office_id && (
                 <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
@@ -197,14 +196,14 @@ export default function TurnoverDisposalEditModal({
                 onChange={e => setData('receiving_office_id', Number(e.target.value))}
                 >
                 <option value={0}>Select Unit/Dept/Lab</option>
-                {unitOrDepartments.map(unit => (
-                    <option key={unit.id} value={unit.id}>
-                    {unit.code} - {unit.name}
-                    </option>
-                ))}
+                    {unitOrDepartments.map(unit => (
+                        <option key={unit.id} value={unit.id}>
+                            {(unit.code).toUpperCase()} - {unit.name}
+                        </option>
+                    ))}
                 </select>
                 {errors.receiving_office_id && (
-                <p className="mt-1 text-xs text-red-500">{errors.receiving_office_id}</p>
+                    <p className="mt-1 text-xs text-red-500">{errors.receiving_office_id}</p>
                 )}
             </div>
 
@@ -225,11 +224,11 @@ export default function TurnoverDisposalEditModal({
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Personnel in Charge</label>
                 <input
-                placeholder="Enter the full name of the personnel"
-                type="text"
-                className="w-full rounded-lg border p-2"
-                value={data.personnel_in_charge ?? ''}
-                onChange={e => setData('personnel_in_charge', e.target.value)}
+                    placeholder="Enter the full name of the personnel"
+                    type="text"
+                    className="w-full rounded-lg border p-2"
+                    value={data.personnel_in_charge ?? ''}
+                    onChange={e => setData('personnel_in_charge', ucwords(e.target.value))}
                 />
                 {errors.personnel_in_charge && (
                 <p className="mt-1 text-xs text-red-500">{errors.personnel_in_charge}</p>
@@ -287,7 +286,7 @@ export default function TurnoverDisposalEditModal({
                             );
                         })
                     ) : (
-                        <p className="text-xs text-gray-500 italic">No assets linked yet.</p>
+                        <p className="text-xs text-red-500">No assets linked yet.</p>
                     )}
                 </div>
 

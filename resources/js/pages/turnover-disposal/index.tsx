@@ -257,7 +257,7 @@ export default function TurnoverDisposalsIndex({
                     <Table>
                         <TableHeader >
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="text-center">ID</TableHead> {/* 1 */}
+                                <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Issuing Office</TableHead>
                                 <TableHead className="text-center">Type</TableHead>
                                 <TableHead className="text-center">Receiving Office</TableHead>

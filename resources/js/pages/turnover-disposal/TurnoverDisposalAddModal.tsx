@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from "@/components/modals/AddModal";
-import { UnitOrDepartment, User, InventoryList, formatEnums } from '@/types/custom-index';
+import { UnitOrDepartment, User, InventoryList, formatEnums, ucwords } from '@/types/custom-index';
 import { TurnoverDisposalFormData } from '@/types/turnover-disposal';
 
 interface TurnoverDisposalAddModalProps {
@@ -155,11 +155,11 @@ export default function TurnoverDisposalAddModal({
                     }}
                 >
                     <option value={0}>Select Unit/Dept/Lab</option>
-                    {unitOrDepartments.map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                        {unit.code} - {unit.name}
-                        </option>
-                    ))}
+                        {unitOrDepartments.map((unit) => (
+                            <option key={unit.id} value={unit.id}>
+                                {(unit.code).toUpperCase()} - {unit.name}
+                            </option>
+                        ))}
                 </select>
 
                 {errors.issuing_office_id && (
@@ -178,7 +178,7 @@ export default function TurnoverDisposalAddModal({
                     <option value={0}>Select Unit/Dept/Lab</option>
                     {unitOrDepartments.map((unit) => (
                         <option key={unit.id} value={unit.id}>
-                        {unit.code} - {unit.name}
+                            {(unit.code).toUpperCase()} - {unit.name}
                         </option>
                     ))}
                 </select>
@@ -209,7 +209,9 @@ export default function TurnoverDisposalAddModal({
                     type="text"
                     className="w-full rounded-lg border p-2"
                     value={data.personnel_in_charge ?? ''}
-                    onChange={(e) => setData('personnel_in_charge', e.target.value)}
+                    onChange={(e) => 
+                        setData('personnel_in_charge', ucwords(e.target.value))
+                    }
                 />
                 {errors.personnel_in_charge && (
                     <p className="mt-1 text-xs text-red-500">{errors.personnel_in_charge}</p>

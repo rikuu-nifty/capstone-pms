@@ -90,3 +90,10 @@ export function formatFullName(
     }
     return `${firstName} ${lastName}`;
 }
+
+export const formatForInputDate = (dateStr?: string | null) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+};
