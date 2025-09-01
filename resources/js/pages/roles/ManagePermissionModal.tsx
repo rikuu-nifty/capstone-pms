@@ -11,7 +11,7 @@ interface Props {
     onClose: () => void;
     role: Role;
     permissions: Permission[];
-};
+}
 
 const PERMISSION_GROUPS: Record<string, string[]> = {
     "Users Management": [
@@ -95,6 +95,7 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "delete-form-approvals",
     ],
     "Reports": ["view-reports"],
+    "Audit Logs": ["view-audit-logs"], // ✅ now included properly
     // "Assignments": [
     //     "view-assignments",
     //     "create-assignments",
@@ -110,7 +111,7 @@ export default function ManagePermissionsModal({
     role,
     permissions,
 }: Props) {
-    const { data, setData, put, processing, reset } = useForm<{permissions: number[];}>({
+    const { data, setData, put, processing, reset } = useForm<{ permissions: number[] }>({
         permissions: role?.permissions?.map((p) => p.id) ?? [],
     });
 
@@ -140,7 +141,7 @@ export default function ManagePermissionsModal({
             "permissions",
             data.permissions.includes(id)
                 ? data.permissions.filter((p) => p !== id)
-                : [...data.permissions, id]
+                : [...data.permissions, id],
         );
     };
 
@@ -165,33 +166,26 @@ export default function ManagePermissionsModal({
             {/* Permission groups */}
             <div className="col-span-2 space-y-6 max-h-[500px] overflow-y-auto rounded-lg p-4 bg-muted/10">
                 {Object.entries(PERMISSION_GROUPS).map(([group, codes]) => {
-                    // Filter group based on search
                     const groupPerms = codes
                         .map((code) => permMap[code])
                         .filter(
                             (p) =>
                                 p &&
                                 (!search ||
-                                    p.name
-                                        .toLowerCase()
-                                        .includes(search.toLowerCase()) ||
-                                    p.code
-                                        .toLowerCase()
-                                        .includes(search.toLowerCase()))
+                                    p.name.toLowerCase().includes(search.toLowerCase()) ||
+                                    p.code.toLowerCase().includes(search.toLowerCase())),
                         );
 
                     if (groupPerms.length === 0) return null;
 
                     return (
                         <div key={group} className="space-y-2">
-                            {/* Group header */}
                             <div className="flex items-center border-b pb-1 mb-2">
                                 <h3 className="text-sm font-semibold text-foreground/80">
                                     {group}
                                 </h3>
                             </div>
 
-                            {/* Group permissions */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-1">
                                 {groupPerms.map((perm) => (
                                     <div
@@ -201,9 +195,7 @@ export default function ManagePermissionsModal({
                                         <Checkbox
                                             id={`perm-${perm.id}`}
                                             checked={data.permissions.includes(perm.id)}
-                                            onCheckedChange={() =>
-                                                togglePermission(perm.id)
-                                            }
+                                            onCheckedChange={() => togglePermission(perm.id)}
                                             className="cursor-pointer"
                                         />
                                         <Label
