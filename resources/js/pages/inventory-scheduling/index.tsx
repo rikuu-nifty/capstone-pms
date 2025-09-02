@@ -11,6 +11,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { type VariantProps } from "class-variance-authority";
+import { badgeVariants } from "@/components/ui/badge";
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -212,6 +214,14 @@ export default function InventorySchedulingIndex({
         `${item.building?.name ?? ''} ${item.unit_or_department?.name ?? ''}`.toLowerCase().includes(search.toLowerCase()),
     );
 
+    const schedulingStatusMap: Record<string, VariantProps<typeof badgeVariants>['variant']> = {
+  Pending_Review: 'Pending_Review',
+  Pending: 'Pending',
+  Completed: 'Completed',
+  Overdue: 'Overdue',
+  Cancelled: 'Cancelled',
+};
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory Scheduling" />
@@ -287,13 +297,11 @@ export default function InventorySchedulingIndex({
                                     {/* <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell> */}
                                     {/* <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell> */}
 
-                                    <TableCell className="text-center align-middle">
-                                        {item.scheduling_status === 'Pending_Review' && <Badge variant="outline">Pending Review</Badge>}
-                                        {item.scheduling_status === 'Pending' && <Badge variant="pending">Pending</Badge>}
-                                        {item.scheduling_status === 'Completed' && <Badge variant="completed">Completed</Badge>}
-                                        {item.scheduling_status === 'Overdue' && <Badge variant="overdue">Overdue</Badge>}
-                                        {item.scheduling_status === 'Cancelled' && <Badge variant="primary">Cancelled</Badge>}
-                                    </TableCell>
+<TableCell className="text-center align-middle">
+  <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
+    {item.scheduling_status.replace('_', ' ')}
+  </Badge>
+</TableCell>
 
                                     <TableCell>
                                         <div className="flex items-center justify-center gap-2">

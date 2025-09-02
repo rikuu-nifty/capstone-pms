@@ -20,17 +20,25 @@ const badgeVariants = cva(
         primary: 'bg-black text-white',
 
         // ✅ status-specific
-        active: 'border-transparent bg-green-100 text-green-700',
-        archived: 'border-transparent bg-gray-100 text-gray-700',
-        completed: "border-transparent bg-emerald-100 text-emerald-700",
-        pending: "border-transparent bg-yellow-100 text-yellow-700",
-        overdue: "border-transparent bg-red-100 text-red-700",
+        active:   'bg-emerald-100 text-emerald-700 border border-emerald-200',
+        archived: 'bg-gray-100 text-gray-700 border border-gray-200',
+        completed:'bg-emerald-100 text-emerald-700 border border-emerald-200',
+        pending:  'bg-yellow-100 text-yellow-700 border border-yellow-200',
+        overdue:  'bg-red-100 text-red-700 border border-red-200',
+
 
         // custom role variants
         pmo_head: 'bg-blue-100 text-blue-700 border border-blue-200 font-medium',
         pmo_staff: 'bg-gray-100 text-gray-700 border border-gray-200 font-medium',
         vp_admin: 'bg-purple-100 text-purple-700 border border-purple-200 font-medium',
         superuser: 'bg-red-100 text-red-700 border border-red-200 font-medium',
+
+        // status-specific (now by color)
+        Pending_Review: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
+        Pending: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
+        Completed: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+        Overdue: 'bg-red-100 text-red-700 border border-red-200',
+        Cancelled: 'bg-red-100 text-red-700 border border-red-200',
 
         // still keep these
         success:
