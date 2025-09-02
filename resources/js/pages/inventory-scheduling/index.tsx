@@ -8,9 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ViewScheduleModal } from '@/components/view-inventory-scheduling';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, useForm, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -54,11 +54,11 @@ export type User = {
 //     email: string;
 // };
 export type PagePropsWithViewing = {
-        viewing?: Scheduled | null;
-        auth: {
-            user: User
-        }
+    viewing?: Scheduled | null;
+    auth: {
+        user: User;
     };
+};
 
 export type Scheduled = {
     id: number;
@@ -108,7 +108,7 @@ export default function InventorySchedulingIndex({
 }) {
     const { props } = usePage<PagePropsWithViewing>();
     const currentUser = props.auth.user;
-    
+
     const { data, setData, post, reset, processing, errors } = useForm<InventorySchedulingFormData>({
         building_id: '',
         building_room_id: '',
@@ -243,31 +243,31 @@ export default function InventorySchedulingIndex({
                     </div>
                 </div>
 
-                <div className="rounded-lg-lg overflow-x-auto border">
-                    <Table className="w-full table-fixed">
+                <div className="overflow-x-auto rounded-lg-lg border">
+                    <Table className="w-full table-auto">
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="w-[200px] text-center">ID</TableHead>
-                                <TableHead className="w-[200px] text-center">Building</TableHead>
-                                <TableHead className="w-[320px] text-center">Unit/Dept/Laboratories</TableHead>
-                                <TableHead className="w-[160px] text-center">Inventory Schedule</TableHead>
-                                <TableHead className="w-[200px] text-center">Actual Date of Inventory</TableHead>
+                                <TableHead className=" text-center">ID</TableHead>
+                                <TableHead className="min-w-[160px] text-center">Building</TableHead>
+                                <TableHead className="min-w-[260px] text-center">Unit/Dept/Laboratories</TableHead>
+                                <TableHead className="min-w-[140px] text-center">Inventory Schedule</TableHead>
+                                <TableHead className="min-w-[180px] text-center">Actual Date of Inventory</TableHead>
                                 {/* <TableHead className="w-[140px] text-center">Checked By</TableHead> */}
                                 {/* <TableHead className="w-[140px] text-center">Verified By</TableHead> */}
                                 {/* <TableHead className="w-[140px] text-center">Received By</TableHead> */}
-                                <TableHead className="w-[120px] text-center">Status</TableHead>
-                                <TableHead className="w-[160px] text-center">Action</TableHead>
+                                <TableHead className="min-w-[120px] text-center">Status</TableHead>
+                                <TableHead className="min-w-[140px] text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
                             {filtered.map((item) => (
-                                <TableRow key={item.id} className='text-center'>
-                                    <TableCell className="w-[200px] whitespace-nowrap">{item.id}</TableCell>
-                                    <TableCell className="w-[200px] whitespace-nowrap">{item.building?.name ?? '—'}</TableCell>
+                                <TableRow key={item.id} className="text-center">
+                                    <TableCell className="whitespace-nowrap">{item.id}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{item.building?.name ?? '—'}</TableCell>
 
                                     {/* truncate long department names, keep header aligned */}
-                                    <TableCell className="w-[320px]">
+                                    <TableCell>
                                         <span
                                             className="block overflow-hidden text-ellipsis whitespace-nowrap"
                                             title={
@@ -279,16 +279,15 @@ export default function InventorySchedulingIndex({
                                     </TableCell>
 
                                     {/* prevent wrap so months don't split */}
-                                    <TableCell className="w-[160px] whitespace-nowrap">{formatMonth(item.inventory_schedule) ?? '—'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{formatMonth(item.inventory_schedule) ?? '—'}</TableCell>
 
-                                    <TableCell className="w-[200px] whitespace-nowrap">{formatDate(item.actual_date_of_inventory) ?? '—'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) ?? '—'}</TableCell>
 
                                     {/* <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell> */}
                                     {/* <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell> */}
                                     {/* <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell> */}
 
-                                    <TableCell className="w-[120px] text-center align-middle">
-                                        
+                                    <TableCell className="text-center align-middle">
                                         {item.scheduling_status === 'Pending_Review' && <Badge variant="outline">Pending Review</Badge>}
                                         {item.scheduling_status === 'Pending' && <Badge variant="pending">Pending</Badge>}
                                         {item.scheduling_status === 'Completed' && <Badge variant="completed">Completed</Badge>}
@@ -296,7 +295,7 @@ export default function InventorySchedulingIndex({
                                         {item.scheduling_status === 'Cancelled' && <Badge variant="primary">Cancelled</Badge>}
                                     </TableCell>
 
-                                    <TableCell className="w-[160px]">
+                                    <TableCell>
                                         <div className="flex items-center justify-center gap-2">
                                             <Button
                                                 size="icon"
@@ -321,15 +320,15 @@ export default function InventorySchedulingIndex({
                                             </Button>
 
                                             {/* <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                onClick={() => {
-                                                    setSelectedSchedule(item);
-                                                    setViewModalVisible(true);
-                                                }}
-                                            >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Button> */}
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                    setSelectedSchedule(item);
+                                    setViewModalVisible(true);
+                                }}
+                            >
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                            </Button> */}
 
                                             <Button size="icon" variant="ghost" asChild>
                                                 <Link href={route('inventory-scheduling.view', item.id)} preserveScroll>
@@ -392,12 +391,7 @@ export default function InventorySchedulingIndex({
                 />
             )} */}
 
-            {viewModalVisible && selectedSchedule && (
-                <ViewScheduleModal
-                    schedule={selectedSchedule}
-                    onClose={closeView}
-                />
-            )}
+            {viewModalVisible && selectedSchedule && <ViewScheduleModal schedule={selectedSchedule} onClose={closeView} />}
 
             {/* Side Panel Modal with Slide Effect (Schedule Inventory) */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddScheduleInventory ? 'visible' : 'invisible'}`}>
