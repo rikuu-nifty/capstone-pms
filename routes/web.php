@@ -68,10 +68,10 @@
         Route::post('/verify-email-otp/resend',  [EmailOtpController::class, 'resendGuest'])->name('otp.resend');
     });
 
-    // ✅ Public, no auth required
-    // Public Asset Summary (guest accessible via NFC scan)
-    Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
-        ->name('asset-summary.show');
+    // // ✅ Public, no auth required
+    // // Public Asset Summary (guest accessible via NFC scan)
+    // Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
+    //     ->name('asset-summary.show');
 
 
 
@@ -84,6 +84,9 @@
     Route::get('calendar', function () {
         return Inertia::render('calendar');
     })->name('calendar');
+
+    Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
+        ->name('asset-summary.show');
     
     //NOTIFICATIONS
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
