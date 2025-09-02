@@ -53,6 +53,12 @@ export type User = {
 //     lname: string;
 //     email: string;
 // };
+export type PagePropsWithViewing = {
+        viewing?: Scheduled | null;
+        auth: {
+            user: User
+        }
+    };
 
 export type Scheduled = {
     id: number;
@@ -100,21 +106,23 @@ export default function InventorySchedulingIndex({
     unitOrDepartments: UnitOrDepartment[];
     users: User[];
 }) {
-    // data, setData, post, processing, errors, reset, clearErrors
+    const { props } = usePage<PagePropsWithViewing>();
+    const currentUser = props.auth.user;
+    
     const { data, setData, post, reset, processing, errors } = useForm<InventorySchedulingFormData>({
         building_id: '',
         building_room_id: '',
         unit_or_department_id: '',
         user_id: '',
         designated_employee: '',
-        assigned_by: '',
+        assigned_by: currentUser?.id ?? '',
         inventory_schedule: '',
         actual_date_of_inventory: '',
         checked_by: '',
         verified_by: '',
         received_by: '',
 
-        scheduling_status: '',
+        scheduling_status: 'Pending_Review',
         description: '',
     });
 
@@ -134,12 +142,6 @@ export default function InventorySchedulingIndex({
 
     // For Modal (View)
     const [viewModalVisible, setViewModalVisible] = useState(false);
-
-    type PagePropsWithViewing = {
-        viewing?: Scheduled | null;
-    };
-
-    const { props } = usePage<PagePropsWithViewing>();
 
     useEffect(() => {
         if (!props.viewing) return;
@@ -245,13 +247,14 @@ export default function InventorySchedulingIndex({
                     <Table className="w-full table-fixed">
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="w-[200px]">Building</TableHead>
-                                <TableHead className="w-[320px]">Unit/Dept/Laboratories</TableHead>
-                                <TableHead className="w-[160px]">Inventory Schedule</TableHead>
-                                <TableHead className="w-[200px]">Actual Date of Inventory</TableHead>
-                                <TableHead className="w-[140px]">Checked By</TableHead>
-                                <TableHead className="w-[140px]">Verified By</TableHead>
-                                <TableHead className="w-[140px]">Received By</TableHead>
+                                <TableHead className="w-[200px] text-center">ID</TableHead>
+                                <TableHead className="w-[200px] text-center">Building</TableHead>
+                                <TableHead className="w-[320px] text-center">Unit/Dept/Laboratories</TableHead>
+                                <TableHead className="w-[160px] text-center">Inventory Schedule</TableHead>
+                                <TableHead className="w-[200px] text-center">Actual Date of Inventory</TableHead>
+                                {/* <TableHead className="w-[140px] text-center">Checked By</TableHead> */}
+                                {/* <TableHead className="w-[140px] text-center">Verified By</TableHead> */}
+                                {/* <TableHead className="w-[140px] text-center">Received By</TableHead> */}
                                 <TableHead className="w-[120px] text-center">Status</TableHead>
                                 <TableHead className="w-[160px] text-center">Action</TableHead>
                             </TableRow>
@@ -259,7 +262,8 @@ export default function InventorySchedulingIndex({
 
                         <TableBody>
                             {filtered.map((item) => (
-                                <TableRow key={item.id}>
+                                <TableRow key={item.id} className='text-center'>
+                                    <TableCell className="w-[200px] whitespace-nowrap">{item.id}</TableCell>
                                     <TableCell className="w-[200px] whitespace-nowrap">{item.building?.name ?? '—'}</TableCell>
 
                                     {/* truncate long department names, keep header aligned */}
@@ -279,9 +283,9 @@ export default function InventorySchedulingIndex({
 
                                     <TableCell className="w-[200px] whitespace-nowrap">{formatDate(item.actual_date_of_inventory) ?? '—'}</TableCell>
 
-                                    <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell>
-                                    <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell>
-                                    <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell>
+                                    {/* <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell> */}
+                                    {/* <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell> */}
+                                    {/* <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell> */}
 
                                     <TableCell className="w-[120px] text-center align-middle">
                                         

@@ -114,14 +114,14 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                         <table className="w-full text-sm">
                             <thead className="bg-gray-100 text-gray-700 dark:bg-neutral-900 dark:text-gray-300 print:bg-gray-100 print:text-black">
                                 <tr>
-                                    <th className="px-3 py-2 text-left font-medium">Designated Employee</th>
-                                    <th className="px-3 py-2 text-left font-medium">Checked By</th>
-                                    <th className="px-3 py-2 text-left font-medium">Verified By</th>
-                                    <th className="px-3 py-2 text-left font-medium">Received By</th>
+                                    <th className="px-3 py-2 text-center font-medium">Designated Employee</th>
+                                    <th className="px-3 py-2 text-center font-medium">Checked By</th>
+                                    <th className="px-3 py-2 text-center font-medium">Verified By</th>
+                                    <th className="px-3 py-2 text-center font-medium">Received By</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr className="border-t border-gray-200 dark:border-gray-800 print:border-gray-300">
+                                <tr className="border-t border-gray-200 dark:border-gray-800 print:border-gray-300 text-center">
                                     <td className="px-3 py-2">{schedule.designated_employee?.name ?? '—'}</td>
                                     <td className="px-3 py-2">{schedule.checked_by ?? '—'}</td>
                                     <td className="px-3 py-2">{schedule.verified_by ?? '—'}</td>
@@ -132,8 +132,7 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                     </div>
 
                     {/* Assigned By & Remarks */}
-                    <div className="mt-8 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
-                        {/* Assigned By */}
+                    {/* <div className="mt-8 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
                         <section className="print:break-inside-avoid">
                             <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Assigned By:</h3>
                             <div className="mt-6 w-56 border-t border-black" />
@@ -141,12 +140,53 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                             <div className="text-[12px] text-gray-500 italic">[Role Here]</div>
                         </section>
 
-                        {/* Remarks */}
                         <section className="md:text-right print:break-inside-avoid">
                             <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Remarks:</h3>
                             <p className="mt-2 text-sm text-blue-700 italic dark:text-blue-300">{schedule.description?.trim() || '—'}</p>
                         </section>
+                    </div> */}
+                    <div className="grid grid-cols-2 gap-x-5 gap-y-5 mt-5 text-sm">
+                    {/* Assigned By */}
+                    {(schedule.assigned_by?.name) && (
+                        <div className="text-center">
+                        <p className="font-semibold mb-8">Assigned By:</p>
+                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                        <p className="font-bold text-gray-700">{schedule.assigned_by.name}</p>
+                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
+                        </div>
+                    )}
+
+                    {/* Checked By */}
+                    {(schedule.checked_by) && (
+                        <div className="text-center">
+                        <p className="font-semibold mb-8">Checked By:</p>
+                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                        <p className="font-bold text-gray-700">{schedule.checked_by}</p>
+                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
+                        </div>
+                    )}
+
+                    {/* Verified By */}
+                    {(schedule.verified_by) && (
+                        <div className="text-center">
+                        <p className="font-semibold mb-8">Verified By:</p>
+                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                        <p className="font-bold text-gray-700">{schedule.verified_by}</p>
+                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
+                        </div>
+                    )}
+
+                    {/* Received By */}
+                    {(schedule.received_by) && (
+                        <div className="text-center">
+                        <p className="font-semibold mb-8">Received By:</p>
+                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                        <p className="font-bold text-gray-700">{schedule.received_by}</p>
+                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
+                        </div>
+                    )}
                     </div>
+
 
                     {/* Actions */}
                     <div className="mt-8 text-center print:hidden">
