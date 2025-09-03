@@ -146,9 +146,14 @@ export default function TransferAddModal({
                 <select
                     className="w-full rounded-lg border p-2"
                     value={data.current_organization}
-                    onChange={(e) => setData('current_organization', Number(e.target.value))}
+                    onChange={(e) => {
+                        setData('current_organization', Number(e.target.value))
+
+                        setData('selected_assets', []);
+                        setShowAssetDropdown([true]);
+                    }}
                 >
-                    <option value="">Select Unit/Dept</option>
+                    <option value="">Select Unit/Dept/Lab</option>
                     {unitOrDepartments.map((unit) => (
                         <option key={unit.id} value={unit.id}>
                             {unit.code} - {unit.name}
@@ -166,7 +171,7 @@ export default function TransferAddModal({
                     value={data.receiving_organization}
                     onChange={(e) => setData('receiving_organization', Number(e.target.value))}
                 >
-                    <option value="">Select Unit/Dept</option>
+                    <option value="">Select Unit/Dept/Lab</option>
                     {unitOrDepartments.map((unit) => (
                         <option key={unit.id} value={unit.id}>
                             {unit.code} - {unit.name}
@@ -334,9 +339,14 @@ export default function TransferAddModal({
                                             ? asset.building_room_id === data.current_building_room
                                             : true;
 
+                                        const matchesUnit = data.current_organization
+                                            ? asset.unit_or_department_id === data.current_organization
+                                            : true;
+
                                         return (
                                             matchesBuilding &&
                                             matchesRoom &&
+                                            matchesUnit &&
                                             !data.selected_assets.includes(asset.id)
                                         );
                                     })
@@ -346,11 +356,15 @@ export default function TransferAddModal({
                                     }))
                                 }
                                 placeholder={
-                                    data.current_building_id && data.current_building_room
+                                    data.current_building_id && data.current_building_room && data.current_organization
                                     ? "Select Asset(s) for Transfer..."
-                                    : "Select Current Building and Room first"
+                                    : "Select Current Building, Room, and Unit/Dept/Lab first"
                                 }
-                                isDisabled={!data.current_building_id || !data.current_building_room}
+                                isDisabled={
+                                    !data.current_building_id || 
+                                    !data.current_building_room ||
+                                    !data.current_organization
+                                }
                                 onChange={(selectedOption) => {
                                     if (selectedOption && !data.selected_assets.includes(selectedOption.value)) {
                                     setData('selected_assets', [...data.selected_assets, selectedOption.value]);
