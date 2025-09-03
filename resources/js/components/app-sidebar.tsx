@@ -41,7 +41,7 @@ type NavItem = {
   title: string
   href: string
   icon: React.ComponentType<Record<string, unknown>>
-  permission?: string
+  permission?: string | string[]
 }
 
 // ------------------ NAV ITEMS ------------------
@@ -51,8 +51,13 @@ const dashboardNavItems = [
 ];
 
 const inventoryNavItems = [
-    { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-inventory-list' },
-    { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-own-unit-inventory-list' },
+    // { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-inventory-list' },
+    { 
+        title: 'Inventory List', 
+        href: '/inventory-list', 
+        icon: Package2, 
+        permission: ['view-all-inventory-list', 'view-own-unit-inventory-list'],
+    },
     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
     { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
@@ -84,10 +89,21 @@ const configNavItems = [
 ];
 
 // ------------------ HELPERS ------------------
+// function canView(item: NavItem, permissions: string[]): boolean {
+//   if (!item.permission) return true
+//   return permissions.includes(item.permission)
+// }
+
 function canView(item: NavItem, permissions: string[]): boolean {
-  if (!item.permission) return true
-  return permissions.includes(item.permission)
+    if (!item.permission) return true
+
+    if (Array.isArray(item.permission)) {
+        return item.permission.some((p) => permissions.includes(p))
+    }
+
+    return permissions.includes(item.permission)
 }
+
 
 // ------------------ COMPONENT ------------------
 export function AppSidebar() {
