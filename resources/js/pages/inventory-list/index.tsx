@@ -445,68 +445,6 @@ export default function InventoryListIndex({
                         />
 
                         {/* Active filter chips */}
-                        {/* <div className="flex flex-wrap gap-2 pt-1">
-                            {selectedStatus && (
-                                <Badge
-                                    variant="darkOutline"
-                                    className="flex items-center gap-1"
-                                >
-                                    Status: {selectedStatus === 'active' ? 'Active' : 'Archived'}
-                                    <button
-                                        onClick={() => setSelectedStatus('')}
-                                        className="ml-1 rounded hover:text-red-600"
-                                    >
-                                        <X className="h-6 w-6" />
-                                    </button>
-                                </Badge>
-                            )}
-
-                            {selectedCategoryId && (
-                                <Badge
-                                    variant="darkOutline"
-                                    className="flex items-center gap-1"
-                                >
-                                    Category: {categories.find(c => c.id === selectedCategoryId)?.name ?? selectedCategoryId}
-                                    <button
-                                        onClick={() => setSelectedCategoryId('')}
-                                        className="ml-1 text-xs font-bold hover:text-red-600"
-                                    >
-                                        ×
-                                    </button>
-                                </Badge>
-                            )}
-
-                            {(selectedUnitId || canViewOwn) && (
-                                <Badge variant="darkOutline" className="flex items-center gap-1">
-                                Unit/Dept:{" "}
-                                {canViewOwn && auth.unit_or_department
-                                    ? `${auth.unit_or_department.name} (${auth.unit_or_department.code})`
-                                    : unitOrDepartments.find(u => u.id === selectedUnitId)?.name ?? selectedUnitId}
-
-                                {canViewAll && (
-                                    <Button onClick={() => setSelectedUnitId('')} className="ml-1 hover:text-red-600">
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
-                                </Badge>
-                            )}
-
-                            {(selectedStatus || selectedCategoryId || selectedUnitId) && (
-                                <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                    setSelectedStatus('');
-                                    setSelectedCategoryId('');
-                                    setSelectedUnitId('');
-                                }}
-                                className="cursor-pointer"
-                                >
-                                    Clear filters
-                                </Button>
-                            )}
-                        </div> */}
-
                         <div className="flex flex-wrap gap-2 pt-1">
                             {selectedStatus && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
@@ -527,17 +465,16 @@ export default function InventoryListIndex({
                             )}
 
                             {/* 🔹 Unit chip */}
-                            {(selectedUnitId || canViewOwn) && (
+                            {selectedUnitId && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
                                 Unit/Dept:{" "}
                                 {canViewOwn && auth.unit_or_department
                                     ? `${auth.unit_or_department.name} (${auth.unit_or_department.code})`
                                     : unitOrDepartments.find(u => u.id === selectedUnitId)?.name ?? selectedUnitId}
 
-                                {/* ❌ Allow clearing only if user can view all */}
                                 {canViewAll && (
                                     <button onClick={() => setSelectedUnitId('')} className="ml-1 hover:text-red-600">
-                                    <X className="h-4 w-4" />
+                                        <X className="h-4 w-4" />
                                     </button>
                                 )}
                                 </Badge>

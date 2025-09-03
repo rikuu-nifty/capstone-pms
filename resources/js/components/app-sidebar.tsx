@@ -139,7 +139,7 @@ export function AppSidebar() {
     const renderCollapsible = (
         label: string,
         Icon: React.ComponentType<{ className?: string }>,
-        items: { title: string; href: string; icon: React.ComponentType<{ className?: string }>; permission?: string }[],
+        items: { title: string; href: string; icon: React.ComponentType<{ className?: string }>; permission?: string | string[] }[],
     ) => {
         const isOpen = openGroups[label] ?? false;
         const visibleItems = items.filter((item) => canView(item, permissions));
