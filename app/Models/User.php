@@ -128,6 +128,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $perms->contains('code', $code);
     }
 
+    public function unitOrDepartment() {
+        return $this->belongsTo(UnitOrDepartment::class);
+    }
+
     public function scopeSearch($query, ?string $q)
     {
         if ($q !== '') {

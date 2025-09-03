@@ -8,14 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
-import { Banknote, Boxes, Eye, Filter, Grid, Pencil, PlusCircle, Trash2, FolderArchive, Pin } from 'lucide-react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Banknote, Boxes, Eye, Pencil, PlusCircle, Trash2, FolderArchive, Pin, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
 import { ChooseAddTypeModal } from './chooseAddTypeModal';
 import { ChooseViewModal } from './chooseViewModal';
 import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
+import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
+import { UnitOrDepartment } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -23,6 +25,8 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/inventory-list',
     },
 ];
+
+
 
 export type Category = {
     id: number;
@@ -49,13 +53,6 @@ export type BuildingRoom = {
     id: number;
     building_id: number;
     room: string | number;
-    description: string;
-};
-
-export type UnitOrDepartment = {
-    id: number;
-    name: string;
-    code: string | number;
     description: string;
 };
 
@@ -167,6 +164,23 @@ export default function InventoryListIndex({
         status: '',
     });
 
+    const { auth } = usePage().props as unknown as {
+        auth: { 
+            permissions: string[]; 
+            role: string;
+            unit_or_department_id: number | null;
+            unit_or_department?: { 
+                id: number; 
+                name: string; 
+                code: string 
+            };
+        };
+    };
+
+
+    const canViewAll = auth.permissions.includes('view-inventory-list');
+    const canViewOwn = auth.permissions.includes('view-own-unit-inventory-list');
+
     const [search, setSearch] = useState('');
     const [showAddAsset, setShowAddAsset] = useState(false);
 
@@ -177,7 +191,18 @@ export default function InventoryListIndex({
     const uniqueBrands = Array.from(new Set(assetModels.map((model) => model.brand)));
     const filteredModels = assetModels.filter((model) => model.brand === data.brand);
 
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
+    const [selectedUnitId, setSelectedUnitId] = useState<number | ''>('');
+    const [selectedStatus, setSelectedStatus] = useState<string>('');
+
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+
+    useEffect(() => {
+        if (canViewOwn && !canViewAll && auth.unit_or_department_id) {
+            setSelectedUnitId(auth.unit_or_department_id);
+        }
+    }, [canViewOwn, canViewAll, auth.unit_or_department_id]);
+
 
     // For Modal (Edit)
     const [editModalVisible, setEditModalVisible] = useState(false);
@@ -280,7 +305,7 @@ export default function InventoryListIndex({
     const filteredData = assets.filter((item) => {
         const keyword = search.toLowerCase();
 
-        return (
+        const matchesSearch =
             item.asset_name?.toLowerCase().includes(keyword) ||
             item.supplier?.toLowerCase().includes(keyword) ||
             item.asset_type?.toLowerCase().includes(keyword) ||
@@ -290,13 +315,18 @@ export default function InventoryListIndex({
             item.quantity?.toString().includes(keyword) ||
             item.building?.name?.toLowerCase().includes(keyword) ||
             item.unit_or_department?.name?.toLowerCase().includes(keyword) ||
-            item.status?.toLowerCase().includes(keyword)
+            item.status?.toLowerCase().includes(keyword);
 
-            // item.asset_model?.brand?.toLowerCase().includes(keyword)
-            // item.serial_no?.toLowerCase().includes(keyword) ||
-            // item.memorandum_no?.toString().includes(keyword) ||
-            // item.building_room?.room?.toString().toLowerCase().includes(keyword) ||
-        );
+        // ✅ then add your filter checks
+        const matchesCategory =
+            selectedCategoryId === '' || item.category_id === selectedCategoryId;
+        const matchesUnit =
+            selectedUnitId === '' || item.unit_or_department?.id === selectedUnitId;
+        const matchesStatus =
+            selectedStatus === '' || item.status === selectedStatus;
+
+        // ✅ final return
+        return matchesSearch && matchesCategory && matchesUnit && matchesStatus;
     });
 
     return (
@@ -413,21 +443,148 @@ export default function InventoryListIndex({
                             onChange={(e) => setSearch(e.target.value)}
                             className="max-w-xs"
                         />
+
+                        {/* Active filter chips */}
+                        {/* <div className="flex flex-wrap gap-2 pt-1">
+                            {selectedStatus && (
+                                <Badge
+                                    variant="darkOutline"
+                                    className="flex items-center gap-1"
+                                >
+                                    Status: {selectedStatus === 'active' ? 'Active' : 'Archived'}
+                                    <button
+                                        onClick={() => setSelectedStatus('')}
+                                        className="ml-1 rounded hover:text-red-600"
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </button>
+                                </Badge>
+                            )}
+
+                            {selectedCategoryId && (
+                                <Badge
+                                    variant="darkOutline"
+                                    className="flex items-center gap-1"
+                                >
+                                    Category: {categories.find(c => c.id === selectedCategoryId)?.name ?? selectedCategoryId}
+                                    <button
+                                        onClick={() => setSelectedCategoryId('')}
+                                        className="ml-1 text-xs font-bold hover:text-red-600"
+                                    >
+                                        ×
+                                    </button>
+                                </Badge>
+                            )}
+
+                            {(selectedUnitId || canViewOwn) && (
+                                <Badge variant="darkOutline" className="flex items-center gap-1">
+                                Unit/Dept:{" "}
+                                {canViewOwn && auth.unit_or_department
+                                    ? `${auth.unit_or_department.name} (${auth.unit_or_department.code})`
+                                    : unitOrDepartments.find(u => u.id === selectedUnitId)?.name ?? selectedUnitId}
+
+                                {canViewAll && (
+                                    <Button onClick={() => setSelectedUnitId('')} className="ml-1 hover:text-red-600">
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                                </Badge>
+                            )}
+
+                            {(selectedStatus || selectedCategoryId || selectedUnitId) && (
+                                <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                    setSelectedStatus('');
+                                    setSelectedCategoryId('');
+                                    setSelectedUnitId('');
+                                }}
+                                className="cursor-pointer"
+                                >
+                                    Clear filters
+                                </Button>
+                            )}
+                        </div> */}
+
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {selectedStatus && (
+                                <Badge variant="darkOutline" className="flex items-center gap-1">
+                                Status: {selectedStatus === 'active' ? 'Active' : 'Archived'}
+                                <button onClick={() => setSelectedStatus('')} className="ml-1 hover:text-red-600">
+                                    <X className="h-4 w-4" />
+                                </button>
+                                </Badge>
+                            )}
+
+                            {selectedCategoryId && (
+                                <Badge variant="darkOutline" className="flex items-center gap-1">
+                                Category: {categories.find(c => c.id === selectedCategoryId)?.name ?? selectedCategoryId}
+                                <button onClick={() => setSelectedCategoryId('')} className="ml-1 hover:text-red-600">
+                                    <X className="h-4 w-4" />
+                                </button>
+                                </Badge>
+                            )}
+
+                            {/* 🔹 Unit chip */}
+                            {(selectedUnitId || canViewOwn) && (
+                                <Badge variant="darkOutline" className="flex items-center gap-1">
+                                Unit/Dept:{" "}
+                                {canViewOwn && auth.unit_or_department
+                                    ? `${auth.unit_or_department.name} (${auth.unit_or_department.code})`
+                                    : unitOrDepartments.find(u => u.id === selectedUnitId)?.name ?? selectedUnitId}
+
+                                {/* ❌ Allow clearing only if user can view all */}
+                                {canViewAll && (
+                                    <button onClick={() => setSelectedUnitId('')} className="ml-1 hover:text-red-600">
+                                    <X className="h-4 w-4" />
+                                    </button>
+                                )}
+                                </Badge>
+                            )}
+
+                            {(selectedStatus || selectedCategoryId || (selectedUnitId && canViewAll)) && (
+                                <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                    setSelectedStatus('');
+                                    setSelectedCategoryId('');
+                                    if (canViewAll) setSelectedUnitId('');
+                                }}
+                                className="cursor-pointer"
+                                >
+                                Clear filters
+                                </Button>
+                            )}
+                        </div>
+
                     </div>
 
                     <div className="flex gap-2">
-                        <Button variant="outline">
-                            <Grid className="mr-1 h-4 w-4" /> Category
-                        </Button>
-                        <Button variant="outline">
-                            <Filter className="mr-1 h-4 w-4" /> Filter
-                        </Button>
+                        <AssetFilterDropdown
+                            categories={categories}
+                            units={unitOrDepartments}
+                            selectedCategoryId={selectedCategoryId}
+                            selectedUnitId={selectedUnitId}
+                            selectedStatus={selectedStatus}
+                            canViewAll={canViewAll}
+                            onApply={({ categoryId, unitId, status }) => {
+                                setSelectedCategoryId(categoryId);
+                                setSelectedUnitId(unitId);
+                                setSelectedStatus(status);
+                            }}
+                            onClear={() => {
+                                setSelectedCategoryId('');
+                                setSelectedUnitId('');
+                                setSelectedStatus('');
+                            }}
+                        />
                         <Button
                             onClick={() => {
                                 reset();
                                 clearErrors();
-                                setChooseAddVisible(true); // ✅ show choose modal first
-                                // setShowAddAsset(true);
+                                setChooseAddVisible(true);
                             }}
                             className="cursor-pointer"
                         >
@@ -757,16 +914,16 @@ onViewMemo={() => {
                                 {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                             </div>
                             <div className="col-span-1 pt-0.5">
-  <label className="mb-1 block font-medium">Maintenance Due Date</label>
-  <PickerInput
-    type="date"
-    value={data.maintenance_due_date}
-    onChange={(v) => setData('maintenance_due_date', v)}
-  />
-  {errors.maintenance_due_date && (
-    <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>
-  )}
-</div>
+                                <label className="mb-1 block font-medium">Maintenance Due Date</label>
+                                <PickerInput
+                                    type="date"
+                                    value={data.maintenance_due_date}
+                                    onChange={(v) => setData('maintenance_due_date', v)}
+                                />
+                                {errors.maintenance_due_date && (
+                                    <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>
+                                )}
+                            </div>
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Type</label>

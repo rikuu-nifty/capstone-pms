@@ -52,6 +52,7 @@ const dashboardNavItems = [
 
 const inventoryNavItems = [
     { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-inventory-list' },
+    { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-own-unit-inventory-list' },
     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
     { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },

@@ -7,14 +7,19 @@ use App\Models\User;
 use App\Models\UserDetail;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Role;
+use App\Models\UnitOrDepartment;
 
 class UsersTableSeeder extends Seeder
 {
     public function run(): void
     {
-        // Superuser role lookup (safe)
-        $superRole = Role::where('code', 'superuser')->first();
+        // Pick fallback units
+        $defaultUnit = UnitOrDepartment::first(); // if nothing else exists
+        $pmoUnit     = UnitOrDepartment::where('code', 'PMO')->first();
+        $acctUnit    = UnitOrDepartment::where('code', 'ACCT')->first(); // example for variety
 
+        // 🔹 Superuser
+        $superRole = Role::where('code', 'superuser')->first();
         $superuser = User::updateOrCreate(
             ['email' => 'superuser@example.com'],
             [
@@ -22,19 +27,15 @@ class UsersTableSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'status' => 'approved',
                 'role_id' => $superRole?->id,
+                'unit_or_department_id' => null, // superuser not tied to any unit
             ]
         );
-
         UserDetail::updateOrCreate(
             ['user_id' => $superuser->id],
-            [
-                'first_name' => 'Root',
-                'last_name' => 'Superuser',
-                'middle_name' => null,
-            ]
+            ['first_name' => 'Root', 'last_name' => 'Superuser']
         );
 
-        // VP Admin
+        // 🔹 VP Admin
         $vpRole = Role::where('code', 'vp_admin')->first();
         $vpAdmin = User::updateOrCreate(
             ['email' => 'vpadmin@example.com'],
@@ -43,19 +44,15 @@ class UsersTableSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'status' => 'approved',
                 'role_id' => $vpRole?->id,
+                'unit_or_department_id' => null, // VP Admin sees all
             ]
         );
-
         UserDetail::updateOrCreate(
             ['user_id' => $vpAdmin->id],
-            [
-                'first_name' => 'VP',
-                'last_name' => 'Admin',
-                'middle_name' => null,
-            ]
+            ['first_name' => 'VP', 'last_name' => 'Admin']
         );
 
-        // PMO Head
+        // 🔹 PMO Head
         $headRole = Role::where('code', 'pmo_head')->first();
         $pmoHead = User::updateOrCreate(
             ['email' => 'pmohead@example.com'],
@@ -64,19 +61,15 @@ class UsersTableSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'status' => 'approved',
                 'role_id' => $headRole?->id,
+                'unit_or_department_id' => $pmoUnit?->id ?? $defaultUnit?->id,
             ]
         );
-
         UserDetail::updateOrCreate(
             ['user_id' => $pmoHead->id],
-            [
-                'first_name' => 'PMO',
-                'last_name' => 'Head',
-                'middle_name' => null,
-            ]
+            ['first_name' => 'PMO', 'last_name' => 'Head']
         );
 
-        // Example PMO Staff accounts
+        // 🔹 PMO Staff (assigned to PMO unit by default)
         $staffRole = Role::where('code', 'pmo_staff')->first();
         for ($i = 1; $i <= 5; $i++) {
             $user = User::updateOrCreate(
@@ -86,17 +79,30 @@ class UsersTableSeeder extends Seeder
                     'password' => Hash::make('password'),
                     'status' => 'approved',
                     'role_id' => $staffRole?->id,
+                    'unit_or_department_id' => $pmoUnit?->id ?? $defaultUnit?->id,
                 ]
             );
-
             UserDetail::updateOrCreate(
                 ['user_id' => $user->id],
-                [
-                    'first_name' => "User{$i}",
-                    'last_name' => "Lastname{$i}",
-                    'middle_name' => null,
-                ]
+                ['first_name' => "User{$i}", 'last_name' => "Lastname{$i}"]
             );
         }
+
+        // 🔹 Example: assign a Finance user to Accounting unit
+        $acctRole = Role::where('code', 'viewer')->first(); // e.g., viewer role
+        $finance = User::updateOrCreate(
+            ['email' => 'finance@example.com'],
+            [
+                'name' => 'Finance Viewer',
+                'password' => Hash::make('password'),
+                'status' => 'approved',
+                'role_id' => $acctRole?->id,
+                'unit_or_department_id' => $acctUnit?->id ?? $defaultUnit?->id,
+            ]
+        );
+        UserDetail::updateOrCreate(
+            ['user_id' => $finance->id],
+            ['first_name' => 'Finance', 'last_name' => 'Viewer']
+        );
     }
 }

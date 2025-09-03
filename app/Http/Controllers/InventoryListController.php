@@ -9,11 +9,13 @@ use App\Models\UnitOrDepartment;
 use App\Models\Building;
 use App\Models\BuildingRoom;
 use App\Models\Category;
+use App\Models\User;
 
 use App\Models\InventoryList;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class InventoryListController extends Controller
 {
@@ -74,14 +76,23 @@ class InventoryListController extends Controller
     // 🔹 Extracted so you don’t repeat code
     private function pageProps(): array
     {
-        $assets = InventoryList::with([
+        /** @var User $user */
+        $user = Auth::user();
+
+        $query = InventoryList::with([
             'assetModel.category',
             'category',
             'unitOrDepartment',
             'building',
             'buildingRoom.building',
             'roomBuilding',
-        ])->latest()->get();
+        ])->latest();
+
+        if ($user && !$user->hasPermission('view-inventory-list')) {
+            $query->where('unit_or_department_id', $user->unit_or_department_id);
+        }
+
+        $assets = $query->get();
 
         return [
             'assets' => $assets,

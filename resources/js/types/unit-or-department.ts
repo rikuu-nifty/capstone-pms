@@ -5,7 +5,7 @@ export type UnitOrDepartment = {
     name: string;
     code: string;
     description: string | null;
-    unit_head: string;
+    unit_head?: string;
 
     assets_count?: number;
     inventory_lists?: InventoryListLite[];

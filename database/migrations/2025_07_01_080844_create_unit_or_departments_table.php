@@ -24,6 +24,15 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('unit_or_department_id')
+                ->nullable()
+                ->after('email')   // 👈 position column right after email
+                ->constrained('unit_or_departments')
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
+        });
     }
 
 
@@ -31,11 +40,14 @@ return new class extends Migration
      * Reverse the migrations.
      */
     public function down(): void
-    
     {
-    //     Schema::table('unit_or_departments', function (Blueprint $table) {
-    //     $table->dropForeign(['inventory_schedule_id']);
-    // });
+        //     Schema::table('unit_or_departments', function (Blueprint $table) {
+        //     $table->dropForeign(['inventory_schedule_id']);
+        // });
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['unit_or_department_id']);
+            $table->dropColumn('unit_or_department_id');
+        });
 
         Schema::dropIfExists('unit_or_departments');
     }

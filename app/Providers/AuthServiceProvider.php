@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Auth\Access\Response;
 use App\Models\Role;
 use App\Models\Permission;
@@ -47,10 +48,17 @@ class AuthServiceProvider extends ServiceProvider
 
         $contextual = ['delete-users', 'delete-role'];
 
-        foreach (Permission::pluck('code') as $code) {
-            if (in_array($code, $contextual, true)) continue;
-            if (Gate::has($code)) continue;
-            Gate::define($code, fn(User $user) => $user->hasPermission($code));
+        // foreach (Permission::pluck('code') as $code) {
+        //     if (in_array($code, $contextual, true)) continue;
+        //     if (Gate::has($code)) continue;
+        //     Gate::define($code, fn(User $user) => $user->hasPermission($code));
+        // }
+        if (Schema::hasTable('permissions')) {
+            foreach (Permission::pluck('code') as $code) {
+                if (in_array($code, $contextual, true)) continue;
+                if (Gate::has($code)) continue;
+                Gate::define($code, fn(User $user) => $user->hasPermission($code));
+            }
         }
 
         Gate::define('delete-role', function (User $authUser, Role $targetRole) {
@@ -79,6 +87,14 @@ class AuthServiceProvider extends ServiceProvider
                 return true;
             }
             return $authUser->hasPermission('delete-users');
+        });
+
+        Gate::define('view-inventory-list', function (User $user) {
+            return $user->hasPermission('view-inventory-list');
+        });
+
+        Gate::define('view-own-unit-inventory-list', function (User $user) {
+            return $user->hasPermission('view-own-unit-inventory-list');
         });
     }
 }
