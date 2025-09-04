@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
 
 type Props = {
@@ -30,7 +29,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         serial_no: asset.serial_no || '', // or asset.serial_no if available
         unit_cost: asset.unit_cost || '', // or asset.unit_cost if available NAGKAKAEEROR KAPAG NILALAGAY KOTO
         memorandum_no: asset.memorandum_no || '', // or asset.memorandum_no if available
-        transfer_status: asset.transfer_status || '',
+        // transfer_status: asset.transfer_status || '',
         description: asset.description || '',
 
         // ✅ ensure we have the FK even if only relation is loaded
@@ -297,8 +296,18 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             />
                         </div>
 
+<div>
+  <Label>Transfer Status</Label>
+  <div className="mt-1 rounded-lg border border-gray-300 bg-white p-2 text-sm text-black">
+    {asset.transfer
+      ? asset.transfer.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      : '-'}
+  </div>
+</div>
+
+
                         {/* Transfer Status */}
-                        <div>
+                        {/* <div>
                             <Label>Transfer Status</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -309,7 +318,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 <option value="transferred">Transferred</option>
                                 <option value="not_transferred">Not Transferred</option>
                             </select>
-                        </div>
+                        </div> */}
 
                         {/* Total Cost */}
                         <div>

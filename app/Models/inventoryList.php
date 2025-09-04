@@ -3,13 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 // ✅ Added imports for notifications
 use App\Models\User;
 use App\Notifications\MaintenanceDueNotification;
 use Carbon\Carbon;
 
-class InventoryList extends Model
+class InventoryList extends Model   
 {
+     use SoftDeletes;
+    protected $dates = ['deleted_at'];
+
     protected $fillable = [
         'memorandum_no',
         'asset_model_id',
@@ -25,7 +29,8 @@ class InventoryList extends Model
         'date_purchased',
         'asset_type',
         'quantity',
-        'transfer_status',
+        'deleted_by_id',
+         // 'transfer_status', // ❌ removed (we now use transfer_id → transfer.status)
         'status',
         'image_path',
         'maintenance_due_date',
@@ -76,6 +81,16 @@ class InventoryList extends Model
     public function offCampuses()
     {
         return $this->hasMany(OffCampus::class, 'asset_id');
+    }
+
+    public function transfer()
+    {
+        return $this->belongsTo(Transfer::class, 'transfer_id');
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
     }
 
     public static function kpis(): array

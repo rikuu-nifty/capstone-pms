@@ -27,6 +27,7 @@ class InventoryListController extends Controller
             'assetModel.category',
             'category',
             'unitOrDepartment',
+            'transfer', // ✅ eager load transfer
         ]);
 
         return Inertia::render('inventory-list/assetSummaryDetail', [
@@ -59,7 +60,8 @@ class InventoryListController extends Controller
             'category',
             'unitOrDepartment',
             'building',
-            'buildingRoom'
+            'buildingRoom',
+            'transfer', // ✅ eager load transfer
         ]);
 
         return Inertia::render('inventory-list/index', array_merge(
@@ -81,6 +83,7 @@ class InventoryListController extends Controller
             'building',
             'buildingRoom.building',
             'roomBuilding',
+            'transfer', // ✅ eager load transfer
         ])->latest()->get();
 
         return [
@@ -144,8 +147,8 @@ class InventoryListController extends Controller
             $data['image_path'] = $path;
         }
 
-        // 🚫 remove transfer_status so DB default applies
-        unset($data['transfer_status']);
+        // 🚫 transfer_status removed — no need to unset anymore
+        // unset($data['transfer_status']);
 
         // ✅ Bulk mode
         if ($request->input('mode') === 'bulk') {
@@ -224,7 +227,7 @@ class InventoryListController extends Controller
             'description' => 'nullable|string|max:1000',
             'date_purchased' => 'nullable|date',
             'maintenance_due_date' => 'nullable|date', // ✅ added here
-            'transfer_status' => 'nullable|string|in:not_transferred,transferred,pending',
+            // 🚫 removed transfer_status validation
             'asset_model_id' => 'nullable|integer',
             'building_id' => 'nullable|exists:buildings,id',
             'building_room_id' => 'nullable|exists:building_rooms,id',
@@ -255,9 +258,33 @@ class InventoryListController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(inventoryList $inventoryList)
-    {
-        $inventoryList->delete();
-        return redirect()->back()->with('success', 'Asset deleted successfully.');
-    }
+   public function destroy(Request $request, InventoryList $inventoryList)
+{
+    // ✅ Track who archived it (requires nullable inventory_lists.deleted_by_id column)
+    $inventoryList->forceFill(['deleted_by_id' => $request->user()->id ?? null])->save();
+
+    // ✅ Soft delete (archive asset)
+    $inventoryList->delete();
+
+    return back()->with('success', 'Asset archived successfully.');
+}
+
+public function restore(int $id)
+{
+    // ✅ Include trashed to find archived asset
+    $inventoryList = InventoryList::withTrashed()->findOrFail($id);
+    $inventoryList->restore(); 
+
+    return back()->with('success', 'Asset restored successfully.');
+}
+
+public function forceDelete(int $id)
+{
+    $inventoryList = InventoryList::withTrashed()->findOrFail($id);
+
+    // ✅ If you want to truly purge asset and children (like related transfer_assets)
+    $inventoryList->forceDelete();
+
+    return back()->with('success', 'Asset permanently removed.');
+}
 }

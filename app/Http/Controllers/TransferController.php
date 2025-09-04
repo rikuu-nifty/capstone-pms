@@ -86,7 +86,7 @@ class TransferController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource.
      */
     public function store(Request $request)
     {
@@ -121,8 +121,14 @@ class TransferController extends Controller
             $transfer = Transfer::create($validated);
 
             foreach ($assetIds as $assetId) {
+                // ✅ Create transfer asset
                 $transfer->transferAssets()->create([
                     'asset_id' => $assetId,
+                ]);
+
+                // ✅ Update inventory list with transfer_id
+                InventoryList::where('id', $assetId)->update([
+                    'transfer_id' => $transfer->id,
                 ]);
             }
 
@@ -228,15 +234,7 @@ class TransferController extends Controller
 
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Transfer $transfer)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
+     * Update the specified resource.
      */
     public function update(Request $request, Transfer $transfer)
     {
@@ -265,6 +263,11 @@ class TransferController extends Controller
             if ($request->has('selected_assets')) {
                 foreach ($request->selected_assets as $assetId) {
                     $transfer->transferAssets()->create(['asset_id' => $assetId]);
+
+                    // ✅ Update inventory list with transfer_id
+                    InventoryList::where('id', $assetId)->update([
+                        'transfer_id' => $transfer->id,
+                    ]);
                 }
             }
 
@@ -291,7 +294,7 @@ class TransferController extends Controller
                 if ($asset) {
                     $asset->update([
                         'building_id'            => $transfer->receivingBuildingRoom->building_id,
-                        'building_room_id'          => $transfer->receiving_building_room,
+                        'building_room_id'       => $transfer->receiving_building_room,
                         'unit_or_department_id'  => $transfer->receiving_organization,
                     ]);
                 }
@@ -304,7 +307,7 @@ class TransferController extends Controller
                 if ($asset) {
                     $asset->update([
                         'building_id'            => $transfer->currentBuildingRoom->building_id,
-                        'building_room_id'          => $transfer->current_building_room,
+                        'building_room_id'       => $transfer->current_building_room,
                         'unit_or_department_id'  => $transfer->current_organization,
                     ]);
                 }

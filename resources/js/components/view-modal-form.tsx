@@ -6,15 +6,15 @@ import { CreditCard, Home, Info, Package, ShieldCheck } from 'lucide-react';
 // -------------------- HELPERS --------------------
 const humanize = (value?: string | number | null): string =>
     !value || value === ''
-        ? 'Not Available'
+        ? '-'
         : typeof value === 'number'
           ? value.toLocaleString()
           : value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 const currencyFormat = (amount?: string | number | null): string => {
-    if (!amount) return 'Not Available';
+    if (!amount) return '-';
     const num = Number(amount);
-    return isNaN(num) ? 'Not Available' : `₱ ${num.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+    return isNaN(num) ? '-' : `₱ ${num.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 };
 
 const dateFormat = (dateStr?: string | null): string =>
@@ -24,7 +24,7 @@ const dateFormat = (dateStr?: string | null): string =>
               month: 'long',
               day: 'numeric',
           })
-        : 'Not Available';
+        : '-';
 
 const StatusBadge = ({ status }: { status?: string | null }) => {
     let color = 'bg-gray-200 text-gray-700';
@@ -135,7 +135,8 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <ShieldCheck size={18} /> Status
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <InfoCard label="Transfer Status" value={humanize(asset.transfer_status)} />
+                                {/* ✅ Now pulling transfer.status via relation */}
+                                <InfoCard label="Transfer Status" value={humanize(asset.transfer?.status)} />
                                 <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
                                 <InfoCard label="Date Purchased" value={dateFormat(asset.date_purchased)} />
                             </div>

@@ -20,7 +20,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
         unit_or_department_id: '',
         building_room_id: '',
         date_purchased: '',
-         maintenance_due_date: '', // ✅ new field
+        maintenance_due_date: '', // ✅ new field
         category_id: '',
         asset_type: '',
         asset_name: '',
@@ -28,7 +28,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
         supplier: '',
         unit_cost: '',
         memorandum_no: '',
-        transfer_status: '',
+        // ❌ removed transfer_status
         description: '',
         asset_model_id: '',
         image: null as File | null,
@@ -45,7 +45,6 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
     const uniqueBrands = Array.from(new Set(assetModels.map((m) => m.brand)));
     const filteredModels = assetModels.filter((m) => m.brand === data.brand);
     
-
     const addSerialField = () => {
         setData('serial_numbers', [...data.serial_numbers, '']);
     };
@@ -315,21 +314,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             />
                         </div>
 
-                        {/* Transfer + Image */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Transfer Status</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.transfer_status}
-                                onChange={(e) => setData('transfer_status', e.target.value)}
-                            >
-                                <option value="">Select Status</option>
-                                <option value="transferred">Transferred</option>
-                                <option value="not_transferred">Not Transferred</option>
-                            </select>
-                        </div>
-
-                        
+                        {/* ❌ Removed Transfer Status select */}
 
                         {/* Total Cost */}
                         <div className="col-span-1">
