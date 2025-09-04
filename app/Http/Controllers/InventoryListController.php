@@ -227,6 +227,8 @@ class InventoryListController extends Controller
             'description' => 'nullable|string|max:1000',
             'date_purchased' => 'nullable|date',
             'maintenance_due_date' => 'nullable|date', // ✅ added here
+            'depreciation_value' => 'nullable|numeric|min:0', // ✅ added
+            'assigned_to' => 'nullable|string|max:255', // ✅ added
             // 🚫 removed transfer_status validation
             'asset_model_id' => 'nullable|integer',
             'building_id' => 'nullable|exists:buildings,id',

@@ -1,5 +1,6 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
 import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
+import Pagination, { PageInfo } from '@/components/Pagination';
 import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,16 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { ucwords } from '@/types/custom-index';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Banknote, Boxes, Eye, Filter, Grid, Pencil, PlusCircle, Trash2, FolderArchive, Pin } from 'lucide-react';
+import { Banknote, Boxes, Eye, Filter, FolderArchive, Grid, Pencil, Pin, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
 import { ChooseAddTypeModal } from './chooseAddTypeModal';
 import { ChooseViewModal } from './chooseViewModal';
 import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
-import Pagination, { PageInfo } from '@/components/Pagination';
-import { ucwords } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -68,7 +68,6 @@ export type Transfer = {
     status: 'pending_review' | 'upcoming' | 'in_progress' | 'overdue' | 'completed' | 'cancelled';
 };
 
-
 export type Asset = {
     id: number;
     memorandum_no: number | string;
@@ -84,12 +83,14 @@ export type Asset = {
     building_room?: BuildingRoom | null;
 
     room_building?: Building | null;
-    
+
     serial_no: string;
     supplier: string;
     unit_cost: number | string;
+    depreciation_value?: number | string | null; // ✅ NEW
     date_purchased: string;
     quantity: number;
+    assigned_to?: string | null; // ✅ add this
 
     // ✅ Changed: transfer relation instead of transfer_status
     transfer?: Transfer | null;
@@ -97,7 +98,6 @@ export type Asset = {
     brand: string;
     image_path?: string | null; // ✅ new field
     maintenance_due_date: string; // ✅ new field
-
 };
 
 export type AssetFormData = {
@@ -112,6 +112,8 @@ export type AssetFormData = {
     serial_no: string;
     supplier: string;
     unit_cost: number | string; // can be number or string
+    depreciation_value: number | string; // ✅ add this
+    assigned_to?: string | null;
     date_purchased: string;
     asset_type: string;
     category_id: number | '';
@@ -174,9 +176,11 @@ export default function InventoryListIndex({
         quantity: 1,
         supplier: '',
         unit_cost: '',
+        depreciation_value: '',
+
         serial_no: '',
         asset_model_id: '',
-         // transfer_status: string;  ❌ Removed: transfer_status
+        // transfer_status: string;  ❌ Removed: transfer_status
         description: '',
         memorandum_no: '',
         status: '',
@@ -247,6 +251,12 @@ export default function InventoryListIndex({
 
     const [receiptAssets, setReceiptAssets] = useState<Asset[]>([]);
     const [receiptMemoNo, setReceiptMemoNo] = useState<string | number>('');
+
+    // ✅ Placeholder formula: Straight-line depreciation // 20% per year.
+    const calculateDepreciation = (unitCost: number, usefulLife = 5, salvageValue = 0): string => {
+        if (!unitCost || unitCost <= 0) return '0.00';
+        return ((unitCost - salvageValue) / usefulLife).toFixed(2);
+    };
 
     // For Date Format
     const formatDate = (dateStr: string) => {
@@ -324,7 +334,6 @@ export default function InventoryListIndex({
         setPage(1);
     }, [search]);
 
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory List" />
@@ -376,55 +385,51 @@ export default function InventoryListIndex({
                 {kpis && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                         {/* Total Assets */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
-                            <Boxes className="h-6 w-6 text-yellow-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Total Assets</div>
-                            <div className="text-2xl font-semibold">
-                            {formatNumber(kpis.total_assets)}
+                        <div className="flex items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+                                <Boxes className="h-6 w-6 text-yellow-600" />
                             </div>
-                        </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Assets</div>
+                                <div className="text-2xl font-semibold">{formatNumber(kpis.total_assets)}</div>
+                            </div>
                         </div>
 
                         {/* Active vs Archived */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-                            <FolderArchive className="h-6 w-6 text-emerald-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Active vs Archived</div>
-                            <div className="text-2xl font-semibold">
-                            {kpis.active_pct}% vs {kpis.archived_pct}%
+                        <div className="flex items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
+                                <FolderArchive className="h-6 w-6 text-emerald-600" />
                             </div>
-                        </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Active vs Archived</div>
+                                <div className="text-2xl font-semibold">
+                                    {kpis.active_pct}% vs {kpis.archived_pct}%
+                                </div>
+                            </div>
                         </div>
 
                         {/* Fixed vs Not Fixed */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-                            <Pin className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Fixed vs Not Fixed</div>
-                            <div className="text-2xl font-semibold">
-                            {kpis.fixed_pct}% vs {kpis.not_fixed_pct}%
+                        <div className="flex items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+                                <Pin className="h-6 w-6 text-indigo-600" />
                             </div>
-                        </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Fixed vs Not Fixed</div>
+                                <div className="text-2xl font-semibold">
+                                    {kpis.fixed_pct}% vs {kpis.not_fixed_pct}%
+                                </div>
+                            </div>
                         </div>
 
                         {/* Total Inventory Value */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-                            <Banknote className="h-6 w-6 text-orange-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Total Inventory Value</div>
-                            <div className="text-2xl font-semibold">
-                            {formatPeso(kpis.total_inventory_sum)}
+                        <div className="flex items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                                <Banknote className="h-6 w-6 text-orange-600" />
                             </div>
-                        </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Inventory Value</div>
+                                <div className="text-2xl font-semibold">{formatPeso(kpis.total_inventory_sum)}</div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -503,23 +508,15 @@ export default function InventoryListIndex({
                                         {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
                                     </TableCell>
                                     <TableCell>
-                                        {item.room_building && item.building_room
-                                            ? `${item.room_building.name} (${item.building_room.room})`
-                                            : '—'
-                                        }
+                                        {item.room_building && item.building_room ? `${item.room_building.name} (${item.building_room.room})` : '—'}
                                     </TableCell>
-                                    <TableCell>
-                                        {item.unit_or_department?.code 
-                                            ? String(item.unit_or_department.code).toUpperCase() 
-                                            : '—'
-                                        }
-                                    </TableCell>
+                                    <TableCell>{item.unit_or_department?.code ? String(item.unit_or_department.code).toUpperCase() : '—'}</TableCell>
                                     <TableCell className="text-center">
                                         <Badge variant={item.status as 'active' | 'archived'}>
                                             {item.status === 'active' ? 'Active' : 'Archived'}
                                         </Badge>
                                     </TableCell>
-                                     <TableCell>
+                                    <TableCell>
                                         <button
                                             onClick={() => {
                                                 const url = route('asset-summary.show', item.id);
@@ -605,14 +602,8 @@ export default function InventoryListIndex({
                     </Table>
                     <div className="flex items-center justify-between p-3">
                         <PageInfo page={page} total={total} pageSize={pageSize} />
-                        <Pagination
-                            page={page}
-                            total={total}
-                            pageSize={pageSize}
-                            onPageChange={setPage}
-                        />
+                        <Pagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
                     </div>
-
                 </div>
             </div>
 
@@ -668,14 +659,14 @@ export default function InventoryListIndex({
                         }
                     }}
                     onViewMemo={() => {
-                    setChooseViewVisible(false);
+                        setChooseViewVisible(false);
 
-                    if (selectedAsset) {
-                        const sameMemoAssets = assets.filter(a => a.memorandum_no === selectedAsset.memorandum_no);
-                        setReceiptAssets(sameMemoAssets);
-                        setReceiptMemoNo(selectedAsset.memorandum_no);
-                        setReceiptModalVisible(true);
-                    }
+                        if (selectedAsset) {
+                            const sameMemoAssets = assets.filter((a) => a.memorandum_no === selectedAsset.memorandum_no);
+                            setReceiptAssets(sameMemoAssets);
+                            setReceiptMemoNo(selectedAsset.memorandum_no);
+                            setReceiptModalVisible(true);
+                        }
                     }}
                 />
             )}
@@ -683,16 +674,16 @@ export default function InventoryListIndex({
             {isViewOpen && viewing_asset && <ViewAssetModal asset={viewing_asset} onClose={closeView} />}
 
             {receiptModalVisible && receiptAssets.length > 0 && (
-            <ViewMemorandumReceiptModal
-                open={receiptModalVisible}
-                onClose={() => {
-                setReceiptModalVisible(false);
-                setReceiptAssets([]);
-                setReceiptMemoNo('');
-                }}
-                assets={receiptAssets}        // ✅ now an array
-                memo_no={receiptMemoNo}       // ✅ shared memo number
-            />
+                <ViewMemorandumReceiptModal
+                    open={receiptModalVisible}
+                    onClose={() => {
+                        setReceiptModalVisible(false);
+                        setReceiptAssets([]);
+                        setReceiptMemoNo('');
+                    }}
+                    assets={receiptAssets} // ✅ now an array
+                    memo_no={receiptMemoNo} // ✅ shared memo number
+                />
             )}
 
             {/* ✅ Choose Add Modal */}
@@ -818,6 +809,17 @@ export default function InventoryListIndex({
                                 </select>
                             </div>
 
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Assigned To</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter person assigned"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.assigned_to ?? ''} // ✅ converts null/undefined → ""
+                                    onChange={(e) => setData('assigned_to', e.target.value)}
+                                />
+                            </div>
+
                             {/* Divider */}
                             <div className="col-span-2 border-t"></div>
 
@@ -829,14 +831,8 @@ export default function InventoryListIndex({
                             </div>
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Maintenance Due Date</label>
-                                <PickerInput
-                                    type="date"
-                                    value={data.maintenance_due_date}
-                                    onChange={(v) => setData('maintenance_due_date', v)}
-                                />
-                                {errors.maintenance_due_date && (
-                                    <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>
-                                )}
+                                <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
+                                {errors.maintenance_due_date && <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
@@ -909,7 +905,7 @@ export default function InventoryListIndex({
                                 {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
                             </div>
 
-                        {/* <div className="col-span-1 pt-0.5">
+                            {/* <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Quantity</label>
                                 <input
                                     type="number"
@@ -921,16 +917,33 @@ export default function InventoryListIndex({
                                 {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
                             </div> */}
 
-                            <div className="col-span-1 pt-0.5">
+                            {/* Unit Cost */}
+                            <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Unit Cost</label>
                                 <input
                                     type="number"
                                     className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Unit Cost"
                                     value={data.unit_cost}
-                                    onChange={(e) => setData('unit_cost', e.target.value)}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setData('unit_cost', value);
+
+                                        // ✅ Auto-calc depreciation (5-year straight-line)
+                                        const depreciation = calculateDepreciation(Number(value));
+                                        setData('depreciation_value', depreciation);
+                                    }}
                                 />
-                                {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
+                            </div>
+
+                            {/* Depreciation Value */}
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Depreciation Value (per year)</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2 text-black"
+                                    value={data.depreciation_value ? `₱ ${data.depreciation_value}` : ''}
+                                    readOnly
+                                />
                             </div>
 
                             <div className="col-span-1 pt-0.5">
@@ -997,7 +1010,7 @@ export default function InventoryListIndex({
                                 {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
                             </div> */}
 
-                            <div className="col-span-1">
+                            <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Total Cost</label>
                                 <input
                                     type="text"

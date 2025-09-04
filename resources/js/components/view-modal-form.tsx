@@ -111,6 +111,7 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <InfoCard label="Quantity" value={humanize(asset.quantity)} />
                                 <InfoCard label="Unit Cost" value={currencyFormat(asset.unit_cost)} />
+                                <InfoCard label="Depreciation Value (per year)" value={currencyFormat(asset.depreciation_value)} /> {/* ✅ new */}
                                 <InfoCard label="Total Cost" value={currencyFormat(totalCost) || '—'} />
                                 <InfoCard label="Supplier" value={humanize(asset.supplier)} />
                                 <InfoCard label="Memorandum No." value={humanize(asset.memorandum_no).replace(/,/g, '')} />
@@ -126,6 +127,7 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <InfoCard label="Building" value={humanize(asset.building?.name)} />
                                 <InfoCard label="Room" value={humanize(asset.building_room?.room)} />
                                 <InfoCard label="Unit / Department" value={humanize(asset.unit_or_department?.name)} />
+                                <InfoCard label="Assigned To" value={humanize(asset.assigned_to)} /> {/* ✅ new */}
                             </div>
                         </div>
 

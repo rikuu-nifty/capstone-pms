@@ -27,6 +27,8 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
         brand: '',
         supplier: '',
         unit_cost: '',
+        depreciation_value: '', // ✅ added
+        assigned_to: '', // ✅ new
         memorandum_no: '',
         // ❌ removed transfer_status
         description: '',
@@ -44,7 +46,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
     const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
     const uniqueBrands = Array.from(new Set(assetModels.map((m) => m.brand)));
     const filteredModels = assetModels.filter((m) => m.brand === data.brand);
-    
+
     const addSerialField = () => {
         setData('serial_numbers', [...data.serial_numbers, '']);
     };
@@ -106,7 +108,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                     </option>
                                 ))}
                             </select>
-                              {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
+                            {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
                         </div>
 
                         <div className="col-span-1">
@@ -152,6 +154,18 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             </select>
                         </div>
 
+                        {/* ✅ Assigned To */}
+                        <div className="col-span-2">
+                            <label className="mb-1 block font-medium">Assigned To</label>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border p-2"
+                                placeholder="Enter person assigned"
+                                value={data.assigned_to ?? ''}
+                                onChange={(e) => setData('assigned_to', e.target.value)}
+                            />
+                        </div>
+
                         {/* Divider */}
                         <div className="col-span-2 border-t"></div>
 
@@ -163,11 +177,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                         {/* ✅ Maintenance Due Date */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Maintenance Due Date</label>
-                            <PickerInput
-                                type="date"
-                                value={data.maintenance_due_date}
-                                onChange={(v) => setData('maintenance_due_date', v)}
-                            />
+                            <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
                         </div>
 
                         <div className="col-span-1">
@@ -222,7 +232,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             />
                         </div>
 
-                        <div className="col-span-1">
+                        <div className="col-span-2">
                             <label className="mb-1 block font-medium">Quantity</label>
                             <input
                                 type="number"
@@ -256,14 +266,31 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             </div>
                         )}
 
-                        {/* Unit Cost + Brand */}
+                        {/* Unit Cost */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Unit Cost</label>
                             <input
                                 type="number"
                                 className="w-full rounded-lg border p-2"
                                 value={data.unit_cost}
-                                onChange={(e) => setData('unit_cost', e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setData('unit_cost', value);
+
+                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
+                                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
+                                    setData('depreciation_value', depreciation);
+                                }}
+                            />
+                        </div>
+                        {/* Depreciation Value */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Depreciation Value (per year)</label>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border bg-white p-2 text-black"
+                                value={data.depreciation_value ? `₱ ${Number(data.depreciation_value).toFixed(2)}` : ''}
+                                readOnly // ✅ looks like Unit Cost, but can’t be edited
                             />
                         </div>
 

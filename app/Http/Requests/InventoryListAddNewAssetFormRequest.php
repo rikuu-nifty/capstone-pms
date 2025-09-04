@@ -58,6 +58,12 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
 
             // ✅ New: mode (single or bulk)
             'mode' => 'nullable|string|in:single,bulk',
+
+            // ✅ New
+            'depreciation_value' => 'nullable|numeric|min:0',
+
+            // ✅ New
+             'assigned_to' => 'nullable|string|max:255',
         ];
     }
 
@@ -127,6 +133,15 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'memorandum_no.required' => 'Please provide the memorandum number.',            // REQUIRED
             'memorandum_no.numeric' => 'The memorandum number must be a valid number.',
             'memorandum_no.min' => 'The memorandum number must be at least 0.',
+
+            // ✅ Depreciation Value
+            'depreciation_value.numeric' => 'The depreciation value must be a valid number.',
+            'depreciation_value.min'     => 'The depreciation value must be at least 0.',
+
+            // ✅ Assigned To
+            'assigned_to.string' => 'The assigned to field must be a valid string.',
+            'assigned_to.max'    => 'The assigned to field may not be greater than 255 characters.',
+
 
             // ✅ Image messages
             'image.image' => 'The uploaded file must be an image.',

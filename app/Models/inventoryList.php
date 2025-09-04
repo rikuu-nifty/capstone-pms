@@ -26,6 +26,8 @@ class InventoryList extends Model
         'serial_no',
         'supplier',
         'unit_cost',
+        'depreciation_value',
+          'assigned_to', // ✅ added
         'date_purchased',
         'asset_type',
         'quantity',

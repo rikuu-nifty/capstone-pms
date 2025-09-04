@@ -4,9 +4,9 @@ import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
 import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
 
 type Props = {
     asset: Asset;
@@ -25,9 +25,11 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         supplier: asset.supplier,
         date_purchased: asset.date_purchased,
         maintenance_due_date: asset.maintenance_due_date || '', // ✅ no `any`
+        assigned_to: asset.assigned_to ?? '', // ✅ new field
         quantity: asset.quantity,
         serial_no: asset.serial_no || '', // or asset.serial_no if available
         unit_cost: asset.unit_cost || '', // or asset.unit_cost if available NAGKAKAEEROR KAPAG NILALAGAY KOTO
+        depreciation_value: asset.depreciation_value || '',
         memorandum_no: asset.memorandum_no || '', // or asset.memorandum_no if available
         // transfer_status: asset.transfer_status || '',
         description: asset.description || '',
@@ -67,12 +69,11 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
             {
                 forceFormData: true, // ✅ ensures File objects get sent as FormData
 
-                
                 onSuccess: () => {
-            onClose();
-            // 🔔 refresh notifications if due date was set to today/past
-            router.reload({ only: ['notifications'] });
-        },
+                    onClose();
+                    // 🔔 refresh notifications if due date was set to today/past
+                    router.reload({ only: ['notifications'] });
+                },
                 onError: (errors) => console.error(errors),
             },
         );
@@ -150,6 +151,17 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 <option value="archived">Archived</option>
                             </select>
                         </div>
+                        {/* Assigned To */}
+                        {/* Assigned To */}
+                        <div className="col-span-2">
+                            <Label>Assigned To</Label>
+                            <Input
+                                type="text"
+                                placeholder="Enter person assigned"
+                                value={form.assigned_to ?? ''} // ✅ fixes TS error
+                                onChange={(e) => handleChange('assigned_to', e.target.value)}
+                            />
+                        </div>
 
                         {/* Divider */}
                         <div className="col-span-2 border-t"></div>
@@ -161,14 +173,10 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                         </div>
 
                         {/* Maintenance Due Date */}
-<div>
-  <Label>Maintenance Due Date</Label>
-  <PickerInput
-    type="date"
-    value={form.maintenance_due_date}
-    onChange={(v) => handleChange('maintenance_due_date', v)}
-  />
-</div>
+                        <div>
+                            <Label>Maintenance Due Date</Label>
+                            <PickerInput type="date" value={form.maintenance_due_date} onChange={(v) => handleChange('maintenance_due_date', v)} />
+                        </div>
 
                         {/* Asset Type */}
                         <div>
@@ -243,7 +251,25 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 type="number"
                                 placeholder="Enter Unit Cost"
                                 value={form.unit_cost}
-                                onChange={(e) => handleChange('unit_cost', e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    handleChange('unit_cost', value);
+
+                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
+                                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
+                                    handleChange('depreciation_value', depreciation);
+                                }}
+                            />
+                        </div>
+
+                        {/* Depreciation Value */}
+                        <div>
+                            <Label>Depreciation Value (per year)</Label>
+                            <Input
+                                type="text"
+                                value={form.depreciation_value ? `₱ ${Number(form.depreciation_value).toFixed(2)}` : ''}
+                                readOnly // ✅ same as Total Cost, user can’t edit
+                                className="bg-white text-black"
                             />
                         </div>
 
@@ -296,15 +322,12 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             />
                         </div>
 
-<div>
-  <Label>Transfer Status</Label>
-  <div className="mt-1 rounded-lg border border-gray-300 bg-white p-2 text-sm text-black">
-    {asset.transfer
-      ? asset.transfer.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-      : '-'}
-  </div>
-</div>
-
+                        <div>
+                            <Label>Transfer Status</Label>
+                            <div className="mt-1 rounded-lg border border-gray-300 bg-white p-2 text-sm text-black">
+                                {asset.transfer ? asset.transfer.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-'}
+                            </div>
+                        </div>
 
                         {/* Transfer Status */}
                         {/* <div>
@@ -324,9 +347,10 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                         <div>
                             <Label>Total Cost</Label>
                             <Input
+                                type="text"
                                 value={form.quantity && form.unit_cost ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toFixed(2)}` : ''}
-                                readOnly
-                                disabled
+                                readOnly // ✅ looks like Unit Cost, but can’t be edited
+                                className="bg-white text-black"
                             />
                         </div>
 
