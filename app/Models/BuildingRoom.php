@@ -57,6 +57,11 @@ class BuildingRoom extends Model
                 // filtered assets count for the user’s unit
                 'assets as assets_count' => fn($q) => $q->where('unit_or_department_id', $unitId),
             ])
+            ->whereHas(
+                'assets',
+                fn($q) =>
+                $q->where('unit_or_department_id', $unitId)
+            )
             ->orderBy('building_id')
             ->orderBy('room')
             ->get(['id', 'building_id', 'room', 'description']);
