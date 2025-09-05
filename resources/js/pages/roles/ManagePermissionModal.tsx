@@ -62,6 +62,7 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     ],
     "Buildings": [
         "view-buildings",
+        "view-own-unit-buildings",
         "create-buildings",
         "update-buildings",
         "delete-buildings",

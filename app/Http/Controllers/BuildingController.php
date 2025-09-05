@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 
 use App\Http\Requests\StoreBuildingRequest;
 
@@ -17,6 +18,8 @@ class BuildingController extends Controller
     
     private function indexProps(): array
     {
+        $user = Auth::user();
+
         $buildings = Building::indexProps();
         
         $totals = [
@@ -34,8 +37,10 @@ class BuildingController extends Controller
             ? round($totals['total_assets'] / $totals['total_rooms'], 2)
             : 0
         ;
-        
-        $rooms = \App\Models\BuildingRoom::listAllRoomsWithAssetShare((int) $totals['total_assets']);
+
+        // Filtered buildings + rooms depending on user permissions
+        $buildings = Building::indexProps($user);
+        $rooms     = BuildingRoom::listAllRoomsWithAssetShare((int) $totals['total_assets'], $user);
 
         return [
             'buildings' => $buildings,
@@ -137,11 +142,17 @@ class BuildingController extends Controller
      */
     public function show(Building $building)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
+        $viewing = $user->hasPermission('view-own-unit-buildings') && !$user->hasPermission('view-buildings')
+            ? Building::showPropsByIdForUser($building->id)
+            : Building::showPropsById($building->id);
 
         return Inertia::render('buildings/index', array_merge(
             $this->indexProps(),
             [
-                'viewing' => Building::showPropsById($building->id),
+                'viewing' => $viewing,
             ],
         ));
     }
@@ -215,10 +226,15 @@ class BuildingController extends Controller
     public function showRoom(BuildingRoom $buildingRoom)
     {
         $props = $this->indexProps();
-
         $totalAssets = (int) ($props['totals']['total_assets'] ?? 0);
 
-        $room = BuildingRoom::viewPropsByIdWithAssetShare($buildingRoom->id, $totalAssets);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $room = $user->hasPermission('view-own-unit-buildings')
+            && !$user->hasPermission('view-buildings')
+            ? BuildingRoom::viewPropsByIdForUserWithAssetShare($buildingRoom->id, $totalAssets)
+            : BuildingRoom::viewPropsByIdWithAssetShare($buildingRoom->id, $totalAssets);
 
         return Inertia::render('buildings/index', array_merge(
             $this->indexProps(),

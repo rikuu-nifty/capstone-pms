@@ -59,6 +59,7 @@ class PermissionsTableSeeder extends Seeder
 
             // BUILDINGS
             ['code' => 'view-buildings', 'name' => 'View Buildings'],
+            ['code' => 'view-own-unit-buildings', 'name' => 'View Own Unit Buildings'],
             ['code' => 'create-buildings', 'name' => 'Create Buildings'],
             ['code' => 'update-buildings', 'name' => 'Update Buildings'],
             ['code' => 'delete-buildings', 'name' => 'Delete Buildings'],

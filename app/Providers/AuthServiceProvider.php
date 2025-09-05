@@ -96,5 +96,13 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('view-own-unit-inventory-list', function (User $user) {
             return $user->hasPermission('view-own-unit-inventory-list');
         });
+
+        Gate::define('view-buildings', function (User $user) {
+            return $user->hasPermission('view-buildings');
+        });
+
+        Gate::define('view-own-unit-buildings', function (User $user) {
+            return $user->hasPermission('view-own-unit-buildings');
+        });
     }
 }

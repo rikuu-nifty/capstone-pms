@@ -72,7 +72,13 @@ const assetsNavItems = [
 ];
 
 const institutionalSetUpNavItems = [
-    { title: 'Buildings', href: '/buildings', icon: Landmark, permission: 'view-buildings' },
+    // { title: 'Buildings', href: '/buildings', icon: Landmark, permission: 'view-buildings' },
+    { 
+        title: 'Buildings', 
+        href: '/buildings', 
+        icon: Landmark, 
+        permission: ['view-buildings', 'view-own-unit-buildings'],
+    },
     { title: 'Organizations', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
 ];
 
