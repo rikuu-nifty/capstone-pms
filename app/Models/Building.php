@@ -106,8 +106,16 @@ class Building extends Model
         $query = static::query()
             ->select('id', 'name', 'code', 'description')
             ->withCount([
-                'buildingRooms', 
-                'assets'
+                'buildingRooms',
+                'assets as assets_count' => function ($q) use ($user) {
+                    if (
+                        $user
+                        && $user->hasPermission('view-own-unit-buildings')
+                        && !$user->hasPermission('view-buildings')
+                    ) {
+                        $q->where('unit_or_department_id', $user->unit_or_department_id);
+                    }
+                },
             ])
             ->with([
                 'buildingRooms:id,building_id,room',
@@ -120,9 +128,9 @@ class Building extends Model
                     ]);
 
                     if (
-                        $user && 
-                        $user->hasPermission('view-own-unit-building') && 
-                        !$user->hasPermission('view-buildings')
+                        $user
+                        && $user->hasPermission('view-own-unit-buildings')
+                        && !$user->hasPermission('view-buildings')
                     ) {
                         $q->where('unit_or_department_id', $user->unit_or_department_id);
                     }
