@@ -262,9 +262,9 @@ export default function InventorySchedulingIndex({
                                 <TableHead className="min-w-[260px] text-center">Unit/Dept/Laboratories</TableHead>
                                 <TableHead className="min-w-[140px] text-center">Inventory Schedule</TableHead>
                                 <TableHead className="min-w-[180px] text-center">Actual Date of Inventory</TableHead>
-                                {/* <TableHead className="w-[140px] text-center">Checked By</TableHead> */}
-                                {/* <TableHead className="w-[140px] text-center">Verified By</TableHead> */}
-                                {/* <TableHead className="w-[140px] text-center">Received By</TableHead> */}
+                                 <TableHead className="w-[140px] text-center">Checked By</TableHead> 
+                                <TableHead className="w-[140px] text-center">Verified By</TableHead> 
+                                 <TableHead className="w-[140px] text-center">Inventory Copy Received By</TableHead> 
                                 <TableHead className="min-w-[120px] text-center">Status</TableHead>
                                 <TableHead className="min-w-[140px] text-center">Action</TableHead>
                             </TableRow>
@@ -293,9 +293,9 @@ export default function InventorySchedulingIndex({
 
                                     <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) ?? '—'}</TableCell>
 
-                                    {/* <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell> */}
-                                    {/* <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell> */}
-                                    {/* <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell> */}
+                                     <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell> 
+                                     <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell> 
+                                     <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell> 
 
 <TableCell className="text-center align-middle">
   <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import type { AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from './index';
+import { WebcamCapture } from './WebcamCapture';
 
 type Props = {
     open: boolean;
@@ -42,20 +43,22 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [enableMultipleSerials, setEnableMultipleSerials] = useState(false);
+    const [showWebcam, setShowWebcam] = useState(false); // ✅ webcam toggle
+    // const qty = Number(data.quantity) || 0;
 
     const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
     const uniqueBrands = Array.from(new Set(assetModels.map((m) => m.brand)));
     const filteredModels = assetModels.filter((m) => m.brand === data.brand);
 
-    const addSerialField = () => {
-        setData('serial_numbers', [...data.serial_numbers, '']);
-    };
+    // const addSerialField = () => {
+    //     setData('serial_numbers', [...data.serial_numbers, '']);
+    // };
 
-    const updateSerial = (i: number, value: string) => {
-        const copy = [...data.serial_numbers];
-        copy[i] = value;
-        setData('serial_numbers', copy);
-    };
+    // const updateSerial = (i: number, value: string) => {
+    //     const copy = [...data.serial_numbers];
+    //     copy[i] = value;
+    //     setData('serial_numbers', copy);
+    // };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -232,39 +235,115 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             />
                         </div>
 
+                        {/* Quantity */}
                         <div className="col-span-2">
-                            <label className="mb-1 block font-medium">Quantity</label>
-                            <input
-                                type="number"
-                                className="w-full rounded-lg border p-2"
-                                value={data.quantity}
-                                onChange={(e) => setData('quantity', e.target.value)}
-                            />
+                          <label className="mb-1 block font-medium">Quantity</label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="w-full rounded-lg border p-2"
+                            value={data.quantity}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setData("quantity", val);
+
+                              if (enableMultipleSerials) {
+                                const newQty = Number(val) || 0;
+                                let newSerials = [...data.serial_numbers];
+
+                                // Ensure at least `qty` fields exist
+                                if (newQty > newSerials.length) {
+                                  newSerials = [
+                                    ...newSerials,
+                                    ...Array(newQty - newSerials.length).fill(""),
+                                  ];
+                                }
+
+                                setData("serial_numbers", newSerials);
+                              }
+                            }}
+                          />
                         </div>
 
-                        {/* ✅ Enable Multiple Serials */}
+                        {/* Enable Multiple Serials */}
                         <div className="col-span-2 flex items-center gap-2">
-                            <input type="checkbox" checked={enableMultipleSerials} onChange={(e) => setEnableMultipleSerials(e.target.checked)} />
-                            <span>Enable multiple serial numbers</span>
+                          <input
+                            type="checkbox"
+                            checked={enableMultipleSerials}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setEnableMultipleSerials(checked);
+
+                              if (checked) {
+                                const newQty = Number(data.quantity) || 0;
+                                let newSerials = [...data.serial_numbers];
+
+                                if (newQty > newSerials.length) {
+                                  newSerials = [
+                                    ...newSerials,
+                                    ...Array(newQty - newSerials.length).fill(""),
+                                  ];
+                                }
+
+                                setData("serial_numbers", newSerials);
+                              } else {
+                                setData("serial_numbers", []);
+                              }
+                            }}
+                          />
+                          <span>Enable multiple serial numbers</span>
                         </div>
 
-                        {enableMultipleSerials && (
-                            <div className="col-span-2 space-y-2">
-                                {data.serial_numbers.map((sn, i) => (
-                                    <input
-                                        key={i}
-                                        type="text"
-                                        placeholder={`Serial ${i + 1}`}
-                                        className="w-full rounded-lg border p-2"
-                                        value={sn}
-                                        onChange={(e) => updateSerial(i, e.target.value)}
-                                    />
-                                ))}
-                                <Button type="button" onClick={addSerialField}>
-                                    + Add Another Serial
-                                </Button>
-                            </div>
-                        )}
+                       {/* Serial Numbers Section */}
+{enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
+  <div className="col-span-2 space-y-2">
+    <p className="text-xs text-gray-600">
+      {data.serial_numbers.length > Number(data.quantity)
+        ? (
+          <>
+            You entered <b>{data.serial_numbers.length}</b> serials out of{" "}
+            <b>{data.quantity}</b> required.
+          </>
+        ) : (
+          <>
+            You can enter <b>{data.quantity}</b> different serial number
+            {Number(data.quantity) > 1 ? "s" : ""}.
+          </>
+        )}
+    </p>
+
+    {data.serial_numbers.map((sn, i) => (
+      <input
+        key={i}
+        type="text"
+        placeholder={`Serial ${i + 1}`}
+        className="w-full rounded-lg border p-2"
+        value={sn}
+        onChange={(e) => {
+          const copy = [...data.serial_numbers];
+          copy[i] = e.target.value;
+          setData("serial_numbers", copy);
+        }}
+      />
+    ))}
+  </div>
+)}
+
+{/* Add More Button — ✅ shows only if multiple serials enabled */}
+{enableMultipleSerials && (
+  <div className="col-span-2">
+    <Button
+      type="button"
+      onClick={() => {
+        const newSerials = [...data.serial_numbers, ""];
+        setData("serial_numbers", newSerials);
+        setData("quantity", newSerials.length.toString()); // ✅ sync qty
+      }}
+    >
+      Add Another Serial
+    </Button>
+  </div>
+)}
 
                         {/* Unit Cost */}
                         <div className="col-span-1">
@@ -355,42 +434,83 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             />
                         </div>
 
+                        {/* ✅ Asset Image with Webcam */}
                         <div className="col-span-2">
                             <label className="mb-1 block font-medium">Asset Image</label>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    if (e.target.files?.[0]) {
-                                        setData('image', e.target.files[0]);
-                                    }
-                                }}
-                                className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
-                            />
-                            {data.image && (
-                                <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
-                                    <img
-                                        src={URL.createObjectURL(data.image as File)}
-                                        alt="Preview"
-                                        className="h-20 w-20 rounded-md border object-cover"
-                                    />
-                                    <div className="flex flex-col">
-                                        <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">{(data.image as File).name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setData('image', null);
-                                                if (fileInputRef.current) {
-                                                    fileInputRef.current.value = '';
+
+                            {showWebcam ? (
+                                <WebcamCapture
+                                    onCapture={(file) => {
+                                        setData('image', file);
+                                        setShowWebcam(false);
+                                    }}
+                                    onCancel={() => setShowWebcam(false)}
+                                />
+                            ) : (
+                                <>
+                                    <div className="flex gap-2">
+                                        {/* File upload */}
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                if (e.target.files?.[0]) {
+                                                    setData('image', e.target.files[0]);
                                                 }
                                             }}
-                                            className="mt-1 w-fit rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
-                                        >
-                                            Remove
-                                        </button>
+                                            className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
+                                                file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
+                                                file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                        />
+
+                                        {/* Open camera */}
+                                        <Button type="button" onClick={() => setShowWebcam(true)}>
+                                            Use Camera
+                                        </Button>
                                     </div>
-                                </div>
+
+                                    {/* Preview */}
+                                    {data.image && (
+                                        <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
+                                            <img
+                                                src={URL.createObjectURL(data.image as File)}
+                                                alt="Preview"
+                                                className="h-20 w-20 rounded-md border object-cover"
+                                            />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">
+                                                    {(data.image as File).name}
+                                                </span>
+                                                <div className="flex gap-2">
+                                                    {/* Remove */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setData('image', null);
+                                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                                        }}
+                                                        className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                    {/* Retake */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setData('image', null);
+                                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                                            setShowWebcam(true);
+                                                        }}
+                                                        className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                                                    >
+                                                        Retake
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
 

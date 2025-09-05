@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
 import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
+import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';// ✅ new import
 
 type Props = {
     asset: Asset;
@@ -56,6 +57,7 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
     const filteredModels = assetModels.filter((model) => model.brand === form.brand);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [showWebcam, setShowWebcam] = useState(false); // ✅ webcam toggle
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -140,302 +142,307 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             </select>
                         </div>
 
-                        <div>
-                            <Label>Status</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.status}
-                                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
-                            >
-                                <option value="active">Active</option>
-                                <option value="archived">Archived</option>
-                            </select>
-                        </div>
-                        {/* Assigned To */}
-                        {/* Assigned To */}
-                        <div className="col-span-2">
-                            <Label>Assigned To</Label>
-                            <Input
-                                type="text"
-                                placeholder="Enter person assigned"
-                                value={form.assigned_to ?? ''} // ✅ fixes TS error
-                                onChange={(e) => handleChange('assigned_to', e.target.value)}
-                            />
-                        </div>
+        <div>
+            <Label>Status</Label>
+            <select
+                className="w-full rounded-lg border p-2"
+                value={form.status}
+                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
+            >
+                <option value="active">Active</option>
+                <option value="archived">Archived</option>
+            </select>
+        </div>
 
-                        {/* Divider */}
-                        <div className="col-span-2 border-t"></div>
+        {/* Assigned To */}
+        <div className="col-span-2">
+            <Label>Assigned To</Label>
+            <Input
+                type="text"
+                placeholder="Enter person assigned"
+                value={form.assigned_to ?? ''} // ✅ fixes TS error
+                onChange={(e) => handleChange('assigned_to', e.target.value)}
+            />
+        </div>
 
-                        {/* Date Purchased */}
-                        <div>
-                            <Label>Date Purchased</Label>
-                            <PickerInput type="date" value={form.date_purchased} onChange={(v) => handleChange('date_purchased', v)} />
-                        </div>
+        {/* Divider */}
+        <div className="col-span-2 border-t"></div>
 
-                        {/* Maintenance Due Date */}
-                        <div>
-                            <Label>Maintenance Due Date</Label>
-                            <PickerInput type="date" value={form.maintenance_due_date} onChange={(v) => handleChange('maintenance_due_date', v)} />
-                        </div>
+        {/* Date Purchased */}
+        <div>
+            <Label>Date Purchased</Label>
+            <PickerInput type="date" value={form.date_purchased} onChange={(v) => handleChange('date_purchased', v)} />
+        </div>
 
-                        {/* Asset Type */}
-                        <div>
-                            <Label>Asset Type</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.asset_type}
-                                onChange={(e) => handleChange('asset_type', e.target.value as 'fixed' | 'not_fixed' | '')}
-                            >
-                                <option value="">Select Asset Type</option>
-                                <option value="fixed">Fixed</option>
-                                <option value="not_fixed">Not Fixed</option>
-                            </select>
-                            {/* {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>} */}
-                        </div>
+        {/* Maintenance Due Date */}
+        <div>
+            <Label>Maintenance Due Date</Label>
+            <PickerInput type="date" value={form.maintenance_due_date} onChange={(v) => handleChange('maintenance_due_date', v)} />
+        </div>
 
-                        {/* Asset Category */}
-                        <div>
-                            <Label>Asset Category</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.category_id ?? ''} // FK on the row
-                                onChange={(e) => handleChange('category_id', Number(e.target.value))}
-                            >
-                                <option value="">Select Asset Category</option>
-                                {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {/* {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>} */}
-                        </div>
+        {/* Asset Type */}
+        <div>
+            <Label>Asset Type</Label>
+            <select
+                className="w-full rounded-lg border p-2"
+                value={form.asset_type}
+                onChange={(e) => handleChange('asset_type', e.target.value as 'fixed' | 'not_fixed' | '')}
+            >
+                <option value="">Select Asset Type</option>
+                <option value="fixed">Fixed</option>
+                <option value="not_fixed">Not Fixed</option>
+            </select>
+            {/* {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>} */}
+        </div>
 
-                        {/* Asset Name */}
-                        <div>
-                            <Label>Asset Name</Label>
-                            <Input placeholder="Enter Assets" value={form.asset_name} onChange={(e) => handleChange('asset_name', e.target.value)} />
-                        </div>
+        {/* Asset Category */}
+        <div>
+            <Label>Asset Category</Label>
+            <select
+                className="w-full rounded-lg border p-2"
+                value={form.category_id ?? ''} // FK on the row
+                onChange={(e) => handleChange('category_id', Number(e.target.value))}
+            >
+                <option value="">Select Asset Category</option>
+                {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                    </option>
+                ))}
+            </select>
+            {/* {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>} */}
+        </div>
 
-                        {/* Supplier */}
-                        <div>
-                            <Label>Supplier</Label>
-                            <Input placeholder="Enter Suppliers" value={form.supplier} onChange={(e) => handleChange('supplier', e.target.value)} />
-                        </div>
+        {/* Asset Name */}
+        <div>
+            <Label>Asset Name</Label>
+            <Input placeholder="Enter Assets" value={form.asset_name} onChange={(e) => handleChange('asset_name', e.target.value)} />
+        </div>
 
-                        {/* Serial Number */}
-                        <div>
-                            <Label>Serial Number</Label>
-                            <Input
-                                placeholder="Enter Serial No."
-                                value={form.serial_no}
-                                onChange={(e) => handleChange('serial_no', e.target.value)}
-                            />
-                        </div>
+        {/* Supplier */}
+        <div>
+            <Label>Supplier</Label>
+            <Input placeholder="Enter Suppliers" value={form.supplier} onChange={(e) => handleChange('supplier', e.target.value)} />
+        </div>
 
-                        {/* Quantity
-                        <div>
-                            <Label>Quantity</Label>
-                            <Input
-                                type="number"
-                                placeholder="Enter Quantity"
-                                value={form.quantity}
-                                onChange={(e) => handleChange('quantity', e.target.value)}
-                            />
-                        </div> */}
+        {/* Serial Number */}
+        <div>
+            <Label>Serial Number</Label>
+            <Input
+                placeholder="Enter Serial No."
+                value={form.serial_no}
+                onChange={(e) => handleChange('serial_no', e.target.value)}
+            />
+        </div>
 
-                        {/* Unit Cost */}
-                        <div>
-                            <Label>Unit Cost</Label>
-                            <Input
-                                type="number"
-                                placeholder="Enter Unit Cost"
-                                value={form.unit_cost}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    handleChange('unit_cost', value);
+        {/* Unit Cost */}
+        <div>
+            <Label>Unit Cost</Label>
+            <Input
+                type="number"
+                placeholder="Enter Unit Cost"
+                value={form.unit_cost}
+                onChange={(e) => {
+                    const value = e.target.value;
+                    handleChange('unit_cost', value);
 
-                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
-                                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
-                                    handleChange('depreciation_value', depreciation);
-                                }}
-                            />
-                        </div>
+                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
+                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
+                    handleChange('depreciation_value', depreciation);
+                }}
+            />
+        </div>
 
-                        {/* Depreciation Value */}
-                        <div>
-                            <Label>Depreciation Value (per year)</Label>
-                            <Input
-                                type="text"
-                                value={form.depreciation_value ? `₱ ${Number(form.depreciation_value).toFixed(2)}` : ''}
-                                readOnly // ✅ same as Total Cost, user can’t edit
-                                className="bg-white text-black"
-                            />
-                        </div>
+        {/* Depreciation Value */}
+        <div>
+            <Label>Depreciation Value (per year)</Label>
+            <Input
+                type="text"
+                value={form.depreciation_value ? `₱ ${Number(form.depreciation_value).toFixed(2)}` : ''}
+                readOnly // ✅ same as Total Cost, user can’t edit
+                className="bg-white text-black"
+            />
+        </div>
 
-                        {/* Brand */}
-                        <div>
-                            <Label>Brand</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.brand}
-                                onChange={(e) => {
-                                    handleChange('brand', e.target.value);
-                                    handleChange('asset_model_id', '');
-                                }}
-                            >
-                                <option value="">Select Brand</option>
-                                {uniqueBrands.map((b) => (
-                                    <option key={b} value={b}>
-                                        {b}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+        {/* Brand */}
+        <div>
+            <Label>Brand</Label>
+            <select
+                className="w-full rounded-lg border p-2"
+                value={form.brand}
+                onChange={(e) => {
+                    handleChange('brand', e.target.value);
+                    handleChange('asset_model_id', '');
+                }}
+            >
+                <option value="">Select Brand</option>
+                {uniqueBrands.map((b) => (
+                    <option key={b} value={b}>
+                        {b}
+                    </option>
+                ))}
+            </select>
+        </div>
 
-                        {/* Asset Model */}
-                        <div>
-                            <Label>Asset Model</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.asset_model_id}
-                                onChange={(e) => handleChange('asset_model_id', Number(e.target.value))}
-                                disabled={!form.brand}
-                            >
-                                <option value="">Select Asset Model</option>
-                                {filteredModels.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.model}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+        {/* Asset Model */}
+        <div>
+            <Label>Asset Model</Label>
+            <select
+                className="w-full rounded-lg border p-2"
+                value={form.asset_model_id}
+                onChange={(e) => handleChange('asset_model_id', Number(e.target.value))}
+                disabled={!form.brand}
+            >
+                <option value="">Select Asset Model</option>
+                {filteredModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                        {m.model}
+                    </option>
+                ))}
+            </select>
+        </div>
 
-                        {/* Memorandum Number */}
-                        <div>
-                            <Label>Memorandum Number</Label>
-                            <Input
-                                type="number"
-                                className="w-full rounded-lg border p-2"
-                                value={form.memorandum_no}
-                                onChange={(e) => handleChange('memorandum_no', Number(e.target.value))}
-                            />
-                        </div>
+        {/* Memorandum Number */}
+        <div>
+            <Label>Memorandum Number</Label>
+            <Input
+                type="number"
+                className="w-full rounded-lg border p-2"
+                value={form.memorandum_no}
+                onChange={(e) => handleChange('memorandum_no', Number(e.target.value))}
+            />
+        </div>
 
-                        <div>
-                            <Label>Transfer Status</Label>
-                            <div className="mt-1 rounded-lg border border-gray-300 bg-white p-2 text-sm text-black">
-                                {asset.transfer ? asset.transfer.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-'}
+        <div>
+            <Label>Transfer Status</Label>
+            <div className="mt-1 rounded-lg border border-gray-300 bg-white p-2 text-sm text-black">
+                {asset.transfer ? asset.transfer.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-'}
+            </div>
+        </div>
+
+        {/* Total Cost */}
+        <div>
+            <Label>Total Cost</Label>
+            <Input
+                type="text"
+                value={form.quantity && form.unit_cost ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toFixed(2)}` : ''}
+                readOnly // ✅ looks like Unit Cost, but can’t be edited
+                className="bg-white text-black"
+            />
+        </div>
+
+        {/* Asset Image */}
+        <div className="col-span-2">
+            <Label className="mb-4 block text-left text-base font-semibold">Asset Image (Before & After)</Label>
+
+            <div className="flex justify-center gap-6">
+                {/* Before (current DB image) */}
+                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                    <p className="mb-3 text-sm font-medium text-gray-600">Current Image</p>
+                    {asset.image_path ? (
+                        <img
+                            src={`/storage/${asset.image_path}`}
+                            alt={asset.asset_name}
+                            className="max-h-64 w-auto rounded-md border object-contain"
+                        />
+                    ) : (
+                        <span className="text-sm text-gray-400">No image available</span>
+                    )}
+                </div>
+
+                {/* After (upload new or camera) */}
+                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                    <p className="mb-3 text-sm font-medium text-gray-600">Update Image</p>
+
+                    {showWebcam ? (
+                        <WebcamCapture
+                            onCapture={(file) => {
+                                handleChange('image', file);
+                                setShowWebcam(false);
+                            }}
+                            onCancel={() => setShowWebcam(false)}
+                        />
+                    ) : (
+                        <>
+                            <div className="flex gap-2">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            handleChange('image', e.target.files[0]);
+                                        }
+                                    }}
+                                    className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
+                                        file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
+                                        file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                />
+                                <Button type="button" onClick={() => setShowWebcam(true)}>
+                                    Use Camera
+                                </Button>
                             </div>
-                        </div>
 
-                        {/* Transfer Status */}
-                        {/* <div>
-                            <Label>Transfer Status</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.transfer_status}
-                                onChange={(e) => handleChange('transfer_status', e.target.value)}
-                            >
-                                <option value="">Select Status</option>
-                                <option value="transferred">Transferred</option>
-                                <option value="not_transferred">Not Transferred</option>
-                            </select>
-                        </div> */}
-
-                        {/* Total Cost */}
-                        <div>
-                            <Label>Total Cost</Label>
-                            <Input
-                                type="text"
-                                value={form.quantity && form.unit_cost ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toFixed(2)}` : ''}
-                                readOnly // ✅ looks like Unit Cost, but can’t be edited
-                                className="bg-white text-black"
-                            />
-                        </div>
-
-                        {/* Asset Image */}
-                        <div className="col-span-2">
-                            <Label className="mb-4 block text-left text-base font-semibold">Asset Image (Before & After)</Label>
-
-                            <div className="flex justify-center gap-6">
-                                {/* Before (current DB image) */}
-                                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
-                                    <p className="mb-3 text-sm font-medium text-gray-600">Current Image</p>
-                                    {asset.image_path ? (
-                                        <img
-                                            src={`/storage/${asset.image_path}`}
-                                            alt={asset.asset_name}
-                                            className="max-h-64 w-auto rounded-md border object-contain"
-                                        />
-                                    ) : (
-                                        <span className="text-sm text-gray-400">No image available</span>
-                                    )}
-                                </div>
-
-                                {/* After (upload new) */}
-                                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
-                                    <p className="mb-3 text-sm font-medium text-gray-600">Update Image</p>
-
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            if (e.target.files?.[0]) {
-                                                handleChange('image', e.target.files[0]);
-                                            }
-                                        }}
-                                        className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                            {form.image && (
+                                <div className="mt-4 flex flex-col items-center gap-3">
+                                    <img
+                                        src={URL.createObjectURL(form.image)}
+                                        alt="Preview"
+                                        className="max-h-64 w-auto rounded-md border object-contain"
                                     />
-
-                                    {form.image && (
-                                        <div className="mt-4 flex flex-col items-center gap-3">
-                                            <img
-                                                src={URL.createObjectURL(form.image)}
-                                                alt="Preview"
-                                                className="max-h-64 w-auto rounded-md border object-contain"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    handleChange('image', null);
-                                                    if (fileInputRef.current) {
-                                                        fileInputRef.current.value = '';
-                                                    }
-                                                }}
-                                                className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                handleChange('image', null);
+                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                            }}
+                                            className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
+                                        >
+                                            Remove
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                handleChange('image', null);
+                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                setShowWebcam(true);
+                                            }}
+                                            className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                                        >
+                                            Retake
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
 
-                        {/* Description */}
-                        <div className="col-span-2">
-                            <Label>Description</Label>
-                            <Textarea
-                                placeholder="Enter Description"
-                                value={form.description}
-                                onChange={(e) => handleChange('description', e.target.value)}
-                            />
-                        </div>
-                        <div className="col-span-2 border-t"></div>
-                    </div>
+        {/* Description */}
+        <div className="col-span-2">
+            <Label>Description</Label>
+            <Textarea
+                placeholder="Enter Description"
+                value={form.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+            />
+        </div>
+        <div className="col-span-2 border-t"></div>
+    </div>
 
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button type="button" onClick={handleSubmit}>
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </form>
-        </Dialog>
-    );
+    <DialogFooter>
+        <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+        </DialogClose>
+        <Button type="button" onClick={handleSubmit}>
+            Save Changes
+        </Button>
+    </DialogFooter>
+</DialogContent>
+</form>
+</Dialog>
+);
 };
