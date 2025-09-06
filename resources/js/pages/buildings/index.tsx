@@ -113,7 +113,7 @@ export default function BuildingIndex({
             <Head title="Buildings" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex flex-col gap-4">w
+                <div className="flex flex-col gap-4">
                     <div>
                         <h1 className="text-2xl font-semibold">Buildings</h1>
                         <p className="text-sm text-muted-foreground">List of AUF buildings.</p>
