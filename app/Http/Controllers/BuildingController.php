@@ -40,7 +40,10 @@ class BuildingController extends Controller
 
         // Filtered buildings + rooms depending on user permissions
         $buildings = Building::indexProps($user);
-        $rooms     = BuildingRoom::listAllRoomsWithAssetShare((int) $totals['total_assets'], $user);
+        $rooms     = BuildingRoom::listAllRoomsWithAssetShare(
+            (int) $totals['total_assets'], 
+            $user
+        );
 
         return [
             'buildings' => $buildings,
@@ -60,28 +63,6 @@ class BuildingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => ['required', 'string', 'max:255'],
-    //         'code' => ['required', 'string', 'max:50',
-    //             Rule::unique('buildings', 'code')
-    //             ->whereNull('deleted_at'),
-    //         ],
-    //         'description' => ['nullable', 'string', 'max:1000'],
-    //     ]);
-
-    //     $payload = [
-    //         'name' => ucwords(trim($validated['name'])),
-    //         'code' => strtoupper(trim($validated['code'])),
-    //         'description' => $validated['description'] ? trim($validated['description']) : null,
-    //     ];
-
-    //     $building = Building::create($payload);
-
-    //     return redirect()->route('buildings.index')->with('success', "Building {$building->name} was successfully created.");
-    // }
-
     public function store(StoreBuildingRequest $request): RedirectResponse
     {
         $validated = $request->validated();

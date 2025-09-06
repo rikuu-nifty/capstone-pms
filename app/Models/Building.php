@@ -44,26 +44,12 @@ class Building extends Model
     {
         $q = static::query()
             ->select('id', 'name', 'code', 'description')
-            // ->withCount(['buildingRooms', 'assets'])
             ->orderBy('id', 'desc');
 
         $withCount = [
             'buildingRooms',
             'assets',
         ];
-
-        // if ($user) {
-        //     if ($user->hasPermission('view-own-unit-inventory-list') && !$user->hasPermission('view-inventory-list')) {
-        //         $unitId = $user->unit_or_department_id;
-        //         if ($unitId) {
-        //             $query->whereHas('assets', function ($q) use ($unitId) {
-        //                 $q->where('unit_or_department_id', $unitId);
-        //             });
-        //         }
-        //     }
-        // }
-
-        // return $query->get();
 
         if (
             $user
@@ -74,8 +60,9 @@ class Building extends Model
             $unitId = (int) $user->unit_or_department_id;
 
             $withCount = [
-                'buildingRooms',
-                // rename to the same alias 'assets_count' but filtered
+                'buildingRooms as building_rooms_count' => function ($q) use ($unitId) {
+                    $q->whereHas('assets', fn($qq) => $qq->where('unit_or_department_id', $unitId));
+                },
                 'assets as assets_count' => fn($qq) => $qq->where('unit_or_department_id', $unitId),
             ];
 
@@ -106,40 +93,63 @@ class Building extends Model
         $query = static::query()
             ->select('id', 'name', 'code', 'description')
             ->withCount([
-                'buildingRooms',
+                'buildingRooms as building_rooms_count' => function ($q) use ($user) {
+                    if (
+                        $user &&
+                        $user->hasPermission('view-own-unit-buildings') &&
+                        !$user->hasPermission('view-buildings')
+                    ) {
+                        $q->whereHas('assets', function ($qq) use ($user) {
+                            $qq->where('unit_or_department_id', $user->unit_or_department_id);
+                        });
+                    }
+                },
                 'assets as assets_count' => function ($q) use ($user) {
                     if (
-                        $user
-                        && $user->hasPermission('view-own-unit-buildings')
-                        && !$user->hasPermission('view-buildings')
+                        $user &&
+                        $user->hasPermission('view-own-unit-buildings') &&
+                        !$user->hasPermission('view-buildings')
                     ) {
                         $q->where('unit_or_department_id', $user->unit_or_department_id);
                     }
                 },
             ])
             ->with([
-                'buildingRooms:id,building_id,room',
-                'buildingRooms.assets' => function ($q) use ($user) {
-                    $q->select([
-                        'id',
-                        'building_room_id',
-                        'serial_no',
-                        'unit_or_department_id',
-                    ]);
+                'buildingRooms' => function ($q) use ($user) {
+                    $q->select('id', 'building_id', 'room');
 
                     if (
-                        $user
-                        && $user->hasPermission('view-own-unit-buildings')
-                        && !$user->hasPermission('view-buildings')
+                        $user &&
+                        $user->hasPermission('view-own-unit-buildings') &&
+                        !$user->hasPermission('view-buildings')
                     ) {
-                        $q->where('unit_or_department_id', $user->unit_or_department_id);
+                        $q->whereHas('assets', function ($qq) use ($user) {
+                            $qq->where('unit_or_department_id', $user->unit_or_department_id);
+                        });
                     }
+
+                    $q->with(['assets' => function ($qq) use ($user) {
+                        $qq->select([
+                            'id',
+                            'building_room_id',
+                            'serial_no',
+                            'unit_or_department_id',
+                        ]);
+
+                        if (
+                            $user &&
+                            $user->hasPermission('view-own-unit-buildings') &&
+                            !$user->hasPermission('view-buildings')
+                        ) {
+                            $qq->where('unit_or_department_id', $user->unit_or_department_id);
+                        }
+                    }]);
                 },
             ]);
 
         return $query->findOrFail($id);
     }
-  
+
     public function inventorySchedulings()
     {
         return $this->hasMany(InventoryScheduling::class);
