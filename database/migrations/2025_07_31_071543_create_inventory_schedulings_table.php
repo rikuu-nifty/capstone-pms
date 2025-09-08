@@ -14,6 +14,13 @@ return new class extends Migration
         Schema::create('inventory_schedulings', function (Blueprint $table) {
             $table->id(); // Primary Key (auto-increment)
 
+             // 👇 NEW: capture preparer
+            $table->unsignedBigInteger('prepared_by_id')->nullable();
+            $table->foreign('prepared_by_id')
+                  ->references('id')
+                  ->on('users')
+                  ->onDelete('set null');
+
             $table->unsignedBigInteger('building_id')->nullable();  // FK Buildings_Table
             $table->foreign('building_id')
                   ->references('id')

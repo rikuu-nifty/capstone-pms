@@ -1,15 +1,15 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 // import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { FileSignature  } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import type { SharedData } from '@/types';
+import { FileSignature } from 'lucide-react';
+import { useState } from 'react';
 
 import ApproveConfirmationModal from '@/components/modals/ApproveConfirmationModal';
 import RejectConfirmationModal from '@/components/modals/RejectConfirmationModal';
@@ -18,24 +18,24 @@ import ResetConfirmationModal from '@/components/modals/ResetFormApprovalModal';
 const viewPath = (formType: string, id?: number | null) => {
     if (!id) return '#';
     const map: Record<string, (id: number) => string> = {
-        transfer:               (id) => `/transfers/${id}/view`,
-        turnover_disposal:      (id) => `/turnover-disposal/${id}/view`,
-        off_campus:             (id) => `/off-campus/${id}/view`,
-        inventory_scheduling:   (id) => `/inventory-scheduling/${id}/view`,
+        transfer: (id) => `/transfers/${id}/view`,
+        turnover_disposal: (id) => `/turnover-disposal/${id}/view`,
+        off_campus: (id) => `/off-campus/${id}/view`,
+        inventory_scheduling: (id) => `/inventory-scheduling/${id}/view`,
     };
-    return (map[formType]?.(id)) ?? '#';
+    return map[formType]?.(id) ?? '#';
 };
 
 type ApprovalItem = {
     id: number;
     form_type: string;
     form_title: string;
-    status: 'pending_review'|'approved'|'rejected'|'cancelled';
-    requested_at: string|null;
-    reviewed_at: string|null;
-    requested_by: { id:number; name:string }|null;
-    reviewed_by: { id:number; name:string }|null;
-    approvable: { id:number }|null;
+    status: 'pending_review' | 'approved' | 'rejected' | 'cancelled';
+    requested_at: string | null;
+    reviewed_at: string | null;
+    requested_by: { id: number; name: string } | null;
+    reviewed_by: { id: number; name: string } | null;
+    approvable: { id: number } | null;
     current_step_label?: string | null;
     current_step_is_external?: boolean;
     current_step_code?: string | null;
@@ -48,37 +48,35 @@ type ApprovalItem = {
 };
 
 type PageProps = {
-    tab: 'pending'|'approved'|'rejected';
-    q: string|null;
+    tab: 'pending' | 'approved' | 'rejected';
+    q: string | null;
     approvals: {
         data: ApprovalItem[];
         current_page: number;
         per_page: number;
         total: number;
-        links: { url: string|null; label: string; active: boolean }[];
+        links: { url: string | null; label: string; active: boolean }[];
     };
 };
 
 const tabs = [
-    { key: 'pending',  label: 'Pending List'   },
-    { key: 'approved', label: 'Approved List'  },
-    { key: 'rejected', label: 'Rejected List'  },
+    { key: 'pending', label: 'Pending List' },
+    { key: 'approved', label: 'Approved List' },
+    { key: 'rejected', label: 'Rejected List' },
 ] as const;
 
 function StatusPill({ s }: { s: ApprovalItem['status'] }) {
     const label = s === 'pending_review' ? 'Pending' : s === 'approved' ? 'Approved' : s === 'rejected' ? 'Rejected' : 'Cancelled';
     const klass =
-        s === 'pending_review' ? 'bg-yellow-200 text-yellow-900'
-    : s === 'approved'       ? 'bg-emerald-200 text-emerald-900'
-    : 'bg-red-200 text-red-900';
+        s === 'pending_review' ? 'bg-yellow-200 text-yellow-900' : s === 'approved' ? 'bg-emerald-200 text-emerald-900' : 'bg-red-200 text-red-900';
     return <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${klass}`}>{label}</span>;
 }
 
 export default function ApprovalsIndex() {
     const { props } = usePage<PageProps & SharedData>();
     const [search, setSearch] = useState(props.q ?? '');
-    
-    const [extFor, setExtFor] = useState<{ id:number; label?:string } | null>(null);
+
+    const [extFor, setExtFor] = useState<{ id: number; label?: string } | null>(null);
     const [extName, setExtName] = useState('');
     const [extTitle, setExtTitle] = useState('');
     const [extNotes, setExtNotes] = useState('');
@@ -93,16 +91,22 @@ export default function ApprovalsIndex() {
 
     const openExternalModal = (approval: ApprovalItem) => {
         setExtFor({ id: approval.id, label: approval.current_step_label ?? 'External Approval' });
-        setExtName(''); setExtTitle(''); setExtNotes('');
+        setExtName('');
+        setExtTitle('');
+        setExtNotes('');
     };
 
     const submitExternal = () => {
         if (!extFor) return;
-        router.post(route('approvals.external_approve', extFor.id), {
-            external_name: extName,
-            external_title: extTitle,
-            notes: extNotes,
-        }, { preserveScroll: true, onSuccess: () => setExtFor(null) });
+        router.post(
+            route('approvals.external_approve', extFor.id),
+            {
+                external_name: extName,
+                external_title: extTitle,
+                notes: extNotes,
+            },
+            { preserveScroll: true, onSuccess: () => setExtFor(null) },
+        );
     };
 
     const onChangeTab = (key: string) => {
@@ -128,17 +132,25 @@ export default function ApprovalsIndex() {
     };
     const approve = () => {
         if (!selectedApprovalId) return;
-        router.post(route('approvals.approve', selectedApprovalId), {}, {
-            preserveScroll: true,
-            onSuccess: () => setShowApprove(false),
-        });
+        router.post(
+            route('approvals.approve', selectedApprovalId),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => setShowApprove(false),
+            },
+        );
     };
     const reject = (notes?: string) => {
         if (!selectedApprovalId) return;
-        router.post(route('approvals.reject', selectedApprovalId), { notes }, {
-            preserveScroll: true,
-            onSuccess: () => setShowReject(false),
-        });
+        router.post(
+            route('approvals.reject', selectedApprovalId),
+            { notes },
+            {
+                preserveScroll: true,
+                onSuccess: () => setShowReject(false),
+            },
+        );
     };
 
     const pageData = props.approvals;
@@ -148,7 +160,7 @@ export default function ApprovalsIndex() {
     // const canAct = (a: ApprovalItem) => {
     //     if (a.status !== "pending_review") {
     //         return false;
-    //     } 
+    //     }
 
     //     if (a.current_step_is_external) {
     //         return true;
@@ -161,21 +173,22 @@ export default function ApprovalsIndex() {
     //     return ["superuser", "vp_admin"].includes(currentUser?.role?.code ?? ""); //Superuser and VP Admin override
     // };
 
-
     return (
         <AppLayout breadcrumbs={[{ title: 'Form Approval', href: '/approvals' }]}>
             <Head title="Form Approval" />
 
             <div className="p-4">
                 <div className="mb-4 flex gap-2 rounded-md bg-muted p-2">
-                {tabs.map(t => (
-                    <Button key={t.key}
-                        variant={props.tab === t.key ? 'default' : 'ghost'}
-                        className="cursor-pointer"
-                        onClick={() => onChangeTab(t.key)}>
-                        {t.label}
-                    </Button>
-                ))}
+                    {tabs.map((t) => (
+                        <Button
+                            key={t.key}
+                            variant={props.tab === t.key ? 'default' : 'ghost'}
+                            className="cursor-pointer"
+                            onClick={() => onChangeTab(t.key)}
+                        >
+                            {t.label}
+                        </Button>
+                    ))}
                 </div>
 
                 {/* Header */}
@@ -188,10 +201,7 @@ export default function ApprovalsIndex() {
 
                 {/* Search */}
                 <div className="mb-3 w-80">
-                    <Input 
-                        placeholder="search for the date, title, or requester"
-                        value={search}
-                        onChange={(e) => onSearch(e.target.value)} />
+                    <Input placeholder="search for the date, title, or requester" value={search} onChange={(e) => onSearch(e.target.value)} />
                 </div>
 
                 {/* Table */}
@@ -209,98 +219,115 @@ export default function ApprovalsIndex() {
                             </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">
-                            {pageData.data.length ? pageData.data.map(a => (
-                                <TableRow key={a.id}>
-                                    <TableCell className="font-medium">{a.form_title}</TableCell>
-                                    <TableCell>{a.requested_at ? new Date(a.requested_at).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}</TableCell>
-                                    <TableCell>{a.reviewed_at  ? new Date(a.reviewed_at ).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' }) : '—'}</TableCell>
-                                    <TableCell>{a.requested_by?.name ?? '—'}</TableCell>
-                                    <TableCell><StatusPill s={a.status} /></TableCell>
-                                    <TableCell className="text-center">
-                                        {/* {Number(a.can_approve) ? 'true' : 'false'} */}
-                                        {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
-                                            <div className="leading-tight">
-                                                <span className="font-medium">{a.current_step_actor}</span>
-                                            </div>
-                                        ) : (
-                                            '—'
-                                        )}
-                                    </TableCell>
+                            {pageData.data.length ? (
+                                pageData.data.map((a) => (
+                                    <TableRow key={a.id}>
+                                        <TableCell className="font-medium">{a.form_title}</TableCell>
+                                        <TableCell>
+                                            {a.requested_at
+                                                ? new Date(a.requested_at).toLocaleDateString('en-US', {
+                                                      month: 'short',
+                                                      day: '2-digit',
+                                                      year: 'numeric',
+                                                  })
+                                                : '—'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {a.reviewed_at
+                                                ? new Date(a.reviewed_at).toLocaleDateString('en-US', {
+                                                      month: 'short',
+                                                      day: '2-digit',
+                                                      year: 'numeric',
+                                                  })
+                                                : '—'}
+                                        </TableCell>
+                                        <TableCell>{a.requested_by?.name ?? '—'}</TableCell>
+                                        <TableCell>
+                                            <StatusPill s={a.status} />
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            {/* {Number(a.can_approve) ? 'true' : 'false'} */}
+                                            {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
+                                                <div className="leading-tight">
+                                                    <span className="font-medium">{a.current_step_actor}</span>
+                                                </div>
+                                            ) : (
+                                                '—'
+                                            )}
+                                        </TableCell>
 
+                                        <TableCell>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {/* View */}
+                                                <Button variant="primary" asChild className="cursor-pointer">
+                                                    <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
+                                                        View
+                                                    </Link>
+                                                </Button>
 
-                                    <TableCell>
-                                        <div className="flex items-center justify-center gap-2">
-                                            {/* View */}
-                                            <Button 
-                                                variant="primary"
-                                                asChild 
-                                                className="cursor-pointer"
-                                            >
-                                                <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
-                                                    View
-                                                </Link>
-                                            </Button>
+                                                {a.status === 'pending_review' ? (
+                                                    a.current_step_is_external ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            title={a.current_step_label ?? 'Record External Approval'}
+                                                            className="cursor-pointer"
+                                                            onClick={() => openExternalModal(a)}
+                                                        >
+                                                            <FileSignature className="h-4 w-4" />
+                                                        </Button>
+                                                    ) : (
+                                                        <>
+                                                            {/* Approve */}
+                                                            <Button
+                                                                variant="blue"
+                                                                className="cursor-pointer"
+                                                                title={`Approve as ${a.current_step_actor}`}
+                                                                disabled={!a.can_approve}
+                                                                onClick={() => openApprove(a)}
+                                                            >
+                                                                {/* {Number(a.can_approve) ? 'true' : 'false'} */}
+                                                                Approve
+                                                            </Button>
 
-                                            {a.status === 'pending_review' ? (
-                                                a.current_step_is_external ? (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        title={a.current_step_label ?? 'Record External Approval'}
-                                                        className="cursor-pointer"
-                                                        onClick={() => openExternalModal(a)}
-                                                    >
-                                                        <FileSignature className="h-4 w-4" />
-                                                    </Button>
+                                                            {/* Reject */}
+                                                            <Button
+                                                                variant="destructive"
+                                                                className="cursor-pointer"
+                                                                title={`Reject as ${a.current_step_actor}`}
+                                                                disabled={!a.can_approve}
+                                                                onClick={() => openReject(a)}
+                                                            >
+                                                                Reject
+                                                            </Button>
+                                                        </>
+                                                    )
                                                 ) : (
-                                                    <>
-                                                    {/* Approve */}
-                                                    <Button
-                                                        variant="blue"
-                                                        className="cursor-pointer"
-                                                        title={`Approve as ${a.current_step_actor}`}
-                                                        disabled={!a.can_approve}
-                                                        onClick={() => openApprove(a)}
-                                                    >
-                                                        {/* {Number(a.can_approve) ? 'true' : 'false'} */}
-                                                        Approve
-                                                    </Button>
-
-                                                    {/* Reject */}
                                                     <Button
                                                         variant="destructive"
+                                                        title="Move back to Pending Review"
                                                         className="cursor-pointer"
-                                                        title={`Reject as ${a.current_step_actor}`}
-                                                        disabled={!a.can_approve}
-                                                        onClick={() => openReject(a)}
+                                                        // onClick={() => {
+                                                        //     if (!confirm('Move this back to Pending Review?')) return;
+                                                        //     router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
+                                                        // }}
+                                                        onClick={() => {
+                                                            setSelectedApprovalId(a.id);
+                                                            setShowReset(true);
+                                                        }}
                                                     >
-                                                        Reject
+                                                        Reset
                                                     </Button>
-                                                    </>
-                                                )
-                                                ) : (
-                                                <Button
-                                                    variant="destructive"
-                                                    title="Move back to Pending Review"
-                                                    className="cursor-pointer"
-                                                    // onClick={() => {
-                                                    //     if (!confirm('Move this back to Pending Review?')) return;
-                                                    //     router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
-                                                    // }}
-                                                    onClick={() => {
-                                                        setSelectedApprovalId(a.id);
-                                                        setShowReset(true);
-                                                    }}
-                                                >
-                                                    Reset
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )) : (
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-sm text-muted-foreground">No items found.</TableCell>
+                                    <TableCell colSpan={7} className="text-sm text-muted-foreground">
+                                        No items found.
+                                    </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -310,13 +337,15 @@ export default function ApprovalsIndex() {
                 <div className="mt-3 flex items-center justify-end">
                     <div className="flex gap-2">
                         {pageData.links.map((lnk, i) => (
-                            <Button key={i}
+                            <Button
+                                key={i}
                                 size="sm"
                                 variant={lnk.active ? 'default' : 'outline'}
                                 disabled={!lnk.url}
                                 className="cursor-pointer"
-                                onClick={() => lnk.url && router.visit(lnk.url, { preserveScroll: true, preserveState: true })}>
-                                {lnk.label.replace('&laquo;','Prev').replace('&raquo;','Next')}
+                                onClick={() => lnk.url && router.visit(lnk.url, { preserveScroll: true, preserveState: true })}
+                            >
+                                {lnk.label.replace('&laquo;', 'Prev').replace('&raquo;', 'Next')}
                             </Button>
                         ))}
                     </div>
@@ -326,31 +355,40 @@ export default function ApprovalsIndex() {
             <Dialog open={!!extFor} onOpenChange={(o) => !o && setExtFor(null)}>
                 <DialogContent>
                     <DialogHeader>
-                    <DialogTitle>{extFor?.label ?? 'External Approval'}</DialogTitle>
+                        <DialogTitle>{extFor?.label ?? 'External Approval'}</DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-3">
-                    <div className="grid gap-1.5">
-                        <Label htmlFor="extName">Signer Name (Dean/Head)</Label>
-                        <Input id="extName" value={extName} onChange={(e)=>setExtName(e.target.value)} placeholder="e.g., Dr. Juan Dela Cruz" />
-                    </div>
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="extName">Signer Name (Dean/Head)</Label>
+                            <Input id="extName" value={extName} onChange={(e) => setExtName(e.target.value)} placeholder="e.g., Dr. Juan Dela Cruz" />
+                        </div>
 
-                    <div className="grid gap-1.5">
-                        <Label htmlFor="extTitle">Title / Position (optional)</Label>
-                        <Input id="extTitle" value={extTitle} onChange={(e)=>setExtTitle(e.target.value)} placeholder="e.g., Dean, College of Engineering" />
-                    </div>
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="extTitle">Title / Position (optional)</Label>
+                            <Input
+                                id="extTitle"
+                                value={extTitle}
+                                onChange={(e) => setExtTitle(e.target.value)}
+                                placeholder="e.g., Dean, College of Engineering"
+                            />
+                        </div>
 
-                    <div className="grid gap-1.5">
-                        <Label htmlFor="extNotes">Notes (optional)</Label>
-                        <Textarea id="extNotes" value={extNotes} onChange={(e)=>setExtNotes(e.target.value)} placeholder="Any remarks..." />
-                    </div>
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="extNotes">Notes (optional)</Label>
+                            <Textarea id="extNotes" value={extNotes} onChange={(e) => setExtNotes(e.target.value)} placeholder="Any remarks..." />
+                        </div>
                     </div>
 
                     <DialogFooter className="gap-2">
-                    <DialogClose asChild>
-                        <Button variant="outline" className="cursor-pointer">Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={submitExternal} className="cursor-pointer">Record Approval</Button>
+                        <DialogClose asChild>
+                            <Button variant="outline" className="cursor-pointer">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button onClick={submitExternal} className="cursor-pointer">
+                            Record Approval
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -377,13 +415,17 @@ export default function ApprovalsIndex() {
                 onCancel={() => setShowReset(false)}
                 onConfirm={() => {
                     if (!selectedApprovalId) return;
-                    router.post(route('approvals.reset', selectedApprovalId), {}, {
-                    preserveScroll: true,
-                    onSuccess: () => setShowReset(false),
-                    });
+                    router.post(
+                        route('approvals.reset', selectedApprovalId),
+                        {},
+                        {
+                            preserveScroll: true,
+                            preserveState: false, // 👈 force Inertia to reload fresh props
+                            onSuccess: () => setShowReset(false),
+                        },
+                    );
                 }}
             />
-
         </AppLayout>
     );
 }

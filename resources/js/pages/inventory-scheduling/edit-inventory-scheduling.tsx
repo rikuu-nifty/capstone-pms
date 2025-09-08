@@ -26,14 +26,15 @@ export const EditInventorySchedulingModal = ({
     buildings,
     buildingRooms,
     unitOrDepartments,
-    users,
+    // users,
     statusOptions = ['pending_review', 'pending', 'completed', 'overdue', 'cancelled'],
 }: Props) => {
     const [form, setForm] = useState<InventorySchedulingFormData>({
         building_id: schedule.building?.id || '',
         building_room_id: schedule.building_room?.id || '',
         unit_or_department_id: schedule.unit_or_department?.id || '',
-        user_id: schedule.user?.id || '',
+        user_id: schedule.user?.id || '', // leave it as the original assigned user only
+        // user_id: schedule.user?.id || '',
         designated_employee: schedule.designated_employee?.id || '',
         assigned_by: schedule.assigned_by?.id || '',
         inventory_schedule: schedule.inventory_schedule || '', // month-only string (e.g., "2025-08")
@@ -136,22 +137,16 @@ export const EditInventorySchedulingModal = ({
                         {/* Assigned To / User */}
                         <div>
                             <Label>Assigned To (User)</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.user_id}
-                                onChange={(e) => handleChange('user_id', Number(e.target.value))}
-                            >
-                                <option value="">Select User</option>
-                                {users.map((u) => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border bg-gray-100 p-2"
+                                value={schedule.prepared_by?.name ?? '—'}
+                                disabled
+                            />
                         </div>
 
                         {/* Designated Employee */}
-                        <div>
+                        {/* <div>
                             <Label>Designated Employee</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -165,10 +160,10 @@ export const EditInventorySchedulingModal = ({
                                     </option>
                                 ))}
                             </select>
-                        </div>
+                        </div> */}
 
                         {/* Assigned By */}
-                        <div>
+                        {/* <div>
                             <Label>Assigned By</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -182,7 +177,7 @@ export const EditInventorySchedulingModal = ({
                                     </option>
                                 ))}
                             </select>
-                        </div>
+                        </div> */}
 
                         {/* Divider */}
                         <div className="col-span-2 border-t" />
@@ -227,7 +222,7 @@ export const EditInventorySchedulingModal = ({
 
                         {/* Received By */}
                         <div>
-                            <Label>Received By</Label>
+                            <Label>Inventory Copy Received By</Label>
                             <Input
                                 className="w-full rounded-lg border p-2"
                                 value={form.received_by}

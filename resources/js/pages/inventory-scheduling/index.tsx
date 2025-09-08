@@ -1,18 +1,17 @@
-import { DeleteScheduleModal } from '@/components/delete-inventory-scheduling';
-import { EditInventorySchedulingModal } from '@/components/edit-inventory-scheduling';
 import { PickerInput } from '@/components/picker-input';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ViewScheduleModal } from '@/components/view-inventory-scheduling';
 import AppLayout from '@/layouts/app-layout';
+import { DeleteScheduleModal } from '@/pages/inventory-scheduling/delete-inventory-scheduling';
+import { EditInventorySchedulingModal } from '@/pages/inventory-scheduling/edit-inventory-scheduling';
+import { ViewScheduleModal } from '@/pages/inventory-scheduling/view-inventory-scheduling';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { type VariantProps } from 'class-variance-authority';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { type VariantProps } from "class-variance-authority";
-import { badgeVariants } from "@/components/ui/badge";
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,6 +19,21 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/inventory-scheduling',
     },
 ];
+
+export type ApprovalStep = {
+    id: number;
+    code: string; // "vp_admin", "pmo_head"
+    status: 'pending' | 'approved' | 'rejected';
+    acted_at?: string | null;
+    actor?: { id: number; name: string } | null;
+};
+
+export type Approval = {
+    id: number;
+    form_type: string;
+    status: 'pending_review' | 'approved' | 'rejected';
+    steps: ApprovalStep[];
+};
 
 export type Building = {
     id: number;
@@ -46,6 +60,7 @@ export type User = {
     id: number;
     name: string;
     email: string;
+    role_name?: string;
 };
 
 // export type Account = {
@@ -55,15 +70,24 @@ export type User = {
 //     lname: string;
 //     email: string;
 // };
+
+export type Signatory = {
+    role_key: string;
+    name: string;
+    title: string;
+};
+
 export type PagePropsWithViewing = {
     viewing?: Scheduled | null;
     auth: {
         user: User;
     };
+    signatories: Record<string, Signatory>; // 👈 added
 };
 
 export type Scheduled = {
     id: number;
+    prepared_by?: User | null; // 👈 add this
     building: Building | null;
     building_room?: BuildingRoom | null;
     unit_or_department: UnitOrDepartment | null;
@@ -77,6 +101,7 @@ export type Scheduled = {
     received_by: string;
     scheduling_status: string;
     description: string;
+    approvals?: Approval[]; // 👈 add this
 };
 
 export type InventorySchedulingFormData = {
@@ -109,6 +134,7 @@ export default function InventorySchedulingIndex({
     users: User[];
 }) {
     const { props } = usePage<PagePropsWithViewing>();
+    const { signatories } = props; // 👈 extract signatories
     const currentUser = props.auth.user;
 
     const { data, setData, post, reset, processing, errors } = useForm<InventorySchedulingFormData>({
@@ -215,12 +241,12 @@ export default function InventorySchedulingIndex({
     );
 
     const schedulingStatusMap: Record<string, VariantProps<typeof badgeVariants>['variant']> = {
-  Pending_Review: 'Pending_Review',
-  Pending: 'Pending',
-  Completed: 'Completed',
-  Overdue: 'Overdue',
-  Cancelled: 'Cancelled',
-};
+        Pending_Review: 'Pending_Review',
+        Pending: 'Pending',
+        Completed: 'Completed',
+        Overdue: 'Overdue',
+        Cancelled: 'Cancelled',
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -253,18 +279,18 @@ export default function InventorySchedulingIndex({
                     </div>
                 </div>
 
-                <div className="overflow-x-auto rounded-lg-lg border">
+                <div className="rounded-lg-lg overflow-x-auto border">
                     <Table className="w-full table-auto">
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className=" text-center">ID</TableHead>
+                                <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="min-w-[160px] text-center">Building</TableHead>
                                 <TableHead className="min-w-[260px] text-center">Unit/Dept/Laboratories</TableHead>
                                 <TableHead className="min-w-[140px] text-center">Inventory Schedule</TableHead>
                                 <TableHead className="min-w-[180px] text-center">Actual Date of Inventory</TableHead>
-                                 <TableHead className="w-[140px] text-center">Checked By</TableHead> 
-                                <TableHead className="w-[140px] text-center">Verified By</TableHead> 
-                                 <TableHead className="w-[140px] text-center">Inventory Copy Received By</TableHead> 
+                                <TableHead className="w-[140px] text-center">Checked By</TableHead>
+                                <TableHead className="w-[140px] text-center">Verified By</TableHead>
+                                <TableHead className="w-[140px] text-center">Inventory Copy Received By</TableHead>
                                 <TableHead className="min-w-[120px] text-center">Status</TableHead>
                                 <TableHead className="min-w-[140px] text-center">Action</TableHead>
                             </TableRow>
@@ -293,15 +319,15 @@ export default function InventorySchedulingIndex({
 
                                     <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) ?? '—'}</TableCell>
 
-                                     <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell> 
-                                     <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell> 
-                                     <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell> 
+                                    <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell>
+                                    <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell>
+                                    <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell>
 
-<TableCell className="text-center align-middle">
-  <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
-    {item.scheduling_status.replace('_', ' ')}
-  </Badge>
-</TableCell>
+                                    <TableCell className="text-center align-middle">
+                                        <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
+                                            {item.scheduling_status.replace('_', ' ')}
+                                        </Badge>
+                                    </TableCell>
 
                                     <TableCell>
                                         <div className="flex items-center justify-center gap-2">
@@ -399,7 +425,13 @@ export default function InventorySchedulingIndex({
                 />
             )} */}
 
-            {viewModalVisible && selectedSchedule && <ViewScheduleModal schedule={selectedSchedule} onClose={closeView} />}
+            {viewModalVisible && selectedSchedule && (
+                <ViewScheduleModal
+                    schedule={selectedSchedule}
+                    onClose={closeView}
+                    signatories={signatories} // 👈 fixed
+                />
+            )}
 
             {/* Side Panel Modal with Slide Effect (Schedule Inventory) */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddScheduleInventory ? 'visible' : 'invisible'}`}>
@@ -527,7 +559,7 @@ export default function InventorySchedulingIndex({
                                 </div>
 
                                 {/* ASSIGNED-BY {user_id}*/}
-                                <div className="col-span-1 pt-0.5">
+                                {/* <div className="col-span-1 pt-0.5">
                                     <label className="mb-1 block font-medium">Assigned By</label>
                                     <select
                                         className="w-full rounded-lg border p-2"
@@ -542,10 +574,10 @@ export default function InventorySchedulingIndex({
                                         ))}
                                     </select>
                                     {errors.assigned_by && <p className="mt-1 text-xs text-red-500">{errors.assigned_by}</p>}
-                                </div>
+                                </div> */}
 
                                 {/* DESIGNATED-EMPLOYEE */}
-                                <div className="col-span-1 pt-0.5">
+                                {/* <div className="col-span-1 pt-0.5">
                                     <label className="mb-1 block font-medium">Designated Employee</label>
                                     <select
                                         className="w-full rounded-lg border p-2"
@@ -560,7 +592,7 @@ export default function InventorySchedulingIndex({
                                         ))}
                                     </select>
                                     {errors.designated_employee && <p className="mt-1 text-xs text-red-500">{errors.designated_employee}</p>}
-                                </div>
+                                </div> */}
 
                                 {/* CHECKED BY */}
                                 <div className="col-span-1 pt-0.5">
@@ -608,7 +640,7 @@ export default function InventorySchedulingIndex({
                                 <div className="col-span-2">
                                     <label className="mb-1 block font-medium">Remarks</label>
                                     <textarea
-                                        rows={10}
+                                        rows={15}
                                         className="w-full resize-none rounded-lg border p-2"
                                         placeholder="Enter Remarks"
                                         value={data.description}

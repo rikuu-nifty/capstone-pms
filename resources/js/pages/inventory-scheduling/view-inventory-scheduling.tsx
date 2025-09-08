@@ -32,12 +32,19 @@ const StatusPill = ({ status }: { status?: string | null }) => {
 };
 // --------------------------------------------------------------
 
+type Signatory = {
+    role_key: string;
+    name: string;
+    title: string;
+};
+
 type Props = {
     schedule: Scheduled & { actual_date_of_inventory?: string | null };
     onClose: () => void;
+    signatories: Record<string, Signatory>; // ✅ now dynamic signatories are injected from backend
 };
 
-export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
+export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => {
     const buildingCode = schedule.building?.code ?? '—';
     const buildingName = schedule.building?.name ?? '—';
     const room = schedule.building_room?.room?.toString() ?? '—';
@@ -48,7 +55,6 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="w-[min(1100px,95vw)] max-w-none overflow-hidden p-0 sm:max-w-[1100px] print:!w-full print:!max-w-none print:!overflow-visible print:!rounded-none print:!border-0 print:!p-0 print:!shadow-none">
                 <div className="print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
-                    {/* Header */}
                     {/* Header */}
                     <div className="relative flex items-center justify-between">
                         {/* Left side - Logo */}
@@ -93,19 +99,15 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                             </p>
                         </section>
 
-                       {/* Scheduling */}
+                        {/* Scheduling */}
                         <section className="w-full text-right print:break-inside-avoid">
-                        <h3 className="mb-2 text-base font-semibold text-gray-700 dark:text-gray-200">
-                            Scheduling
-                        </h3>
-                        <p className="text-sm">
-                            <span className="font-semibold">Inventory Month:</span>{" "}
-                            {formatMonth(schedule.inventory_schedule)}
-                        </p>
-                        <p className="text-sm">
-                            <span className="font-semibold">Actual Date:</span>{" "}
-                            {formatDateLong(schedule.actual_date_of_inventory)}
-                        </p>
+                            <h3 className="mb-2 text-base font-semibold text-gray-700 dark:text-gray-200">Scheduling</h3>
+                            <p className="text-sm">
+                                <span className="font-semibold">Inventory Month:</span> {formatMonth(schedule.inventory_schedule)}
+                            </p>
+                            <p className="text-sm">
+                                <span className="font-semibold">Actual Date:</span> {formatDateLong(schedule.actual_date_of_inventory)}
+                            </p>
                         </section>
                     </div>
 
@@ -121,7 +123,7 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr className="border-t border-gray-200 dark:border-gray-800 print:border-gray-300 text-center">
+                                <tr className="border-t border-gray-200 text-center dark:border-gray-800 print:border-gray-300">
                                     <td className="px-3 py-2">{schedule.designated_employee?.name ?? '—'}</td>
                                     <td className="px-3 py-2">{schedule.checked_by ?? '—'}</td>
                                     <td className="px-3 py-2">{schedule.verified_by ?? '—'}</td>
@@ -131,69 +133,86 @@ export const ViewScheduleModal = ({ schedule, onClose }: Props) => {
                         </table>
                     </div>
 
-                    {/* Assigned By & Remarks */}
-                    {/* <div className="mt-8 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
-                        <section className="print:break-inside-avoid">
-                            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Assigned By:</h3>
-                            <div className="mt-6 w-56 border-t border-black" />
-                            <div className="mt-1 font-bold">{schedule.assigned_by?.name ?? '—'}</div>
-                            <div className="text-[12px] text-gray-500 italic">[Role Here]</div>
-                        </section>
+                    {/* Assigned By & Remarks (kept commented out) */}
 
-                        <section className="md:text-right print:break-inside-avoid">
-                            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Remarks:</h3>
-                            <p className="mt-2 text-sm text-blue-700 italic dark:text-blue-300">{schedule.description?.trim() || '—'}</p>
-                        </section>
-                    </div> */}
-                    <div className="grid grid-cols-2 gap-x-5 gap-y-5 mt-5 text-sm">
-                    {/* Assigned By */}
-                    {(schedule.assigned_by?.name) && (
-                        <div className="text-center">
-                        <p className="font-semibold mb-8">Assigned By:</p>
-                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                        <p className="font-bold text-gray-700">{schedule.assigned_by.name}</p>
-                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
-                        </div>
-                    )}
+                    <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 text-sm">
+                        {/* Prepared By (signatory) */}
+                        {/* <div className="text-center">
+                            <p className="font-semibold mb-8">Prepared By:</p>
+                            <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                            <p className="font-bold text-gray-700 uppercase">{signatories['prepared_by']?.name ?? '—'}</p>
+                            <p className="text-xs text-gray-500 italic">{signatories['prepared_by']?.title ?? '—'}</p>
+                        </div> */}
 
-                    {/* Checked By */}
-                    {(schedule.checked_by) && (
+                        {/* Prepared By */}
                         <div className="text-center">
-                        <p className="font-semibold mb-8">Checked By:</p>
-                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                        <p className="font-bold text-gray-700">{schedule.checked_by}</p>
-                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
+                            <p className="mb-8 font-semibold">Prepared By:</p>
+                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-bold text-gray-700 uppercase">{schedule.prepared_by?.name ?? '—'}</p>
+                            <p className="text-xs text-gray-500 italic">{schedule.prepared_by?.role_name ?? 'Property Clerk'}</p>
                         </div>
-                    )}
+                        {/* Approved By (VP Admin) */}
+                        <div className="text-center">
+                            <p className="mb-8 font-semibold">Approved By:</p>
+                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'approved_by' && s.status === 'approved')
+                                    ? signatories['approved_by']?.name
+                                    : '—'}
+                            </p>
+                            <p className="text-xs text-gray-500 italic">{signatories['approved_by']?.title ?? 'VP for Administration'}</p>
+                        </div>
 
-                    {/* Verified By */}
-                    {(schedule.verified_by) && (
+                        {/* Received By (Internal Auditor) – always visible */}
                         <div className="text-center">
-                        <p className="font-semibold mb-8">Verified By:</p>
-                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                        <p className="font-bold text-gray-700">{schedule.verified_by}</p>
-                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
+                            <p className="mb-8 font-semibold">Received By:</p>
+                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-bold text-gray-700 uppercase">{signatories['received_by']?.name ?? '—'}</p>
+                            <p className="text-xs text-gray-500 italic">{signatories['received_by']?.title ?? 'Internal Auditor'}</p>
                         </div>
-                    )}
 
-                    {/* Received By */}
-                    {(schedule.received_by) && (
+                        {/* Noted By (PMO Head) */}
                         <div className="text-center">
-                        <p className="font-semibold mb-8">Received By:</p>
-                        <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                        <p className="font-bold text-gray-700">{schedule.received_by}</p>
-                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
+                            <p className="mb-8 font-semibold">Noted By:</p>
+                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'noted_by' && s.status === 'approved')
+                                    ? signatories['noted_by']?.name
+                                    : '—'}
+                            </p>
+                            <p className="text-xs text-gray-500 italic">{signatories['noted_by']?.title ?? 'Head, Property Management'}</p>
                         </div>
-                    )}
+                        {/* Approved By (signatory) */}
+                        {/* <div className="text-center">
+                            <p className="mb-8 font-semibold">Approved By:</p>
+                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-bold text-gray-700 uppercase">{signatories['approved_by']?.name ?? '—'}</p>
+                            <p className="text-xs text-gray-500 italic">{signatories['approved_by']?.title ?? '—'}</p>
+                        </div> */}
+
+                        {/* Received By (signatory) */}
+                        {/* <div className="text-center">
+                            <p className="mb-8 font-semibold">Received By:</p>
+                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-bold text-gray-700 uppercase">{signatories['received_by']?.name ?? '—'}</p>
+                            <p className="text-xs text-gray-500 italic">{signatories['received_by']?.title ?? '—'}</p>
+                        </div> */}
+
+                        {/* Noted By (signatory) */}
+                        {/* <div className="text-center">
+                            <p className="mb-8 font-semibold">Noted By:</p>
+                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-bold text-gray-700 uppercase">{signatories['noted_by']?.name ?? '—'}</p>
+                            <p className="text-xs text-gray-500 italic">{signatories['noted_by']?.title ?? '—'}</p>
+                        </div> */}
                     </div>
-
 
                     {/* Actions */}
                     <div className="mt-8 text-center print:hidden">
-                        {(schedule.scheduling_status).toLowerCase() !== 'pending_review' && (
+                        {schedule.scheduling_status.toLowerCase() !== 'pending_review' && (
                             <Button className="mr-2" variant="secondary" onClick={() => window.print()}>
-                            🖨️ Print Form
-                        </Button>
+                                🖨️ Print Form
+                            </Button>
                         )}
                         <DialogClose asChild>
                             <Button variant="outline">Close</Button>

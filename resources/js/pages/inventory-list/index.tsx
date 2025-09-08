@@ -254,7 +254,7 @@ export default function InventoryListIndex({
     const [receiptAssets, setReceiptAssets] = useState<Asset[]>([]);
     const [receiptMemoNo, setReceiptMemoNo] = useState<string | number>('');
 
-    // Webcam 
+    // Webcam
     const [showWebcam, setShowWebcam] = useState(false);
 
     // ✅ Placeholder formula: Straight-line depreciation // 20% per year.
@@ -1033,88 +1033,84 @@ export default function InventoryListIndex({
                                 />
                             </div>
 
-                          <div className="col-span-2">
-  <label className="mb-1 block font-medium">Asset Image</label>
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Asset Image</label>
 
-  {showWebcam ? (
-    <WebcamCapture
-      onCapture={(file) => {
-        setData("image", file);   // save new captured photo
-        setShowWebcam(false);     // close webcam after capture
-      }}
-      onCancel={() => setShowWebcam(false)}
-    />
-  ) : (
-    <>
-      <div className="flex gap-2">
-        {/* File Upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={(e) => {
-            if (e.target.files?.[0]) {
-              setData("image", e.target.files[0]);
-            }
-          }}
-          className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
-            file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
-            file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
-        />
+                                {showWebcam ? (
+                                    <WebcamCapture
+                                        onCapture={(file) => {
+                                            setData('image', file); // save new captured photo
+                                            setShowWebcam(false); // close webcam after capture
+                                        }}
+                                        onCancel={() => setShowWebcam(false)}
+                                    />
+                                ) : (
+                                    <>
+                                        <div className="flex gap-2">
+                                            {/* File Upload */}
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                onChange={(e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        setData('image', e.target.files[0]);
+                                                    }
+                                                }}
+                                                className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                            />
 
-        {/* Open Camera */}
-        <Button type="button" onClick={() => setShowWebcam(true)}>
-          Use Camera
-        </Button>
-      </div>
+                                            {/* Open Camera */}
+                                            <Button type="button" onClick={() => setShowWebcam(true)}>
+                                                Use Camera
+                                            </Button>
+                                        </div>
 
-      {/* Preview */}
-      {data.image && (
-        <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
-          <img
-            src={URL.createObjectURL(data.image as File)}
-            alt="Preview"
-            className="h-20 w-20 rounded-md border object-cover"
-          />
-          <div className="flex flex-col gap-1">
-            <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">
-              {(data.image as File).name}
-            </span>
-            <div className="flex gap-2">
-              {/* Remove photo */}
-              <button
-                type="button"
-                onClick={() => {
-                  setData("image", null);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                }}
-                className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
-              >
-                Remove
-              </button>
+                                        {/* Preview */}
+                                        {data.image && (
+                                            <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
+                                                <img
+                                                    src={URL.createObjectURL(data.image as File)}
+                                                    alt="Preview"
+                                                    className="h-20 w-20 rounded-md border object-cover"
+                                                />
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">
+                                                        {(data.image as File).name}
+                                                    </span>
+                                                    <div className="flex gap-2">
+                                                        {/* Remove photo */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setData('image', null);
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                            }}
+                                                            className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                                                        >
+                                                            Remove
+                                                        </button>
 
-              {/* Retake photo → clears old one first */}
-              <button
-                type="button"
-                onClick={() => {
-                  setData("image", null); // clear current photo
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                  setShowWebcam(true); // reopen webcam
-                }}
-                className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-600"
-              >
-                Retake
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  )}
-</div>
-
-
+                                                        {/* Retake photo → clears old one first */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setData('image', null); // clear current photo
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                                setShowWebcam(true); // reopen webcam
+                                                            }}
+                                                            className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-600"
+                                                        >
+                                                            Retake
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
 
                             <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Description</label>

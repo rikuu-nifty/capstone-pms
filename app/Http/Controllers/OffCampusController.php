@@ -248,7 +248,7 @@ class OffCampusController extends Controller
 public function destroy(Request $request, OffCampus $offCampus)
 {
     // Track who archived it (requires nullable off_campuses.deleted_by column)
-    $offCampus->forceFill(['deleted_by' => $request->user()->id ?? null])->save();
+    $offCampus->forceFill(['deleted_by_id' => $request->user()->id ?? null])->save();
 
     // Archive parent (children are archived in model events)
     $offCampus->delete();

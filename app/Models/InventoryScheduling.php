@@ -11,6 +11,7 @@ class InventoryScheduling extends Model
     use HasFormApproval;
 
     protected $fillable = [
+        'prepared_by_id',
         'building_id',
         'building_room_id',
         'unit_or_department_id',
@@ -25,6 +26,21 @@ class InventoryScheduling extends Model
         'scheduling_status',
         'description',
     ];
+
+    // public function approvals()
+    // {
+    //     return $this->morphMany(FormApproval::class, 'approvable');
+    // }
+
+    public function approvals()
+{
+    return $this->morphMany(FormApproval::class, 'approvable')->with('steps');
+}
+
+    public function preparedBy()
+    {
+        return $this->belongsTo(User::class, 'prepared_by_id');
+    }
 
     // Inventory schedule belongs to a building
     public function building()

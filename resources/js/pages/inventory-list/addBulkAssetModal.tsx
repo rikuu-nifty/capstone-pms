@@ -237,113 +237,105 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
 
                         {/* Quantity */}
                         <div className="col-span-2">
-                          <label className="mb-1 block font-medium">Quantity</label>
-                          <input
-                            type="number"
-                            min="1"
-                            className="w-full rounded-lg border p-2"
-                            value={data.quantity}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setData("quantity", val);
+                            <label className="mb-1 block font-medium">Quantity</label>
+                            <input
+                                type="number"
+                                min="1"
+                                className="w-full rounded-lg border p-2"
+                                value={data.quantity}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setData('quantity', val);
 
-                              if (enableMultipleSerials) {
-                                const newQty = Number(val) || 0;
-                                let newSerials = [...data.serial_numbers];
+                                    if (enableMultipleSerials) {
+                                        const newQty = Number(val) || 0;
+                                        let newSerials = [...data.serial_numbers];
 
-                                // Ensure at least `qty` fields exist
-                                if (newQty > newSerials.length) {
-                                  newSerials = [
-                                    ...newSerials,
-                                    ...Array(newQty - newSerials.length).fill(""),
-                                  ];
-                                }
+                                        // Ensure at least `qty` fields exist
+                                        if (newQty > newSerials.length) {
+                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
+                                        }
 
-                                setData("serial_numbers", newSerials);
-                              }
-                            }}
-                          />
+                                        setData('serial_numbers', newSerials);
+                                    }
+                                }}
+                            />
                         </div>
 
                         {/* Enable Multiple Serials */}
                         <div className="col-span-2 flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={enableMultipleSerials}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setEnableMultipleSerials(checked);
+                            <input
+                                type="checkbox"
+                                checked={enableMultipleSerials}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setEnableMultipleSerials(checked);
 
-                              if (checked) {
-                                const newQty = Number(data.quantity) || 0;
-                                let newSerials = [...data.serial_numbers];
+                                    if (checked) {
+                                        const newQty = Number(data.quantity) || 0;
+                                        let newSerials = [...data.serial_numbers];
 
-                                if (newQty > newSerials.length) {
-                                  newSerials = [
-                                    ...newSerials,
-                                    ...Array(newQty - newSerials.length).fill(""),
-                                  ];
-                                }
+                                        if (newQty > newSerials.length) {
+                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
+                                        }
 
-                                setData("serial_numbers", newSerials);
-                              } else {
-                                setData("serial_numbers", []);
-                              }
-                            }}
-                          />
-                          <span>Enable multiple serial numbers</span>
+                                        setData('serial_numbers', newSerials);
+                                    } else {
+                                        setData('serial_numbers', []);
+                                    }
+                                }}
+                            />
+                            <span>Enable multiple serial numbers</span>
                         </div>
 
-                       {/* Serial Numbers Section */}
-{enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
-  <div className="col-span-2 space-y-2">
-    <p className="text-xs text-gray-600">
-      {data.serial_numbers.length > Number(data.quantity)
-        ? (
-          <>
-            You entered <b>{data.serial_numbers.length}</b> serials out of{" "}
-            <b>{data.quantity}</b> required.
-          </>
-        ) : (
-          <>
-            You can enter <b>{data.quantity}</b> different serial number
-            {Number(data.quantity) > 1 ? "s" : ""}.
-          </>
-        )}
-    </p>
+                        {/* Serial Numbers Section */}
+                        {enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
+                            <div className="col-span-2 space-y-2">
+                                <p className="text-xs text-gray-600">
+                                    {data.serial_numbers.length > Number(data.quantity) ? (
+                                        <>
+                                            You entered <b>{data.serial_numbers.length}</b> serials out of <b>{data.quantity}</b> required.
+                                        </>
+                                    ) : (
+                                        <>
+                                            You can enter <b>{data.quantity}</b> different serial number
+                                            {Number(data.quantity) > 1 ? 's' : ''}.
+                                        </>
+                                    )}
+                                </p>
 
-    {data.serial_numbers.map((sn, i) => (
-      <input
-        key={i}
-        type="text"
-        placeholder={`Serial ${i + 1}`}
-        className="w-full rounded-lg border p-2"
-        value={sn}
-        onChange={(e) => {
-          const copy = [...data.serial_numbers];
-          copy[i] = e.target.value;
-          setData("serial_numbers", copy);
-        }}
-      />
-    ))}
-  </div>
-)}
+                                {data.serial_numbers.map((sn, i) => (
+                                    <input
+                                        key={i}
+                                        type="text"
+                                        placeholder={`Serial No. ${i + 1}`}
+                                        className="w-full rounded-lg border p-2"
+                                        value={sn}
+                                        onChange={(e) => {
+                                            const copy = [...data.serial_numbers];
+                                            copy[i] = e.target.value;
+                                            setData('serial_numbers', copy);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        )}
 
-{/* Add More Button — ✅ shows only if multiple serials enabled */}
-{enableMultipleSerials && (
-  <div className="col-span-2">
-    <Button
-      type="button"
-      onClick={() => {
-        const newSerials = [...data.serial_numbers, ""];
-        setData("serial_numbers", newSerials);
-        setData("quantity", newSerials.length.toString()); // ✅ sync qty
-      }}
-    >
-      Add Another Serial
-    </Button>
-  </div>
-)}
+                        {/* Add More Button — ✅ shows only if multiple serials enabled */}
+                        {enableMultipleSerials && (
+                            <div className="col-span-2">
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        const newSerials = [...data.serial_numbers, ''];
+                                        setData('serial_numbers', newSerials);
+                                        setData('quantity', newSerials.length.toString()); // ✅ sync qty
+                                    }}
+                                >
+                                    Add Another Serial
+                                </Button>
+                            </div>
+                        )}
 
                         {/* Unit Cost */}
                         <div className="col-span-1">
@@ -459,9 +451,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                                     setData('image', e.target.files[0]);
                                                 }
                                             }}
-                                            className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
-                                                file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
-                                                file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                            className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                         />
 
                                         {/* Open camera */}
