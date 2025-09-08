@@ -116,7 +116,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         <table className="w-full text-sm">
                             <thead className="bg-gray-100 text-gray-700 dark:bg-neutral-900 dark:text-gray-300 print:bg-gray-100 print:text-black">
                                 <tr>
-                                    <th className="px-3 py-2 text-center font-medium">Designated Employee</th>
+                                    {/* <th className="px-3 py-2 text-center font-medium">Designated Employee</th> */}
                                     <th className="px-3 py-2 text-center font-medium">Checked By</th>
                                     <th className="px-3 py-2 text-center font-medium">Verified By</th>
                                     <th className="px-3 py-2 text-center font-medium">Received By</th>
@@ -124,7 +124,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             </thead>
                             <tbody>
                                 <tr className="border-t border-gray-200 text-center dark:border-gray-800 print:border-gray-300">
-                                    <td className="px-3 py-2">{schedule.designated_employee?.name ?? '—'}</td>
+                                    {/* <td className="px-3 py-2">{schedule.designated_employee?.name ?? '—'}</td> */}
                                     <td className="px-3 py-2">{schedule.checked_by ?? '—'}</td>
                                     <td className="px-3 py-2">{schedule.verified_by ?? '—'}</td>
                                     <td className="px-3 py-2">{schedule.received_by ?? '—'}</td>

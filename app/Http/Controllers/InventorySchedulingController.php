@@ -174,6 +174,13 @@ class InventorySchedulingController extends Controller
         // Convert '' -> null for nullable FKs
         $data = array_map(fn($v) => $v === '' ? null : $v, $data);
 
+         // 👇 Special case: if scheduling_status set to Pending_Review, reset approvals
+    if (strtolower($data['scheduling_status']) === 'pending_review') {
+        $inventoryScheduling->approvals()->each(function ($approval) {
+            $approval->resetToPending(); // 👈 resets all approval steps
+        });
+    }
+
         $inventoryScheduling->update($data);
 
         $inventoryScheduling->load([
