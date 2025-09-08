@@ -123,9 +123,9 @@ export default function TurnoverDisposalEditModal({
             show={show}
             onClose={handleClose}
             title={`Edit ${formatEnums(turnoverDisposal.type)} Record #${turnoverDisposal.id}`}
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit}   // ✅ pass back into EditModal
             processing={processing}
-            >
+        >
             {/* Type */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Type</label>
@@ -330,7 +330,6 @@ export default function TurnoverDisposalEditModal({
                     <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
                 )}
             </div>
-
 
             {/* Remarks */}
             <div className="col-span-2">

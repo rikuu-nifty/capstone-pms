@@ -36,6 +36,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
         asset_model_id: '',
         image: null as File | null,
         quantity: '',
+        serial_no: '',  
         serial_numbers: [] as string[], // ✅ for multiple serials
         status: '',
         mode: 'bulk',
@@ -148,13 +149,19 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             </select>
                         </div>
 
+                        {/* ✅ Status (required) */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Status</label>
-                            <select className="w-full rounded-lg border p-2" value={data.status} onChange={(e) => setData('status', e.target.value)}>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.status}
+                                onChange={(e) => setData('status', e.target.value)}
+                            >
                                 <option value="">Select Status</option>
                                 <option value="active">Active</option>
                                 <option value="archived">Archived</option>
                             </select>
+                            {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                         </div>
 
                         {/* ✅ Assigned To */}
@@ -176,6 +183,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Date Purchased</label>
                             <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
+                            {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                         </div>
                         {/* ✅ Maintenance Due Date */}
                         <div className="col-span-1">
@@ -183,6 +191,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
                         </div>
 
+                        {/* ✅ Asset Type (required) */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Asset Type</label>
                             <select
@@ -194,9 +203,10 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                 <option value="fixed">Fixed</option>
                                 <option value="not_fixed">Not Fixed</option>
                             </select>
+                            {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                         </div>
 
-                        {/* Category + Name */}
+                        {/* ✅ Category (required) */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Asset Category</label>
                             <select
@@ -211,6 +221,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                     </option>
                                 ))}
                             </select>
+                            {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
                         </div>
 
                         <div className="col-span-1">
@@ -222,6 +233,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                 value={data.asset_name}
                                 onChange={(e) => setData('asset_name', e.target.value)}
                             />
+                            {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
                         </div>
 
                         {/* Supplier + Quantity */}
@@ -233,6 +245,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                 value={data.supplier}
                                 onChange={(e) => setData('supplier', e.target.value)}
                             />
+                            {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
                         </div>
 
                         {/* Quantity */}
@@ -260,6 +273,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                     }
                                 }}
                             />
+                            {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
                         </div>
 
                         {/* Enable Multiple Serials */}
@@ -288,22 +302,23 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                             <span>Enable multiple serial numbers</span>
                         </div>
 
-                        {/* Serial Numbers Section */}
+                        {/* ✅ Serial Number (required if not using bulk serials) */}
+                        {!enableMultipleSerials && (
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Serial Number</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.serial_numbers[0] || ''}
+                                    onChange={(e) => setData('serial_numbers', [e.target.value])}
+                                />
+                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
+                            </div>
+                        )}
+
+                        {/* Serial Numbers Section (bulk) */}
                         {enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
                             <div className="col-span-2 space-y-2">
-                                <p className="text-xs text-gray-600">
-                                    {data.serial_numbers.length > Number(data.quantity) ? (
-                                        <>
-                                            You entered <b>{data.serial_numbers.length}</b> serials out of <b>{data.quantity}</b> required.
-                                        </>
-                                    ) : (
-                                        <>
-                                            You can enter <b>{data.quantity}</b> different serial number
-                                            {Number(data.quantity) > 1 ? 's' : ''}.
-                                        </>
-                                    )}
-                                </p>
-
                                 {data.serial_numbers.map((sn, i) => (
                                     <input
                                         key={i}
@@ -318,22 +333,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                         }}
                                     />
                                 ))}
-                            </div>
-                        )}
-
-                        {/* Add More Button — ✅ shows only if multiple serials enabled */}
-                        {enableMultipleSerials && (
-                            <div className="col-span-2">
-                                <Button
-                                    type="button"
-                                    onClick={() => {
-                                        const newSerials = [...data.serial_numbers, ''];
-                                        setData('serial_numbers', newSerials);
-                                        setData('quantity', newSerials.length.toString()); // ✅ sync qty
-                                    }}
-                                >
-                                    Add Another Serial
-                                </Button>
+                                {errors.serial_numbers && <p className="mt-1 text-xs text-red-500">{errors.serial_numbers}</p>}
                             </div>
                         )}
 
@@ -353,6 +353,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                     setData('depreciation_value', depreciation);
                                 }}
                             />
+                            {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
                         </div>
                         {/* Depreciation Value */}
                         <div className="col-span-1">
@@ -382,6 +383,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                     </option>
                                 ))}
                             </select>
+                            {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
                         </div>
 
                         {/* Model + Memo */}
@@ -400,6 +402,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                     </option>
                                 ))}
                             </select>
+                            {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                         </div>
 
                         <div className="col-span-1">
@@ -410,6 +413,7 @@ export function AddBulkAssetModalForm({ open, onClose, buildings, buildingRooms,
                                 value={data.memorandum_no}
                                 onChange={(e) => setData('memorandum_no', e.target.value)}
                             />
+                            {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
                         </div>
 
                         {/* ❌ Removed Transfer Status select */}

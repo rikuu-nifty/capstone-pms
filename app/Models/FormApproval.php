@@ -303,16 +303,15 @@ class FormApproval extends Model
                 }
             },
             
-            InventoryScheduling::class => function ($model, $status, $approved) {
-                if ($status === 'reset') {
-                    $model->update(['scheduling_status' => 'Pending_Review']);
-                } elseif ($status === 'rejected') {
-                    $model->update(['scheduling_status' => 'Cancelled']);
-                } elseif ($approved) {
-                    $model->update(['scheduling_status' => 'Pending']);
-                }
-            },
-            
+          InventoryScheduling::class => function ($model, $status, $approved) {
+            if ($status === 'reset') {
+                $model->update(['scheduling_status' => 'Pending_Review']);
+            } elseif ($status === 'rejected') {
+                $model->update(['scheduling_status' => 'Cancelled']);
+            } elseif ($approved) {
+                $model->update(['scheduling_status' => 'Pending']);
+            }
+        },
             Transfer::class => function ($model, $status, $approved) {
                 if ($status === 'rejected') {
                     $model->update(['status' => 'cancelled']);

@@ -12,6 +12,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { type VariantProps } from 'class-variance-authority';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Asset } from '../inventory-list';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -102,6 +103,7 @@ export type Scheduled = {
     scheduling_status: string;
     description: string;
     approvals?: Approval[]; // 👈 add this
+    isFullyApproved?: boolean; // 👈 add this
 };
 
 export type InventorySchedulingFormData = {
@@ -122,12 +124,15 @@ export type InventorySchedulingFormData = {
 
 export default function InventorySchedulingIndex({
     schedules = [],
+    assets = [], // 👈 default empty array
     buildings = [],
     buildingRooms = [],
     unitOrDepartments = [],
     users = [],
 }: {
     schedules: Scheduled[];
+    viewing?: Scheduled; // 👈 may exist when opening View modal
+    assets?: Asset[]; // 👈 fixed type         // 👈 new, will be passed for view modal
     buildings: Building[];
     buildingRooms: BuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
@@ -428,8 +433,9 @@ export default function InventorySchedulingIndex({
             {viewModalVisible && selectedSchedule && (
                 <ViewScheduleModal
                     schedule={selectedSchedule}
+                    assets={assets ?? []} // 👈 pass assets safely
                     onClose={closeView}
-                    signatories={signatories} // 👈 fixed
+                    signatories={signatories}
                 />
             )}
 
@@ -548,12 +554,21 @@ export default function InventorySchedulingIndex({
                                         value={data.scheduling_status}
                                         onChange={(e) => setData('scheduling_status', e.target.value)}
                                     >
-                                        <option value="">Select Status</option>
                                         <option value="Pending_Review">Pending Review</option>
                                         <option value="Pending">Pending</option>
-                                        <option value="Completed">Completed</option>
                                         <option value="Overdue">Overdue</option>
-                                        <option value="Cancelled">Cancelled</option>
+                                           <option
+                                            value="Completed"
+                                            disabled // 👈 disable until approvals are complete
+                                        >
+                                            Completed
+                                        </option>
+                                        <option
+                                            value="Cancelled"
+                                            disabled // 👈 always disabled, handled by Form Approval
+                                        >
+                                            Cancelled
+                                        </option>
                                     </select>
                                     {errors.scheduling_status && <p className="mt-1 text-xs text-red-500">{errors.scheduling_status}</p>}
                                 </div>

@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
 import { formatUnderscore } from '@/types/custom-index';
+import { Asset } from '../inventory-list';
 
 const formatMonth = (ym?: string | null) => {
     if (!ym) return '—';
@@ -41,10 +42,11 @@ type Signatory = {
 type Props = {
     schedule: Scheduled & { actual_date_of_inventory?: string | null };
     onClose: () => void;
+    assets: Asset[]; // 👈 add this
     signatories: Record<string, Signatory>; // ✅ now dynamic signatories are injected from backend
 };
 
-export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => {
+export const ViewScheduleModal = ({ schedule, onClose, assets, signatories }: Props) => {
     const buildingCode = schedule.building?.code ?? '—';
     const buildingName = schedule.building?.name ?? '—';
     const room = schedule.building_room?.room?.toString() ?? '—';
@@ -111,24 +113,36 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         </section>
                     </div>
 
-                    {/* People Table */}
-                    <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800 print:border-gray-300">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-100 text-gray-700 dark:bg-neutral-900 dark:text-gray-300 print:bg-gray-100 print:text-black">
+                    {/* Assets Table */}
+                    <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                        <table className="w-full text-center text-sm">
+                            <thead className="bg-gray-100 text-gray-700">
                                 <tr>
-                                    {/* <th className="px-3 py-2 text-center font-medium">Designated Employee</th> */}
-                                    <th className="px-3 py-2 text-center font-medium">Checked By</th>
-                                    <th className="px-3 py-2 text-center font-medium">Verified By</th>
-                                    <th className="px-3 py-2 text-center font-medium">Received By</th>
+                                    <th className="px-3 py-2 text-center font-medium">ID</th>
+                                    <th className="px-3 py-2 text-center font-medium">Asset Name</th>
+                                    <th className="px-3 py-2 text-center font-medium">Serial No.</th>
+                                    <th className="px-3 py-2 text-center font-medium">Category</th>
+                                    <th className="px-3 py-2 text-center font-medium">Model / Brand</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr className="border-t border-gray-200 text-center dark:border-gray-800 print:border-gray-300">
-                                    {/* <td className="px-3 py-2">{schedule.designated_employee?.name ?? '—'}</td> */}
-                                    <td className="px-3 py-2">{schedule.checked_by ?? '—'}</td>
-                                    <td className="px-3 py-2">{schedule.verified_by ?? '—'}</td>
-                                    <td className="px-3 py-2">{schedule.received_by ?? '—'}</td>
-                                </tr>
+                                {assets.length > 0 ? (
+                                    assets.map((a) => (
+                                        <tr key={a.id} className="border-t">
+                                            <td className="px-3 py-2">{a.id}</td>
+                                            <td className="px-3 py-2">{a.asset_name}</td>
+                                            <td className="px-3 py-2">{a.serial_no || '—'}</td>
+                                            <td className="px-3 py-2">{a.category?.name || '—'}</td>
+                                            <td className="px-3 py-2">{a.asset_model ? `${a.asset_model.brand} ${a.asset_model.model}` : '—'}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">
+                                            No assets found for this building/room/department.
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

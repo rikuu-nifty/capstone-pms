@@ -28,9 +28,9 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'unit_or_department_id' => ['nullable', 'exists:unit_or_departments,id'],
             // 'building_room' => 'nullable|string|max:255',
             'building_room_id' => ['nullable', 'exists:building_rooms,id'],
-            'category_id' => 'nullable|integer|exists:categories,id',
+            'category_id'   => 'required|integer|exists:categories,id',
             'date_purchased' => 'required|date',
-            'asset_type' => 'nullable|in:fixed,not_fixed',
+            'asset_type' => 'required|in:fixed,not_fixed',
             'asset_name' =>  'required|string|max:255',
             'brand' =>       'required|string|max:255',
 
@@ -41,7 +41,7 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'unit_cost' =>   'required|numeric|min:0|max:999999.99',
 
             // ✅ Single mode: serial_no is required; Bulk mode: can be nullable
-            'serial_no' =>   'nullable|string|max:255',
+            'serial_no'     => 'required|string|max:255',
 
             // ✅ Bulk mode: array of serials
             'serial_numbers'   => 'array',
@@ -51,7 +51,8 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             // 🚫 removed transfer_status validation
             'description' =>     'nullable|string|max:1000',
             'memorandum_no' =>  'required|numeric|min:0',
-            'status' => 'nullable|in:active,archived',
+
+            'status' => 'required|in:active,archived', // ✅ Validation for status
 
             // ✅ New: Image upload
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
@@ -63,7 +64,7 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'depreciation_value' => 'nullable|numeric|min:0',
 
             // ✅ New
-             'assigned_to' => 'nullable|string|max:255',
+            'assigned_to' => 'nullable|string|max:255',
         ];
     }
 
@@ -74,6 +75,24 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
     public function messages(): array 
     {
         return [
+
+            // ✅ Asset Category
+'category_id.required' => 'Please select the asset category.',
+'category_id.integer'  => 'The asset category must be a valid number.',
+'category_id.exists'   => 'The selected asset category does not exist.',
+
+
+// ✅ Serial Number
+'serial_no.required' => 'Please provide the serial number of the asset.',
+'serial_no.string'   => 'The serial number must be a valid string.',
+'serial_no.max'      => 'The serial number may not be greater than 255 characters.',
+
+
+// ✅ Unit Cost
+'unit_cost.required' => 'Please provide the unit cost of the asset.',
+'unit_cost.numeric'  => 'The unit cost must be a valid number.',
+'unit_cost.min'      => 'The unit cost must be at least 0.',
+'unit_cost.max'      => 'The unit cost may not exceed 999,999.99.',
             // 'building_id.required' => 'Please select a building.',
             'asset_model_id.required' => 'Please specify the model of the asset.',
 
@@ -142,7 +161,6 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'assigned_to.string' => 'The assigned to field must be a valid string.',
             'assigned_to.max'    => 'The assigned to field may not be greater than 255 characters.',
 
-
             // ✅ Image messages
             'image.image' => 'The uploaded file must be an image.',
             'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif.',
@@ -150,6 +168,14 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
 
             // ✅ Mode messages
             'mode.in' => 'The mode must be either single or bulk.',
+
+            // ✅ Status messages
+            'status.required' => 'Please select the status of the asset.',
+            'status.in' => 'The status must be either Active or Archived.',
+
+            'asset_type.required' => 'Please select the type of asset.',
+            'asset_type.in'       => 'The asset type must be either Fixed or Not Fixed.',
+           
         ];
     }
 }

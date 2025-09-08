@@ -63,6 +63,7 @@ class InventoryListController extends Controller
             'buildingRoom',
             'transfer', // ✅ eager load transfer
         ]);
+        
 
         return Inertia::render('inventory-list/index', array_merge(
             $this->pageProps(),
@@ -198,7 +199,7 @@ class InventoryListController extends Controller
      */
     public function show(inventoryList $inventoryList)
     {
-        //
+        
     }
 
     /**

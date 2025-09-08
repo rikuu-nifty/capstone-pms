@@ -1,13 +1,13 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
-import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ViewAssetModal } from '@/components/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
+import { EditAssetModalForm } from '@/pages/inventory-list/edit-asset-modal-form';
+import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import { type BreadcrumbItem } from '@/types';
 import { ucwords } from '@/types/custom-index';
 import { Head, router, useForm } from '@inertiajs/react';
@@ -478,7 +478,7 @@ export default function InventoryListIndex({
                             <TableRow className="bg-muted text-foreground">
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Asset Name</TableHead>
-                                <TableHead className="text-center">Image</TableHead>
+                                <TableHead className="text-center">Asset Image</TableHead>
                                 <TableHead className="text-center">Brand</TableHead>
                                 <TableHead className="text-center">Date Purchased</TableHead>
                                 <TableHead className="text-center">Asset Type</TableHead>
@@ -808,6 +808,21 @@ export default function InventoryListIndex({
                                 </select>
                             </div>
 
+                            {/* <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Status</label>
+                                <select
+                                    className={`w-full rounded-lg border p-2 ${errors.status ? 'border-red-500' : 'border-gray-300'}`}
+                                    value={data.status}
+                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived')}
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+
+                                {errors.status && <p className="mt-1 text-sm text-red-500">{errors.status}</p>}
+                            </div> */}
+
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Status</label>
                                 <select
@@ -819,6 +834,8 @@ export default function InventoryListIndex({
                                     <option value="active">Active</option>
                                     <option value="archived">Archived</option>
                                 </select>
+
+                                {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                             </div>
 
                             <div className="col-span-2">
@@ -858,7 +875,7 @@ export default function InventoryListIndex({
                                     <option value="fixed">Fixed</option>
                                     <option value="not_fixed">Not Fixed</option>
                                 </select>
-                                {/* {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>} */}
+                                {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
@@ -945,6 +962,7 @@ export default function InventoryListIndex({
                                         setData('depreciation_value', depreciation);
                                     }}
                                 />
+                                {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
                             </div>
 
                             {/* Depreciation Value */}

@@ -4,10 +4,9 @@ import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { router } from '@inertiajs/react';
-import { useState } from 'react';
-
 import type { Building, BuildingRoom, InventorySchedulingFormData, Scheduled, UnitOrDepartment, User } from '@/pages/inventory-scheduling/index';
+import { router,  } from '@inertiajs/react';
+import { useState } from 'react';
 
 type Props = {
     schedule: Scheduled;
@@ -28,6 +27,7 @@ export const EditInventorySchedulingModal = ({
     unitOrDepartments,
     // users,
     statusOptions = ['pending_review', 'pending', 'completed', 'overdue', 'cancelled'],
+    
 }: Props) => {
     const [form, setForm] = useState<InventorySchedulingFormData>({
         building_id: schedule.building?.id || '',
@@ -52,6 +52,8 @@ export const EditInventorySchedulingModal = ({
 
     // Filter rooms by selected building
     const filteredRooms = buildingRooms.filter((r) => r.building_id === Number(form.building_id));
+
+    // const { isFullyApproved } = usePage<{ isFullyApproved: boolean }>().props;
 
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -232,7 +234,7 @@ export const EditInventorySchedulingModal = ({
                         </div>
 
                         {/* Status */}
-                        <div>
+                        {/* <div>
                             <Label>Status</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -245,6 +247,34 @@ export const EditInventorySchedulingModal = ({
                                     </option>
                                 ))}
                             </select>
+                        </div> */}
+
+                        {/* Status */}
+                        <div>
+                            <Label>Status</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.scheduling_status}
+                                 onChange={(e) => handleChange('scheduling_status', e.target.value)}
+                            >
+                                {['Pending_Review', 'Pending', 'Overdue', 'Completed', 'Cancelled'].map((s) => (
+      <option
+        key={s}
+        value={s}
+        disabled={
+          (s === 'Completed' && !schedule.isFullyApproved) || 
+          s === 'Cancelled' // 👈 disable Cancelled
+        }
+      >
+        {s.replace(/_/g, ' ')}
+      </option>
+    ))}
+  </select>
+                            {/* {!isFullyApproved && form.scheduling_status === 'Completed' && (
+                                <p className="mt-1 text-xs text-red-500">
+                                    You cannot mark this schedule as Completed until it has been fully approved.
+                                </p>
+                            )} */}
                         </div>
 
                         {/* Description */}

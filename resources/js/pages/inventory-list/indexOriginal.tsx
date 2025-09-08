@@ -1,11 +1,11 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
-import { EditAssetModalForm } from '@/components/edit-asset-modal-form';
+import { EditAssetModalForm } from '@/pages/inventory-list/edit-asset-modal-form';
 import { PickerInput } from '@/components/picker-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ViewAssetModal } from '@/components/view-modal-form';
+import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
