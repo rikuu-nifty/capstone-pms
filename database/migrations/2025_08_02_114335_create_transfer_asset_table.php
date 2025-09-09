@@ -17,10 +17,21 @@ return new class extends Migration
             $table->unsignedBigInteger('transfer_id');
             $table->unsignedBigInteger('asset_id');
 
-            $table->timestamps();
+            $table->date('moved_at')->nullable();
+            $table->unsignedBigInteger('from_sub_area_id')->nullable();
+            $table->unsignedBigInteger('to_sub_area_id')->nullable();
+            $table->enum('asset_transfer_status', ['pending', 'completed', 'cancelled'])
+                ->default('pending')
+            ;
+            $table->text('remarks')->nullable();
 
             $table->foreign('transfer_id')->references('id')->on('transfers')->onDelete('cascade');
             $table->foreign('asset_id')->references('id')->on('inventory_lists')->onDelete('cascade');
+            $table->foreign('from_sub_area_id')->references('id')->on('sub_areas')->nullOnDelete();
+            $table->foreign('to_sub_area_id')->references('id')->on('sub_areas')->nullOnDelete();
+
+            $table->index(['asset_id', 'moved_at']);
+            $table->timestamps();
         });
     }
 
