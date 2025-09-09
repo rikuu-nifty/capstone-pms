@@ -8,7 +8,10 @@ class TurnoverDisposalAsset extends Model
 {
     protected $fillable = [
         'turnover_disposal_id', 
-        'asset_id'
+        'asset_id',
+        'asset_status',
+        'date_finalized',
+        'remarks',       
     ];
 
     public $timestamps = true;

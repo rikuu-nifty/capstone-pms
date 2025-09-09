@@ -17,11 +17,23 @@ return new class extends Migration
             $table->unsignedBigInteger('turnover_disposal_id');
             $table->unsignedBigInteger('asset_id');
 
+            $table->enum('asset_status', [
+                'pending',
+                'completed',
+                'cancelled',
+            ])
+            ->default('pending');
+
+            $table->date('date_finalized')->nullable();
+            $table->text('remarks')->nullable();
+
             $table->timestamps();
-            $table->softDeletes();
+            // $table->softDeletes();
 
             $table->foreign('turnover_disposal_id')->references('id')->on('turnover_disposals')->onDelete('cascade');
             $table->foreign('asset_id')->references('id')->on('inventory_lists')->onDelete('cascade');
+            $table->index(['asset_id', 'asset_status']);
+            $table->unique(['turnover_disposal_id', 'asset_id']);
         });
     }
 

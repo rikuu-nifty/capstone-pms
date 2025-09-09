@@ -67,6 +67,166 @@ class TurnoverDisposal extends Model
         }
     }
 
+    public static function assertLinesBelongToOffice(array $lineItems, int $officeId): void
+    {
+        $assetIds = [];
+        foreach ($lineItems as $li) {
+            if (!is_array($li)) continue;
+            if (!isset($li['asset_id'])) continue;
+            $id = (int) $li['asset_id'];
+            if ($id > 0) $assetIds[] = $id;
+        }
+        $assetIds = array_values(array_unique($assetIds));
+
+        if (count($assetIds) === 0) {
+            throw ValidationException::withMessages([
+                'turnover_disposal_assets' => 'Please select at least one asset.',
+            ]);
+        }
+
+        $count = InventoryList::whereIn('id', $assetIds)
+            ->where('unit_or_department_id', $officeId)
+            ->count();
+
+        if ($count !== count($assetIds)) {
+            throw ValidationException::withMessages([
+                'turnover_disposal_assets' => 'All selected assets must belong to the issuing office.',
+            ]);
+        }
+    }
+
+    protected function assertLinesBelongToEitherOffice(array $lineItems, int $issuingOfficeId): void
+    {
+        $assetIds = [];
+        foreach ($lineItems as $li) {
+            if (is_array($li) && isset($li['asset_id'])) {
+                $id = (int) $li['asset_id'];
+                if ($id > 0) $assetIds[] = $id;
+            }
+        }
+        $assetIds = array_values(array_unique($assetIds));
+
+        if (count($assetIds) === 0) {
+            throw ValidationException::withMessages([
+                'turnover_disposal_assets' => 'Please select at least one asset.',
+            ]);
+        }
+
+        $allowedOffices = array_values(array_filter([
+            (int) $issuingOfficeId,
+            (int) $this->receiving_office_id,
+        ]));
+
+        $count = InventoryList::whereIn('id', $assetIds)
+            ->whereIn('unit_or_department_id', $allowedOffices)
+            ->count();
+
+        if ($count !== count($assetIds)) {
+            throw ValidationException::withMessages([
+                'turnover_disposal_assets' => 'All selected assets must belong to the issuing or receiving office for this record.',
+            ]);
+        }
+    }
+
+    public static function createWithLines(array $details, array $lineItems): self
+    {
+        return DB::transaction(function () use ($details, $lineItems) {
+            /** @var self $record */
+            $record = static::create($details);
+
+            // Validate against issuing OR receiving office for THIS record
+            $record->assertLinesBelongToEitherOffice($lineItems, (int) $details['issuing_office_id']);
+
+            $record->syncLines($lineItems);
+
+            return $record->fresh(['turnoverDisposalAssets']);
+        });
+    }
+
+    public function updateWithLines(array $details, array $lineItems): self
+    {
+        return DB::transaction(function () use ($details, $lineItems) {
+            $this->updateDetails($details);
+
+            $this->assertLinesBelongToEitherOffice($lineItems, (int) $details['issuing_office_id']);
+
+            $this->syncLines($lineItems);
+
+            return $this->fresh(['turnoverDisposalAssets']);
+        });
+    }
+
+    public function syncLines(array $lineItems): void
+    {
+        $keptIds = [];
+
+        foreach ($lineItems as $item) {
+            if (!is_array($item)) continue;
+
+            $assetId       = isset($item['asset_id']) ? (int) $item['asset_id'] : 0;
+            if ($assetId <= 0) continue;
+
+            $newStatus     = isset($item['asset_status']) ? (string) $item['asset_status'] : 'pending';
+            $dateFinalized = $item['date_finalized'] ?? null;
+            $remarks       = $item['remarks'] ?? null;
+
+            /** @var TurnoverDisposalAsset $detail */
+            $detail = $this->turnoverDisposalAssets()->firstOrNew(['asset_id' => $assetId]);
+            $prevStatus = $detail->exists ? (string) $detail->asset_status : null;
+
+            $detail->asset_status   = $newStatus;
+            $detail->date_finalized = $dateFinalized;
+            $detail->remarks        = $remarks;
+            $detail->save();
+
+            $keptIds[] = $detail->id;
+
+            // Apply forward (to completed) OR reverse (away from completed)
+            $this->applySideEffectsTransition($detail, $prevStatus);
+        }
+
+        // Remove any lines not present in payload
+        $this->turnoverDisposalAssets()
+            ->whereNotIn('id', $keptIds)
+            ->delete();
+    }
+
+    protected function applySideEffectsTransition(TurnoverDisposalAsset $line, ?string $previous): void
+    {
+        if (!$line->asset_id) return;
+
+        /** @var InventoryList|null $asset */
+        $asset = $line->assets()->lockForUpdate()->first();
+        if (!$asset) return;
+
+        // Transition INTO completed
+        if ($line->asset_status === 'completed' && $previous !== 'completed') {
+            if ($this->type === 'turnover') {
+                if ($this->receiving_office_id) {
+                    $asset->unit_or_department_id = $this->receiving_office_id;
+                    $asset->save();
+                }
+            } else { // disposal
+                $asset->status = 'archived';
+                $asset->save();
+            }
+            return;
+        }
+
+        if ($previous === 'completed' && $line->asset_status !== 'completed') {
+            if ($this->type === 'turnover') {
+                if ($this->issuing_office_id) {
+                    $asset->unit_or_department_id = $this->issuing_office_id;
+                    $asset->save();
+                }
+            } else { // disposal
+                // Un-archive since it's no longer completed
+                $asset->status = 'active';
+                $asset->save();
+            }
+        }
+    }
+    
     public static function createWithAssets(array $details, array $assetIds): self
     {
         return DB::transaction(function () use ($details, $assetIds) {
@@ -78,6 +238,27 @@ class TurnoverDisposal extends Model
 
             return $td;
         });
+    }
+
+    protected function applySideEffectsIfCompleted(TurnoverDisposalAsset $line): void
+    {
+        if ($line->asset_status !== 'completed' || !$line->asset_id) {
+            return;
+        }
+
+        /** @var InventoryList|null $asset */
+        $asset = $line->assets()->lockForUpdate()->first();
+        if (!$asset) return;
+
+        if ($this->type === 'turnover') {
+            if ($this->receiving_office_id) {
+                $asset->unit_or_department_id = $this->receiving_office_id;
+                $asset->save();
+            }
+        } else { // disposal
+            $asset->status = 'archived'; // your “disposed/archived” state
+            $asset->save();
+        }
     }
 
     public function updateDetails(array $payload): void
@@ -156,8 +337,6 @@ class TurnoverDisposal extends Model
             InventoryList::whereIn('id', $assetIds)->update(['status' => 'active']);
         }
     }
-
-
 
     public function softDeleteRelatedAssets(): void
     {
