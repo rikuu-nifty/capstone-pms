@@ -20,7 +20,7 @@ import {
     ClipboardList,
     File,
     FileCheck2,
-    Files,
+    ChartColumnIncreasing,
     Landmark,
     LayoutGrid,
     Network,
@@ -36,7 +36,7 @@ import {
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
-// Define type for nav items
+// ------------------ TYPES ------------------
 type NavItem = {
   title: string
   href: string
@@ -50,19 +50,24 @@ const dashboardNavItems = [
     { title: 'Calendar', href: '/calendar', icon: Calendar },
 ];
 
+const reportsNavItem = {
+    title: 'Reports',
+    href: '/reports',
+    icon: ChartColumnIncreasing,
+    permission: 'view-reports',
+};
+
 const inventoryNavItems = [
-    // { title: 'Inventory List', href: '/inventory-list', icon: Package2, permission: 'view-inventory-list' },
-    { 
-        title: 'Inventory List', 
-        href: '/inventory-list', 
-        icon: Package2, 
+    {
+        title: 'Inventory List',
+        href: '/inventory-list',
+        icon: Package2,
         permission: ['view-all-inventory-list', 'view-own-unit-inventory-list'],
     },
     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
     { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
-    { title: 'Reports', href: '/reports', icon: Files, permission: 'view-reports' },
 ];
 
 const assetsNavItems = [
@@ -72,11 +77,10 @@ const assetsNavItems = [
 ];
 
 const institutionalSetUpNavItems = [
-    // { title: 'Buildings', href: '/buildings', icon: Landmark, permission: 'view-buildings' },
-    { 
-        title: 'Buildings', 
-        href: '/buildings', 
-        icon: Landmark, 
+    {
+        title: 'Buildings',
+        href: '/buildings',
+        icon: Landmark,
         permission: ['view-buildings', 'view-own-unit-buildings'],
     },
     { title: 'Organizations', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
@@ -85,7 +89,7 @@ const institutionalSetUpNavItems = [
 const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
-    { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals'},
+    { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals' },
     { title: 'Audit Log', href: '/audit-log', icon: File, permission: 'view-audit-logs' },
     { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
 ];
@@ -95,21 +99,15 @@ const configNavItems = [
 ];
 
 // ------------------ HELPERS ------------------
-// function canView(item: NavItem, permissions: string[]): boolean {
-//   if (!item.permission) return true
-//   return permissions.includes(item.permission)
-// }
-
 function canView(item: NavItem, permissions: string[]): boolean {
-    if (!item.permission) return true
+    if (!item.permission) return true;
 
     if (Array.isArray(item.permission)) {
-        return item.permission.some((p) => permissions.includes(p))
+        return item.permission.some((p) => permissions.includes(p));
     }
 
-    return permissions.includes(item.permission)
+    return permissions.includes(item.permission);
 }
-
 
 // ------------------ COMPONENT ------------------
 export function AppSidebar() {
@@ -149,7 +147,7 @@ export function AppSidebar() {
     ) => {
         const isOpen = openGroups[label] ?? false;
         const visibleItems = items.filter((item) => canView(item, permissions));
-        if (visibleItems.length === 0) return null; // hide group if empty
+        if (visibleItems.length === 0) return null;
 
         return (
             <SidebarMenuItem>
@@ -187,7 +185,7 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar collapsible="icon" variant="inset" className="h-screen overflow-hidden">
+        <Sidebar collapsible="icon" variant="inset" className="h-screen flex flex-col">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -200,10 +198,11 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="overflow-hidden">
-                <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
+            {/* Make this flex-1 and scrollable */}
+            <SidebarContent className="flex-1 overflow-y-auto">
+                {/* MAIN PLATFORM */}
+                <SidebarGroupLabel>Main Platform</SidebarGroupLabel>
                 <SidebarMenu>
-                    {/* Flat items (Dashboard, Calendar) */}
                     {dashboardNavItems
                         .filter((item) => canView(item, permissions))
                         .map((item) => (
@@ -216,15 +215,38 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         ))}
-
-                    {/* Collapsible groups */}
-                    {renderCollapsible('Inventory', Package2, inventoryNavItems)}
-                    {renderCollapsible('Assets', Blocks, assetsNavItems)}
-                    {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
-                    {renderCollapsible('User Management', User, userNavItems)}
                 </SidebarMenu>
 
-                {/* Configuration section */}
+                {/* PROPERTY MANAGEMENT */}
+                <div className="mt-1">
+                    <SidebarGroupLabel>Property Management</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {renderCollapsible('Inventory', Package2, inventoryNavItems)}
+                        {renderCollapsible('Assets', Blocks, assetsNavItems)}
+                        {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
+                    </SidebarMenu>
+                </div>
+
+                {/* ADMINISTRATION */}
+                <div className="mt-1">
+                    <SidebarGroupLabel>Administration</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {renderCollapsible('User Management', User, userNavItems)}
+
+                        {canView(reportsNavItem, permissions) && (
+                            <SidebarMenuItem key={reportsNavItem.href}>
+                                <SidebarMenuButton asChild className="px-3 py-2">
+                                    <Link href={reportsNavItem.href} className="flex items-center space-x-2">
+                                        <reportsNavItem.icon className="h-4 w-4" />
+                                        <span>{reportsNavItem.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                    </SidebarMenu>
+                </div>
+
+                {/* CONFIGURATION */}
                 <div className="mt-1">
                     <SidebarGroupLabel>Configuration</SidebarGroupLabel>
                     <SidebarMenu>
