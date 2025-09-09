@@ -23,8 +23,12 @@ export default function Pagination({
     className,
     disabled = false,
 }: PaginationProps) {
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    const effectivePageSize = Math.min(pageSize, 10);
+      const totalPages = Math.max(1, Math.ceil(total / effectivePageSize));
     if (totalPages <= 1) return null;
+
+   
 
     const go = (p: number) => {
         if (disabled) return;
@@ -60,7 +64,7 @@ export default function Pagination({
             className={[
                 'px-3 py-1 rounded-md text-sm border transition-colors',
                 isActive
-                ? 'bg-primary text-primary-foreground border-primary'
+                ? 'bg-[#155dfc] text-white border-[#155dfc]' // 🔵 custom blue
                 : 'bg-background hover:bg-muted border-input',
                 (disabled || disabledBtn) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             ].join(' ')}
@@ -131,11 +135,12 @@ export function PageInfo({
     className?: string;
     label?: string;
 }) {
-    const start = total ? (page - 1) * pageSize + 1 : 0;
-    const end = Math.min(page * pageSize, total);
+    const effectivePageSize = Math.min(pageSize, 10); // ✅ cap at 10
+    const start = total ? (page - 1) * effectivePageSize + 1 : 0;
+    const end = Math.min(page * effectivePageSize, total);
     return (
         <div className={['text-xs text-muted-foreground', className ?? ''].join(' ')}>
-        Showing {start} – {end} of <strong>{total}</strong> {label}
+            Showing {start} – {end} of <strong>{total}</strong> {label}
         </div>
     );
 }
