@@ -200,6 +200,54 @@ export default function TransferEditModal({
                 )}
             </div>
 
+            {/* Current Unit/Department */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Current Unit/Dept/Lab</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.current_organization}
+                    onChange={(e) => {
+                        setData('current_organization', Number(e.target.value))
+                        
+                        setData('selected_assets', []);
+                        setShowAssetDropdown([true]);
+                    }}
+                >
+                    {!data.current_organization && (
+                        <option value="">Select Unit/Dept</option>
+                    )}
+
+                    {unitOrDepartments.map((unit) => (
+                        <option key={unit.id} value={unit.id}>
+                        {unit.code} - {unit.name}
+                        </option>
+                    ))}
+                </select>
+                {errors.current_organization && <p className="mt-1 text-xs text-red-500">{errors.current_organization}</p>}
+            </div>
+
+            {/* Receiving Unit/Department */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Receiving Unit/Dept/Lab</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.receiving_organization}
+                    onChange={(e) => setData('receiving_organization', Number(e.target.value))}
+                >
+
+                    {!data.receiving_organization && (
+                        <option value="">Select Unit/Dept</option>
+                    )}
+
+                    {unitOrDepartments.map((unit) => (
+                        <option key={unit.id} value={unit.id}>
+                        {unit.code} - {unit.name}
+                        </option>
+                    ))}
+                </select>
+                {errors.receiving_organization && <p className="mt-1 text-xs text-red-500">{errors.receiving_organization}</p>}
+            </div>            
+
             {/* Receiving Building */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Receiving Building</label>
@@ -243,49 +291,7 @@ export default function TransferEditModal({
                 {errors.receiving_building_room && <p className="mt-1 text-xs text-red-500">{errors.receiving_building_room}</p>}
             </div>
 
-            {/* Current Unit/Department */}
-            <div className="col-span-1">
-                <label className="mb-1 block font-medium">Current Unit/Dept/Lab</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.current_organization}
-                    onChange={(e) => setData('current_organization', Number(e.target.value))}
-                >
-                
-                    {!data.current_organization && (
-                        <option value="">Select Unit/Dept</option>
-                    )}
 
-                    {unitOrDepartments.map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                        {unit.code} - {unit.name}
-                        </option>
-                    ))}
-                </select>
-                {errors.current_organization && <p className="mt-1 text-xs text-red-500">{errors.current_organization}</p>}
-            </div>
-
-            {/* Receiving Unit/Department */}
-            <div className="col-span-1">
-                <label className="mb-1 block font-medium">Receiving Unit/Dept/Lab</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.receiving_organization}
-                    onChange={(e) => setData('receiving_organization', Number(e.target.value))}
-                >
-
-                    {!data.receiving_organization && (
-                        <option value="">Select Unit/Dept</option>
-                    )}
-
-                    {unitOrDepartments.map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                        {unit.code} - {unit.name}
-                        </option>
-                    ))}
-                </select>
-                {errors.receiving_organization && <p className="mt-1 text-xs text-red-500">{errors.receiving_organization}</p>}
-            </div>
             
             {/* Scheduled Date */}
             <div className="col-span-1">
@@ -407,33 +413,6 @@ export default function TransferEditModal({
                     (visible, index) =>
                         visible && (
                             <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                                {/* <Select
-                                    className="w-full"
-                                    placeholder="Select Asset(s) for Transfer"
-                                    options={assets
-                                        .filter((asset) => !data.selected_assets.includes(asset.id))
-                                        .map((asset) => ({
-                                            value: asset.id,
-                                            label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
-                                        }))}
-                                    onChange={(selectedOption) => {
-                                        if (
-                                            selectedOption &&
-                                            !data.selected_assets.includes(selectedOption.value)
-                                        ) {
-                                            setData('selected_assets', [
-                                                ...data.selected_assets,
-                                                selectedOption.value,
-                                            ]);
-
-                                            setShowAssetDropdown((prev) => {
-                                                const updated = [...prev];
-                                                updated[index] = false;
-                                                return [...updated, true];
-                                            });
-                                        }
-                                    }}
-                                /> */}
                                 {showAssetDropdown.map((visible, index) =>
                                     visible && (
                                         <div key={`dropdown-${index}`} className="flex items-center gap-2 w-full">
@@ -449,9 +428,14 @@ export default function TransferEditModal({
                                                         ? asset.building_room_id === data.current_building_room
                                                         : true;
 
+                                                    const matchesUnit = data.current_organization
+                                                        ? asset.unit_or_department_id === data.current_organization
+                                                        : true;
+
                                                     return (
                                                         matchesBuilding &&
                                                         matchesRoom &&
+                                                        matchesUnit &&
                                                         !data.selected_assets.includes(asset.id)
                                                     );
                                                     })
@@ -460,11 +444,15 @@ export default function TransferEditModal({
                                                     label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
                                                     }))}
                                                 placeholder={
-                                                    data.current_building_id && data.current_building_room
+                                                    data.current_building_id && data.current_building_room && data.current_organization
                                                     ? 'Select Asset(s) for Transfer...'
-                                                    : 'Select Current Building and Room first'
+                                                    : 'Select Current Building, Room, and Unit/Dept/Lab first'
                                                 }
-                                                isDisabled={!data.current_building_id || !data.current_building_room}
+                                                isDisabled={
+                                                    !data.current_building_id || 
+                                                    !data.current_building_room ||
+                                                    !data.current_organization
+                                                }
                                                 onChange={(selectedOption) => {
                                                     if (
                                                     selectedOption &&

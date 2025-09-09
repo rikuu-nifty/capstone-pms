@@ -165,6 +165,9 @@
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
         ->name('inventory-list.index')
         ->middleware('can:view-inventory-list');
+    Route::get('/inventory-list', [InventoryListController::class, 'index'])
+        ->name('inventory-list.index')
+        ->middleware('can:view-own-unit-inventory-list');
     Route::post('/inventory-list', [InventoryListController::class, 'store'])
         ->name('inventory-list.store')
         ->middleware('can:create-inventory-list');
@@ -258,6 +261,9 @@
     Route::get('/buildings', [BuildingController::class, 'index'])
         ->name('buildings.index')
         ->middleware('can:view-buildings');
+    Route::get('/buildings', [BuildingController::class, 'index'])
+        ->name('buildings.index')
+        ->middleware('can:view-own-unit-buildings');
     Route::post('/buildings', [BuildingController::class, 'store'])
         ->name('buildings.store')
         ->middleware('can:create-buildings');
@@ -267,6 +273,9 @@
     Route::get('/buildings/view/{building}', [BuildingController::class, 'show'])
         ->name('buildings.view')
         ->middleware('can:view-buildings');
+    Route::get('/buildings/view/{building}', [BuildingController::class, 'show'])
+        ->name('buildings.view')
+        ->middleware('can:view-own-unit-buildings');
     Route::delete('/buildings/{building}', [BuildingController::class, 'destroy'])
         ->name('buildings.destroy')
         ->middleware('can:delete-buildings');
@@ -284,6 +293,9 @@
     Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])
         ->name('building-rooms.view')
         ->middleware('can:view-building-rooms');
+    Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])
+        ->name('building-rooms.view')
+        ->middleware('can:view-own-unit-buildings');
 
     // CATEGORIES
     Route::get('/categories', [CategoryController::class, 'index'])

@@ -33,6 +33,7 @@ class PermissionsTableSeeder extends Seeder
 
             //INVENTORY LIST
             ['code' => 'view-inventory-list', 'name' => 'View Inventory List'],
+            ['code' => 'view-own-unit-inventory-list', 'name' => 'View Own Unit Inventory List'],
             ['code' => 'create-inventory-list', 'name' => 'Create Inventory List'],
             ['code' => 'update-inventory-list', 'name' => 'Update Inventory List'],
             ['code' => 'delete-inventory-list', 'name' => 'Delete Inventory List'],
@@ -58,6 +59,7 @@ class PermissionsTableSeeder extends Seeder
 
             // BUILDINGS
             ['code' => 'view-buildings', 'name' => 'View Buildings'],
+            ['code' => 'view-own-unit-buildings', 'name' => 'View Own Unit Buildings'],
             ['code' => 'create-buildings', 'name' => 'Create Buildings'],
             ['code' => 'update-buildings', 'name' => 'Update Buildings'],
             ['code' => 'delete-buildings', 'name' => 'Delete Buildings'],

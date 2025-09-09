@@ -35,7 +35,8 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "delete-inventory-scheduling",
     ],
     "Inventory List": [
-        "view-inventory-list",
+        "view-inventory-list", 
+        "view-own-unit-inventory-list", 
         "create-inventory-list",
         "update-inventory-list",
         "delete-inventory-list",
@@ -61,6 +62,7 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     ],
     "Buildings": [
         "view-buildings",
+        "view-own-unit-buildings",
         "create-buildings",
         "update-buildings",
         "delete-buildings",

@@ -25,6 +25,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
                 'view-building-rooms',
                 'view-asset-models',
                 'view-unit-or-departments',
+                'view-own-unit-inventory-list',
 
                 'view-users-page',
                 'approve-users',
@@ -53,6 +54,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
                 'delete-inventory-scheduling',
 
                 'view-inventory-list',
+                'view-own-unit-inventory-list',
                 'create-inventory-list',
                 'update-inventory-list',
                 'delete-inventory-list',

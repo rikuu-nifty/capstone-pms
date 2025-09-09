@@ -54,6 +54,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 'permissions' => $request->user()?->role?->permissions->pluck('code')->toArray() ?? [],
                 'role' => $request->user()?->role?->code,
+                'unit_or_department_id' => $request->user()?->unit_or_department_id,
+                'unit_or_department' => $request->user()?->unitOrDepartment?->only(['id', 'name', 'code']),
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),

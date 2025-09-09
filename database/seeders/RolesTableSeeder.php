@@ -24,5 +24,9 @@ class RolesTableSeeder extends Seeder
         Role::updateOrCreate(['code' => 'pmo_staff'], [
             'name' => 'PMO Staff',
         ]);
+
+        Role::updateOrCreate(['code' => 'viewer'], [
+            'name' => 'Viewer',
+        ]);
     }
 }

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class BuildingRoom extends Model
 {
@@ -46,6 +48,24 @@ class BuildingRoom extends Model
             ->get(['id', 'building_id', 'room', 'description'])
         ;
     }
+
+    public static function listAllRoomsForUnit(int $unitId)
+    {
+        return static::query()
+            ->with(['building:id,code,name'])
+            ->withCount([
+                // filtered assets count for the user’s unit
+                'assets as assets_count' => fn($q) => $q->where('unit_or_department_id', $unitId),
+            ])
+            ->whereHas(
+                'assets',
+                fn($q) =>
+                $q->where('unit_or_department_id', $unitId)
+            )
+            ->orderBy('building_id')
+            ->orderBy('room')
+            ->get(['id', 'building_id', 'room', 'description']);
+    }
     
     public function scopeForSingleBuilding($query, int $buildingId)
     {
@@ -63,9 +83,37 @@ class BuildingRoom extends Model
         ;
     }
 
-    public static function listAllRoomsWithAssetShare(int $totalAssets)
+    public static function listAllRoomsWithAssetShare(int $totalAssets, ?User $user = null)
     {
-        $rooms = static::listAllRooms();
+        // $rooms = static::listAllRooms();
+
+        // $rooms->each(function ($r) use ($totalAssets) {
+        //     $assetsCount = (int) ($r->assets_count ?? 0);
+        //     $r->asset_share = $totalAssets > 0
+        //         ? round(($assetsCount / $totalAssets) * 100, 2)
+        //         : 0.00;
+        // });
+
+        $rooms = $user &&
+            $user->hasPermission('view-own-unit-buildings') &&
+            !$user->hasPermission('view-buildings') &&
+            $user->unit_or_department_id
+            ? static::listAllRoomsForUnit($user->unit_or_department_id)
+            : static::listAllRooms();
+
+        $rooms->each(function ($r) use ($totalAssets) {
+            $assetsCount = (int) ($r->assets_count ?? 0);
+            $r->asset_share = $totalAssets > 0
+                ? round(($assetsCount / $totalAssets) * 100, 2)
+                : 0.00;
+        });
+
+        return $rooms;
+    }
+
+    public static function listAllRoomsWithAssetShareForUnit(int $totalAssets, int $unitId)
+    {
+        $rooms = static::listAllRoomsForUnit($unitId);
 
         $rooms->each(function ($r) use ($totalAssets) {
             $assetsCount = (int) ($r->assets_count ?? 0);
@@ -108,6 +156,65 @@ class BuildingRoom extends Model
         $room->asset_share = $totalAssets > 0
             ? round(($assetsCount / $totalAssets) * 100, 2)
             : 0.00;
+
+        return $room;
+    }
+
+    public static function viewPropsByIdForUserWithAssetShare(int $id, int $totalAssets)
+    {
+        $room = static::viewPropsByIdForUser($id);
+
+        $assetsCount = (int) ($room->assets_count ?? 0);
+        $room->asset_share = $totalAssets > 0
+            ? round(($assetsCount / $totalAssets) * 100, 2)
+            : 0.00;
+
+        return $room;
+    }
+
+    public static function viewPropsByIdForUser(int $id, ?int $totalAssets = null)
+    {
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        $query = static::query()
+            ->select(['id', 'building_id', 'room', 'description'])
+            ->with([
+                'building:id,code,name',
+                'assets' => function ($q) use ($user) {
+                    $q->select([
+                        'id',
+                        'asset_model_id',
+                        'asset_name',
+                        'serial_no',
+                        'status',
+                        'building_room_id',
+                        'unit_or_department_id',
+                    ]);
+
+                    // 🔹 Restrict to user's unit if they only have "view-own"
+                    if ($user->hasPermission('view-own-unit-inventory-list') && !$user->hasPermission('view-inventory-list')) {
+                        $q->where('unit_or_department_id', $user->unit_or_department_id);
+                    }
+                },
+                'assets.assetModel:id,category_id,brand,model',
+                'assets.assetModel.category:id,name',
+            ])
+            ->withCount(['assets' => function ($q) use ($user) {
+                if ($user->hasPermission('view-own-unit-inventory-list') && !$user->hasPermission('view-inventory-list')) {
+                    $q->where('unit_or_department_id', $user->unit_or_department_id);
+                }
+            }]);
+
+        $room = $query->findOrFail($id);
+
+        // 🔹 Calculate asset share if requested
+        if ($totalAssets !== null) {
+            $assetsCount = (int) ($room->assets_count ?? 0);
+            $room->asset_share = $totalAssets > 0
+                ? round(($assetsCount / $totalAssets) * 100, 2)
+                : 0.00;
+        }
 
         return $room;
     }
