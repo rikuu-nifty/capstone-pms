@@ -618,7 +618,7 @@ export default function InventoryListIndex({
                                     <TableCell>
                                         <button
                                             onClick={() => {
-                                                const url = route('asset-summary.show', item.id);
+                                                const url = route('inventory-list.view', item.id);
                                                 navigator.clipboard.writeText(url).then(() => {
                                                     toast.success('Link copied!', {
                                                         description: 'The viewing link has been copied to your clipboard.',
