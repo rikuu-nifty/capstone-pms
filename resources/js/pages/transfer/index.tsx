@@ -43,6 +43,7 @@ export default function TransferIndex({
     unitOrDepartments = [],
     users = [],
     currentUser,
+    subAreas,
 
 }: TransferPageProps) {
 
@@ -368,6 +369,7 @@ export default function TransferIndex({
                 unitOrDepartments={unitOrDepartments}
                 users={users}
                 assets={assets}
+                subAreas={subAreas}
             />
 
             {selectedTransfer && (
@@ -384,6 +386,7 @@ export default function TransferIndex({
                     unitOrDepartments={unitOrDepartments}
                     users={users}
                     assets={assets}
+                    subAreas={subAreas}
                 />
             )}
 

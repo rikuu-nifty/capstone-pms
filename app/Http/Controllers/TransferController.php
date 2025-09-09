@@ -5,6 +5,7 @@ use Inertia\Inertia;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 use App\Models\Transfer;
 use App\Models\Building;
@@ -12,7 +13,7 @@ use App\Models\BuildingRoom;
 use App\Models\InventoryList;
 use App\Models\UnitOrDepartment;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Models\SubArea;
 
 class TransferController extends Controller
 {
@@ -43,6 +44,7 @@ class TransferController extends Controller
             ->where('status', 'active')
             ->get()
         ;
+        $subAreas = SubArea::all();
 
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {
@@ -61,8 +63,14 @@ class TransferController extends Controller
                         'transfer_id' => $ta->transfer_id,
                         'asset_id' => $ta->asset_id,
                         'asset' => $ta->asset,
+
+                        'moved_at'               => $ta->moved_at ? $ta->moved_at->toDateString() : null,
+                        'from_sub_area_id'       => $ta->from_sub_area_id,
+                        'to_sub_area_id'         => $ta->to_sub_area_id,
+                        'asset_transfer_status'  => $ta->asset_transfer_status,
+                        'remarks'                => $ta->remarks,
                     ];
-                });
+                })->values();
 
                 $array['asset_count'] = $transfer->transferAssets->count();
 
@@ -74,6 +82,7 @@ class TransferController extends Controller
             'users' => $users,
             'currentUser' => $currentUser,
             'assets' => $assets,
+            'subAreas' => $subAreas,
         ]);
     }
 
@@ -88,46 +97,107 @@ class TransferController extends Controller
     /**
      * Store a newly created resource.
      */
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'current_building_id' => 'required|integer|exists:buildings,id',
+    //         'current_building_room' => 'required|integer|exists:building_rooms,id',
+    //         'current_organization' => 'required|integer|exists:unit_or_departments,id',
+    //         'receiving_building_id' => 'required|integer|exists:buildings,id',
+    //         'receiving_building_room' => 'required|integer|exists:building_rooms,id',
+    //         'receiving_organization' => 'required|integer|exists:unit_or_departments,id',
+    //         'designated_employee' => 'required|integer|exists:users,id',
+    //         'assigned_by' => 'required|integer|exists:users,id',
+    //         'scheduled_date' => 'required|date',
+    //         'actual_transfer_date' => 'nullable|date',
+    //         'received_by' => 'nullable|string',
+    //         'status' => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
+    //         'remarks' => 'nullable|string',
+
+    //         'selected_assets' => 'required|array|min:1',
+    //         'selected_assets.*' => 'integer|exists:inventory_lists,id',
+    //     ]);
+
+    //     $assetIds = $validated['selected_assets'];
+
+    //     unset(
+    //         $validated['current_building_id'],
+    //         $validated['receiving_building_id'],
+    //         $validated['selected_assets']
+    //     );
+
+    //     $transfer = DB::transaction(function () use ($validated, $assetIds) {
+    //         $transfer = Transfer::create($validated);
+
+    //         foreach ($assetIds as $assetId) {
+    //             // ✅ Create transfer asset
+    //             $transfer->transferAssets()->create([
+    //                 'asset_id' => $assetId,
+    //             ]);
+
+    //             // ✅ Update inventory list with transfer_id
+    //             InventoryList::where('id', $assetId)->update([
+    //                 'transfer_id' => $transfer->id,
+    //             ]);
+    //         }
+
+    //         $this->syncAssetLocations($transfer, null);
+
+    //         return $transfer;
+    //     });
+
+    //     return back()->with('success', "Transfer #{$transfer->id} created successfully.");
+    // }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'current_building_id' => 'required|integer|exists:buildings,id',
-            'current_building_room' => 'required|integer|exists:building_rooms,id',
-            'current_organization' => 'required|integer|exists:unit_or_departments,id',
-            'receiving_building_id' => 'required|integer|exists:buildings,id',
+            'current_building_id'     => 'required|integer|exists:buildings,id',
+            'current_building_room'   => 'required|integer|exists:building_rooms,id',
+            'current_organization'    => 'required|integer|exists:unit_or_departments,id',
+            'receiving_building_id'   => 'required|integer|exists:buildings,id',
             'receiving_building_room' => 'required|integer|exists:building_rooms,id',
-            'receiving_organization' => 'required|integer|exists:unit_or_departments,id',
-            'designated_employee' => 'required|integer|exists:users,id',
-            'assigned_by' => 'required|integer|exists:users,id',
-            'scheduled_date' => 'required|date',
-            'actual_transfer_date' => 'nullable|date',
-            'received_by' => 'nullable|string',
-            'status' => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
-            'remarks' => 'nullable|string',
+            'receiving_organization'  => 'required|integer|exists:unit_or_departments,id',
+            'designated_employee'     => 'required|integer|exists:users,id',
+            'assigned_by'             => 'required|integer|exists:users,id',
+            'scheduled_date'          => 'required|date',
+            'actual_transfer_date'    => 'nullable|date',
+            'received_by'             => 'nullable|string',
+            'status'                  => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
+            'remarks'                 => 'nullable|string',
 
-            'selected_assets' => 'required|array|min:1',
-            'selected_assets.*' => 'integer|exists:inventory_lists,id',
+            // NEW: rich pivot array
+            'transfer_assets'                         => 'required|array|min:1',
+            'transfer_assets.*.asset_id'              => 'required|integer|exists:inventory_lists,id',
+            'transfer_assets.*.moved_at'      => 'nullable|date',
+            'transfer_assets.*.from_sub_area_id'      => 'nullable|integer|exists:sub_areas,id',
+            'transfer_assets.*.to_sub_area_id'        => 'nullable|integer|exists:sub_areas,id',
+            'transfer_assets.*.asset_transfer_status' => 'nullable|in:pending,completed,cancelled',
+            'transfer_assets.*.remarks'               => 'nullable|string',
         ]);
 
-        $assetIds = $validated['selected_assets'];
+        // these are only used by the UI for filtering; not persisted on Transfer
+        unset($validated['current_building_id'], $validated['receiving_building_id']);
 
-        unset(
-            $validated['current_building_id'],
-            $validated['receiving_building_id'],
-            $validated['selected_assets']
-        );
+        $pivotRows = $validated['transfer_assets'];
+        unset($validated['transfer_assets']);
 
-        $transfer = DB::transaction(function () use ($validated, $assetIds) {
+        $transfer = DB::transaction(function () use ($validated, $pivotRows) {
+            /** @var \App\Models\Transfer $transfer */
             $transfer = Transfer::create($validated);
 
-            foreach ($assetIds as $assetId) {
-                // ✅ Create transfer asset
+            foreach ($pivotRows as $row) {
                 $transfer->transferAssets()->create([
-                    'asset_id' => $assetId,
+                    'asset_id'               => $row['asset_id'],
+                    'moved_at'               => $row['moved_at'] ?? null,
+                    'from_sub_area_id'       => $row['from_sub_area_id'] ?? null,
+                    'to_sub_area_id'         => $row['to_sub_area_id'] ?? null,
+                    'asset_transfer_status'  => $row['asset_transfer_status'] ?? 'pending',
+                    'remarks'                => $row['remarks'] ?? null,
                 ]);
 
-                // ✅ Update inventory list with transfer_id
-                InventoryList::where('id', $assetId)->update([
+                // keep your existing behavior: tag the inventory row with this transfer_id
+                InventoryList::where('id', $row['asset_id'])->update([
                     'transfer_id' => $transfer->id,
                 ]);
             }
@@ -171,6 +241,7 @@ class TransferController extends Controller
         $unitOrDepartments = UnitOrDepartment::all();
         $users = User::all();
         $assets = InventoryList::with(['assetModel.category'])->where('status', 'active')->get();
+        $subAreas          = SubArea::all();
 
         $viewingModel = Transfer::findForView($id);
         $viewing_assets = $viewingModel->viewingAssets();
@@ -191,6 +262,12 @@ class TransferController extends Controller
                     'transfer_id' => $ta->transfer_id,
                     'asset_id'    => $ta->asset_id,
                     'asset'       => $ta->asset,
+
+                    'moved_at'       => $ta->moved_at ? $ta->moved_at->toDateString() : null,
+                    'from_sub_area_id'       => $ta->from_sub_area_id,
+                    'to_sub_area_id'         => $ta->to_sub_area_id,
+                    'asset_transfer_status'  => $ta->asset_transfer_status,
+                    'remarks'                => $ta->remarks,
                 ];
             })->values();
 
@@ -215,8 +292,15 @@ class TransferController extends Controller
                         'transfer_id' => $ta->transfer_id,
                         'asset_id'    => $ta->asset_id,
                         'asset'       => $ta->asset,
+
+                        'moved_at'               => $ta->moved_at ? $ta->moved_at->toDateString() : null,
+                        'from_sub_area_id'       => $ta->from_sub_area_id,
+                        'to_sub_area_id'         => $ta->to_sub_area_id,
+                        'asset_transfer_status'  => $ta->asset_transfer_status,
+                        'remarks'                => $ta->remarks,
                     ];
                 })->values();
+                
                 $array['asset_count'] = $transfer->transferAssets->count();
                 return $array;
             }),
@@ -226,6 +310,7 @@ class TransferController extends Controller
             'users'             => $users,
             'currentUser'       => $currentUser,
             'assets'            => $assets,
+            'subAreas'          => $subAreas,
 
             'viewing'        => $viewing,
             'viewing_assets' => $viewing_assets,
@@ -236,39 +321,97 @@ class TransferController extends Controller
     /**
      * Update the specified resource.
      */
+    // public function update(Request $request, Transfer $transfer)
+    // {
+    //     $validated = $request->validate([
+    //         'current_building_room' => 'required|integer|exists:building_rooms,id',
+    //         'current_organization' => 'required|integer|exists:unit_or_departments,id',
+    //         'receiving_building_room' => 'required|integer|exists:building_rooms,id',
+    //         'receiving_organization' => 'required|integer|exists:unit_or_departments,id',
+    //         'designated_employee' => 'required|integer|exists:users,id',
+    //         'assigned_by' => 'required|integer|exists:users,id',
+    //         'scheduled_date' => 'required|date',
+    //         'actual_transfer_date' => 'nullable|date',
+    //         'received_by' => 'nullable|string',
+    //         'status' => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
+    //         'remarks' => 'nullable|string',
+    //         'selected_assets' => 'nullable|array|min:1',
+    //         'selected_assets.*' => 'integer|exists:inventory_lists,id',
+    //     ]);
+
+    //     DB::transaction(function () use ($transfer, $request, $validated) {
+    //         $oldStatus = $transfer->status;
+    //         $transfer->update($validated);
+
+    //         // Sync assets
+    //         $transfer->transferAssets()->delete();
+    //         if ($request->has('selected_assets')) {
+    //             foreach ($request->selected_assets as $assetId) {
+    //                 $transfer->transferAssets()->create(['asset_id' => $assetId]);
+
+    //                 // ✅ Update inventory list with transfer_id
+    //                 InventoryList::where('id', $assetId)->update([
+    //                     'transfer_id' => $transfer->id,
+    //                 ]);
+    //             }
+    //         }
+
+    //         $this->syncAssetLocations($transfer, $oldStatus);
+    //     });
+
+    //     return back()->with('success', 'Transfer updated successfully.');
+    // }
+
     public function update(Request $request, Transfer $transfer)
     {
         $validated = $request->validate([
-            'current_building_room' => 'required|integer|exists:building_rooms,id',
-            'current_organization' => 'required|integer|exists:unit_or_departments,id',
+            'current_building_room'   => 'required|integer|exists:building_rooms,id',
+            'current_organization'    => 'required|integer|exists:unit_or_departments,id',
             'receiving_building_room' => 'required|integer|exists:building_rooms,id',
-            'receiving_organization' => 'required|integer|exists:unit_or_departments,id',
-            'designated_employee' => 'required|integer|exists:users,id',
-            'assigned_by' => 'required|integer|exists:users,id',
-            'scheduled_date' => 'required|date',
-            'actual_transfer_date' => 'nullable|date',
-            'received_by' => 'nullable|string',
-            'status' => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
-            'remarks' => 'nullable|string',
-            'selected_assets' => 'nullable|array|min:1',
-            'selected_assets.*' => 'integer|exists:inventory_lists,id',
+            'receiving_organization'  => 'required|integer|exists:unit_or_departments,id',
+            'designated_employee'     => 'required|integer|exists:users,id',
+            'assigned_by'             => 'required|integer|exists:users,id',
+            'scheduled_date'          => 'required|date',
+            'actual_transfer_date'    => 'nullable|date',
+            'received_by'             => 'nullable|string',
+            'status'                  => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
+            'remarks'                 => 'nullable|string',
+
+            // NEW: rich pivot array (allow empty only if you want to permit “header-only” edit)
+            'transfer_assets'                         => 'required|array|min:1',
+            'transfer_assets.*.asset_id'              => 'required|integer|exists:inventory_lists,id',
+            'transfer_assets.*.moved_at'              => 'nullable|date',
+            'transfer_assets.*.from_sub_area_id'      => 'nullable|integer|exists:sub_areas,id',
+            'transfer_assets.*.to_sub_area_id'        => 'nullable|integer|exists:sub_areas,id',
+            'transfer_assets.*.asset_transfer_status' => 'nullable|in:pending,transferred,cancelled',
+            'transfer_assets.*.remarks'               => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($transfer, $request, $validated) {
+        DB::transaction(function () use ($transfer, $validated) {
             $oldStatus = $transfer->status;
+
+            $pivotRows = $validated['transfer_assets'];
+            unset($validated['transfer_assets']);
+
             $transfer->update($validated);
 
-            // Sync assets
+            // simple + reliable: replace all pivot rows from the payload
             $transfer->transferAssets()->delete();
-            if ($request->has('selected_assets')) {
-                foreach ($request->selected_assets as $assetId) {
-                    $transfer->transferAssets()->create(['asset_id' => $assetId]);
 
-                    // ✅ Update inventory list with transfer_id
-                    InventoryList::where('id', $assetId)->update([
-                        'transfer_id' => $transfer->id,
-                    ]);
-                }
+            foreach ($pivotRows as $row) {
+                $transfer->transferAssets()->create([
+                    'asset_id'               => $row['asset_id'],
+                    'moved_at'               => $row['moved_at'] ?? null,
+                    'from_sub_area_id'       => $row['from_sub_area_id'] ?? null,
+                    'to_sub_area_id'         => $row['to_sub_area_id'] ?? null,
+                    'asset_transfer_status'  => $row['asset_transfer_status'] ?? 'pending',
+                    'remarks'                => $row['remarks'] ?? null,
+                ]);
+
+                // keep your existing behavior
+                InventoryList::where('id', $row['asset_id'])->update([
+                    'transfer_id' => $transfer->id,
+                ]);
             }
 
             $this->syncAssetLocations($transfer, $oldStatus);

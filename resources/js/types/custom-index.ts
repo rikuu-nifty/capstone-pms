@@ -13,6 +13,7 @@ export type { AssetAssignment } from './asset-assignment';
 export type { Role, RolePageProps } from './role';
 export type { UserDetail } from './user-detail';
 export type { Permission } from './permission';
+export type { SubArea } from './sub-area';
 export * from './page-props';
 
 export const formatDate = (dateStr?: string) =>

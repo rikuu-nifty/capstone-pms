@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('moved_at')->nullable();
             $table->unsignedBigInteger('from_sub_area_id')->nullable();
             $table->unsignedBigInteger('to_sub_area_id')->nullable();
-            $table->enum('asset_transfer_status', ['pending', 'completed', 'cancelled'])
+            $table->enum('asset_transfer_status', ['pending', 'transferred', 'cancelled'])
                 ->default('pending')
             ;
             $table->text('remarks')->nullable();
