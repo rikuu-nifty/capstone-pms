@@ -26,8 +26,6 @@ return new class extends Migration
 
         Schema::table('inventory_lists', function (Blueprint $table) {
             $table->unsignedBigInteger('sub_area_id')->nullable()->after('building_room_id');
-            $table->index('sub_area_id');
-
             $table->foreign('sub_area_id')->references('id')->on('sub_areas')->nullOnDelete();
         });
     }
@@ -38,8 +36,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('inventory_lists', function (Blueprint $table) {
-            $table->dropIndex(['sub_area_id']);
             $table->dropForeign(['sub_area_id']);
+            $table->dropIndex(['sub_area_id']);
             $table->dropColumn('sub_area_id');
         });
 
