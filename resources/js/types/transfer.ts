@@ -1,7 +1,7 @@
 import type { BuildingRoom } from './building-room';
 import type { UnitOrDepartment } from './unit-or-department';
 import type { User } from './user';
-import type { TransferAsset } from './transfer-asset';
+import type { TransferAsset, TransferAssetPivot } from './transfer-asset';
 
 export type Transfer = {
     id: number;
@@ -45,7 +45,8 @@ export type TransferFormData = {
     current_building_id: number;
     receiving_building_id: number;
 
-    selected_assets: number[];
+    // selected_assets: number[];
+    transfer_assets: TransferAssetPivot[]; // richer array for pivot saving
 }
 
 export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'|'outline'> = {

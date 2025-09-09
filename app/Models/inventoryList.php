@@ -22,12 +22,13 @@ class InventoryList extends Model
         'unit_or_department_id',
         'building_id',
         'building_room_id',
+        'sub_area_id',
         'category_id',
         'serial_no',
         'supplier',
         'unit_cost',
         'depreciation_value',
-          'assigned_to', // ✅ added
+        'assigned_to', // ✅ added
         'date_purchased',
         'asset_type',
         'quantity',
@@ -90,6 +91,23 @@ class InventoryList extends Model
         return $this->belongsTo(Transfer::class, 'transfer_id');
     }
 
+    public function transferAssets()
+    {
+        return $this->hasMany(TransferAsset::class, 'asset_id');
+    }
+
+    // DO NOT DELETE - FOR PIVOT TABLE and INVENTORY SHEET REPORTS
+    public function transfers()
+    {
+        return $this->belongsToMany(
+            Transfer::class, //related table
+            'transfer_assets', //pivot table
+            'asset_id', // FK on pivot pointing to Inventory Lists
+            'transfer_id' // FK on pivot pointing to related table
+        )
+        ->withTimestamps();
+    }
+
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by_id');
@@ -143,18 +161,10 @@ class InventoryList extends Model
         return $sum;
     }
 
-
-    // public function category()
-    // {
-    //     return $this->belongsTo(Category::class);
-    // }
-
-    
     // public function offCampusAsset() // NEED LAGAY
     // {
     //     return $this->hasMany(offCampusAsset::class, 'asset_id');
     // }
-
 
     // ✅ Hook into model events for instant notifications
     protected static function booted()
@@ -173,8 +183,8 @@ class InventoryList extends Model
 
         static::updated(function ($asset) {
     if ($asset->maintenance_due_date && 
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isToday() || 
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isPast()
+        Carbon::parse($asset->maintenance_due_date)->isToday() || 
+        Carbon::parse($asset->maintenance_due_date)->isPast()
     ) {
         self::checkAndNotify($asset, true); // force notify
     }
@@ -186,8 +196,8 @@ class InventoryList extends Model
      */protected static function checkAndNotify($asset)
 {
     if ($asset->maintenance_due_date && (
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isToday() ||
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isPast()
+        Carbon::parse($asset->maintenance_due_date)->isToday() ||
+        Carbon::parse($asset->maintenance_due_date)->isPast()
     )) {
         $users = \App\Models\User::whereHas('role', function ($q) {
             $q->where('code', '!=', 'vp_admin'); // 👈 exclude VP Admin

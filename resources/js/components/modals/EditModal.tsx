@@ -28,7 +28,9 @@ const EditModal: React.FC<EditModalProps> = ({
 }) => {
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
+            <DialogContent 
+                className="w-full max-w-[700px] p-6 sm:max-w-[800px] max-h-[90vh] overflow-y-auto"
+            >
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
