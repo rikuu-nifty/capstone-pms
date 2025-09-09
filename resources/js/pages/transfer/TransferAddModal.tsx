@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
-import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList, formatEnums } from '@/types/custom-index';
+import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList, formatEnums, SubArea } from '@/types/custom-index';
 import AddModal from "@/components/modals/AddModal";
 import { TransferFormData } from '@/types/transfer';
+import AssetTransferItem from './AssetTransferItem';
 
 interface TransferAddModalProps {
     show: boolean;
@@ -14,6 +15,7 @@ interface TransferAddModalProps {
     unitOrDepartments: UnitOrDepartment[];
     users: User[];
     assets: InventoryList[];
+    subAreas: SubArea[];
 }
 
 const statusOptions = [ 'pending_review', 'upcoming', 'in_progress', 'completed', 'overdue', 'cancelled'];
@@ -27,6 +29,7 @@ export default function TransferAddModal({
     unitOrDepartments,
     users,
     assets,
+    subAreas,
 }: TransferAddModalProps) {
 
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TransferFormData>({
@@ -43,7 +46,8 @@ export default function TransferAddModal({
         received_by: '',
         status: 'pending_review',
         remarks: '',
-        selected_assets: [],
+        // selected_assets: [],
+        transfer_assets: [],
     });
 
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
@@ -103,7 +107,8 @@ export default function TransferAddModal({
                     onChange={(e) => {
                         setData('current_building_id', Number(e.target.value));
                         setData('current_building_room', 0);
-                        setData('selected_assets', []);
+                        // setData('selected_assets', []);
+                        setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
                 >
@@ -125,7 +130,8 @@ export default function TransferAddModal({
                     value={data.current_building_room}
                     onChange={(e) => {
                         setData('current_building_room', Number(e.target.value))
-                        setData('selected_assets', []);
+                        // setData('selected_assets', []);
+                        setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
                     disabled={!data.current_building_id}
@@ -149,7 +155,8 @@ export default function TransferAddModal({
                     onChange={(e) => {
                         setData('current_organization', Number(e.target.value))
 
-                        setData('selected_assets', []);
+                        // setData('selected_assets', []);
+                        setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
                 >
@@ -289,7 +296,7 @@ export default function TransferAddModal({
             </div>
             
             {/* Selected Assets */}
-            <div className="col-span-2 flex flex-col gap-4">
+            {/* <div className="col-span-2 flex flex-col gap-4">
                 <label className="block font-medium">Assets to Transfer</label>
 
                 {data.selected_assets.map((assetId, index) => {
@@ -384,6 +391,139 @@ export default function TransferAddModal({
                 {errors.selected_assets && (
                     <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
                 )}
+            </div> */}
+
+            {/* Assets to Transfer */}
+            <div className="col-span-2 flex flex-col gap-4">
+                <label className="block font-medium">Assets to Transfer</label>
+
+                {/* List of chosen assets + per-asset fields */}
+                {/* {data.transfer_assets.map((ta, index) => {
+                    const asset = assets.find((a) => a.id === ta.asset_id);
+                    return (
+                        <div key={`${ta.asset_id}-${index}`} className="flex flex-col gap-2 rounded-lg border p-2">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-blue-800">
+                                    {asset ? `${asset.asset_name ?? ''} (${asset.serial_no})` : 'Asset not found'}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const next = [...data.transfer_assets];
+                                        next.splice(index, 1);
+                                        setData('transfer_assets', next);
+                                    }}
+                                    className="text-red-500 text-xs hover:underline cursor-pointer"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+
+                            {asset && (
+                                <PerAssetFields
+                                    value={ta}
+                                    asset={asset}
+                                    subAreas={subAreas}
+                                    parentStatus={data.status}
+                                    onChange={(next) => {
+                                        const copy = [...data.transfer_assets];
+                                        copy[index] = next;
+                                        setData('transfer_assets', copy);
+                                    }}
+                                />
+                            )}
+                        </div>
+                    );
+                })} */}
+                {data.transfer_assets.map((ta, index) => {
+  const asset = assets.find(a => a.id === ta.asset_id);
+  if (!asset) {
+    return (
+      <div key={`${ta.asset_id}-${index}`} className="rounded-lg border p-2 text-sm text-red-600">
+        Asset not found
+      </div>
+    );
+  }
+
+  return (
+    <AssetTransferItem
+      key={`${ta.asset_id}-${index}`}
+      ta={ta}
+      asset={asset}
+      subAreas={subAreas}
+      parentStatus={data.status}
+      onRemove={() => {
+        const next = [...data.transfer_assets];
+        next.splice(index, 1);
+        setData('transfer_assets', next);
+      }}
+      onChange={(next) => {
+        const copy = [...data.transfer_assets];
+        copy[index] = next;
+        setData('transfer_assets', copy);
+      }}
+    />
+  );
+})}
+
+
+                {/* Add new asset dropdown(s) */}
+                {showAssetDropdown.map(
+                (visible, index) =>
+                    visible && (
+                    <div key={`dropdown-${index}`} className="flex items-center gap-2">
+                        <Select
+                        className="w-full"
+                        options={assets
+                            .filter((asset) => {
+                            const matchesBuilding = data.current_building_id
+                                ? asset.building_id === data.current_building_id
+                                : true;
+
+                            const matchesRoom = data.current_building_room
+                                ? asset.building_room_id === data.current_building_room
+                                : true;
+
+                            const matchesUnit = data.current_organization
+                                ? asset.unit_or_department_id === data.current_organization
+                                : true;
+
+                            const notAlreadyChosen = !data.transfer_assets.some((x) => x.asset_id === asset.id);
+
+                            return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
+                            })
+                            .map((asset) => ({
+                            value: asset.id,
+                            label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                            }))}
+                        placeholder={
+                            data.current_building_id && data.current_building_room && data.current_organization
+                            ? 'Select Asset(s) for Transfer...'
+                            : 'Select Current Building, Room, and Unit/Dept/Lab first'
+                        }
+                        isDisabled={!data.current_building_id || !data.current_building_room || !data.current_organization}
+                        onChange={(selectedOption) => {
+                            if (selectedOption) {
+                            const id = Number(selectedOption.value);
+                            if (!data.transfer_assets.some((x) => x.asset_id === id)) {
+                                setData('transfer_assets', [
+                                ...data.transfer_assets,
+                                { asset_id: id, asset_transfer_status: 'pending' },
+                                ]);
+                                setShowAssetDropdown((prev) => {
+                                const updated = [...prev];
+                                updated[index] = false;
+                                return [...updated, true];
+                                });
+                            }
+                            }
+                        }}
+                        />
+                    </div>
+                    ),
+                )}
+
+                {errors.transfer_assets && <p className="mt-1 text-sm text-red-500">{String(errors.transfer_assets)}</p>}
             </div>
 
             {/* Received By */}
