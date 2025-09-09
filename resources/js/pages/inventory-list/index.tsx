@@ -21,6 +21,7 @@ import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 import { WebcamCapture } from './WebcamCapture';
 import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
 import { UnitOrDepartment } from '@/types/custom-index';
+import { ucwords } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

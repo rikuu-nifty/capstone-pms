@@ -60,7 +60,13 @@ return new class extends Migration
             $table->date('maintenance_due_date')->nullable();
             $table->string('asset_type');
             $table->integer('quantity');
-            $table->foreignId('transfer_id')->nullable()->constrained('transfers')->nullOnDelete();
+
+            // $table->foreignId('transfer_id')->nullable()->constrained('transfers')->nullOnDelete();
+
+            // $table->unsignedInteger('transfer_id')->nullable();
+            // $table->foreign('transfer_id')
+            // ->references('id')->on('transfers')
+            // ->nullOnDelete();
             // $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->default('pending');
             
             // ✅ New field: Assigned To 

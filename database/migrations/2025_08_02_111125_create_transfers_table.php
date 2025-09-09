@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Create transfers table
         Schema::create('transfers', function (Blueprint $table) {
             $table->id();
 
@@ -38,6 +39,14 @@ return new class extends Migration
             $table->foreign('designated_employee')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('assigned_by')->references('id')->on('users')->onDelete('cascade');
         });
+
+        // Add transfer_id column to inventory_lists
+        Schema::table('inventory_lists', function (Blueprint $table) {
+            $table->foreignId('transfer_id')
+                ->nullable()
+                ->constrained('transfers')
+                ->nullOnDelete();
+        });
     }
 
     /**
@@ -45,6 +54,15 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Drop foreign key + column from inventory_lists first
+        Schema::table('inventory_lists', function (Blueprint $table) {
+            if (Schema::hasColumn('inventory_lists', 'transfer_id')) {
+                $table->dropForeign(['transfer_id']);
+                $table->dropColumn('transfer_id');
+            }
+        });
+
+        // Drop FKs from transfers
         Schema::table('transfers', function (Blueprint $table) {
             $table->dropForeign(['current_building_room']);
             $table->dropForeign(['current_organization']);
@@ -55,6 +73,7 @@ return new class extends Migration
             $table->dropForeign(['created_by_id']);
         });
 
+        // Finally drop transfers table
         Schema::dropIfExists('transfers');
     }
 };

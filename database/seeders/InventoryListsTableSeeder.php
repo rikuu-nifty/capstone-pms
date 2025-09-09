@@ -27,7 +27,7 @@ class InventoryListsTableSeeder extends Seeder
                     'asset_name' => "Sample Asset {$i}",
                     'description' => "Description for Sample Asset {$i}",
                     'status' => 'active', // ✅ valid value
-                    'transfer_status' => 'not_transferred', // ✅ valid value
+                    // 'transfer_status' => 'not_transferred', // ✅ valid value
                     'unit_or_department_id' => $unit?->id,
                     'building_id' => $building?->id,
                     'building_room_id' => $room?->id,

@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
             CategoriesTableSeeder::class,
             AssetModelsTableSeeder::class,
             InventoryListsTableSeeder::class,
+            InventorySchedulingSignatoriesSeeder::class,
         ]);
     }
 }
