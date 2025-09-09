@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
 
 type Size = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
@@ -18,6 +19,7 @@ export type ViewModalProps = {
     size?: Size;
     contentClassName?: string;
     children: React.ReactNode;
+    title?: string;
 };
 
 export default function ViewModal({ 
@@ -25,7 +27,8 @@ export default function ViewModal({
     onClose, 
     size = 'xl', 
     contentClassName, 
-    children 
+    children,
+    title = 'Details View',
 }: ViewModalProps) {
     return (
         <Dialog 
@@ -40,6 +43,10 @@ export default function ViewModal({
                     SIZE_MAP[size],
                 )}
             >
+                <VisuallyHidden>
+                    <DialogTitle>{title}</DialogTitle>
+                </VisuallyHidden>
+
                 <div className={cn('print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100', contentClassName)}>
                     {children}
                 </div>

@@ -21,9 +21,14 @@ class SubArea extends Model
      */
 
     // Each sub-area belongs to a building room
-    public function buildingRoom()
+    public function room()
     {
-        return $this->belongsTo(BuildingRoom::class);
+        return $this->belongsTo(BuildingRoom::class, 'building_room_id');
+    }
+
+    public function assets()
+    {
+        return $this->hasMany(InventoryList::class, 'sub_area_id');
     }
 
     // If you want: get all transferAssets that reference this sub-area

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import ViewModal from '@/components/modals/ViewModal';
 import { TurnoverDisposals, InventoryList, AssetModel, formatEnums  } from '@/types/custom-index';
@@ -24,6 +25,13 @@ export default function TurnoverDisposalViewModal({
     TurnoverDisposalViewModalProps
 ) {
     const recordNo = String(turnoverDisposal.id).padStart(2, '0');
+    type TdaStatus = 'pending' | 'completed' | 'cancelled';
+
+    type TdaPivot = {
+        asset_id: number;
+        asset_status?: TdaStatus;
+        date_finalized?: string | null;
+    }
 
     const formatDateLong = (d?: string | null) => {
         if (!d) return '—';
@@ -56,6 +64,34 @@ export default function TurnoverDisposalViewModal({
             </span>
         );
     };
+
+    const AssetStatusPill = ({ status }: { status?: string | null }) => {
+        const s = (status ?? 'pending').toLowerCase();
+        const label = s.charAt(0).toUpperCase() + s.slice(1);
+
+        const cls =
+            s === 'cancelled'
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+            : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300'; // pending
+
+        return (
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
+                {label}
+            </span>
+        );
+    };
+
+
+    const pivotByAssetId = useMemo<Record<number, TdaPivot>>(() => {
+        const map: Record<number, TdaPivot> = {};
+        (turnoverDisposal.turnover_disposal_assets ?? []).forEach((li) => {
+            const asset_id = Number(li.asset_id);
+            const asset_status = (li.asset_status ?? 'pending') as TdaStatus;
+            const date_finalized = li.date_finalized ?? null;
+            map[asset_id] = { asset_id, asset_status, date_finalized };
+        });
+        return map;
+    }, [turnoverDisposal.turnover_disposal_assets]);
 
     return (
         <ViewModal 
@@ -142,9 +178,11 @@ export default function TurnoverDisposalViewModal({
                             <th className="px-3 py-2 text-center font-medium">Category</th>
                             <th className="px-3 py-2 text-center font-medium">Asset Name</th>
                             <th className="px-3 py-2 text-center font-medium">Serial No.</th>
+                            <th className="px-3 py-2 text-center font-medium">Asset Status</th>
+                            <th className="px-3 py-2 text-center font-medium">Date Finalized</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    {/* <tbody>
                         {assets.map((asset) => (
                             <tr key={asset.id} className="border-t">
                                 <td className="px-3 py-2">{asset.asset_model?.brand ?? '—'}</td>
@@ -153,7 +191,30 @@ export default function TurnoverDisposalViewModal({
                                 <td className="px-3 py-2">{asset.serial_no ?? '—'}</td>
                             </tr>
                         ))}
+                    </tbody> */}
+                    <tbody>
+                        {assets.map((asset) => {
+                            const pivot = pivotByAssetId[Number(asset.id)];
+                            const perStatus: TdaStatus | undefined = pivot?.asset_status ?? 'pending';
+                            const dateFinalized = pivot?.date_finalized ? formatDateLong(pivot.date_finalized) : '—';
+
+                            return (
+                            <tr key={asset.id} className="border-t">
+                                <td className="px-3 py-2">{asset.asset_model?.brand ?? '—'}</td>
+                                <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td>
+                                <td className="px-3 py-2">{asset.asset_name ?? '—'}</td>
+                                <td className="px-3 py-2">{asset.serial_no ?? '—'}</td>
+
+                                <td className="px-3 py-2">
+                                    <AssetStatusPill status={perStatus}/>
+                                </td>
+
+                                <td className="px-3 py-2">{dateFinalized}</td>
+                            </tr>
+                            );
+                        })}
                     </tbody>
+
                 </table>
             </div>
 
