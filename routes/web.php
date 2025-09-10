@@ -19,7 +19,7 @@
     use App\Http\Controllers\UserApprovalController;
     use App\Http\Controllers\DashboardController;
     use App\Http\Controllers\NotificationController;
-
+    use App\Http\Controllers\ReportController;
     use App\Http\Controllers\Settings\PasswordController;
     use App\Http\Controllers\RoleController;
 
@@ -80,6 +80,19 @@
     
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    Route::prefix('reports')->group(function () {
+    Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+
+    Route::get('/inventory-list', [ReportController::class, 'inventoryList'])->name('reports.inventory-list');
+
+    // Placeholders
+    Route::get('/inventory-scheduling', fn() => Inertia::render('reports/placeholder', ['title' => 'Inventory Scheduling Report']));
+    Route::get('/transfer', fn() => Inertia::render('reports/placeholder', ['title' => 'Property Transfer Report']));
+    Route::get('/turnover-disposal', fn() => Inertia::render('reports/placeholder', ['title' => 'Turnover/Disposal Report']));
+    Route::get('/off-campus', fn() => Inertia::render('reports/placeholder', ['title' => 'Off-Campus Report']));
+});
+
 
     Route::get('calendar', function () {
         return Inertia::render('calendar');
