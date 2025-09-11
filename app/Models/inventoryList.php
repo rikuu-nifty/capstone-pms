@@ -71,6 +71,11 @@ class InventoryList extends Model
         return $this->belongsTo(BuildingRoom::class, 'building_room_id');
     }
 
+    public function subArea()
+    {
+        return $this->belongsTo(SubArea::class);
+    }
+
     public function turnoverDisposalAsset()
     {
         return $this->hasMany(TurnoverDisposalAsset::class, 'asset_id');

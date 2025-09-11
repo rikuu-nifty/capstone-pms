@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Select from 'react-select';
+import { Button } from '@/components/ui/button';
 import { useForm } from '@inertiajs/react';
 import AddModal from '@/components/modals/AddModal';
 import { Input } from '@/components/ui/input';
 import type { Building } from '@/types/building';
 import type { BuildingRoomFormData } from '@/types/building-room';
+import { ucwords } from '@/types/custom-index';
 
 interface AddNewRoomProps {
     show: boolean;
@@ -21,39 +23,74 @@ export default function AddBuildingRoomModal({
     defaultBuildingId = null,
     lockBuildingSelect = false,
 }: AddNewRoomProps) {
-    const { data, setData, post, processing, reset, errors, clearErrors, } = useForm<BuildingRoomFormData>({
+
+    const { data, setData, post, processing, reset, errors, clearErrors, setError } = useForm<BuildingRoomFormData>({
         building_id: '',
         room: '',
         description: '',
+        sub_areas: [],
     });
+
+    const [addSubAreasNow, setAddSubAreasNow] = useState(false);
 
     useEffect(() => {
         if (!show) return;
         reset();
         clearErrors();
+        setAddSubAreasNow(false);
 
         if (defaultBuildingId != null) {
-        setData('building_id', Number(defaultBuildingId));
+            setData('building_id', Number(defaultBuildingId));
         }
     }, [show, defaultBuildingId, reset, clearErrors, setData]);
+
+    const addSubAreaRow = () => {
+        setData('sub_areas', [...(data.sub_areas ?? []), { name: '', description: '' }]);
+    };
+
+    const removeSubAreaRow = (index: number) => {
+        const copy = [...(data.sub_areas ?? [])];
+        copy.splice(index, 1);
+        setData('sub_areas', copy);
+    };
+
+    const updateSubAreaField = (index: number, key: 'name' | 'description', value: string) => {
+        const copy = [...(data.sub_areas ?? [])];
+        copy[index] = { ...copy[index], [key]: value };
+        setData('sub_areas', copy);
+    };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const payload: BuildingRoomFormData = {
-            building_id:
-                data.building_id === '' ? '' : Number(data.building_id),
+            building_id: data.building_id === '' ? '' : Number(data.building_id),
             room: (data.room ?? '').trim(),
             description: (data.description ?? '').toString().trim() || null,
+            sub_areas: addSubAreasNow
+                ? (data.sub_areas ?? [])
+                      .map((sa) => ({
+                          name: (sa.name ?? '').trim(),
+                          description: (sa.description ?? '').trim() || null,
+                      }))
+                      .filter((sa) => sa.name.length > 0)
+                : []
+            ,
         };
 
         setData(payload);
 
         post('/building-rooms', {
             preserveScroll: true,
+            onError: (serverErrors: Record<string, string>) => {
+                Object.entries(serverErrors).forEach(([field, message]) => {
+                    setError(field as keyof BuildingRoomFormData, message);
+                });
+            },
             onSuccess: () => {
                 reset();
                 clearErrors();
+                setAddSubAreasNow(false);
                 onClose();
             },
         });
@@ -66,11 +103,12 @@ export default function AddBuildingRoomModal({
                 onClose();
                 reset();
                 clearErrors();
+                setAddSubAreasNow(false);
             }}
             title="Add New Building Room"
             onSubmit={handleSubmit}
             processing={processing}
-            >
+        >
             {/* Building */}
             <div>
                 <label className="mb-1 block font-medium">Building</label>
@@ -97,7 +135,7 @@ export default function AddBuildingRoomModal({
                     }
                     options={buildings.map((b) => ({
                         value: b.id,
-                        label: `${b.code} : ${b.name}`,
+                        label: `${(b.code.toUpperCase())} : ${ucwords(b.name)}`,
                     }))}
                 />
                 {errors.building_id && (
@@ -134,6 +172,87 @@ export default function AddBuildingRoomModal({
                     <p className="mt-1 text-xs text-red-500">{errors.description}</p>
                 )}
             </div>
+
+             {/* Toggle for Sub Areas */}
+            <div className="col-span-2 flex items-center justify-between">
+                <div>
+                    <label className="font-medium">Add Sub Areas now (optional)</label>
+                    <p className="text-xs text-muted-foreground">
+                        Add one or more sub areas that belong under this room.
+                    </p>
+                </div>
+                <label className="inline-flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={addSubAreasNow}
+                        onChange={(e) => setAddSubAreasNow(e.target.checked)}
+                    />
+                    <span className="text-sm">Enable</span>
+                </label>
+            </div>
+
+            {/* Sub Area fields */}
+            {addSubAreasNow && (
+                <div className="col-span-2 space-y-3">
+                    {(data.sub_areas ?? []).map((sa, idx) => (
+                        <div key={idx} className="rounded-lg border p-3">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
+                                <div className="md:col-span-2">
+                                    <label className="mb-1 block text-sm font-medium">
+                                        Sub Area Name
+                                    </label>
+                                    <Input
+                                        placeholder="e.g., Front Left, Cabinet A"
+                                        value={sa.name}
+                                        onChange={(e) =>
+                                            updateSubAreaField(idx, 'name', e.target.value)
+                                        }
+                                    />
+                                    {errors[`sub_areas.${idx}.name` as keyof typeof errors] && (
+                                        <p className="mt-1 text-xs text-red-500">
+                                            {
+                                                errors[
+                                                    `sub_areas.${idx}.name` as keyof typeof errors
+                                                ] as unknown as string
+                                            }
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="md:col-span-3">
+                                    <label className="mb-1 block text-sm font-medium">
+                                        Description (optional)
+                                    </label>
+                                    <Input
+                                        placeholder="Short description"
+                                        value={sa.description ?? ''}
+                                        onChange={(e) =>
+                                            updateSubAreaField(idx, 'description', e.target.value)
+                                        }
+                                    />
+                                </div>
+
+                                <div className="md:col-span-1 flex items-end">
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        onClick={() => removeSubAreaRow(idx)}
+                                        disabled={processing}
+                                        className="cursor-pointer"
+                                    >
+                                        Remove
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    <Button type="button" onClick={addSubAreaRow} disabled={processing}>
+                        Add a new Sub-Area
+                    </Button>
+                </div>
+            )}
         </AddModal>
     );
 }
