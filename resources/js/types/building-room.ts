@@ -17,7 +17,10 @@ export type BuildingRoom = {
     asset_share?: number;
     
     sub_areas?: SubArea[];
+<<<<<<< HEAD
     sub_areas_count?: number;
+=======
+>>>>>>> 394a679 (Feature to add new sub areas during room creation in Buildings page)
 };
 
 export type BuildingRoomFormData = {
@@ -29,7 +32,10 @@ export type BuildingRoomFormData = {
         id?: number;
         name: string;
         description?: string | null;
+<<<<<<< HEAD
         _open?: boolean;
+=======
+>>>>>>> 394a679 (Feature to add new sub areas during room creation in Buildings page)
     }[];
     remove_sub_area_ids?: number[];
 };
