@@ -10,6 +10,7 @@ use App\Models\Building;
 use App\Models\BuildingRoom;
 use App\Models\Category;
 use App\Models\User;
+use App\Models\SubArea;
 
 use App\Models\InventoryList;
 use Illuminate\Http\Request;
@@ -90,6 +91,7 @@ class InventoryListController extends Controller
             'buildingRoom.building',
             'roomBuilding',
             'transfer', // ✅ eager load transfer
+            'subArea',
         ])->latest();
 
         if ($user && !$user->hasPermission('view-inventory-list')) {
@@ -105,6 +107,7 @@ class InventoryListController extends Controller
             'buildings' => Building::all(),
             'buildingRooms' => BuildingRoom::all(),
             'categories' => Category::all(),
+            'subAreas' => SubArea::all(),
             'kpis' => InventoryList::kpis(),
         ];
     }
@@ -173,12 +176,22 @@ class InventoryListController extends Controller
                     $newData = $data;
                     $newData['serial_no'] = $serial;
                     $newData['quantity'] = 1;
+
+                    if ($request->filled('sub_area_id')) {
+                        $newData['sub_area_id'] = $request->input('sub_area_id');
+                    }
+
                     $created[] = InventoryList::create($newData);
                 }
             } else {
                 for ($i = 0; $i < $qty; $i++) {
                     $newData = $data;
                     $newData['quantity'] = 1;
+
+                    if ($request->filled('sub_area_id')) {
+                        $newData['sub_area_id'] = $request->input('sub_area_id');
+                    }
+
                     $created[] = InventoryList::create($newData);
                 }
             }
@@ -248,6 +261,8 @@ class InventoryListController extends Controller
             'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
             'status' => 'nullable|string|in:active,archived',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // ✅ image validation
+
+            'sub_area_id' => 'nullable|exists:sub_areas,id',
         ]);
 
         // ✅ ensure maintenance_due_date is passed

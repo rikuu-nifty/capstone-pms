@@ -20,7 +20,7 @@ import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 // import { WebcamCaptureModal } from './WebcamCaptureModal';
 import { WebcamCapture } from './WebcamCapture';
 import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
-import { UnitOrDepartment } from '@/types/custom-index';
+import { UnitOrDepartment, SubArea } from '@/types/custom-index';
 import { ucwords } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -29,8 +29,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/inventory-list',
     },
 ];
-
-
 
 export type Category = {
     id: number;
@@ -97,6 +95,7 @@ export type Asset = {
     brand: string;
     image_path?: string | null; // ✅ new field
     maintenance_due_date: string; // ✅ new field
+    sub_area?: SubArea | null;
 };
 
 export type AssetFormData = {
@@ -121,6 +120,8 @@ export type AssetFormData = {
     // transfer_status: string;  ❌ Removed: transfer_status
     image?: File | null; // ✅ add this
     maintenance_due_date: string; // ✅ new field
+
+    sub_area_id: number | string;
 };
 
 type KPIs = {
@@ -150,6 +151,8 @@ export default function InventoryListIndex({
         fixed_pct: 0,
         not_fixed_pct: 0,
     },
+
+    subAreas = [],
 }: {
     assets: Asset[];
     assetModels: AssetModel[];
@@ -161,11 +164,14 @@ export default function InventoryListIndex({
     viewing_asset?: Asset | null;
 
     kpis?: KPIs;
+
+    subAreas: SubArea[];
 }) {
     const { data, setData, post, processing, errors, reset, clearErrors, transform } = useForm<AssetFormData>({
         building_id: '',
         unit_or_department_id: '',
         building_room_id: '',
+        sub_area_id: '',
         date_purchased: '',
         maintenance_due_date: '', // ✅ new default
         category_id: '',
@@ -719,6 +725,7 @@ export default function InventoryListIndex({
                     categories={categories}
                     assetModels={assetModels}
                     uniqueBrands={[...new Set(assetModels.map((m) => m.brand))]}
+                    subAreas={subAreas}
                 />
             )}
 
@@ -811,6 +818,7 @@ export default function InventoryListIndex({
                     buildingRooms={buildingRooms}
                     categories={categories}
                     assetModels={assetModels}
+                    subAreas={subAreas}
                 />
             )}
 
@@ -900,6 +908,28 @@ export default function InventoryListIndex({
                                         </option>
                                     ))}
                                 </select>
+                            </div>
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Sub Area</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.sub_area_id}
+                                    onChange={(e) => setData('sub_area_id', Number(e.target.value))}
+                                    disabled={!data.building_room_id}
+                                >
+                                    <option value="">Select Sub Area</option>
+                                    {subAreas
+                                    .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id)) // ✅ typed
+                                    .map((s: SubArea) => ( // ✅ typed
+                                        <option key={s.id} value={s.id}>
+                                        {s.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.sub_area_id && (
+                                    <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
+                                )}
                             </div>
 
                             {/* <div className="col-span-1">
