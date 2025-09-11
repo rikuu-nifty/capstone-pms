@@ -69,7 +69,7 @@ type Props = {
 
 // -------------------- HELPERS --------------------
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Off Campus', href: '/off-campus' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Off-Campus', href: '/off-campus' }];
 
 function formatDate(d?: string | null) {
     if (!d) return '—';
@@ -198,7 +198,7 @@ export default function OffCampusIndex({
                 {/* Header + Search */}
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Off Campus</h1>
+                        <h1 className="text-2xl font-semibold">Off-Campus</h1>
                         <p className="text-sm text-muted-foreground">Forms authorizing items to be brought out of AUF premises.</p>
                         <Input
                             type="text"

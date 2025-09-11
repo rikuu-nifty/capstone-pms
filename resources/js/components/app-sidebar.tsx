@@ -67,7 +67,7 @@ const inventoryNavItems = [
     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
     { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
-    { title: 'Off Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
+    { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
 ];
 
 const assetsNavItems = [

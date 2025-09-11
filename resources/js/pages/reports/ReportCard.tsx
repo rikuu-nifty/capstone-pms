@@ -29,8 +29,12 @@ export function ReportCard({ title, description, href, icon, chart, footer }: Re
 
       <CardContent className="flex-1">
         {/* Mini Chart Preview */}
-        <div className="h-40 flex items-center justify-center">
-          {chart ?? <span className="text-gray-400 text-sm">Data Visualization Charts</span>}
+        <div className="w-full">
+          {chart ?? (
+            <div className="rounded-lg bg-gray-50 p-6 text-center text-gray-400 text-sm">
+              Data Visualization Charts
+            </div>
+          )}
         </div>
 
         {/* Description */}
@@ -39,10 +43,10 @@ export function ReportCard({ title, description, href, icon, chart, footer }: Re
 
       {footer && (
         <CardFooter className="border-t px-4 h-8 flex justify-center items-end">
-  {footer}
-</CardFooter>
-
+          {footer}
+        </CardFooter>
       )}
     </Card>
   )
 }
+

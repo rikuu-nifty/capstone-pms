@@ -1,7 +1,10 @@
 "use client"
 
+
 import { TrendingUp } from "lucide-react"
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
+
+
 import {
   Card,
   CardContent,
@@ -17,6 +20,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
+
 // ✅ Props from backend
 type ChartPoint = {
   month: string
@@ -26,29 +30,32 @@ type ChartPoint = {
   cumulative: number
 }
 
+
 type Props = {
   data: ChartPoint[]
 }
 
-// ✅ Define chart config with HSL-based colors (blue palette)
+
+// ✅ Define chart config with real colors
 const chartConfig = {
   added: {
     label: "New Assets",
-    color: "hsl(210, 90%, 55%)", // medium blue
+    color: "#3B82F6", // blue
   },
   disposed: {
     label: "Disposed Assets",
-    color: "hsl(200, 70%, 45%)", // darker blue
+    color: "#EF4444", // red
   },
   transfers: {
     label: "Transfers",
-    color: "hsl(220, 80%, 65%)", // lighter blue
+    color: "#F59E0B", // amber/orange
   },
   cumulative: {
     label: "Total Active Assets",
-    color: "hsl(210, 100%, 35%)", // strong dark blue for emphasis
+    color: "#10B981", // green
   },
 } satisfies ChartConfig
+
 
 export default function AssetsOverTimeChart({ data }: Props) {
   return (
@@ -61,7 +68,7 @@ export default function AssetsOverTimeChart({ data }: Props) {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <LineChart
+          <AreaChart
             accessibilityLayer
             data={data}
             margin={{ left: 12, right: 12 }}
@@ -72,51 +79,63 @@ export default function AssetsOverTimeChart({ data }: Props) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)} // short month label
+              tickFormatter={(value) => value.slice(0, 3)}
             />
             <YAxis tickLine={false} axisLine={false} />
-            {/* ✅ Custom Tooltip showing ALL lines */}
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
-            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
 
-            {/* New Assets */}
-            <Line
+
+            {/* Gradient defs for each color */}
+            <defs>
+              <linearGradient id="fillAdded" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={chartConfig.added.color} stopOpacity={0.7} />
+                <stop offset="95%" stopColor={chartConfig.added.color} stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id="fillDisposed" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={chartConfig.disposed.color} stopOpacity={0.7} />
+                <stop offset="95%" stopColor={chartConfig.disposed.color} stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id="fillTransfers" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={chartConfig.transfers.color} stopOpacity={0.7} />
+                <stop offset="95%" stopColor={chartConfig.transfers.color} stopOpacity={0.05} />
+              </linearGradient>
+              <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={chartConfig.cumulative.color} stopOpacity={0.7} />
+                <stop offset="95%" stopColor={chartConfig.cumulative.color} stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+
+
+            {/* Areas */}
+            <Area
               dataKey="added"
               type="monotone"
               stroke={chartConfig.added.color}
+              fill="url(#fillAdded)"
               strokeWidth={2}
-              dot={false}
             />
-
-            {/* Disposed Assets */}
-            <Line
+            <Area
               dataKey="disposed"
               type="monotone"
               stroke={chartConfig.disposed.color}
+              fill="url(#fillDisposed)"
               strokeWidth={2}
-              dot={false}
             />
-
-            {/* Transfers */}
-            <Line
+            <Area
               dataKey="transfers"
               type="monotone"
               stroke={chartConfig.transfers.color}
+              fill="url(#fillTransfers)"
               strokeWidth={2}
-              dot={false}
             />
-
-            {/* Cumulative Active Assets */}
-            <Line
+            <Area
               dataKey="cumulative"
               type="monotone"
               stroke={chartConfig.cumulative.color}
-              strokeWidth={3} // thicker to stand out
-              dot={false}
+              fill="url(#fillCumulative)"
+              strokeWidth={3} // slightly thicker
             />
-          </LineChart>
+          </AreaChart>
         </ChartContainer>
       </CardContent>
       <CardFooter>
@@ -134,3 +153,6 @@ export default function AssetsOverTimeChart({ data }: Props) {
     </Card>
   )
 }
+
+
+

@@ -4,7 +4,8 @@ import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from '@/pages/inventory-list/index';
+import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category } from '@/pages/inventory-list/index';
+import { UnitOrDepartment } from '@/types/custom-index';
 import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';// ✅ new import
