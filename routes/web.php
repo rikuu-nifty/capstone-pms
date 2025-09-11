@@ -22,7 +22,7 @@
 
     use App\Http\Controllers\Settings\PasswordController;
     use App\Http\Controllers\RoleController;
-
+    use App\Http\Controllers\InventoryReportController;
 
     // Route::get('/', function () {
     //     return Inertia::render('welcome');
@@ -367,6 +367,8 @@
 
 
     //REPORTS
+    Route::get('/reports/inventory-sheet', [InventoryReportController::class, 'index'])->name('reports.inventory-sheet');
+    Route::post('/reports/inventory-sheet/generate', [InventoryReportController::class, 'generate'])->name('reports.inventory-sheet.generate');
 
     //ASSIGNMENTS
 
