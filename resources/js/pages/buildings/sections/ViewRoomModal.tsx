@@ -15,8 +15,10 @@ export default function ViewRoomModal({
     room 
 }: Props) {
     const assets = room.assets ?? [];
-    const assetCount =
-        typeof room.assets_count === 'number' ? room.assets_count : assets.length;
+    const assetCount =  typeof room.assets_count === 'number' ? room.assets_count : assets.length;
+
+    const subAreas = room.sub_areas ?? [];
+    const subAreaCount = subAreas.length;
 
     return (
         <ViewModal
@@ -64,7 +66,7 @@ export default function ViewRoomModal({
                                 </tr>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
                                     <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                        Room (Name/Number)
+                                        Room Name/No.
                                     </td>
                                     <td className="px-3 py-2 font-medium">{room.room ?? '—'}</td>
                                 </tr>
@@ -97,6 +99,14 @@ export default function ViewRoomModal({
                                 </tr>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
                                     <td className="w-3/4 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                        Total Sub-Area
+                                    </td>
+                                    <td className="px-3 py-2 font-semibold text-right">
+                                        {subAreaCount.toLocaleString()}
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                    <td className="w-3/4 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
                                         Institution Asset Share
                                     </td>
                                     <td className="px-3 py-2 font-semibold text-right">
@@ -110,28 +120,63 @@ export default function ViewRoomModal({
             </div>
 
             {/* Description */}
-            <div className="grid grid-cols-2 items-start gap-4 mb-1 mt-4">
-                <div>
-                    <h4 className="mt-2 text-sm font-semibold text-gray-800">Description:</h4>
-                    {room.description ? (
-                        <p className="text-sm italic text-blue-700 mt-2 w-200 ml-15">
-                        {room.description.trim()}
+            {room.description && room.description.trim().length > 0 && (
+                <div className="grid grid-cols-2 items-start gap-4 mb-1 mt-4">
+                    <div>
+                        <h4 className="mt-2 text-sm font-semibold text-gray-800">Description:</h4>
+                        <p className="text-sm italic text-blue-700 mt-2">
+                            {room.description.trim()}
                         </p>
-                    ) : (
-                        <p className="text-sm text-muted-foreground mt-2">—</p>
-                    )}
+                    </div>
                 </div>
+            )}
+
+            {/* Sub Areas Table */}
+            <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                <h3 className="bg-blue-100 px-3 py-2 text-sm font-semibold text-left">
+                    SUB AREAS
+                </h3>
+                <table className="w-full text-sm text-center">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-3 py-2">ID</th>
+                            <th className="px-3 py-2">Name</th>
+                            <th className="px-3 py-2">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {subAreas.length > 0 ? (
+                            subAreas.map((sa) => (
+                                <tr key={sa.id} className="border-t">
+                                    <td className="px-3 py-2">{sa.id}</td>
+                                    <td className="px-3 py-2">{sa.name}</td>
+                                    <td className="px-3 py-2">{sa.description ?? '—'}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={3} className="px-3 py-4 text-center text-muted-foreground">
+                                    No sub areas assigned to this room.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {/* Assets Table */}
             <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                <h3 className="bg-blue-100 px-3 py-2 text-sm font-semibold text-left">
+                    ASSETS
+                </h3>
                 <table className="w-full text-sm text-center">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                            <th className="px-3 py-2 text-center font-medium">ID</th>
-                            <th className="px-3 py-2 text-center font-medium">Asset Name</th>
-                            <th className="px-3 py-2 text-center font-medium">Serial No.</th>
-                            <th className="px-3 py-2 text-center font-medium">Category</th>
+                            <th className="px-3 py-2">ID</th>
+                            <th className="px-3 py-2">Asset Name</th>
+                            <th className="px-3 py-2">Serial No.</th>
+                            <th className="px-3 py-2">Category</th>
+                            <th className="px-3 py-2">Sub Area</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -141,6 +186,7 @@ export default function ViewRoomModal({
                                     <td className="px-3 py-2">{formatLabel(a.asset_name ?? '—')}</td>
                                     <td className="px-3 py-2">{a.serial_no ?? '—'}</td>
                                     <td className="px-3 py-2">{a.asset_model?.category?.name ?? '—'}</td>
+                                    <td className="px-3 py-2">{a.sub_area?.name ?? '—'}</td>
                                 </tr>
                             ))
                             ) : (
