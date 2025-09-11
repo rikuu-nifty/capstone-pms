@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import EditModal from '@/components/modals/EditModal';
 import Select from 'react-select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+// import { Button } from '@/components/ui/button';
+// import { Input } from '@/components/ui/input';
 import type { Building } from '@/types/building';
 import type { BuildingRoom, BuildingRoomFormData } from '@/types/building-room';
 import { ucwords } from '@/types/custom-index';
@@ -54,7 +54,9 @@ export default function EditBuildingRoomModal({
     }, [show, room, setData, clearErrors]);
 
     const addSubAreaRow = () => {
-        setData('sub_areas', [...(data.sub_areas ?? []), { name: '', description: '' }]);
+        setData('sub_areas', [
+            ...(data.sub_areas ?? []), 
+            { name: '', description: '', _open: true }]);
     };
 
     const updateSubAreaField = (index: number, key: 'name' | 'description', value: string) => {
@@ -171,7 +173,7 @@ export default function EditBuildingRoomModal({
             </div>
 
             {/* Sub Areas */}
-            <div className="col-span-2 mt-4">
+            {/* <div className="col-span-2 mt-4">
                 <div className="flex items-center justify-between mb-2">
                     <label className="font-medium">Sub Areas</label>
                     <Button
@@ -234,6 +236,92 @@ export default function EditBuildingRoomModal({
                         </div>
                     </div>
                 ))}
+            </div> */}
+            <div className="col-span-2 flex flex-col gap-4 mt-4">
+                <label className="block font-medium">Sub Areas</label>
+
+                {(data.sub_areas ?? []).map((sa, index) => (
+                    <div
+                        key={sa.id ?? `new-${index}`}
+                        className="flex flex-col gap-2 rounded-lg border"
+                    >
+                    {/* Card header */}
+                    <div className="flex items-center justify-between px-2 py-2">
+                        <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                            <span className="truncate text-base font-semibold text-gray-900">
+                            {sa.name || `Sub Area ${index + 1}`}
+                            </span>
+                        </div>
+                        {!sa._open && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                            Click to show sub-area details
+                            </div>
+                        )}
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => {
+                            const copy = [...(data.sub_areas ?? [])];
+                            copy[index]._open = !copy[index]._open;
+                            setData('sub_areas', copy);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50 cursor-pointer"
+                        >
+                            {sa._open ? 'Hide Details' : 'Show Details'}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => removeSubAreaRow(index)}
+                            className="text-red-500 text-xs hover:underline cursor-pointer"
+                        >
+                            Remove
+                        </button>
+                        </div>
+                    </div>
+
+                    {/* Details */}
+                    {sa._open && (
+                        <div className="px-2 pb-2 grid grid-cols-2 gap-3 text-sm">
+                        <div className="col-span-1">
+                            <label className="mb-0.5 block font-medium">Name</label>
+                            <input
+                            type="text"
+                            className="w-full rounded-md border p-1.5"
+                            value={sa.name}
+                            onChange={(e) => updateSubAreaField(index, 'name', e.target.value)}
+                            placeholder="Sub Area name"
+                            />
+                        </div>
+
+                        <div className="col-span-1">
+                            <label className="mb-0.5 block font-medium">Description</label>
+                            <input
+                            type="text"
+                            className="w-full rounded-md border p-1.5"
+                            value={sa.description ?? ''}
+                            onChange={(e) =>
+                                updateSubAreaField(index, 'description', e.target.value)
+                            }
+                            placeholder="Optional description"
+                            />
+                        </div>
+                        </div>
+                    )}
+                    </div>
+                ))}
+
+                <button
+                    type="button"
+                    onClick={addSubAreaRow}
+                    disabled={processing}
+                    className="rounded-md border px-3 py-1 text-sm hover:bg-gray-50 cursor-pointer self-start"
+                >
+                    + Add Sub Area
+                </button>
             </div>
         </EditModal>
     );
