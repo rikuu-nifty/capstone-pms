@@ -73,7 +73,7 @@ class InventoryList extends Model
 
     public function subArea()
     {
-        return $this->belongsTo(SubArea::class);
+        return $this->belongsTo(SubArea::class, 'sub_area_id');
     }
 
     public function turnoverDisposalAsset()
