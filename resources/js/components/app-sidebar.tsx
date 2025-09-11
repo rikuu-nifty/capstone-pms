@@ -68,6 +68,8 @@ const inventoryNavItems = [
     { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
+    
+    { title: 'Inventory Sheet Report', href: '/reports/inventory-sheet', icon: ClipboardList, permission: 'view-reports' },
 ];
 
 const assetsNavItems = [
