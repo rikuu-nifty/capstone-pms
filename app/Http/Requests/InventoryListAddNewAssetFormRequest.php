@@ -41,7 +41,8 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'unit_cost' =>   'required|numeric|min:0|max:999999.99',
 
             // ✅ Single mode: serial_no is required; Bulk mode: can be nullable
-            'serial_no'     => 'required|string|max:255',
+            // 'serial_no'     => 'required|string|max:255',
+            'serial_no' => 'required_if:mode,single|nullable|string|max:255',
 
             // ✅ Bulk mode: array of serials
             'serial_numbers'   => 'array',
@@ -65,6 +66,8 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
 
             // ✅ New
             'assigned_to' => 'nullable|string|max:255',
+
+            'sub_area_id' => 'nullable|exists:sub_areas,id',
         ];
     }
 
