@@ -47,6 +47,7 @@ class BuildingRoom extends Model
     {
         return static::query()
             ->with(['building:id,code,name'])
+            ->with(['subAreas:id,building_room_id,name,description'])
             ->withCount('assets')
             ->orderBy('building_id')
             ->orderBy('room')
@@ -58,6 +59,7 @@ class BuildingRoom extends Model
     {
         return static::query()
             ->with(['building:id,code,name'])
+            ->with(['subAreas:id,building_room_id,name,description'])
             ->withCount([
                 // filtered assets count for the user’s unit
                 'assets as assets_count' => fn($q) => $q->where('unit_or_department_id', $unitId),
@@ -90,15 +92,6 @@ class BuildingRoom extends Model
 
     public static function listAllRoomsWithAssetShare(int $totalAssets, ?User $user = null)
     {
-        // $rooms = static::listAllRooms();
-
-        // $rooms->each(function ($r) use ($totalAssets) {
-        //     $assetsCount = (int) ($r->assets_count ?? 0);
-        //     $r->asset_share = $totalAssets > 0
-        //         ? round(($assetsCount / $totalAssets) * 100, 2)
-        //         : 0.00;
-        // });
-
         $rooms = $user &&
             $user->hasPermission('view-own-unit-buildings') &&
             !$user->hasPermission('view-buildings') &&
@@ -136,6 +129,7 @@ class BuildingRoom extends Model
             ->select(['id', 'building_id', 'room', 'description'])
             ->with([
                 'building:id,code,name',
+                'subAreas:id,building_room_id,name,description',
                 'assets' => function ($q) {
                     $q->select([
                         'id',
@@ -148,6 +142,7 @@ class BuildingRoom extends Model
                 },
                 'assets.assetModel:id,category_id,brand,model',
                 'assets.assetModel.category:id,name',
+                'assets.subArea:id,name,building_room_id',
             ])
             ->withCount('assets')
             ->findOrFail($id);
@@ -186,6 +181,7 @@ class BuildingRoom extends Model
             ->select(['id', 'building_id', 'room', 'description'])
             ->with([
                 'building:id,code,name',
+                'subAreas:id,building_room_id,name,description',
                 'assets' => function ($q) use ($user) {
                     $q->select([
                         'id',

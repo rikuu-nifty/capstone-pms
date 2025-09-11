@@ -47,6 +47,12 @@ export type AssetLite = {
         name: string;
         } | null;
     } | null;
+    sub_area?: {
+        id: number;
+        name: string;
+        description?: string | null;
+        building_room_id?: number;
+    } | null;
 };
 
 export type RoomWithAssets = {
