@@ -1,4 +1,4 @@
-import type { InventoryList } from './custom-index';
+import type { InventoryList, SubArea } from './custom-index';
 
 export type BuildingRoom = {
     id: number;
@@ -15,12 +15,21 @@ export type BuildingRoom = {
     assets?: InventoryList[];
     assets_count?: number;
     asset_share?: number;
+    
+    sub_areas?: SubArea[];
 };
 
 export type BuildingRoomFormData = {
     building_id: number | ''; 
     room: string;
     description: string | null;
+
+    sub_areas?: {
+        id?: number;
+        name: string;
+        description?: string | null;
+    }[];
+    remove_sub_area_ids?: number[];
 };
 
 export type AssetLite = {
@@ -45,12 +54,16 @@ export type RoomWithAssets = {
     building_id: number | string;
     room: string | null;
     description: string | null;
+
     building?: { 
         id: number | string; 
         code?: string | null; 
         name?: string | null 
     } | null;
+
     assets?: AssetLite[];
     assets_count?: number;
     asset_share?: number;
+
+    sub_areas?: SubArea[];
 };

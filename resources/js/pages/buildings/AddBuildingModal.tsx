@@ -191,9 +191,10 @@ export default function AddBuildingModal({ show, onClose }: AddBuildingModalProp
                             <div className="md:col-span-1 flex items-end">
                             <Button
                                 type="button"
-                                variant="ghost"
+                                variant="destructive"
                                 onClick={() => removeRoomRow(idx)}
                                 disabled={isSubmitting}
+                                className='cursor-pointer'
                             >
                                 Remove
                             </Button>
