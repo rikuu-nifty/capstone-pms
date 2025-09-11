@@ -57,6 +57,13 @@ const reportsNavItem = {
     permission: 'view-reports',
 };
 
+const InventorySheetReportsNavItem = {
+    title: 'Inventory Sheet Reports',
+    href: '/reports/inventory-sheet',
+    icon: ClipboardList,
+    permission: 'view-reports',
+};
+
 const inventoryNavItems = [
     {
         title: 'Inventory List',
@@ -69,7 +76,7 @@ const inventoryNavItems = [
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
     
-    { title: 'Inventory Sheet Report', href: '/reports/inventory-sheet', icon: ClipboardList, permission: 'view-reports' },
+    // { title: 'Inventory Sheet Report', href: '/reports/inventory-sheet', icon: ClipboardList, permission: 'view-reports' },
 ];
 
 const assetsNavItems = [
@@ -241,6 +248,17 @@ export function AppSidebar() {
                                     <Link href={reportsNavItem.href} className="flex items-center space-x-2">
                                         <reportsNavItem.icon className="h-4 w-4" />
                                         <span>{reportsNavItem.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+
+                        {canView(InventorySheetReportsNavItem, permissions) && (
+                            <SidebarMenuItem key={InventorySheetReportsNavItem.href}>
+                                <SidebarMenuButton asChild className="px-3 py-2">
+                                    <Link href={InventorySheetReportsNavItem.href} className="flex items-center space-x-2">
+                                        <InventorySheetReportsNavItem.icon className="h-4 w-4" />
+                                        <span>{InventorySheetReportsNavItem.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
