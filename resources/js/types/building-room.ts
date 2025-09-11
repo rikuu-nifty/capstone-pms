@@ -29,6 +29,7 @@ export type BuildingRoomFormData = {
         id?: number;
         name: string;
         description?: string | null;
+        _open?: boolean;
     }[];
     remove_sub_area_ids?: number[];
 };
