@@ -27,6 +27,11 @@ class Building extends Model
         return $this->hasMany(BuildingRoom::class);
     }
 
+    public function subAreas()
+    {
+        return $this->hasManyThrough(SubArea::class, BuildingRoom::class, 'building_id', 'building_room_id');
+    }
+
     public function assets(): HasManyThrough
     {
         return $this->hasManyThrough(
@@ -49,6 +54,7 @@ class Building extends Model
         $withCount = [
             'buildingRooms',
             'assets',
+            'subAreas',
         ];
 
         if (

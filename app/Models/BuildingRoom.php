@@ -48,7 +48,7 @@ class BuildingRoom extends Model
         return static::query()
             ->with(['building:id,code,name'])
             ->with(['subAreas:id,building_room_id,name,description'])
-            ->withCount('assets')
+            ->withCount(['assets', 'subAreas'])
             ->orderBy('building_id')
             ->orderBy('room')
             ->get(['id', 'building_id', 'room', 'description'])
@@ -61,8 +61,9 @@ class BuildingRoom extends Model
             ->with(['building:id,code,name'])
             ->with(['subAreas:id,building_room_id,name,description'])
             ->withCount([
-                // filtered assets count for the user’s unit
                 'assets as assets_count' => fn($q) => $q->where('unit_or_department_id', $unitId),
+                'subAreas as sub_areas_count' => fn($q) =>
+                    $q->whereHas('inventoryLists', fn($qa) => $qa->where('unit_or_department_id', $unitId))
             ])
             ->whereHas(
                 'assets',

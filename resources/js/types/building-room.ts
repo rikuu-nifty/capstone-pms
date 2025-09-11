@@ -17,6 +17,7 @@ export type BuildingRoom = {
     asset_share?: number;
     
     sub_areas?: SubArea[];
+    sub_areas_count?: number;
 };
 
 export type BuildingRoomFormData = {
