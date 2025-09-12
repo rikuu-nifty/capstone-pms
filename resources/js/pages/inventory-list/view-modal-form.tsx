@@ -127,8 +127,17 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <InfoCard label="Building" value={humanize(asset.building?.name)} />
-                                <InfoCard label="Room" value={humanize(asset.building_room?.room)} />
-                                <InfoCard label="Sub Area" value={humanize(asset.sub_area?.name)} />
+                                {/* <InfoCard label="Room" value={humanize(asset.building_room?.room) } /> */}
+                                <InfoCard
+                                    label="Room"
+                                    value={
+                                        asset.building_room?.room
+                                        ? `${humanize(asset.building_room?.room)}${
+                                            asset.sub_area?.name ? ` (${humanize(asset.sub_area?.name)})` : ''
+                                            }`
+                                        : humanize(asset.sub_area?.name)
+                                    }
+                                />
                                 <InfoCard label="Unit / Department" value={humanize(asset.unit_or_department?.name)} />
                                 <InfoCard label="Assigned To" value={humanize(asset.assigned_to)} /> {/* ✅ new */}
                             </div>
