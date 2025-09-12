@@ -1,231 +1,231 @@
 // import { Input } from '@/components/ui/input'
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import type { PageProps as InertiaPageProps } from '@inertiajs/core';
-import { Head, usePage } from '@inertiajs/react';
-import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lucide-react';
-// import { useState } from 'react'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useState } from 'react';
-import { Cell, Label, Pie, PieChart } from 'recharts';
-import { ReportCard } from './ReportCard';
+import AppLayout from '@/layouts/app-layout'
+import { type BreadcrumbItem } from '@/types'
+import type { PageProps as InertiaPageProps } from '@inertiajs/core'
+import { Head, usePage } from '@inertiajs/react'
+import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lucide-react'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useState } from 'react'
+import { Cell, Label, Pie, PieChart } from 'recharts'
+import { ReportCard } from './ReportCard'
 
 // 🔹 Type for chart data coming from backend
 type CategoryData = {
-    label: string;
-    value: number;
-};
+  label: string
+  value: number
+}
 
 // 🔹 Extend default Inertia props with our custom props
 type ReportsPageProps = InertiaPageProps & {
-    categoryData: CategoryData[];
-};
+  categoryData: CategoryData[]
+}
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }]
 
 export default function ReportsIndex() {
-    const { categoryData } = usePage<ReportsPageProps>().props;
-    const [showOthersModal, setShowOthersModal] = useState(false);
+  const { categoryData } = usePage<ReportsPageProps>().props
+  const [showOthersModal, setShowOthersModal] = useState(false)
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA66CC'];
+  const BASE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA66CC']
 
-    // ✅ Calculate total assets
-    const totalAssets = categoryData.reduce((acc, curr) => acc + curr.value, 0);
-
-    // ✅ Group small categories into "Others"
-    const MAX_CATEGORIES = 5;
-    const sortedData = [...categoryData].sort((a, b) => b.value - a.value);
-    let displayedData = sortedData;
-    let others: CategoryData[] = [];
-
-    if (sortedData.length > MAX_CATEGORIES) {
-        displayedData = sortedData.slice(0, MAX_CATEGORIES - 1);
-        others = sortedData.slice(MAX_CATEGORIES - 1);
-        const othersTotal = others.reduce((sum, c) => sum + c.value, 0);
-        displayedData.push({ label: 'Others', value: othersTotal });
+  function generateColor(index: number, total: number): string {
+    if (index < BASE_COLORS.length) {
+      return BASE_COLORS[index]
     }
 
-    const reports = [
-        {
-            title: 'Asset Inventory List Report',
-            description: 'Summary of assets grouped by category.',
-            href: route('reports.inventory-list'), // ✅ named route
-            icon: <ClipboardList className="h-5 w-5 text-blue-500" />,
-            footer: (
-                <span className="text-xs text-muted-foreground">
-                    Click "View" to see more details
-                </span>
-            ),
-            chart:
-                displayedData.length > 0 ? (
-                    <div className="rounded-lg bg-gray-50 p-3">
-                        <ChartContainer
-                            config={{
-                                assets: { label: 'Assets' },
-                            }}
-                            className="mx-auto aspect-square max-h-[200px]"
-                        >
-                            <PieChart>
-                                <ChartTooltip
-                                    cursor={false}
-                                    content={<ChartTooltipContent hideLabel />}
-                                />
-                                <Pie
-                                    data={displayedData}
-                                    dataKey="value"
-                                    nameKey="label"
-                                    innerRadius={50}
-                                    outerRadius={80}
-                                    strokeWidth={5}
-                                    onClick={(data) => {
-                                        if (data && data.name === 'Others') {
-                                            setShowOthersModal(true);
-                                        }
-                                    }}
-                                >
-                                    {displayedData.map((_, index) => (
-                                        <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                    <Label
-                                        content={({ viewBox }) => {
-                                            if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                                                return (
-                                                    <text
-                                                        x={viewBox.cx}
-                                                        y={viewBox.cy}
-                                                        textAnchor="middle"
-                                                        dominantBaseline="middle"
-                                                    >
-                                                        <tspan
-                                                            x={viewBox.cx}
-                                                            y={viewBox.cy}
-                                                            className="fill-foreground text-xl font-bold"
-                                                        >
-                                                            {totalAssets.toLocaleString()}
-                                                        </tspan>
-                                                        <tspan
-                                                            x={viewBox.cx}
-                                                            y={(viewBox.cy || 0) + 18}
-                                                            className="fill-muted-foreground text-xs"
-                                                        >
-                                                            Total Assets
-                                                        </tspan>
-                                                    </text>
-                                                );
-                                            }
-                                        }}
-                                    />
-                                </Pie>
-                            </PieChart>
-                        </ChartContainer>
+    // for categories beyond 5, generate vibrant HSL
+    const step = 360 / total
+    const hue = (210 + index * step) % 360
+    const saturation = 80
+    const lightness = 60
 
-                        {/* ✅ Custom Legend */}
-                        <div className="mt-3 flex flex-wrap justify-center gap-3">
-                            {displayedData.map((d, i) => (
-                                <div
-                                    key={i}
-                                    className="flex cursor-pointer items-center gap-2"
-                                    onClick={() =>
-                                        d.label === 'Others' && setShowOthersModal(true)
-                                    }
-                                >
-                                    <span
-                                        className="h-3 w-3 rounded-sm"
-                                        style={{
-                                            backgroundColor: COLORS[i % COLORS.length],
-                                        }}
-                                    ></span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {d.label}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+  }
 
-                        {/* ✅ Others Modal */}
-                        <Dialog
-                            open={showOthersModal}
-                            onOpenChange={setShowOthersModal}
-                        >
-                            <DialogContent className="max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle>Other Categories</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-2">
-                                    {others.map((cat, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="flex justify-between text-sm text-muted-foreground"
-                                        >
-                                            <span>{cat.label}</span>
-                                            <span className="font-medium">{cat.value}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                        No data available
-                    </div>
-                ),
-        },
-        {
-            title: 'Inventory Scheduling Report',
-            description: 'Placeholder for scheduling data visualization.',
-            href: route('reports.inventory-scheduling'), // ✅ named route
-            icon: <CalendarCheck2 className="h-5 w-5 text-green-500" />,
-        },
-        {
-            title: 'Property Transfer Report',
-            description: 'Placeholder for transfer report.',
-            href: route('reports.transfer'), // ✅ named route
-            icon: <ArrowRightLeft className="h-5 w-5 text-orange-500" />,
-        },
-        {
-            title: 'Turnover/Disposal Report',
-            description: 'Placeholder for turnover/disposal.',
-            href: route('reports.turnover-disposal'), // ✅ named route
-            icon: <Trash2 className="h-5 w-5 text-red-500" />,
-        },
-        {
-            title: 'Off-Campus Report',
-            description: 'Placeholder for off-campus reporting.',
-            href: route('reports.off-campus'), // ✅ named route
-            icon: <Truck className="h-5 w-5 text-indigo-800" />,
-        },
-    ];
+  // ✅ Calculate total assets
+  const totalAssets = categoryData.reduce((acc, curr) => acc + curr.value, 0)
 
-    const filteredReports = reports;
+  // ✅ Group small categories into "Others"
+  const MAX_CATEGORIES = 5
+  const sortedData = [...categoryData].sort((a, b) => b.value - a.value)
+  let displayedData = sortedData
+  let others: CategoryData[] = []
 
-    return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Reports" />
-            <div className="space-y-6 px-6 py-4">
-                {/* Header */}
-                <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl font-semibold">Reports</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Generate, view, and manage reports across assets, transfers, and
-                        inventory scheduling.
-                    </p>
+  if (sortedData.length > MAX_CATEGORIES) {
+    displayedData = sortedData.slice(0, MAX_CATEGORIES - 1)
+    others = sortedData.slice(MAX_CATEGORIES - 1)
+    const othersTotal = others.reduce((sum, c) => sum + c.value, 0)
+    displayedData.push({ label: 'Others', value: othersTotal })
+  }
+
+  const reports = [
+    {
+      title: 'Asset Inventory List Report',
+      description: 'Summary of assets grouped by category.',
+      href: route('reports.inventory-list'),
+      icon: <ClipboardList className="h-5 w-5 text-blue-500" />,
+      footer: (
+        <span className="text-xs text-muted-foreground">
+          Click "View" to see more details
+        </span>
+      ),
+      chart:
+        displayedData.length > 0 ? (
+          <div className="rounded-lg bg-gray-50 p-3">
+            <ChartContainer
+              config={{
+                assets: { label: 'Assets' },
+              }}
+              className="mx-auto aspect-square max-h-[200px]"
+            >
+              <PieChart>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Pie
+                  data={displayedData}
+                  dataKey="value"
+                  nameKey="label"
+                  innerRadius={50}
+                  outerRadius={80}
+                  strokeWidth={5}
+                  onClick={(data) => {
+                    if (data && data.name === 'Others') {
+                      setShowOthersModal(true)
+                    }
+                  }}
+                >
+                  {displayedData.map((_, index) => (
+                    <Cell key={index} fill={generateColor(index, displayedData.length)} />
+                  ))}
+                  <Label
+                    content={({ viewBox }) => {
+                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                        return (
+                          <text
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                          >
+                            <tspan
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              className="fill-foreground text-xl font-bold"
+                            >
+                              {totalAssets.toLocaleString()}
+                            </tspan>
+                            <tspan
+                              x={viewBox.cx}
+                              y={(viewBox.cy || 0) + 18}
+                              className="fill-muted-foreground text-xs"
+                            >
+                              Total Assets
+                            </tspan>
+                          </text>
+                        )
+                      }
+                    }}
+                  />
+                </Pie>
+              </PieChart>
+            </ChartContainer>
+
+            {/* ✅ Custom Legend */}
+            <div className="mt-3 flex flex-wrap justify-center gap-3">
+              {displayedData.map((d, i) => (
+                <div
+                  key={i}
+                  className="flex cursor-pointer items-center gap-2"
+                  onClick={() => d.label === 'Others' && setShowOthersModal(true)}
+                >
+                  <span
+                    className="h-3 w-3 rounded-sm"
+                    style={{ backgroundColor: generateColor(i, displayedData.length) }}
+                  ></span>
+                  <span className="text-xs text-muted-foreground">{d.label}</span>
                 </div>
-
-                {/* Reports Grid */}
-                {filteredReports.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                        {filteredReports.map((report, idx) => (
-                            <ReportCard key={idx} {...report} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="rounded-lg border py-10 text-center text-muted-foreground">
-                        <p>No reports available.</p>
-                    </div>
-                )}
+              ))}
             </div>
-        </AppLayout>
-    );
+
+            {/* ✅ Others Modal */}
+            <Dialog open={showOthersModal} onOpenChange={setShowOthersModal}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Other Categories</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  {others.map((cat, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between text-sm text-muted-foreground"
+                    >
+                      <span>{cat.label}</span>
+                      <span className="font-medium">{cat.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-gray-400">
+            No data available
+          </div>
+        ),
+    },
+    {
+      title: 'Inventory Scheduling Report',
+      description: 'Placeholder for scheduling data visualization.',
+      href: route('reports.inventory-scheduling'),
+      icon: <CalendarCheck2 className="h-5 w-5 text-green-500" />,
+    },
+    {
+      title: 'Property Transfer Report',
+      description: 'Placeholder for transfer report.',
+      href: route('reports.transfer'),
+      icon: <ArrowRightLeft className="h-5 w-5 text-orange-500" />,
+    },
+    {
+      title: 'Turnover/Disposal Report',
+      description: 'Placeholder for turnover/disposal.',
+      href: route('reports.turnover-disposal'),
+      icon: <Trash2 className="h-5 w-5 text-red-500" />,
+    },
+    {
+      title: 'Off-Campus Report',
+      description: 'Placeholder for off-campus reporting.',
+      href: route('reports.off-campus'),
+      icon: <Truck className="h-5 w-5 text-indigo-800" />,
+    },
+  ]
+
+  const filteredReports = reports
+
+  return (
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title="Reports" />
+      <div className="space-y-6 px-6 py-4">
+        {/* Header */}
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold">Reports</h1>
+          <p className="text-sm text-muted-foreground">
+            Generate, view, and manage reports across assets, transfers, and inventory scheduling.
+          </p>
+        </div>
+
+        {/* Reports Grid */}
+        {filteredReports.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {filteredReports.map((report, idx) => (
+              <ReportCard key={idx} {...report} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border py-10 text-center text-muted-foreground">
+            <p>No reports available.</p>
+          </div>
+        )}
+      </div>
+    </AppLayout>
+  )
 }
