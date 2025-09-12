@@ -61,7 +61,8 @@ return new class extends Migration
             $table->string('asset_type');
             $table->integer('quantity');
 
-            // $table->foreignId('transfer_id')->nullable()->constrained('transfers')->nullOnDelete();
+            // ✅ New field: Assigned To 
+            $table->foreignId('transfer_id')->nullable()->constrained('transfers')->nullOnDelete();
 
             // $table->unsignedInteger('transfer_id')->nullable();
             // $table->foreign('transfer_id')

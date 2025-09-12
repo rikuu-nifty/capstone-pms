@@ -8,6 +8,7 @@ use App\Models\BuildingRoom;
 use App\Models\UnitOrDepartment;
 use App\Models\AssetModel;
 use App\Models\Category;
+use App\Models\Transfer; // ✅ added so we can assign transfer_id
 
 class InventoryListsTableSeeder extends Seeder
 {
@@ -18,6 +19,7 @@ class InventoryListsTableSeeder extends Seeder
         $unit = UnitOrDepartment::first();
         $assetModel = AssetModel::first();
         $category = Category::first();
+        // $transfer = Transfer::first(); // ❌ not needed since we want null
 
         for ($i = 1; $i <= 40; $i++) {
             InventoryList::updateOrCreate(
@@ -38,6 +40,9 @@ class InventoryListsTableSeeder extends Seeder
                     'date_purchased' => now()->subYears(rand(0, 5))->toDateString(),
                     'asset_type' => 'Equipment',
                     'quantity' => rand(1, 10),
+
+                    // ✅ new field for transfer reference (always null at seed)
+                    'transfer_id' => null, 
                 ]
             );
         }
