@@ -5,7 +5,7 @@ use Inertia\Inertia;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use App\Models\InventoryList;
-
+use App\Models\Category;
 
 class ReportController extends Controller
 {
@@ -14,44 +14,32 @@ class ReportController extends Controller
      */
     public function index()
     {
-        // Later: query data from inventory_lists, transfers, etc.
-        // For now just render the page.
-
-
-        // ✅ Group assets by category for the dashboard cards
-        $categoryData = InventoryList::selectRaw('category_id, COUNT(*) as total')
-            ->groupBy('category_id')
-            ->with('category:id,name')
+        // ✅ Fetch all categories and count their assets
+        $categoryData = Category::withCount('inventoryLists')
             ->get()
-            ->map(fn($row) => [
-                'label' => $row->category->name ?? 'Uncategorized',
-                'value' => $row->total,
+            ->map(fn($cat) => [
+                'label' => $cat->name,
+                'value' => $cat->inventory_lists_count ?? 0, // default to 0
             ]);
-
-            
-
 
         return Inertia::render('reports/index', [
             'title' => 'Reports Dashboard',
-            'categoryData' => $categoryData, // ✅ send to frontend
+            'categoryData' => $categoryData,
         ]);
     }
 
-
     public function inventoryList()
     {
-        // Example: group assets by category for chart
-        $data = InventoryList::selectRaw('category_id, COUNT(*) as total')
-            ->groupBy('category_id')
-            ->with('category:id,name')
+        // ✅ Fetch categories with asset counts for the Inventory List Report
+        $data = Category::withCount('inventoryLists')
             ->get()
-            ->map(fn($row) => [
-                'label' => $row->category->name ?? 'Uncategorized',
-                'value' => $row->total,
+            ->map(fn($cat) => [
+                'label' => $cat->name,
+                'value' => $cat->inventory_lists_count ?? 0,
             ]);
 
-
-        return Inertia::render('reports/inventory-list', [
+        // ✅ Point to your renamed React component
+        return Inertia::render('reports/InventoryListReport', [
             'chartData' => $data,
         ]);
     }
@@ -64,7 +52,6 @@ class ReportController extends Controller
         //
     }
 
-
     /**
      * Store a newly created resource in storage.
      */
@@ -72,7 +59,6 @@ class ReportController extends Controller
     {
         //
     }
-
 
     /**
      * Display the specified resource.
@@ -82,7 +68,6 @@ class ReportController extends Controller
         //
     }
 
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -90,7 +75,6 @@ class ReportController extends Controller
     {
         //
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -100,7 +84,6 @@ class ReportController extends Controller
         //
     }
 
-
     /**
      * Remove the specified resource from storage.
      */
@@ -109,6 +92,3 @@ class ReportController extends Controller
         //
     }
 }
-
-
-

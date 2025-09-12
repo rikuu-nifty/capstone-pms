@@ -1,6 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Link } from '@inertiajs/react'
 import { ReactNode } from 'react'
+import { Button } from '@/components/ui/button' // ✅ import button
 
 type ReportCardProps = {
   title: string
@@ -19,12 +20,11 @@ export function ReportCard({ title, description, href, icon, chart, footer }: Re
           <span className="p-2 rounded-lg bg-gray-100 text-gray-700">{icon}</span>
           <CardTitle className="text-base font-semibold">{title}</CardTitle>
         </div>
-        <Link
-          href={href}
-          className="text-sm font-medium text-blue-600 hover:underline"
-        >
-          View
-        </Link>
+
+        {/* ✅ Replace text link with shadcn button */}
+        <Button size="sm" variant="outline" asChild>
+          <Link href={href}>View</Link>
+        </Button>
       </CardHeader>
 
       <CardContent className="flex-1">
@@ -38,7 +38,7 @@ export function ReportCard({ title, description, href, icon, chart, footer }: Re
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground mt-3">{description}</p>
+        <p className="text-sm text-muted-foreground mt-6 text-center">{description}</p>
       </CardContent>
 
       {footer && (
@@ -49,4 +49,3 @@ export function ReportCard({ title, description, href, icon, chart, footer }: Re
     </Card>
   )
 }
-

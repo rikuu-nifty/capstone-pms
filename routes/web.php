@@ -81,17 +81,38 @@
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    Route::prefix('reports')->group(function () {
+Route::prefix('reports')->group(function () {
     Route::get('/', [ReportController::class, 'index'])->name('reports.index');
 
-    Route::get('/inventory-list', [ReportController::class, 'inventoryList'])->name('reports.inventory-list');
+    Route::get('/inventory-list', [ReportController::class, 'inventoryList'])
+        ->name('reports.inventory-list');
 
-    // Placeholders
-    Route::get('/inventory-scheduling', fn() => Inertia::render('reports/placeholder', ['title' => 'Inventory Scheduling Report']));
-    Route::get('/transfer', fn() => Inertia::render('reports/placeholder', ['title' => 'Property Transfer Report']));
-    Route::get('/turnover-disposal', fn() => Inertia::render('reports/placeholder', ['title' => 'Turnover/Disposal Report']));
-    Route::get('/off-campus', fn() => Inertia::render('reports/placeholder', ['title' => 'Off-Campus Report']));
+    // Placeholders with proper names
+    Route::get('/inventory-scheduling', fn() =>
+        Inertia::render('reports/InventorySchedulingReport', [
+            'title' => 'Inventory Scheduling Report',
+        ])
+    )->name('reports.inventory-scheduling');
+
+    Route::get('/transfer', fn() =>
+        Inertia::render('reports/PropertyTransferReport', [
+            'title' => 'Property Transfer Report',
+        ])
+    )->name('reports.transfer');
+
+    Route::get('/turnover-disposal', fn() =>
+        Inertia::render('reports/TurnoverDisposalReport', [
+            'title' => 'Turnover/Disposal Report',
+        ])
+    )->name('reports.turnover-disposal');
+
+    Route::get('/off-campus', fn() =>
+        Inertia::render('reports/OffCampusReport', [
+            'title' => 'Off-Campus Report',
+        ])
+    )->name('reports.off-campus');
 });
+
 
 
     Route::get('calendar', function () {
