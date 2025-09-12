@@ -93,6 +93,9 @@ class InventoryListController extends Controller
             'roomBuilding',
             'transfer', // ✅ eager load transfer
             'subArea',
+            'transfers' => function ($q) {
+                $q->latest('transfers.created_at'); // just order for accessor
+            },
         ])->latest();
 
         if ($user && !$user->hasPermission('view-inventory-list')) {

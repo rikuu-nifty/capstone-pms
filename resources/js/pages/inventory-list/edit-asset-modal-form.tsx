@@ -110,7 +110,11 @@ export const EditAssetModalForm = ({
                             <select
                                 className="w-full rounded-lg border p-2"
                                 value={form.building_id}
-                                onChange={(e) => handleChange('building_id', Number(e.target.value))}
+                                onChange={(e) => {
+                                    handleChange('building_id', Number(e.target.value));
+
+                                    handleChange('sub_area_id', '');
+                                }}
                             >
                                 <option value="">Select Building</option>
                                 {buildings.map((b) => (

@@ -150,7 +150,8 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 {/* ✅ Now pulling transfer.status via relation */}
-                                <InfoCard label="Transfer Status" value={humanize(asset.transfer?.status)} />
+                                {/* <InfoCard label="Transfer Status" value={humanize(asset.transfer?.status)} /> */}
+                                <InfoCard label="Transfer Status" value={humanize(asset.current_transfer_status)} />
                                 <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
                                 <InfoCard label="Date Purchased" value={dateFormat(asset.date_purchased)} />
                             </div>

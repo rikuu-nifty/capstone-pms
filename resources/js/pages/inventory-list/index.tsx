@@ -96,6 +96,8 @@ export type Asset = {
     image_path?: string | null; // ✅ new field
     maintenance_due_date: string; // ✅ new field
     sub_area?: SubArea | null;
+
+    current_transfer_status?: string | null;
 };
 
 export type AssetFormData = {
