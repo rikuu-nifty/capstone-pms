@@ -1,5 +1,4 @@
-// PerAssetFields.tsx
-import { useMemo, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { InventoryList, SubArea } from '@/types/custom-index';
 import type { TransferAssetPivot } from '@/types/transfer-asset';
@@ -12,7 +11,8 @@ type Props = {
   value: TransferAssetPivot;
   onChange: (next: TransferAssetPivot) => void;
   asset: InventoryList;
-  subAreas: SubArea[];
+  fromSubAreas: SubArea[];
+  toSubAreas: SubArea[];
   parentStatus?: TransferHeaderStatus;
 
   // layout controls
@@ -25,7 +25,8 @@ export default function PerAssetFields({
   value,
   onChange,
   asset,
-  subAreas,
+  fromSubAreas,
+  toSubAreas,
   parentStatus,
   renderContainer = true,
   renderHeader = true,
@@ -40,11 +41,6 @@ export default function PerAssetFields({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHeaderPending]);
-
-  const roomSubAreas = useMemo(
-    () => subAreas.filter(sa => Number(sa.building_room_id) === Number(asset.building_room_id)),
-    [subAreas, asset.building_room_id]
-  );
 
   // Decide visibility: externalOpen wins; otherwise use internal state
   const isOpen = typeof externalOpen === 'boolean' ? externalOpen : open;
@@ -87,40 +83,40 @@ export default function PerAssetFields({
                 <div className="col-span-5 sm:col-span-1">
                     <label className="mb-0.5 block font-medium">From Sub-area</label>
                     <select
-                        className="w-full rounded-md border p-1.5"
-                        value={value.from_sub_area_id ?? ''}
-                        onChange={e =>
-                            onChange({
-                            ...value,
-                            from_sub_area_id: e.target.value ? Number(e.target.value) : null,
-                            })
-                        }
+                      className="w-full rounded-md border p-1.5"
+                      value={value.from_sub_area_id ?? ''}
+                      onChange={e =>
+                        onChange({
+                          ...value,
+                          from_sub_area_id: e.target.value ? Number(e.target.value) : null,
+                        })
+                      }
                     >
-                        <option value="">—</option>
-                        {roomSubAreas.map(sa => (
-                            <option key={sa.id} value={sa.id}>{sa.name}</option>
-                        ))}
-                    </select>
+                      <option value="">—</option>
+                      {fromSubAreas.map(sa => (
+                        <option key={sa.id} value={sa.id}>{sa.name}</option>
+                      ))}
+                  </select>
                 </div>
 
                 {/* To Sub-area */}
                 <div className="col-span-5 sm:col-span-1">
                     <label className="mb-0.5 block font-medium">To Sub-area</label>
                     <select
-                        className="w-full rounded-md border p-1.5"
-                        value={value.to_sub_area_id ?? ''}
-                        onChange={e =>
-                            onChange({
-                            ...value,
-                            to_sub_area_id: e.target.value ? Number(e.target.value) : null,
-                            })
-                        }
+                      className="w-full rounded-md border p-1.5"
+                      value={value.to_sub_area_id ?? ''}
+                      onChange={e =>
+                        onChange({
+                          ...value,
+                          to_sub_area_id: e.target.value ? Number(e.target.value) : null,
+                        })
+                      }
                     >
-                        <option value="">—</option>
-                        {roomSubAreas.map(sa => (
-                            <option key={sa.id} value={sa.id}>{sa.name}</option>
-                        ))}
-                    </select>
+                      <option value="">—</option>
+                      {toSubAreas.map(sa => (
+                        <option key={sa.id} value={sa.id}>{sa.name}</option>
+                      ))}
+                  </select>
                 </div>
 
                 {/* Asset Status */}

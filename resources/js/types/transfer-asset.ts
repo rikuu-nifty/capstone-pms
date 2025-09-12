@@ -1,4 +1,4 @@
-import type { InventoryList } from './custom-index';
+import type { InventoryList, SubArea } from './custom-index';
 
 export type TransferAsset = {
     id: number;
@@ -11,6 +11,9 @@ export type TransferAsset = {
     to_sub_area_id?: number | null;
     asset_transfer_status?: 'pending' | 'transferred' | 'cancelled';
     remarks?: string | null;
+
+    fromSubArea?: SubArea | null;
+    toSubArea?: SubArea | null;
 }
 
 export type TransferAssetPivot = {

@@ -11,8 +11,11 @@ use Carbon\Carbon;
 
 class InventoryList extends Model   
 {
-     use SoftDeletes;
+    use SoftDeletes;
+
     protected $dates = ['deleted_at'];
+
+    protected $appends = ['current_transfer_status'];
 
     protected $fillable = [
         'memorandum_no',
@@ -33,7 +36,6 @@ class InventoryList extends Model
         'asset_type',
         'quantity',
         'deleted_by_id',
-         // 'transfer_status', // ❌ removed (we now use transfer_id → transfer.status)
         'status',
         'image_path',
         'maintenance_due_date',
@@ -101,6 +103,29 @@ class InventoryList extends Model
         return $this->hasMany(TransferAsset::class, 'asset_id');
     }
 
+    public function getCurrentTransferStatusAttribute(): ?string
+    {
+        $transfer = $this->transfers()
+            ->whereIn('transfers.status', [
+                'pending_review',
+                'upcoming',
+                'in_progress'
+            ])
+            ->latest('transfers.created_at')
+            ->first();
+
+        if ($transfer) {
+            return $transfer->pivot?->asset_transfer_status;
+        }
+
+        // fallback to latest transfer (completed/cancelled)
+        $latest = $this->transfers()
+            ->latest('transfers.created_at')
+            ->first();
+
+        return $latest?->pivot?->asset_transfer_status;
+    }
+
     // DO NOT DELETE - FOR PIVOT TABLE and INVENTORY SHEET REPORTS
     public function transfers()
     {
@@ -110,6 +135,14 @@ class InventoryList extends Model
             'asset_id', // FK on pivot pointing to Inventory Lists
             'transfer_id' // FK on pivot pointing to related table
         )
+        ->withPivot([
+            'id',
+            'moved_at', //date transferred
+            'from_sub_area_id',
+            'to_sub_area_id',
+            'asset_transfer_status',
+            'remarks',
+        ])
         ->withTimestamps();
     }
 

@@ -1,4 +1,3 @@
-// AssetTransferItem.tsx
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import PerAssetFields from './PerAssetFields';
@@ -13,14 +12,16 @@ type TransferHeaderStatus =
 type Props = {
     ta: TransferAssetPivot;
     asset: InventoryList;
-    subAreas: SubArea[];
+    fromSubAreas: SubArea[];
+    toSubAreas: SubArea[];
+    
     parentStatus?: TransferHeaderStatus;
     onRemove: () => void;
     onChange: (next: TransferAssetPivot) => void;
 };
 
 export default function AssetTransferItem({
-    ta, asset, subAreas, parentStatus, onRemove, onChange,
+    ta, asset, fromSubAreas, toSubAreas, parentStatus, onRemove, onChange,
 }: Props) {
     const [open, setOpen] = useState(false);
 
@@ -71,7 +72,8 @@ export default function AssetTransferItem({
                 <PerAssetFields
                     value={ta}
                     asset={asset}
-                    subAreas={subAreas}
+                    fromSubAreas={fromSubAreas}
+                    toSubAreas={toSubAreas}
                     parentStatus={parentStatus}
                     onChange={onChange}
                     renderContainer={false}  // no inner border
