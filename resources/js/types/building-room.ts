@@ -17,10 +17,7 @@ export type BuildingRoom = {
     asset_share?: number;
     
     sub_areas?: SubArea[];
-<<<<<<< HEAD
     sub_areas_count?: number;
-=======
->>>>>>> 394a679 (Feature to add new sub areas during room creation in Buildings page)
 };
 
 export type BuildingRoomFormData = {
