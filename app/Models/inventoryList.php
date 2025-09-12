@@ -109,12 +109,18 @@ class InventoryList extends Model
             ->whereIn('transfers.status', [
                 'pending_review',
                 'upcoming',
-                'in_progress'
+                'in_progress',
+                'overdue',
             ])
             ->latest('transfers.created_at')
             ->first();
 
         if ($transfer) {
+
+            if ($transfer->status === 'overdue') {
+                return 'overdue';
+            }
+            
             return $transfer->pivot?->asset_transfer_status;
         }
 

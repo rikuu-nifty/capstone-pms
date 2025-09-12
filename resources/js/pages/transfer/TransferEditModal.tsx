@@ -7,6 +7,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { TransferFormData, Transfer } from '@/types/transfer';
 import EditModal from '@/components/modals/EditModal';
 import AssetTransferItem from './AssetTransferItem';
+import TransferStatusWarningModal from './TransferStatusWarningModal';
 
 interface TransferEditModalProps {
     show: boolean;
@@ -71,6 +72,11 @@ export default function TransferEditModal({
     });
   
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([false]);
+    const [showWarning, setShowWarning] = useState(false);
+    const [warningData, setWarningData] = useState<{
+        desiredStatus: 'completed' | 'cancelled' | 'overdue' | 'pending_review' | 'upcoming' | 'in_progress';
+        conflictingAssets: { id: number; name?: string; asset_transfer_status: string }[];
+    } | null>(null);
 
     const filteredCurrentRooms = data.current_building_id
         ? buildingRooms.filter(
@@ -144,13 +150,133 @@ export default function TransferEditModal({
         setData,
     ]);
 
+    useEffect(() => {
+        const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
+        const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
+        const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+
+        let newStatus: TransferFormData['status'] | null = null;
+
+        if (pendingCount === 0 && cancelledCount === 0 && transferredCount > 0) {
+            newStatus = 'completed';
+        } else if (pendingCount === 0 && transferredCount === 0 && cancelledCount > 0) {
+            newStatus = 'cancelled';
+        } else if (pendingCount === 0 && (transferredCount > 0 || cancelledCount > 0)) {
+            newStatus = 'completed';
+        } else if (pendingCount > 0) {
+            // ✅ Match backend logic
+            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+
+            if (['completed'].includes(data.status)) {
+            // Reverted from completed → in_progress
+            newStatus = 'in_progress';
+            } else if (scheduledDate && scheduledDate < new Date()) {
+            // Past due → overdue
+            newStatus = 'overdue';
+            } else {
+            // Still active → in_progress
+            newStatus = 'in_progress';
+            }
+        }
+
+        if (newStatus && newStatus !== data.status) {
+            setData('status', newStatus);
+        }
+    }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
+
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        const desiredStatus = data.status as 'completed' | 'cancelled' | 'overdue' | 'pending_review' | string;
+
+        // Collect pending assets from form state
+        const pendingAssets = data.transfer_assets
+            .filter((ta) => ta.asset_transfer_status === 'pending')
+            .map((ta) => {
+                const asset = assets.find((a) => a.id === ta.asset_id);
+                return {
+                    id: ta.asset_id,
+                    name: asset?.asset_name ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status ?? '—',
+                };
+            });
+
+        // Overdue selected but no pending assets → auto-downgrade to completed
+        if (desiredStatus === 'overdue' && pendingAssets.length === 0) {
+            setWarningData({
+                desiredStatus: 'completed',
+                conflictingAssets: data.transfer_assets.map((ta) => ({
+                id: ta.asset_id,
+                name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
+                asset_transfer_status: ta.asset_transfer_status ?? '—',
+                })),
+            });
+            setShowWarning(true);
+            return;
+        }
+
+        // Special case: record is completed but some assets are pending → downgrade to in_progress
+        if (desiredStatus === 'completed' && pendingAssets.length > 0) {
+            setWarningData({
+                desiredStatus: 'in_progress',
+                conflictingAssets: pendingAssets.map((ta) => ({
+                id: ta.id,
+                name: ta.name ?? '—',
+                asset_transfer_status: ta.asset_transfer_status,
+                })),
+            });
+            setShowWarning(true);
+            return;
+        }
+
+        // Warn if completed/cancelled but still pending
+        if ((desiredStatus === 'completed' || desiredStatus === 'cancelled') && pendingAssets.length > 0) {
+            setWarningData({
+                desiredStatus,
+                conflictingAssets: pendingAssets,
+            });
+            setShowWarning(true);
+            return;
+        }
+
+        // pending_review / upcoming → warn about reverting assets
+        if (desiredStatus === 'pending_review' || desiredStatus === 'upcoming') {
+            const transferredAssets = data.transfer_assets.filter(
+            (ta) => ta.asset_transfer_status === 'transferred'
+            );
+            if (transferredAssets.length > 0) {
+            setWarningData({
+                desiredStatus: desiredStatus as 'pending_review' | 'upcoming',
+                conflictingAssets: transferredAssets.map((ta) => ({
+                id: ta.asset_id,
+                name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
+                asset_transfer_status: ta.asset_transfer_status ?? '—',
+                })),
+            });
+            setShowWarning(true);
+            return;
+            }
+        }
+
+        // Proceed normally
         put(`/transfers/${transfer.id}`, {
             onSuccess: () => {
-                clearErrors();
-                setShowAssetDropdown([true]);
-                onClose();
+            clearErrors();
+            setShowAssetDropdown([true]);
+            onClose();
+            },
+        });
+    };
+
+    // Called when user confirms from modal
+    const confirmWarning = () => {
+        setShowWarning(false);
+        put(`/transfers/${transfer.id}`, {
+            onSuccess: () => {
+            clearErrors();
+            setShowAssetDropdown([true]);
+            onClose();
             },
         });
     };
@@ -514,6 +640,17 @@ export default function TransferEditModal({
                 />
                 {errors.remarks && <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>}
             </div>
+
+            {warningData && (
+                <TransferStatusWarningModal
+                    show={showWarning}
+                    onCancel={() => setShowWarning(false)}
+                    onConfirm={confirmWarning}
+                    desiredStatus={warningData.desiredStatus}
+                    conflictingAssets={warningData.conflictingAssets}
+                />
+            )}
+
         </EditModal>
     );
 }

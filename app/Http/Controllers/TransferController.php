@@ -394,20 +394,29 @@ class TransferController extends Controller
                 if ($ta->asset_transfer_status !== 'transferred') {
                     $ta->update([
                         'asset_transfer_status' => 'cancelled',
+                        'moved_at'              => null,
                     ]);
                 }
             }
         }
 
-        // Auto-complete transfer record if all assets transferred ---
-        if ($transfer->status !== 'completed') {
-            $allTransferred = $transfer->transferAssets
-                ->every(fn($ta) => $ta->asset_transfer_status === 'transferred');
+        // Form set to pending_review => revert asset statuses & locations ---
+        if (in_array($transfer->status, ['pending_review', 'upcoming']) && $oldStatus !== $transfer->status) {
+            foreach ($transfer->transferAssets as $ta) {
+                if ($ta->asset_transfer_status === 'transferred') {
+                    $ta->update([
+                        'asset_transfer_status' => 'pending',
+                        'moved_at'              => null,
+                        'remarks'               => null,
+                    ]);
 
-            if ($allTransferred) {
-                $transfer->update([
-                    'status' => 'completed'
-                ]);
+                    $ta->asset?->update([
+                        'building_id'           => $transfer->currentBuildingRoom->building_id,
+                        'building_room_id'      => $transfer->current_building_room,
+                        'unit_or_department_id' => $transfer->current_organization,
+                        'sub_area_id'           => $ta->from_sub_area_id ?? $ta->asset->sub_area_id,
+                    ]);
+                }
             }
         }
 
@@ -417,19 +426,65 @@ class TransferController extends Controller
                 ->contains(fn($ta) => $ta->asset_transfer_status !== 'transferred');
 
             if ($hasNonTransferred) {
-                $transfer->update(['status' => 'in_progress']);
+                $transfer->update([
+                    'status' => 'in_progress'
+                ]);
 
                 // Roll back locations only for reverted assets
                 foreach ($transfer->transferAssets as $ta) {
                     if ($ta->asset_transfer_status !== 'transferred') {
-                        $ta->asset?->update([
+                        $updates = [
                             'building_id'           => $transfer->currentBuildingRoom->building_id,
                             'building_room_id'      => $transfer->current_building_room,
                             'unit_or_department_id' => $transfer->current_organization,
                             'sub_area_id'           => $ta->from_sub_area_id ?? $ta->asset->sub_area_id,
-                        ]);
+                        ];
+
+                        if ($ta->asset_transfer_status === 'pending') {
+                            $ta->update([
+                                'moved_at' => null,
+                                'remarks'  => null, // clear remarks when reverted to pending
+                            ]);
+                        } elseif ($ta->asset_transfer_status === 'cancelled') {
+                            $ta->update([
+                                'moved_at' => null,
+                            ]);
+                        }
+
+                        $ta->asset?->update($updates);
                     }
                 }
+            }
+        }
+
+        $assets = $transfer->transferAssets;
+
+        $allTransferred = $assets->every(fn($ta) => $ta->asset_transfer_status === 'transferred');
+        $allCancelled   = $assets->every(fn($ta) => $ta->asset_transfer_status === 'cancelled');
+        $hasPending     = $assets->contains(fn($ta) => $ta->asset_transfer_status === 'pending');
+
+        if ($allTransferred) {
+            $transfer->update([
+                'status' => 'completed'
+            ]);
+        } elseif ($allCancelled) {
+            $transfer->update([
+                'status' => 'cancelled'
+            ]);
+        } elseif (!$hasPending) {   // Mix of transferred + cancelled → still treated as completed
+            $transfer->update([
+                'status' => 'completed'
+            ]); 
+        } elseif ($hasPending) {
+            if ($oldStatus === 'completed') {
+                // Reverted from completed → downgrade to in_progress, not overdue
+                $transfer->update(['status' => 'in_progress']);
+            } elseif ($transfer->scheduled_date < now()) {
+                // Normal overdue case
+                $transfer->update(['status' => 'overdue']);
+            } else {
+                // Normal still active case
+                $transfer->update(['status' => 'in_progress']);
             }
         }
     }
