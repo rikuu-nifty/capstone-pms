@@ -65,6 +65,7 @@ class InventoryListController extends Controller
             'building',
             'buildingRoom',
             'transfer', // ✅ eager load transfer
+            'subArea',
         ]);
         
 
