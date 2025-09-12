@@ -198,7 +198,7 @@ export default function TransferEditModal({
                 return {
                     id: ta.asset_id,
                     name: asset?.asset_name ?? '—',
-                    asset_transfer_status: ta.asset_transfer_status ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status ?? 'pending',
                 };
             });
 
@@ -207,9 +207,9 @@ export default function TransferEditModal({
             setWarningData({
                 desiredStatus: 'completed',
                 conflictingAssets: data.transfer_assets.map((ta) => ({
-                id: ta.asset_id,
-                name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
-                asset_transfer_status: ta.asset_transfer_status ?? '—',
+                    id: ta.asset_id,
+                    name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status ?? 'cancelled',
                 })),
             });
             setShowWarning(true);
@@ -221,9 +221,9 @@ export default function TransferEditModal({
             setWarningData({
                 desiredStatus: 'in_progress',
                 conflictingAssets: pendingAssets.map((ta) => ({
-                id: ta.id,
-                name: ta.name ?? '—',
-                asset_transfer_status: ta.asset_transfer_status,
+                    id: ta.id,
+                    name: ta.name ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status,
                 })),
             });
             setShowWarning(true);
