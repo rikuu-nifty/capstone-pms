@@ -107,6 +107,12 @@ export type Scheduled = {
 };
 
 export type InventorySchedulingFormData = {
+    scope_type: 'unit' | 'building';
+    unit_ids: number[];
+    building_ids: number[];
+    room_ids: number[];
+    sub_area_ids: number[];
+    
     building_id: number | string;
     building_room_id: number | string;
     unit_or_department_id: number | string;
@@ -157,6 +163,12 @@ export default function InventorySchedulingIndex({
 
         scheduling_status: 'Pending_Review',
         description: '',
+
+        scope_type: 'unit',
+        unit_ids: [],
+        building_ids: [],
+        room_ids: [],
+        sub_area_ids: [],
     });
 
     const [search, setSearch] = useState('');
@@ -420,16 +432,6 @@ export default function InventorySchedulingIndex({
                 />
             )}
 
-            {/* {viewModalVisible && selectedSchedule && (
-                <ViewScheduleModal
-                    schedule={selectedSchedule}
-                    onClose={() => {
-                        setViewModalVisible(false);
-                        setSelectedSchedule(null);
-                    }}
-                />
-            )} */}
-
             {viewModalVisible && selectedSchedule && (
                 <ViewScheduleModal
                     schedule={selectedSchedule}
@@ -463,6 +465,32 @@ export default function InventorySchedulingIndex({
                     {/* Scrollable content — fields start at the top */}
                     <div className="min-h-0 flex-1 overflow-y-auto px-6">
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Scope Type</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="scope_type"
+                                        value="unit"
+                                        checked={data.scope_type === 'unit'}
+                                        onChange={() => setData('scope_type', 'unit')}
+                                    />
+                                        By Unit/Department
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="scope_type"
+                                        value="building"
+                                        checked={data.scope_type === 'building'}
+                                        onChange={() => setData('scope_type', 'building')}
+                                    />
+                                        By Building/Room/Sub-Area
+                                    </label>
+                                </div>
+                            </div>
+
                             {/* BUILDING */}
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Building</label>
