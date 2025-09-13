@@ -182,6 +182,11 @@ class InventorySchedulingController extends Controller
                 'assignedBy',
                 'preparedBy',     
                 'approvals' => fn ($q) => $q->with(['steps.actor' => fn($s) => $s->select('id','name')]),
+
+                'units',
+                'buildings',
+                'rooms.building',
+                'subAreas.room',
             ])->findOrFail($inventory_scheduling->id);
 
             

@@ -121,6 +121,7 @@ export type Scheduled = {
     units?: UnitOrDepartment[];
 
     assets_count?: number;
+    scope_type: 'unit' | 'building';
 };
 
 export type SchedulingBuildingRoom = {
