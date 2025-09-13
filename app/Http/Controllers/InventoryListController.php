@@ -156,6 +156,11 @@ class InventoryListController extends Controller
     {
         $data = $request->validated();
 
+        // Convert empty sub_area_id to null
+        if (empty($data['sub_area_id'])) {
+            $data['sub_area_id'] = null;
+        }
+
         // ✅ ensure maintenance_due_date is included
         if ($request->filled('maintenance_due_date')) {
             $data['maintenance_due_date'] = $request->input('maintenance_due_date');
@@ -269,6 +274,11 @@ class InventoryListController extends Controller
 
             'sub_area_id' => 'nullable|exists:sub_areas,id',
         ]);
+
+        // Convert empty sub_area_id to null
+        if (empty($data['sub_area_id'])) {
+            $data['sub_area_id'] = null;
+        }
 
         // ✅ ensure maintenance_due_date is passed
         if ($request->filled('maintenance_due_date')) {

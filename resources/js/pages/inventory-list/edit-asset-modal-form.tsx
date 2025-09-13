@@ -80,14 +80,14 @@ export const EditAssetModalForm = ({
             `/inventory-list/${asset.id}`,
             {
                 ...form,
-                _method: 'put', // ✅ Laravel will interpret this as a PUT
+                 sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
+                _method: 'put',
             },
             {
                 forceFormData: true, // ✅ ensures File objects get sent as FormData
-
                 onSuccess: () => {
                     onClose();
-                    // 🔔 refresh notifications if due date was set to today/past
+                    // refresh notifications if due date was set to today/past
                     router.reload({ only: ['notifications'] });
                 },
                 onError: (errors) => console.error(errors),
@@ -113,7 +113,7 @@ export const EditAssetModalForm = ({
                                 onChange={(e) => {
                                     handleChange('building_id', Number(e.target.value));
 
-                                    handleChange('sub_area_id', '');
+                                    handleChange('sub_area_id', null)
                                 }}
                             >
                                 <option value="">Select Building</option>
@@ -165,8 +165,10 @@ export const EditAssetModalForm = ({
                             <Label>Sub Area</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
-                                value={form.sub_area_id}
-                                onChange={(e) => handleChange('sub_area_id', Number(e.target.value))}
+                                value={form.sub_area_id ?? ''}
+                                onChange={(e) => 
+                                    handleChange('sub_area_id', e.target.value === '' ? null : Number(e.target.value))
+                                }
                                 disabled={!form.building_room_id}
                             >
                                 <option value="">Select Sub Area</option>

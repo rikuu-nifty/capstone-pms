@@ -164,25 +164,27 @@ export function AddBulkAssetModalForm({
 
                         {/* Sub Area */}
                         <div className="col-span-1">
-                        <label className="mb-1 block font-medium">Sub Area</label>
-                        <select
-                            className="w-full rounded-lg border p-2"
-                            value={data.sub_area_id}
-                            onChange={(e) => setData('sub_area_id', e.target.value)}
-                            disabled={!data.building_room_id}
-                        >
-                            <option value="">Select Sub Area</option>
-                            {subAreas
-                            .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id))
-                            .map((s: SubArea) => (
-                                <option key={s.id} value={s.id.toString()}>
-                                {s.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.sub_area_id && (
-                            <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
-                        )}
+                            <label className="mb-1 block font-medium">Sub Area</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.sub_area_id ?? ''}
+                                onChange={(e) =>
+                                    setData('sub_area_id', e.target.value === '' ? '' : e.target.value)
+                                }
+                                disabled={!data.building_room_id}
+                            >
+                                <option value="">Select Sub Area</option>
+                                {subAreas
+                                .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id))
+                                .map((s: SubArea) => (
+                                    <option key={s.id} value={s.id.toString()}>
+                                    {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.sub_area_id && (
+                                <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
+                            )}
                         </div>
 
                         {/* ✅ Status (required) */}

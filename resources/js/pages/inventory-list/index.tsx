@@ -127,7 +127,7 @@ export type AssetFormData = {
     image?: File | null; // ✅ add this
     maintenance_due_date: string; // ✅ new field
 
-    sub_area_id: number | string;
+    sub_area_id: number | string | null;
 };
 
 type KPIs = {
@@ -315,7 +315,7 @@ export default function InventoryListIndex({
 
         transform((d) => ({
             ...d,
-            // ensure numbers are numbers (or stay empty only when allowed)
+            sub_area_id: d.sub_area_id === '' ? null : Number(d.sub_area_id),
             building_id: d.building_id === '' ? '' : Number(d.building_id),
             unit_or_department_id: d.unit_or_department_id === '' ? '' : Number(d.unit_or_department_id),
             building_room_id: d.building_room_id === '' ? '' : Number(d.building_room_id),
@@ -836,11 +836,11 @@ export default function InventoryListIndex({
             )}
 
             {/* Webcam modal
-<WebcamCaptureModal
-  open={webcamOpen}
-  onClose={() => setWebcamOpen(false)}
-  onCapture={(file) => setData("image", file)}
-/> */}
+            <WebcamCaptureModal
+            open={webcamOpen}
+            onClose={() => setWebcamOpen(false)}
+            onCapture={(file) => setData("image", file)}
+            /> */}
 
             {/* Side Panel Modal with Slide Effect */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddAsset ? 'visible' : 'invisible'}`}>
@@ -927,8 +927,10 @@ export default function InventoryListIndex({
                                 <label className="mb-1 block font-medium">Sub Area</label>
                                 <select
                                     className="w-full rounded-lg border p-2"
-                                    value={data.sub_area_id}
-                                    onChange={(e) => setData('sub_area_id', Number(e.target.value))}
+                                    value={data.sub_area_id ?? ''}
+                                    onChange={(e) =>
+                                        setData('sub_area_id', e.target.value === '' ? null : Number(e.target.value))
+                                    }
                                     disabled={!data.building_room_id}
                                 >
                                     <option value="">Select Sub Area</option>
