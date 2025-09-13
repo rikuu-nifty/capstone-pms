@@ -94,9 +94,9 @@ class InventorySchedulingController extends Controller
     {
         $data = $request->validate([
             'scope_type'                => ['required', Rule::in(['unit', 'building'])],
-            'unit_ids'                  => ['array'],
+            'unit_ids'                  => ['required_if:scope_type,unit', 'array',],
             'unit_ids.*'                => ['integer', Rule::exists('unit_or_departments', 'id')],
-            'building_ids'              => ['array'],
+            'building_ids'              => ['required_if:scope_type,building', 'array'],
             'building_ids.*'            => ['integer', Rule::exists('buildings', 'id')],
             'room_ids'                  => ['array'],
             'room_ids.*'                => ['integer', Rule::exists('building_rooms', 'id')],
@@ -111,6 +111,11 @@ class InventorySchedulingController extends Controller
             'scheduling_status'         => ['required', 'string'],
             'description'               => ['nullable', 'string'],
             'designated_employee'       => ['nullable', 'integer', 'exists:users,id'],
+        ], [
+            'unit_ids.required_if'     => 'Please select at least one unit or department.',
+            'unit_ids.min'              => 'Please select at least one unit or department.',
+            'building_ids.required_if' => 'Please select at least one building.',
+            'building_ids.min'          => 'Please select at least one building.',
         ]);
 
         // Create schedule
@@ -235,29 +240,34 @@ class InventorySchedulingController extends Controller
     public function update(Request $request, InventoryScheduling $inventoryScheduling)
     {
         $data = $request->validate([
-            'scope_type' => ['required', Rule::in(['unit', 'building'])],
-            'unit_ids' => ['array'],
-            'unit_ids.*' => ['integer', 'exists:unit_or_departments,id'],
-            'building_ids' => ['array'],
-            'building_ids.*' => ['integer', 'exists:buildings,id'],
-            'room_ids' => ['array'],
-            'room_ids.*' => ['integer', 'exists:building_rooms,id'],
-            'sub_area_ids' => ['array'],
-            'sub_area_ids.*' => ['integer', 'exists:sub_areas,id'],
+            'scope_type'            => ['required', Rule::in(['unit', 'building'])],
+            'unit_ids'              => ['required_if:scope_type,unit', 'array',],
+            'unit_ids.*'            => ['integer', Rule::exists('unit_or_departments', 'id')],
+            'building_ids'          => ['required_if:scope_type,building', 'array',],
+            'building_ids.*'        => ['integer', Rule::exists('buildings', 'id')],
+            'room_ids'              => ['array'],
+            'room_ids.*'            => ['integer', 'exists:building_rooms,id'],
+            'sub_area_ids'          => ['array'],
+            'sub_area_ids.*'        => ['integer', 'exists:sub_areas,id'],
 
-            'building_id' => ['nullable','integer','exists:buildings,id'],
-            'building_room_id' => ['nullable','integer','exists:building_rooms,id'],
+            'building_id'           => ['nullable','integer','exists:buildings,id'],
+            'building_room_id'      => ['nullable','integer','exists:building_rooms,id'],
             'unit_or_department_id' => ['nullable','integer','exists:unit_or_departments,id'],
-            'user_id' => ['nullable','integer','exists:users,id'],
-            'designated_employee' => ['nullable','integer','exists:users,id'],
-            'assigned_by' => ['nullable','integer','exists:users,id'],
-            'inventory_schedule' => ['required','string'],      // "YYYY-MM"
+            'user_id'               => ['nullable','integer','exists:users,id'],
+            'designated_employee'   => ['nullable','integer','exists:users,id'],
+            'assigned_by'           => ['nullable','integer','exists:users,id'],
+            'inventory_schedule'    => ['required','string'],      // "YYYY-MM"
             'actual_date_of_inventory' => ['nullable','date'],  // "YYYY-MM-DD"
-            'checked_by' => ['nullable','string'],
-            'verified_by' => ['nullable','string'],
-            'received_by' => ['nullable','string'],
-            'scheduling_status' => ['required','string'],
-            'description' => ['nullable','string'],
+            'checked_by'            => ['nullable','string'],
+            'verified_by'           => ['nullable','string'],
+            'received_by'           => ['nullable','string'],
+            'scheduling_status'     => ['required','string'],
+            'description'           => ['nullable','string'],
+        ], [
+            'unit_ids.required_if'     => 'Please select at least one unit or department.',
+            'unit_ids.min'              => 'Please select at least one unit or department.',
+            'building_ids.required_if' => 'Please select at least one building.',
+            'building_ids.min'          => 'Please select at least one building.',
         ]);
 
         // Convert '' -> null for nullable FKs

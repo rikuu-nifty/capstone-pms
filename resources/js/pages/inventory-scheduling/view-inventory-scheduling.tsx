@@ -90,32 +90,38 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         <section className="md:w-[400px]">
                             <h3 className="mb-2 text-base font-semibold">Scope Information</h3>
                             <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                                <table className="w-full text-sm">
+                                <table className="w-full text-sm table-fixed">
                                     <tbody>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
                                             <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Scope Type
-                                            </td>
-                                            <td className="px-3 py-2 font-medium">
-                                                {schedule.scope_type === 'unit'
-                                                ? 'By Units / Departments'
-                                                : 'By Buildings'}
-                                            </td>
-                                        </tr>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
                                                 Units
                                             </td>
-                                            <td className="px-3 py-2 font-medium">
+                                            <td className="w-2/3 px-3 py-2 font-medium text-right">
                                                 {schedule.units?.length ?? 0}
                                             </td>
                                         </tr>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
                                                 Buildings
                                             </td>
-                                            <td className="px-3 py-2 font-medium">
+                                            <td className="w-2/3 px-3 py-2 font-medium text-right">
                                                 {schedule.buildings?.length ?? 0}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800">
+                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Rooms
+                                            </td>
+                                            <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                                {schedule.rooms?.length ?? 0}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Sub-Areas
+                                            </td>
+                                            <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                                {schedule.sub_areas?.length ?? 0}
                                             </td>
                                         </tr>
                                     </tbody>
@@ -127,10 +133,20 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         <section className="md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
                             <h3 className="mb-2 text-base font-semibold">Scheduling Information</h3>
                             <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                                <table className="w-full text-sm">
+                                <table className="w-full text-sm table-fixed">
                                     <tbody>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Scope Type
+                                            </td>
+                                            <td className="px-3 py-2 font-medium">
+                                                {schedule.scope_type === 'unit'
+                                                ? 'By Units / Departments'
+                                                : 'By Buildings'}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800">
+                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
                                                 Inventory Month
                                             </td>
                                             <td className="px-3 py-2 font-medium">
@@ -139,28 +155,13 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                         </tr>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
                                             <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Actual Date
+                                                Actual Inventory Date
                                             </td>
                                             <td className="px-3 py-2 font-medium">
                                                 {formatDateLong(schedule.actual_date_of_inventory)}
                                             </td>
                                         </tr>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Rooms
-                                            </td>
-                                            <td className="px-3 py-2 font-medium">
-                                                {schedule.rooms?.length ?? 0}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Sub-Areas
-                                            </td>
-                                            <td className="px-3 py-2 font-medium">
-                                                {schedule.sub_areas?.length ?? 0}
-                                            </td>
-                                        </tr>
+                                        
                                     </tbody>
                                 </table>
                             </div>
@@ -210,61 +211,6 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                         rows.push({ unit: unitName ?? undefined, building: b.name });
                                         return;
                                         }
-                                        // rooms.forEach((r) => {
-                                        //     const subAreas = (schedule.sub_areas ?? []).filter(
-                                        //         (sa) => sa.building_room_id === r.id
-                                        //     );
-
-                                        //     // room without sub-areas → count assets by room
-                                        //     if (subAreas.length === 0) {
-                                        //         // Count assets directly by room
-                                        //         const assetCount = (schedule.assets ?? []).filter(
-                                        //             (a) => a.asset?.building_room_id === r.id
-                                        //         ).length;
-
-
-                                        //         rows.push({
-                                        //         unit: unitName ?? undefined,
-                                        //         building: b.name,
-                                        //         room: String(r.room),
-                                        //         assetCount,
-                                        //         });
-                                        //         return;
-                                        //     }
-
-                                        //     // room has sub-areas
-                                        //     subAreas.forEach((sa) => {
-                                        //         // Count assets by sub-area
-                                        //         const assetCount = (schedule.assets ?? []).filter(
-                                        //             (a) => a.asset?.sub_area_id === sa.id
-                                        //         ).length;
-
-                                        //         rows.push({
-                                        //         unit: unitName ?? undefined,
-                                        //         building: b.name,
-                                        //         room: String(r.room),
-                                        //         sub_area: sa.name,
-                                        //         assetCount,
-                                        //         });
-                                        //     });
-
-                                        //     // Extra row for assets in the room not tied to any sub-area
-                                        //     const leftoverCount = (schedule.assets ?? []).filter(
-                                        //         (a) =>
-                                        //             a.asset?.building_room_id === r.id &&
-                                        //             (a.asset?.sub_area_id === null || a.asset?.sub_area_id === undefined)
-                                        //     ).length;
-
-                                        //     if (leftoverCount > 0) {
-                                        //         rows.push({
-                                        //             unit: unitName ?? undefined,
-                                        //             building: b.name,
-                                        //             room: String(r.room),
-                                        //             sub_area: '—',
-                                        //             assetCount: leftoverCount,
-                                        //         });
-                                        //     }
-                                        // });
                                         rooms.forEach((r) => {
                                             const subAreas = (schedule.sub_areas ?? []).filter(
                                                 (sa) => sa.building_room_id === r.id

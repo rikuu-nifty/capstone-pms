@@ -584,6 +584,7 @@ export default function InventorySchedulingIndex({
                                             }
                                         }}
                                     />
+                                    {errors.unit_ids && <p className="mt-1 text-xs text-red-500">{String(errors.unit_ids)}</p>}
                                     
                                     {data.unit_ids.map((uid) => {
                                         const unit = unitOrDepartments.find((u) => u.id === uid);
@@ -593,34 +594,33 @@ export default function InventorySchedulingIndex({
 
                                         // derive related buildings
                                         const unitBuildings: Building[] = [
-                                        ...new Map(
-                                            unitAssets
-                                            .map((a) => a.building)
-                                            .filter((b): b is Building => b !== null && b !== undefined)
-                                            .map((b) => [b.id, b])
-                                        ).values(),
+                                            ...new Map(
+                                                unitAssets
+                                                .map((a) => a.building)
+                                                .filter((b): b is Building => b !== null && b !== undefined)
+                                                .map((b) => [b.id, b])
+                                            ).values(),
                                         ];
 
                                         // derive related rooms
                                         const unitRooms: SchedulingBuildingRoom[] = [
-                                        ...new Map(
-                                            unitAssets
-                                            .map((a) => a.building_room as unknown as SchedulingBuildingRoom | null)
-                                            .filter((r): r is SchedulingBuildingRoom => r !== null && r !== undefined)
-                                            .map((r) => [r.id, r])
-                                        ).values(),
+                                            ...new Map(
+                                                unitAssets
+                                                .map((a) => a.building_room as unknown as SchedulingBuildingRoom | null)
+                                                .filter((r): r is SchedulingBuildingRoom => r !== null && r !== undefined)
+                                                .map((r) => [r.id, r])
+                                            ).values(),
                                         ];
 
                                         // derive related subareas
                                         const unitSubAreas: SubArea[] = [
-                                        ...new Map(
-                                            unitAssets
-                                            .map((a) => a.sub_area)
-                                            .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
-                                            .map((sa) => [sa.id, sa])
-                                        ).values(),
+                                            ...new Map(
+                                                unitAssets
+                                                .map((a) => a.sub_area)
+                                                .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
+                                                .map((sa) => [sa.id, sa])
+                                            ).values(),
                                         ];
-
 
                                         return (
                                             <UnitItem
@@ -695,7 +695,6 @@ export default function InventorySchedulingIndex({
                                             />
                                         );
                                     })}
-                                    {errors.unit_ids && <p className="text-xs text-red-500 mt-1">{String(errors.unit_ids)}</p>}
                                 </div>
                             )}
 
@@ -739,6 +738,7 @@ export default function InventorySchedulingIndex({
                                             }
                                         }}
                                     />
+                                    {errors.building_ids && <p className="mt-1 text-xs text-red-500">{String(errors.building_ids)}</p>}
                                     
                                     {/* Selected buildings */}
                                     <div className="flex flex-col gap-3">
@@ -804,6 +804,9 @@ export default function InventorySchedulingIndex({
                                 <div>
                                     <label className="mb-1 block font-medium">Inventory Schedule</label>
                                     <PickerInput type="month" value={data.inventory_schedule || ''} onChange={(v) => setData('inventory_schedule', v)} />
+                                        {errors.inventory_schedule && (
+                                            <p className="mt-1 text-xs text-red-500">{String(errors.inventory_schedule)}</p>
+                                        )}
                                 </div>
 
                                 <div>
@@ -831,9 +834,11 @@ export default function InventorySchedulingIndex({
                                             }
                                         }}
                                     />
+                                    {errors.designated_employee && (
+                                        <p className="mt-1 text-xs text-red-500">{String(errors.designated_employee)}</p>
+                                    )}
                                 </div>
 
-                                
                                 <div>
                                     <label className="mb-1 block font-medium">Scheduling Status</label>
                                     <select
@@ -857,19 +862,32 @@ export default function InventorySchedulingIndex({
                             <div className="col-span-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                                 <div>
                                     <label className="mb-1 block font-medium">Actual Date of Inventory</label>
-                                    <PickerInput type="date" value={data.actual_date_of_inventory} onChange={setActualDateFromValue} />
+                                    <PickerInput 
+                                        type="date" 
+                                        value={data.actual_date_of_inventory} 
+                                        onChange={setActualDateFromValue} 
+                                    />
                                 </div>
                                 <div>
                                     <label className="mb-1 block font-medium">Checked By</label>
-                                    <Input value={data.checked_by} onChange={e => setData('checked_by', e.target.value)} />
+                                    <Input 
+                                        value={data.checked_by} 
+                                        onChange={e => setData('checked_by', e.target.value)} 
+                                    />
                                 </div>
                                 <div>
                                     <label className="mb-1 block font-medium">Verified By</label>
-                                    <Input value={data.verified_by} onChange={e => setData('verified_by', e.target.value)} />
+                                    <Input 
+                                        value={data.verified_by} 
+                                        onChange={e => setData('verified_by', e.target.value)} 
+                                    />
                                 </div>
                                 <div>
                                     <label className="mb-1 block font-medium">Received By</label>
-                                    <Input value={data.received_by} onChange={e => setData('received_by', e.target.value)} />
+                                    <Input 
+                                        value={data.received_by} 
+                                        onChange={e => setData('received_by', e.target.value)} 
+                                    />
                                 </div>
                             </div>
 
@@ -888,7 +906,7 @@ export default function InventorySchedulingIndex({
                     {/* Footer */}
                     <div className="flex justify-end gap-2 border-t p-4">
                         <Button
-                            variant="secondary"
+                            variant="destructive"
                             type="button"
                             className='cursor-pointer'
                             onClick={() => {
