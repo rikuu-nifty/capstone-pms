@@ -477,8 +477,16 @@ class TransferController extends Controller
             ]); 
         } elseif ($hasPending) {
             if ($oldStatus === 'completed') {
-                // Reverted from completed → downgrade to in_progress, not overdue
-                $transfer->update(['status' => 'in_progress']);
+                // Reverted from completed → check overdue vs in_progress
+                if ($transfer->scheduled_date && $transfer->scheduled_date < now()) {
+                    $transfer->update([
+                        'status' => 'overdue'
+                    ]);
+                } else {
+                    $transfer->update([
+                        'status' => 'in_progress'
+                    ]);
+                }
             } elseif ($transfer->scheduled_date < now()) {
                 // Normal overdue case
                 $transfer->update(['status' => 'overdue']);

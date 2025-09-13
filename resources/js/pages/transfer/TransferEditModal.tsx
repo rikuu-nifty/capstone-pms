@@ -75,6 +75,7 @@ export default function TransferEditModal({
     const [showWarning, setShowWarning] = useState(false);
     const [warningData, setWarningData] = useState<{
         desiredStatus: 'completed' | 'cancelled' | 'overdue' | 'pending_review' | 'upcoming' | 'in_progress';
+        actualStatus?: 'completed' | 'cancelled' | 'overdue' | 'pending_review' | 'upcoming' | 'in_progress';
         conflictingAssets: { id: number; name?: string; asset_transfer_status: string }[];
     } | null>(null);
 
@@ -150,40 +151,39 @@ export default function TransferEditModal({
         setData,
     ]);
 
-    useEffect(() => {
-        const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
-        const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
-        const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+    // useEffect(() => {
+    //     const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
+    //     const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
+    //     const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
 
-        let newStatus: TransferFormData['status'] | null = null;
+    //     let newStatus: TransferFormData['status'] | null = null;
 
-        if (pendingCount === 0 && cancelledCount === 0 && transferredCount > 0) {
-            newStatus = 'completed';
-        } else if (pendingCount === 0 && transferredCount === 0 && cancelledCount > 0) {
-            newStatus = 'cancelled';
-        } else if (pendingCount === 0 && (transferredCount > 0 || cancelledCount > 0)) {
-            newStatus = 'completed';
-        } else if (pendingCount > 0) {
-            // ✅ Match backend logic
-            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+    //     if (pendingCount === 0 && cancelledCount === 0 && transferredCount > 0) {
+    //         newStatus = 'completed';
+    //     } else if (pendingCount === 0 && transferredCount === 0 && cancelledCount > 0) {
+    //         newStatus = 'cancelled';
+    //     } else if (pendingCount === 0 && (transferredCount > 0 || cancelledCount > 0)) {
+    //         newStatus = 'completed';
+    //     } else if (pendingCount > 0) {
+    //         // ✅ Match backend logic
+    //         const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
 
-            if (['completed'].includes(data.status)) {
-            // Reverted from completed → in_progress
-            newStatus = 'in_progress';
-            } else if (scheduledDate && scheduledDate < new Date()) {
-            // Past due → overdue
-            newStatus = 'overdue';
-            } else {
-            // Still active → in_progress
-            newStatus = 'in_progress';
-            }
-        }
+    //         if (['completed'].includes(data.status)) {
+    //         // Reverted from completed → in_progress
+    //         newStatus = 'in_progress';
+    //         } else if (scheduledDate && scheduledDate < new Date()) {
+    //         // Past due → overdue
+    //         newStatus = 'overdue';
+    //         } else {
+    //         // Still active → in_progress
+    //         newStatus = 'in_progress';
+    //         }
+    //     }
 
-        if (newStatus && newStatus !== data.status) {
-            setData('status', newStatus);
-        }
-    }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
-
+    //     if (newStatus && newStatus !== data.status) {
+    //         setData('status', newStatus);
+    //     }
+    // }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -204,22 +204,24 @@ export default function TransferEditModal({
 
         // Overdue selected but no pending assets → auto-downgrade to completed
         if (desiredStatus === 'overdue' && pendingAssets.length === 0) {
-            setWarningData({
-                desiredStatus: 'completed',
-                conflictingAssets: data.transfer_assets.map((ta) => ({
-                    id: ta.asset_id,
-                    name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
-                    asset_transfer_status: ta.asset_transfer_status ?? 'cancelled',
-                })),
-            });
-            setShowWarning(true);
-            return;
+            const allCancelled = data.transfer_assets.every(
+                (ta) => ta.asset_transfer_status === 'cancelled'
+            );
+            const nextStatus: 'completed' | 'cancelled' = allCancelled ? 'cancelled' : 'completed';
+
+            setData('status', nextStatus);
         }
 
-        // Special case: record is completed but some assets are pending → downgrade to in_progress
+        // Special case: record is completed but some assets are pending → downgrade to in_progress OR overdue
         if (desiredStatus === 'completed' && pendingAssets.length > 0) {
+            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+            const nowDate = new Date();
+
+            const nextStatus: 'in_progress' | 'overdue' = scheduledDate && scheduledDate < nowDate ? 'overdue' : 'in_progress';
+
             setWarningData({
-                desiredStatus: 'in_progress',
+                desiredStatus: 'completed',
+                actualStatus: nextStatus,
                 conflictingAssets: pendingAssets.map((ta) => ({
                     id: ta.id,
                     name: ta.name ?? '—',
@@ -246,16 +248,16 @@ export default function TransferEditModal({
             (ta) => ta.asset_transfer_status === 'transferred'
             );
             if (transferredAssets.length > 0) {
-            setWarningData({
-                desiredStatus: desiredStatus as 'pending_review' | 'upcoming',
-                conflictingAssets: transferredAssets.map((ta) => ({
-                id: ta.asset_id,
-                name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
-                asset_transfer_status: ta.asset_transfer_status ?? '—',
-                })),
-            });
-            setShowWarning(true);
-            return;
+                setWarningData({
+                    desiredStatus: desiredStatus as 'pending_review' | 'upcoming',
+                    conflictingAssets: transferredAssets.map((ta) => ({
+                    id: ta.asset_id,
+                    name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status ?? '—',
+                    })),
+                });
+                setShowWarning(true);
+                return;
             }
         }
 
@@ -647,6 +649,7 @@ export default function TransferEditModal({
                     onCancel={() => setShowWarning(false)}
                     onConfirm={confirmWarning}
                     desiredStatus={warningData.desiredStatus}
+                    actualStatus={warningData.actualStatus}
                     conflictingAssets={warningData.conflictingAssets}
                 />
             )}
