@@ -77,6 +77,10 @@ export type Asset = {
     category?: Category | null;
     unit_or_department: UnitOrDepartment | null;
     building: Building | null;
+
+    building_room_id?: number | null;
+    sub_area_id?: number | null;
+    
     building_room?: BuildingRoom | null;
 
     room_building?: Building | null;

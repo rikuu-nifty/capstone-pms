@@ -187,6 +187,8 @@ class InventorySchedulingController extends Controller
                 'buildings',
                 'rooms.building',
                 'subAreas.room',
+                'assets.asset.buildingRoom',
+                'assets.asset.subArea',
             ])->findOrFail($inventory_scheduling->id);
 
             
@@ -221,7 +223,7 @@ class InventorySchedulingController extends Controller
                 'users'             => $users,
 
                 'viewing'           => $viewing,      // 👈 now provided with full approvals
-                'assets'            => $assets,       // 👈 pass assets to frontend
+                'assets'            => $viewing->assets,       // 👈 pass assets to frontend
                 'signatories'       => $signatories,  // 👈 now provided
                 'isFullyApproved'   => $isFullyApproved, // 👈 pass flag to frontend
                 

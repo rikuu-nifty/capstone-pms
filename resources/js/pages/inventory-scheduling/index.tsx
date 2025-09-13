@@ -91,6 +91,15 @@ export type PagePropsWithViewing = {
     signatories: Record<string, Signatory>; // 👈 added
 };
 
+export type ScheduledAsset = {
+    id: number;
+    inventory_list_id: number;
+    inventory_status: string;
+    remarks?: string;
+    inventoried_at?: string;
+    asset: Asset;
+};
+
 export type Scheduled = {
     id: number;
     prepared_by?: User | null;
@@ -122,6 +131,8 @@ export type Scheduled = {
 
     assets_count?: number;
     scope_type: 'unit' | 'building';
+
+    assets?: ScheduledAsset[];
 };
 
 export type SchedulingBuildingRoom = {

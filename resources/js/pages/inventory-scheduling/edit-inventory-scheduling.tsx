@@ -189,40 +189,58 @@ export const EditInventorySchedulingModal = ({
                                         selectedRooms={form.room_ids}
                                         selectedSubAreas={form.sub_area_ids}
                                         onToggleRoom={(roomId, buildingId, checked) => {
-                                            if (!checked) {
-                                                setForm({
-                                                ...form,
-                                                room_ids: form.room_ids.filter((id) => id !== roomId),
-                                                });
-                                            } else {
-                                                setForm({
-                                                ...form,
-                                                room_ids: [...form.room_ids, roomId],
-                                                building_ids: form.building_ids.includes(buildingId)
-                                                    ? form.building_ids
-                                                    : [...form.building_ids, buildingId],
-                                                });
-                                            }
+                                        if (!checked) {
+                                            // remove room + all subareas
+                                            const subAreasToRemove =
+                                            buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
+                                            setForm(prev => ({
+                                            ...prev,
+                                            room_ids: prev.room_ids.filter(id => id !== roomId),
+                                            sub_area_ids: prev.sub_area_ids.filter(id => !subAreasToRemove.includes(id)),
+                                            }));
+                                        } else {
+                                            // add room, ensure building
+                                            setForm(prev => ({
+                                            ...prev,
+                                            room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                            building_ids: prev.building_ids.includes(buildingId)
+                                                ? prev.building_ids
+                                                : [...prev.building_ids, buildingId],
+                                            }));
+                                        }
                                         }}
+
                                         onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
-                                            if (!checked) {
-                                                setForm({
-                                                ...form,
-                                                sub_area_ids: form.sub_area_ids.filter((id) => id !== subAreaId),
-                                                });
-                                            } else {
-                                                setForm({
-                                                ...form,
-                                                sub_area_ids: [...form.sub_area_ids, subAreaId],
-                                                room_ids: form.room_ids.includes(roomId)
-                                                    ? form.room_ids
-                                                    : [...form.room_ids, roomId],
-                                                building_ids: form.building_ids.includes(buildingId)
-                                                    ? form.building_ids
-                                                    : [...form.building_ids, buildingId],
-                                                });
-                                            }
+                                        if (!checked) {
+                                            setForm(prev => {
+                                            const newSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
+
+                                            // check if this was the last subarea of the room
+                                            const otherSubAreas = buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
+                                            const stillSelected = otherSubAreas.some(id => newSubAreas.includes(id));
+
+                                            return {
+                                                ...prev,
+                                                sub_area_ids: newSubAreas,
+                                                room_ids: stillSelected
+                                                ? prev.room_ids
+                                                : prev.room_ids.filter(id => id !== roomId), // auto-uncheck room if no subs left
+                                            };
+                                            });
+                                        } else {
+                                            setForm(prev => ({
+                                            ...prev,
+                                            sub_area_ids: prev.sub_area_ids.includes(subAreaId)
+                                                ? prev.sub_area_ids
+                                                : [...prev.sub_area_ids, subAreaId],
+                                            room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                            building_ids: prev.building_ids.includes(buildingId)
+                                                ? prev.building_ids
+                                                : [...prev.building_ids, buildingId],
+                                            }));
+                                        }
                                         }}
+
                                         onRemove={() => {
                                             setForm({
                                                 ...form,
@@ -278,30 +296,56 @@ export const EditInventorySchedulingModal = ({
                                             selectedRooms={form.room_ids}
                                             selectedSubAreas={form.sub_area_ids}
                                             onToggleRoom={(roomId, buildingId, checked) => {
-                                                setForm({
-                                                    ...form,
-                                                    room_ids: checked
-                                                    ? [...form.room_ids, roomId]
-                                                    : form.room_ids.filter((id) => id !== roomId),
-                                                    building_ids: checked && !form.building_ids.includes(buildingId)
-                                                    ? [...form.building_ids, buildingId]
-                                                    : form.building_ids,
-                                                });
+                                            if (!checked) {
+                                                // remove room + all subareas
+                                                const subAreasToRemove =
+                                                buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
+                                                setForm(prev => ({
+                                                ...prev,
+                                                room_ids: prev.room_ids.filter(id => id !== roomId),
+                                                sub_area_ids: prev.sub_area_ids.filter(id => !subAreasToRemove.includes(id)),
+                                                }));
+                                            } else {
+                                                // add room, ensure building
+                                                setForm(prev => ({
+                                                ...prev,
+                                                room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                                building_ids: prev.building_ids.includes(buildingId)
+                                                    ? prev.building_ids
+                                                    : [...prev.building_ids, buildingId],
+                                                }));
+                                            }
                                             }}
 
                                             onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
-                                                setForm({
-                                                    ...form,
-                                                    sub_area_ids: checked
-                                                    ? [...form.sub_area_ids, subAreaId]
-                                                    : form.sub_area_ids.filter((id) => id !== subAreaId),
-                                                    room_ids: checked && !form.room_ids.includes(roomId)
-                                                    ? [...form.room_ids, roomId]
-                                                    : form.room_ids,
-                                                    building_ids: checked && !form.building_ids.includes(buildingId)
-                                                    ? [...form.building_ids, buildingId]
-                                                    : form.building_ids,
+                                            if (!checked) {
+                                                setForm(prev => {
+                                                const newSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
+
+                                                // check if this was the last subarea of the room
+                                                const otherSubAreas = buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
+                                                const stillSelected = otherSubAreas.some(id => newSubAreas.includes(id));
+
+                                                return {
+                                                    ...prev,
+                                                    sub_area_ids: newSubAreas,
+                                                    room_ids: stillSelected
+                                                    ? prev.room_ids
+                                                    : prev.room_ids.filter(id => id !== roomId), // auto-uncheck room if no subs left
+                                                };
                                                 });
+                                            } else {
+                                                setForm(prev => ({
+                                                ...prev,
+                                                sub_area_ids: prev.sub_area_ids.includes(subAreaId)
+                                                    ? prev.sub_area_ids
+                                                    : [...prev.sub_area_ids, subAreaId],
+                                                room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                                building_ids: prev.building_ids.includes(buildingId)
+                                                    ? prev.building_ids
+                                                    : [...prev.building_ids, buildingId],
+                                                }));
+                                            }
                                             }}
 
                                             onRemove={() => {
