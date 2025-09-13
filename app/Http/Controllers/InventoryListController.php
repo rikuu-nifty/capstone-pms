@@ -96,7 +96,8 @@ class InventoryListController extends Controller
             'transfers' => function ($q) {
                 $q->latest('transfers.created_at'); // just order for accessor
             },
-        ])->latest();
+        ])
+        ->orderBy('id', 'desc');
 
         if ($user && !$user->hasPermission('view-inventory-list')) {
             $query->where('unit_or_department_id', $user->unit_or_department_id);
