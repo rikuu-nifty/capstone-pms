@@ -151,39 +151,41 @@ export default function TransferEditModal({
         setData,
     ]);
 
-    // useEffect(() => {
-    //     const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
-    //     const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
-    //     const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+    useEffect(() => {
+        const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
+        const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
+        const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
 
-    //     let newStatus: TransferFormData['status'] | null = null;
+        let newStatus: TransferFormData['status'] | null = null;
 
-    //     if (pendingCount === 0 && cancelledCount === 0 && transferredCount > 0) {
-    //         newStatus = 'completed';
-    //     } else if (pendingCount === 0 && transferredCount === 0 && cancelledCount > 0) {
-    //         newStatus = 'cancelled';
-    //     } else if (pendingCount === 0 && (transferredCount > 0 || cancelledCount > 0)) {
-    //         newStatus = 'completed';
-    //     } else if (pendingCount > 0) {
-    //         // ✅ Match backend logic
-    //         const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+        if (pendingCount === 0) {
+            if (transferredCount > 0 && cancelledCount === 0) {
+                newStatus = 'completed';
+            } else if (cancelledCount > 0 && transferredCount === 0) {
+                newStatus = 'cancelled';
+            } else if (transferredCount > 0 && cancelledCount > 0) {
+                // mixed case → don’t force to completed/cancelled
+                newStatus = 'in_progress';
+            }
+        } else if (pendingCount > 0) {
+            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
 
-    //         if (['completed'].includes(data.status)) {
-    //         // Reverted from completed → in_progress
-    //         newStatus = 'in_progress';
-    //         } else if (scheduledDate && scheduledDate < new Date()) {
-    //         // Past due → overdue
-    //         newStatus = 'overdue';
-    //         } else {
-    //         // Still active → in_progress
-    //         newStatus = 'in_progress';
-    //         }
-    //     }
+            if (['completed'].includes(data.status)) {
+                newStatus = 'in_progress'; // Reverted from completed → in_progress
+            } else if (scheduledDate && scheduledDate < new Date()) {
+                // Past due → overdue
+                newStatus = 'overdue';
+            }
+            // else {
+            //     // Still active → upcoming
+            //     newStatus = 'pending_review';
+            // }
+        }
 
-    //     if (newStatus && newStatus !== data.status) {
-    //         setData('status', newStatus);
-    //     }
-    // }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
+        if (newStatus && newStatus !== data.status) {
+            setData('status', newStatus);
+        }
+    }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

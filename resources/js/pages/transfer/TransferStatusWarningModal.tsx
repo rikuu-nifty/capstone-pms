@@ -34,10 +34,11 @@ export default function TransferStatusWarningModal({
                         Transfer Status Conflict
                     </DialogTitle>
                     <DialogDescription className="text-center text-base leading-snug text-muted-foreground">
-                        {actualStatus
+                        {/* {actualStatus
                             ? <>You are trying to set this transfer record to <b>"{formatEnums(desiredStatus)}"</b>.</>
                             : <>You are trying to set this transfer record to <b>"{formatEnums(actualStatus)}"</b>.</>
-                        }
+                        } */}
+                        You are trying to set this transfer record to <b>"{formatEnums(desiredStatus)}"</b>.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -84,6 +85,18 @@ export default function TransferStatusWarningModal({
                         Any pending assets must be resolved <i>("transferred" or "cancelled")</i> before this record can move out of the <b>"Overdue"</b> status.
                         </>
                     )}
+
+                    {/* Mixed transferred + cancelled assets */}
+                    {desiredStatus === 'completed' &&
+                        conflictingAssets.every(a => a.asset_transfer_status !== 'pending') && 
+                        conflictingAssets.some(a => a.asset_transfer_status === 'cancelled') &&
+                        conflictingAssets.some(a => a.asset_transfer_status === 'transferred') && (
+                            <>
+                            This transfer record contains assets with both <b>"Transferred"</b> and <b>"Cancelled"</b> statuses. <br />
+                            The record cannot be marked as <b>"Completed"</b> and will remain <b>"In Progress"</b>.
+                            </>
+                    )}
+
 
                     {/* Completed/Cancelled but still pending assets */}
                     {(desiredStatus === 'completed' || desiredStatus === 'cancelled') && conflictingAssets.length > 0 && (

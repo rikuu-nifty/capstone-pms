@@ -414,7 +414,7 @@ class TransferController extends Controller
                         'building_id'           => $transfer->currentBuildingRoom->building_id,
                         'building_room_id'      => $transfer->current_building_room,
                         'unit_or_department_id' => $transfer->current_organization,
-                        'sub_area_id'           => $ta->from_sub_area_id ?? $ta->asset->sub_area_id,
+                        'sub_area_id' => $ta->from_sub_area_id,
                     ]);
                 }
             }
@@ -437,7 +437,7 @@ class TransferController extends Controller
                             'building_id'           => $transfer->currentBuildingRoom->building_id,
                             'building_room_id'      => $transfer->current_building_room,
                             'unit_or_department_id' => $transfer->current_organization,
-                            'sub_area_id'           => $ta->from_sub_area_id ?? $ta->asset->sub_area_id,
+                            'sub_area_id' => $ta->from_sub_area_id,
                         ];
 
                         if ($ta->asset_transfer_status === 'pending') {
@@ -473,7 +473,7 @@ class TransferController extends Controller
             ]);
         } elseif (!$hasPending) {   // Mix of transferred + cancelled → still treated as completed
             $transfer->update([
-                'status' => 'completed'
+                'status' => 'in_progress'
             ]); 
         } elseif ($hasPending) {
             if ($oldStatus === 'completed') {
@@ -493,6 +493,20 @@ class TransferController extends Controller
             } else {
                 // Normal still active case
                 $transfer->update(['status' => 'in_progress']);
+            }
+        }
+
+        foreach ($transfer->transferAssets as $ta) {
+            $asset = $ta->asset;
+            if (!$asset) continue;
+
+            if ($ta->asset_transfer_status !== 'transferred') {
+                $asset->update([
+                    'building_id'           => $transfer->currentBuildingRoom->building_id,
+                    'building_room_id'      => $transfer->current_building_room,
+                    'unit_or_department_id' => $transfer->current_organization,
+                    'sub_area_id'           => $ta->from_sub_area_id,
+                ]);
             }
         }
     }
