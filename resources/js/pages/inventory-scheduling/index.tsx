@@ -13,6 +13,12 @@ import { type VariantProps } from 'class-variance-authority';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Asset } from '../inventory-list';
+import Select from "react-select";
+
+import BuildingItem from './BuildingItem';
+import UnitItem from './UnitItem';
+import type { } from '@/types/building-room';
+import type { Building, BuildingRoom, SubArea } from '@/types/custom-index'
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -36,19 +42,19 @@ export type Approval = {
     steps: ApprovalStep[];
 };
 
-export type Building = {
-    id: number;
-    name: string;
-    code: string | number;
-    description: string;
-};
+// export type Building = {
+//     id: number;
+//     name: string;
+//     code: string | number;
+//     description: string;
+// };
 
-export type BuildingRoom = {
-    id: number;
-    building_id: number;
-    room: string | number;
-    description: string;
-};
+// export type BuildingRoom = {
+//     id: number;
+//     building_id: number;
+//     room: string | number;
+//     description: string;
+// };
 
 export type UnitOrDepartment = {
     id: number;
@@ -88,13 +94,16 @@ export type PagePropsWithViewing = {
 
 export type Scheduled = {
     id: number;
-    prepared_by?: User | null; // 👈 add this
-    building: Building | null;
-    building_room?: BuildingRoom | null;
-    unit_or_department: UnitOrDepartment | null;
+    prepared_by?: User | null;
     user?: User | null;
     designated_employee?: User | null;
     assigned_by?: User | null;
+
+    // legacy version - single association
+    building: Building | null;
+    building_room?: BuildingRoom | null;
+    unit_or_department: UnitOrDepartment | null;
+    
     inventory_schedule: string;
     actual_date_of_inventory: string;
     checked_by: string;
@@ -102,8 +111,15 @@ export type Scheduled = {
     received_by: string;
     scheduling_status: string;
     description: string;
-    approvals?: Approval[]; // 👈 add this
-    isFullyApproved?: boolean; // 👈 add this
+
+    approvals?: Approval[];
+    isFullyApproved?: boolean;
+    
+      // new pivot associations
+    buildings?: Building[];
+    rooms?: BuildingRoom[];
+    sub_areas?: SubArea[];
+    units?: UnitOrDepartment[];
 };
 
 export type InventorySchedulingFormData = {
@@ -126,6 +142,8 @@ export type InventorySchedulingFormData = {
     received_by: string;
     scheduling_status: string;
     description: string;
+
+    scheduled_assets: number[];
 };
 
 export default function InventorySchedulingIndex({
@@ -169,23 +187,18 @@ export default function InventorySchedulingIndex({
         building_ids: [],
         room_ids: [],
         sub_area_ids: [],
+        scheduled_assets: [],
     });
 
     const [search, setSearch] = useState('');
     const [showAddScheduleInventory, setShowAddScheduleInventory] = useState(false);
 
     // Filter for Rooms
-    const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
+    // const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
 
     const [selectedSchedule, setSelectedSchedule] = useState<Scheduled | null>(null);
-
-    // For Modal (Edit)
     const [editModalVisible, setEditModalVisible] = useState(false);
-
-    // For Modal (Delete)
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-
-    // For Modal (View)
     const [viewModalVisible, setViewModalVisible] = useState(false);
 
     useEffect(() => {
@@ -244,6 +257,7 @@ export default function InventorySchedulingIndex({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        // console.log("Submitting scheduling data:", JSON.stringify(data, null, 2));
         post('/inventory-scheduling', {
             onSuccess: () => {
                 reset();
@@ -301,51 +315,36 @@ export default function InventorySchedulingIndex({
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
                                 <TableHead className="text-center">ID</TableHead>
-                                <TableHead className="min-w-[160px] text-center">Building</TableHead>
-                                <TableHead className="min-w-[260px] text-center">Unit/Dept/Laboratories</TableHead>
-                                <TableHead className="min-w-[140px] text-center">Inventory Schedule</TableHead>
-                                <TableHead className="min-w-[180px] text-center">Actual Date of Inventory</TableHead>
-                                <TableHead className="w-[140px] text-center">Checked By</TableHead>
-                                <TableHead className="w-[140px] text-center">Verified By</TableHead>
-                                <TableHead className="w-[140px] text-center">Inventory Copy Received By</TableHead>
-                                <TableHead className="min-w-[120px] text-center">Status</TableHead>
-                                <TableHead className="min-w-[140px] text-center">Action</TableHead>
+                                <TableHead className="text-center">Inventory Schedule</TableHead>
+                                <TableHead className="text-center">Building Count</TableHead>
+                                <TableHead className="text-center">Rooms Count</TableHead>
+                                <TableHead className="text-center">Unit Count</TableHead>
+                                <TableHead className="text-center">Designated Staff</TableHead>
+                                
+                                <TableHead className="text-center">Actual Date</TableHead>
+                                <TableHead className="text-center">Status</TableHead>
+                                <TableHead className="text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
                             {filtered.map((item) => (
                                 <TableRow key={item.id} className="text-center">
-                                    <TableCell className="whitespace-nowrap">{item.id}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{item.building?.name ?? '—'}</TableCell>
+                                    <TableCell>{item.id}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{formatMonth(item.inventory_schedule) || '—'}</TableCell>
+                                    <TableCell>{item.buildings?.length ?? 0}</TableCell>
+                                    <TableCell>{item.rooms?.length ?? 0}</TableCell>
+                                    <TableCell>{item.units?.length ?? 0}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{item.designated_employee?.name ?? '—'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) || '—'}</TableCell>
 
-                                    {/* truncate long department names, keep header aligned */}
                                     <TableCell>
-                                        <span
-                                            className="block overflow-hidden text-ellipsis whitespace-nowrap"
-                                            title={
-                                                item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'
-                                            }
-                                        >
-                                            {item.unit_or_department ? `${item.unit_or_department.name} (${item.unit_or_department.code})` : '—'}
-                                        </span>
-                                    </TableCell>
-
-                                    {/* prevent wrap so months don't split */}
-                                    <TableCell className="whitespace-nowrap">{formatMonth(item.inventory_schedule) ?? '—'}</TableCell>
-
-                                    <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) ?? '—'}</TableCell>
-
-                                    <TableCell className="w-[140px] whitespace-nowrap">{item.checked_by ?? '—'}</TableCell>
-                                    <TableCell className="w-[140px] whitespace-nowrap">{item.verified_by ?? '—'}</TableCell>
-                                    <TableCell className="w-[140px] whitespace-nowrap">{item.received_by ?? '—'}</TableCell>
-
-                                    <TableCell className="text-center align-middle">
                                         <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
                                             {item.scheduling_status.replace('_', ' ')}
                                         </Badge>
                                     </TableCell>
 
+                                    {/* Actions */}
                                     <TableCell>
                                         <div className="flex items-center justify-center gap-2">
                                             <Button
@@ -363,27 +362,16 @@ export default function InventorySchedulingIndex({
                                                 size="icon"
                                                 variant="ghost"
                                                 onClick={() => {
-                                                    setSelectedSchedule(item);
-                                                    setDeleteModalVisible(true);
+                                                setSelectedSchedule(item);
+                                                setDeleteModalVisible(true);
                                                 }}
                                             >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
 
-                                            {/* <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => {
-                                    setSelectedSchedule(item);
-                                    setViewModalVisible(true);
-                                }}
-                            >
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Button> */}
-
                                             <Button size="icon" variant="ghost" asChild>
                                                 <Link href={route('inventory-scheduling.view', item.id)} preserveScroll>
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Link>
                                             </Button>
                                         </div>
@@ -443,12 +431,15 @@ export default function InventorySchedulingIndex({
 
             {/* Side Panel Modal with Slide Effect (Schedule Inventory) */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddScheduleInventory ? 'visible' : 'invisible'}`}>
+                {/* Overlay */}
                 <div
                     className={`fixed inset-0 bg-black/40 transition-opacity duration-300 ${showAddScheduleInventory ? 'opacity-100' : 'opacity-0'}`}
-                    onClick={() => setShowAddScheduleInventory(false)}
-                ></div>
+                    onClick={() => {
+                        reset();
+                        setShowAddScheduleInventory(false);
+                    }}
+                />
 
-                {/* Slide-In Panel */}
                 <div
                     className={`relative ml-auto flex h-screen w-full max-w-3xl transform flex-col overflow-hidden bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-zinc-900 ${
                         showAddScheduleInventory ? 'translate-x-0' : 'translate-x-full'
@@ -462,9 +453,10 @@ export default function InventorySchedulingIndex({
                         </button>
                     </div>
 
-                    {/* Scrollable content — fields start at the top */}
-                    <div className="min-h-0 flex-1 overflow-y-auto px-6">
+                    {/* Form Content */}
+                    <div className="flex-1 overflow-y-auto px-6">
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                            {/* Scope Type */}
                             <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Scope Type</label>
                                 <div className="flex gap-4">
@@ -491,91 +483,154 @@ export default function InventorySchedulingIndex({
                                 </div>
                             </div>
 
-                            {/* BUILDING */}
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Building</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.building_id}
-                                    onChange={(e) => setData('building_id', Number(e.target.value))}
-                                >
-                                    <option value="">Select Building</option>
-                                    {buildings.map((building) => (
-                                        <option key={building.id} value={building.id}>
-                                            {building.name} ({building.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
-                            </div>
+                            {/* Units Section */}
+                            {data.scope_type === 'unit' && (
+                                <div className="col-span-2 flex flex-col gap-4">
+                                    <label className="block font-medium">Units Selection</label>
 
-                            {/* UNIT/DEPARTMENT */}
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Unit/Department</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.unit_or_department_id}
-                                    onChange={(e) => setData('unit_or_department_id', Number(e.target.value))}
-                                >
-                                    <option value="">Select Unit/Department</option>
-                                    {unitOrDepartments.map((unit) => (
-                                        <option key={unit.id} value={unit.id}>
-                                            {unit.name} ({unit.code})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
-                            </div>
+                                    <Select
+                                        className="w-full"
+                                        options={unitOrDepartments
+                                            .filter((u) => !data.unit_ids.includes(u.id))
+                                            .map((u) => ({
+                                                value: u.id,
+                                                label: `${u.name} (${u.code})`,
+                                            })
+                                        )}
+                                        placeholder="Add another unit..."
+                                        value={null}
+                                        onChange={(selected) => {
+                                            if (selected) {
+                                                const id = Number(selected.value);
+                                                setData('unit_ids', [...data.unit_ids, id]);
+                                            }
+                                        }}
+                                    />
+                                    
+                                    {data.unit_ids.map((uid) => {
+                                        const unit = unitOrDepartments.find((u) => u.id === uid);
+                                        if (!unit) return null;
+                                        const unitAssets = assets.filter((a) => a.unit_or_department?.id === uid);
 
-                            {/* ROOM */}
-                            <div className="col-span-2">
-                                <label className="mb-1 block font-medium">Room</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.building_room_id}
-                                    onChange={(e) => setData('building_room_id', Number(e.target.value))}
-                                    disabled={!data.building_id}
-                                >
-                                    <option value="">Select Room</option>
-                                    {filteredRooms.map((room) => (
-                                        <option key={room.id} value={room.id}>
-                                            {room.room}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                                        return (
+                                            <UnitItem
+                                                key={uid}
+                                                unit={unit}
+                                                assets={unitAssets}
+                                                onRemove={() => setData('unit_ids', data.unit_ids.filter((id) => id !== uid))}
+                                            />
+                                        );
+                                    })}
+                                    {errors.unit_ids && <p className="text-xs text-red-500 mt-1">{String(errors.unit_ids)}</p>}
+                                </div>
+                            )}
+
+                            {/* Buildings Section */}
+                            {data.scope_type === 'building' && (
+                                <div className="col-span-2 flex flex-col gap-4">
+                                    <label className="block font-medium">Buildings Selection</label>
+                                    
+                                    <Select
+                                        className="w-full"
+                                        options={buildings
+                                            .filter((b) => !data.building_ids.includes(b.id))
+                                            .map((b) => ({
+                                                value: b.id,
+                                                label: `${b.name} (${b.code})`,
+                                            })
+                                        )}
+                                        placeholder="Add another building..."
+                                        value={null}
+                                        onChange={(selected) => {
+                                            if (selected) {
+                                                const id = Number(selected.value);
+
+                                                if (!data.building_ids.includes(id)) {
+                                                    // Get all rooms for this building
+                                                    const rooms = buildingRooms.filter((r) => r.building_id === id);
+
+                                                    // Collect all sub areas from those rooms
+                                                    const subAreas = rooms.flatMap((r) => r.sub_areas ?? []);
+
+                                                    setData('building_ids', [...data.building_ids, id]);
+                                                    setData('room_ids', [
+                                                        ...data.room_ids,
+                                                        ...rooms.map((r) => r.id).filter((rid) => !data.room_ids.includes(rid)),
+                                                    ]);
+                                                    setData('sub_area_ids', [
+                                                        ...data.sub_area_ids,
+                                                        ...subAreas.map((sa) => sa.id).filter((sid) => !data.sub_area_ids.includes(sid)),
+                                                    ]);
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    
+                                    {/* Selected buildings */}
+                                    <div className="flex flex-col gap-3">
+                                        {data.building_ids.map((bid) => {
+                                            const building = buildings.find((b) => b.id === bid);
+                                            if (!building) return null;
+
+                                            const rooms = buildingRooms.filter((r) => r.building_id === bid);
+
+                                            return (
+                                            <BuildingItem
+                                                key={bid}
+                                                building={building}
+                                                rooms={rooms}
+                                                selectedRooms={data.room_ids}
+                                                selectedSubAreas={data.sub_area_ids}
+                                                onToggleRoom={(roomId) =>
+                                                setData(
+                                                    'room_ids',
+                                                    data.room_ids.includes(roomId)
+                                                    ? data.room_ids.filter((id) => id !== roomId)
+                                                    : [...data.room_ids, roomId],
+                                                )
+                                                }
+                                                onToggleSubArea={(subAreaId) =>
+                                                setData(
+                                                    'sub_area_ids',
+                                                    data.sub_area_ids.includes(subAreaId)
+                                                    ? data.sub_area_ids.filter((id) => id !== subAreaId)
+                                                    : [...data.sub_area_ids, subAreaId],
+                                                )
+                                                }
+                                                onRemove={() => {
+                                                // Remove building + its rooms + subareas
+                                                const roomsToRemove = buildingRooms.filter((r) => r.building_id === bid).map((r) => r.id);
+                                                const subAreasToRemove = buildingRooms
+                                                    .filter((r) => r.building_id === bid)
+                                                    .flatMap((r) => r.sub_areas ?? [])
+                                                    .map((sa) => sa.id);
+
+                                                setData('building_ids', data.building_ids.filter((id) => id !== bid));
+                                                setData('room_ids', data.room_ids.filter((id) => !roomsToRemove.includes(id)));
+                                                setData('sub_area_ids', data.sub_area_ids.filter((id) => !subAreasToRemove.includes(id)));
+                                                }}
+                                            />
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Divider */}
-                            <div className="col-span-2 border-t"></div>
+                            <div className="col-span-2 border-t" />
 
-                            {/* SPACE */}
                             <div className="col-span-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                                {/* ACTUAL DATE OF SCHEDULE */}
-                                <div className="col-span-1 pt-0.5">
-                                    <label className="mb-1 block font-medium">Actual Date of Inventory</label>
-                                    <PickerInput
-                                        type="date"
-                                        value={data.actual_date_of_inventory}
-                                        onChange={setActualDateFromValue} // <- passes a string
-                                    />
-                                    {errors.actual_date_of_inventory && (
-                                        <p className="mt-1 text-xs text-red-500">{errors.actual_date_of_inventory}</p>
-                                    )}
-                                </div>
-
-                                {/* INVENTORY SCHEDULE (month only) */}
-                                <div className="col-span-1 pt-0.5">
+                                <div>
                                     <label className="mb-1 block font-medium">Inventory Schedule</label>
-                                    <PickerInput
-                                        type="month" // 👈 month picker
-                                        value={data.inventory_schedule || ''} // expects "YYYY-MM"
-                                        onChange={(v) => setData('inventory_schedule', v)}
-                                    />
-                                    {errors.inventory_schedule && <p className="mt-1 text-xs text-red-500">{errors.inventory_schedule}</p>}
+                                    <PickerInput type="month" value={data.inventory_schedule || ''} onChange={(v) => setData('inventory_schedule', v)} />
                                 </div>
 
-                                {/* STATUS */}
-                                <div className="col-span-1 pt-0.5">
+                                <div>
+                                    <label className="mb-1 block font-medium">Designated Staff</label>
+                                    <Input value={data.designated_employee} onChange={e => setData('designated_employee', e.target.value)} />
+                                </div>
+                                
+                                <div>
                                     <label className="mb-1 block font-medium">Scheduling Status</label>
                                     <select
                                         className="w-full rounded-lg border p-2"
@@ -585,130 +640,66 @@ export default function InventorySchedulingIndex({
                                         <option value="Pending_Review">Pending Review</option>
                                         <option value="Pending">Pending</option>
                                         <option value="Overdue">Overdue</option>
-                                           <option
-                                            value="Completed"
-                                            disabled // 👈 disable until approvals are complete
-                                        >
-                                            Completed
-                                        </option>
-                                        <option
-                                            value="Cancelled"
-                                            disabled // 👈 always disabled, handled by Form Approval
-                                        >
-                                            Cancelled
-                                        </option>
+                                        <option value="Completed" disabled>Completed</option>
+                                        <option value="Cancelled" disabled>Cancelled</option>
                                     </select>
-                                    {errors.scheduling_status && <p className="mt-1 text-xs text-red-500">{errors.scheduling_status}</p>}
                                 </div>
+                                
+                            </div>
 
-                                {/* ASSIGNED-BY {user_id}*/}
-                                {/* <div className="col-span-1 pt-0.5">
-                                    <label className="mb-1 block font-medium">Assigned By</label>
-                                    <select
-                                        className="w-full rounded-lg border p-2"
-                                        value={data.assigned_by}
-                                        onChange={(e) => setData('assigned_by', Number(e.target.value))}
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map((user) => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.assigned_by && <p className="mt-1 text-xs text-red-500">{errors.assigned_by}</p>}
-                                </div> */}
+                            {/* Divider */}
+                            <div className="col-span-2 border-t" />
 
-                                {/* DESIGNATED-EMPLOYEE */}
-                                {/* <div className="col-span-1 pt-0.5">
-                                    <label className="mb-1 block font-medium">Designated Employee</label>
-                                    <select
-                                        className="w-full rounded-lg border p-2"
-                                        value={data.designated_employee}
-                                        onChange={(e) => setData('designated_employee', Number(e.target.value))}
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map((user) => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.designated_employee && <p className="mt-1 text-xs text-red-500">{errors.designated_employee}</p>}
-                                </div> */}
-
-                                {/* CHECKED BY */}
-                                <div className="col-span-1 pt-0.5">
+                            <div className="col-span-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                                <div>
+                                    <label className="mb-1 block font-medium">Actual Date of Inventory</label>
+                                    <PickerInput type="date" value={data.actual_date_of_inventory} onChange={setActualDateFromValue} />
+                                </div>
+                                <div>
                                     <label className="mb-1 block font-medium">Checked By</label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-lg border p-2"
-                                        placeholder="Full Name of Checker"
-                                        value={data.checked_by}
-                                        onChange={(e) => setData('checked_by', e.target.value)}
-                                    />
-                                    {errors.checked_by && <p className="mt-1 text-xs text-red-500">{errors.checked_by}</p>}
+                                    <Input value={data.checked_by} onChange={e => setData('checked_by', e.target.value)} />
                                 </div>
-
-                                {/* RECEIVED BY */}
-                                <div className="col-span-1 pt-0.5">
-                                    <label className="mb-1 block font-medium">Received By</label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-lg border p-2"
-                                        placeholder="Full Name of Receiver"
-                                        value={data.received_by}
-                                        onChange={(e) => setData('received_by', e.target.value)}
-                                    />
-                                    {errors.received_by && <p className="mt-1 text-xs text-red-500">{errors.received_by}</p>}
-                                </div>
-
-                                {/* VERIFIED BY */}
-                                <div className="col-span-1 pt-0.5">
+                                <div>
                                     <label className="mb-1 block font-medium">Verified By</label>
-                                    <input
-                                        type="text"
-                                        className="w-full rounded-lg border p-2"
-                                        placeholder="Full Name of Verifier"
-                                        value={data.verified_by}
-                                        onChange={(e) => setData('verified_by', e.target.value)}
-                                    />
-                                    {errors.verified_by && <p className="mt-1 text-xs text-red-500">{errors.verified_by}</p>}
+                                    <Input value={data.verified_by} onChange={e => setData('verified_by', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block font-medium">Received By</label>
+                                    <Input value={data.received_by} onChange={e => setData('received_by', e.target.value)} />
                                 </div>
                             </div>
 
-                            <div className="col-span-2 border-t"></div>
-                            <div className="col-span-2 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                                {/* DESCRIPTION */}
-                                <div className="col-span-2">
-                                    <label className="mb-1 block font-medium">Remarks</label>
-                                    <textarea
-                                        rows={15}
-                                        className="w-full resize-none rounded-lg border p-2"
-                                        placeholder="Enter Remarks"
-                                        value={data.description}
-                                        onChange={(e) => setData('description', e.target.value)}
-                                    />
-                                    {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
-                                </div>
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Description</label>
+                                <textarea
+                                    rows={6}
+                                    className="w-full resize-none rounded-lg border p-2"
+                                    value={data.description}
+                                    onChange={e => setData('description', e.target.value)}
+                                />
                             </div>
                         </form>
                     </div>
 
+                    {/* Footer */}
                     <div className="flex justify-end gap-2 border-t p-4">
                         <Button
                             variant="secondary"
                             type="button"
+                            className='cursor-pointer'
                             onClick={() => {
                                 reset();
                                 setShowAddScheduleInventory(false);
                             }}
-                            className="cursor-pointer"
                         >
                             Cancel
                         </Button>
-
-                        <Button type="submit" onClick={handleSubmit} className="cursor-pointer" disabled={processing}>
+                        <Button 
+                            type="submit"
+                            className='cursor-pointer'
+                            onClick={handleSubmit} 
+                            disabled={processing}
+                        >
                             Add Schedule
                         </Button>
                     </div>

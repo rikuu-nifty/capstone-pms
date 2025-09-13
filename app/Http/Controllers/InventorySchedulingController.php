@@ -13,6 +13,7 @@ use App\Models\InventoryList; // 👈 your assets model
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class InventorySchedulingController extends Controller
 {
@@ -29,22 +30,27 @@ class InventorySchedulingController extends Controller
             'designatedEmployee',
             'assignedBy',
             'preparedBy',     // 👈 include preparer relationship
-            'approvals.steps', // 👈 load steps
+            'approvals.steps',
             // keep approvals lightweight here (pending-only, handled in FormApprovalController)
+
+            'buildings',
+            'rooms.subAreas',
+            'subAreas',
+            'units',
         ])->latest()->get();
 
-        $buildings = Building::all();
-        $buildingRooms = BuildingRoom::all();
+        $buildings = Building::withCount(['buildingRooms as building_rooms_count', 'assets'])->get();
+        $buildingRooms = BuildingRoom::with('subAreas')->get();
         $unitOrDepartments = UnitOrDepartment::all();
         $users = User::all();
 
         // Add computed flag to each schedule
-$schedules->each(function ($schedule) {
-    $schedule->isFullyApproved = $schedule->approvals
-        ->flatMap->steps
-        ->filter(fn($s) => in_array($s->code, ['noted_by', 'approved_by']))
-        ->every(fn($s) => $s->status === 'approved');
-});
+        $schedules->each(function ($schedule) {
+            $schedule->isFullyApproved = $schedule->approvals
+                ->flatMap->steps
+                ->filter(fn($s) => in_array($s->code, ['noted_by', 'approved_by']))
+                ->every(fn($s) => $s->status === 'approved');
+        });
 
         // also load signatories for the page
         $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
@@ -62,47 +68,93 @@ $schedules->each(function ($schedule) {
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
+    // public function store(Request $request)
+    // {
+    //     // Get validated input
+    //     $data = $request->all();
+    //     // $data = $request->validated();
+
+    //     // 👇 assign current logged-in user as preparer
+    //     $data['prepared_by_id'] = Auth::id();
+
+    //     // Save to database
+    //     $schedule = InventoryScheduling::create($data);
+
+    //     // Load FK relationships so frontend gets complete data
+    //     $schedule->load([
+    //         'building',
+    //         'unitOrDepartment',
+    //         'buildingRoom',
+    //         'user',
+    //         'designatedEmployee',
+    //         'assignedBy',
+    //         'preparedBy',     // 👈 include preparer
+    //         'approvals',      // 👈 include approvals
+    //         'approvals.steps' // 👈 load approvals as well
+    //     ]);
+
+    //     // Redirect back with success message and new schedule
+    //     return redirect()->back()->with([
+    //         'success' => 'Schedule added successfully.',
+    //         'newSchedule' => $schedule,
+    //     ]);
+    // }
     public function store(Request $request)
     {
-        // Get validated input
-        $data = $request->all();
-        // $data = $request->validated();
+        $data = $request->validate([
+            'scope_type'                => ['required', Rule::in(['unit', 'building'])],
+            'unit_ids'                  => ['array'],
+            'unit_ids.*'                => ['integer', Rule::exists('unit_or_departments', 'id')],
+            'building_ids'              => ['array'],
+            'building_ids.*'            => ['integer', Rule::exists('buildings', 'id')],
+            'room_ids'                  => ['array'],
+            'room_ids.*'                => ['integer', Rule::exists('building_rooms', 'id')],
+            'sub_area_ids'              => ['array'],
+            'sub_area_ids.*'            => ['integer', Rule::exists('sub_areas', 'id')],
 
-        // 👇 assign current logged-in user as preparer
-        $data['prepared_by_id'] = Auth::id();
-
-        // Save to database
-        $schedule = InventoryScheduling::create($data);
-
-        // Load FK relationships so frontend gets complete data
-        $schedule->load([
-            'building',
-            'unitOrDepartment',
-            'buildingRoom',
-            'user',
-            'designatedEmployee',
-            'assignedBy',
-            'preparedBy',     // 👈 include preparer
-            'approvals',      // 👈 include approvals
-            'approvals.steps' // 👈 load approvals as well
+            'inventory_schedule'        => ['required', 'string'],
+            'actual_date_of_inventory'  => ['nullable', 'date'],
+            'checked_by'                => ['nullable', 'string'],
+            'verified_by'               => ['nullable', 'string'],
+            'received_by'               => ['nullable', 'string'],
+            'scheduling_status'         => ['required', 'string'],
+            'description'               => ['nullable', 'string'],
         ]);
 
-        // Redirect back with success message and new schedule
+        // Create schedule
+        $schedule = InventoryScheduling::create([
+            'prepared_by_id' => Auth::id(),
+            'inventory_schedule' => $data['inventory_schedule'],
+            'actual_date_of_inventory' => $data['actual_date_of_inventory'] ?? null,
+            'checked_by' => $data['checked_by'] ?? null,
+            'verified_by' => $data['verified_by'] ?? null,
+            'received_by' => $data['received_by'] ?? null,
+            'scheduling_status' => $data['scheduling_status'],
+            'description' => $data['description'] ?? null,
+        ]);
+
+        // Attach pivots + fetch assets
+        $schedule->syncScopeAndAssets($data);
+
+        // Reload relationships for frontend
+        $schedule->load([
+            'units',
+            'buildings',
+            'rooms',
+            'subAreas',
+            'assets.asset',
+            'preparedBy',
+            'approvals',
+            'approvals.steps',
+        ]);
+
         return redirect()->back()->with([
             'success' => 'Schedule added successfully.',
             'newSchedule' => $schedule,
         ]);
-    }   
+    }
 
     /**
      * Display the specified resource.

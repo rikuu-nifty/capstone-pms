@@ -27,8 +27,6 @@ class InventoryScheduling extends Model
         'description',
     ];
 
-    
-
     public function approvals()
     {
         return $this->morphMany(FormApproval::class, 'approvable')->with('steps');
@@ -39,10 +37,26 @@ class InventoryScheduling extends Model
         return $this->belongsTo(User::class, 'prepared_by_id');
     }
 
+    public function building()
+    {
+        return $this->belongsTo(Building::class);
+    }
+
+    // Inventory schedule belongs to a building room
+    public function buildingRoom()
+    {
+        return $this->belongsTo(BuildingRoom::class);
+    }
+
+    // Inventory schedule belongs to a unit or department
+    public function unitOrDepartment()
+    {
+        return $this->belongsTo(UnitOrDepartment::class);
+    }
+
     public function units()
     {
-        return $this->belongsToMany(UnitOrDepartment::class, 'inventory_scheduling_units')
-            ->withTimestamps();
+        return $this->belongsToMany(UnitOrDepartment::class, 'inventory_scheduling_units')->withTimestamps();
     }
 
     public function buildings()
@@ -119,6 +133,38 @@ class InventoryScheduling extends Model
     public static function findForView(int $id): self
     {
         return static::query()->withViewRelations()->findOrFail($id);
+    }
+
+    /**
+     * Sync scope (units OR buildings/rooms/subareas) and auto-attach assets.
+     */
+    public function syncScopeAndAssets(array $data): void
+    {
+        if ($data['scope_type'] === 'unit') {
+            $this->units()->sync($data['unit_ids'] ?? []);
+
+            $assets = InventoryList::with(['category', 'assetModel'])
+                ->whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
+                ->get();
+        } else {
+            $this->buildings()->sync($data['building_ids'] ?? []);
+            $this->rooms()->sync($data['room_ids'] ?? []);
+            $this->subAreas()->sync($data['sub_area_ids'] ?? []);
+
+            $assets = InventoryList::with(['category', 'assetModel'])
+                ->when(!empty($data['building_ids']), fn($q) => $q->whereIn('building_id', $data['building_ids']))
+                ->when(!empty($data['room_ids']), fn($q) => $q->whereIn('building_room_id', $data['room_ids']))
+                ->when(!empty($data['sub_area_ids']), fn($q) => $q->whereIn('sub_area_id', $data['sub_area_ids']))
+                ->get();
+        }
+
+        // Attach assets to pivot
+        foreach ($assets as $asset) {
+            $this->assets()->create([
+                'inventory_list_id' => $asset->id,
+                'inventory_status' => 'scheduled',
+            ]);
+        }
     }
 
 }
