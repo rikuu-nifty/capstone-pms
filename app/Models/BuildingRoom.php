@@ -43,6 +43,11 @@ class BuildingRoom extends Model
         return $this->hasMany(InventoryScheduling::class);
     }
 
+    public function schedulings()
+    {
+        return $this->belongsToMany(InventoryScheduling::class, 'inventory_scheduling_rooms')->withTimestamps();
+    }
+
     public static function listAllRooms()
     {
         return static::query()

@@ -161,6 +161,11 @@ class Building extends Model
         return $this->hasMany(InventoryScheduling::class);
     }
 
+    public function schedulings()
+    {
+        return $this->belongsToMany(InventoryScheduling::class, 'inventory_scheduling_buildings')->withTimestamps();
+    }
+
     // app/Models/Building.php
     public function syncRooms(array $rooms): void
     {

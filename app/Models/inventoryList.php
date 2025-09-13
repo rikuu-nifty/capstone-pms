@@ -152,6 +152,11 @@ class InventoryList extends Model
         ->withTimestamps();
     }
 
+    public function schedulingAssets()
+    {
+        return $this->hasMany(InventorySchedulingAsset::class, 'inventory_list_id');
+    }
+
     public function deletedBy()
     {
         return $this->belongsTo(User::class, 'deleted_by_id');
@@ -226,33 +231,33 @@ class InventoryList extends Model
         // });
 
         static::updated(function ($asset) {
-    if ($asset->maintenance_due_date && 
-        Carbon::parse($asset->maintenance_due_date)->isToday() || 
-        Carbon::parse($asset->maintenance_due_date)->isPast()
-    ) {
-        self::checkAndNotify($asset, true); // force notify
-    }
-});
+            if ($asset->maintenance_due_date && 
+                Carbon::parse($asset->maintenance_due_date)->isToday() || 
+                Carbon::parse($asset->maintenance_due_date)->isPast()
+            ) {
+                self::checkAndNotify($asset, true); // force notify
+            }
+        });
     }
 
     /**
      * ✅ Helper to check if due and send notifications
      */protected static function checkAndNotify($asset)
-{
-    if ($asset->maintenance_due_date && (
-        Carbon::parse($asset->maintenance_due_date)->isToday() ||
-        Carbon::parse($asset->maintenance_due_date)->isPast()
-    )) {
-        $users = \App\Models\User::whereHas('role', function ($q) {
-            $q->where('code', '!=', 'vp_admin'); // 👈 exclude VP Admin
-        })->get();
+    {
+        if ($asset->maintenance_due_date && (
+            Carbon::parse($asset->maintenance_due_date)->isToday() ||
+            Carbon::parse($asset->maintenance_due_date)->isPast()
+        )) {
+            $users = \App\Models\User::whereHas('role', function ($q) {
+                $q->where('code', '!=', 'vp_admin'); // 👈 exclude VP Admin
+            })->get();
 
-        foreach ($users as $user) {
-            // ✅ Always send a new notification, even if same asset already had one
-            $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
+            foreach ($users as $user) {
+                // ✅ Always send a new notification, even if same asset already had one
+                $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
+            }
         }
     }
-}
 
 // IF WANT MO KASAMA PATI VP ADMIN UNCOMMENT MOTO
 //     protected static function checkAndNotify($asset)

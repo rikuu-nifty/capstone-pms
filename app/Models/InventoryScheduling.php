@@ -27,37 +27,45 @@ class InventoryScheduling extends Model
         'description',
     ];
 
-    // public function approvals()
-    // {
-    //     return $this->morphMany(FormApproval::class, 'approvable');
-    // }
+    
 
     public function approvals()
-{
-    return $this->morphMany(FormApproval::class, 'approvable')->with('steps');
-}
+    {
+        return $this->morphMany(FormApproval::class, 'approvable')->with('steps');
+    }
 
     public function preparedBy()
     {
         return $this->belongsTo(User::class, 'prepared_by_id');
     }
 
-    // Inventory schedule belongs to a building
-    public function building()
+    public function units()
     {
-        return $this->belongsTo(Building::class);
+        return $this->belongsToMany(UnitOrDepartment::class, 'inventory_scheduling_units')
+            ->withTimestamps();
     }
 
-    // Inventory schedule belongs to a building room
-    public function buildingRoom()
+    public function buildings()
     {
-        return $this->belongsTo(BuildingRoom::class);
+        return $this->belongsToMany(Building::class, 'inventory_scheduling_buildings')
+            ->withTimestamps();
     }
 
-    // Inventory schedule belongs to a unit or department
-    public function unitOrDepartment()
+    public function rooms()
     {
-        return $this->belongsTo(UnitOrDepartment::class);
+        return $this->belongsToMany(BuildingRoom::class, 'inventory_scheduling_rooms')
+            ->withTimestamps();
+    }
+
+    public function subAreas()
+    {
+        return $this->belongsToMany(SubArea::class, 'inventory_scheduling_sub_areas')
+            ->withTimestamps();
+    }
+
+    public function assets()
+    {
+        return $this->hasMany(InventorySchedulingAsset::class, 'inventory_scheduling_id');
     }
 
     // User who created or owns the schedule

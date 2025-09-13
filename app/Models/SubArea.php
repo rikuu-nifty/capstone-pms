@@ -41,4 +41,9 @@ class SubArea extends Model
     {
         return $this->hasMany(TransferAsset::class, 'to_sub_area_id');
     }
+
+    public function schedulings()
+    {
+        return $this->belongsToMany(InventoryScheduling::class, 'inventory_scheduling_sub_areas')->withTimestamps();
+    }
 }
