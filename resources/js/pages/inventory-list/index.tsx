@@ -589,7 +589,7 @@ export default function InventoryListIndex({
                                 <TableHead className="text-center">Date Purchased</TableHead>
                                 <TableHead className="text-center">Asset Type</TableHead>
                                 {/* <TableHead className="text-center">Quantity</TableHead> */}
-                                <TableHead className="text-center">Building</TableHead>
+                                <TableHead className="text-center">Location</TableHead>
                                 <TableHead className="text-center">Unit/Department</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">NFC Link</TableHead>
@@ -619,7 +619,14 @@ export default function InventoryListIndex({
                                         {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
                                     </TableCell>
                                     <TableCell>
-                                        {item.room_building && item.building_room ? `${item.room_building.name} (${item.building_room.room})` : '—'}
+                                        {item.room_building && item.building_room ? (
+                                            <>
+                                            {item.room_building.name} ({item.building_room.room})
+                                            {item.sub_area?.name ? ` – ${item.sub_area.name}` : ''}
+                                            </>
+                                        ) : (
+                                            '—'
+                                        )}
                                     </TableCell>
                                     <TableCell>{item.unit_or_department?.code ? String(item.unit_or_department.code).toUpperCase() : '—'}</TableCell>
                                     <TableCell className="text-center">
