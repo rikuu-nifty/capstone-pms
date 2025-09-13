@@ -23,6 +23,8 @@ type Asset = {
     asset_name: string;
     description?: string | null;
     serial_no?: string | null;
+
+    unit_or_department_id: number;
 };
 
 type User = {
@@ -117,16 +119,33 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
         // Keep quantity as the user entered value
     };
 
-    const assetOptions: AssetOption[] = assets.map((a) => {
+    // const assetOptions: AssetOption[] = assets.map((a) => {
+    //     const model = assetModels.find((m) => m.id === a.asset_model_id);
+    //     return {
+    //         value: a.id,
+    //         label: `${a.asset_name} | ${model ? `${model.brand} ${model.model}` : ''}${
+    //             a.serial_no ? ` | SN: ${a.serial_no}` : ''
+    //         }${a.description ? ` | ${a.description}` : ''}`,
+    //         model_id: model ? model.id : null,
+    //     };
+    // });
+
+    // Only keep assets that belong to the chosen unit/department
+    const filteredAssets = data.college_or_unit_id
+    ? assets.filter((a) => a.unit_or_department_id === Number(data.college_or_unit_id))
+    : assets;
+
+    const assetOptions: AssetOption[] = filteredAssets.map((a) => {
         const model = assetModels.find((m) => m.id === a.asset_model_id);
         return {
             value: a.id,
             label: `${a.asset_name} | ${model ? `${model.brand} ${model.model}` : ''}${
-                a.serial_no ? ` | SN: ${a.serial_no}` : ''
+            a.serial_no ? ` | SN: ${a.serial_no}` : ''
             }${a.description ? ` | ${a.description}` : ''}`,
             model_id: model ? model.id : null,
         };
     });
+
 
     // How many assets can be selected based on Quantity
     const maxSelectable = Number(data.quantity) || 0;
@@ -196,11 +215,15 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                         </div>
 
                         <div className="col-span-1">
-                            <label className="mb-1 block font-medium">College / Unit</label>
+                            <label className="mb-1 block font-medium">Unit/Dept/Lab</label>
                             <select
                                 className="w-full rounded-lg border p-2"
                                 value={data.college_or_unit_id}
-                                onChange={(e) => setData('college_or_unit_id', e.target.value === '' ? '' : Number(e.target.value))}
+                                onChange={(e) => {
+                                    const val = e.target.value === '' ? '' : Number(e.target.value);
+                                    setData('college_or_unit_id', val);
+                                    setData('selected_assets', []);
+                                }}
                             >
                                 <option value="">Select Unit/Department</option>
                                 {unitOrDepartments.map((u) => (
