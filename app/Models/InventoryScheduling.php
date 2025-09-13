@@ -4,11 +4,12 @@ namespace App\Models;
 
 use App\Models\Concerns\HasFormApproval;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 
 class InventoryScheduling extends Model
 {
-    use HasFormApproval;
+    use HasFormApproval, SoftDeletes;
 
     protected $fillable = [
         'prepared_by_id',
@@ -140,17 +141,33 @@ class InventoryScheduling extends Model
      */
     public function syncScopeAndAssets(array $data): void
     {
-        if ($data['scope_type'] === 'unit') {
-            $this->units()->sync($data['unit_ids'] ?? []);
+        // Clear old pivot associations
+        $this->units()->sync([]);
+        $this->buildings()->sync([]);
+        $this->rooms()->sync([]);
+        $this->subAreas()->sync([]);
+        $this->assets()->delete(); // remove old asset scheduling records
 
-            $assets = InventoryList::with(['category', 'assetModel'])
-                ->whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
-                ->get();
-        } else {
+        if ($data['scope_type'] === 'unit') {
+            $this->units()->sync($data['unit_ids'] ?? []); // Sync units
+
+            // Sync related pivots
             $this->buildings()->sync($data['building_ids'] ?? []);
             $this->rooms()->sync($data['room_ids'] ?? []);
             $this->subAreas()->sync($data['sub_area_ids'] ?? []);
 
+            // Fetch assets from selected units
+            $assets = InventoryList::with(['category', 'assetModel'])
+                ->whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
+                ->get();
+        } else {
+
+            // Sync buildings/rooms/subareas
+            $this->buildings()->sync($data['building_ids'] ?? []);
+            $this->rooms()->sync($data['room_ids'] ?? []);
+            $this->subAreas()->sync($data['sub_area_ids'] ?? []);
+
+            // Fetch assets from selected building/room/subareas
             $assets = InventoryList::with(['category', 'assetModel'])
                 ->when(!empty($data['building_ids']), fn($q) => $q->whereIn('building_id', $data['building_ids']))
                 ->when(!empty($data['room_ids']), fn($q) => $q->whereIn('building_room_id', $data['room_ids']))
@@ -158,7 +175,7 @@ class InventoryScheduling extends Model
                 ->get();
         }
 
-        // Attach assets to pivot
+        // Re-attach fresh assets
         foreach ($assets as $asset) {
             $this->assets()->create([
                 'inventory_list_id' => $asset->id,

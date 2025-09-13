@@ -14,6 +14,7 @@ use App\Models\InventoryList; // 👈 your assets model
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class InventorySchedulingController extends Controller
 {
@@ -29,20 +30,39 @@ class InventorySchedulingController extends Controller
             'user',
             'designatedEmployee',
             'assignedBy',
-            'preparedBy',     // 👈 include preparer relationship
-            'approvals.steps',
-            // keep approvals lightweight here (pending-only, handled in FormApprovalController)
-
+            'preparedBy',     // include preparer relationship
+            'approvals.steps', // keep approvals lightweight here (pending-only, handled in FormApprovalController)
+            
             'buildings',
             'rooms.subAreas',
             'subAreas',
             'units',
-        ])->latest()->get();
+        ])
+        ->withCount('assets')
+        ->latest()
+        ->get();
+
+        $assets = InventoryList::with([
+            'building',
+            'buildingRoom.subAreas',
+            'subArea',
+            'unitOrDepartment'
+        ])->get();
 
         $buildings = Building::withCount(['buildingRooms as building_rooms_count', 'assets'])->get();
         $buildingRooms = BuildingRoom::with('subAreas')->get();
         $unitOrDepartments = UnitOrDepartment::all();
-        $users = User::all();
+        $users = User::with('role:id,name,code')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role_name' => $user->role->name ?? null,
+                ];
+            }
+        );
 
         // Add computed flag to each schedule
         $schedules->each(function ($schedule) {
@@ -63,44 +83,13 @@ class InventorySchedulingController extends Controller
             'users' => $users,
             // 'auth' => ['user' => auth()->user()], // 👈 make sure this is included
             'signatories' => $signatories, // 👈 pass signatories
-            
+            'assets' => $assets,
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    // public function store(Request $request)
-    // {
-    //     // Get validated input
-    //     $data = $request->all();
-    //     // $data = $request->validated();
-
-    //     // 👇 assign current logged-in user as preparer
-    //     $data['prepared_by_id'] = Auth::id();
-
-    //     // Save to database
-    //     $schedule = InventoryScheduling::create($data);
-
-    //     // Load FK relationships so frontend gets complete data
-    //     $schedule->load([
-    //         'building',
-    //         'unitOrDepartment',
-    //         'buildingRoom',
-    //         'user',
-    //         'designatedEmployee',
-    //         'assignedBy',
-    //         'preparedBy',     // 👈 include preparer
-    //         'approvals',      // 👈 include approvals
-    //         'approvals.steps' // 👈 load approvals as well
-    //     ]);
-
-    //     // Redirect back with success message and new schedule
-    //     return redirect()->back()->with([
-    //         'success' => 'Schedule added successfully.',
-    //         'newSchedule' => $schedule,
-    //     ]);
-    // }
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -121,22 +110,28 @@ class InventorySchedulingController extends Controller
             'received_by'               => ['nullable', 'string'],
             'scheduling_status'         => ['required', 'string'],
             'description'               => ['nullable', 'string'],
+            'designated_employee'       => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
         // Create schedule
-        $schedule = InventoryScheduling::create([
-            'prepared_by_id' => Auth::id(),
-            'inventory_schedule' => $data['inventory_schedule'],
-            'actual_date_of_inventory' => $data['actual_date_of_inventory'] ?? null,
-            'checked_by' => $data['checked_by'] ?? null,
-            'verified_by' => $data['verified_by'] ?? null,
-            'received_by' => $data['received_by'] ?? null,
-            'scheduling_status' => $data['scheduling_status'],
-            'description' => $data['description'] ?? null,
-        ]);
+        $schedule = DB::transaction(function () use ($data) {
+            $schedule = InventoryScheduling::create([
+                'prepared_by_id' => Auth::id(),
+                'inventory_schedule' => $data['inventory_schedule'],
+                'actual_date_of_inventory' => $data['actual_date_of_inventory'] ?? null,
+                'checked_by' => $data['checked_by'] ?? null,
+                'verified_by' => $data['verified_by'] ?? null,
+                'received_by' => $data['received_by'] ?? null,
+                'scheduling_status' => $data['scheduling_status'],
+                'description' => $data['description'] ?? null,
+                'designated_employee' => $data['designated_employee'] ?? null,
+            ]);
 
-        // Attach pivots + fetch assets
-        $schedule->syncScopeAndAssets($data);
+            // Attach pivots + fetch assets
+            $schedule->syncScopeAndAssets($data);
+
+            return $schedule;
+        });
 
         // Reload relationships for frontend
         $schedule->load([
@@ -192,10 +187,10 @@ class InventorySchedulingController extends Controller
             
     // 👇 compute approval completion flag
   // only require approvals from PMO Head (noted_by) and VP Admin (approved_by)
-$isFullyApproved = $viewing->approvals
-    ->flatMap->steps
-    ->filter(fn($s) => in_array($s->code, ['noted_by', 'approved_by'])) // only PMO Head + VP Admin
-    ->every(fn($s) => $s->status === 'approved');
+        $isFullyApproved = $viewing->approvals
+            ->flatMap->steps
+            ->filter(fn($s) => in_array($s->code, ['noted_by', 'approved_by'])) // only PMO Head + VP Admin
+            ->every(fn($s) => $s->status === 'approved');
 
 
          // 👇 Fetch assets specific to this building room,
@@ -246,6 +241,16 @@ $isFullyApproved = $viewing->approvals
     public function update(Request $request, InventoryScheduling $inventoryScheduling)
     {
         $data = $request->validate([
+            'scope_type' => ['required', Rule::in(['unit', 'building'])],
+            'unit_ids' => ['array'],
+            'unit_ids.*' => ['integer', 'exists:unit_or_departments,id'],
+            'building_ids' => ['array'],
+            'building_ids.*' => ['integer', 'exists:buildings,id'],
+            'room_ids' => ['array'],
+            'room_ids.*' => ['integer', 'exists:building_rooms,id'],
+            'sub_area_ids' => ['array'],
+            'sub_area_ids.*' => ['integer', 'exists:sub_areas,id'],
+
             'building_id' => ['nullable','integer','exists:buildings,id'],
             'building_room_id' => ['nullable','integer','exists:building_rooms,id'],
             'unit_or_department_id' => ['nullable','integer','exists:unit_or_departments,id'],
@@ -264,16 +269,28 @@ $isFullyApproved = $viewing->approvals
         // Convert '' -> null for nullable FKs
         $data = array_map(fn($v) => $v === '' ? null : $v, $data);
 
-        // 👇 Special case: if scheduling_status set to Pending_Review, reset approvals
-        if (strtolower($data['scheduling_status']) === 'pending_review') {
-            $inventoryScheduling->approvals()->each(function ($approval) {
-                $approval->resetToPending(); // 👈 resets all approval steps
-            });
-        }
+        DB::transaction(function () use ($inventoryScheduling, $data) {
+            // Reset approvals if scheduling_status is set to pending_review
+            if (strtolower($data['scheduling_status']) === 'pending_review') {
+                $inventoryScheduling->approvals()->each(function ($approval) {
+                    $approval->resetToPending();
+                });
+            }
 
-        $inventoryScheduling->update($data);
+            // Update main record
+            $inventoryScheduling->update($data);
+
+            // Sync pivots + assets
+            $inventoryScheduling->syncScopeAndAssets($data);
+        });
 
         $inventoryScheduling->load([
+            'units',
+            'buildings',
+            'rooms',
+            'subAreas',
+            'assets.asset',
+            
             'building',
             'unitOrDepartment',
             'buildingRoom',
@@ -282,8 +299,7 @@ $isFullyApproved = $viewing->approvals
             'assignedBy',
             'preparedBy',
             'approvals' => function ($q) {
-                $q->with(['steps' => fn ($s) => $s->orderBy('step_order')]); 
-                // 👆 reload approvals with full history after update
+                $q->with(['steps' => fn ($s) => $s->orderBy('step_order')]); // 👆 reload approvals with full history after update
             },
         ]);
 

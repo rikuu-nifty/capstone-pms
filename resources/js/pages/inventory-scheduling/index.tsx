@@ -17,8 +17,7 @@ import Select from "react-select";
 
 import BuildingItem from './BuildingItem';
 import UnitItem from './UnitItem';
-import type { } from '@/types/building-room';
-import type { Building, BuildingRoom, SubArea } from '@/types/custom-index'
+import type { Building, SubArea } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -101,7 +100,7 @@ export type Scheduled = {
 
     // legacy version - single association
     building: Building | null;
-    building_room?: BuildingRoom | null;
+    building_room?: SchedulingBuildingRoom | null;
     unit_or_department: UnitOrDepartment | null;
     
     inventory_schedule: string;
@@ -117,9 +116,19 @@ export type Scheduled = {
     
       // new pivot associations
     buildings?: Building[];
-    rooms?: BuildingRoom[];
+    rooms?: SchedulingBuildingRoom[];
     sub_areas?: SubArea[];
     units?: UnitOrDepartment[];
+
+    assets_count?: number;
+};
+
+export type SchedulingBuildingRoom = {
+    id: number;
+    building_id: number;
+    room: string | number;
+    description?: string;
+    sub_areas?: SubArea[];
 };
 
 export type InventorySchedulingFormData = {
@@ -158,7 +167,7 @@ export default function InventorySchedulingIndex({
     viewing?: Scheduled; // 👈 may exist when opening View modal
     assets?: Asset[]; // 👈 fixed type         // 👈 new, will be passed for view modal
     buildings: Building[];
-    buildingRooms: BuildingRoom[];
+    buildingRooms: SchedulingBuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
     users: User[];
 }) {
@@ -316,10 +325,11 @@ export default function InventorySchedulingIndex({
                             <TableRow className="bg-muted text-foreground">
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Inventory Schedule</TableHead>
-                                <TableHead className="text-center">Building Count</TableHead>
-                                <TableHead className="text-center">Rooms Count</TableHead>
-                                <TableHead className="text-center">Unit Count</TableHead>
-                                <TableHead className="text-center">Designated Staff</TableHead>
+                                <TableHead className="text-center">Total Buildings</TableHead>
+                                <TableHead className="text-center">Total Rooms</TableHead>
+                                <TableHead className="text-center">Total Units/Departments</TableHead>
+                                <TableHead className="text-center">Total Assets</TableHead>
+                                {/* <TableHead className="text-center">Designated Staff</TableHead> */}
                                 
                                 <TableHead className="text-center">Actual Date</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
@@ -335,7 +345,8 @@ export default function InventorySchedulingIndex({
                                     <TableCell>{item.buildings?.length ?? 0}</TableCell>
                                     <TableCell>{item.rooms?.length ?? 0}</TableCell>
                                     <TableCell>{item.units?.length ?? 0}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{item.designated_employee?.name ?? '—'}</TableCell>
+                                    <TableCell>{item.assets_count ?? 0}</TableCell>
+                                    {/* <TableCell className="whitespace-nowrap">{item.designated_employee?.name ?? '—'}</TableCell> */}
                                     <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) || '—'}</TableCell>
 
                                     <TableCell>
@@ -395,6 +406,7 @@ export default function InventorySchedulingIndex({
                     unitOrDepartments={unitOrDepartments}
                     users={users}
                     statusOptions={['Completed', 'Pending', 'Overdue', 'Cancelled', 'Pending_Review']}
+                    assets={assets}
                 />
             )}
 
@@ -458,28 +470,31 @@ export default function InventorySchedulingIndex({
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
                             {/* Scope Type */}
                             <div className="col-span-2">
-                                <label className="mb-1 block font-medium">Scope Type</label>
-                                <div className="flex gap-4">
-                                    <label className="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        name="scope_type"
-                                        value="unit"
-                                        checked={data.scope_type === 'unit'}
-                                        onChange={() => setData('scope_type', 'unit')}
-                                    />
-                                        By Unit/Department
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        name="scope_type"
-                                        value="building"
-                                        checked={data.scope_type === 'building'}
-                                        onChange={() => setData('scope_type', 'building')}
-                                    />
-                                        By Building/Room/Sub-Area
-                                    </label>
+                                <label className="mb-2 block font-medium">Scope Type</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setData("scope_type", "unit")}
+                                        className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+                                            ${data.scope_type === "unit"
+                                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                                            : "border-gray-300 bg-white hover:bg-gray-50"
+                                            }`}
+                                    >
+                                        By Units / Departments
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setData("scope_type", "building")}
+                                        className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+                                            ${data.scope_type === "building"
+                                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                                            : "border-gray-300 bg-white hover:bg-gray-50"
+                                            }`}
+                                    >
+                                        By Buildings
+                                    </button>
                                 </div>
                             </div>
 
@@ -502,7 +517,58 @@ export default function InventorySchedulingIndex({
                                         onChange={(selected) => {
                                             if (selected) {
                                                 const id = Number(selected.value);
-                                                setData('unit_ids', [...data.unit_ids, id]);
+
+                                                if (!data.unit_ids.includes(id)) {
+                                                    setData('unit_ids', [...data.unit_ids, id]);
+
+                                                    // derive all assets for this unit
+                                                    const unitAssets = assets.filter((a) => a.unit_or_department?.id === id);
+
+                                                    // collect related rooms
+                                                    const rooms = [
+                                                        ...new Map(
+                                                        unitAssets
+                                                            .map((a) => a.building_room as SchedulingBuildingRoom | null)
+                                                            .filter((r): r is SchedulingBuildingRoom => r !== null)
+                                                            .map((r) => [r.id, r])
+                                                        ).values(),
+                                                    ];
+
+                                                    // collect related sub-areas
+                                                    const subAreas = [
+                                                        ...new Map(
+                                                        unitAssets
+                                                            .map((a) => a.sub_area)
+                                                            .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
+                                                            .map((sa) => [sa.id, sa])
+                                                        ).values(),
+                                                    ];
+
+                                                    // auto select them
+                                                    setData('room_ids', [
+                                                        ...data.room_ids,
+                                                        ...rooms.map((r) => r.id).filter((rid) => !data.room_ids.includes(rid)),
+                                                    ]);
+
+                                                    setData('sub_area_ids', [
+                                                        ...data.sub_area_ids,
+                                                        ...subAreas.map((sa) => sa.id).filter((sid) => !data.sub_area_ids.includes(sid)),
+                                                    ]);
+
+                                                    const unitBuildings: Building[] = [
+                                                        ...new Map(
+                                                            unitAssets
+                                                                .map((a) => a.building)
+                                                                .filter((b): b is Building => b !== null && b !== undefined)
+                                                                .map((b) => [b.id, b])
+                                                        ).values(),
+                                                    ];
+
+                                                    setData('building_ids', [
+                                                        ...data.building_ids,
+                                                        ...unitBuildings.map((b) => b.id).filter((bid) => !data.building_ids.includes(bid)),
+                                                    ]);
+                                                }
                                             }
                                         }}
                                     />
@@ -510,14 +576,110 @@ export default function InventorySchedulingIndex({
                                     {data.unit_ids.map((uid) => {
                                         const unit = unitOrDepartments.find((u) => u.id === uid);
                                         if (!unit) return null;
+
                                         const unitAssets = assets.filter((a) => a.unit_or_department?.id === uid);
+
+                                        // derive related buildings
+                                        const unitBuildings: Building[] = [
+                                        ...new Map(
+                                            unitAssets
+                                            .map((a) => a.building)
+                                            .filter((b): b is Building => b !== null && b !== undefined)
+                                            .map((b) => [b.id, b])
+                                        ).values(),
+                                        ];
+
+                                        // derive related rooms
+                                        const unitRooms: SchedulingBuildingRoom[] = [
+                                        ...new Map(
+                                            unitAssets
+                                            .map((a) => a.building_room as unknown as SchedulingBuildingRoom | null)
+                                            .filter((r): r is SchedulingBuildingRoom => r !== null && r !== undefined)
+                                            .map((r) => [r.id, r])
+                                        ).values(),
+                                        ];
+
+                                        // derive related subareas
+                                        const unitSubAreas: SubArea[] = [
+                                        ...new Map(
+                                            unitAssets
+                                            .map((a) => a.sub_area)
+                                            .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
+                                            .map((sa) => [sa.id, sa])
+                                        ).values(),
+                                        ];
+
 
                                         return (
                                             <UnitItem
                                                 key={uid}
                                                 unit={unit}
                                                 assets={unitAssets}
-                                                onRemove={() => setData('unit_ids', data.unit_ids.filter((id) => id !== uid))}
+                                                buildings={unitBuildings}
+                                                rooms={unitRooms}
+                                                subAreas={unitSubAreas}
+                                                selectedRooms={data.room_ids}
+                                                selectedSubAreas={data.sub_area_ids}
+                                                onToggleRoom={(roomId, buildingId, checked) => {
+                                                    if (!checked) {
+                                                        setData('room_ids', data.room_ids.filter(id => id !== roomId));
+                                                        // remove sub-areas under this room
+                                                        const subAreasToRemove = buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
+                                                        setData('sub_area_ids', data.sub_area_ids.filter(id => !subAreasToRemove.includes(id)));
+                                                    } else {
+                                                        if (!data.room_ids.includes(roomId)) setData('room_ids', [...data.room_ids, roomId]);
+                                                        if (!data.building_ids.includes(buildingId)) setData('building_ids', [...data.building_ids, buildingId]);
+                                                    }
+                                                }}
+                                                onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
+                                                    if (!checked) {
+                                                        setData('sub_area_ids', data.sub_area_ids.filter(id => id !== subAreaId));
+                                                    } else {
+                                                        if (!data.sub_area_ids.includes(subAreaId)) setData('sub_area_ids', [...data.sub_area_ids, subAreaId]);
+                                                        if (!data.room_ids.includes(roomId)) setData('room_ids', [...data.room_ids, roomId]);
+                                                        if (!data.building_ids.includes(buildingId)) setData('building_ids', [...data.building_ids, buildingId]);
+                                                    }
+                                                }}
+                                                onRemove={() => {
+                                                    // derive related assets
+                                                    const unitAssets = assets.filter((a) => a.unit_or_department?.id === uid);
+
+                                                    const buildingsToRemove = [
+                                                        ...new Map(
+                                                            unitAssets
+                                                                .map((a) => a.building)
+                                                                .filter((b): b is Building => b !== null && b !== undefined)
+                                                                .map((b) => [b.id, b])
+                                                        ).values(),
+                                                    ].map((b) => b.id);
+                                                    
+                                                    // collect related rooms
+                                                    const roomsToRemove = [
+                                                        ...new Map(
+                                                        unitAssets
+                                                            .map((a) => a.building_room as SchedulingBuildingRoom | null)
+                                                            .filter((r): r is SchedulingBuildingRoom => r !== null)
+                                                            .map((r) => [r.id, r])
+                                                        ).values(),
+                                                    ].map((r) => r.id);
+
+                                                    // collect related sub-areas
+                                                    const subAreasToRemove = [
+                                                        ...new Map(
+                                                        unitAssets
+                                                            .map((a) => a.sub_area)
+                                                            .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
+                                                            .map((sa) => [sa.id, sa])
+                                                        ).values(),
+                                                    ].map((sa) => sa.id);
+
+                                                    // update state
+                                                    setData('unit_ids', data.unit_ids.filter((id) => id !== uid));
+                                                    setData('building_ids', data.building_ids.filter((id) => !buildingsToRemove.includes(id)));
+                                                    setData('room_ids', data.room_ids.filter((id) => !roomsToRemove.includes(id)));
+                                                    setData('sub_area_ids', data.sub_area_ids.filter((id) => !subAreasToRemove.includes(id)));
+                                                }}
+
                                             />
                                         );
                                     })}
@@ -575,41 +737,48 @@ export default function InventorySchedulingIndex({
                                             const rooms = buildingRooms.filter((r) => r.building_id === bid);
 
                                             return (
-                                            <BuildingItem
-                                                key={bid}
-                                                building={building}
-                                                rooms={rooms}
-                                                selectedRooms={data.room_ids}
-                                                selectedSubAreas={data.sub_area_ids}
-                                                onToggleRoom={(roomId) =>
-                                                setData(
-                                                    'room_ids',
-                                                    data.room_ids.includes(roomId)
-                                                    ? data.room_ids.filter((id) => id !== roomId)
-                                                    : [...data.room_ids, roomId],
-                                                )
-                                                }
-                                                onToggleSubArea={(subAreaId) =>
-                                                setData(
-                                                    'sub_area_ids',
-                                                    data.sub_area_ids.includes(subAreaId)
-                                                    ? data.sub_area_ids.filter((id) => id !== subAreaId)
-                                                    : [...data.sub_area_ids, subAreaId],
-                                                )
-                                                }
-                                                onRemove={() => {
-                                                // Remove building + its rooms + subareas
-                                                const roomsToRemove = buildingRooms.filter((r) => r.building_id === bid).map((r) => r.id);
-                                                const subAreasToRemove = buildingRooms
-                                                    .filter((r) => r.building_id === bid)
-                                                    .flatMap((r) => r.sub_areas ?? [])
-                                                    .map((sa) => sa.id);
+                                                <BuildingItem
+                                                    key={bid}
+                                                    building={building}
+                                                    rooms={rooms}
+                                                    selectedRooms={data.room_ids}
+                                                    selectedSubAreas={data.sub_area_ids}
+                                                    onToggleRoom={(roomId, buildingId) => {
+                                                        if (data.room_ids.includes(roomId)) {
+                                                            setData('room_ids', data.room_ids.filter((id) => id !== roomId));
+                                                        } else {
+                                                            setData('room_ids', [...data.room_ids, roomId]);
+                                                            if (!data.building_ids.includes(buildingId)) {
+                                                                setData('building_ids', [...data.building_ids, buildingId]);
+                                                            }
+                                                        }
+                                                    }}
+                                                    onToggleSubArea={(subAreaId, roomId, buildingId) => {
+                                                        if (data.sub_area_ids.includes(subAreaId)) {
+                                                            setData('sub_area_ids', data.sub_area_ids.filter((id) => id !== subAreaId));
+                                                        } else {
+                                                            setData('sub_area_ids', [...data.sub_area_ids, subAreaId]);
+                                                            if (!data.room_ids.includes(roomId)) {
+                                                                setData('room_ids', [...data.room_ids, roomId]);
+                                                            }
+                                                            if (!data.building_ids.includes(buildingId)) {
+                                                                setData('building_ids', [...data.building_ids, buildingId]);
+                                                            }
+                                                        }
+                                                    }}
+                                                    onRemove={() => {
+                                                        // Remove building + its rooms + subareas
+                                                        const roomsToRemove = buildingRooms.filter((r) => r.building_id === bid).map((r) => r.id);
+                                                        const subAreasToRemove = buildingRooms
+                                                            .filter((r) => r.building_id === bid)
+                                                            .flatMap((r) => r.sub_areas ?? [])
+                                                            .map((sa) => sa.id);
 
-                                                setData('building_ids', data.building_ids.filter((id) => id !== bid));
-                                                setData('room_ids', data.room_ids.filter((id) => !roomsToRemove.includes(id)));
-                                                setData('sub_area_ids', data.sub_area_ids.filter((id) => !subAreasToRemove.includes(id)));
-                                                }}
-                                            />
+                                                        setData('building_ids', data.building_ids.filter((id) => id !== bid));
+                                                        setData('room_ids', data.room_ids.filter((id) => !roomsToRemove.includes(id)));
+                                                        setData('sub_area_ids', data.sub_area_ids.filter((id) => !subAreasToRemove.includes(id)));
+                                                    }}
+                                                />
                                             );
                                         })}
                                     </div>
@@ -627,8 +796,31 @@ export default function InventorySchedulingIndex({
 
                                 <div>
                                     <label className="mb-1 block font-medium">Designated Staff</label>
-                                    <Input value={data.designated_employee} onChange={e => setData('designated_employee', e.target.value)} />
+                                    <Select
+                                        className="w-full"
+                                        options={users.map((u) => ({
+                                            value: u.id,
+                                            label: `${u.name} (${u.role_name})`,
+                                        }))}
+                                        placeholder="Select designated staff..."
+                                        value={
+                                            users.find((u) => u.id === Number(data.designated_employee))
+                                                ? {
+                                                    value: Number(data.designated_employee),
+                                                    label: users.find((u) => u.id === Number(data.designated_employee))?.name,
+                                                }
+                                                : null
+                                        }
+                                        onChange={(selected) => {
+                                            if (selected) {
+                                                setData('designated_employee', selected.value);
+                                            } else {
+                                                setData('designated_employee', '');
+                                            }
+                                        }}
+                                    />
                                 </div>
+
                                 
                                 <div>
                                     <label className="mb-1 block font-medium">Scheduling Status</label>

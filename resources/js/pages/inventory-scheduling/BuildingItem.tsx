@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import type { Building, BuildingRoom, SubArea } from '@/types/custom-index';
+import type { Building } from '@/types/custom-index';
+import type { SchedulingBuildingRoom } from './index';
 
 type Props = {
     building: Building;
-    rooms: (BuildingRoom & { sub_areas?: SubArea[] })[];
+    rooms: SchedulingBuildingRoom[];
     selectedRooms: number[];
     selectedSubAreas: number[];
-    onToggleRoom: (roomId: number) => void;
-    onToggleSubArea: (subAreaId: number) => void;
+    onToggleRoom: (roomId: number, parentBuildingId: number, checked: boolean) => void;
+    onToggleSubArea: (subAreaId: number, parentRoomId: number, parentBuildingId: number, checked: boolean) => void;
     onRemove: () => void;
 };
 
@@ -66,9 +67,24 @@ export default function BuildingItem({
                                     type="checkbox"
                                     className='cursor-pointer'
                                     checked={selectedRooms.includes(room.id)}
-                                    onChange={() => onToggleRoom(room.id)}
+                                    // onChange={() => onToggleRoom(room.id, building.id)}
+                                    onChange={() => {
+                                        if (selectedRooms.includes(room.id)) {
+                                        // ✅ unselect room → unselect its sub-areas
+                                        onToggleRoom(room.id, building.id, false);
+                                        if (room.sub_areas) {
+                                            room.sub_areas.forEach(sa =>
+                                            onToggleSubArea(sa.id, room.id, building.id, false)
+                                            );
+                                        }
+                                        } else {
+                                        // ✅ select room → ensure parent building is also marked
+                                        onToggleRoom(room.id, building.id, true);
+                                        }
+                                    }}
                                 />
-                                    Room {room.room}
+                                    {/* Room {room.room} */}
+                                    Room {String(room.room)}
                                 </label>
 
                                 {/* Sub-areas under room */}
@@ -79,8 +95,18 @@ export default function BuildingItem({
                                             <input
                                                 type="checkbox"
                                                 checked={selectedSubAreas.includes(sa.id)}
-                                                onChange={() => onToggleSubArea(sa.id)}
+                                                // onChange={() => onToggleSubArea(sa.id, room.id, building.id)}
                                                 className='cursor-pointer'
+                                                onChange={() => {
+                                                    if (selectedSubAreas.includes(sa.id)) {
+                                                    // ✅ unselect sub-area only
+                                                    onToggleSubArea(sa.id, room.id, building.id, false);
+                                                    } else {
+                                                    // ✅ select sub-area → also select parent room + building
+                                                    onToggleSubArea(sa.id, room.id, building.id, true);
+                                                    onToggleRoom(room.id, building.id, true);
+                                                    }
+                                                }}
                                             />
                                             {sa.name}
                                         </label>
