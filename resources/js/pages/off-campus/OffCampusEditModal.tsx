@@ -18,6 +18,7 @@ type Asset = {
     asset_name: string;
     description?: string | null;
     serial_no?: string | null;
+    unit_or_department_id: number;
 };
 
 type OffCampusAssetRow = {
@@ -75,18 +76,18 @@ const DEFAULT_UNITS = ['pcs', 'set', 'unit', 'pair', 'dozen', 'box', 'pack', 'ro
 
 export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartments, assets, assetModels, users, unitsList = DEFAULT_UNITS }: Props) {
     // Build react-select options once
-    const assetOptions: AssetOption[] = useMemo(() => {
-        return assets.map((a) => {
-            const m = assetModels.find((x) => x.id === a.asset_model_id);
-            return {
-                value: a.id,
-                label: [a.asset_name, m ? `${m.brand} ${m.model}` : null, a.serial_no ? `SN: ${a.serial_no}` : null, a.description || null]
-                    .filter(Boolean)
-                    .join(' • '),
-                model_id: m ? m.id : null,
-            };
-        });
-    }, [assets, assetModels]);
+    // const assetOptions: AssetOption[] = useMemo(() => {
+    //     return assets.map((a) => {
+    //         const m = assetModels.find((x) => x.id === a.asset_model_id);
+    //         return {
+    //             value: a.id,
+    //             label: [a.asset_name, m ? `${m.brand} ${m.model}` : null, a.serial_no ? `SN: ${a.serial_no}` : null, a.description || null]
+    //                 .filter(Boolean)
+    //                 .join(' • '),
+    //             model_id: m ? m.id : null,
+    //         };
+    //     });
+    // }, [assets, assetModels]);
 
     // Initialize selected_assets:
     // - Prefer offCampus.assets[] (child rows) if present
@@ -127,6 +128,24 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
         // multi-select selections
         selected_assets: initialSelected as { asset_id: number; asset_model_id?: number | null }[],
     });
+
+    const assetOptions: AssetOption[] = useMemo(() => {
+        // ✅ Only keep assets that belong to the selected unit/department
+        const filtered = data.college_or_unit_id
+            ? assets.filter((a) => a.unit_or_department_id === Number(data.college_or_unit_id))
+            : assets;
+
+        return filtered.map((a) => {
+            const m = assetModels.find((x) => x.id === a.asset_model_id);
+            return {
+                value: a.id,
+                label: [a.asset_name, m ? `${m.brand} ${m.model}` : null, a.serial_no ? `SN: ${a.serial_no}` : null, a.description || null]
+                    .filter(Boolean)
+                    .join(' • '),
+                model_id: m ? m.id : null,
+            };
+        });
+    }, [assets, assetModels, data.college_or_unit_id]);
 
     useEffect(() => {
         let selected = offCampus.assets
@@ -237,11 +256,15 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
 
                         {/* College / Unit */}
                         <div>
-                            <Label>College / Unit</Label>
+                            <Label>Unit/Dept/Lab</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
                                 value={data.college_or_unit_id}
-                                onChange={(e) => setData('college_or_unit_id', e.target.value === '' ? '' : Number(e.target.value))}
+                                onChange={(e) => {
+                                    const val = e.target.value === '' ? '' : Number(e.target.value);
+                                    setData('college_or_unit_id', val);
+                                    setData('selected_assets', []); // ✅ reset selections
+                                }}
                             >
                                 <option value="">Select Unit/Department</option>
                                 {unitOrDepartments.map((u) => (
