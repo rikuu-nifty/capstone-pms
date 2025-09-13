@@ -12,6 +12,7 @@ use App\Models\InventorySchedulingSignatory; // 👈 add this
 use App\Models\InventoryList; // 👈 your assets model
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class InventorySchedulingController extends Controller
 {
@@ -78,7 +79,7 @@ $schedules->each(function ($schedule) {
         // $data = $request->validated();
 
         // 👇 assign current logged-in user as preparer
-        $data['prepared_by_id'] = auth()->id();
+        $data['prepared_by_id'] = Auth::id();
 
         // Save to database
         $schedule = InventoryScheduling::create($data);
