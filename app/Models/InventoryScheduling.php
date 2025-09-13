@@ -141,46 +141,69 @@ class InventoryScheduling extends Model
      */
     public function syncScopeAndAssets(array $data): void
     {
-        // Clear old pivot associations
-        $this->units()->sync([]);
-        $this->buildings()->sync([]);
-        $this->rooms()->sync([]);
-        $this->subAreas()->sync([]);
-        $this->assets()->delete(); // remove old asset scheduling records
+        $scope = $data['scope_type']; // validated as 'unit' or 'building'
 
-        if ($data['scope_type'] === 'unit') {
-            $this->units()->sync($data['unit_ids'] ?? []); // Sync units
+        // Normalize inputs and de-dupe
+        $unitIds     = array_values(array_unique($data['unit_ids']      ?? []));
+        $buildingIds = array_values(array_unique($data['building_ids']  ?? []));
+        $roomIds     = array_values(array_unique($data['room_ids']      ?? []));
+        $subAreaIds  = array_values(array_unique($data['sub_area_ids']  ?? []));
 
-            // Sync related pivots
-            $this->buildings()->sync($data['building_ids'] ?? []);
-            $this->rooms()->sync($data['room_ids'] ?? []);
-            $this->subAreas()->sync($data['sub_area_ids'] ?? []);
+        // --- Sync pivots ---
+        if ($scope === 'unit') {
+            $this->units()->sync($unitIds);
+            $this->buildings()->sync($buildingIds);
+            $this->rooms()->sync($roomIds);
+            $this->subAreas()->sync($subAreaIds);
 
-            // Fetch assets from selected units
-            $assets = InventoryList::with(['category', 'assetModel'])
-                ->whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
-                ->get();
+            // Fetch assets by units
+            $assetIds = empty($unitIds) ? [] : InventoryList::whereIn('unit_or_department_id', $unitIds)
+                ->pluck('id')
+                ->all();
+        } elseif ($scope === 'building') {
+            $this->units()->sync([]);
+            $this->buildings()->sync($buildingIds);
+            $this->rooms()->sync($roomIds);
+            $this->subAreas()->sync($subAreaIds);
+
+            if (empty($buildingIds) && empty($roomIds) && empty($subAreaIds)) {
+                $assetIds = [];
+            } else {
+                $assetIds = InventoryList::query()
+                    ->when(!empty($buildingIds), fn($q) => $q->whereIn('building_id', $buildingIds))
+                    ->when(!empty($roomIds),     fn($q) => $q->whereIn('building_room_id', $roomIds))
+                    ->when(!empty($subAreaIds),  fn($q) => $q->whereIn('sub_area_id', $subAreaIds))
+                    ->orWhere(function ($q) use ($roomIds) {
+                        // Always include assets for selected rooms with no sub-area
+                        if (!empty($roomIds)) {
+                            $q->whereIn('building_room_id', $roomIds)
+                                ->whereNull('sub_area_id');
+                        }
+                    })
+                    ->pluck('id')
+                    ->all();
+            }
         } else {
-
-            // Sync buildings/rooms/subareas
-            $this->buildings()->sync($data['building_ids'] ?? []);
-            $this->rooms()->sync($data['room_ids'] ?? []);
-            $this->subAreas()->sync($data['sub_area_ids'] ?? []);
-
-            // Fetch assets from selected building/room/subareas
-            $assets = InventoryList::with(['category', 'assetModel'])
-                ->when(!empty($data['building_ids']), fn($q) => $q->whereIn('building_id', $data['building_ids']))
-                ->when(!empty($data['room_ids']), fn($q) => $q->whereIn('building_room_id', $data['room_ids']))
-                ->when(!empty($data['sub_area_ids']), fn($q) => $q->whereIn('sub_area_id', $data['sub_area_ids']))
-                ->get();
+            throw new \InvalidArgumentException("Invalid scope_type: {$scope}");
         }
 
-        // Re-attach fresh assets
-        foreach ($assets as $asset) {
-            $this->assets()->create([
-                'inventory_list_id' => $asset->id,
-                'inventory_status' => 'scheduled',
-            ]);
+        // Sync assets
+        $current = $this->assets()->pluck('inventory_list_id')->all();
+
+        $toDelete = array_diff($current,  $assetIds);
+        $toInsert = array_diff($assetIds, $current);
+
+        if (!empty($toDelete)) {
+            $this->assets()->whereIn('inventory_list_id', $toDelete)->delete();
+        }
+
+        if (!empty($toInsert)) {
+            foreach ($toInsert as $assetId) {
+                $this->assets()->firstOrCreate(
+                    ['inventory_list_id' => $assetId],
+                    ['inventory_status' => 'scheduled']
+                );
+            }
         }
     }
 

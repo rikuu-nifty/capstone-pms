@@ -155,53 +155,51 @@ class InventorySchedulingController extends Controller
      * Display the specified resource.
      */
     public function show(InventoryScheduling $inventory_scheduling)
-        {
-            $schedules = InventoryScheduling::with([
-                'building',
-                'buildingRoom',
-                'unitOrDepartment',
-                'user',
-                'designatedEmployee',
-                'assignedBy',
-                'preparedBy', // 👈 include preparer
-                // approvals omitted here to keep list lightweight
-            ])->latest()->get();
+    {
+        $schedules = InventoryScheduling::with([
+            'building',
+            'buildingRoom',
+            'unitOrDepartment',
+            'user',
+            'designatedEmployee',
+            'assignedBy',
+            'preparedBy', // 👈 include preparer
+            // approvals omitted here to keep list lightweight
+        ])->latest()->get();
 
-            $buildings         = Building::all();
-            $buildingRooms     = BuildingRoom::with('building')->get();
-            $unitOrDepartments = UnitOrDepartment::all();
-            $users             = User::all();
+        $buildings         = Building::all();
+        $buildingRooms     = BuildingRoom::with('building')->get();
+        $unitOrDepartments = UnitOrDepartment::all();
+        $users             = User::all();
 
-            // load the single schedule for viewing
-            $viewing = InventoryScheduling::with([
-                'building',
-                'buildingRoom',
-                'unitOrDepartment',
-                'user',
-                'designatedEmployee',
-                'assignedBy',
-                'preparedBy',     
-                'approvals' => fn ($q) => $q->with(['steps.actor' => fn($s) => $s->select('id','name')]),
+        // load the single schedule for viewing
+        $viewing = InventoryScheduling::with([
+            'building',
+            'buildingRoom',
+            'unitOrDepartment',
+            'user',
+            'designatedEmployee',
+            'assignedBy',
+            'preparedBy',     
+            'approvals' => fn ($q) => $q->with(['steps.actor' => fn($s) => $s->select('id','name')]),
 
-                'units',
-                'buildings',
-                'rooms.building',
-                'subAreas.room',
-                'assets.asset.buildingRoom',
-                'assets.asset.subArea',
-            ])->findOrFail($inventory_scheduling->id);
+            'units',
+            'buildings',
+            'rooms.building',
+            'subAreas.room',
+            'assets.asset.buildingRoom',
+            'assets.asset.subArea',
+        ])->findOrFail($inventory_scheduling->id);
 
-            
-    // 👇 compute approval completion flag
-  // only require approvals from PMO Head (noted_by) and VP Admin (approved_by)
+        
+        // 👇 compute approval completion flag only require approvals from PMO Head (noted_by) and VP Admin (approved_by)
         $isFullyApproved = $viewing->approvals
             ->flatMap->steps
             ->filter(fn($s) => in_array($s->code, ['noted_by', 'approved_by'])) // only PMO Head + VP Admin
             ->every(fn($s) => $s->status === 'approved');
 
 
-         // 👇 Fetch assets specific to this building room,
-        // and optionally match building + department if provided
+        // 👇 Fetch assets specific to this building room, and optionally match building + department if provided
         $assets = InventoryList::with(['category', 'assetModel'])
             ->where('building_room_id', $viewing->building_room_id)
             ->when($viewing->building_id, fn($q) => 
@@ -212,34 +210,23 @@ class InventorySchedulingController extends Controller
             )
             ->get();
 
-            // also load signatories
-            $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
+        // also load signatories
+        $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
 
-            return Inertia::render('inventory-scheduling/index', [
-                'schedules'         => $schedules, 
-                'buildings'         => $buildings,
-                'buildingRooms'     => $buildingRooms,
-                'unitOrDepartments' => $unitOrDepartments,
-                'users'             => $users,
+        return Inertia::render('inventory-scheduling/index', [
+            'schedules'         => $schedules, 
+            'buildings'         => $buildings,
+            'buildingRooms'     => $buildingRooms,
+            'unitOrDepartments' => $unitOrDepartments,
+            'users'             => $users,
 
-                'viewing'           => $viewing,      // 👈 now provided with full approvals
-                'assets'            => $viewing->assets,       // 👈 pass assets to frontend
-                'signatories'       => $signatories,  // 👈 now provided
-                'isFullyApproved'   => $isFullyApproved, // 👈 pass flag to frontend
-                
+            'viewing'           => $viewing,      // 👈 now provided with full approvals
+            'assets'            => $viewing->assets,       // 👈 pass assets to frontend
+            'signatories'       => $signatories,  // 👈 now provided
+            'isFullyApproved'   => $isFullyApproved, // 👈 pass flag to frontend
 
-
-                // 'auth'              => ['user' => auth()->user()], // 👈 FIX: include auth like in index()
-            ]);
-        }
-
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(InventoryScheduling $inventoryScheduling)
-    {
-        //
+            // 'auth'              => ['user' => auth()->user()], // 👈 FIX: include auth like in index()
+        ]);
     }
 
     /**
