@@ -85,7 +85,7 @@ export const EditInventorySchedulingModal = ({
                     <DialogTitle>Edit Inventory Schedule</DialogTitle>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto -mr-2 pr-4">
+                <div className="flex-1 overflow-y-auto -mr-2 pr-2">
                     <form
                         id="edit-inventory-form"
                         onSubmit={handleSubmit} 

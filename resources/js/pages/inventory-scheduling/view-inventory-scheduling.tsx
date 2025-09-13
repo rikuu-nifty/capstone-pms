@@ -59,28 +59,28 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     {/* Header */}
                     <div className="relative flex items-center justify-between">
                         <div className="flex items-center">
-                        <img
-                            src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
-                            alt="Logo"
-                            className="h-24 opacity-90"
-                        />
-                        </div>
-                        <div className="absolute left-1/2 -translate-x-1/2 text-center">
-                        <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">
-                            Property Management Office
-                        </h2>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">pmo@auf.edu.ph</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">+63 973 234 3456</p>
-                        </div>
-                        <div className="text-right text-sm leading-snug">
-                        <p>
-                            <span className="text-gray-600 dark:text-gray-400">Schedule Record #:</span>{' '}
-                            <span className="font-semibold">{recordNo}</span>
-                        </p>
-                        <p className="mt-1 flex items-center justify-end gap-2">
-                            <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                            <StatusPill status={schedule.scheduling_status} />
-                        </p>
+                            <img
+                                src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
+                                alt="Logo"
+                                className="h-24 opacity-90"
+                            />
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 text-center">
+                                <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">
+                                    Property Management Office
+                                </h2>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">pmo@auf.edu.ph</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">+63 973 234 3456</p>
+                            </div>
+                            <div className="text-right text-sm leading-snug">
+                            <p>
+                                <span className="text-gray-600 dark:text-gray-400">Schedule Record #:</span>{' '}
+                                <span className="font-semibold">{recordNo}</span>
+                            </p>
+                            <p className="mt-1 flex items-center justify-end gap-2">
+                                <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                                <StatusPill status={schedule.scheduling_status} />
+                            </p>
                         </div>
                     </div>
 
@@ -170,188 +170,177 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
 
                     {/* Pivot Table (grouped with faux-merged cells + asset counts) */}
                     <div className="mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                    <div className="bg-blue-200 px-4 py-2 text-center text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
-                        Scope Records Associated with this Schedule
-                    </div>
-                    <table className="w-full text-sm border-collapse">
-                        <thead className="bg-gray-100 text-gray-700">
-                        <tr>
-                            <th className="border px-2 py-1 w-10 text-center">#</th>
-                            <th className="border px-2 py-1 text-center">Unit / Department</th>
-                            <th className="border px-2 py-1 text-center">Building</th>
-                            <th className="border px-2 py-1 text-center">Room</th>
-                            <th className="border px-2 py-1 text-center">Sub-Area</th>
-                            <th className="border px-2 py-1 text-center">Inventory Schedule</th>
-                            <th className="border px-2 py-1 text-center">Actual Date</th>
-                            <th className="border px-2 py-1 text-center">Status</th>
-                            <th className="border px-2 py-1 text-center">Assets</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            {(() => {
-                                let counter = 1;
-                                const rows: {
-                                    unit?: string;
-                                    building?: string;
-                                    room?: string;
-                                    sub_area?: string;
-                                    assetCount?: number;
-                                }[] = [];
+                        <div className="bg-blue-200 px-4 py-2 text-center text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
+                            Inventory Sheet Scheduling
+                        </div>
+                        <table className="w-full text-sm border-collapse">
+                            <thead className="bg-gray-100 text-gray-700">
+                                <tr>
+                                    <th className="border px-2 py-1 w-10 text-center">#</th>
+                                    <th className="border px-2 py-1 text-center">Unit / Department</th>
+                                    <th className="border px-2 py-1 text-center">Building</th>
+                                    <th className="border px-2 py-1 text-center">Room</th>
+                                    <th className="border px-2 py-1 text-center">Sub-Area</th>
+                                    <th className="border px-2 py-1 text-center">Inventory Schedule</th>
+                                    <th className="border px-2 py-1 text-center">Actual Date</th>
+                                    <th className="border px-2 py-1 text-center">Status</th>
+                                    <th className="border px-2 py-1 text-center">Assets</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(() => {
+                                    let counter = 1;
+                                    const rows: {
+                                        unit?: string;
+                                        building?: string;
+                                        room?: string;
+                                        sub_area?: string;
+                                        assetCount?: number;
+                                        status?: string;
+                                    }[] = [];
 
-                                // Flatten hierarchy (unit → building → room → subarea)
-                                (schedule.units?.length ? schedule.units : [null]).forEach((u) => {
-                                    const unitName = u?.name ?? null;
-                                    const buildings = schedule.units?.length
-                                        ? (schedule.buildings ?? [])
-                                        : (schedule.buildings ?? []);
+                                    (schedule.units?.length ? schedule.units : [null]).forEach((u) => {
+                                        const unitName = u?.name ?? null;
+                                        const buildings = schedule.units?.length
+                                            ? (schedule.buildings ?? [])
+                                            : (schedule.buildings ?? []);
 
-                                    buildings.forEach((b) => {
-                                        const rooms = (schedule.rooms ?? []).filter((r) => r.building_id === b.id);
-                                        if (rooms.length === 0) {
-                                        rows.push({ unit: unitName ?? undefined, building: b.name });
-                                        return;
-                                        }
-                                        rooms.forEach((r) => {
-                                            const subAreas = (schedule.sub_areas ?? []).filter(
-                                                (sa) => sa.building_room_id === r.id
-                                            );
+                                        buildings.forEach((b) => {
+                                            const rooms = (schedule.rooms ?? []).filter((r) => r.building_id === b.id);
+                                            if (rooms.length === 0) {
+                                                rows.push({ unit: unitName ?? undefined, building: b.name });
+                                                return;
+                                            }
+                                            rooms.forEach((r) => {
+                                                const subAreas = (schedule.sub_areas ?? []).filter(
+                                                    (sa) => sa.building_room_id === r.id
+                                                );
 
-                                            if (subAreas.length === 0) {
-                                                // Case: room without sub-areas
-                                                const assetCount = (schedule.assets ?? []).filter(
-                                                    (a) => a.asset?.building_room_id === r.id
-                                                ).length;
-
-                                                rows.push({
-                                                    unit: unitName ?? undefined,
-                                                    building: b.name,
-                                                    room: String(r.room),
-                                                    sub_area: '—',
-                                                    assetCount,
-                                                });
-                                            } else {
-                                                // Case: room with sub-areas
-                                                subAreas.forEach((sa) => {
+                                                if (subAreas.length === 0) {
+                                                    // Case: room without sub-areas
                                                     const assetCount = (schedule.assets ?? []).filter(
-                                                        (a) => a.asset?.sub_area_id === sa.id
+                                                        (a) => a.asset?.building_room_id === r.id
                                                     ).length;
 
                                                     rows.push({
                                                         unit: unitName ?? undefined,
                                                         building: b.name,
                                                         room: String(r.room),
-                                                        sub_area: sa.name,
+                                                        sub_area: '—',
                                                         assetCount,
                                                     });
-                                                });
+                                                } else {
+                                                    subAreas.forEach((sa) => {
+                                                        const assetCount = (schedule.assets ?? []).filter(
+                                                            (a) => a.asset?.sub_area_id === sa.id
+                                                        ).length;
 
-                                                // ✅ Extra row for assets tied only to the room
-                                                const leftoverCount = (schedule.assets ?? []).filter(
-                                                    (a) =>
-                                                        a.asset?.building_room_id === r.id &&
-                                                        (!a.asset?.sub_area_id || a.asset?.sub_area_id === null)
-                                                ).length;
-
-                                                if (leftoverCount > 0) {
-                                                    rows.push({
-                                                        unit: unitName ?? undefined,
-                                                        building: b.name,
-                                                        room: String(r.room),
-                                                        sub_area: '—',
-                                                        assetCount: leftoverCount,
+                                                        rows.push({
+                                                            unit: unitName ?? undefined,
+                                                            building: b.name,
+                                                            room: String(r.room),
+                                                            sub_area: sa.name,
+                                                            assetCount,
+                                                        });
                                                     });
+
+                                                    const leftoverCount = (schedule.assets ?? []).filter(
+                                                        (a) =>
+                                                            a.asset?.building_room_id === r.id &&
+                                                            (!a.asset?.sub_area_id || a.asset?.sub_area_id === null)
+                                                    ).length;
+
+                                                    if (leftoverCount > 0) {
+                                                        rows.push({
+                                                            unit: unitName ?? undefined,
+                                                            building: b.name,
+                                                            room: String(r.room),
+                                                            sub_area: '—',
+                                                            assetCount: leftoverCount,
+                                                        });
+                                                    }
                                                 }
-                                            }
+                                            });
+
                                         });
-
                                     });
-                                });
 
-                                return rows.length > 0 ? (
-                                    rows.map((row, idx) => {
-                                        const prev = rows[idx - 1];
-                                        const next = rows[idx + 1];
+                                    return rows.length > 0 ? (
+                                        rows.map((row, idx) => {
+                                            const prev = rows[idx - 1];
+                                            const next = rows[idx + 1];
 
-                                        return (
-                                        <tr key={idx}>
-                                            {/* Counter */}
-                                            <td className="border px-2 py-1 text-center align-middle">
-                                            {counter++}
-                                            </td>
+                                            return (
+                                            <tr key={idx}>
+                                                <td className="border px-2 py-1 text-center align-middle">
+                                                {counter++}
+                                                </td>
 
-                                            {/* Unit */}
-                                            <td
-                                            className={`px-2 py-1 text-center align-middle border-r ${
-                                                prev?.unit === row.unit ? 'border-t-0' : 'border-t'
-                                            } ${
-                                                next?.unit === row.unit ? 'border-b-0' : 'border-b'
-                                            }`}
-                                            >
-                                            {prev?.unit === row.unit ? '' : row.unit ?? '—'}
-                                            </td>
+                                                <td
+                                                className={`px-2 py-1 text-center align-middle border-r ${
+                                                    prev?.unit === row.unit ? 'border-t-0' : 'border-t'
+                                                } ${
+                                                    next?.unit === row.unit ? 'border-b-0' : 'border-b'
+                                                }`}
+                                                >
+                                                {prev?.unit === row.unit ? '' : row.unit ?? '—'}
+                                                </td>
 
-                                            {/* Building */}
-                                            <td
-                                            className={`px-2 py-1 text-center align-middle border-r ${
-                                                prev?.building === row.building ? 'border-t-0' : 'border-t'
-                                            } ${
-                                                next?.building === row.building ? 'border-b-0' : 'border-b'
-                                            }`}
-                                            >
-                                            {prev?.building === row.building ? '' : row.building ?? '—'}
-                                            </td>
+                                                <td
+                                                className={`px-2 py-1 text-center align-middle border-r ${
+                                                    prev?.building === row.building ? 'border-t-0' : 'border-t'
+                                                } ${
+                                                    next?.building === row.building ? 'border-b-0' : 'border-b'
+                                                }`}
+                                                >
+                                                {prev?.building === row.building ? '' : row.building ?? '—'}
+                                                </td>
 
-                                            {/* Room */}
-                                            <td
-                                            className={`px-2 py-1 text-center align-middle border-r ${
-                                                prev?.room === row.room ? 'border-t-0' : 'border-t'
-                                            } ${
-                                                next?.room === row.room ? 'border-b-0' : 'border-b'
-                                            }`}
-                                            >
-                                            {prev?.room === row.room ? '' : row.room ?? '—'}
-                                            </td>
+                                                <td
+                                                className={`px-2 py-1 text-center align-middle border-r ${
+                                                    prev?.room === row.room ? 'border-t-0' : 'border-t'
+                                                } ${
+                                                    next?.room === row.room ? 'border-b-0' : 'border-b'
+                                                }`}
+                                                >
+                                                {prev?.room === row.room ? '' : row.room ?? '—'}
+                                                </td>
 
-                                            {/* Sub-Area */}
-                                            <td className="border px-2 py-1 text-center align-middle">
-                                            {row.sub_area ?? '—'}
-                                            </td>
+                                                <td className="border px-2 py-1 text-center align-middle">
+                                                {row.sub_area ?? '—'}
+                                                </td>
 
-                                            {/* Inventory Schedule */}
-                                            <td className="border px-2 py-1 text-center align-middle">
-                                            {formatMonth(schedule.inventory_schedule)}
-                                            </td>
+                                                <td className="border px-2 py-1 text-center align-middle">
+                                                {formatMonth(schedule.inventory_schedule)}
+                                                </td>
 
-                                            {/* Actual Date */}
-                                            <td className="border px-2 py-1 text-center align-middle">
-                                            {formatDateLong(schedule.actual_date_of_inventory)}
-                                            </td>
+                                                <td className="border px-2 py-1 text-center align-middle">
+                                                {formatDateLong(schedule.actual_date_of_inventory)}
+                                                </td>
 
-                                            {/* Status */}
-                                            <td className="border px-2 py-1 text-center align-middle">
-                                            {schedule.scheduling_status}
-                                            </td>
+                                                <td className="border px-2 py-1 text-center align-middle">
+                                                {schedule.scheduling_status}
+                                                </td>
 
-                                            {/* Assets */}
-                                            <td className="border px-2 py-1 text-center align-middle">
-                                            {row.assetCount ?? '—'}
-                                            </td>
-                                        </tr>
-                                        );
-                                    })
-                                ) : (
-                                <tr>
-                                    <td
-                                    colSpan={9}
-                                    className="border px-2 py-4 text-center text-muted-foreground"
-                                    >
-                                    No scope records found.
-                                    </td>
-                                </tr>
-                                );
-                            })()}
-                        </tbody>
-                    </table>
+                                                <td className="border px-2 py-1 text-center align-middle">
+                                                {row.assetCount ?? '—'}
+                                                </td>
+                                            </tr>
+                                            );
+                                        })
+                                    ) : (
+                                    <tr>
+                                        <td
+                                        colSpan={9}
+                                        className="border px-2 py-4 text-center text-muted-foreground"
+                                        >
+                                        No scope records found.
+                                        </td>
+                                    </tr>
+                                    );
+                                })()}
+                            </tbody>
+                        </table>
                     </div>
 
                     {/* Signatories */}

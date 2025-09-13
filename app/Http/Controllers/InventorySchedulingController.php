@@ -192,6 +192,7 @@ class InventorySchedulingController extends Controller
             'buildings',
             'rooms.building',
             'subAreas.room',
+            'assets' => fn($q) => $q->select('id', 'inventory_scheduling_id', 'inventory_list_id', 'inventory_status'),
             'assets.asset.buildingRoom',
             'assets.asset.subArea',
         ])->findOrFail($inventory_scheduling->id);
