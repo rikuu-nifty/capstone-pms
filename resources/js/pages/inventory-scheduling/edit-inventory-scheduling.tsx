@@ -12,12 +12,14 @@ import type {
 } from '@/pages/inventory-scheduling/index';
 import { Asset } from '../inventory-list';
 import type { Building, SubArea } from '@/types/custom-index';
-import { useForm } from '@inertiajs/react';
-// import { useEffect } from 'react';
+import { useForm, } from '@inertiajs/react';
+import { useState } from 'react';
 import Select from 'react-select';
 
 import UnitItem from './UnitItem';
 import BuildingItem from './BuildingItem';
+import WarningModal from './WarningModal';
+import { validateScheduleForm } from '@/types/validateScheduleForm';
 
 type Props = {
     schedule: Scheduled;
@@ -40,6 +42,10 @@ export const EditInventorySchedulingModal = ({
     statusOptions = ['Pending_Review', 'Pending', 'Overdue', 'Completed', 'Cancelled'],
     assets,
 }: Props) => {
+    const [warningVisible, setWarningVisible] = useState(false);
+    const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
+    const [warningDetails, setWarningDetails] = useState<string[]>([]);
+    
     const { data, setData, put, errors } = useForm<InventorySchedulingFormData>({
         scope_type: schedule.units && schedule.units.length > 0 ? 'unit' : 'building',
         unit_ids: schedule.units?.map((u) => u.id) ?? [],
@@ -72,6 +78,16 @@ export const EditInventorySchedulingModal = ({
 
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
+
+        const result = validateScheduleForm(data, assets, unitOrDepartments, buildings, buildingRooms);
+
+        if (!result.valid) {
+            setWarningMessage(result.message ?? 'Validation failed.');
+            setWarningDetails(result.details ?? []);
+            setWarningVisible(true);
+            return;
+        }
+
         put(`/inventory-scheduling/${schedule.id}`, {
             preserveScroll: true,
             onSuccess: () => onClose(),
@@ -445,6 +461,15 @@ export const EditInventorySchedulingModal = ({
                     </Button>
                 </div>
             </DialogContent>
+            
+            <WarningModal
+                show={warningVisible}
+                onClose={() => setWarningVisible(false)}
+                title="Validation Warning"
+                message={warningMessage}
+                details={warningDetails}
+            />
+
         </Dialog>
     );
 };

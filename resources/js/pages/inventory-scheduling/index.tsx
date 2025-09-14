@@ -18,6 +18,8 @@ import Select from "react-select";
 import BuildingItem from './BuildingItem';
 import UnitItem from './UnitItem';
 import type { Building, SubArea } from '@/types/custom-index';
+import WarningModal from './WarningModal';
+import { validateScheduleForm } from '@/types/validateScheduleForm';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -222,6 +224,10 @@ export default function InventorySchedulingIndex({
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [viewModalVisible, setViewModalVisible] = useState(false);
 
+    const [warningVisible, setWarningVisible] = useState(false);
+    const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
+    const [warningDetails, setWarningDetails] = useState<string[]>([]);
+
     useEffect(() => {
         if (!props.viewing) return;
         setSelectedSchedule(props.viewing);
@@ -278,14 +284,22 @@ export default function InventorySchedulingIndex({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // console.log("Submitting scheduling data:", JSON.stringify(data, null, 2));
+
+        const result = validateScheduleForm(data, assets, unitOrDepartments, buildings, buildingRooms);
+
+        if (!result.valid) {
+            setWarningMessage(result.message ?? 'Validation failed.');
+            setWarningDetails(result.details ?? []);
+            setWarningVisible(true);
+            return;
+        }
+
         post('/inventory-scheduling', {
             onSuccess: () => {
                 reset();
                 setShowAddScheduleInventory(false);
             },
         });
-        console.log('Form Submitted', data);
     };
 
     const filtered = schedules.filter((item) =>
@@ -927,6 +941,13 @@ export default function InventorySchedulingIndex({
                     </div>
                 </div>
             </div>
+            <WarningModal
+                show={warningVisible}
+                onClose={() => setWarningVisible(false)}
+                title="Validation Warning"
+                message={warningMessage}
+                details={warningDetails}
+            />
         </AppLayout>
     );
 }

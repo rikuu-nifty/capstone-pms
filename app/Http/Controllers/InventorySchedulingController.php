@@ -118,6 +118,26 @@ class InventorySchedulingController extends Controller
             'building_ids.min'          => 'Please select at least one building.',
         ]);
 
+        if ($data['scope_type'] === 'unit') {
+            $hasBuildings = InventoryList::whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
+                ->whereNotNull('building_id')
+                ->exists();
+
+            if (! $hasBuildings) {
+                return back()->withErrors([
+                    'unit_ids' => 'The selected unit(s) must have at least one associated building.',
+                ])->withInput();
+            }
+        }
+
+        if ($data['scope_type'] === 'building') {
+            if (empty($data['room_ids'])) {
+                return back()->withErrors([
+                    'room_ids' => 'Please select at least one room for the chosen building(s).',
+                ])->withInput();
+            }
+        }
+
         // Create schedule
         $schedule = DB::transaction(function () use ($data) {
             $schedule = InventoryScheduling::create([
@@ -195,6 +215,7 @@ class InventorySchedulingController extends Controller
             'assets' => fn($q) => $q->select('id', 'inventory_scheduling_id', 'inventory_list_id', 'inventory_status'),
             'assets.asset.buildingRoom',
             'assets.asset.subArea',
+            'assets.asset.assetModel.category',
         ])->findOrFail($inventory_scheduling->id);
 
         
@@ -271,6 +292,26 @@ class InventorySchedulingController extends Controller
             'building_ids.min'          => 'Please select at least one building.',
         ]);
 
+        if ($data['scope_type'] === 'unit') {
+            $hasBuildings = InventoryList::whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
+                ->whereNotNull('building_id')
+                ->exists();
+
+            if (! $hasBuildings) {
+                return back()->withErrors([
+                    'unit_ids' => 'The selected unit(s) must have at least one associated building.',
+                ])->withInput();
+            }
+        }
+
+        if ($data['scope_type'] === 'building') {
+            if (empty($data['room_ids'])) {
+                return back()->withErrors([
+                    'room_ids' => 'Please select at least one room for the chosen building(s).',
+                ])->withInput();
+            }
+        }
+
         // Convert '' -> null for nullable FKs
         $data = array_map(fn($v) => $v === '' ? null : $v, $data);
 
@@ -318,5 +359,49 @@ class InventorySchedulingController extends Controller
     {
         $inventoryScheduling->delete();
         return redirect()->back()->with('success', 'The Inventory Schedule Has Been Deleted Successfully.');
+    }
+
+    public function rowAssets(Request $request, InventoryScheduling $schedule, int $rowId)
+    {
+        $perPage = (int) $request->input('per_page', 10);
+        $type = $request->input('type', 'building_room');
+        $unitId = $request->input('unit_id'); // 👈
+
+        $query = $schedule->assets()->with(['asset.assetModel.category']);
+
+        $query->whereHas('asset', function ($q) use ($rowId, $type, $schedule, $unitId) {
+            if ($type === 'sub_area') {
+                $q->where('sub_area_id', $rowId);
+            } else {
+                $q->where('building_room_id', $rowId);
+            }
+
+            if ($unitId) {
+                $q->where('unit_or_department_id', $unitId);
+            } elseif ($schedule->units()->exists()) {
+                $q->whereIn('unit_or_department_id', $schedule->units->pluck('id'));
+            }
+        });
+
+        $paginated = $query->paginate($perPage);
+
+        $transformed = $paginated->through(function ($pivot) {
+            return [
+                'id' => $pivot->asset->id,
+                'asset_name' => $pivot->asset->asset_name,
+                'serial_no' => $pivot->asset->serial_no,
+                'inventory_status' => $pivot->inventory_status,
+                'unit_or_department_id' => $pivot->asset->unit_or_department_id,
+                'asset_model' => $pivot->asset->assetModel
+                    ? [
+                        'category' => [
+                            'name' => $pivot->asset->assetModel->category->name ?? null,
+                        ],
+                    ]
+                    : null,
+            ];
+        });
+
+        return response()->json($transformed);
     }
 }

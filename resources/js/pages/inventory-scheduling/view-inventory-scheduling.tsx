@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
 import { formatUnderscore } from '@/types/custom-index';
 import { Asset } from '../inventory-list';
+import ViewRowAssetModal from './ViewRowAssetsModal';
+import Pagination, { PageInfo } from '@/components/Pagination';
 
 const formatDateLong = (d?: string | null) => {
     if (!d) return '—';
@@ -49,8 +52,132 @@ type Props = {
     assets: Asset[];
 };
 
+export type AssetWithStatus = Asset & {
+    inventory_status: string
+};
+
 export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => {
     const recordNo = String(schedule.id).padStart(2, '0');
+
+    const [rowAssets, setRowAssets] = useState<{
+        scheduleId: number;
+        rowId: number;
+        type: 'building_room' | 'sub_area';
+        title: string;
+        unitId?: number | null;
+    } | null>(null);
+    
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 5;
+
+    const computeRowStatus = (assets: { inventory_status: string }[]) => {
+        if (!assets.length) return 'scheduled';
+        const allInventoried = assets.every((a) => a.inventory_status === 'inventoried');
+        if (allInventoried) return 'completed';
+        const noneInventoried = assets.every(
+            (a) => a.inventory_status === 'scheduled' || a.inventory_status === 'not_inventoried'
+        );
+        if (noneInventoried) return 'scheduled';
+        return 'in_progress';
+    };
+
+    const rows = (() => {
+        const list: {
+            unit?: string;
+            unit_id?: number | null;
+            building?: string;
+            room?: string;
+            sub_area?: string;
+            assetCount?: number;
+            status?: string;
+            sub_area_id?: number;
+            building_room_id?: number;
+        }[] = [];
+
+        (schedule.units?.length ? schedule.units : [null]).forEach((u) => {
+            const unitName = u?.name ?? null;
+            const buildings = schedule.buildings ?? [];
+
+            buildings.forEach((b) => {
+                const rooms = (schedule.rooms ?? []).filter((r) => r.building_id === b.id);
+                rooms.forEach((r) => {
+                    const subAreas = (schedule.sub_areas ?? []).filter(
+                        (sa) => sa.building_room_id === r.id
+                    );
+
+                    if (subAreas.length === 0) {
+                        const assetsHere = (schedule.assets ?? [])
+                            .filter(
+                                (a) =>
+                                a.asset?.building_room_id === r.id &&
+                                a.asset?.unit_or_department_id === u?.id
+                            )
+                            .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
+
+                        list.push({
+                            unit: unitName ?? undefined,
+                            unit_id: u?.id ?? null,
+                            building: b.name,
+                            room: String(r.room),
+                            sub_area: '—',
+                            assetCount: assetsHere.length,
+                            status: computeRowStatus(assetsHere),
+                            building_room_id: r.id,
+                        });
+                    } else {
+                        subAreas.forEach((sa) => {
+                            const assetsHere = (schedule.assets ?? [])
+                                .filter(
+                                    (a) =>
+                                    a.asset?.sub_area_id === sa.id &&
+                                    a.asset?.unit_or_department_id === u?.id
+                                )
+                                .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
+
+                            list.push({
+                                unit: unitName ?? undefined,
+                                unit_id: u?.id ?? null,
+                                building: b.name,
+                                room: String(r.room),
+                                sub_area: sa.name,
+                                assetCount: assetsHere.length,
+                                status: computeRowStatus(assetsHere),
+                                sub_area_id: sa.id,
+                            });
+                        });
+
+                        const leftoverAssets = (schedule.assets ?? [])
+                            .filter(
+                                (a) =>
+                                a.asset?.building_room_id === r.id &&
+                                (!a.asset?.sub_area_id || a.asset?.sub_area_id === null) &&
+                                a.asset?.unit_or_department_id === u?.id
+                            )
+                            .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
+
+                        if (leftoverAssets.length > 0) {
+                            list.push({
+                                unit: unitName ?? undefined,
+                                unit_id: u?.id ?? null,
+                                building: b.name,
+                                room: String(r.room),
+                                sub_area: '—',
+                                assetCount: leftoverAssets.length,
+                                status: computeRowStatus(leftoverAssets),
+                                building_room_id: r.id,
+                            });
+                        }
+                    }
+                });
+            });
+        });
+
+        return list;
+    })();
+
+    const total = rows.length;
+    const start = (page - 1) * PAGE_SIZE;
+    const pageItems = rows.slice(start, start + PAGE_SIZE);
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -168,7 +295,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         </section>
                     </div>
 
-                    {/* Pivot Table (grouped with faux-merged cells + asset counts) */}
+                    {/* Pivot Table */}
                     <div className="mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                         <div className="bg-blue-200 px-4 py-2 text-center text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
                             Inventory Sheet Scheduling
@@ -188,159 +315,52 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                 </tr>
                             </thead>
                             <tbody>
-                                {(() => {
-                                    let counter = 1;
-                                    const rows: {
-                                        unit?: string;
-                                        building?: string;
-                                        room?: string;
-                                        sub_area?: string;
-                                        assetCount?: number;
-                                        status?: string;
-                                    }[] = [];
-
-                                    (schedule.units?.length ? schedule.units : [null]).forEach((u) => {
-                                        const unitName = u?.name ?? null;
-                                        const buildings = schedule.units?.length
-                                            ? (schedule.buildings ?? [])
-                                            : (schedule.buildings ?? []);
-
-                                        buildings.forEach((b) => {
-                                            const rooms = (schedule.rooms ?? []).filter((r) => r.building_id === b.id);
-                                            if (rooms.length === 0) {
-                                                rows.push({ unit: unitName ?? undefined, building: b.name });
-                                                return;
-                                            }
-                                            rooms.forEach((r) => {
-                                                const subAreas = (schedule.sub_areas ?? []).filter(
-                                                    (sa) => sa.building_room_id === r.id
-                                                );
-
-                                                if (subAreas.length === 0) {
-                                                    // Case: room without sub-areas
-                                                    const assetCount = (schedule.assets ?? []).filter(
-                                                        (a) => a.asset?.building_room_id === r.id
-                                                    ).length;
-
-                                                    rows.push({
-                                                        unit: unitName ?? undefined,
-                                                        building: b.name,
-                                                        room: String(r.room),
-                                                        sub_area: '—',
-                                                        assetCount,
-                                                    });
-                                                } else {
-                                                    subAreas.forEach((sa) => {
-                                                        const assetCount = (schedule.assets ?? []).filter(
-                                                            (a) => a.asset?.sub_area_id === sa.id
-                                                        ).length;
-
-                                                        rows.push({
-                                                            unit: unitName ?? undefined,
-                                                            building: b.name,
-                                                            room: String(r.room),
-                                                            sub_area: sa.name,
-                                                            assetCount,
-                                                        });
-                                                    });
-
-                                                    const leftoverCount = (schedule.assets ?? []).filter(
-                                                        (a) =>
-                                                            a.asset?.building_room_id === r.id &&
-                                                            (!a.asset?.sub_area_id || a.asset?.sub_area_id === null)
-                                                    ).length;
-
-                                                    if (leftoverCount > 0) {
-                                                        rows.push({
-                                                            unit: unitName ?? undefined,
-                                                            building: b.name,
-                                                            room: String(r.room),
-                                                            sub_area: '—',
-                                                            assetCount: leftoverCount,
-                                                        });
-                                                    }
-                                                }
-                                            });
-
-                                        });
-                                    });
-
-                                    return rows.length > 0 ? (
-                                        rows.map((row, idx) => {
-                                            const prev = rows[idx - 1];
-                                            const next = rows[idx + 1];
-
-                                            return (
-                                            <tr key={idx}>
-                                                <td className="border px-2 py-1 text-center align-middle">
-                                                {counter++}
-                                                </td>
-
-                                                <td
-                                                className={`px-2 py-1 text-center align-middle border-r ${
-                                                    prev?.unit === row.unit ? 'border-t-0' : 'border-t'
-                                                } ${
-                                                    next?.unit === row.unit ? 'border-b-0' : 'border-b'
-                                                }`}
-                                                >
-                                                {prev?.unit === row.unit ? '' : row.unit ?? '—'}
-                                                </td>
-
-                                                <td
-                                                className={`px-2 py-1 text-center align-middle border-r ${
-                                                    prev?.building === row.building ? 'border-t-0' : 'border-t'
-                                                } ${
-                                                    next?.building === row.building ? 'border-b-0' : 'border-b'
-                                                }`}
-                                                >
-                                                {prev?.building === row.building ? '' : row.building ?? '—'}
-                                                </td>
-
-                                                <td
-                                                className={`px-2 py-1 text-center align-middle border-r ${
-                                                    prev?.room === row.room ? 'border-t-0' : 'border-t'
-                                                } ${
-                                                    next?.room === row.room ? 'border-b-0' : 'border-b'
-                                                }`}
-                                                >
-                                                {prev?.room === row.room ? '' : row.room ?? '—'}
-                                                </td>
-
-                                                <td className="border px-2 py-1 text-center align-middle">
-                                                {row.sub_area ?? '—'}
-                                                </td>
-
-                                                <td className="border px-2 py-1 text-center align-middle">
+                                {pageItems.length > 0 ? (
+                                    pageItems.map((row, idx) => (
+                                        <tr key={start + idx}>
+                                            <td className="border px-2 py-1 text-center">{start + idx + 1}</td>
+                                            <td className="border px-2 py-1 text-center">{row.unit ?? '—'}</td>
+                                            <td className="border px-2 py-1 text-center">{row.building ?? '—'}</td>
+                                            <td className="border px-2 py-1 text-center">{row.room ?? '—'}</td>
+                                            <td className="border px-2 py-1 text-center">{row.sub_area ?? '—'}</td>
+                                            <td className="border px-2 py-1 text-center">
                                                 {formatMonth(schedule.inventory_schedule)}
-                                                </td>
-
-                                                <td className="border px-2 py-1 text-center align-middle">
+                                            </td>
+                                            <td className="border px-2 py-1 text-center">
                                                 {formatDateLong(schedule.actual_date_of_inventory)}
-                                                </td>
-
-                                                <td className="border px-2 py-1 text-center align-middle">
-                                                {schedule.scheduling_status}
-                                                </td>
-
-                                                <td className="border px-2 py-1 text-center align-middle">
+                                            </td>
+                                            <td className="border px-2 py-1 text-center">
+                                                <StatusPill status={row.status} />
+                                            </td>
+                                            <td
+                                                className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
+                                                onClick={() => {
+                                                    setRowAssets({
+                                                        scheduleId: schedule.id,
+                                                        rowId: row.sub_area_id ? row.sub_area_id : row.building_room_id!,
+                                                        type: row.sub_area_id ? 'sub_area' : 'building_room',
+                                                        title: `${row.unit ?? ''} / ${row.building ?? ''} / ${row.room ?? ''} / ${row.sub_area ?? ''}`,
+                                                        unitId: row.unit_id,
+                                                    });
+                                                }}
+                                            >
                                                 {row.assetCount ?? '—'}
-                                                </td>
-                                            </tr>
-                                            );
-                                        })
-                                    ) : (
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
                                     <tr>
-                                        <td
-                                        colSpan={9}
-                                        className="border px-2 py-4 text-center text-muted-foreground"
-                                        >
-                                        No scope records found.
+                                        <td colSpan={9} className="border px-2 py-4 text-center text-muted-foreground">
+                                            No scope records found.
                                         </td>
                                     </tr>
-                                    );
-                                })()}
+                                )}
                             </tbody>
                         </table>
+                        <div className="flex items-center justify-between p-3">
+                            <PageInfo page={page} total={total} pageSize={PAGE_SIZE} label="rows" />
+                            <Pagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
+                        </div>
                     </div>
 
                     {/* Signatories */}
@@ -396,7 +416,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     {/* Actions */}
                     <div className="text-center print:hidden mt-6">
                         <DialogClose asChild>
-                            <Button variant="outline" className="mr-2">
+                            <Button variant="primary" className="mr-2 cursor-pointer">
                                 ← Back to Schedules
                             </Button>
                         </DialogClose>
@@ -411,6 +431,17 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     </div>
                 </div>
             </DialogContent>
+            {rowAssets && (
+                <ViewRowAssetModal
+                    open={true}
+                    onClose={() => setRowAssets(null)}
+                    scheduleId={rowAssets.scheduleId}
+                    rowId={rowAssets.rowId}
+                    type={rowAssets.type}
+                    title={rowAssets.title}
+                    unitId={rowAssets.unitId}
+                />
+            )}
         </Dialog>
     );
 };

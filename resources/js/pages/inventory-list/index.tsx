@@ -73,6 +73,7 @@ export type Asset = {
     asset_type: string;
     description: string;
     status: 'active' | 'archived';
+    unit_or_department_id?: number | null;
     category_id: number;
     category?: Category | null;
     unit_or_department: UnitOrDepartment | null;
