@@ -273,14 +273,14 @@ export default function InventorySchedulingIndex({
     };
 
     // For Date  MM-DD-YYYY
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return '';
-        return new Date(dateStr).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
+    // const formatDate = (dateStr: string) => {
+    //     if (!dateStr) return '';
+    //     return new Date(dateStr).toLocaleDateString('en-US', {
+    //         year: 'numeric',
+    //         month: 'long',
+    //         day: 'numeric',
+    //     });
+    // };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -485,7 +485,7 @@ export default function InventorySchedulingIndex({
                 >
                     {/* Header */}
                     <div className="mb-4 flex shrink-0 items-center justify-between p-6">
-                        <h2 className="text-xl font-semibold">Create Schedule Inventory</h2>
+                        <h2 className="text-xl font-semibold">Create Inventory Scheduling </h2>
                         <button onClick={() => setShowAddScheduleInventory(false)} className="cursor-pointer text-2xl font-medium">
                             &times;
                         </button>

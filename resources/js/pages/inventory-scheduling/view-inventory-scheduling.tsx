@@ -323,7 +323,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-[min(1100px,95vw)] max-w-none overflow-hidden p-0 sm:max-w-[1100px]">
+            <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]">
                 <div className="print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
                     {/* Header */}
                     <div className="relative flex items-center justify-between">
