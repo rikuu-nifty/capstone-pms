@@ -363,7 +363,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                     <tbody>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
                                             <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Units
+                                                Units/Dept/Lab
                                             </td>
                                             <td className="w-2/3 px-3 py-2 font-medium text-right">
                                                 {schedule.units?.length ?? 0}
@@ -430,7 +430,14 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                 {formatDateLong(schedule.actual_date_of_inventory)}
                                             </td>
                                         </tr>
-                                        
+                                        <tr className="border-b border-gray-200 dark:border-gray-800">
+                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Total Assets
+                                            </td>
+                                            <td className="px-3 py-2 font-medium">
+                                                {schedule.assets?.length}
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -446,14 +453,14 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             <thead className="bg-gray-100 text-gray-700">
                                 <tr>
                                     <th className="border px-2 py-1 w-10 text-center">#</th>
-                                    <th className="border px-2 py-1 text-center">Unit / Department</th>
-                                    <th className="border px-2 py-1 text-center">Building</th>
-                                    <th className="border px-2 py-1 text-center">Room</th>
-                                    <th className="border px-2 py-1 text-center">Sub-Area</th>
+                                    <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
+                                    <th className="border px-2 py-1 text-center">Buildings</th>
+                                    <th className="border px-2 py-1 text-center">Rooms</th>
+                                    <th className="border px-2 py-1 text-center">Sub-Areas</th>
                                     {/* <th className="border px-2 py-1 text-center">Inventory Schedule</th> */}
-                                    <th className="border px-2 py-1 text-center">Actual Date</th>
+                                    {/* <th className="border px-2 py-1 text-center">Actual Date</th> */}
                                     <th className="border px-2 py-1 text-center">Status</th>
-                                    <th className="border px-2 py-1 text-center">Assets</th>
+                                    <th className="border px-2 py-1 text-center">Asset Count</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -502,9 +509,9 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                 {/* <td className="border px-2 py-1 text-center">
                                                     {formatMonth(schedule.inventory_schedule)}
                                                 </td> */}
-                                                <td className="border px-2 py-1 text-center">
+                                                {/* <td className="border px-2 py-1 text-center">
                                                     {formatDateLong(schedule.actual_date_of_inventory)}
-                                                </td>
+                                                </td> */}
                                                 <td className="border px-2 py-1 text-center">
                                                     <StatusPill status={row.status} />
                                                 </td>

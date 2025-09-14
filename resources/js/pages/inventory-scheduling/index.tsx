@@ -355,9 +355,9 @@ export default function InventorySchedulingIndex({
                                 <TableHead className="text-center">Total Rooms</TableHead>
                                 <TableHead className="text-center">Total Units/Departments</TableHead>
                                 <TableHead className="text-center">Total Assets</TableHead>
-                                {/* <TableHead className="text-center">Designated Staff</TableHead> */}
+                                <TableHead className="text-center">Designated Staff</TableHead>
                                 
-                                <TableHead className="text-center">Actual Date</TableHead>
+                                {/* <TableHead className="text-center">Actual Date</TableHead> */}
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Action</TableHead>
                             </TableRow>
@@ -372,8 +372,8 @@ export default function InventorySchedulingIndex({
                                     <TableCell>{item.rooms?.length ?? 0}</TableCell>
                                     <TableCell>{item.units?.length ?? 0}</TableCell>
                                     <TableCell>{item.assets_count ?? 0}</TableCell>
-                                    {/* <TableCell className="whitespace-nowrap">{item.designated_employee?.name ?? '—'}</TableCell> */}
-                                    <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) || '—'}</TableCell>
+                                    <TableCell className="whitespace-nowrap">{item.designated_employee?.name ?? '—'}</TableCell>
+                                    {/* <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) || '—'}</TableCell> */}
 
                                     <TableCell>
                                         <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
