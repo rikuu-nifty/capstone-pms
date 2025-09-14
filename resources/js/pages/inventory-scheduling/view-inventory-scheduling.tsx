@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
-import { formatUnderscore } from '@/types/custom-index';
+import { formatEnums } from '@/types/custom-index';
 import { Asset } from '../inventory-list';
 import ViewRowAssetModal from './ViewRowAssetsModal';
 import Pagination, { PageInfo } from '@/components/Pagination';
@@ -22,19 +22,39 @@ const formatMonth = (ym?: string | null) => {
     return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 };
 
+// const StatusPill = ({ status }: { status?: string | null }) => {
+//     const s = status ?? '';
+//     const cls =
+//         s === 'inventoried'
+//         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+//         : s === 'scheduled'
+//         ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+//         : s === 'not_inventoried'
+//         ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+//         : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
+//     return (
+//         <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+//             {status ? s[0].toUpperCase() + s.slice(1) : '—'}
+//         </span>
+//     );
+// };
+
 const StatusPill = ({ status }: { status?: string | null }) => {
-    const s = formatUnderscore(status ?? '');
+    const s = status ?? '';
     const cls =
         s === 'completed'
-        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-        : s === 'pending'
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-        : s === 'overdue'
-        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-        : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
+            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+            : s === 'in_progress'
+            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+            : s === 'scheduled'
+            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+            : s === 'overdue'
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+            : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
+
     return (
         <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
-            {status ? s[0].toUpperCase() + s.slice(1) : '—'}
+            {status ? formatEnums(s) : '—'}
         </span>
     );
 };
@@ -89,14 +109,42 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 5;
 
-    const computeRowStatus = (assets: { inventory_status: string }[]) => {
+    // const computeRowStatus = (assets: { inventory_status: string }[]) => {
+    //     if (!assets.length) return 'scheduled';
+    //     const allInventoried = assets.every((a) => a.inventory_status === 'inventoried');
+    //     if (allInventoried) return 'completed';
+    //     const noneInventoried = assets.every(
+    //         (a) => a.inventory_status === 'scheduled' || a.inventory_status === 'not_inventoried'
+    //     );
+    //     if (noneInventoried) return 'scheduled';
+    //     return 'in_progress';
+    // };
+
+    const computeRowStatus = (
+        assets: { inventory_status: string }[],
+        actualDate?: string | null, 
+        scheduledMonth?: string | null
+        ) => {
         if (!assets.length) return 'scheduled';
-        const allInventoried = assets.every((a) => a.inventory_status === 'inventoried');
+
+        const allInventoried = assets.every(a => a.inventory_status === 'inventoried');
         if (allInventoried) return 'completed';
+
         const noneInventoried = assets.every(
-            (a) => a.inventory_status === 'scheduled' || a.inventory_status === 'not_inventoried'
+            a => a.inventory_status === 'scheduled' || a.inventory_status === 'not_inventoried'
         );
-        if (noneInventoried) return 'scheduled';
+        if (noneInventoried) {
+            // 🔹 check if overdue
+            if (scheduledMonth) {
+            const [y, m] = scheduledMonth.split('-').map(Number);
+            const scheduleEnd = new Date(y, m, 0); // last day of that month
+            if (new Date() > scheduleEnd) {
+                return 'overdue';
+            }
+            }
+            return 'scheduled';
+        }
+
         return 'in_progress';
     };
 
@@ -402,7 +450,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                     <th className="border px-2 py-1 text-center">Building</th>
                                     <th className="border px-2 py-1 text-center">Room</th>
                                     <th className="border px-2 py-1 text-center">Sub-Area</th>
-                                    <th className="border px-2 py-1 text-center">Inventory Schedule</th>
+                                    {/* <th className="border px-2 py-1 text-center">Inventory Schedule</th> */}
                                     <th className="border px-2 py-1 text-center">Actual Date</th>
                                     <th className="border px-2 py-1 text-center">Status</th>
                                     <th className="border px-2 py-1 text-center">Assets</th>
@@ -451,9 +499,9 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                     </td>
                                                 )}
 
-                                                <td className="border px-2 py-1 text-center">
+                                                {/* <td className="border px-2 py-1 text-center">
                                                     {formatMonth(schedule.inventory_schedule)}
-                                                </td>
+                                                </td> */}
                                                 <td className="border px-2 py-1 text-center">
                                                     {formatDateLong(schedule.actual_date_of_inventory)}
                                                 </td>
