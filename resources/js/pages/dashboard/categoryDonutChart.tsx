@@ -8,6 +8,16 @@ type Props = {
     assetTrend: number;
 };
 
+// ✅ Use same base colors as InventoryListReport
+const BASE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA66CC'];
+
+function generateColor(index: number, total: number): string {
+    if (index < BASE_COLORS.length) return BASE_COLORS[index];
+    const step = 360 / total;
+    const hue = (210 + index * step) % 360;
+    return `hsl(${hue}, 80%, 60%)`;
+}
+
 export default function CategoryDonutChart({ categories, assetTrend }: Props) {
     const totalAssets = categories.reduce((sum, cat) => sum + cat.count, 0);
 
@@ -15,8 +25,9 @@ export default function CategoryDonutChart({ categories, assetTrend }: Props) {
         category: cat.name,
         assets: cat.count,
         percentage: totalAssets > 0 ? ((cat.count / totalAssets) * 100).toFixed(1) : "0",
-        fill: `hsl(${(210 + i * 137.508) % 360}, 70%, 50%)`, // golden angle for colors
+        fill: generateColor(i, categories.length), // ✅ unified color logic
     }));
+
     const isPositive = assetTrend >= 0;
 
     // ✅ Custom tooltip
@@ -26,9 +37,7 @@ export default function CategoryDonutChart({ categories, assetTrend }: Props) {
             return (
                 <div className="rounded-md border bg-white p-2 text-xs shadow-md dark:bg-neutral-900 dark:text-neutral-100">
                     <p className="font-medium">{data.category}</p>
-                    <p>
-                        {data.assets} asset ({data.percentage}%)
-                    </p>
+                    <p>{data.assets} asset ({data.percentage}%)</p>
                 </div>
             );
         }

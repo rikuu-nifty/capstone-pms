@@ -3,7 +3,6 @@
     use Illuminate\Support\Facades\Route;
     use Inertia\Inertia;
     use Illuminate\Support\Facades\Auth;
-
     use App\Http\Controllers\AssetModelController;
     use App\Http\Controllers\InventoryListController;
     use App\Http\Controllers\InventorySchedulingController;
@@ -13,7 +12,7 @@
     use App\Http\Controllers\Auth\EmailOtpController;
     use App\Http\Controllers\CategoryController;
     use App\Http\Controllers\TurnoverDisposalController;
-    use App\Http\Controllers\OffCampusController;
+    use App\Http\Controllers\OffCampusController;           
     use App\Http\Controllers\UnitOrDepartmentController;
     use App\Http\Controllers\FormApprovalController;
     use App\Http\Controllers\UserApprovalController;
@@ -81,12 +80,23 @@
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-Route::prefix('reports')->group(function () {
-    Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+    Route::prefix('reports')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
 
-    Route::get('/inventory-list', [ReportController::class, 'inventoryList'])
+        // Show the Inventory List Report (with filters)
+    Route::get('/assets-inventory-list', [ReportController::class, 'inventoryList'])
         ->name('reports.inventory-list');
 
+    // Export to PDF
+    Route::get('/assets-inventory-list/export/pdf', [ReportController::class, 'exportPdf'])
+        ->name('reports.inventory-list.export.pdf');
+
+    // Export to Excel
+    Route::get('/assets-inventory-list/export/excel', [ReportController::class, 'exportExcel'])
+        ->name('reports.inventory-list.export.excel');
+
+  
+        
     // Placeholders with proper names
     Route::get('/inventory-scheduling', fn() =>
         Inertia::render('reports/InventorySchedulingReport', [

@@ -578,7 +578,7 @@ export default function InventoryListIndex({
                                 <TableHead className="text-center">Asset Type</TableHead>
                                 {/* <TableHead className="text-center">Quantity</TableHead> */}
                                 <TableHead className="text-center">Building</TableHead>
-                                <TableHead className="text-center">Unit/Department</TableHead>
+                                <TableHead className="text-center">Unit / Department</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">NFC Link</TableHead>
                                 <TableHead className="text-center">Action</TableHead>

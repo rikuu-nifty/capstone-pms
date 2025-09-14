@@ -2,7 +2,8 @@ import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-import type { AssetModel, Building, BuildingRoom, Category, UnitOrDepartment } from './index';
+import type { AssetModel, Building, BuildingRoom, Category, } from './index';
+import { UnitOrDepartment } from '@/types/custom-index';
 import { WebcamCapture } from './WebcamCapture';
 
 type Props = {

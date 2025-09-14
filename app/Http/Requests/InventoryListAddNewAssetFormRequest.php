@@ -21,52 +21,39 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
      */
     public function rules(): array
     {
+        $mode = $this->input('mode', 'single');
+
         return [
-            // 'building' =>  'nullable|string|max:255',
-            'building_id' => ['nullable', 'exists:buildings,id'],
-            // 'unit_or_department' =>  'nullable|string|max:255',
-            'unit_or_department_id' => ['nullable', 'exists:unit_or_departments,id'],
-            // 'building_room' => 'nullable|string|max:255',
-            'building_room_id' => ['nullable', 'exists:building_rooms,id'],
-            'category_id'   => 'required|integer|exists:categories,id',
-            'date_purchased' => 'required|date',
-            'asset_type' => 'required|in:fixed,not_fixed',
-            'asset_name' =>  'required|string|max:255',
-            'brand' =>       'required|string|max:255',
+            'building_id'          => ['nullable', 'exists:buildings,id'],
+            'unit_or_department_id'=> ['nullable', 'exists:unit_or_departments,id'],
+            'building_room_id'     => ['nullable', 'exists:building_rooms,id'],
+            'category_id'          => 'required|integer|exists:categories,id',
+            'date_purchased'       => 'required|date',
+            'asset_type'           => 'required|in:fixed,not_fixed',
+            'asset_name'           => 'required|string|max:255',
+            'brand'                => 'required|string|max:255',
+            'quantity'             => 'required|integer|min:1|max:1000',
+            'supplier'             => 'required|string|max:255',
+            'unit_cost'            => 'required|numeric|min:0|max:999999.99',
 
-            // ✅ Quantity is always required (bulk or single)
-            'quantity' =>    'required|integer|min:1|max:1000',
+            // 🔹 Single mode only
+            'serial_no'            => $mode === 'single' ? 'required|string|max:255' : 'nullable|string|max:255',
 
-            'supplier' =>    'required|string|max:255',
-            'unit_cost' =>   'required|numeric|min:0|max:999999.99',
+            // 🔹 Bulk mode
+            'serial_numbers'       => $mode === 'bulk' ? 'required|array|min:1' : 'nullable|array',
+            'serial_numbers.*'     => 'nullable|string|max:255',
 
-            // ✅ Single mode: serial_no is required; Bulk mode: can be nullable
-            'serial_no'     => 'required|string|max:255',
-
-            // ✅ Bulk mode: array of serials
-            'serial_numbers'   => 'array',
-            'serial_numbers.*' => 'nullable|string|max:255',
-
-            'asset_model_id' =>  'required|integer|max:255',
-            // 🚫 removed transfer_status validation
-            'description' =>     'nullable|string|max:1000',
-            'memorandum_no' =>  'required|numeric|min:0',
-
-            'status' => 'required|in:active,archived', // ✅ Validation for status
-
-            // ✅ New: Image upload
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-
-            // ✅ New: mode (single or bulk)
-            'mode' => 'nullable|string|in:single,bulk',
-
-            // ✅ New
-            'depreciation_value' => 'nullable|numeric|min:0',
-
-            // ✅ New
-            'assigned_to' => 'nullable|string|max:255',
+            'asset_model_id'       => 'required|integer',
+            'description'          => 'nullable|string|max:1000',
+            'memorandum_no'        => 'required|numeric|min:0',
+            'status'               => 'required|in:active,archived',
+            'image'                => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'mode'                 => 'nullable|string|in:single,bulk',
+            'depreciation_value'   => 'nullable|numeric|min:0',
+            'assigned_to'          => 'nullable|string|max:255',
         ];
     }
+
 
     /**
      * Function: Messages
