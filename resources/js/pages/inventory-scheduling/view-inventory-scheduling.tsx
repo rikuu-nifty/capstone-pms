@@ -56,6 +56,25 @@ export type AssetWithStatus = Asset & {
     inventory_status: string
 };
 
+type Row = {
+    unit?: string;
+    unit_id?: number | null;
+    building?: string;
+    room?: string;
+    sub_area?: string;
+    assetCount?: number;
+    status?: string;
+    sub_area_id?: number;
+    building_room_id?: number;
+};
+
+type RowSpanInfo = {
+    unitSpan: number;
+    buildingSpan: number;
+    roomSpan: number;
+    subAreaSpan: number;
+};
+
 export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => {
     const recordNo = String(schedule.id).padStart(2, '0');
 
@@ -81,18 +100,8 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
         return 'in_progress';
     };
 
-    const rows = (() => {
-        const list: {
-            unit?: string;
-            unit_id?: number | null;
-            building?: string;
-            room?: string;
-            sub_area?: string;
-            assetCount?: number;
-            status?: string;
-            sub_area_id?: number;
-            building_room_id?: number;
-        }[] = [];
+    const rows: Row[] = (() => {
+        const list: Row[] = [];
 
         (schedule.units?.length ? schedule.units : [null]).forEach((u) => {
             const unitName = u?.name ?? null;
@@ -109,8 +118,8 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         const assetsHere = (schedule.assets ?? [])
                             .filter(
                                 (a) =>
-                                a.asset?.building_room_id === r.id &&
-                                a.asset?.unit_or_department_id === u?.id
+                                    a.asset?.building_room_id === r.id &&
+                                    a.asset?.unit_or_department_id === u?.id
                             )
                             .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
@@ -129,8 +138,8 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             const assetsHere = (schedule.assets ?? [])
                                 .filter(
                                     (a) =>
-                                    a.asset?.sub_area_id === sa.id &&
-                                    a.asset?.unit_or_department_id === u?.id
+                                        a.asset?.sub_area_id === sa.id &&
+                                        a.asset?.unit_or_department_id === u?.id
                                 )
                                 .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
@@ -149,9 +158,9 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         const leftoverAssets = (schedule.assets ?? [])
                             .filter(
                                 (a) =>
-                                a.asset?.building_room_id === r.id &&
-                                (!a.asset?.sub_area_id || a.asset?.sub_area_id === null) &&
-                                a.asset?.unit_or_department_id === u?.id
+                                    a.asset?.building_room_id === r.id &&
+                                    (!a.asset?.sub_area_id || a.asset?.sub_area_id === null) &&
+                                    a.asset?.unit_or_department_id === u?.id
                             )
                             .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
@@ -178,6 +187,91 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
     const total = rows.length;
     const start = (page - 1) * PAGE_SIZE;
     const pageItems = rows.slice(start, start + PAGE_SIZE);
+
+    function computeRowSpans(data: Row[]): RowSpanInfo[] {
+        const spans: RowSpanInfo[] = data.map(() => ({
+            unitSpan: 0,
+            buildingSpan: 0,
+            roomSpan: 0,
+            subAreaSpan: 0,
+        }));
+
+        for (let i = 0; i < data.length; i++) {
+            // Unit span (contiguous)
+            if (i === 0 || data[i].unit !== data[i - 1].unit) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                    if (data[j].unit === data[i].unit) count++;
+                    else break;
+                }
+                spans[i].unitSpan = count;
+            }
+
+            // Building span (contiguous within same unit)
+            if (
+                i === 0 ||
+                data[i].unit !== data[i - 1].unit ||
+                data[i].building !== data[i - 1].building
+            ) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                    if (
+                        data[j].unit === data[i].unit &&
+                        data[j].building === data[i].building
+                    )
+                        count++;
+                    else break;
+                }
+                spans[i].buildingSpan = count;
+            }
+
+            // Room span (contiguous within same unit+building)
+            if (
+                i === 0 ||
+                data[i].unit !== data[i - 1].unit ||
+                data[i].building !== data[i - 1].building ||
+                data[i].room !== data[i - 1].room
+            ) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                    if (
+                        data[j].unit === data[i].unit &&
+                        data[j].building === data[i].building &&
+                        data[j].room === data[i].room
+                    )
+                        count++;
+                    else break;
+                }
+                spans[i].roomSpan = count;
+            }
+
+            // Sub-area span (contiguous within same unit+building+room)
+            if (
+                i === 0 ||
+                data[i].unit !== data[i - 1].unit ||
+                data[i].building !== data[i - 1].building ||
+                data[i].room !== data[i - 1].room ||
+                data[i].sub_area !== data[i - 1].sub_area
+            ) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                    if (
+                        data[j].unit === data[i].unit &&
+                        data[j].building === data[i].building &&
+                        data[j].room === data[i].room &&
+                        data[j].sub_area === data[i].sub_area
+                    )
+                        count++;
+                    else break;
+                }
+                spans[i].subAreaSpan = count;
+            }
+        }
+
+        return spans;
+    }
+
+    const spans = computeRowSpans(pageItems);
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -316,41 +410,81 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             </thead>
                             <tbody>
                                 {pageItems.length > 0 ? (
-                                    pageItems.map((row, idx) => (
-                                        <tr key={start + idx}>
-                                            <td className="border px-2 py-1 text-center">{start + idx + 1}</td>
-                                            <td className="border px-2 py-1 text-center">{row.unit ?? '—'}</td>
-                                            <td className="border px-2 py-1 text-center">{row.building ?? '—'}</td>
-                                            <td className="border px-2 py-1 text-center">{row.room ?? '—'}</td>
-                                            <td className="border px-2 py-1 text-center">{row.sub_area ?? '—'}</td>
-                                            <td className="border px-2 py-1 text-center">
-                                                {formatMonth(schedule.inventory_schedule)}
-                                            </td>
-                                            <td className="border px-2 py-1 text-center">
-                                                {formatDateLong(schedule.actual_date_of_inventory)}
-                                            </td>
-                                            <td className="border px-2 py-1 text-center">
-                                                <StatusPill status={row.status} />
-                                            </td>
-                                            <td
-                                                className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
-                                                onClick={() => {
-                                                    setRowAssets({
-                                                        scheduleId: schedule.id,
-                                                        rowId: row.sub_area_id ? row.sub_area_id : row.building_room_id!,
-                                                        type: row.sub_area_id ? 'sub_area' : 'building_room',
-                                                        title: `${row.unit ?? ''} / ${row.building ?? ''} / ${row.room ?? ''} / ${row.sub_area ?? ''}`,
-                                                        unitId: row.unit_id,
-                                                    });
-                                                }}
-                                            >
-                                                {row.assetCount ?? '—'}
-                                            </td>
-                                        </tr>
-                                    ))
+                                    pageItems.map((row, idx) => {
+                                        const s = spans[idx];
+                                        return (
+                                            <tr key={start + idx}>
+                                                <td className="border px-2 py-1 text-center">
+                                                    {start + idx + 1}
+                                                </td>
+
+                                                {s.unitSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.unitSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.unit ?? '—'}
+                                                    </td>
+                                                )}
+                                                {s.buildingSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.buildingSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.building ?? '—'}
+                                                    </td>
+                                                )}
+                                                {s.roomSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.roomSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.room ?? '—'}
+                                                    </td>
+                                                )}
+                                                {s.subAreaSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.subAreaSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.sub_area ?? '—'}
+                                                    </td>
+                                                )}
+
+                                                <td className="border px-2 py-1 text-center">
+                                                    {formatMonth(schedule.inventory_schedule)}
+                                                </td>
+                                                <td className="border px-2 py-1 text-center">
+                                                    {formatDateLong(schedule.actual_date_of_inventory)}
+                                                </td>
+                                                <td className="border px-2 py-1 text-center">
+                                                    <StatusPill status={row.status} />
+                                                </td>
+                                                <td
+                                                    className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
+                                                    onClick={() => {
+                                                        setRowAssets({
+                                                            scheduleId: schedule.id,
+                                                            rowId: row.sub_area_id
+                                                                ? row.sub_area_id
+                                                                : row.building_room_id!,
+                                                            type: row.sub_area_id ? 'sub_area' : 'building_room',
+                                                            title: `${row.unit ?? ''} / ${row.building ?? ''} / ${row.room ?? ''} / ${row.sub_area ?? ''}`,
+                                                            unitId: row.unit_id,
+                                                        });
+                                                    }}
+                                                >
+                                                    {row.assetCount ?? '—'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 ) : (
                                     <tr>
-                                        <td colSpan={9} className="border px-2 py-4 text-center text-muted-foreground">
+                                        <td
+                                            colSpan={9}
+                                            className="border px-2 py-4 text-center text-muted-foreground"
+                                        >
                                             No scope records found.
                                         </td>
                                     </tr>

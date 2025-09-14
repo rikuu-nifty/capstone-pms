@@ -373,7 +373,8 @@ class InventorySchedulingController extends Controller
             if ($type === 'sub_area') {
                 $q->where('sub_area_id', $rowId);
             } else {
-                $q->where('building_room_id', $rowId);
+                $q->where('building_room_id', $rowId)
+                    ->whereNull('sub_area_id');;
             }
 
             if ($unitId) {

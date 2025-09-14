@@ -9,6 +9,14 @@ type AssetWithStatus = {
     asset_name: string;
     serial_no: string;
     inventory_status: string;
+    unit_or_department_id?: number | null;
+    unit_or_department_name?: string | null;
+    building_id?: number | null;
+    building_name?: string | null;
+    room_id?: number | null;
+    room_name?: string | null;
+    sub_area_id?: number | null;
+    sub_area_name?: string | null;
     asset_model?: {
         category?: { name?: string };
     };
@@ -96,22 +104,22 @@ function ViewRowAssetModal({
                                 </thead>
                                 <tbody>
                                     {assets.map((a, idx) => (
-                                    <tr
-                                        key={a.id}
-                                        className="odd:bg-white even:bg-gray-50 dark:odd:bg-neutral-950 dark:even:bg-neutral-900"
-                                    >
-                                        <td className="border px-3 py-2 text-center">
-                                            {(page - 1) * pageSize + idx + 1}
-                                        </td>
-                                        <td className="border px-3 py-2 text-center">{ucwords(a.asset_name ?? '—')}</td>
-                                        <td className="border px-3 py-2 text-center">{a.serial_no ?? '—'}</td>
-                                        <td className="border px-3 py-2 text-center">
-                                            {ucwords(a.asset_model?.category?.name ?? '—')}
-                                        </td>
-                                        <td className="border px-3 py-2 text-center">
-                                            <StatusPill status={a.inventory_status} />
-                                        </td>
-                                    </tr>
+                                        <tr
+                                            key={a.id}
+                                            className="odd:bg-white even:bg-gray-50 dark:odd:bg-neutral-950 dark:even:bg-neutral-900"
+                                        >
+                                            <td className="border px-3 py-2 text-center">
+                                                {(page - 1) * pageSize + idx + 1}
+                                            </td>
+                                            <td className="border px-3 py-2 text-center">{ucwords(a.asset_name ?? '—')}</td>
+                                            <td className="border px-3 py-2 text-center">{a.serial_no ?? '—'}</td>
+                                            <td className="border px-3 py-2 text-center">
+                                                {ucwords(a.asset_model?.category?.name ?? '—')}
+                                            </td>
+                                            <td className="border px-3 py-2 text-center">
+                                                <StatusPill status={a.inventory_status} />
+                                            </td>
+                                        </tr>
                                     ))}
                                 </tbody>
                             </table>
