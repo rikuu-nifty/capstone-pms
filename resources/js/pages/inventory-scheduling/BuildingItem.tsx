@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Building } from '@/types/custom-index';
 import type { SchedulingBuildingRoom } from './index';
 import type { Asset } from '../inventory-list';
+import { Button } from '@/components/ui/button';
 
 type Props = {
     building: Building;
@@ -13,6 +14,8 @@ type Props = {
     onToggleSubArea: (subAreaId: number, parentRoomId: number, parentBuildingId: number, checked: boolean) => void;
     onRemove: () => void;
     assets: Asset[];
+    onSelectAll: () => void;
+    onClearAll: () => void;
 };
 
 export default function BuildingItem({
@@ -24,6 +27,8 @@ export default function BuildingItem({
     onToggleSubArea,
     onRemove,
     assets,
+    onSelectAll,
+    onClearAll,
 }: Props) {
 
     const [open, setOpen] = useState(false);
@@ -43,28 +48,50 @@ export default function BuildingItem({
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => setOpen((o) => !o)}
-                        className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-gray-50 cursor-pointer"
+                        className="cursor-pointer"
                     >
                         {open ? 'Hide Details' : 'Show Details'}
-                        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                    </button>
+                        {open ? <ChevronDown className="ml-1 h-3.5 w-3.5" /> : <ChevronRight className="ml-1 h-3.5 w-3.5" />}
+                    </Button>
 
-                    <button
+                    <Button
                         type="button"
+                        variant="destructive"
+                        size="sm"
                         onClick={onRemove}
-                        className="text-red-500 text-xs hover:underline cursor-pointer"
+                        className="cursor-pointer"
                     >
                         Remove
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Details */}
             {open && (
                 <div className="px-3 pb-3 text-xs text-gray-700 space-y-2">
+                    <div className="flex justify-center gap-3 mb-3">
+                        <button
+                            type="button"
+                            onClick={onSelectAll}
+                            className="rounded-full border border-blue-500 px-3 py-0.5 text-[11px] font-medium text-blue-600 hover:bg-blue-50 cursor-pointer transition"
+                        >
+                            Select All
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={onClearAll}
+                            className="rounded-full border border-red-500 px-3 py-0.5 text-[11px] font-medium text-red-600 hover:bg-red-50 cursor-pointer transition"
+                        >
+                            Clear All
+                        </button>
+                    </div>
+
                     {filteredRooms.length > 0 ? (
                         filteredRooms.map((room) => {
                             // 🔹 Filter subareas → only subareas with assets
@@ -75,7 +102,7 @@ export default function BuildingItem({
                             return (
                                 <div key={room.id} className="pl-2">
                                     {/* Room Checkbox */}
-                                    <label className="flex items-center gap-2 font-medium">
+                                    <label className="flex items-center gap-2 font-medium text-blue-700">
                                         <input
                                             type="checkbox"
                                             className="cursor-pointer"
@@ -92,6 +119,15 @@ export default function BuildingItem({
                                             }}
                                         />
                                         Room {String(room.room)}
+
+                                        {/* 🔹 Inline helper text */}
+                                        {selectedRooms.includes(room.id) && (
+                                            <span className="text-[11px] text-red-500 italic">
+                                                {filteredSubAreas.length > 0
+                                                    ? "— Includes leftover assets not in sub-areas"
+                                                    : "— Includes all assets in this room"}
+                                            </span>
+                                        )}
                                     </label>
 
                                     {/* Sub-areas under room */}

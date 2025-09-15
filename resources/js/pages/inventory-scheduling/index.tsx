@@ -693,7 +693,20 @@ export default function InventorySchedulingIndex({
                                                     setData('room_ids', data.room_ids.filter((id) => !roomsToRemove.includes(id)));
                                                     setData('sub_area_ids', data.sub_area_ids.filter((id) => !subAreasToRemove.includes(id)));
                                                 }}
+                                                onClearAll={() => {
+                                                    const unitRoomIds = unitRooms.map(r => r.id);
+                                                    const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
 
+                                                    setData('room_ids', data.room_ids.filter(id => !unitRoomIds.includes(id)));
+                                                    setData('sub_area_ids', data.sub_area_ids.filter(id => !unitSubAreaIds.includes(id)));
+                                                }}
+                                                onSelectAll={() => {
+                                                    const unitRoomIds = unitRooms.map(r => r.id);
+                                                    const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
+
+                                                    setData('room_ids', Array.from(new Set([...data.room_ids, ...unitRoomIds])));
+                                                    setData('sub_area_ids', Array.from(new Set([...data.sub_area_ids, ...unitSubAreaIds])));
+                                                }}
                                             />
                                         );
                                     })}
@@ -792,6 +805,20 @@ export default function InventorySchedulingIndex({
                                                         setData('building_ids', data.building_ids.filter((id) => id !== bid));
                                                         setData('room_ids', data.room_ids.filter((id) => !roomsToRemove.includes(id)));
                                                         setData('sub_area_ids', data.sub_area_ids.filter((id) => !subAreasToRemove.includes(id)));
+                                                    }}
+                                                    onSelectAll={() => {
+                                                        const buildingRoomIds = rooms.map(r => r.id);
+                                                        const buildingSubAreaIds = rooms.flatMap(r => r.sub_areas?.map(sa => sa.id) ?? []);
+
+                                                        setData('room_ids', Array.from(new Set([...data.room_ids, ...buildingRoomIds])));
+                                                        setData('sub_area_ids', Array.from(new Set([...data.sub_area_ids, ...buildingSubAreaIds])));
+                                                    }}
+                                                    onClearAll={() => {
+                                                        const buildingRoomIds = rooms.map(r => r.id);
+                                                        const buildingSubAreaIds = rooms.flatMap(r => r.sub_areas?.map(sa => sa.id) ?? []);
+
+                                                        setData('room_ids', data.room_ids.filter(id => !buildingRoomIds.includes(id)));
+                                                        setData('sub_area_ids', data.sub_area_ids.filter(id => !buildingSubAreaIds.includes(id)));
                                                     }}
                                                 />
                                             );
