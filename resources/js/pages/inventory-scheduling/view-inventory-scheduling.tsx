@@ -242,7 +242,9 @@ export const ViewScheduleModal = ({
             });
         });
 
-        return list;
+        // return list;
+        // remove rows with 0 assets
+        return list.filter(r => (r.assetCount ?? 0) > 0);
     })();
 
     const total = rows.length;
@@ -374,90 +376,72 @@ export const ViewScheduleModal = ({
                     <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
                         {/* Scope Info */}
                         <section className="md:w-[400px]">
-                        <h3 className="mb-2 text-base font-semibold">Scope Information</h3>
-                        <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                            <table className="w-full text-sm table-fixed">
-                            <tbody>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Units/Dept/Lab
-                                </td>
-                                <td className="w-2/3 px-3 py-2 font-medium text-right">
-                                    {schedule.units?.length ?? 0}
-                                </td>
-                                </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Buildings
-                                </td>
-                                <td className="w-2/3 px-3 py-2 font-medium text-right">
-                                    {schedule.buildings?.length ?? 0}
-                                </td>
-                                </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Rooms
-                                </td>
-                                <td className="w-2/3 px-3 py-2 font-medium text-right">
-                                    {schedule.rooms?.length ?? 0}
-                                </td>
-                                </tr>
-                                <tr>
-                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Sub-Areas
-                                </td>
-                                <td className="w-2/3 px-3 py-2 font-medium text-right">
-                                    {schedule.sub_areas?.length ?? 0}
-                                </td>
-                                </tr>
-                            </tbody>
-                            </table>
-                        </div>
+                            <h3 className="mb-2 text-base font-semibold">Scope Information</h3>
+                            <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                                <table className="w-full text-sm table-fixed">
+                                    <tbody>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800">
+                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Buildings
+                                            </td>
+                                            <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                                {schedule.buildings?.length ?? 0}
+                                            </td>
+                                        </tr>
+                                        <tr className="border-b border-gray-200 dark:border-gray-800">
+                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Rooms
+                                            </td>
+                                            <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                                {schedule.rooms?.length ?? 0}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Sub-Areas
+                                            </td>
+                                            <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                                {schedule.sub_areas?.length ?? 0}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </section>
 
                         {/* Scheduling Info */}
                         <section className="md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
-                        <h3 className="mb-2 text-base font-semibold">Scheduling Information</h3>
-                        <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                            <table className="w-full text-sm table-fixed">
-                            <tbody>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Scope Type
-                                </td>
-                                <td className="px-3 py-2 font-medium">
-                                    {schedule.scope_type === 'unit'
-                                    ? 'By Units / Departments'
-                                    : 'By Buildings'}
-                                </td>
-                                </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Inventory Month
-                                </td>
-                                <td className="px-3 py-2 font-medium">
-                                    {formatMonth(schedule.inventory_schedule)}
-                                </td>
-                                </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Actual Inventory Date
-                                </td>
-                                <td className="px-3 py-2 font-medium">
-                                    {formatDateLong(schedule.actual_date_of_inventory)}
-                                </td>
-                                </tr>
-                                <tr>
-                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                    Total Assets
-                                </td>
-                                <td className="px-3 py-2 font-medium">
-                                    {schedule.assets?.length ?? 0}
-                                </td>
-                                </tr>
-                            </tbody>
-                            </table>
-                        </div>
+                            <h3 className="mb-2 text-base font-semibold">Scheduling Information</h3>
+                            <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                                <table className="w-full text-sm table-fixed">
+                                <tbody>
+                                    <tr className="border-b border-gray-200 dark:border-gray-800">
+                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            Inventory Month
+                                        </td>
+                                        <td className="px-3 py-2 font-medium">
+                                            {formatMonth(schedule.inventory_schedule)}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-800">
+                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            Actual Inventory Date
+                                        </td>
+                                        <td className="px-3 py-2 font-medium">
+                                            {formatDateLong(schedule.actual_date_of_inventory)}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            Total Assets
+                                        </td>
+                                        <td className="px-3 py-2 font-medium">
+                                            {schedule.assets?.length ?? 0}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                </table>
+                            </div>
                         </section>
                     </div>
 
