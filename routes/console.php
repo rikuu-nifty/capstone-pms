@@ -11,3 +11,6 @@ Artisan::command('inspire', function () {
 
 // ✅ Schedule your maintenance checker
 Schedule::command('maintenance:check-due')->daily();
+
+// Checks for overdue Transfers
+Schedule::command('transfers:mark-overdue')->daily();

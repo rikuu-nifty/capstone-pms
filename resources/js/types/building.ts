@@ -10,6 +10,7 @@ export type Building = {
     assets_count: number;
 
     building_rooms?: BuildingRoom[];
+    sub_areas_count?: number;
 };
 
 export type NewRoomPayload = {

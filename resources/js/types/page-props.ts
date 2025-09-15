@@ -6,7 +6,8 @@ import {
     UnitOrDepartment, 
     User, 
     TurnoverDisposals, 
-    TurnoverDisposalAssets 
+    TurnoverDisposalAssets,
+    SubArea, 
 } from './custom-index';
 
 export type TransferPageProps = {
@@ -23,6 +24,8 @@ export type TransferPageProps = {
         success?: string;
         error?: string;
     };
+
+    subAreas: SubArea[];
 }
 
 export type TransferViewPageProps = {

@@ -11,8 +11,11 @@ use Carbon\Carbon;
 
 class InventoryList extends Model   
 {
-     use SoftDeletes;
+    use SoftDeletes;
+
     protected $dates = ['deleted_at'];
+
+    protected $appends = ['current_transfer_status'];
 
     protected $fillable = [
         'memorandum_no',
@@ -22,17 +25,17 @@ class InventoryList extends Model
         'unit_or_department_id',
         'building_id',
         'building_room_id',
+        'sub_area_id',
         'category_id',
         'serial_no',
         'supplier',
         'unit_cost',
         'depreciation_value',
-          'assigned_to', // ✅ added
+        'assigned_to', // ✅ added
         'date_purchased',
         'asset_type',
         'quantity',
         'deleted_by_id',
-         // 'transfer_status', // ❌ removed (we now use transfer_id → transfer.status)
         'status',
         'image_path',
         'maintenance_due_date',
@@ -70,6 +73,11 @@ class InventoryList extends Model
         return $this->belongsTo(BuildingRoom::class, 'building_room_id');
     }
 
+    public function subArea()
+    {
+        return $this->belongsTo(SubArea::class, 'sub_area_id');
+    }
+
     public function turnoverDisposalAsset()
     {
         return $this->hasMany(TurnoverDisposalAsset::class, 'asset_id');
@@ -88,6 +96,65 @@ class InventoryList extends Model
     public function transfer()
     {
         return $this->belongsTo(Transfer::class, 'transfer_id');
+    }
+
+    public function transferAssets()
+    {
+        return $this->hasMany(TransferAsset::class, 'asset_id');
+    }
+
+    public function getCurrentTransferStatusAttribute(): ?string
+    {
+        $transfer = $this->transfers()
+            ->whereIn('transfers.status', [
+                'pending_review',
+                'upcoming',
+                'in_progress',
+                'overdue',
+            ])
+            ->latest('transfers.created_at')
+            ->first();
+
+        if ($transfer) {
+
+            if ($transfer->status === 'overdue') {
+                return 'overdue';
+            }
+            
+            return $transfer->pivot?->asset_transfer_status;
+        }
+
+        // fallback to latest transfer (completed/cancelled)
+        $latest = $this->transfers()
+            ->latest('transfers.created_at')
+            ->first();
+
+        return $latest?->pivot?->asset_transfer_status;
+    }
+
+    // DO NOT DELETE - FOR PIVOT TABLE and INVENTORY SHEET REPORTS
+    public function transfers()
+    {
+        return $this->belongsToMany(
+            Transfer::class, //related table
+            'transfer_assets', //pivot table
+            'asset_id', // FK on pivot pointing to Inventory Lists
+            'transfer_id' // FK on pivot pointing to related table
+        )
+        ->withPivot([
+            'id',
+            'moved_at', //date transferred
+            'from_sub_area_id',
+            'to_sub_area_id',
+            'asset_transfer_status',
+            'remarks',
+        ])
+        ->withTimestamps();
+    }
+
+    public function schedulingAssets()
+    {
+        return $this->hasMany(InventorySchedulingAsset::class, 'inventory_list_id');
     }
 
     public function deletedBy()
@@ -143,18 +210,10 @@ class InventoryList extends Model
         return $sum;
     }
 
-
-    // public function category()
-    // {
-    //     return $this->belongsTo(Category::class);
-    // }
-
-    
     // public function offCampusAsset() // NEED LAGAY
     // {
     //     return $this->hasMany(offCampusAsset::class, 'asset_id');
     // }
-
 
     // ✅ Hook into model events for instant notifications
     protected static function booted()
@@ -172,33 +231,33 @@ class InventoryList extends Model
         // });
 
         static::updated(function ($asset) {
-    if ($asset->maintenance_due_date && 
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isToday() || 
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isPast()
-    ) {
-        self::checkAndNotify($asset, true); // force notify
-    }
-});
+            if ($asset->maintenance_due_date && 
+                Carbon::parse($asset->maintenance_due_date)->isToday() || 
+                Carbon::parse($asset->maintenance_due_date)->isPast()
+            ) {
+                self::checkAndNotify($asset, true); // force notify
+            }
+        });
     }
 
     /**
      * ✅ Helper to check if due and send notifications
      */protected static function checkAndNotify($asset)
-{
-    if ($asset->maintenance_due_date && (
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isToday() ||
-        \Carbon\Carbon::parse($asset->maintenance_due_date)->isPast()
-    )) {
-        $users = \App\Models\User::whereHas('role', function ($q) {
-            $q->where('code', '!=', 'vp_admin'); // 👈 exclude VP Admin
-        })->get();
+    {
+        if ($asset->maintenance_due_date && (
+            Carbon::parse($asset->maintenance_due_date)->isToday() ||
+            Carbon::parse($asset->maintenance_due_date)->isPast()
+        )) {
+            $users = \App\Models\User::whereHas('role', function ($q) {
+                $q->where('code', '!=', 'vp_admin'); // 👈 exclude VP Admin
+            })->get();
 
-        foreach ($users as $user) {
-            // ✅ Always send a new notification, even if same asset already had one
-            $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
+            foreach ($users as $user) {
+                // ✅ Always send a new notification, even if same asset already had one
+                $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
+            }
         }
     }
-}
 
 // IF WANT MO KASAMA PATI VP ADMIN UNCOMMENT MOTO
 //     protected static function checkAndNotify($asset)

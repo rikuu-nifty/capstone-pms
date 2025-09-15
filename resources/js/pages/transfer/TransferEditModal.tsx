@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
-import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList } from '@/types/custom-index';
+import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList, SubArea } from '@/types/custom-index';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import { TransferFormData, Transfer } from '@/types/transfer';
 import EditModal from '@/components/modals/EditModal';
+import AssetTransferItem from './AssetTransferItem';
+import TransferStatusWarningModal from './TransferStatusWarningModal';
 
 interface TransferEditModalProps {
     show: boolean;
@@ -17,6 +19,7 @@ interface TransferEditModalProps {
     unitOrDepartments: UnitOrDepartment[];
     users: User[];
     assets: InventoryList[];
+    subAreas: SubArea[];
 }
 
 function extractId(value: number | { id: number } | undefined): number {
@@ -34,6 +37,7 @@ export default function TransferEditModal({
     unitOrDepartments,
     users,
     assets,
+    subAreas,
 }: TransferEditModalProps) {
 
     const { data, setData, put, processing, errors, clearErrors } = useForm<TransferFormData>({
@@ -56,10 +60,24 @@ export default function TransferEditModal({
         received_by: String(transfer.received_by ?? ''),
         status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',
-        selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
+        // selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
+        transfer_assets: transfer.transferAssets?.map((ta) => ({
+            asset_id: ta.asset_id,
+            moved_at: ta.moved_at ?? null,
+            from_sub_area_id: ta.from_sub_area_id ?? null,
+            to_sub_area_id: ta.to_sub_area_id ?? null,
+            asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
+            remarks: ta.remarks ?? null,
+        })) ?? [],
     });
   
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([false]);
+    const [showWarning, setShowWarning] = useState(false);
+    const [warningData, setWarningData] = useState<{
+        desiredStatus: 'completed' | 'cancelled' | 'overdue' | 'pending_review' | 'upcoming' | 'in_progress';
+        actualStatus?: 'completed' | 'cancelled' | 'overdue' | 'pending_review' | 'upcoming' | 'in_progress';
+        conflictingAssets: { id: number; name?: string; asset_transfer_status: string }[];
+    } | null>(null);
 
     const filteredCurrentRooms = data.current_building_id
         ? buildingRooms.filter(
@@ -100,7 +118,15 @@ export default function TransferEditModal({
                 received_by: transfer.received_by ? String(transfer.received_by) : null,
                 status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
                 remarks: transfer.remarks ?? '',
-                selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
+                // selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
+                transfer_assets: transfer.transferAssets?.map((ta) => ({
+                    asset_id: ta.asset_id,
+                    moved_at: ta.moved_at ?? null,
+                    from_sub_area_id: ta.from_sub_area_id ?? null,
+                    to_sub_area_id: ta.to_sub_area_id ?? null,
+                    asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
+                    remarks: ta.remarks ?? null,
+                })) ?? [],
             });
             clearErrors();
             setShowAssetDropdown([true]);
@@ -125,13 +151,136 @@ export default function TransferEditModal({
         setData,
     ]);
 
+    useEffect(() => {
+        const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
+        const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
+        const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+
+        let newStatus: TransferFormData['status'] | null = null;
+
+        if (pendingCount === 0) {
+            if (transferredCount > 0 && cancelledCount === 0) {
+                newStatus = 'completed';
+            } else if (cancelledCount > 0 && transferredCount === 0) {
+                newStatus = 'cancelled';
+            } else if (transferredCount > 0 && cancelledCount > 0) {
+                // mixed case → don’t force to completed/cancelled
+                newStatus = 'in_progress';
+            }
+        } else if (pendingCount > 0) {
+            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+
+            if (['completed'].includes(data.status)) {
+                newStatus = 'in_progress'; // Reverted from completed → in_progress
+            } else if (scheduledDate && scheduledDate < new Date()) {
+                // Past due → overdue
+                newStatus = 'overdue';
+            }
+            // else {
+            //     // Still active → upcoming
+            //     newStatus = 'pending_review';
+            // }
+        }
+
+        if (newStatus && newStatus !== data.status) {
+            setData('status', newStatus);
+        }
+    }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        const desiredStatus = data.status as 'completed' | 'cancelled' | 'overdue' | 'pending_review' | string;
+
+        // Collect pending assets from form state
+        const pendingAssets = data.transfer_assets
+            .filter((ta) => ta.asset_transfer_status === 'pending')
+            .map((ta) => {
+                const asset = assets.find((a) => a.id === ta.asset_id);
+                return {
+                    id: ta.asset_id,
+                    name: asset?.asset_name ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status ?? 'pending',
+                };
+            });
+
+        // Overdue selected but no pending assets → auto-downgrade to completed
+        if (desiredStatus === 'overdue' && pendingAssets.length === 0) {
+            const allCancelled = data.transfer_assets.every(
+                (ta) => ta.asset_transfer_status === 'cancelled'
+            );
+            const nextStatus: 'completed' | 'cancelled' = allCancelled ? 'cancelled' : 'completed';
+
+            setData('status', nextStatus);
+        }
+
+        // Special case: record is completed but some assets are pending → downgrade to in_progress OR overdue
+        if (desiredStatus === 'completed' && pendingAssets.length > 0) {
+            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+            const nowDate = new Date();
+
+            const nextStatus: 'in_progress' | 'overdue' = scheduledDate && scheduledDate < nowDate ? 'overdue' : 'in_progress';
+
+            setWarningData({
+                desiredStatus: 'completed',
+                actualStatus: nextStatus,
+                conflictingAssets: pendingAssets.map((ta) => ({
+                    id: ta.id,
+                    name: ta.name ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status,
+                })),
+            });
+            setShowWarning(true);
+            return;
+        }
+
+        // Warn if completed/cancelled but still pending
+        if ((desiredStatus === 'completed' || desiredStatus === 'cancelled') && pendingAssets.length > 0) {
+            setWarningData({
+                desiredStatus,
+                conflictingAssets: pendingAssets,
+            });
+            setShowWarning(true);
+            return;
+        }
+
+        // pending_review / upcoming → warn about reverting assets
+        if (desiredStatus === 'pending_review' || desiredStatus === 'upcoming') {
+            const transferredAssets = data.transfer_assets.filter(
+            (ta) => ta.asset_transfer_status === 'transferred'
+            );
+            if (transferredAssets.length > 0) {
+                setWarningData({
+                    desiredStatus: desiredStatus as 'pending_review' | 'upcoming',
+                    conflictingAssets: transferredAssets.map((ta) => ({
+                    id: ta.asset_id,
+                    name: assets.find((a) => a.id === ta.asset_id)?.asset_name ?? '—',
+                    asset_transfer_status: ta.asset_transfer_status ?? '—',
+                    })),
+                });
+                setShowWarning(true);
+                return;
+            }
+        }
+
+        // Proceed normally
         put(`/transfers/${transfer.id}`, {
             onSuccess: () => {
-                clearErrors();
-                setShowAssetDropdown([true]);
-                onClose();
+            clearErrors();
+            setShowAssetDropdown([true]);
+            onClose();
+            },
+        });
+    };
+
+    // Called when user confirms from modal
+    const confirmWarning = () => {
+        setShowWarning(false);
+        put(`/transfers/${transfer.id}`, {
+            onSuccess: () => {
+            clearErrors();
+            setShowAssetDropdown([true]);
+            onClose();
             },
         });
     };
@@ -156,7 +305,8 @@ export default function TransferEditModal({
                         setData('current_building_id', Number(e.target.value));
                         setData('current_building_room', 0);
 
-                        setData('selected_assets', []);
+                        // setData('selected_assets', []);
+                        setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
                 >
@@ -181,7 +331,8 @@ export default function TransferEditModal({
                     onChange={(e) => {
                         setData('current_building_room', Number(e.target.value))
 
-                        setData('selected_assets', []);
+                        // setData('selected_assets', []);
+                        setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
                 >
@@ -209,7 +360,8 @@ export default function TransferEditModal({
                     onChange={(e) => {
                         setData('current_organization', Number(e.target.value))
                         
-                        setData('selected_assets', []);
+                        // setData('selected_assets', []);
+                        setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
                 >
@@ -291,8 +443,6 @@ export default function TransferEditModal({
                 {errors.receiving_building_room && <p className="mt-1 text-xs text-red-500">{errors.receiving_building_room}</p>}
             </div>
 
-
-            
             {/* Scheduled Date */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Scheduled Date</label>
@@ -308,7 +458,7 @@ export default function TransferEditModal({
 
             {/* Actual Transfer Date */}
             <div className="col-span-1">
-                <label className="mb-1 block font-medium">Actual Transfer Date</label>
+                <label className="mb-1 block font-medium">Date Completed</label>
                 <input
                     type="date"
                     className="w-full rounded-lg border p-2 uppercase "
@@ -366,121 +516,99 @@ export default function TransferEditModal({
             <div className="col-span-2 flex flex-col gap-4">
                 <label className="block font-medium">Assets to Transfer</label>
 
-                {data.selected_assets.map((assetId, index) => {
-                    const selectedAsset = assets.find((a) => a.id === assetId);
+                {data.transfer_assets.map((ta, index) => {
+                    const asset = assets.find((a) => a.id === ta.asset_id);
+                    if (!asset) {
+                        return (
+                        <div key={`${ta.asset_id}-${index}`} className="rounded-lg border p-2 text-sm text-red-600">
+                            Asset not found
+                        </div>
+                        );
+                    }
 
                     return (
-                        <div key={index} className="flex items-center gap-2">
-                            <span className="text-sm">
-                                {selectedAsset ? (
-                                    <>
-                                        <span className="text-red-600 font-semibold">[{selectedAsset.asset_type}]</span>{' '}
-                                        <span className="text-blue-800">
-                                            {selectedAsset.asset_name} - {selectedAsset.serial_no}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span className="text-gray-500 italic">Asset not found</span>
-                                )}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const updated = [...data.selected_assets];
-                                    updated.splice(index, 1);
-                                    setData('selected_assets', updated);
-
-                                    setShowAssetDropdown((prev) => {
-                                        const newState = [...prev];
-                                        newState.splice(index, 1);
-
-                                        if (newState.length === 0) {
-                                            newState.push(true);
-                                        }
-
-                                        return newState;
-                                    });
-                                }}
-                                className="text-red-500 text-xs hover:underline cursor-pointer"
-                            >
-                                Remove
-                            </button>
-                        </div>
+                        <AssetTransferItem
+                            key={`${ta.asset_id}-${index}`}
+                            ta={ta}
+                            asset={asset}
+                            fromSubAreas={subAreas.filter(
+                                (sa) => sa.building_room_id === data.current_building_room
+                            )}
+                            toSubAreas={subAreas.filter(
+                                (sa) => sa.building_room_id === data.receiving_building_room
+                            )}
+                            parentStatus={data.status}
+                            onRemove={() => {
+                                const next = [...data.transfer_assets];
+                                next.splice(index, 1);
+                                setData('transfer_assets', next);
+                            }}
+                            onChange={(next) => {
+                                const copy = [...data.transfer_assets];
+                                copy[index] = next;
+                                setData('transfer_assets', copy);
+                            }}
+                        />
                     );
                 })}
 
+
+                {/* Add more assets */}
                 {showAssetDropdown.map(
-                    (visible, index) =>
-                        visible && (
-                            <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                                {showAssetDropdown.map((visible, index) =>
-                                    visible && (
-                                        <div key={`dropdown-${index}`} className="flex items-center gap-2 w-full">
-                                            <Select
-                                                className="w-full"
-                                                options={assets
-                                                    .filter((asset) => {
-                                                    const matchesBuilding = data.current_building_id
-                                                        ? asset.building_id === data.current_building_id
-                                                        : true;
+                    (visible, index) => visible && (
+                        <div key={`dropdown-${index}`} className="flex items-center gap-2 w-full">
+                            <Select
+                            className="w-full"
+                            options={assets
+                                .filter((asset) => {
+                                const matchesBuilding = data.current_building_id
+                                    ? asset.building_id === data.current_building_id
+                                    : true;
 
-                                                    const matchesRoom = data.current_building_room
-                                                        ? asset.building_room_id === data.current_building_room
-                                                        : true;
+                                const matchesRoom = data.current_building_room
+                                    ? asset.building_room_id === data.current_building_room
+                                    : true;
 
-                                                    const matchesUnit = data.current_organization
-                                                        ? asset.unit_or_department_id === data.current_organization
-                                                        : true;
+                                const matchesUnit = data.current_organization
+                                    ? asset.unit_or_department_id === data.current_organization
+                                    : true;
 
-                                                    return (
-                                                        matchesBuilding &&
-                                                        matchesRoom &&
-                                                        matchesUnit &&
-                                                        !data.selected_assets.includes(asset.id)
-                                                    );
-                                                    })
-                                                    .map((asset) => ({
-                                                    value: asset.id,
-                                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
-                                                    }))}
-                                                placeholder={
-                                                    data.current_building_id && data.current_building_room && data.current_organization
-                                                    ? 'Select Asset(s) for Transfer...'
-                                                    : 'Select Current Building, Room, and Unit/Dept/Lab first'
-                                                }
-                                                isDisabled={
-                                                    !data.current_building_id || 
-                                                    !data.current_building_room ||
-                                                    !data.current_organization
-                                                }
-                                                onChange={(selectedOption) => {
-                                                    if (
-                                                    selectedOption &&
-                                                    !data.selected_assets.includes(selectedOption.value)
-                                                    ) {
-                                                    setData('selected_assets', [
-                                                        ...data.selected_assets,
-                                                        selectedOption.value,
-                                                    ]);
+                                const notAlreadyChosen = !data.transfer_assets.some((x) => x.asset_id === asset.id);
 
-                                                    setShowAssetDropdown((prev) => {
-                                                        const updated = [...prev];
-                                                        updated[index] = false;
-                                                        return [...updated, true];
-                                                    });
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        )
+                                return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
+                                })
+                                .map((asset) => ({
+                                value: asset.id,
+                                label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                }))}
+                            placeholder={
+                                data.current_building_id && data.current_building_room && data.current_organization
+                                ? 'Select Asset(s) for Transfer...'
+                                : 'Select Current Building, Room, and Unit/Dept/Lab first'
+                            }
+                            isDisabled={!data.current_building_id || !data.current_building_room || !data.current_organization}
+                            onChange={(selectedOption) => {
+                                if (selectedOption) {
+                                const id = Number(selectedOption.value);
+                                if (!data.transfer_assets.some((x) => x.asset_id === id)) {
+                                    setData('transfer_assets', [
+                                    ...data.transfer_assets,
+                                    { asset_id: id, asset_transfer_status: 'pending' },
+                                    ]);
+                                    setShowAssetDropdown((prev) => {
+                                    const updated = [...prev];
+                                    updated[index] = false;
+                                    return [...updated, true];
+                                    });
+                                }
+                                }
+                            }}
+                            />
+                        </div>
+                    ),
                 )}
 
-                {errors.selected_assets && (
-                    <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
-                )}
+                {errors.transfer_assets && <p className="mt-1 text-sm text-red-500">{String(errors.transfer_assets)}</p>}
             </div>
 
             {/* Received By */}
@@ -516,6 +644,18 @@ export default function TransferEditModal({
                 />
                 {errors.remarks && <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>}
             </div>
+
+            {warningData && (
+                <TransferStatusWarningModal
+                    show={showWarning}
+                    onCancel={() => setShowWarning(false)}
+                    onConfirm={confirmWarning}
+                    desiredStatus={warningData.desiredStatus}
+                    actualStatus={warningData.actualStatus}
+                    conflictingAssets={warningData.conflictingAssets}
+                />
+            )}
+
         </EditModal>
     );
 }

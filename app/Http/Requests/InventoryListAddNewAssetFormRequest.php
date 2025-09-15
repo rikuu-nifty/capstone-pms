@@ -36,21 +36,32 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'supplier'             => 'required|string|max:255',
             'unit_cost'            => 'required|numeric|min:0|max:999999.99',
 
-            // 🔹 Single mode only
-            'serial_no'            => $mode === 'single' ? 'required|string|max:255' : 'nullable|string|max:255',
+            // ✅ Single mode: serial_no is required; Bulk mode: can be nullable
+            // 'serial_no'     => 'required|string|max:255',
+            'serial_no' => 'required_if:mode,single|nullable|string|max:255',
 
             // 🔹 Bulk mode
             'serial_numbers'       => $mode === 'bulk' ? 'required|array|min:1' : 'nullable|array',
             'serial_numbers.*'     => 'nullable|string|max:255',
 
-            'asset_model_id'       => 'required|integer',
-            'description'          => 'nullable|string|max:1000',
-            'memorandum_no'        => 'required|numeric|min:0',
-            'status'               => 'required|in:active,archived',
-            'image'                => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-            'mode'                 => 'nullable|string|in:single,bulk',
-            'depreciation_value'   => 'nullable|numeric|min:0',
-            'assigned_to'          => 'nullable|string|max:255',
+            'asset_model_id' =>  'required|integer|max:255',
+            // 🚫 removed transfer_status validation
+            'description' =>     'nullable|string|max:1000',
+            'memorandum_no' =>  'required|numeric|min:0',
+
+            'status' => 'required|in:active,archived', // ✅ Validation for status
+
+            // ✅ New: Image upload
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+
+            // ✅ New: mode (single or bulk)
+            'mode' => 'nullable|string|in:single,bulk',
+
+            // ✅ New
+            'depreciation_value' => 'nullable|numeric|min:0',
+
+            // ✅ New
+            'assigned_to' => 'nullable|string|max:255',
         ];
     }
 

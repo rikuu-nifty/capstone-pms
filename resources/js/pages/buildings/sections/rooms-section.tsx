@@ -136,9 +136,10 @@ export default function RoomsSection({
                     <TableHeader>
                         <TableRow className="bg-muted text-foreground">
                         <TableHead className="text-center">Room ID</TableHead>
-                        <TableHead className="text-center">Room (Name/Number)</TableHead>
+                        <TableHead className="text-center">Room Name/No.</TableHead>
                         <TableHead className="text-center">Building Code</TableHead>
-                        <TableHead className="text-center">Description</TableHead>
+                        {/* <TableHead className="text-center">Description</TableHead> */}
+                        <TableHead className="text-center">Sub Areas Count</TableHead>
                         <TableHead className="text-center">Assets Count</TableHead>
                         <TableHead className="text-center">Institution Asset Share</TableHead>
                         <TableHead className="text-center">Actions</TableHead>
@@ -149,10 +150,11 @@ export default function RoomsSection({
                         <TableRow key={r.id}>
                             <TableCell>{r.id}</TableCell>
                             <TableCell className="font-medium">{r.room}</TableCell>
-                            <TableCell>{r.building?.code ?? '—'}</TableCell>
-                            <TableCell className="max-w-[500px] whitespace-normal break-words text-center">
-                            {r.description ?? '—'}
-                            </TableCell>
+                            <TableCell>{(r.building?.code ?? '—').toUpperCase()}</TableCell>
+                            {/* <TableCell className="max-w-[500px] whitespace-normal break-words text-center">
+                                {r.description ?? '—'}
+                            </TableCell> */}
+                            <TableCell className="font-medium">{r.sub_areas_count ?? 0}</TableCell>
                             <TableCell className="font-medium">{r.assets_count}</TableCell>
                             <TableCell>
                                 {/* {(r.assets_count ?? 0).toLocaleString()}{' '} */}

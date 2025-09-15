@@ -31,7 +31,7 @@ class OffCampusController extends Controller
                 'assets' => function ($q) {
         $q->select('id','off_campus_id','asset_id','asset_model_id') 
         ->with([
-            'asset:id,asset_model_id,asset_name,description,serial_no',
+            'asset:id,asset_model_id,asset_name,description,serial_no,unit_or_department_id',
             'asset.assetModel:id,brand,model',
         ]);
     },
@@ -46,7 +46,7 @@ class OffCampusController extends Controller
             'offCampuses'        => $rows,
             'filters'            => ['status' => $status ?: 'active'],
             'unitOrDepartments'  => UnitOrDepartment::select('id','name','code')->orderBy('name')->get(),
-            'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no')->orderBy('asset_name')->get(),
+            'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no','unit_or_department_id')->orderBy('asset_name')->get(),
             'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
             'users'              => User::select('id','name')->orderBy('name')->get(),
         ]);
@@ -124,7 +124,7 @@ class OffCampusController extends Controller
         ->paginate(20);
 
         $unitOrDepartments = UnitOrDepartment::select('id','name','code')->orderBy('name')->get();
-        $assets            = InventoryList::select('id','asset_model_id','asset_name','serial_no')->orderBy('asset_name')->get();
+        $assets            = InventoryList::select('id','asset_model_id','asset_name','serial_no', 'unit_or_department_id',)->orderBy('asset_name')->get();
         $assetModels       = AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get();
         $users             = User::select('id','name')->orderBy('name')->get();
 
@@ -148,7 +148,7 @@ class OffCampusController extends Controller
     public function edit(OffCampus $offCampus)
 {
     $offCampus->load([
-        'assets.asset:id,asset_model_id,asset_name,description,serial_no',
+        'assets.asset:id,asset_model_id,asset_name,description,serial_no,unit_or_department_id',
         'assets.asset.assetModel:id,brand,model',
         'collegeOrUnit:id,name,code',
         'issuedBy:id,name',
@@ -157,7 +157,7 @@ class OffCampusController extends Controller
     return Inertia::render('off-campus/edit', [
         'offCampus'          => $offCampus,
         'unitOrDepartments'  => UnitOrDepartment::select('id','name','code')->orderBy('name')->get(),
-        'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no')->orderBy('asset_name')->get(),
+        'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no', 'unit_or_department_id')->orderBy('asset_name')->get(),
         'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
         'users'              => User::select('id','name')->orderBy('name')->get(),
     ]);

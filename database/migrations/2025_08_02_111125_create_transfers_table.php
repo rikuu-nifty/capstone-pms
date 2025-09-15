@@ -40,11 +40,10 @@ return new class extends Migration
             $table->foreign('assigned_by')->references('id')->on('users')->onDelete('cascade');
         });
 
-        // Add transfer_id column to inventory_lists
         Schema::table('inventory_lists', function (Blueprint $table) {
-            $table->foreignId('transfer_id')
-                ->nullable()
-                ->constrained('transfers')
+            $table->foreign('transfer_id')
+                ->references('id')
+                ->on('transfers')
                 ->nullOnDelete();
         });
     }

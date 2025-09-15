@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import type { Asset } from '@/pages/inventory-list/index';
 import { CreditCard, Home, Info, Package, ShieldCheck } from 'lucide-react';
 
@@ -49,6 +49,8 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-gray-50 p-0 shadow-2xl animate-in fade-in-50 zoom-in-95 sm:max-w-[1100px]">
+                <DialogTitle className="sr-only">View Asset Details</DialogTitle>
+                
                 {/* Hero Section */}
                 <div className="relative rounded-t-2xl bg-gradient-to-r from-[#1d4ed8] to-[#3b82f6] p-10 text-white">
                     {/* AUF Mascot Logo (left side) */}
@@ -125,7 +127,17 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <InfoCard label="Building" value={humanize(asset.building?.name)} />
-                                <InfoCard label="Room" value={humanize(asset.building_room?.room)} />
+                                {/* <InfoCard label="Room" value={humanize(asset.building_room?.room) } /> */}
+                                <InfoCard
+                                    label="Room"
+                                    value={
+                                        asset.building_room?.room
+                                        ? `${humanize(asset.building_room?.room)}${
+                                            asset.sub_area?.name ? ` (${humanize(asset.sub_area?.name)})` : ''
+                                            }`
+                                        : humanize(asset.sub_area?.name)
+                                    }
+                                />
                                 <InfoCard label="Unit / Department" value={humanize(asset.unit_or_department?.name)} />
                                 <InfoCard label="Assigned To" value={humanize(asset.assigned_to)} /> {/* ✅ new */}
                             </div>
@@ -138,7 +150,8 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 {/* ✅ Now pulling transfer.status via relation */}
-                                <InfoCard label="Transfer Status" value={humanize(asset.transfer?.status)} />
+                                {/* <InfoCard label="Transfer Status" value={humanize(asset.transfer?.status)} /> */}
+                                <InfoCard label="Transfer Status" value={humanize(asset.current_transfer_status)} />
                                 <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
                                 <InfoCard label="Date Purchased" value={dateFormat(asset.date_purchased)} />
                             </div>

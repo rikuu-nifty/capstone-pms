@@ -15,16 +15,9 @@ class StoreBuildingRoomRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'building_id' => [
-                'required',
-                'integer',
-                Rule::exists('buildings', 'id')->whereNull('deleted_at'),
-            ],
-            'room' => [
-                'required',
-                'string',
-                'max:255',
-                // Unique within the same building among active rows
+            'building_id' => [ 'required', 'integer', Rule::exists('buildings', 'id')->whereNull('deleted_at'), ],
+            'room' => [ 
+                'required', 'string', 'max:255',
                 Rule::unique('building_rooms', 'room')
                     ->where(fn ($q) => $q
                         ->whereNull('deleted_at')
@@ -32,6 +25,10 @@ class StoreBuildingRoomRequest extends FormRequest
                     ),
             ],
             'description' => ['nullable', 'string', 'max:1000'],
+
+            'sub_areas' => ['nullable', 'array'],
+            'sub_areas.*.name' => ['required_with:sub_areas', 'string', 'max:255'],
+            'sub_areas.*.description' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

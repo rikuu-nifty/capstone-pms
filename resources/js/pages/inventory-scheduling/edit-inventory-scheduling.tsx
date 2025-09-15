@@ -1,22 +1,35 @@
 import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { Building, BuildingRoom, InventorySchedulingFormData, Scheduled, UnitOrDepartment, User } from '@/pages/inventory-scheduling/index';
-import { router,  } from '@inertiajs/react';
+import type {
+    InventorySchedulingFormData,
+    Scheduled,
+    UnitOrDepartment,
+    User,
+    SchedulingBuildingRoom,
+} from '@/pages/inventory-scheduling/index';
+import { Asset } from '../inventory-list';
+import type { Building, SubArea } from '@/types/custom-index';
+import { useForm, } from '@inertiajs/react';
 import { useState } from 'react';
+import Select from 'react-select';
+
+import UnitItem from './UnitItem';
+import BuildingItem from './BuildingItem';
+import WarningModal from './WarningModal';
+import { validateScheduleForm } from '@/types/validateScheduleForm';
 
 type Props = {
     schedule: Scheduled;
     onClose: () => void;
     buildings: Building[];
-    buildingRooms: BuildingRoom[];
+    buildingRooms: SchedulingBuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
     users: User[];
-    // Optional: pass allowed statuses; else fallback provided below
     statusOptions?: string[];
+    assets: Asset[];
 };
 
 export const EditInventorySchedulingModal = ({
@@ -25,281 +38,660 @@ export const EditInventorySchedulingModal = ({
     buildings,
     buildingRooms,
     unitOrDepartments,
-    // users,
-    statusOptions = ['pending_review', 'pending', 'completed', 'overdue', 'cancelled'],
-    
+    users,
+    statusOptions = ['Pending_Review', 'Pending', 'Overdue', 'Completed', 'Cancelled'],
+    assets,
 }: Props) => {
-    const [form, setForm] = useState<InventorySchedulingFormData>({
+    const [warningVisible, setWarningVisible] = useState(false);
+    const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
+    const [warningDetails, setWarningDetails] = useState<string[]>([]);
+    
+    const { data, setData, put, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
+        scope_type: schedule.units && schedule.units.length > 0 ? 'unit' : 'building',
+        unit_ids: schedule.units?.map((u) => u.id) ?? [],
+        building_ids: schedule.buildings?.map((b) => b.id) ?? [],
+        room_ids: schedule.rooms?.map((r) => r.id) ?? [],
+        sub_area_ids: schedule.sub_areas?.map((sa) => sa.id) ?? [],
+
         building_id: schedule.building?.id || '',
         building_room_id: schedule.building_room?.id || '',
         unit_or_department_id: schedule.unit_or_department?.id || '',
-        user_id: schedule.user?.id || '', // leave it as the original assigned user only
-        // user_id: schedule.user?.id || '',
+        user_id: schedule.user?.id || '',
         designated_employee: schedule.designated_employee?.id || '',
         assigned_by: schedule.assigned_by?.id || '',
-        inventory_schedule: schedule.inventory_schedule || '', // month-only string (e.g., "2025-08")
-        actual_date_of_inventory: schedule.actual_date_of_inventory || '', // full date (YYYY-MM-DD)
+        inventory_schedule: schedule.inventory_schedule || '',
+        actual_date_of_inventory: schedule.actual_date_of_inventory || '',
         checked_by: schedule.checked_by || '',
         verified_by: schedule.verified_by || '',
         received_by: schedule.received_by || '',
-        scheduling_status: schedule.scheduling_status || statusOptions[0],
+        scheduling_status: schedule.scheduling_status || 'Pending_Review',
         description: schedule.description || '',
+        scheduled_assets: [],
     });
-
-    const handleChange = <K extends keyof InventorySchedulingFormData>(field: K, value: InventorySchedulingFormData[K]) => {
-        setForm((prev) => ({ ...prev, [field]: value }));
-    };
-
-    // Filter rooms by selected building
-    const filteredRooms = buildingRooms.filter((r) => r.building_id === Number(form.building_id));
-
-    // const { isFullyApproved } = usePage<{ isFullyApproved: boolean }>().props;
 
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
-        router.put(`/inventory-scheduling/${schedule.id}`, form, {
-            onSuccess: () => onClose(),
-            onError: (errors) => {
-                // You can wire individual field error displays if you pass `errors` prop in
-                console.error(errors);
-            },
-            preserveScroll: true,
-        });
-    };
+        const cleanRoomIds = (data.room_ids ?? []).filter(id => !!id);
 
-    // When building changes, clear room until user reselects
-    const onBuildingChange = (idStr: string) => {
-        const id = idStr ? Number(idStr) : '';
-        handleChange('building_id', id);
-        handleChange('building_room_id', '');
+        if (data.scope_type === 'unit') {
+            if (data.unit_ids.length === 0) {
+                setError('unit_ids', 'You must select at least one unit/department.');
+                return;
+            }
+
+            // Get all room IDs that actually belong to the chosen units
+            const unitRoomIds = buildingRooms
+                .filter(r =>
+                    assets.some(a =>
+                        a.unit_or_department_id &&
+                        data.unit_ids.includes(a.unit_or_department_id) &&
+                        a.building_room_id === r.id
+                    )
+                )
+                .map(r => r.id);
+
+            const hasUnitRoom = cleanRoomIds.some(rid => unitRoomIds.includes(rid));
+
+            if (!hasUnitRoom) {
+                setError('room_ids', 'You must select at least one room from the chosen unit(s).');
+                return;
+            }
+        }
+
+        if (data.scope_type === 'building') {
+            if (data.building_ids.length === 0) {
+                setError('building_ids', 'You must select at least one building.');
+                return;
+            }
+            if (cleanRoomIds.length === 0) {
+                setError('room_ids', 'You must select at least one room for the selected building(s).');
+                return;
+            }
+        }
+
+        clearErrors('unit_ids');
+        clearErrors('building_ids');
+        clearErrors('room_ids');
+
+        const result = validateScheduleForm(
+            { ...data, room_ids: cleanRoomIds },
+            assets,
+            unitOrDepartments,
+            buildings,
+            buildingRooms
+        );
+
+        if (!result.valid) {
+            setWarningMessage(result.message ?? 'Validation failed.');
+            setWarningDetails(result.details ?? []);
+            setWarningVisible(true);
+            return;
+        }
+
+        put(`/inventory-scheduling/${schedule.id}`, {
+            preserveScroll: true,
+            onSuccess: () => onClose(),
+        });
     };
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <form onSubmit={handleSubmit}>
-                <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
-                    <DialogHeader>
-                        <DialogTitle>Update Inventory Schedule</DialogTitle>
-                    </DialogHeader>
+            <DialogContent className="w-full max-w-[700px] sm:max-w-[800px] p-6 max-h-[90vh] flex flex-col overflow-hidden">
+                <DialogHeader className="shrink-0">
+                    <DialogTitle>Edit Inventory Schedule</DialogTitle>
+                </DialogHeader>
 
-                    <div className="grid grid-cols-2 gap-4 py-4">
-                        {/* Building */}
-                        <div>
-                            <Label>Building</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.building_id}
-                                onChange={(e) => onBuildingChange(e.target.value)}
-                            >
-                                <option value="">Select Building</option>
-                                {buildings.map((b) => (
-                                    <option key={b.id} value={b.id}>
-                                        {b.name} ({b.code})
-                                    </option>
-                                ))}
-                            </select>
+                <div className="flex-1 overflow-y-auto -mr-2 pr-2">
+                    <form
+                        id="edit-inventory-form"
+                        onSubmit={handleSubmit} 
+                        className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm"
+                    >
+                        {/* Scope Type */}
+                        <div className="col-span-2">
+                            <label className="mb-2 block font-medium">Scope Type</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    type="button"
+                                    // onClick={() => handleChange("scope_type", "unit")}
+                                    onClick={() => {
+                                        setData({
+                                            ...data,
+                                            scope_type: 'unit',
+                                            unit_ids: [],
+                                            building_ids: [],
+                                            room_ids: [],
+                                            sub_area_ids: [],
+                                        });
+                                        clearErrors('unit_ids');
+                                        clearErrors('building_ids');
+                                        clearErrors('room_ids');
+                                    }}
+                                    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+                                        ${data.scope_type === "unit"
+                                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                                        : "border-gray-300 bg-white hover:bg-gray-50"
+                                        }`}
+                                >
+                                    By Units / Departments
+                                </button>
+
+                                <button
+                                    type="button"
+                                    // onClick={() => handleChange("scope_type", "building")}
+                                    onClick={() => {
+                                        setData({
+                                            ...data,
+                                            scope_type: 'building',
+                                            unit_ids: [],
+                                            building_ids: [],
+                                            room_ids: [],
+                                            sub_area_ids: [],
+                                        });
+                                        clearErrors('unit_ids');
+                                        clearErrors('building_ids');
+                                        clearErrors('room_ids');
+                                    }}
+                                    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+                                        ${data.scope_type === "building"
+                                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                                        : "border-gray-300 bg-white hover:bg-gray-50"
+                                        }`}
+                                >
+                                    By Buildings
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Unit/Department */}
-                        <div>
-                            <Label>Unit/Department</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.unit_or_department_id}
-                                onChange={(e) => handleChange('unit_or_department_id', Number(e.target.value))}
-                            >
-                                <option value="">Select Unit/Department</option>
-                                {unitOrDepartments.map((u) => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.code} - {u.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        {/* Units Section */}
+                        {data.scope_type === 'unit' && (
+                            <div className="col-span-2 flex flex-col gap-4">
+                                <label className="block font-medium">Unit/Dept/Labs Selection</label>
 
-                        {/* Room (depends on building) */}
-                        <div>
-                            <Label>Room</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.building_room_id}
-                                onChange={(e) => handleChange('building_room_id', Number(e.target.value))}
-                                disabled={!form.building_id}
-                            >
-                                <option value="">Select Room</option>
-                                {filteredRooms.map((room) => (
-                                    <option key={room.id} value={room.id}>
-                                        {room.room}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                                <Select
+                                    className="w-full"
+                                    options={unitOrDepartments
+                                        .filter((u) => !data.unit_ids.includes(u.id))
+                                        .map((u) => ({
+                                            value: u.id,
+                                            label: `${u.name} (${u.code})`,
+                                        }))
+                                    }
+                                    placeholder="Add another unit..."
+                                    value={null}
+                                    onChange={(selected) => {
+                                        if (selected) {
+                                            const id = Number(selected.value);
+                                            if (!data.unit_ids.includes(id)) {
+                                                // collect buildings, rooms, subareas tied to this unit
+                                                const unitAssets = assets.filter((a) => a.unit_or_department?.id === id);
 
-                        {/* Assigned To / User */}
-                        <div>
-                            <Label>Assigned To (User)</Label>
-                            <input
-                                type="text"
-                                className="w-full rounded-lg border bg-gray-100 p-2"
-                                value={schedule.prepared_by?.name ?? '—'}
-                                disabled
-                            />
-                        </div>
+                                                const unitBuildingIds = [
+                                                    ...new Set(unitAssets.map((a) => a.building?.id).filter((b): b is number => !!b)),
+                                                ];
 
-                        {/* Designated Employee */}
-                        {/* <div>
-                            <Label>Designated Employee</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.designated_employee}
-                                onChange={(e) => handleChange('designated_employee', Number(e.target.value))}
-                            >
-                                <option value="">Select Employee</option>
-                                {users.map((u) => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div> */}
+                                                const unitRoomIds = [
+                                                    ...new Set(unitAssets.map((a) => a.building_room_id).filter((r): r is number => !!r)),
+                                                ];
 
-                        {/* Assigned By */}
-                        {/* <div>
-                            <Label>Assigned By</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.assigned_by}
-                                onChange={(e) => handleChange('assigned_by', Number(e.target.value))}
-                            >
-                                <option value="">Select Assigner</option>
-                                {users.map((u) => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div> */}
+                                                const unitSubAreaIds = [
+                                                    ...new Set(unitAssets.map((a) => a.sub_area_id).filter((sa): sa is number => !!sa)),
+                                                ];
+
+                                                setData({
+                                                    ...data,
+                                                    unit_ids: [...data.unit_ids, id],
+                                                    building_ids: [...new Set([...data.building_ids, ...unitBuildingIds])],
+                                                    room_ids: [...new Set([...data.room_ids, ...unitRoomIds])],
+                                                    sub_area_ids: [...new Set([...data.sub_area_ids, ...unitSubAreaIds])],
+                                                });
+                                            }
+                                        }
+                                    }}
+                                />
+                                {errors.unit_ids && (
+                                    <p className="mt-1 text-xs text-red-500">{String(errors.unit_ids)}</p>
+                                )}
+
+
+                                {data.unit_ids.map((uid) => {
+                                    const unit = unitOrDepartments.find((u) => u.id === uid);
+                                    if (!unit) return null;
+
+                                    const unitAssets = assets.filter((a) => a.unit_or_department?.id === uid);
+
+                                    const unitBuildings: Building[] = [
+                                        ...new Map(
+                                            unitAssets
+                                                .map((a) => a.building)
+                                                .filter((b): b is Building => b !== null && b !== undefined)
+                                                .map((b) => [b.id, b])
+                                        ).values(),
+                                    ];
+
+                                    const unitRooms: SchedulingBuildingRoom[] = [
+                                        ...new Map(
+                                            unitAssets
+                                                .map((a) => a.building_room as SchedulingBuildingRoom | null)
+                                                .filter((r): r is SchedulingBuildingRoom => r !== null && r !== undefined)
+                                                .map((r) => [r.id, r])
+                                        ).values(),
+                                    ];
+
+                                    const unitSubAreas: SubArea[] = [
+                                        ...new Map(
+                                            unitAssets
+                                                .map((a) => a.sub_area)
+                                                .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
+                                                .map((sa) => [sa.id, sa])
+                                        ).values(),
+                                    ];
+
+                                    return (
+                                        <UnitItem
+                                            key={uid}
+                                            unit={unit}
+                                            assets={unitAssets}
+                                            buildings={unitBuildings}
+                                            rooms={unitRooms}
+                                            subAreas={unitSubAreas}
+                                            selectedBuildings={data.building_ids}
+                                            selectedRooms={data.room_ids}
+                                            selectedSubAreas={data.sub_area_ids}
+                                            onToggleBuilding={(buildingId, checked) => {
+                                                const roomsForBuilding = buildingRooms.filter((r: SchedulingBuildingRoom) => r.building_id === buildingId);
+                                                const subAreasForBuilding = roomsForBuilding.flatMap((r) =>
+                                                    (r.sub_areas ?? []).map((sa: SubArea) => sa.id)
+                                                );
+
+                                                setData(prev => {
+                                                    let nextRooms: number[];
+                                                    let nextSubs: number[];
+                                                    let nextBuildings: number[];
+
+                                                    if (checked) {
+                                                        nextRooms = Array.from(new Set([...prev.room_ids, ...roomsForBuilding.map(r => r.id)]));
+                                                        nextSubs = Array.from(new Set([...prev.sub_area_ids, ...subAreasForBuilding]));
+                                                        nextBuildings = prev.building_ids.includes(buildingId)
+                                                        ? prev.building_ids
+                                                        : [...prev.building_ids, buildingId];
+                                                    } else {
+                                                        nextRooms = prev.room_ids.filter(id => !roomsForBuilding.map(r => r.id).includes(id));
+                                                        nextSubs = prev.sub_area_ids.filter(id => !subAreasForBuilding.includes(id));
+                                                        nextBuildings = prev.building_ids.filter(id => id !== buildingId);
+                                                    }
+
+                                                    return {
+                                                        ...prev,
+                                                        room_ids: nextRooms,
+                                                        sub_area_ids: nextSubs,
+                                                        building_ids: nextBuildings,
+                                                    };
+                                                });
+                                            }}
+                                            onToggleRoom={(roomId, buildingId, checked) => {
+                                                const room = buildingRooms.find(r => r.id === roomId);
+                                                const subAreaIds = room?.sub_areas?.map(sa => sa.id) ?? [];
+
+                                                setData(prev => {
+                                                const hasRoom = prev.room_ids.includes(roomId);
+                                                const nextRooms = checked
+                                                    ? (hasRoom ? prev.room_ids : [...prev.room_ids, roomId])
+                                                    : prev.room_ids.filter(id => id !== roomId);
+
+                                                const nextSubs = checked
+                                                    ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
+                                                    : prev.sub_area_ids.filter(id => !subAreaIds.includes(id));
+
+                                                const buildingRoomIds = buildingRooms.filter(r => r.building_id === buildingId).map(r => r.id);
+                                                const stillHasRooms = buildingRoomIds.some(id => nextRooms.includes(id));
+
+                                                const nextBuildings = checked
+                                                    ? (prev.building_ids.includes(buildingId) ? prev.building_ids : [...prev.building_ids, buildingId])
+                                                    : stillHasRooms
+                                                    ? prev.building_ids
+                                                    : prev.building_ids.filter(id => id !== buildingId);
+
+                                                return {
+                                                    ...prev,
+                                                    room_ids: nextRooms,
+                                                    sub_area_ids: nextSubs,
+                                                    building_ids: nextBuildings,
+                                                };
+                                                });
+                                            }}
+                                            onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
+                                                setData(prev => {
+                                                let updatedSubAreas: number[];
+
+                                                if (!checked) {
+                                                    updatedSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
+                                                    return {
+                                                    ...prev,
+                                                    sub_area_ids: updatedSubAreas,
+                                                    };
+                                                } else {
+                                                    updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
+                                                    ? prev.sub_area_ids
+                                                    : [...prev.sub_area_ids, subAreaId];
+
+                                                    return {
+                                                    ...prev,
+                                                    sub_area_ids: updatedSubAreas,
+                                                    room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                                    building_ids: prev.building_ids.includes(buildingId)
+                                                        ? prev.building_ids
+                                                        : [...prev.building_ids, buildingId],
+                                                    };
+                                                }
+                                                });
+                                            }}
+                                            onRemove={() => {
+                                                setData('unit_ids', data.unit_ids.filter((id) => id !== uid));
+                                            }}
+                                            onClearAll={() => {
+                                                const unitBuildingIds = unitBuildings.map(b => b.id);
+                                                const unitRoomIds = unitRooms.map(r => r.id);
+                                                const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
+
+                                                setData({
+                                                    ...data,
+                                                    building_ids: data.building_ids.filter(id => !unitBuildingIds.includes(id)),
+                                                    room_ids: data.room_ids.filter(id => !unitRoomIds.includes(id)),
+                                                    sub_area_ids: data.sub_area_ids.filter(id => !unitSubAreaIds.includes(id)),
+                                                });
+                                            }}
+                                            onSelectAll={() => {
+                                                const unitBuildingIds = unitBuildings.map(b => b.id);
+                                                const unitRoomIds = unitRooms.map(r => r.id);
+                                                const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
+
+                                                setData({
+                                                    ...data,
+                                                    building_ids: Array.from(new Set([...data.building_ids, ...unitBuildingIds])),
+                                                    room_ids: Array.from(new Set([...data.room_ids, ...unitRoomIds])),
+                                                    sub_area_ids: Array.from(new Set([...data.sub_area_ids, ...unitSubAreaIds])),
+                                                });
+                                            }}
+                                        />
+                                    );
+                                })}
+                                {errors.room_ids && (
+                                    <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Buildings Section */}
+                        {data.scope_type === 'building' && (
+                            <div className="col-span-2 flex flex-col gap-4">
+                                <label className="block font-medium">Buildings Selection</label>
+
+                                <Select
+                                    className="w-full"
+                                    options={buildings
+                                        .filter((b) => !data.building_ids.includes(b.id))
+                                        .map((b) => ({
+                                            value: b.id,
+                                            label: `${b.name} (${b.code})`,
+                                        }))
+                                    }
+                                    placeholder="Add another building..."
+                                    value={null}
+                                    onChange={(selected) => {
+                                        if (selected) {
+                                            const id = Number(selected.value);
+                                            if (!data.building_ids.includes(id)) {
+                                                // collect rooms & subareas tied to this building
+                                                const buildingRoomIds = buildingRooms
+                                                    .filter((r) => r.building_id === id)
+                                                    .map((r) => r.id);
+
+                                                const buildingSubAreaIds = buildingRooms
+                                                    .filter((r) => r.building_id === id)
+                                                    .flatMap((r) => r.sub_areas?.map((sa) => sa.id) ?? []);
+
+                                                setData({
+                                                    ...data,
+                                                    building_ids: [...data.building_ids, id],
+                                                    room_ids: [...new Set([...data.room_ids, ...buildingRoomIds])],
+                                                    sub_area_ids: [...new Set([...data.sub_area_ids, ...buildingSubAreaIds])],
+                                                });
+                                            }
+                                        }
+                                    }}
+
+                                />
+                                {errors.building_ids && <p className="mt-1 text-xs text-red-500">{String(errors.building_ids)}</p>}
+
+                                <div className="flex flex-col gap-3">
+                                    {data.building_ids.map((bid) => {
+                                        const building = buildings.find((b) => b.id === bid);
+                                        if (!building) return null;
+
+                                        const rooms = buildingRooms.filter((r) => r.building_id === bid);
+
+                                        return (
+                                            <BuildingItem
+                                                key={bid}
+                                                building={building}
+                                                rooms={rooms}
+                                                assets={assets}
+                                                selectedRooms={data.room_ids}
+                                                selectedSubAreas={data.sub_area_ids}
+                                                onToggleRoom={(roomId, buildingId, checked) => {
+                                                    const room = buildingRooms.find(r => r.id === roomId);
+                                                    const subAreaIds = room?.sub_areas?.map(sa => sa.id) ?? [];
+
+                                                    setData(prev => {
+                                                        const hasRoom = prev.room_ids.includes(roomId);
+                                                        const nextRooms = checked
+                                                        ? (hasRoom ? prev.room_ids : [...prev.room_ids, roomId])
+                                                        : prev.room_ids.filter(id => id !== roomId);
+
+                                                        const nextSubs = checked
+                                                        ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
+                                                        : prev.sub_area_ids.filter(id => !subAreaIds.includes(id));
+
+                                                        const nextBuildings = checked
+                                                        ? (prev.building_ids.includes(buildingId) ? prev.building_ids : [...prev.building_ids, buildingId])
+                                                        : prev.building_ids;
+
+                                                        return {
+                                                            ...prev,
+                                                            room_ids: nextRooms,
+                                                            sub_area_ids: nextSubs,
+                                                            building_ids: nextBuildings,
+                                                        };
+                                                    });
+                                                }}
+                                                onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
+                                                    setData(prev => {
+                                                        let updatedSubAreas: number[];
+
+                                                        if (!checked) {
+                                                        // remove this subarea
+                                                        updatedSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
+
+                                                        // ✅ Keep the room even if no subareas are left
+                                                        return {
+                                                            ...prev,
+                                                            sub_area_ids: updatedSubAreas,
+                                                        };
+                                                        } else {
+                                                        // add this subarea
+                                                        updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
+                                                            ? prev.sub_area_ids
+                                                            : [...prev.sub_area_ids, subAreaId];
+
+                                                        return {
+                                                            ...prev,
+                                                            sub_area_ids: updatedSubAreas,
+                                                            room_ids: prev.room_ids.includes(roomId)
+                                                            ? prev.room_ids
+                                                            : [...prev.room_ids, roomId],
+                                                            building_ids: prev.building_ids.includes(buildingId)
+                                                            ? prev.building_ids
+                                                            : [...prev.building_ids, buildingId],
+                                                        };
+                                                        }
+                                                    });
+                                                }}
+                                                onRemove={() => {
+                                                    setData('building_ids', data.building_ids.filter((id) => id !== bid));
+                                                }}
+                                                onSelectAll={() => {
+                                                    const buildingRoomIds = rooms.map(r => r.id);
+                                                    const buildingSubAreaIds = rooms.flatMap(r => r.sub_areas?.map(sa => sa.id) ?? []);
+
+                                                    setData('room_ids', Array.from(new Set([...data.room_ids, ...buildingRoomIds])));
+                                                    setData('sub_area_ids', Array.from(new Set([...data.sub_area_ids, ...buildingSubAreaIds])));
+                                                }}
+                                                onClearAll={() => {
+                                                    const buildingRoomIds = rooms.map(r => r.id);
+                                                    const buildingSubAreaIds = rooms.flatMap(r => r.sub_areas?.map(sa => sa.id) ?? []);
+
+                                                    setData('room_ids', data.room_ids.filter(id => !buildingRoomIds.includes(id)));
+                                                    setData('sub_area_ids', data.sub_area_ids.filter(id => !buildingSubAreaIds.includes(id)));
+                                                }}
+                                            />
+                                        );
+                                    })}
+                                    {errors.room_ids && (
+                                        <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Divider */}
                         <div className="col-span-2 border-t" />
 
-                        {/* Inventory Schedule (Month Only) */}
+                        {/* Schedule + Staff + Status */}
                         <div>
-                            <Label>Inventory Schedule (Month)</Label>
-                            <PickerInput type="month" value={form.inventory_schedule} onChange={(v) => handleChange('inventory_schedule', v)} />
-                        </div>
-
-                        {/* Actual Date of Schedule (Full Date) */}
-                        <div>
-                            <Label>Actual Date of Inventory</Label>
+                            <label className="mb-1 block font-medium">Inventory Schedule</label>
                             <PickerInput
-                                type="date"
-                                value={form.actual_date_of_inventory}
-                                onChange={(v) => handleChange('actual_date_of_inventory', v)}
+                                type="month"
+                                value={data.inventory_schedule}
+                                onChange={(v) => setData('inventory_schedule', v)}
                             />
+                            {errors.inventory_schedule && <p className="text-sm text-red-600">{errors.inventory_schedule}</p>}
                         </div>
 
-                        {/* Checked By */}
                         <div>
-                            <Label>Checked By</Label>
-                            <Input
-                                className="w-full rounded-lg border p-2"
-                                value={form.checked_by}
-                                onChange={(e) => handleChange('checked_by', e.target.value)}
-                                placeholder="Name"
+                            <label className="mb-1 block font-medium">Designated Staff</label>
+                            <Select
+                                className="w-full"
+                                options={users.map((u) => ({
+                                    value: u.id,
+                                    label: `${u.name} (${u.role_name})`,
+                                }))}
+                                value={
+                                    users.find((u) => u.id === Number(data.designated_employee))
+                                        ? {
+                                            value: Number(data.designated_employee),
+                                            label: users.find((u) => u.id === Number(data.designated_employee))?.name,
+                                        }
+                                        : null
+                                }
+                                onChange={(selected) => setData('designated_employee', selected ? selected.value : '')}
                             />
+                            {errors.designated_employee && <p className="text-sm text-red-600">{errors.designated_employee}</p>}
                         </div>
 
-                        {/* Verified By */}
                         <div>
-                            <Label>Verified By</Label>
-                            <Input
-                                className="w-full rounded-lg border p-2"
-                                value={form.verified_by}
-                                onChange={(e) => handleChange('verified_by', e.target.value)}
-                                placeholder="Name"
-                            />
-                        </div>
-
-                        {/* Received By */}
-                        <div>
-                            <Label>Inventory Copy Received By</Label>
-                            <Input
-                                className="w-full rounded-lg border p-2"
-                                value={form.received_by}
-                                onChange={(e) => handleChange('received_by', e.target.value)}
-                                placeholder="Name"
-                            />
-                        </div>
-
-                        {/* Status */}
-                        {/* <div>
-                            <Label>Status</Label>
+                            <label className="mb-1 block font-medium">Scheduling Status</label>
                             <select
                                 className="w-full rounded-lg border p-2"
-                                value={form.scheduling_status}
-                                onChange={(e) => handleChange('scheduling_status', e.target.value)}
+                                value={data.scheduling_status}
+                                onChange={(e) => setData('scheduling_status', e.target.value)}
                             >
                                 {statusOptions.map((s) => (
                                     <option key={s} value={s}>
-                                        {s.replace(/_/g, ' ')}
+                                        {s.replace('_', ' ')}
                                     </option>
                                 ))}
                             </select>
-                        </div> */}
-
-                        {/* Status */}
-                        <div>
-                            <Label>Status</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.scheduling_status}
-                                 onChange={(e) => handleChange('scheduling_status', e.target.value)}
-                            >
-                                {['Pending_Review', 'Pending', 'Overdue', 'Completed', 'Cancelled'].map((s) => (
-      <option
-        key={s}
-        value={s}
-        disabled={
-          (s === 'Completed' && !schedule.isFullyApproved) || 
-          s === 'Cancelled' // 👈 disable Cancelled
-        }
-      >
-        {s.replace(/_/g, ' ')}
-      </option>
-    ))}
-  </select>
-                            {/* {!isFullyApproved && form.scheduling_status === 'Completed' && (
-                                <p className="mt-1 text-xs text-red-500">
-                                    You cannot mark this schedule as Completed until it has been fully approved.
-                                </p>
-                            )} */}
                         </div>
 
-                        {/* Description */}
-                        <div className="col-span-2">
-                            <Label>Description</Label>
-                            <Textarea
-                                placeholder="Enter Description"
-                                value={form.description}
-                                onChange={(e) => handleChange('description', e.target.value)}
+                        {/* Divider */}
+                        <div className="col-span-2 border-t" />
+
+                        {/* Dates + Checks */}
+                        <div>
+                            <label className="mb-1 block font-medium">Actual Date of Inventory</label>
+                            <PickerInput
+                                type="date"
+                                value={data.actual_date_of_inventory}
+                                onChange={(v) => setData('actual_date_of_inventory', v)}
                             />
                         </div>
 
-                        <div className="col-span-2 border-t" />
-                    </div>
+                        <div>
+                            <label className="mb-1 block font-medium">Checked By</label>
+                            <Input
+                                value={data.checked_by}
+                                onChange={(e) => setData('checked_by', e.target.value)}
+                            />
+                        </div>
 
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button type="button" onClick={handleSubmit}>
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </form>
+                        <div>
+                            <label className="mb-1 block font-medium">Verified By</label>
+                            <Input
+                                value={data.verified_by}
+                                onChange={(e) => setData('verified_by', e.target.value)}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block font-medium">Received By</label>
+                            <Input
+                                value={data.received_by}
+                                onChange={(e) => setData('received_by', e.target.value)}
+                            />
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="mb-1 block font-medium">Description</label>
+                            <Textarea
+                                rows={6}
+                                className="w-full resize-none rounded-lg border p-2"
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
+                            />
+                        </div>
+
+                    </form>
+                </div>
+                {/* Footer */}
+                <div className="shrink-0 flex justify-end gap-2 border-t pt-4 mt-4">
+                    <Button 
+                        type="button" 
+                        variant="destructive"
+                        className='cursor-pointer' 
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </Button>
+                    <Button 
+                        type="submit" 
+                        form="edit-inventory-form"
+                        className='cursor-pointer'
+                    >
+                        Save Changes
+                    </Button>
+                </div>
+            </DialogContent>
+            
+            <WarningModal
+                show={warningVisible}
+                onClose={() => setWarningVisible(false)}
+                title="Validation Warning"
+                message={warningMessage}
+                details={warningDetails}
+            />
+
         </Dialog>
     );
 };

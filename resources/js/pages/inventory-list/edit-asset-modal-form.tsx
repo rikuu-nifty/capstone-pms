@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category } from '@/pages/inventory-list/index';
-import { UnitOrDepartment } from '@/types/custom-index';
+import type { UnitOrDepartment, SubArea } from '@/types/custom-index';
 import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';// ✅ new import
@@ -19,9 +19,20 @@ type Props = {
     categories: Category[];
     assetModels: AssetModel[];
     uniqueBrands: string[];
+    subAreas: SubArea[];
 };
 
-export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartments, buildingRooms, categories, assetModels, uniqueBrands }: Props) => {
+export const EditAssetModalForm = ({ 
+    onClose, 
+    asset,
+    subAreas, 
+    buildings, 
+    unitOrDepartments, 
+    buildingRooms, 
+    categories, 
+    assetModels, 
+    uniqueBrands 
+}: Props) => {
     const [form, setForm] = useState<AssetFormData>({
         asset_name: asset.asset_name,
         supplier: asset.supplier,
@@ -49,6 +60,8 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
         status: asset.status || 'archived',
         // ✅ new field
         image: null,
+
+        sub_area_id: asset.sub_area?.id || '',
     });
 
     const handleChange = <K extends keyof AssetFormData>(field: K, value: AssetFormData[K]) => {
@@ -67,14 +80,14 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
             `/inventory-list/${asset.id}`,
             {
                 ...form,
-                _method: 'put', // ✅ Laravel will interpret this as a PUT
+                 sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
+                _method: 'put',
             },
             {
                 forceFormData: true, // ✅ ensures File objects get sent as FormData
-
                 onSuccess: () => {
                     onClose();
-                    // 🔔 refresh notifications if due date was set to today/past
+                    // refresh notifications if due date was set to today/past
                     router.reload({ only: ['notifications'] });
                 },
                 onError: (errors) => console.error(errors),
@@ -97,7 +110,11 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                             <select
                                 className="w-full rounded-lg border p-2"
                                 value={form.building_id}
-                                onChange={(e) => handleChange('building_id', Number(e.target.value))}
+                                onChange={(e) => {
+                                    handleChange('building_id', Number(e.target.value));
+
+                                    handleChange('sub_area_id', null)
+                                }}
                             >
                                 <option value="">Select Building</option>
                                 {buildings.map((b) => (
@@ -142,6 +159,29 @@ export const EditAssetModalForm = ({ asset, onClose, buildings, unitOrDepartment
                                 ))}
                             </select>
                         </div>
+
+                        {/* Sub Area */}
+                        <div>
+                            <Label>Sub Area</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.sub_area_id ?? ''}
+                                onChange={(e) => 
+                                    handleChange('sub_area_id', e.target.value === '' ? null : Number(e.target.value))
+                                }
+                                disabled={!form.building_room_id}
+                            >
+                                <option value="">Select Sub Area</option>
+                                {subAreas
+                                .filter((s: SubArea) => s.building_room_id === Number(form.building_room_id)) // ✅ filter by chosen room
+                                .map((s: SubArea) => (
+                                    <option key={s.id} value={s.id}>
+                                    {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
 
         <div>
             <Label>Status</Label>

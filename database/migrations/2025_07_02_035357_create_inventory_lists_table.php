@@ -62,14 +62,15 @@ return new class extends Migration
             $table->integer('quantity');
 
             // ✅ New field: Assigned To 
-            $table->foreignId('transfer_id')->nullable()->constrained('transfers')->nullOnDelete();
+            // $table->foreignId('transfer_id')->nullable()->constrained('transfers')->nullOnDelete();
+            $table->unsignedBigInteger('transfer_id')->nullable();
 
             // $table->unsignedInteger('transfer_id')->nullable();
             // $table->foreign('transfer_id')
             // ->references('id')->on('transfers')
             // ->nullOnDelete();
             // $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->default('pending');
-            
+
             // ✅ New field: Assigned To 
             $table->string('assigned_to')->nullable(); // Person's name (not linked to users)
 

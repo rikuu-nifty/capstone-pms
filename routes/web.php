@@ -21,7 +21,7 @@
     use App\Http\Controllers\ReportController;
     use App\Http\Controllers\Settings\PasswordController;
     use App\Http\Controllers\RoleController;
-
+    use App\Http\Controllers\InventoryReportController;
 
     // Route::get('/', function () {
     //     return Inertia::render('welcome');
@@ -204,7 +204,14 @@
     Route::delete('/inventory-scheduling/{inventory_scheduling}', [InventorySchedulingController::class, 'destroy'])
         ->name('inventory-scheduling.destroy')
         ->middleware('can:delete-inventory-scheduling');
-    
+    Route::get('/schedules/{schedule}/rows/{row}/assets', [InventorySchedulingController::class, 'rowAssets'])
+        ->name('schedules.rowAssets');
+    Route::put('/schedules/{schedule}/rows/{row}/bulk-status', [InventorySchedulingController::class, 'bulkUpdateAssetStatus'])
+        ->name('schedules.bulkUpdateAssetStatus');
+    Route::put('/schedules/{schedule}/assets/{asset}', [InventorySchedulingController::class, 'updateAssetStatus'])
+        ->name('schedules.updateAssetStatus');
+
+
     // INVENTORY LIST
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
         ->name('inventory-list.index')
@@ -411,6 +418,8 @@
 
 
     //REPORTS
+    Route::get('/reports/inventory-sheet', [InventoryReportController::class, 'index'])->name('reports.inventory-sheet');
+    Route::post('/reports/inventory-sheet/generate', [InventoryReportController::class, 'generate'])->name('reports.inventory-sheet.generate');
 
     //ASSIGNMENTS
 

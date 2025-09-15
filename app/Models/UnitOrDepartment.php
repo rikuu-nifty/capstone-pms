@@ -26,6 +26,12 @@ class UnitOrDepartment extends Model
         return $this->hasMany(InventoryScheduling::class);
     }
 
+    public function schedulings()
+    {
+        return $this->belongsToMany(InventoryScheduling::class, 'inventory_scheduling_units')->withTimestamps();
+    }
+
+
     public function issuingOffice()
     {
         return $this->hasMany(TurnoverDisposal::class, 'issuing_office');

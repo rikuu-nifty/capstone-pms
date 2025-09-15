@@ -61,8 +61,9 @@ export default function BuildingsTable({ buildings, sortKey, sortDir, search, se
                             <TableHead className="text-center">ID</TableHead>
                             <TableHead className="text-center">Building Code</TableHead>
                             <TableHead className="text-center">Name</TableHead>
-                            <TableHead className="text-center">Description</TableHead>
+                            {/* <TableHead className="text-center">Description</TableHead> */}
                             <TableHead className="text-center">Room Count</TableHead>
+                            <TableHead className="text-center">Sub Areas Count</TableHead>
                             <TableHead className="text-center">Assets Count</TableHead>
                             <TableHead className="text-center">Actions</TableHead>
                         </TableRow>
@@ -79,8 +80,9 @@ export default function BuildingsTable({ buildings, sortKey, sortDir, search, se
                                     <TableCell>{b.id}</TableCell>
                                     <TableCell className="font-medium">{(b.code).toUpperCase()}</TableCell>
                                     <TableCell>{b.name}</TableCell>
-                                    <TableCell className="max-w-[250px] text-center break-words whitespace-normal">{b.description ?? '—'}</TableCell>
+                                    {/* <TableCell className="max-w-[250px] text-center break-words whitespace-normal">{b.description ?? '—'}</TableCell> */}
                                     <TableCell>{b.building_rooms_count ?? 0}</TableCell>
+                                    <TableCell>{b.sub_areas_count ?? 0}</TableCell>
                                     <TableCell>{b.assets_count ?? 0}</TableCell>
                                     <TableCell className="h-full">
                                         <div className="flex h-full items-center justify-center gap-2">

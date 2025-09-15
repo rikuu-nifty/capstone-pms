@@ -71,23 +71,24 @@ class TurnoverDisposalController extends Controller
             'status'              => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
             'remarks'             => ['nullable', 'string'],
 
-            'selected_assets'     => ['required', 'array', 'min:1'],
-            'selected_assets.*'   => [
-                'integer','distinct',
-                Rule::exists('inventory_lists','id')
-                ->where(function ($q) use ($request) {
-                    $q->where('unit_or_department_id', (int) $request->issuing_office_id);
-                }),
+            'turnover_disposal_assets'                  => ['required', 'array', 'min:1'],
+            'turnover_disposal_assets.*.asset_id'       => [
+                'required',
+                'integer',
+                Rule::exists('inventory_lists', 'id'),
             ],
+            'turnover_disposal_assets.*.asset_status'   => ['nullable', Rule::in(['pending', 'completed', 'cancelled'])],
+            'turnover_disposal_assets.*.date_finalized' => ['nullable', 'date'],
+            'turnover_disposal_assets.*.remarks'        => ['nullable', 'string'],
         ]);
 
-        $assetIds = $validated['selected_assets'];
-        unset($validated['selected_assets']);
+        $lines = $validated['turnover_disposal_assets'];
+        unset($validated['turnover_disposal_assets']);
 
-        $td = TurnoverDisposal::createWithAssets($validated, $assetIds);
-        $recordType = ucwords($td->type);
+        $record = TurnoverDisposal::createWithLines($validated, $lines);
+        $recordType = ucfirst($record->type);
 
-        return back()->with('success', "{$recordType} Record #{$td->id} created.");
+        return back()->with('success', "{$recordType} Record #{$record->id} created.");
     }
 
     /**
@@ -96,32 +97,34 @@ class TurnoverDisposalController extends Controller
     public function update(Request $request, TurnoverDisposal $turnoverDisposal)
     {
         $validated = $request->validate([
-            'issuing_office_id'     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'type'                  => ['required', Rule::in(['turnover', 'disposal'])],
-            'receiving_office_id'   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'description'           => ['nullable', 'string'],
-            'personnel_in_charge'   => ['required', 'string'],
-            'document_date'         => ['required', 'date'],
-            'status'                => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
-            'remarks'               => ['nullable', 'string'],
+            'issuing_office_id'   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type'                => ['required', Rule::in(['turnover', 'disposal'])],
+            'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description'         => ['nullable', 'string'],
+            'personnel_in_charge' => ['required', 'string'],
+            'document_date'       => ['required', 'date'],
+            'status'              => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
+            'remarks'             => ['nullable', 'string'],
 
-            'selected_assets'       => ['required','array','min:1'],
-            'selected_assets.*'     => [
-                'integer','distinct', 
-                Rule::exists('inventory_lists','id')
-                ->where(function ($q) use ($request) {
-                    $q->where('unit_or_department_id', (int) $request->input('issuing_office_id'));
-                }),
+            'turnover_disposal_assets'                  => ['required', 'array', 'min:1'],
+            'turnover_disposal_assets.*.asset_id'       => [
+                'required',
+                'integer',
+                Rule::exists('inventory_lists', 'id'),
             ],
+            'turnover_disposal_assets.*.asset_status'   => ['nullable', Rule::in(['pending', 'completed', 'cancelled'])],
+            'turnover_disposal_assets.*.date_finalized' => ['nullable', 'date'],
+            'turnover_disposal_assets.*.remarks'        => ['nullable', 'string'],
         ]);
-        
-        $assetIds = $validated['selected_assets']; 
-        unset($validated['selected_assets']);
 
-        $td = $turnoverDisposal->updateWithAssets($validated, $assetIds);
+        $lines = $validated['turnover_disposal_assets'];
+        unset($validated['turnover_disposal_assets']);
 
-        return back()->with('success', "Record #{$td->id} has been updated.");
+        $record = $turnoverDisposal->updateWithLines($validated, $lines);
+
+        return back()->with('success', "Record #{$record->id} has been updated.");
     }
+
 
     public function show(TurnoverDisposal $turnoverDisposal)
     {

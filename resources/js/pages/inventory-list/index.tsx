@@ -20,7 +20,7 @@ import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 // import { WebcamCaptureModal } from './WebcamCaptureModal';
 import { WebcamCapture } from './WebcamCapture';
 import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
-import { UnitOrDepartment } from '@/types/custom-index';
+import { UnitOrDepartment, SubArea } from '@/types/custom-index';
 import { ucwords } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -29,8 +29,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/inventory-list',
     },
 ];
-
-
 
 export type Category = {
     id: number;
@@ -75,10 +73,15 @@ export type Asset = {
     asset_type: string;
     description: string;
     status: 'active' | 'archived';
+    unit_or_department_id?: number | null;
     category_id: number;
     category?: Category | null;
     unit_or_department: UnitOrDepartment | null;
     building: Building | null;
+
+    building_room_id?: number | null;
+    sub_area_id?: number | null;
+    
     building_room?: BuildingRoom | null;
 
     room_building?: Building | null;
@@ -97,6 +100,9 @@ export type Asset = {
     brand: string;
     image_path?: string | null; // ✅ new field
     maintenance_due_date: string; // ✅ new field
+    sub_area?: SubArea | null;
+
+    current_transfer_status?: string | null;
 };
 
 export type AssetFormData = {
@@ -121,6 +127,8 @@ export type AssetFormData = {
     // transfer_status: string;  ❌ Removed: transfer_status
     image?: File | null; // ✅ add this
     maintenance_due_date: string; // ✅ new field
+
+    sub_area_id: number | string | null;
 };
 
 type KPIs = {
@@ -150,6 +158,8 @@ export default function InventoryListIndex({
         fixed_pct: 0,
         not_fixed_pct: 0,
     },
+
+    subAreas = [],
 }: {
     assets: Asset[];
     assetModels: AssetModel[];
@@ -161,11 +171,14 @@ export default function InventoryListIndex({
     viewing_asset?: Asset | null;
 
     kpis?: KPIs;
+
+    subAreas: SubArea[];
 }) {
     const { data, setData, post, processing, errors, reset, clearErrors, transform } = useForm<AssetFormData>({
         building_id: '',
         unit_or_department_id: '',
         building_room_id: '',
+        sub_area_id: '',
         date_purchased: '',
         maintenance_due_date: '', // ✅ new default
         category_id: '',
@@ -303,7 +316,7 @@ export default function InventoryListIndex({
 
         transform((d) => ({
             ...d,
-            // ensure numbers are numbers (or stay empty only when allowed)
+            sub_area_id: d.sub_area_id === '' ? null : Number(d.sub_area_id),
             building_id: d.building_id === '' ? '' : Number(d.building_id),
             unit_or_department_id: d.unit_or_department_id === '' ? '' : Number(d.unit_or_department_id),
             building_room_id: d.building_room_id === '' ? '' : Number(d.building_room_id),
@@ -577,8 +590,8 @@ export default function InventoryListIndex({
                                 <TableHead className="text-center">Date Purchased</TableHead>
                                 <TableHead className="text-center">Asset Type</TableHead>
                                 {/* <TableHead className="text-center">Quantity</TableHead> */}
-                                <TableHead className="text-center">Building</TableHead>
-                                <TableHead className="text-center">Unit / Department</TableHead>
+                                <TableHead className="text-center">Location</TableHead>
+                                <TableHead className="text-center">Unit/Department</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">NFC Link</TableHead>
                                 <TableHead className="text-center">Action</TableHead>
@@ -607,7 +620,14 @@ export default function InventoryListIndex({
                                         {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
                                     </TableCell>
                                     <TableCell>
-                                        {item.room_building && item.building_room ? `${item.room_building.name} (${item.building_room.room})` : '—'}
+                                        {item.room_building && item.building_room ? (
+                                            <>
+                                            {item.room_building.name} ({item.building_room.room})
+                                            {item.sub_area?.name ? ` – ${item.sub_area.name}` : ''}
+                                            </>
+                                        ) : (
+                                            '—'
+                                        )}
                                     </TableCell>
                                     <TableCell>{item.unit_or_department?.code ? String(item.unit_or_department.code).toUpperCase() : '—'}</TableCell>
                                     <TableCell className="text-center">
@@ -719,6 +739,7 @@ export default function InventoryListIndex({
                     categories={categories}
                     assetModels={assetModels}
                     uniqueBrands={[...new Set(assetModels.map((m) => m.brand))]}
+                    subAreas={subAreas}
                 />
             )}
 
@@ -811,15 +832,16 @@ export default function InventoryListIndex({
                     buildingRooms={buildingRooms}
                     categories={categories}
                     assetModels={assetModels}
+                    subAreas={subAreas}
                 />
             )}
 
             {/* Webcam modal
-<WebcamCaptureModal
-  open={webcamOpen}
-  onClose={() => setWebcamOpen(false)}
-  onCapture={(file) => setData("image", file)}
-/> */}
+            <WebcamCaptureModal
+            open={webcamOpen}
+            onClose={() => setWebcamOpen(false)}
+            onCapture={(file) => setData("image", file)}
+            /> */}
 
             {/* Side Panel Modal with Slide Effect */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddAsset ? 'visible' : 'invisible'}`}>
@@ -900,6 +922,30 @@ export default function InventoryListIndex({
                                         </option>
                                     ))}
                                 </select>
+                            </div>
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Sub Area</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.sub_area_id ?? ''}
+                                    onChange={(e) =>
+                                        setData('sub_area_id', e.target.value === '' ? null : Number(e.target.value))
+                                    }
+                                    disabled={!data.building_room_id}
+                                >
+                                    <option value="">Select Sub Area</option>
+                                    {subAreas
+                                    .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id)) // ✅ typed
+                                    .map((s: SubArea) => ( // ✅ typed
+                                        <option key={s.id} value={s.id}>
+                                        {s.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.sub_area_id && (
+                                    <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
+                                )}
                             </div>
 
                             {/* <div className="col-span-1">
