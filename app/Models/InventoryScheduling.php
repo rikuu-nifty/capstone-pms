@@ -140,99 +140,29 @@ class InventoryScheduling extends Model
     /**
      * Sync scope (units OR buildings/rooms/subareas) and auto-attach assets.
      */
-    // public function syncScopeAndAssets(array $data): void
-    // {
-    //     $scope = $data['scope_type']; // validated as 'unit' or 'building'
-
-    //     // Normalize inputs and de-dupe
-    //     $unitIds     = array_values(array_unique($data['unit_ids']      ?? []));
-    //     $buildingIds = array_values(array_unique($data['building_ids']  ?? []));
-    //     $roomIds     = array_values(array_unique($data['room_ids']      ?? []));
-    //     $subAreaIds  = array_values(array_unique($data['sub_area_ids']  ?? []));
-
-    //     // --- Sync pivots ---
-    //     if ($scope === 'unit') {
-    //         $this->units()->sync($unitIds);
-    //         $this->buildings()->sync($buildingIds);
-    //         $this->rooms()->sync($roomIds);
-    //         $this->subAreas()->sync($subAreaIds);
-
-    //         // Fetch assets by units
-    //         $assetIds = empty($unitIds) ? [] : InventoryList::whereIn('unit_or_department_id', $unitIds)
-    //             ->pluck('id')
-    //             ->all()
-    //         ;
-
-    //     } elseif ($scope === 'building') {
-    //         $this->units()->sync([]);
-    //         $this->buildings()->sync($buildingIds);
-    //         $this->rooms()->sync($roomIds);
-    //         $this->subAreas()->sync($subAreaIds);
-
-    //         if (empty($buildingIds) && empty($roomIds) && empty($subAreaIds)) {
-    //             $assetIds = [];
-    //         } else {
-    //             $assetIds = InventoryList::query()
-    //                 ->when(!empty($subAreaIds), function ($q) use ($subAreaIds) {
-    //                     // explicit subareas
-    //                     $q->whereIn('sub_area_id', $subAreaIds);
-    //                 })
-    //                 ->when(!empty($roomIds), function ($q) use ($roomIds) {
-    //                     // leftovers only
-    //                     $q->orWhere(function ($x) use ($roomIds) {
-    //                         $x->whereIn('building_room_id', $roomIds)
-    //                             ->whereNull('sub_area_id');
-    //                     });
-    //                 })
-    //                 ->when(!empty($buildingIds), function ($q) use ($buildingIds) {
-    //                     // full buildings (only if rooms/subareas not chosen)
-    //                     $q->orWhereIn('building_id', $buildingIds);
-    //                 })
-    //                 ->pluck('id')
-    //                 ->all();
-    //         }
-    //     } else {
-    //         throw new \InvalidArgumentException("Invalid scope_type: {$scope}");
-    //     }
-
-    //     // Sync assets
-    //     $current = $this->assets()->pluck('inventory_list_id')->all();
-
-    //     $toDelete = array_diff($current,  $assetIds);
-    //     $toInsert = array_diff($assetIds, $current);
-
-    //     if (!empty($toDelete)) {
-    //         $this->assets()->whereIn('inventory_list_id', $toDelete)->delete();
-    //     }
-
-    //     if (!empty($toInsert)) {
-    //         foreach ($toInsert as $assetId) {
-    //             $this->assets()->firstOrCreate(
-    //                 ['inventory_list_id' => $assetId],
-    //                 ['inventory_status' => 'scheduled']
-    //             );
-    //         }
-    //     }
-    // }
-
     public function syncScopeAndAssets(array $data): void
     {
         $scope = $data['scope_type']; // validated as 'unit' or 'building'
 
+        // Normalize inputs and de-dupe
         $unitIds     = array_values(array_unique($data['unit_ids']      ?? []));
         $buildingIds = array_values(array_unique($data['building_ids']  ?? []));
         $roomIds     = array_values(array_unique($data['room_ids']      ?? []));
         $subAreaIds  = array_values(array_unique($data['sub_area_ids']  ?? []));
 
+        // --- Sync pivots ---
         if ($scope === 'unit') {
             $this->units()->sync($unitIds);
             $this->buildings()->sync($buildingIds);
             $this->rooms()->sync($roomIds);
             $this->subAreas()->sync($subAreaIds);
 
-            $assetIds = empty($unitIds)
-                ? []
-                : InventoryList::whereIn('unit_or_department_id', $unitIds)->pluck('id')->all();
+            // Fetch assets by units
+            $assetIds = empty($unitIds) ? [] : InventoryList::whereIn('unit_or_department_id', $unitIds)
+                ->pluck('id')
+                ->all()
+            ;
+
         } elseif ($scope === 'building') {
             $this->units()->sync([]);
             $this->buildings()->sync($buildingIds);
@@ -240,15 +170,16 @@ class InventoryScheduling extends Model
             $this->subAreas()->sync($subAreaIds);
 
             if (!empty($subAreaIds)) {
-                $assetIds = InventoryList::whereIn('sub_area_id', $subAreaIds)
-                    ->pluck('id')->all();
+                $assetIds = InventoryList::whereIn('sub_area_id', $subAreaIds)->pluck('id')->all();
             } elseif (!empty($roomIds)) {
                 $assetIds = InventoryList::whereIn('building_room_id', $roomIds)
                     ->whereNull('sub_area_id')
-                    ->pluck('id')->all();
+                    ->pluck('id')
+                    ->all();
             } elseif (!empty($buildingIds)) {
                 $assetIds = InventoryList::whereIn('building_id', $buildingIds)
-                    ->pluck('id')->all();
+                ->pluck('id')
+                ->all();
             } else {
                 $assetIds = [];
             }
@@ -259,7 +190,7 @@ class InventoryScheduling extends Model
         // Sync assets
         $current = $this->assets()->pluck('inventory_list_id')->all();
 
-        $toDelete = array_diff($current, $assetIds);
+        $toDelete = array_diff($current,  $assetIds);
         $toInsert = array_diff($assetIds, $current);
 
         if (!empty($toDelete)) {
@@ -275,4 +206,6 @@ class InventoryScheduling extends Model
             }
         }
     }
+
+    
 }
