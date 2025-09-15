@@ -150,17 +150,20 @@ export const ViewScheduleModal = ({
                 const rooms = (schedule.rooms ?? []).filter((r) => r.building_id === b.id);
 
                 rooms.forEach((r) => {
-                const subAreas = (schedule.sub_areas ?? []).filter(
+                    const subAreas = (schedule.sub_areas ?? []).filter(
                     (sa) => sa.building_room_id === r.id
                 );
 
                 if (subAreas.length === 0) {
                     const assetsHere = (schedule.assets ?? [])
-                    .filter(
-                        (a) =>
-                        a.asset?.building_room_id === r.id &&
-                        a.asset?.unit_or_department_id === u?.id
-                    )
+                    .filter((a) => {
+                        const matchRoom = a.asset?.building_room_id === r.id;
+                        const matchUnit =
+                        schedule.scope_type === 'unit'
+                            ? a.asset?.unit_or_department_id === u?.id
+                            : true;
+                        return matchRoom && matchUnit;
+                    })
                     .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
                     list.push({
@@ -180,12 +183,15 @@ export const ViewScheduleModal = ({
                 } else {
                     subAreas.forEach((sa) => {
                     const assetsHere = (schedule.assets ?? [])
-                        .filter(
-                        (a) =>
-                            a.asset?.sub_area_id === sa.id &&
-                            a.asset?.unit_or_department_id === u?.id
-                        )
-                        .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
+                    .filter((a) => {
+                        const matchSubArea = a.asset?.sub_area_id === sa.id;
+                        const matchUnit =
+                        schedule.scope_type === 'unit'
+                            ? a.asset?.unit_or_department_id === u?.id
+                            : true;
+                        return matchSubArea && matchUnit;
+                    })
+                    .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
                     list.push({
                         unit: unitName ?? undefined,
@@ -204,12 +210,15 @@ export const ViewScheduleModal = ({
                     });
 
                     const leftoverAssets = (schedule.assets ?? [])
-                    .filter(
-                        (a) =>
-                        a.asset?.building_room_id === r.id &&
-                        (!a.asset?.sub_area_id || a.asset?.sub_area_id === null) &&
-                        a.asset?.unit_or_department_id === u?.id
-                    )
+                    .filter((a) => {
+                        const matchRoom = a.asset?.building_room_id === r.id;
+                        const noSubArea = !a.asset?.sub_area_id;
+                        const matchUnit =
+                        schedule.scope_type === 'unit'
+                            ? a.asset?.unit_or_department_id === u?.id
+                            : true;
+                        return matchRoom && noSubArea && matchUnit;
+                    })
                     .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
                     if (leftoverAssets.length > 0) {

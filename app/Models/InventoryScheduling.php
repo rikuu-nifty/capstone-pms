@@ -169,36 +169,20 @@ class InventoryScheduling extends Model
             if (empty($buildingIds) && empty($roomIds) && empty($subAreaIds)) {
                 $assetIds = [];
             } else {
-                // $assetIds = InventoryList::query()
-                //     ->when(!empty($buildingIds), fn($q) => $q->whereIn('building_id', $buildingIds))
-                //     ->when(!empty($roomIds),     fn($q) => $q->whereIn('building_room_id', $roomIds))
-                //     ->when(!empty($subAreaIds),  fn($q) => $q->whereIn('sub_area_id', $subAreaIds))
-                //     ->orWhere(function ($q) use ($roomIds) {
-                //         // Always include assets for selected rooms with no sub-area
-                //         if (!empty($roomIds)) {
-                //             $q->whereIn('building_room_id', $roomIds)
-                //                 ->whereNull('sub_area_id');
-                //         }
-                //     })
-                //     ->pluck('id')
-                //     ->all();
                 $assetIds = InventoryList::query()
-                    ->when(
-                        !empty($buildingIds),
-                        fn($q) =>
-                        $q->whereIn('building_id', $buildingIds)
-                    )
-                    ->when(
-                        !empty($roomIds),
-                        fn($q) =>
-                        $q->whereIn('building_room_id', $roomIds)
-                            ->whereNull('sub_area_id') // 👈 exclude subarea assets
-                    )
-                    ->when(
-                        !empty($subAreaIds),
-                        fn($q) =>
-                        $q->whereIn('sub_area_id', $subAreaIds)
-                    )
+                    ->when(!empty($buildingIds), function ($q) use ($buildingIds) {
+                        $q->whereIn('building_id', $buildingIds);
+                    })
+                    ->orWhere(function ($q) use ($roomIds) {
+                        if (!empty($roomIds)) {
+                            $q->whereIn('building_room_id', $roomIds);
+                        }
+                    })
+                    ->orWhere(function ($q) use ($subAreaIds) {
+                        if (!empty($subAreaIds)) {
+                            $q->whereIn('sub_area_id', $subAreaIds);
+                        }
+                    })
                     ->pluck('id')
                     ->all();
             }
