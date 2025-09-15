@@ -69,13 +69,6 @@ export const EditInventorySchedulingModal = ({
         scheduled_assets: [],
     });
 
-    const handleChange = <K extends keyof InventorySchedulingFormData>(
-        field: K,
-        value: InventorySchedulingFormData[K],
-    ) => {
-        setData(field, value);
-    };
-
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
@@ -113,7 +106,17 @@ export const EditInventorySchedulingModal = ({
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     type="button"
-                                    onClick={() => handleChange("scope_type", "unit")}
+                                    // onClick={() => handleChange("scope_type", "unit")}
+                                    onClick={() => {
+                                        setData({
+                                            ...data,
+                                            scope_type: 'unit',
+                                            unit_ids: [],
+                                            building_ids: [],
+                                            room_ids: [],
+                                            sub_area_ids: [],
+                                        });
+                                    }}
                                     className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                         ${data.scope_type === "unit"
                                         ? "border-blue-600 bg-blue-50 text-blue-700"
@@ -125,7 +128,17 @@ export const EditInventorySchedulingModal = ({
 
                                 <button
                                     type="button"
-                                    onClick={() => handleChange("scope_type", "building")}
+                                    // onClick={() => handleChange("scope_type", "building")}
+                                    onClick={() => {
+                                        setData({
+                                            ...data,
+                                            scope_type: 'building',
+                                            unit_ids: [],
+                                            building_ids: [],
+                                            room_ids: [],
+                                            sub_area_ids: [],
+                                        });
+                                    }}
                                     className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                         ${data.scope_type === "building"
                                         ? "border-blue-600 bg-blue-50 text-blue-700"
@@ -157,7 +170,28 @@ export const EditInventorySchedulingModal = ({
                                         if (selected) {
                                             const id = Number(selected.value);
                                             if (!data.unit_ids.includes(id)) {
-                                                setData('unit_ids', [...data.unit_ids, id]);
+                                                // collect buildings, rooms, subareas tied to this unit
+                                                const unitAssets = assets.filter((a) => a.unit_or_department?.id === id);
+
+                                                const unitBuildingIds = [
+                                                    ...new Set(unitAssets.map((a) => a.building?.id).filter((b): b is number => !!b)),
+                                                ];
+
+                                                const unitRoomIds = [
+                                                    ...new Set(unitAssets.map((a) => a.building_room_id).filter((r): r is number => !!r)),
+                                                ];
+
+                                                const unitSubAreaIds = [
+                                                    ...new Set(unitAssets.map((a) => a.sub_area_id).filter((sa): sa is number => !!sa)),
+                                                ];
+
+                                                setData({
+                                                    ...data,
+                                                    unit_ids: [...data.unit_ids, id],
+                                                    building_ids: [...new Set([...data.building_ids, ...unitBuildingIds])],
+                                                    room_ids: [...new Set([...data.room_ids, ...unitRoomIds])],
+                                                    sub_area_ids: [...new Set([...data.sub_area_ids, ...unitSubAreaIds])],
+                                                });
                                             }
                                         }
                                     }}
@@ -211,7 +245,7 @@ export const EditInventorySchedulingModal = ({
                                             selectedRooms={data.room_ids}
                                             selectedSubAreas={data.sub_area_ids}
                                             onToggleRoom={(roomId, buildingId, checked) => {
-                                            if (!checked) {
+                                                if (!checked) {
                                                     const subAreasToRemove =
                                                         buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
                                                     setData('room_ids', data.room_ids.filter(id => id !== roomId));
@@ -223,9 +257,8 @@ export const EditInventorySchedulingModal = ({
                                                         : [...data.building_ids, buildingId]);
                                                 }
                                             }}
-
                                             onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
-                                            if (!checked) {
+                                                if (!checked) {
                                                     const newSubAreas = data.sub_area_ids.filter(id => id !== subAreaId);
                                                     const otherSubAreas = buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
                                                     const stillSelected = otherSubAreas.some(id => newSubAreas.includes(id));
@@ -246,7 +279,6 @@ export const EditInventorySchedulingModal = ({
                                                     }
                                                 }
                                             }}
-
                                             onRemove={() => {
                                                 setData('unit_ids', data.unit_ids.filter((id) => id !== uid));
                                             }}
@@ -264,21 +296,37 @@ export const EditInventorySchedulingModal = ({
                                 <Select
                                     className="w-full"
                                     options={buildings
-                                    .filter((b) => !data.building_ids.includes(b.id))
-                                    .map((b) => ({
-                                        value: b.id,
-                                        label: `${b.name} (${b.code})`,
-                                    }))}
+                                        .filter((b) => !data.building_ids.includes(b.id))
+                                        .map((b) => ({
+                                            value: b.id,
+                                            label: `${b.name} (${b.code})`,
+                                        }))
+                                    }
                                     placeholder="Add another building..."
                                     value={null}
                                     onChange={(selected) => {
                                         if (selected) {
                                             const id = Number(selected.value);
                                             if (!data.building_ids.includes(id)) {
-                                                setData('building_ids', [...data.building_ids, id]);
+                                                // collect rooms & subareas tied to this building
+                                                const buildingRoomIds = buildingRooms
+                                                    .filter((r) => r.building_id === id)
+                                                    .map((r) => r.id);
+
+                                                const buildingSubAreaIds = buildingRooms
+                                                    .filter((r) => r.building_id === id)
+                                                    .flatMap((r) => r.sub_areas?.map((sa) => sa.id) ?? []);
+
+                                                setData({
+                                                    ...data,
+                                                    building_ids: [...data.building_ids, id],
+                                                    room_ids: [...new Set([...data.room_ids, ...buildingRoomIds])],
+                                                    sub_area_ids: [...new Set([...data.sub_area_ids, ...buildingSubAreaIds])],
+                                                });
                                             }
                                         }
                                     }}
+
                                 />
                                 {errors.building_ids && <p className="mt-1 text-xs text-red-500">{String(errors.building_ids)}</p>}
 
@@ -294,6 +342,7 @@ export const EditInventorySchedulingModal = ({
                                                 key={bid}
                                                 building={building}
                                                 rooms={rooms}
+                                                assets={assets}
                                                 selectedRooms={data.room_ids}
                                                 selectedSubAreas={data.sub_area_ids}
                                                 onToggleRoom={(roomId, buildingId, checked) => {

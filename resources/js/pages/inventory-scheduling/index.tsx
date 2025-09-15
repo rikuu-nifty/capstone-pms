@@ -353,11 +353,9 @@ export default function InventorySchedulingIndex({
                                 <TableHead className="text-center">Inventory Schedule</TableHead>
                                 <TableHead className="text-center">Total Buildings</TableHead>
                                 <TableHead className="text-center">Total Rooms</TableHead>
-                                <TableHead className="text-center">Total Units/Departments</TableHead>
                                 <TableHead className="text-center">Total Assets</TableHead>
                                 <TableHead className="text-center">Designated Staff</TableHead>
                                 
-                                {/* <TableHead className="text-center">Actual Date</TableHead> */}
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Action</TableHead>
                             </TableRow>
@@ -370,10 +368,8 @@ export default function InventorySchedulingIndex({
                                     <TableCell className="whitespace-nowrap">{formatMonth(item.inventory_schedule) || '—'}</TableCell>
                                     <TableCell>{item.buildings?.length ?? 0}</TableCell>
                                     <TableCell>{item.rooms?.length ?? 0}</TableCell>
-                                    <TableCell>{item.units?.length ?? 0}</TableCell>
                                     <TableCell>{item.assets_count ?? 0}</TableCell>
                                     <TableCell className="whitespace-nowrap">{item.designated_employee?.name ?? '—'}</TableCell>
-                                    {/* <TableCell className="whitespace-nowrap">{formatDate(item.actual_date_of_inventory) || '—'}</TableCell> */}
 
                                     <TableCell>
                                         <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
@@ -500,7 +496,17 @@ export default function InventorySchedulingIndex({
                                 <div className="grid grid-cols-2 gap-4">
                                     <button
                                         type="button"
-                                        onClick={() => setData("scope_type", "unit")}
+                                        // onClick={() => setData("scope_type", "unit")}
+                                        onClick={() => {
+                                            setData({
+                                                ...data,
+                                                scope_type: 'unit',
+                                                unit_ids: [],
+                                                building_ids: [],
+                                                room_ids: [],
+                                                sub_area_ids: [],
+                                            });
+                                        }}
                                         className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                             ${data.scope_type === "unit"
                                             ? "border-blue-600 bg-blue-50 text-blue-700"
@@ -512,7 +518,17 @@ export default function InventorySchedulingIndex({
 
                                     <button
                                         type="button"
-                                        onClick={() => setData("scope_type", "building")}
+                                        // onClick={() => setData("scope_type", "building")}
+                                        onClick={() => {
+                                            setData({
+                                                ...data,
+                                                scope_type: 'building',
+                                                unit_ids: [],
+                                                building_ids: [],
+                                                room_ids: [],
+                                                sub_area_ids: [],
+                                            });
+                                        }}
                                         className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                             ${data.scope_type === "building"
                                             ? "border-blue-600 bg-blue-50 text-blue-700"
@@ -543,57 +559,29 @@ export default function InventorySchedulingIndex({
                                         onChange={(selected) => {
                                             if (selected) {
                                                 const id = Number(selected.value);
-
                                                 if (!data.unit_ids.includes(id)) {
-                                                    setData('unit_ids', [...data.unit_ids, id]);
-
-                                                    // derive all assets for this unit
+                                                    // collect buildings, rooms, subareas tied to this unit
                                                     const unitAssets = assets.filter((a) => a.unit_or_department?.id === id);
 
-                                                    // collect related rooms
-                                                    const rooms = [
-                                                        ...new Map(
-                                                        unitAssets
-                                                            .map((a) => a.building_room as SchedulingBuildingRoom | null)
-                                                            .filter((r): r is SchedulingBuildingRoom => r !== null)
-                                                            .map((r) => [r.id, r])
-                                                        ).values(),
+                                                    const unitBuildingIds = [
+                                                        ...new Set(unitAssets.map((a) => a.building?.id).filter((b): b is number => !!b)),
                                                     ];
 
-                                                    // collect related sub-areas
-                                                    const subAreas = [
-                                                        ...new Map(
-                                                        unitAssets
-                                                            .map((a) => a.sub_area)
-                                                            .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
-                                                            .map((sa) => [sa.id, sa])
-                                                        ).values(),
+                                                    const unitRoomIds = [
+                                                        ...new Set(unitAssets.map((a) => a.building_room_id).filter((r): r is number => !!r)),
                                                     ];
 
-                                                    // auto select them
-                                                    setData('room_ids', [
-                                                        ...data.room_ids,
-                                                        ...rooms.map((r) => r.id).filter((rid) => !data.room_ids.includes(rid)),
-                                                    ]);
-
-                                                    setData('sub_area_ids', [
-                                                        ...data.sub_area_ids,
-                                                        ...subAreas.map((sa) => sa.id).filter((sid) => !data.sub_area_ids.includes(sid)),
-                                                    ]);
-
-                                                    const unitBuildings: Building[] = [
-                                                        ...new Map(
-                                                            unitAssets
-                                                                .map((a) => a.building)
-                                                                .filter((b): b is Building => b !== null && b !== undefined)
-                                                                .map((b) => [b.id, b])
-                                                        ).values(),
+                                                    const unitSubAreaIds = [
+                                                        ...new Set(unitAssets.map((a) => a.sub_area_id).filter((sa): sa is number => !!sa)),
                                                     ];
 
-                                                    setData('building_ids', [
-                                                        ...data.building_ids,
-                                                        ...unitBuildings.map((b) => b.id).filter((bid) => !data.building_ids.includes(bid)),
-                                                    ]);
+                                                    setData({
+                                                        ...data,
+                                                        unit_ids: [...data.unit_ids, id],
+                                                        building_ids: [...new Set([...data.building_ids, ...unitBuildingIds])],
+                                                        room_ids: [...new Set([...data.room_ids, ...unitRoomIds])],
+                                                        sub_area_ids: [...new Set([...data.sub_area_ids, ...unitSubAreaIds])],
+                                                    });
                                                 }
                                             }
                                         }}
@@ -767,6 +755,7 @@ export default function InventorySchedulingIndex({
                                                     key={bid}
                                                     building={building}
                                                     rooms={rooms}
+                                                    assets={assets}
                                                     selectedRooms={data.room_ids}
                                                     selectedSubAreas={data.sub_area_ids}
                                                     onToggleRoom={(roomId, buildingId) => {
