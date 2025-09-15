@@ -327,342 +327,342 @@ export const ViewScheduleModal = ({
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]">
-            <div className="print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
-            {/* Header */}
-            <div className="relative flex items-center justify-between">
-                <div className="flex items-center">
-                <img
-                    src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
-                    alt="Logo"
-                    className="h-24 opacity-90"
+            <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]">
+                <div className="print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
+                {/* Header */}
+                    <div className="relative flex items-center justify-between">
+                        <div className="flex items-center">
+                        <img
+                            src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
+                            alt="Logo"
+                            className="h-24 opacity-90"
+                        />
+                        </div>
+                        <div className="absolute left-1/2 -translate-x-1/2 text-center">
+                        <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">
+                            Property Management Office
+                        </h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                            pmo@auf.edu.ph
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                            +63 973 234 3456
+                        </p>
+                        </div>
+                        <div className="text-right text-sm leading-snug">
+                        <p>
+                            <span className="text-gray-600 dark:text-gray-400">
+                            Schedule Record #:
+                            </span>{' '}
+                            <span className="font-semibold">{recordNo}</span>
+                        </p>
+                        <p className="mt-1 flex items-center justify-end gap-2">
+                            <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                            <StatusPill status={schedule.scheduling_status} />
+                        </p>
+                        </div>
+                    </div>
+
+                    {/* Scope + Scheduling Info */}
+                    <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
+                        {/* Scope Info */}
+                        <section className="md:w-[400px]">
+                        <h3 className="mb-2 text-base font-semibold">Scope Information</h3>
+                        <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                            <table className="w-full text-sm table-fixed">
+                            <tbody>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Units/Dept/Lab
+                                </td>
+                                <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                    {schedule.units?.length ?? 0}
+                                </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Buildings
+                                </td>
+                                <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                    {schedule.buildings?.length ?? 0}
+                                </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Rooms
+                                </td>
+                                <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                    {schedule.rooms?.length ?? 0}
+                                </td>
+                                </tr>
+                                <tr>
+                                <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Sub-Areas
+                                </td>
+                                <td className="w-2/3 px-3 py-2 font-medium text-right">
+                                    {schedule.sub_areas?.length ?? 0}
+                                </td>
+                                </tr>
+                            </tbody>
+                            </table>
+                        </div>
+                        </section>
+
+                        {/* Scheduling Info */}
+                        <section className="md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
+                        <h3 className="mb-2 text-base font-semibold">Scheduling Information</h3>
+                        <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                            <table className="w-full text-sm table-fixed">
+                            <tbody>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Scope Type
+                                </td>
+                                <td className="px-3 py-2 font-medium">
+                                    {schedule.scope_type === 'unit'
+                                    ? 'By Units / Departments'
+                                    : 'By Buildings'}
+                                </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Inventory Month
+                                </td>
+                                <td className="px-3 py-2 font-medium">
+                                    {formatMonth(schedule.inventory_schedule)}
+                                </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Actual Inventory Date
+                                </td>
+                                <td className="px-3 py-2 font-medium">
+                                    {formatDateLong(schedule.actual_date_of_inventory)}
+                                </td>
+                                </tr>
+                                <tr>
+                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Total Assets
+                                </td>
+                                <td className="px-3 py-2 font-medium">
+                                    {schedule.assets?.length ?? 0}
+                                </td>
+                                </tr>
+                            </tbody>
+                            </table>
+                        </div>
+                        </section>
+                    </div>
+
+                    {/* Pivot Table */}
+                    <div className="mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                        <div className="flex items-center justify-between bg-blue-200 px-4 py-2 text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
+                            <span>Inventory Sheet Scheduling</span>
+                            <Button
+                                onClick={refreshSchedule}
+                                disabled={refreshing}
+                                variant="primary"
+                                className="flex items-center gap-2 cursor-pointer"
+                                size="sm"
+                            >
+                                <RotateCcw
+                                    className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
+                                />
+                                {refreshing ? 'Refreshing…' : 'Refresh'}
+                            </Button>
+                        </div>
+
+                        <table className="w-full text-sm border-collapse">
+                            <thead className="bg-gray-100 text-gray-700">
+                                <tr>
+                                    <th className="border px-2 py-1 w-10 text-center">#</th>
+                                    <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
+                                    <th className="border px-2 py-1 text-center">Buildings</th>
+                                    <th className="border px-2 py-1 text-center">Rooms</th>
+                                    <th className="border px-2 py-1 text-center">Sub-Areas</th>
+                                    <th className="border px-2 py-1 text-center">Status</th>
+                                    <th className="border px-2 py-1 text-center">Asset Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pageItems.length > 0 ? (
+                                    pageItems.map((row, idx) => {
+                                        const s = spans[idx];
+                                        return (
+                                            <tr key={start + idx}>
+                                                <td className="border px-2 py-1 text-center">
+                                                    {start + idx + 1}
+                                                </td>
+
+                                                {s.unitSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.unitSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.unit ?? '—'}
+                                                    </td>
+                                                )}
+                                                {s.buildingSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.buildingSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.building ?? '—'}
+                                                    </td>
+                                                )}
+                                                {s.roomSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.roomSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.room ?? '—'}
+                                                    </td>
+                                                )}
+                                                {s.subAreaSpan > 0 && (
+                                                    <td
+                                                        rowSpan={s.subAreaSpan}
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {row.sub_area ?? '—'}
+                                                    </td>
+                                                )}
+
+                                                <td className="border px-2 py-1 text-center">
+                                                    <StatusPill status={row.status} />
+                                                </td>
+
+                                                <td
+                                                    className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
+                                                    onClick={() => {
+                                                        setRowAssets({
+                                                        scheduleId: schedule.id,
+                                                        rowId: row.sub_area_id
+                                                            ? row.sub_area_id
+                                                            : row.building_room_id!,
+                                                        type: row.sub_area_id ? 'sub_area' : 'building_room',
+                                                        title: `${row.unit ?? ''} / ${row.building ?? ''} / ${
+                                                            row.room ?? ''
+                                                        } / ${row.sub_area ?? ''}`,
+                                                        unitId: row.unit_id,
+                                                        });
+                                                    }}
+                                                >
+                                                    {row.assetCount ?? '—'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                <tr>
+                                    <td
+                                        colSpan={9}
+                                        className="border px-2 py-4 text-center text-muted-foreground"
+                                    >
+                                        No scope records found.
+                                    </td>
+                                </tr>
+                                )}
+                            </tbody>
+                        </table>
+
+                        <div className="flex items-center justify-between p-3">
+                            <PageInfo
+                                page={page}
+                                total={total}
+                                pageSize={PAGE_SIZE}
+                                label="rows"
+                            />
+                            <Pagination
+                                page={page}
+                                total={total}
+                                pageSize={PAGE_SIZE}
+                                onPageChange={setPage}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Signatories */}
+                    <div className="grid grid-cols-2 gap-x-5 gap-y-5 mt-5 text-sm">
+                        <div className="text-center">
+                            <p className="font-semibold mb-8">Prepared By:</p>
+                            <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {schedule.prepared_by?.name ?? '—'}
+                            </p>
+                            <p className="text-xs text-gray-500 italic">
+                                {schedule.prepared_by?.role_name ?? 'Property Clerk'}
+                            </p>
+                        </div>
+                        <div className="text-center">
+                            <p className="font-semibold mb-8">Approved By:</p>
+                            <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {schedule.approvals?.flatMap((a) => a.steps).some(
+                                (s) => s.code === 'approved_by' && s.status === 'approved'
+                                )
+                                ? signatories['approved_by']?.name
+                                : '—'}
+                            </p>
+                            <p className="text-xs text-gray-500 italic">
+                                {signatories['approved_by']?.title ?? 'VP for Administration'}
+                            </p>
+                        </div>
+                        <div className="text-center">
+                            <p className="font-semibold mb-8">Received By:</p>
+                            <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {signatories['received_by']?.name ?? '—'}
+                            </p>
+                            <p className="text-xs text-gray-500 italic">
+                                {signatories['received_by']?.title ?? 'Internal Auditor'}
+                            </p>
+                        </div>
+                        <div className="text-center">
+                            <p className="font-semibold mb-8">Noted By:</p>
+                            <div className="border-t border-black w-48 mx-auto mb-1"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {schedule.approvals?.flatMap((a) => a.steps).some(
+                                    (s) => s.code === 'noted_by' && s.status === 'approved'
+                                )
+                                ? signatories['noted_by']?.name
+                                : '—'}
+                            </p>
+                            <p className="text-xs text-gray-500 italic">
+                                {signatories['noted_by']?.title ?? 'Head, Property Management'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="text-center print:hidden mt-6">
+                        <DialogClose asChild>
+                            <Button variant="primary" className="mr-2 cursor-pointer">
+                                ← Back to Schedules
+                            </Button>
+                        </DialogClose>
+                        {String(schedule.scheduling_status ?? '').toLowerCase() !== 'pending_review' && (
+                            <Button
+                                onClick={() => window.print()}
+                                className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                            >
+                                🖨️ Print Form
+                            </Button>
+                        )}
+                    </div>
+                    
+                </div>
+            </DialogContent>
+            {rowAssets && (
+                <ViewRowAssetModal
+                    open={true}
+                    onClose={() => setRowAssets(null)}
+                    scheduleId={rowAssets.scheduleId}
+                    rowId={rowAssets.rowId}
+                    type={rowAssets.type}
+                    title={rowAssets.title}
+                    unitId={rowAssets.unitId}
                 />
-                </div>
-                <div className="absolute left-1/2 -translate-x-1/2 text-center">
-                <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">
-                    Property Management Office
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">
-                    pmo@auf.edu.ph
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">
-                    +63 973 234 3456
-                </p>
-                </div>
-                <div className="text-right text-sm leading-snug">
-                <p>
-                    <span className="text-gray-600 dark:text-gray-400">
-                    Schedule Record #:
-                    </span>{' '}
-                    <span className="font-semibold">{recordNo}</span>
-                </p>
-                <p className="mt-1 flex items-center justify-end gap-2">
-                    <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                    <StatusPill status={schedule.scheduling_status} />
-                </p>
-                </div>
-            </div>
-
-            {/* Scope + Scheduling Info */}
-            <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
-                {/* Scope Info */}
-                <section className="md:w-[400px]">
-                <h3 className="mb-2 text-base font-semibold">Scope Information</h3>
-                <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                    <table className="w-full text-sm table-fixed">
-                    <tbody>
-                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Units/Dept/Lab
-                        </td>
-                        <td className="w-2/3 px-3 py-2 font-medium text-right">
-                            {schedule.units?.length ?? 0}
-                        </td>
-                        </tr>
-                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Buildings
-                        </td>
-                        <td className="w-2/3 px-3 py-2 font-medium text-right">
-                            {schedule.buildings?.length ?? 0}
-                        </td>
-                        </tr>
-                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Rooms
-                        </td>
-                        <td className="w-2/3 px-3 py-2 font-medium text-right">
-                            {schedule.rooms?.length ?? 0}
-                        </td>
-                        </tr>
-                        <tr>
-                        <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Sub-Areas
-                        </td>
-                        <td className="w-2/3 px-3 py-2 font-medium text-right">
-                            {schedule.sub_areas?.length ?? 0}
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                </div>
-                </section>
-
-                {/* Scheduling Info */}
-                <section className="md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
-                <h3 className="mb-2 text-base font-semibold">Scheduling Information</h3>
-                <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                    <table className="w-full text-sm table-fixed">
-                    <tbody>
-                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Scope Type
-                        </td>
-                        <td className="px-3 py-2 font-medium">
-                            {schedule.scope_type === 'unit'
-                            ? 'By Units / Departments'
-                            : 'By Buildings'}
-                        </td>
-                        </tr>
-                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Inventory Month
-                        </td>
-                        <td className="px-3 py-2 font-medium">
-                            {formatMonth(schedule.inventory_schedule)}
-                        </td>
-                        </tr>
-                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Actual Inventory Date
-                        </td>
-                        <td className="px-3 py-2 font-medium">
-                            {formatDateLong(schedule.actual_date_of_inventory)}
-                        </td>
-                        </tr>
-                        <tr>
-                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                            Total Assets
-                        </td>
-                        <td className="px-3 py-2 font-medium">
-                            {schedule.assets?.length ?? 0}
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                </div>
-                </section>
-            </div>
-
-            {/* Pivot Table */}
-            <div className="mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                <div className="flex items-center justify-between bg-blue-200 px-4 py-2 text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
-                <span>Inventory Sheet Scheduling</span>
-                <Button
-                    onClick={refreshSchedule}
-                    disabled={refreshing}
-                    variant="primary"
-                    className="flex items-center gap-2 cursor-pointer"
-                    size="sm"
-                >
-                    <RotateCcw
-                    className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
-                    />
-                    {refreshing ? 'Refreshing…' : 'Refresh'}
-                </Button>
-                </div>
-
-                <table className="w-full text-sm border-collapse">
-                <thead className="bg-gray-100 text-gray-700">
-                    <tr>
-                    <th className="border px-2 py-1 w-10 text-center">#</th>
-                    <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
-                    <th className="border px-2 py-1 text-center">Buildings</th>
-                    <th className="border px-2 py-1 text-center">Rooms</th>
-                    <th className="border px-2 py-1 text-center">Sub-Areas</th>
-                    <th className="border px-2 py-1 text-center">Status</th>
-                    <th className="border px-2 py-1 text-center">Asset Count</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {pageItems.length > 0 ? (
-                    pageItems.map((row, idx) => {
-                        const s = spans[idx];
-                        return (
-                        <tr key={start + idx}>
-                            <td className="border px-2 py-1 text-center">
-                            {start + idx + 1}
-                            </td>
-
-                            {s.unitSpan > 0 && (
-                            <td
-                                rowSpan={s.unitSpan}
-                                className="border px-2 py-1 text-center align-middle"
-                            >
-                                {row.unit ?? '—'}
-                            </td>
-                            )}
-                            {s.buildingSpan > 0 && (
-                            <td
-                                rowSpan={s.buildingSpan}
-                                className="border px-2 py-1 text-center align-middle"
-                            >
-                                {row.building ?? '—'}
-                            </td>
-                            )}
-                            {s.roomSpan > 0 && (
-                            <td
-                                rowSpan={s.roomSpan}
-                                className="border px-2 py-1 text-center align-middle"
-                            >
-                                {row.room ?? '—'}
-                            </td>
-                            )}
-                            {s.subAreaSpan > 0 && (
-                            <td
-                                rowSpan={s.subAreaSpan}
-                                className="border px-2 py-1 text-center align-middle"
-                            >
-                                {row.sub_area ?? '—'}
-                            </td>
-                            )}
-
-                            <td className="border px-2 py-1 text-center">
-                            <StatusPill status={row.status} />
-                            </td>
-
-                            <td
-                            className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
-                            onClick={() => {
-                                setRowAssets({
-                                scheduleId: schedule.id,
-                                rowId: row.sub_area_id
-                                    ? row.sub_area_id
-                                    : row.building_room_id!,
-                                type: row.sub_area_id ? 'sub_area' : 'building_room',
-                                title: `${row.unit ?? ''} / ${row.building ?? ''} / ${
-                                    row.room ?? ''
-                                } / ${row.sub_area ?? ''}`,
-                                unitId: row.unit_id,
-                                });
-                            }}
-                            >
-                            {row.assetCount ?? '—'}
-                            </td>
-                        </tr>
-                        );
-                    })
-                    ) : (
-                    <tr>
-                        <td
-                        colSpan={9}
-                        className="border px-2 py-4 text-center text-muted-foreground"
-                        >
-                        No scope records found.
-                        </td>
-                    </tr>
-                    )}
-                </tbody>
-                </table>
-
-                <div className="flex items-center justify-between p-3">
-                <PageInfo
-                    page={page}
-                    total={total}
-                    pageSize={PAGE_SIZE}
-                    label="rows"
-                />
-                <Pagination
-                    page={page}
-                    total={total}
-                    pageSize={PAGE_SIZE}
-                    onPageChange={setPage}
-                />
-                </div>
-            </div>
-
-            {/* Signatories */}
-            <div className="grid grid-cols-2 gap-x-5 gap-y-5 mt-5 text-sm">
-                <div className="text-center">
-                <p className="font-semibold mb-8">Prepared By:</p>
-                <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                <p className="font-bold text-gray-700 uppercase">
-                    {schedule.prepared_by?.name ?? '—'}
-                </p>
-                <p className="text-xs text-gray-500 italic">
-                    {schedule.prepared_by?.role_name ?? 'Property Clerk'}
-                </p>
-                </div>
-                <div className="text-center">
-                <p className="font-semibold mb-8">Approved By:</p>
-                <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                <p className="font-bold text-gray-700 uppercase">
-                    {schedule.approvals?.flatMap((a) => a.steps).some(
-                    (s) => s.code === 'approved_by' && s.status === 'approved'
-                    )
-                    ? signatories['approved_by']?.name
-                    : '—'}
-                </p>
-                <p className="text-xs text-gray-500 italic">
-                    {signatories['approved_by']?.title ?? 'VP for Administration'}
-                </p>
-                </div>
-                <div className="text-center">
-                <p className="font-semibold mb-8">Received By:</p>
-                <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                <p className="font-bold text-gray-700 uppercase">
-                    {signatories['received_by']?.name ?? '—'}
-                </p>
-                <p className="text-xs text-gray-500 italic">
-                    {signatories['received_by']?.title ?? 'Internal Auditor'}
-                </p>
-                </div>
-                <div className="text-center">
-                <p className="font-semibold mb-8">Noted By:</p>
-                <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                <p className="font-bold text-gray-700 uppercase">
-                    {schedule.approvals?.flatMap((a) => a.steps).some(
-                    (s) => s.code === 'noted_by' && s.status === 'approved'
-                    )
-                    ? signatories['noted_by']?.name
-                    : '—'}
-                </p>
-                <p className="text-xs text-gray-500 italic">
-                    {signatories['noted_by']?.title ?? 'Head, Property Management'}
-                </p>
-                </div>
-            </div>
-
-            {/* Actions */}
-            <div className="text-center print:hidden mt-6">
-                <DialogClose asChild>
-                <Button variant="primary" className="mr-2 cursor-pointer">
-                    ← Back to Schedules
-                </Button>
-                </DialogClose>
-                {String(schedule.scheduling_status ?? '').toLowerCase() !==
-                'pending_review' && (
-                <Button
-                    onClick={() => window.print()}
-                    className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
-                >
-                    🖨️ Print Form
-                </Button>
-                )}
-            </div>
-            </div>
-        </DialogContent>
-        {rowAssets && (
-            <ViewRowAssetModal
-            open={true}
-            onClose={() => setRowAssets(null)}
-            scheduleId={rowAssets.scheduleId}
-            rowId={rowAssets.rowId}
-            type={rowAssets.type}
-            title={rowAssets.title}
-            unitId={rowAssets.unitId}
-            />
-        )}
+            )}
         </Dialog>
     );
 };

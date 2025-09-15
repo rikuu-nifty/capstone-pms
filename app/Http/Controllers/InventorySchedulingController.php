@@ -429,4 +429,34 @@ class InventorySchedulingController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function bulkUpdateAssetStatus(Request $request, InventoryScheduling $schedule, int $rowId)
+    {
+        $data = $request->validate([
+            'inventory_status' => ['required', Rule::in(['not_inventoried', 'scheduled', 'inventoried'])],
+            'type' => ['required', Rule::in(['building_room', 'sub_area'])],
+            'unit_id' => ['nullable', 'integer', 'exists:unit_or_departments,id'],
+        ]);
+
+        $query = $schedule->assets();
+
+        $query->whereHas('asset', function ($q) use ($rowId, $data, $schedule) {
+            if ($data['type'] === 'sub_area') {
+                $q->where('sub_area_id', $rowId);
+            } else {
+                $q->where('building_room_id', $rowId)
+                    ->whereNull('sub_area_id'); // exclude subarea assets
+            }
+
+            if (!empty($data['unit_id'])) {
+                $q->where('unit_or_department_id', $data['unit_id']);
+            } elseif ($schedule->units()->exists()) {
+                $q->whereIn('unit_or_department_id', $schedule->units->pluck('id'));
+            }
+        });
+
+        $query->update(['inventory_status' => $data['inventory_status']]);
+
+        return response()->json(['success' => true]);
+    }
 }

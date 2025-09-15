@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Pagination, { PageInfo } from '@/components/Pagination';
-// import { formatEnums, ucwords } from '@/types/custom-index';
 import { ucwords } from '@/types/custom-index';
 import axios from 'axios';
+import { Button } from '@/components/ui/button';
 
 type AssetWithStatus = {
     id: number;
@@ -76,6 +76,18 @@ function ViewRowAssetModal({
         }
     };
 
+    const bulkUpdateStatus = async (newStatus: string) => {
+        try {
+            await axios.put(
+                route('schedules.bulkUpdateAssetStatus', { schedule: scheduleId, row: rowId }),
+                { inventory_status: newStatus, type, unit_id: unitId }
+            );
+            fetchAssets(page);
+        } catch (err) {
+            console.error('Failed to bulk update assets', err);
+        }
+    };
+
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
             <DialogContent className="w-[min(900px,95vw)] max-w-none overflow-hidden p-0 sm:max-w-[1100px]">
@@ -83,6 +95,35 @@ function ViewRowAssetModal({
                     <DialogHeader>
                         <DialogTitle className="text-xl font-bold tracking-wide">{title}</DialogTitle>
                     </DialogHeader>
+
+                    <div className="flex justify-center gap-3 mt-4 mb-4">
+                        <Button 
+                            className='cursor-pointer'
+                            size="sm" 
+                            variant="primary" 
+                            onClick={() => bulkUpdateStatus('scheduled')}
+                        >
+                            Set all as Scheduled
+                        </Button>
+
+                        <Button 
+                            className='cursor-pointer'
+                            size="sm" 
+                            // variant="outline" 
+                            onClick={() => bulkUpdateStatus('inventoried')}
+                        >
+                            Set all as Inventoried
+                        </Button>
+                        
+                        <Button 
+                            className='cursor-pointer'
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={() => bulkUpdateStatus('not_inventoried')}>
+                            
+                            Set all as Not Inventoried
+                        </Button>
+                    </div>
 
                     <div className="mt-4 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                         {assets.length > 0 ? (
@@ -140,6 +181,7 @@ function ViewRowAssetModal({
                             </p>
                         )}
                     </div>
+
                 </div>
             </DialogContent>
         </Dialog>
