@@ -189,7 +189,7 @@ export default function InventorySchedulingIndex({
     const { signatories } = props; // 👈 extract signatories
     const currentUser = props.auth.user;
 
-    const { data, setData, post, reset, processing, errors } = useForm<InventorySchedulingFormData>({
+    const { data, setData, post, reset, processing, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         building_id: '',
         building_room_id: '',
         unit_or_department_id: '',
@@ -285,7 +285,54 @@ export default function InventorySchedulingIndex({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const result = validateScheduleForm(data, assets, unitOrDepartments, buildings, buildingRooms);
+        const cleanRoomIds = (data.room_ids ?? []).filter(id => !!id);
+
+        if (data.scope_type === 'unit') {
+            if (data.unit_ids.length === 0) {
+                setError('unit_ids', 'You must select at least one unit/department.');
+                return;
+            }
+
+            // ✅ validate that at least one room belongs to chosen units
+            const unitRoomIds = buildingRooms
+                .filter(r =>
+                    assets.some(a =>
+                        a.unit_or_department_id &&
+                        data.unit_ids.includes(a.unit_or_department_id) &&
+                        a.building_room_id === r.id
+                    )
+                )
+                .map(r => r.id);
+
+            const hasUnitRoom = cleanRoomIds.some(rid => unitRoomIds.includes(rid));
+            if (!hasUnitRoom) {
+                setError('room_ids', 'You must select at least one room from the chosen unit(s).');
+                return;
+            }
+        }
+
+        if (data.scope_type === 'building') {
+            if (data.building_ids.length === 0) {
+                setError('building_ids', 'You must select at least one building.');
+                return;
+            }
+            if (cleanRoomIds.length === 0) {
+                setError('room_ids', 'You must select at least one room for the selected building(s).');
+                return;
+            }
+        }
+
+        clearErrors('unit_ids');
+        clearErrors('building_ids');
+        clearErrors('room_ids');
+
+        const result = validateScheduleForm(
+            data,
+            assets,
+            unitOrDepartments,
+            buildings,
+            buildingRooms
+        );
 
         if (!result.valid) {
             setWarningMessage(result.message ?? 'Validation failed.');
@@ -506,6 +553,9 @@ export default function InventorySchedulingIndex({
                                                 room_ids: [],
                                                 sub_area_ids: [],
                                             });
+                                            clearErrors('unit_ids');
+                                            clearErrors('building_ids');
+                                            clearErrors('room_ids');
                                         }}
                                         className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                             ${data.scope_type === "unit"
@@ -528,6 +578,9 @@ export default function InventorySchedulingIndex({
                                                 room_ids: [],
                                                 sub_area_ids: [],
                                             });
+                                            clearErrors('unit_ids');
+                                            clearErrors('building_ids');
+                                            clearErrors('room_ids');
                                         }}
                                         className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                             ${data.scope_type === "building"
@@ -781,6 +834,9 @@ export default function InventorySchedulingIndex({
                                             />
                                         );
                                     })}
+                                    {errors.room_ids && (
+                                        <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
+                                    )}
                                 </div>
                             )}
 
@@ -933,6 +989,9 @@ export default function InventorySchedulingIndex({
                                             );
                                         })}
                                     </div>
+                                    {errors.room_ids && (
+                                        <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
+                                    )}
                                 </div>
                             )}
 

@@ -46,7 +46,7 @@ export const EditInventorySchedulingModal = ({
     const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
     const [warningDetails, setWarningDetails] = useState<string[]>([]);
     
-    const { data, setData, put, errors } = useForm<InventorySchedulingFormData>({
+    const { data, setData, put, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         scope_type: schedule.units && schedule.units.length > 0 ? 'unit' : 'building',
         unit_ids: schedule.units?.map((u) => u.id) ?? [],
         building_ids: schedule.buildings?.map((b) => b.id) ?? [],
@@ -72,7 +72,55 @@ export const EditInventorySchedulingModal = ({
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
-        const result = validateScheduleForm(data, assets, unitOrDepartments, buildings, buildingRooms);
+        const cleanRoomIds = (data.room_ids ?? []).filter(id => !!id);
+
+        if (data.scope_type === 'unit') {
+            if (data.unit_ids.length === 0) {
+                setError('unit_ids', 'You must select at least one unit/department.');
+                return;
+            }
+
+            // Get all room IDs that actually belong to the chosen units
+            const unitRoomIds = buildingRooms
+                .filter(r =>
+                    assets.some(a =>
+                        a.unit_or_department_id &&
+                        data.unit_ids.includes(a.unit_or_department_id) &&
+                        a.building_room_id === r.id
+                    )
+                )
+                .map(r => r.id);
+
+            const hasUnitRoom = cleanRoomIds.some(rid => unitRoomIds.includes(rid));
+
+            if (!hasUnitRoom) {
+                setError('room_ids', 'You must select at least one room from the chosen unit(s).');
+                return;
+            }
+        }
+
+        if (data.scope_type === 'building') {
+            if (data.building_ids.length === 0) {
+                setError('building_ids', 'You must select at least one building.');
+                return;
+            }
+            if (cleanRoomIds.length === 0) {
+                setError('room_ids', 'You must select at least one room for the selected building(s).');
+                return;
+            }
+        }
+
+        clearErrors('unit_ids');
+        clearErrors('building_ids');
+        clearErrors('room_ids');
+
+        const result = validateScheduleForm(
+            { ...data, room_ids: cleanRoomIds },
+            assets,
+            unitOrDepartments,
+            buildings,
+            buildingRooms
+        );
 
         if (!result.valid) {
             setWarningMessage(result.message ?? 'Validation failed.');
@@ -116,6 +164,9 @@ export const EditInventorySchedulingModal = ({
                                             room_ids: [],
                                             sub_area_ids: [],
                                         });
+                                        clearErrors('unit_ids');
+                                        clearErrors('building_ids');
+                                        clearErrors('room_ids');
                                     }}
                                     className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                         ${data.scope_type === "unit"
@@ -138,6 +189,9 @@ export const EditInventorySchedulingModal = ({
                                             room_ids: [],
                                             sub_area_ids: [],
                                         });
+                                        clearErrors('unit_ids');
+                                        clearErrors('building_ids');
+                                        clearErrors('room_ids');
                                     }}
                                     className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
                                         ${data.scope_type === "building"
@@ -354,6 +408,9 @@ export const EditInventorySchedulingModal = ({
                                         />
                                     );
                                 })}
+                                {errors.room_ids && (
+                                    <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
+                                )}
                             </div>
                         )}
 
@@ -492,6 +549,9 @@ export const EditInventorySchedulingModal = ({
                                             />
                                         );
                                     })}
+                                    {errors.room_ids && (
+                                        <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
+                                    )}
                                 </div>
                             </div>
                         )}

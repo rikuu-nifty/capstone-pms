@@ -98,7 +98,7 @@ class InventorySchedulingController extends Controller
             'unit_ids.*'                => ['integer', Rule::exists('unit_or_departments', 'id')],
             'building_ids'              => ['required_if:scope_type,building', 'array'],
             'building_ids.*'            => ['integer', Rule::exists('buildings', 'id')],
-            'room_ids'                  => ['array'],
+            'room_ids'                  => ['required', 'array', 'min:1'],
             'room_ids.*'                => ['integer', Rule::exists('building_rooms', 'id')],
             'sub_area_ids'              => ['array'],
             'sub_area_ids.*'            => ['integer', Rule::exists('sub_areas', 'id')],
@@ -112,11 +112,19 @@ class InventorySchedulingController extends Controller
             'description'               => ['nullable', 'string'],
             'designated_employee'       => ['nullable', 'integer', 'exists:users,id'],
         ], [
-            'unit_ids.required_if'     => 'Please select at least one unit or department.',
+            'unit_ids.required_if'      => 'Please select at least one unit or department.',
             'unit_ids.min'              => 'Please select at least one unit or department.',
-            'building_ids.required_if' => 'Please select at least one building.',
+            'building_ids.required_if'  => 'Please select at least one building.',
             'building_ids.min'          => 'Please select at least one building.',
+            'room_ids.required'         => 'Please select at least one room.',
+            'room_ids.min'              => 'Please select at least one room.',
         ]);
+
+        if (empty($data['room_ids']) || count($data['room_ids']) < 1) {
+            return back()->withErrors([
+                'room_ids' => 'Please select at least one room for the chosen unit(s) or building(s).',
+            ])->withInput();
+        }
 
         if ($data['scope_type'] === 'unit') {
             $hasBuildings = InventoryList::whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
@@ -277,8 +285,8 @@ class InventorySchedulingController extends Controller
             'unit_ids.*'            => ['integer', Rule::exists('unit_or_departments', 'id')],
             'building_ids'          => ['required_if:scope_type,building', 'array',],
             'building_ids.*'        => ['integer', Rule::exists('buildings', 'id')],
-            'room_ids'              => ['array'],
-            'room_ids.*'            => ['integer', 'exists:building_rooms,id'],
+            'room_ids'              => ['required', 'array', 'min:1'],
+            'room_ids.*'            => ['integer', Rule::exists('building_rooms', 'id')],
             'sub_area_ids'          => ['array'],
             'sub_area_ids.*'        => ['integer', 'exists:sub_areas,id'],
 
@@ -296,11 +304,20 @@ class InventorySchedulingController extends Controller
             'scheduling_status'     => ['required','string'],
             'description'           => ['nullable','string'],
         ], [
-            'unit_ids.required_if'     => 'Please select at least one unit or department.',
+            'unit_ids.required_if'      => 'Please select at least one unit or department.',
             'unit_ids.min'              => 'Please select at least one unit or department.',
-            'building_ids.required_if' => 'Please select at least one building.',
+            'building_ids.required_if'  => 'Please select at least one building.',
             'building_ids.min'          => 'Please select at least one building.',
+            'room_ids.required'         => 'Please select at least one room.',
+            'room_ids.min'              => 'Please select at least one room.',
+
         ]);
+
+        if (empty($data['room_ids']) || count($data['room_ids']) < 1) {
+            return back()->withErrors([
+                'room_ids' => 'Please select at least one room for the chosen unit(s) or building(s).',
+            ])->withInput();
+        }
 
         if ($data['scope_type'] === 'unit') {
             $hasBuildings = InventoryList::whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
