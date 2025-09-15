@@ -219,14 +219,14 @@ class InventorySchedulingController extends Controller
         ])->findOrFail($inventory_scheduling->id);
 
         
-        // 👇 compute approval completion flag only require approvals from PMO Head (noted_by) and VP Admin (approved_by)
+        // compute approval completion flag only require approvals from PMO Head (noted_by) and VP Admin (approved_by)
         $isFullyApproved = $viewing->approvals
             ->flatMap->steps
             ->filter(fn($s) => in_array($s->code, ['noted_by', 'approved_by'])) // only PMO Head + VP Admin
             ->every(fn($s) => $s->status === 'approved');
 
 
-        // 👇 Fetch assets specific to this building room, and optionally match building + department if provided
+        // Fetch assets specific to this building room, and optionally match building + department if provided
         $assets = InventoryList::with(['category', 'assetModel'])
             ->where('building_room_id', $viewing->building_room_id)
             ->when($viewing->building_id, fn($q) => 
@@ -239,6 +239,16 @@ class InventorySchedulingController extends Controller
 
         // also load signatories
         $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
+
+        // If frontend explicitly asks for JSON, return raw data (for refresh)
+        if (request()->wantsJson()) {
+            return response()->json([
+                'viewing'         => $viewing,
+                'assets'          => $viewing->assets,
+                'signatories'     => $signatories,
+                'isFullyApproved' => $isFullyApproved,
+            ]);
+        }
 
         return Inertia::render('inventory-scheduling/index', [
             'schedules'         => $schedules, 
@@ -404,5 +414,19 @@ class InventorySchedulingController extends Controller
         });
 
         return response()->json($transformed);
+    }
+
+    public function updateAssetStatus(Request $request, InventoryScheduling $schedule, $assetId)
+    {
+        $data = $request->validate([
+            'inventory_status' => ['required', Rule::in(['not_inventoried', 'scheduled', 'inventoried'])],
+        ]);
+
+        // update the pivot model (InventorySchedulingAsset)
+        $schedule->assets()
+            ->where('inventory_list_id', $assetId)
+            ->update(['inventory_status' => $data['inventory_status']]);
+
+        return response()->json(['success' => true]);
     }
 }

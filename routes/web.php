@@ -196,8 +196,10 @@ Route::prefix('reports')->group(function () {
         ->middleware('can:delete-inventory-scheduling');
     Route::get('/schedules/{schedule}/rows/{row}/assets', [InventorySchedulingController::class, 'rowAssets'])
         ->name('schedules.rowAssets');
+    Route::put('/schedules/{schedule}/assets/{asset}', [InventorySchedulingController::class, 'updateAssetStatus'])
+        ->name('schedules.updateAssetStatus');
 
-        
+
     // INVENTORY LIST
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
         ->name('inventory-list.index')

@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Pagination, { PageInfo } from '@/components/Pagination';
-import { formatEnums, ucwords } from '@/types/custom-index';
+// import { formatEnums, ucwords } from '@/types/custom-index';
+import { ucwords } from '@/types/custom-index';
 import axios from 'axios';
 
 type AssetWithStatus = {
@@ -55,30 +56,24 @@ function ViewRowAssetModal({
             setAssets(res.data.data);
             setTotal(res.data.total);
         },
-    [scheduleId, rowId, type, pageSize, unitId]
+        [scheduleId, rowId, type, pageSize, unitId]
     );
-
 
     useEffect(() => {
         if (open) fetchAssets(page);
     }, [open, page, fetchAssets]);
 
-
-    const StatusPill = ({ status }: { status?: string | null }) => {
-        const cls =
-        status === 'inventoried'
-            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-            : status === 'scheduled'
-            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-            : status === 'not_inventoried'
-            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-            : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
-
-        return (
-        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
-            {status ? formatEnums(status) : '—'}
-        </span>
-        );
+    const updateStatus = async (assetId: number, newStatus: string) => {
+        try {
+            await axios.put(
+                route('schedules.updateAssetStatus', { schedule: scheduleId, asset: assetId }),
+                { inventory_status: newStatus }
+            );
+            // refresh after update
+            fetchAssets(page);
+        } catch (err) {
+            console.error('Failed to update asset status', err);
+        }
     };
 
     return (
@@ -117,7 +112,17 @@ function ViewRowAssetModal({
                                                 {ucwords(a.asset_model?.category?.name ?? '—')}
                                             </td>
                                             <td className="border px-3 py-2 text-center">
-                                                <StatusPill status={a.inventory_status} />
+                                                {/* <StatusPill status={a.inventory_status} /> */}
+
+                                                <select
+                                                    value={a.inventory_status}
+                                                    onChange={(e) => updateStatus(a.id, e.target.value)}
+                                                    className="rounded border px-2 py-1 text-xs cursor-pointer"
+                                                >
+                                                    <option value="not_inventoried">Not Inventoried</option>
+                                                    <option value="scheduled">Scheduled</option>
+                                                    <option value="inventoried">Inventoried</option>
+                                                </select>
                                             </td>
                                         </tr>
                                     ))}
