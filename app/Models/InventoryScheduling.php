@@ -169,20 +169,28 @@ class InventoryScheduling extends Model
             $this->rooms()->sync($roomIds);
             $this->subAreas()->sync($subAreaIds);
 
-            if (!empty($subAreaIds)) {
-                $assetIds = InventoryList::whereIn('sub_area_id', $subAreaIds)->pluck('id')->all();
-            } elseif (!empty($roomIds)) {
-                $assetIds = InventoryList::whereIn('building_room_id', $roomIds)
+            $assetIds = [];
+
+            $assetIds = array_merge(
+                $assetIds,
+                InventoryList::whereIn('building_room_id', $roomIds)
                     ->whereNull('sub_area_id')
                     ->pluck('id')
-                    ->all();
-            } elseif (!empty($buildingIds)) {
-                $assetIds = InventoryList::whereIn('building_id', $buildingIds)
-                ->pluck('id')
-                ->all();
-            } else {
-                $assetIds = [];
+                    ->all()
+            );
+
+            // 🔹 Include assets from selected subareas
+            if (!empty($subAreaIds)) {
+                $assetIds = array_merge(
+                    $assetIds,
+                    InventoryList::whereIn('sub_area_id', $subAreaIds)
+                        ->pluck('id')
+                        ->all()
+                );
             }
+
+            // De-dupe
+            $assetIds = array_values(array_unique($assetIds));
         } else {
             throw new \InvalidArgumentException("Invalid scope_type: {$scope}");
         }
