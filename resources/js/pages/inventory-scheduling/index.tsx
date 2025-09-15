@@ -818,18 +818,28 @@ export default function InventorySchedulingIndex({
                                                     setData('sub_area_ids', data.sub_area_ids.filter((id) => !subAreasToRemove.includes(id)));
                                                 }}
                                                 onClearAll={() => {
+                                                    const unitBuildingIds = unitBuildings.map(b => b.id);
                                                     const unitRoomIds = unitRooms.map(r => r.id);
                                                     const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
 
-                                                    setData('room_ids', data.room_ids.filter(id => !unitRoomIds.includes(id)));
-                                                    setData('sub_area_ids', data.sub_area_ids.filter(id => !unitSubAreaIds.includes(id)));
+                                                    setData({
+                                                        ...data,
+                                                        building_ids: data.building_ids.filter(id => !unitBuildingIds.includes(id)),
+                                                        room_ids: data.room_ids.filter(id => !unitRoomIds.includes(id)),
+                                                        sub_area_ids: data.sub_area_ids.filter(id => !unitSubAreaIds.includes(id)),
+                                                    });
                                                 }}
                                                 onSelectAll={() => {
+                                                    const unitBuildingIds = unitBuildings.map(b => b.id);
                                                     const unitRoomIds = unitRooms.map(r => r.id);
                                                     const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
 
-                                                    setData('room_ids', Array.from(new Set([...data.room_ids, ...unitRoomIds])));
-                                                    setData('sub_area_ids', Array.from(new Set([...data.sub_area_ids, ...unitSubAreaIds])));
+                                                    setData({
+                                                        ...data,
+                                                        building_ids: Array.from(new Set([...data.building_ids, ...unitBuildingIds])),
+                                                        room_ids: Array.from(new Set([...data.room_ids, ...unitRoomIds])),
+                                                        sub_area_ids: Array.from(new Set([...data.sub_area_ids, ...unitSubAreaIds])),
+                                                    });
                                                 }}
                                             />
                                         );
