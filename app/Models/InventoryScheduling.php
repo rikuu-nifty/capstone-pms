@@ -157,17 +157,68 @@ class InventoryScheduling extends Model
             $this->rooms()->sync($roomIds);
             $this->subAreas()->sync($subAreaIds);
 
-            // Fetch assets by units
-            $assetIds = empty($unitIds) ? [] : InventoryList::whereIn('unit_or_department_id', $unitIds)
-                ->pluck('id')
-                ->all()
-            ;
+            if (empty($roomIds)) {
+                throw new \InvalidArgumentException("At least one room must be selected for unit scope.");
+            }
+
+            $assetIds = [];
+
+            if (!empty($subAreaIds)) {
+                // 🔹 Assets from selected subareas (but still filtered by unit)
+                $assetIds = array_merge(
+                    $assetIds,
+                    InventoryList::whereIn('unit_or_department_id', $unitIds)
+                        ->whereIn('sub_area_id', $subAreaIds)
+                        ->pluck('id')
+                        ->all()
+                );
+            }
+
+            if (!empty($roomIds)) {
+                // 🔹 Leftover assets for selected rooms (no subarea)
+                $assetIds = array_merge(
+                    $assetIds,
+                    InventoryList::whereIn('unit_or_department_id', $unitIds)
+                        ->whereIn('building_room_id', $roomIds)
+                        ->whereNull('sub_area_id')
+                        ->pluck('id')
+                        ->all()
+                );
+            }
+
+            if (!empty($buildingIds) && empty($roomIds) && empty($subAreaIds)) {
+                // 🔹 If building(s) selected but no room/subarea
+                $assetIds = array_merge(
+                    $assetIds,
+                    InventoryList::whereIn('unit_or_department_id', $unitIds)
+                        ->whereIn('building_id', $buildingIds)
+                        ->pluck('id')
+                        ->all()
+                );
+            }
+
+            if (empty($buildingIds) && empty($roomIds) && empty($subAreaIds)) {
+                // 🔹 Fall back → all assets for the unit
+                $assetIds = array_merge(
+                    $assetIds,
+                    InventoryList::whereIn('unit_or_department_id', $unitIds)
+                        ->pluck('id')
+                        ->all()
+                );
+            }
+
+            // De-dupe
+            $assetIds = array_values(array_unique($assetIds));
 
         } elseif ($scope === 'building') {
             $this->units()->sync([]);
             $this->buildings()->sync($buildingIds);
             $this->rooms()->sync($roomIds);
             $this->subAreas()->sync($subAreaIds);
+
+            if (empty($roomIds)) {
+                throw new \InvalidArgumentException("At least one room must be selected for building scope.");
+            }
 
             $assetIds = [];
 
