@@ -12,8 +12,10 @@ type Props = {
     buildings: Building[];
     rooms: SchedulingBuildingRoom[];
     subAreas: SubArea[];
+    selectedBuildings: number[];
     selectedRooms: number[];
     selectedSubAreas: number[];
+    onToggleBuilding: (buildingId: number, checked: boolean) => void;
     onToggleRoom: (roomId: number, parentBuildingId: number, checked: boolean) => void;
     onToggleSubArea: (subAreaId: number, parentRoomId: number, parentBuildingId: number, checked: boolean) => void;
     onRemove: () => void;
@@ -27,6 +29,8 @@ export default function UnitItem({
     buildings,
     rooms,
     subAreas,
+    onToggleBuilding,
+    selectedBuildings,
     selectedRooms,
     selectedSubAreas,
     onToggleRoom,
@@ -108,78 +112,73 @@ export default function UnitItem({
                     </div>
 
                     {filteredBuildings.length > 0 ? (
-                        filteredBuildings.map((b) => (
-                            <div key={b.id} className="pl-2">
-                                <div className="font-medium text-gray-800 mb-1">{b.name} ({formatEnums(b.code)})</div>
+                        filteredBuildings.map((b) => {
+                            const buildingRooms = filteredRooms.filter(r => r.building_id === b.id);
+                            const buildingSubAreas = filteredSubAreas.filter(sa =>
+                                buildingRooms.some(r => r.id === sa.building_room_id)
+                            );
 
-                                {/* Rooms under building */}
-                                {filteredRooms
-                                .filter((r) => r.building_id === b.id)
-                                .map((room) => {
-                                    const roomSubAreas = filteredSubAreas.filter(
-                                        (sa) => sa.building_room_id === room.id
-                                    );
+                            const isBuildingChecked = selectedBuildings.includes(b.id);
 
-                                    return (
-                                        <div key={room.id} className="ml-4">
-                                            <label className="flex items-center gap-2 font-medium text-blue-700">
-                                                <input
-                                                    type="checkbox"
-                                                    className="cursor-pointer"
-                                                    checked={selectedRooms.includes(room.id)}
-                                                    onChange={() => {
-                                                        if (selectedRooms.includes(room.id)) {
-                                                            // unselect room → unselect its sub-areas
-                                                            onToggleRoom(room.id, b.id, false);
-                                                            roomSubAreas.forEach((sa) =>
-                                                                onToggleSubArea(sa.id, room.id, b.id, false)
-                                                            );
-                                                        } else {
-                                                            // select room → ensure parent building is marked
-                                                            onToggleRoom(room.id, b.id, true);
-                                                        }  
-                                                    }}
-                                                />
-                                                Room {room.room}
+                            return (
+                                <div key={b.id} className="pl-2">
+                                    {/* 🔹 Building Checkbox */}
+                                    <label className="flex items-center gap-2 font-medium text-gray-800">
+                                        <input
+                                            type="checkbox"
+                                            className="cursor-pointer"
+                                            checked={isBuildingChecked}
+                                            onChange={(e) => onToggleBuilding(b.id, e.target.checked)}
+                                        />
+                                        {b.name} ({formatEnums(b.code)})
+                                    </label>
 
-                                                {/* 🔹 Inline helper text */}
-                                                {selectedRooms.includes(room.id) && (
-                                                    <span className="text-[11px] text-red-500 italic">
-                                                    {roomSubAreas.length > 0
-                                                        ? "— includes leftover assets not in sub-areas"
-                                                        : "— includes all assets in this room"}
-                                                    </span>
-                                                )}
-                                            </label>
+                                    {/* Rooms under building */}
+                                    {buildingRooms.map((room) => {
+                                        const roomSubAreas = buildingSubAreas.filter(sa => sa.building_room_id === room.id);
 
-                                            {/* Sub-areas under room */}
-                                            {roomSubAreas.map((sa) => (
-                                                <div key={sa.id} className="ml-6">
-                                                    <label className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="cursor-pointer"
-                                                            checked={selectedSubAreas.includes(sa.id)}
-                                                            onChange={() => {
-                                                                if (selectedSubAreas.includes(sa.id)) {
-                                                                    // unselect sub-area only
-                                                                    onToggleSubArea(sa.id, room.id, b.id, false);
-                                                                } else {
-                                                                    // select sub-area → also select its room + building
-                                                                    onToggleSubArea(sa.id, room.id, b.id, true);
-                                                                    onToggleRoom(room.id, b.id, true);
+                                        return (
+                                            <div key={room.id} className="ml-4">
+                                                <label className="flex items-center gap-2 font-medium text-blue-700">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="cursor-pointer"
+                                                        checked={selectedRooms.includes(room.id)}
+                                                        onChange={(e) => onToggleRoom(room.id, b.id, e.target.checked)}
+                                                    />
+                                                    Room {room.room}
+
+                                                    {selectedRooms.includes(room.id) && (
+                                                        <span className="text-[11px] text-red-500 italic">
+                                                            {roomSubAreas.length > 0
+                                                                ? "— includes leftover assets not in sub-areas"
+                                                                : "— includes all assets in this room"}
+                                                        </span>
+                                                    )}
+                                                </label>
+
+                                                {/* Sub-areas under room */}
+                                                {roomSubAreas.map((sa) => (
+                                                    <div key={sa.id} className="ml-6">
+                                                        <label className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="cursor-pointer"
+                                                                checked={selectedSubAreas.includes(sa.id)}
+                                                                onChange={(e) =>
+                                                                    onToggleSubArea(sa.id, room.id, b.id, e.target.checked)
                                                                 }
-                                                            }}
-                                                        />
-                                                        {sa.name}
-                                                    </label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))
+                                                            />
+                                                            {sa.name}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })
                     ) : (
                         <div className="text-muted-foreground">No buildings found for this unit.</div>
                     )}

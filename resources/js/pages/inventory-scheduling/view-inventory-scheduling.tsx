@@ -151,93 +151,93 @@ export const ViewScheduleModal = ({
 
                 rooms.forEach((r) => {
                     const subAreas = (schedule.sub_areas ?? []).filter(
-                    (sa) => sa.building_room_id === r.id
-                );
+                        (sa) => sa.building_room_id === r.id
+                    );
 
-                if (subAreas.length === 0) {
-                    const assetsHere = (schedule.assets ?? [])
-                    .filter((a) => {
-                        const matchRoom = a.asset?.building_room_id === r.id;
-                        const matchUnit =
-                        schedule.scope_type === 'unit'
-                            ? a.asset?.unit_or_department_id === u?.id
-                            : true;
-                        return matchRoom && matchUnit;
-                    })
-                    .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
+                    if (subAreas.length === 0) {
+                        const assetsHere = (schedule.assets ?? [])
+                        .filter((a) => {
+                            const matchRoom = a.asset?.building_room_id === r.id;
+                            const matchUnit =
+                            schedule.scope_type === 'unit'
+                                ? a.asset?.unit_or_department_id === u?.id
+                                : true;
+                            return matchRoom && matchUnit;
+                        })
+                        .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
-                    list.push({
-                    unit: unitName ?? undefined,
-                    unit_id: u?.id ?? null,
-                    building: b.name,
-                    room: String(r.room),
-                    sub_area: '—',
-                    assetCount: assetsHere.length,
-                    status: computeRowStatus(
-                        assetsHere,
-                        schedule.actual_date_of_inventory,
-                        schedule.inventory_schedule
-                    ),
-                    building_room_id: r.id,
-                    });
-                } else {
-                    subAreas.forEach((sa) => {
-                    const assetsHere = (schedule.assets ?? [])
-                    .filter((a) => {
-                        const matchSubArea = a.asset?.sub_area_id === sa.id;
-                        const matchUnit =
-                        schedule.scope_type === 'unit'
-                            ? a.asset?.unit_or_department_id === u?.id
-                            : true;
-                        return matchSubArea && matchUnit;
-                    })
-                    .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
+                        list.push({
+                            unit: unitName ?? undefined,
+                            unit_id: u?.id ?? null,
+                            building: b.name,
+                            room: String(r.room),
+                            sub_area: '—',
+                            assetCount: assetsHere.length,
+                            status: computeRowStatus(
+                                assetsHere,
+                                schedule.actual_date_of_inventory,
+                                schedule.inventory_schedule
+                            ),
+                            building_room_id: r.id,
+                        });
+                    } else {
+                        subAreas.forEach((sa) => {
+                            const assetsHere = (schedule.assets ?? [])
+                            .filter((a) => {
+                                const matchSubArea = a.asset?.sub_area_id === sa.id;
+                                const matchUnit =
+                                schedule.scope_type === 'unit'
+                                    ? a.asset?.unit_or_department_id === u?.id
+                                    : true;
+                                return matchSubArea && matchUnit;
+                            })
+                            .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
-                    list.push({
-                        unit: unitName ?? undefined,
-                        unit_id: u?.id ?? null,
-                        building: b.name,
-                        room: String(r.room),
-                        sub_area: sa.name,
-                        assetCount: assetsHere.length,
-                        status: computeRowStatus(
-                        assetsHere,
-                        schedule.actual_date_of_inventory,
-                        schedule.inventory_schedule
-                        ),
-                        sub_area_id: sa.id,
-                    });
-                    });
+                            list.push({
+                                unit: unitName ?? undefined,
+                                unit_id: u?.id ?? null,
+                                building: b.name,
+                                room: String(r.room),
+                                sub_area: sa.name,
+                                assetCount: assetsHere.length,
+                                status: computeRowStatus(
+                                    assetsHere,
+                                    schedule.actual_date_of_inventory,
+                                    schedule.inventory_schedule
+                                ),
+                                sub_area_id: sa.id,
+                            });
+                        });
 
-                    const leftoverAssets = (schedule.assets ?? [])
-                    .filter((a) => {
-                        const matchRoom = a.asset?.building_room_id === r.id;
-                        const noSubArea = !a.asset?.sub_area_id;
-                        const matchUnit =
-                        schedule.scope_type === 'unit'
-                            ? a.asset?.unit_or_department_id === u?.id
-                            : true;
-                        return matchRoom && noSubArea && matchUnit;
-                    })
-                    .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
+                        const leftoverAssets = (schedule.assets ?? [])
+                        .filter((a) => {
+                            const matchRoom = a.asset?.building_room_id === r.id;
+                            const noSubArea = !a.asset?.sub_area_id;
+                            const matchUnit =
+                            schedule.scope_type === 'unit'
+                                ? a.asset?.unit_or_department_id === u?.id
+                                : true;
+                            return matchRoom && noSubArea && matchUnit;
+                        })
+                        .map((a) => ({ ...a.asset!, inventory_status: a.inventory_status }));
 
-                    if (leftoverAssets.length > 0) {
-                    list.push({
-                        unit: unitName ?? undefined,
-                        unit_id: u?.id ?? null,
-                        building: b.name,
-                        room: String(r.room),
-                        sub_area: '—',
-                        assetCount: leftoverAssets.length,
-                        status: computeRowStatus(
-                        leftoverAssets,
-                        schedule.actual_date_of_inventory,
-                        schedule.inventory_schedule
-                        ),
-                        building_room_id: r.id,
-                    });
+                        if (leftoverAssets.length > 0) {
+                            list.push({
+                                unit: unitName ?? undefined,
+                                unit_id: u?.id ?? null,
+                                building: b.name,
+                                room: String(r.room),
+                                sub_area: '—',
+                                assetCount: leftoverAssets.length,
+                                status: computeRowStatus(
+                                leftoverAssets,
+                                schedule.actual_date_of_inventory,
+                                schedule.inventory_schedule
+                                ),
+                                building_room_id: r.id,
+                            });
+                        }
                     }
-                }
                 });
             });
         });
@@ -253,85 +253,84 @@ export const ViewScheduleModal = ({
 
     function computeRowSpans(data: Row[]): RowSpanInfo[] {
         const spans: RowSpanInfo[] = data.map(() => ({
-        unitSpan: 0,
-        buildingSpan: 0,
-        roomSpan: 0,
-        subAreaSpan: 0,
+            unitSpan: 0,
+            buildingSpan: 0,
+            roomSpan: 0,
+            subAreaSpan: 0,
         }));
 
         for (let i = 0; i < data.length; i++) {
-        if (i === 0 || data[i].unit !== data[i - 1].unit) {
-            let count = 1;
-            for (let j = i + 1; j < data.length; j++) {
-            if (data[j].unit === data[i].unit) count++;
-            else break;
+            if (i === 0 || data[i].unit !== data[i - 1].unit) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                if (data[j].unit === data[i].unit) count++;
+                else break;
+                }
+                spans[i].unitSpan = count;
             }
-            spans[i].unitSpan = count;
-        }
 
-        if (
-            i === 0 ||
-            data[i].unit !== data[i - 1].unit ||
-            data[i].building !== data[i - 1].building
-        ) {
-            let count = 1;
-            for (let j = i + 1; j < data.length; j++) {
             if (
-                data[j].unit === data[i].unit &&
-                data[j].building === data[i].building
-            )
-                count++;
-            else break;
+                i === 0 ||
+                data[i].unit !== data[i - 1].unit ||
+                data[i].building !== data[i - 1].building
+            ) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                if (
+                    data[j].unit === data[i].unit &&
+                    data[j].building === data[i].building
+                )
+                    count++;
+                else break;
+                }
+                spans[i].buildingSpan = count;
             }
-            spans[i].buildingSpan = count;
-        }
 
-        if (
-            i === 0 ||
-            data[i].unit !== data[i - 1].unit ||
-            data[i].building !== data[i - 1].building ||
-            data[i].room !== data[i - 1].room
-        ) {
-            let count = 1;
-            for (let j = i + 1; j < data.length; j++) {
             if (
-                data[j].unit === data[i].unit &&
-                data[j].building === data[i].building &&
-                data[j].room === data[i].room
-            )
-                count++;
-            else break;
+                i === 0 ||
+                data[i].unit !== data[i - 1].unit ||
+                data[i].building !== data[i - 1].building ||
+                data[i].room !== data[i - 1].room
+            ) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                if (
+                    data[j].unit === data[i].unit &&
+                    data[j].building === data[i].building &&
+                    data[j].room === data[i].room
+                )
+                    count++;
+                else break;
+                }
+                spans[i].roomSpan = count;
             }
-            spans[i].roomSpan = count;
-        }
 
-        if (
-            i === 0 ||
-            data[i].unit !== data[i - 1].unit ||
-            data[i].building !== data[i - 1].building ||
-            data[i].room !== data[i - 1].room ||
-            data[i].sub_area !== data[i - 1].sub_area
-        ) {
-            let count = 1;
-            for (let j = i + 1; j < data.length; j++) {
             if (
-                data[j].unit === data[i].unit &&
-                data[j].building === data[i].building &&
-                data[j].room === data[i].room &&
-                data[j].sub_area === data[i].sub_area
-            )
-                count++;
-            else break;
+                i === 0 ||
+                data[i].unit !== data[i - 1].unit ||
+                data[i].building !== data[i - 1].building ||
+                data[i].room !== data[i - 1].room ||
+                data[i].sub_area !== data[i - 1].sub_area
+            ) {
+                let count = 1;
+                for (let j = i + 1; j < data.length; j++) {
+                if (
+                    data[j].unit === data[i].unit &&
+                    data[j].building === data[i].building &&
+                    data[j].room === data[i].room &&
+                    data[j].sub_area === data[i].sub_area
+                )
+                    count++;
+                else break;
+                }
+                spans[i].subAreaSpan = count;
             }
-            spans[i].subAreaSpan = count;
-        }
         }
 
         return spans;
     }
 
     const spans = computeRowSpans(pageItems);
-
     const recordNo = String(schedule.id).padStart(2, '0');
 
     return (

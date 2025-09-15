@@ -242,42 +242,96 @@ export const EditInventorySchedulingModal = ({
                                             buildings={unitBuildings}
                                             rooms={unitRooms}
                                             subAreas={unitSubAreas}
+                                            selectedBuildings={data.building_ids}
                                             selectedRooms={data.room_ids}
                                             selectedSubAreas={data.sub_area_ids}
+                                            onToggleBuilding={(buildingId, checked) => {
+                                                const roomsForBuilding = buildingRooms.filter((r: SchedulingBuildingRoom) => r.building_id === buildingId);
+                                                const subAreasForBuilding = roomsForBuilding.flatMap((r) =>
+                                                    (r.sub_areas ?? []).map((sa: SubArea) => sa.id)
+                                                );
+
+                                                setData(prev => {
+                                                    let nextRooms: number[];
+                                                    let nextSubs: number[];
+                                                    let nextBuildings: number[];
+
+                                                    if (checked) {
+                                                        nextRooms = Array.from(new Set([...prev.room_ids, ...roomsForBuilding.map(r => r.id)]));
+                                                        nextSubs = Array.from(new Set([...prev.sub_area_ids, ...subAreasForBuilding]));
+                                                        nextBuildings = prev.building_ids.includes(buildingId)
+                                                        ? prev.building_ids
+                                                        : [...prev.building_ids, buildingId];
+                                                    } else {
+                                                        nextRooms = prev.room_ids.filter(id => !roomsForBuilding.map(r => r.id).includes(id));
+                                                        nextSubs = prev.sub_area_ids.filter(id => !subAreasForBuilding.includes(id));
+                                                        nextBuildings = prev.building_ids.filter(id => id !== buildingId);
+                                                    }
+
+                                                    return {
+                                                        ...prev,
+                                                        room_ids: nextRooms,
+                                                        sub_area_ids: nextSubs,
+                                                        building_ids: nextBuildings,
+                                                    };
+                                                });
+                                            }}
                                             onToggleRoom={(roomId, buildingId, checked) => {
-                                                if (!checked) {
-                                                    const subAreasToRemove =
-                                                        buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
-                                                    setData('room_ids', data.room_ids.filter(id => id !== roomId));
-                                                    setData('sub_area_ids', data.sub_area_ids.filter(id => !subAreasToRemove.includes(id)));
-                                                } else {
-                                                    setData('room_ids', data.room_ids.includes(roomId) ? data.room_ids : [...data.room_ids, roomId]);
-                                                    setData('building_ids', data.building_ids.includes(buildingId)
-                                                        ? data.building_ids
-                                                        : [...data.building_ids, buildingId]);
-                                                }
+                                                const room = buildingRooms.find(r => r.id === roomId);
+                                                const subAreaIds = room?.sub_areas?.map(sa => sa.id) ?? [];
+
+                                                setData(prev => {
+                                                const hasRoom = prev.room_ids.includes(roomId);
+                                                const nextRooms = checked
+                                                    ? (hasRoom ? prev.room_ids : [...prev.room_ids, roomId])
+                                                    : prev.room_ids.filter(id => id !== roomId);
+
+                                                const nextSubs = checked
+                                                    ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
+                                                    : prev.sub_area_ids.filter(id => !subAreaIds.includes(id));
+
+                                                const buildingRoomIds = buildingRooms.filter(r => r.building_id === buildingId).map(r => r.id);
+                                                const stillHasRooms = buildingRoomIds.some(id => nextRooms.includes(id));
+
+                                                const nextBuildings = checked
+                                                    ? (prev.building_ids.includes(buildingId) ? prev.building_ids : [...prev.building_ids, buildingId])
+                                                    : stillHasRooms
+                                                    ? prev.building_ids
+                                                    : prev.building_ids.filter(id => id !== buildingId);
+
+                                                return {
+                                                    ...prev,
+                                                    room_ids: nextRooms,
+                                                    sub_area_ids: nextSubs,
+                                                    building_ids: nextBuildings,
+                                                };
+                                                });
                                             }}
                                             onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
-                                                if (!checked) {
-                                                    const newSubAreas = data.sub_area_ids.filter(id => id !== subAreaId);
-                                                    const otherSubAreas = buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
-                                                    const stillSelected = otherSubAreas.some(id => newSubAreas.includes(id));
+                                                setData(prev => {
+                                                let updatedSubAreas: number[];
 
-                                                    setData('sub_area_ids', newSubAreas);
-                                                    if (!stillSelected) {
-                                                        setData('room_ids', data.room_ids.filter(id => id !== roomId));
-                                                    }
+                                                if (!checked) {
+                                                    updatedSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
+                                                    return {
+                                                    ...prev,
+                                                    sub_area_ids: updatedSubAreas,
+                                                    };
                                                 } else {
-                                                    setData('sub_area_ids', data.sub_area_ids.includes(subAreaId)
-                                                        ? data.sub_area_ids
-                                                        : [...data.sub_area_ids, subAreaId]);
-                                                    if (!data.room_ids.includes(roomId)) {
-                                                        setData('room_ids', [...data.room_ids, roomId]);
-                                                    }
-                                                    if (!data.building_ids.includes(buildingId)) {
-                                                        setData('building_ids', [...data.building_ids, buildingId]);
-                                                    }
+                                                    updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
+                                                    ? prev.sub_area_ids
+                                                    : [...prev.sub_area_ids, subAreaId];
+
+                                                    return {
+                                                    ...prev,
+                                                    sub_area_ids: updatedSubAreas,
+                                                    room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                                    building_ids: prev.building_ids.includes(buildingId)
+                                                        ? prev.building_ids
+                                                        : [...prev.building_ids, buildingId],
+                                                    };
                                                 }
+                                                });
                                             }}
                                             onRemove={() => {
                                                 setData('unit_ids', data.unit_ids.filter((id) => id !== uid));
@@ -361,40 +415,62 @@ export const EditInventorySchedulingModal = ({
                                                 selectedRooms={data.room_ids}
                                                 selectedSubAreas={data.sub_area_ids}
                                                 onToggleRoom={(roomId, buildingId, checked) => {
-                                                    if (!checked) {
-                                                        const subAreasToRemove =
-                                                            buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
-                                                        setData('room_ids', data.room_ids.filter(id => id !== roomId));
-                                                        setData('sub_area_ids', data.sub_area_ids.filter(id => !subAreasToRemove.includes(id)));
-                                                    } else {
-                                                        setData('room_ids', data.room_ids.includes(roomId) ? data.room_ids : [...data.room_ids, roomId]);
-                                                        setData('building_ids', data.building_ids.includes(buildingId)
-                                                            ? data.building_ids
-                                                            : [...data.building_ids, buildingId]);
-                                                    }
+                                                    const room = buildingRooms.find(r => r.id === roomId);
+                                                    const subAreaIds = room?.sub_areas?.map(sa => sa.id) ?? [];
+
+                                                    setData(prev => {
+                                                        const hasRoom = prev.room_ids.includes(roomId);
+                                                        const nextRooms = checked
+                                                        ? (hasRoom ? prev.room_ids : [...prev.room_ids, roomId])
+                                                        : prev.room_ids.filter(id => id !== roomId);
+
+                                                        const nextSubs = checked
+                                                        ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
+                                                        : prev.sub_area_ids.filter(id => !subAreaIds.includes(id));
+
+                                                        const nextBuildings = checked
+                                                        ? (prev.building_ids.includes(buildingId) ? prev.building_ids : [...prev.building_ids, buildingId])
+                                                        : prev.building_ids;
+
+                                                        return {
+                                                            ...prev,
+                                                            room_ids: nextRooms,
+                                                            sub_area_ids: nextSubs,
+                                                            building_ids: nextBuildings,
+                                                        };
+                                                    });
                                                 }}
-
                                                 onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
-                                                    if (!checked) {
-                                                        const newSubAreas = data.sub_area_ids.filter(id => id !== subAreaId);
-                                                        const otherSubAreas = buildingRooms.find(r => r.id === roomId)?.sub_areas?.map(sa => sa.id) ?? [];
-                                                        const stillSelected = otherSubAreas.some(id => newSubAreas.includes(id));
+                                                    setData(prev => {
+                                                        let updatedSubAreas: number[];
 
-                                                        setData('sub_area_ids', newSubAreas);
-                                                        if (!stillSelected) {
-                                                            setData('room_ids', data.room_ids.filter(id => id !== roomId));
+                                                        if (!checked) {
+                                                        // remove this subarea
+                                                        updatedSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
+
+                                                        // ✅ Keep the room even if no subareas are left
+                                                        return {
+                                                            ...prev,
+                                                            sub_area_ids: updatedSubAreas,
+                                                        };
+                                                        } else {
+                                                        // add this subarea
+                                                        updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
+                                                            ? prev.sub_area_ids
+                                                            : [...prev.sub_area_ids, subAreaId];
+
+                                                        return {
+                                                            ...prev,
+                                                            sub_area_ids: updatedSubAreas,
+                                                            room_ids: prev.room_ids.includes(roomId)
+                                                            ? prev.room_ids
+                                                            : [...prev.room_ids, roomId],
+                                                            building_ids: prev.building_ids.includes(buildingId)
+                                                            ? prev.building_ids
+                                                            : [...prev.building_ids, buildingId],
+                                                        };
                                                         }
-                                                    } else {
-                                                        setData('sub_area_ids', data.sub_area_ids.includes(subAreaId)
-                                                            ? data.sub_area_ids
-                                                            : [...data.sub_area_ids, subAreaId]);
-                                                        if (!data.room_ids.includes(roomId)) {
-                                                            setData('room_ids', [...data.room_ids, roomId]);
-                                                        }
-                                                        if (!data.building_ids.includes(buildingId)) {
-                                                            setData('building_ids', [...data.building_ids, buildingId]);
-                                                        }
-                                                    }
+                                                    });
                                                 }}
                                                 onRemove={() => {
                                                     setData('building_ids', data.building_ids.filter((id) => id !== bid));

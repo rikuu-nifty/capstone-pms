@@ -108,14 +108,8 @@ export default function BuildingItem({
                                             className="cursor-pointer"
                                             checked={selectedRooms.includes(room.id)}
                                             onChange={() => {
-                                                if (selectedRooms.includes(room.id)) {
-                                                    onToggleRoom(room.id, building.id, false);
-                                                    filteredSubAreas.forEach((sa) =>
-                                                        onToggleSubArea(sa.id, room.id, building.id, false)
-                                                    );
-                                                } else {
-                                                    onToggleRoom(room.id, building.id, true);
-                                                }
+                                                const checked = !selectedRooms.includes(room.id);
+                                                onToggleRoom(room.id, building.id, checked);
                                             }}
                                         />
                                         Room {String(room.room)}
