@@ -20,6 +20,30 @@ class SubArea extends Model
      * Relationships
      */
 
+     protected static function booted()
+{
+    static::saved(function ($subArea) {
+        $room = $subArea->buildingRoom;
+        if ($room) {
+            $room->sub_area_count = $room->subAreas()->count();
+            $room->saveQuietly(); // prevents recursive events
+        }
+    });
+
+    static::deleted(function ($subArea) {
+        $room = $subArea->buildingRoom;
+        if ($room) {
+            $room->sub_area_count = $room->subAreas()->count();
+            $room->saveQuietly();
+        }
+    });
+}
+
+    public function buildingRoom()
+    {
+        return $this->belongsTo(BuildingRoom::class, 'building_room_id');
+    }
+
     // Each sub-area belongs to a building room
     public function room()
     {

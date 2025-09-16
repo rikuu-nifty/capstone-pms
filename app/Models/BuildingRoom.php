@@ -32,6 +32,7 @@ class BuildingRoom extends Model
         return $this->hasMany(SubArea::class, 'building_room_id');
     }
 
+
     public function assets()
     {
         return $this->hasMany(InventoryList::class, 'building_room_id', 'id')

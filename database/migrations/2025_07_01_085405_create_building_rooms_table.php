@@ -23,6 +23,9 @@
                 $table->string('room', 50);
                 $table->text('description')->nullable();
 
+                // 👇 new column here
+                $table->unsignedInteger('sub_area_count')->default(0);
+
                 $table->timestamps();
                 $table->softDeletes();
             });
