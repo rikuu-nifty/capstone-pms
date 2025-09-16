@@ -57,12 +57,12 @@ const reportsNavItem = {
     permission: 'view-reports',
 };
 
-const InventorySheetReportsNavItem = {
-    title: 'Inventory Sheet Reports',
-    href: '/reports/inventory-sheet',
-    icon: ClipboardList,
-    permission: 'view-reports',
-};
+// const InventorySheetReportsNavItem = {
+//     title: 'Inventory Sheet Reports',
+//     href: '/reports/inventory-sheet',
+//     icon: ClipboardList,
+//     permission: 'view-reports',
+// };
 
 const inventoryNavItems = [
     {
@@ -253,7 +253,7 @@ export function AppSidebar() {
                             </SidebarMenuItem>
                         )}
 
-                        {canView(InventorySheetReportsNavItem, permissions) && (
+                        {/* {canView(InventorySheetReportsNavItem, permissions) && (
                             <SidebarMenuItem key={InventorySheetReportsNavItem.href}>
                                 <SidebarMenuButton asChild className="px-3 py-2">
                                     <Link href={InventorySheetReportsNavItem.href} className="flex items-center space-x-2">
@@ -262,7 +262,7 @@ export function AppSidebar() {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
-                        )}
+                        )} */}
                     </SidebarMenu>
                 </div>
 

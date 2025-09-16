@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { UnitOrDepartment } from './index';
 import { Asset } from '../inventory-list';
@@ -15,6 +14,8 @@ type Props = {
     selectedBuildings: number[];
     selectedRooms: number[];
     selectedSubAreas: number[];
+    expanded: boolean;          // 👈 controlled by parent
+    onToggleExpand: () => void; // 👈 controlled by parent
     onToggleBuilding: (buildingId: number, checked: boolean) => void;
     onToggleRoom: (roomId: number, parentBuildingId: number, checked: boolean) => void;
     onToggleSubArea: (subAreaId: number, parentRoomId: number, parentBuildingId: number, checked: boolean) => void;
@@ -29,6 +30,8 @@ export default function UnitItem({
     buildings,
     rooms,
     subAreas,
+    expanded,
+    onToggleExpand,
     onToggleBuilding,
     selectedBuildings,
     selectedRooms,
@@ -39,19 +42,13 @@ export default function UnitItem({
     onClearAll,
     onSelectAll,
 }: Props) {
-    const [open, setOpen] = useState(false);
-
-    // Get only buildings that have assets for this unit
+    // 🔹 Filter relevant data
     const filteredBuildings = buildings.filter((b) =>
         assets.some((a) => a.building?.id === b.id && a.unit_or_department_id === unit.id)
     );
-
-    // Get only rooms that have assets for this unit
     const filteredRooms = rooms.filter((r) =>
         assets.some((a) => a.building_room_id === r.id && a.unit_or_department_id === unit.id)
     );
-
-    // Get only subareas that have assets for this unit
     const filteredSubAreas = subAreas.filter((sa) =>
         assets.some((a) => a.sub_area_id === sa.id && a.unit_or_department_id === unit.id)
     );
@@ -71,11 +68,15 @@ export default function UnitItem({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setOpen((o) => !o)}
+                        onClick={onToggleExpand} // 👈 now uses parent-controlled expand
                         className="cursor-pointer"
                     >
-                        {open ? 'Hide Details' : 'Show Details'}
-                        {open ? <ChevronDown className="ml-1 h-3.5 w-3.5" /> : <ChevronRight className="ml-1 h-3.5 w-3.5" />}
+                        {expanded ? 'Hide Details' : 'Show Details'}
+                        {expanded ? (
+                            <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                        ) : (
+                            <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                        )}
                     </Button>
 
                     <Button
@@ -91,7 +92,7 @@ export default function UnitItem({
             </div>
 
             {/* Details */}
-            {open && (
+            {expanded && (
                 <div className="px-3 pb-3 text-xs text-gray-700 space-y-2">
                     <div className="flex justify-center gap-3 mb-3">
                         <button
@@ -113,16 +114,16 @@ export default function UnitItem({
 
                     {filteredBuildings.length > 0 ? (
                         filteredBuildings.map((b) => {
-                            const buildingRooms = filteredRooms.filter(r => r.building_id === b.id);
-                            const buildingSubAreas = filteredSubAreas.filter(sa =>
-                                buildingRooms.some(r => r.id === sa.building_room_id)
+                            const buildingRooms = filteredRooms.filter((r) => r.building_id === b.id);
+                            const buildingSubAreas = filteredSubAreas.filter((sa) =>
+                                buildingRooms.some((r) => r.id === sa.building_room_id)
                             );
 
                             const isBuildingChecked = selectedBuildings.includes(b.id);
 
                             return (
                                 <div key={b.id} className="pl-2">
-                                    {/* 🔹 Building Checkbox */}
+                                    {/* Building Checkbox */}
                                     <label className="flex items-center gap-2 font-medium text-gray-800">
                                         <input
                                             type="checkbox"
@@ -135,7 +136,9 @@ export default function UnitItem({
 
                                     {/* Rooms under building */}
                                     {buildingRooms.map((room) => {
-                                        const roomSubAreas = buildingSubAreas.filter(sa => sa.building_room_id === room.id);
+                                        const roomSubAreas = buildingSubAreas.filter(
+                                            (sa) => sa.building_room_id === room.id
+                                        );
 
                                         return (
                                             <div key={room.id} className="ml-4">
@@ -144,15 +147,16 @@ export default function UnitItem({
                                                         type="checkbox"
                                                         className="cursor-pointer"
                                                         checked={selectedRooms.includes(room.id)}
-                                                        onChange={(e) => onToggleRoom(room.id, b.id, e.target.checked)}
+                                                        onChange={(e) =>
+                                                            onToggleRoom(room.id, b.id, e.target.checked)
+                                                        }
                                                     />
                                                     Room {room.room}
-
                                                     {selectedRooms.includes(room.id) && (
                                                         <span className="text-[11px] text-red-500 italic">
                                                             {roomSubAreas.length > 0
-                                                                ? "— includes leftover assets not in sub-areas"
-                                                                : "— includes all assets in this room"}
+                                                                ? '— includes leftover assets not in sub-areas'
+                                                                : '— includes all assets in this room'}
                                                         </span>
                                                     )}
                                                 </label>

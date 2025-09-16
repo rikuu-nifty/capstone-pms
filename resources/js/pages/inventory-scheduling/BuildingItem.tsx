@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Building } from '@/types/custom-index';
 import type { SchedulingBuildingRoom } from './index';
@@ -10,6 +9,8 @@ type Props = {
     rooms: SchedulingBuildingRoom[];
     selectedRooms: number[];
     selectedSubAreas: number[];
+    expanded: boolean;          // 👈 controlled from parent
+    onToggleExpand: () => void; // 👈 controlled from parent
     onToggleRoom: (roomId: number, parentBuildingId: number, checked: boolean) => void;
     onToggleSubArea: (subAreaId: number, parentRoomId: number, parentBuildingId: number, checked: boolean) => void;
     onRemove: () => void;
@@ -23,6 +24,8 @@ export default function BuildingItem({
     rooms,
     selectedRooms,
     selectedSubAreas,
+    expanded,
+    onToggleExpand,
     onToggleRoom,
     onToggleSubArea,
     onRemove,
@@ -30,13 +33,10 @@ export default function BuildingItem({
     onSelectAll,
     onClearAll,
 }: Props) {
-
-    const [open, setOpen] = useState(false);
-
     const filteredRooms = rooms.filter((room) =>
         assets.some((a) => a.building_room_id === room.id)
     );
-    
+
     return (
         <div className="flex flex-col gap-2 rounded-lg border">
             {/* Header */}
@@ -52,11 +52,15 @@ export default function BuildingItem({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setOpen((o) => !o)}
+                        onClick={onToggleExpand} // 👈 use parent state instead of local
                         className="cursor-pointer"
                     >
-                        {open ? 'Hide Details' : 'Show Details'}
-                        {open ? <ChevronDown className="ml-1 h-3.5 w-3.5" /> : <ChevronRight className="ml-1 h-3.5 w-3.5" />}
+                        {expanded ? 'Hide Details' : 'Show Details'}
+                        {expanded ? (
+                            <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                        ) : (
+                            <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                        )}
                     </Button>
 
                     <Button
@@ -72,7 +76,7 @@ export default function BuildingItem({
             </div>
 
             {/* Details */}
-            {open && (
+            {expanded && (
                 <div className="px-3 pb-3 text-xs text-gray-700 space-y-2">
                     <div className="flex justify-center gap-3 mb-3">
                         <button
@@ -94,7 +98,6 @@ export default function BuildingItem({
 
                     {filteredRooms.length > 0 ? (
                         filteredRooms.map((room) => {
-                            // 🔹 Filter subareas → only subareas with assets
                             const filteredSubAreas = (room.sub_areas ?? []).filter((sa) =>
                                 assets.some((a) => a.sub_area_id === sa.id)
                             );
@@ -114,12 +117,11 @@ export default function BuildingItem({
                                         />
                                         Room {String(room.room)}
 
-                                        {/* 🔹 Inline helper text */}
                                         {selectedRooms.includes(room.id) && (
                                             <span className="text-[11px] text-red-500 italic">
                                                 {filteredSubAreas.length > 0
-                                                    ? "— Includes leftover assets not in sub-areas"
-                                                    : "— Includes all assets in this room"}
+                                                    ? '— Includes leftover assets not in sub-areas'
+                                                    : '— Includes all assets in this room'}
                                             </span>
                                         )}
                                     </label>

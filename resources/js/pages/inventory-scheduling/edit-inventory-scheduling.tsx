@@ -40,6 +40,8 @@ export const EditInventorySchedulingModal = ({
     const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
     const [warningDetails, setWarningDetails] = useState<string[]>([]);
 
+  
+
     const { data, setData, put, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         scope_type: schedule.units && schedule.units.length > 0 ? 'unit' : 'building',
         unit_ids: schedule.units?.map((u) => u.id) ?? [],
@@ -62,6 +64,26 @@ export const EditInventorySchedulingModal = ({
         description: schedule.description || '',
         scheduled_assets: [],
     });
+
+    // 2. Now you can safely create selections using `data`
+const [unitSelections, setUnitSelections] = useState({
+    unit_ids: data.unit_ids,
+    building_ids: data.building_ids,
+    room_ids: data.room_ids,
+    sub_area_ids: data.sub_area_ids,
+    expanded: [] as number[],
+});
+
+const [buildingSelections, setBuildingSelections] = useState({
+    building_ids: data.building_ids,
+    room_ids: data.room_ids,
+    sub_area_ids: data.sub_area_ids,
+    expanded: [] as number[],
+});
+
+// 3. Track expanded rows
+const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
+const [expandedBuildings, setExpandedBuildings] = useState<number[]>([]);
 
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -131,47 +153,79 @@ export const EditInventorySchedulingModal = ({
                         {/* Scope Type */}
                         <div className="col-span-2">
                             <label className="mb-2 block font-medium">Scope Type</label>
-                            {/* Scope Type Buttons */}
                             <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setData((prev) => ({
-                                            ...prev,
-                                            scope_type: 'unit', // ✅ only switch scope, don’t clear arrays
-                                        }));
-                                        clearErrors('unit_ids');
-                                        clearErrors('building_ids');
-                                        clearErrors('room_ids');
-                                    }}
-                                    className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 text-sm font-medium transition ${
-                                        data.scope_type === 'unit'
-                                            ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                            : 'border-gray-300 bg-white hover:bg-gray-50'
-                                    }`}
-                                >
-                                    By Units / Departments
-                                </button>
+                               {/* By Units */}
+<button
+    type="button"
+    onClick={() => {
+        // Save building selections
+        setBuildingSelections({
+            building_ids: data.building_ids,
+            room_ids: data.room_ids,
+            sub_area_ids: data.sub_area_ids,
+            expanded: expandedBuildings,
+        });
 
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setData((prev) => ({
-                                            ...prev,
-                                            scope_type: 'building', // ✅ only switch scope, don’t clear arrays
-                                        }));
-                                        clearErrors('unit_ids');
-                                        clearErrors('building_ids');
-                                        clearErrors('room_ids');
-                                    }}
-                                    className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 text-sm font-medium transition ${
-                                        data.scope_type === 'building'
-                                            ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                            : 'border-gray-300 bg-white hover:bg-gray-50'
-                                    }`}
-                                >
-                                    By Buildings
-                                </button>
+        // Restore unit selections
+        setData(prev => ({
+            ...prev,
+            scope_type: 'unit',
+            unit_ids: unitSelections.unit_ids,
+            building_ids: unitSelections.building_ids,
+            room_ids: unitSelections.room_ids,
+            sub_area_ids: unitSelections.sub_area_ids,
+        }));
+        setExpandedUnits(unitSelections.expanded);
+
+        clearErrors('unit_ids');
+        clearErrors('building_ids');
+        clearErrors('room_ids');
+    }}
+    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+        ${data.scope_type === "unit"
+            ? "border-blue-600 bg-blue-50 text-blue-700"
+            : "border-gray-300 bg-white hover:bg-gray-50"
+        }`}
+>
+    By Units / Departments
+</button>
+
+                                {/* By Buildings */}
+<button
+    type="button"
+    onClick={() => {
+        // Save unit selections
+        setUnitSelections({
+            unit_ids: data.unit_ids,
+            building_ids: data.building_ids,
+            room_ids: data.room_ids,
+            sub_area_ids: data.sub_area_ids,
+            expanded: expandedUnits,
+        });
+
+        // Restore building selections
+        setData(prev => ({
+            ...prev,
+            scope_type: 'building',
+            building_ids: buildingSelections.building_ids,
+            room_ids: buildingSelections.room_ids,
+            sub_area_ids: buildingSelections.sub_area_ids,
+            unit_ids: [], // optional: usually empty in building scope
+        }));
+        setExpandedBuildings(buildingSelections.expanded);
+
+        clearErrors('unit_ids');
+        clearErrors('building_ids');
+        clearErrors('room_ids');
+    }}
+    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+        ${data.scope_type === "building"
+            ? "border-blue-600 bg-blue-50 text-blue-700"
+            : "border-gray-300 bg-white hover:bg-gray-50"
+        }`}
+>
+    By Buildings
+</button>
                             </div>
                         </div>
 
@@ -266,6 +320,13 @@ export const EditInventorySchedulingModal = ({
                                             selectedBuildings={data.building_ids}
                                             selectedRooms={data.room_ids}
                                             selectedSubAreas={data.sub_area_ids}
+                                            expanded={expandedUnits.includes(uid)}
+onToggleExpand={() => {
+    setExpandedUnits(prev => 
+        prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+    );
+}}
+
                                             onToggleBuilding={(buildingId, checked) => {
                                                 const roomsForBuilding = buildingRooms.filter(
                                                     (r: SchedulingBuildingRoom) => r.building_id === buildingId,
@@ -406,12 +467,14 @@ export const EditInventorySchedulingModal = ({
 
                                 <Select
                                     className="w-full"
-                                    options={buildings.map((b) => ({
-                                        value: b.id,
-                                        label: `${b.name} (${b.code})`,
-                                    }))}
+                                    options={buildings
+                                        .filter((b) => !data.building_ids.includes(b.id))
+                                        .map((b) => ({
+                                            value: b.id,
+                                            label: `${b.name} (${b.code})`,
+                                        }))}
                                     placeholder="Add another building..."
-                                    value={null} // stays null, so Select is always ready to add another
+                                    value={null}
                                     onChange={(selected) => {
                                         if (selected) {
                                             const id = Number(selected.value);
@@ -433,7 +496,6 @@ export const EditInventorySchedulingModal = ({
                                         }
                                     }}
                                 />
-
                                 {errors.building_ids && <p className="mt-1 text-xs text-red-500">{String(errors.building_ids)}</p>}
 
                                 <div className="flex flex-col gap-3">
@@ -451,6 +513,12 @@ export const EditInventorySchedulingModal = ({
                                                 assets={assets}
                                                 selectedRooms={data.room_ids}
                                                 selectedSubAreas={data.sub_area_ids}
+                                               expanded={expandedBuildings.includes(bid)}
+onToggleExpand={() => {
+    setExpandedBuildings(prev => 
+        prev.includes(bid) ? prev.filter(id => id !== bid) : [...prev, bid]
+    );
+}}
                                                 onToggleRoom={(roomId, buildingId, checked) => {
                                                     const room = buildingRooms.find((r) => r.id === roomId);
                                                     const subAreaIds = room?.sub_areas?.map((sa) => sa.id) ?? [];
