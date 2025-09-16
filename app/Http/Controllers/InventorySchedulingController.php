@@ -90,11 +90,11 @@ class InventorySchedulingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+     public function store(Request $request)
     {
         $data = $request->validate([
             'scope_type'                => ['required', Rule::in(['unit', 'building'])],
-            'unit_ids'                  => ['required_if:scope_type,unit', 'array',],
+            'unit_ids'                  => ['required_if:scope_type,unit', 'array'],
             'unit_ids.*'                => ['integer', Rule::exists('unit_or_departments', 'id')],
             'building_ids'              => ['required_if:scope_type,building', 'array'],
             'building_ids.*'            => ['integer', Rule::exists('buildings', 'id')],
@@ -111,53 +111,25 @@ class InventorySchedulingController extends Controller
             'scheduling_status'         => ['required', 'string'],
             'description'               => ['nullable', 'string'],
             'designated_employee'       => ['nullable', 'integer', 'exists:users,id'],
-        ], [
-            'unit_ids.required_if'      => 'Please select at least one unit or department.',
-            'unit_ids.min'              => 'Please select at least one unit or department.',
-            'building_ids.required_if'  => 'Please select at least one building.',
-            'building_ids.min'          => 'Please select at least one building.',
-            'room_ids.required'         => 'Please select at least one room.',
-            'room_ids.min'              => 'Please select at least one room.',
         ]);
-
-        if (empty($data['room_ids']) || count($data['room_ids']) < 1) {
-            return back()->withErrors([
-                'room_ids' => 'Please select at least one room for the chosen unit(s) or building(s).',
-            ])->withInput();
-        }
-
-        if ($data['scope_type'] === 'unit') {
-            $hasBuildings = InventoryList::whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
-                ->whereNotNull('building_id')
-                ->exists();
-
-            if (! $hasBuildings) {
-                return back()->withErrors([
-                    'unit_ids' => 'The selected unit(s) must have at least one associated building.',
-                ])->withInput();
-            }
-        }
-
-        if ($data['scope_type'] === 'building') {
-            if (empty($data['room_ids'])) {
-                return back()->withErrors([
-                    'room_ids' => 'Please select at least one room for the chosen building(s).',
-                ])->withInput();
-            }
-        }
 
         // Create schedule
         $schedule = DB::transaction(function () use ($data) {
             $schedule = InventoryScheduling::create([
-                'prepared_by_id' => Auth::id(),
-                'inventory_schedule' => $data['inventory_schedule'],
-                'actual_date_of_inventory' => $data['actual_date_of_inventory'] ?? null,
-                'checked_by' => $data['checked_by'] ?? null,
-                'verified_by' => $data['verified_by'] ?? null,
-                'received_by' => $data['received_by'] ?? null,
-                'scheduling_status' => $data['scheduling_status'],
-                'description' => $data['description'] ?? null,
-                'designated_employee' => $data['designated_employee'] ?? null,
+                'prepared_by_id'          => Auth::id(),
+                'inventory_schedule'      => $data['inventory_schedule'],
+                'actual_date_of_inventory'=> $data['actual_date_of_inventory'] ?? null,
+                'checked_by'              => $data['checked_by'] ?? null,
+                'verified_by'             => $data['verified_by'] ?? null,
+                'received_by'             => $data['received_by'] ?? null,
+                'scheduling_status'       => $data['scheduling_status'],
+                'description'             => $data['description'] ?? null,
+                'designated_employee'     => $data['designated_employee'] ?? null,
+
+                // 👇 Reflect first selected values in main table
+                'building_id'             => $data['building_ids'][0] ?? null,
+                'building_room_id'        => $data['room_ids'][0] ?? null,
+                'unit_or_department_id'   => $data['unit_ids'][0] ?? null,
             ]);
 
             // Attach pivots + fetch assets
@@ -166,20 +138,13 @@ class InventorySchedulingController extends Controller
             return $schedule;
         });
 
-        // Reload relationships for frontend
         $schedule->load([
-            'units',
-            'buildings',
-            'rooms',
-            'subAreas',
-            'assets.asset',
-            'preparedBy',
-            'approvals',
-            'approvals.steps',
+            'units','buildings','rooms','subAreas','assets.asset',
+            'preparedBy','approvals','approvals.steps',
         ]);
 
         return redirect()->back()->with([
-            'success' => 'Schedule added successfully.',
+            'success'     => 'Schedule added successfully.',
             'newSchedule' => $schedule,
         ]);
     }
@@ -277,13 +242,13 @@ class InventorySchedulingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, InventoryScheduling $inventoryScheduling)
+     public function update(Request $request, InventoryScheduling $inventoryScheduling)
     {
         $data = $request->validate([
             'scope_type'            => ['required', Rule::in(['unit', 'building'])],
-            'unit_ids'              => ['required_if:scope_type,unit', 'array',],
+            'unit_ids'              => ['required_if:scope_type,unit', 'array'],
             'unit_ids.*'            => ['integer', Rule::exists('unit_or_departments', 'id')],
-            'building_ids'          => ['required_if:scope_type,building', 'array',],
+            'building_ids'          => ['required_if:scope_type,building', 'array'],
             'building_ids.*'        => ['integer', Rule::exists('buildings', 'id')],
             'room_ids'              => ['required', 'array', 'min:1'],
             'room_ids.*'            => ['integer', Rule::exists('building_rooms', 'id')],
@@ -296,84 +261,39 @@ class InventorySchedulingController extends Controller
             'user_id'               => ['nullable','integer','exists:users,id'],
             'designated_employee'   => ['nullable','integer','exists:users,id'],
             'assigned_by'           => ['nullable','integer','exists:users,id'],
-            'inventory_schedule'    => ['required','string'],      // "YYYY-MM"
-            'actual_date_of_inventory' => ['nullable','date'],  // "YYYY-MM-DD"
+            'inventory_schedule'    => ['required','string'],
+            'actual_date_of_inventory' => ['nullable','date'],
             'checked_by'            => ['nullable','string'],
             'verified_by'           => ['nullable','string'],
             'received_by'           => ['nullable','string'],
             'scheduling_status'     => ['required','string'],
             'description'           => ['nullable','string'],
-        ], [
-            'unit_ids.required_if'      => 'Please select at least one unit or department.',
-            'unit_ids.min'              => 'Please select at least one unit or department.',
-            'building_ids.required_if'  => 'Please select at least one building.',
-            'building_ids.min'          => 'Please select at least one building.',
-            'room_ids.required'         => 'Please select at least one room.',
-            'room_ids.min'              => 'Please select at least one room.',
-
         ]);
 
-        if (empty($data['room_ids']) || count($data['room_ids']) < 1) {
-            return back()->withErrors([
-                'room_ids' => 'Please select at least one room for the chosen unit(s) or building(s).',
-            ])->withInput();
-        }
-
-        if ($data['scope_type'] === 'unit') {
-            $hasBuildings = InventoryList::whereIn('unit_or_department_id', $data['unit_ids'] ?? [])
-                ->whereNotNull('building_id')
-                ->exists();
-
-            if (! $hasBuildings) {
-                return back()->withErrors([
-                    'unit_ids' => 'The selected unit(s) must have at least one associated building.',
-                ])->withInput();
-            }
-        }
-
-        if ($data['scope_type'] === 'building') {
-            if (empty($data['room_ids'])) {
-                return back()->withErrors([
-                    'room_ids' => 'Please select at least one room for the chosen building(s).',
-                ])->withInput();
-            }
-        }
-
-        // Convert '' -> null for nullable FKs
         $data = array_map(fn($v) => $v === '' ? null : $v, $data);
 
         DB::transaction(function () use ($inventoryScheduling, $data) {
-            // Reset approvals if scheduling_status is set to pending_review
             if (strtolower($data['scheduling_status']) === 'pending_review') {
-                $inventoryScheduling->approvals()->each(function ($approval) {
-                    $approval->resetToPending();
-                });
+                $inventoryScheduling->approvals()->each(fn ($approval) => $approval->resetToPending());
             }
 
-            // Update main record
-            $inventoryScheduling->update($data);
+            $inventoryScheduling->update([
+                ...$data,
 
-            // Sync pivots + assets
+                // 👇 Always keep single FKs aligned with pivot arrays
+                'building_id'           => $data['building_ids'][0] ?? $data['building_id'] ?? null,
+                'building_room_id'      => $data['room_ids'][0] ?? $data['building_room_id'] ?? null,
+                'unit_or_department_id' => $data['unit_ids'][0] ?? $data['unit_or_department_id'] ?? null,
+            ]);
+
             $inventoryScheduling->syncScopeAndAssets($data);
         });
 
         $inventoryScheduling->load([
-            'units',
-            'buildings',
-            'rooms',
-            'subAreas',
-            'assets.asset',
-            
-            'building',
-            'unitOrDepartment',
-            'buildingRoom',
-            'user',
-            'designatedEmployee',
-            'assignedBy',
-            'preparedBy',
-            'approvals' => function ($q) {
-                $q->with(['steps' => fn ($s) => $s->orderBy('step_order')]); // 👆 reload approvals with full history after update
-            },
+            'units','buildings','rooms','subAreas','assets.asset',
+            'building','unitOrDepartment','buildingRoom',
+            'user','designatedEmployee','assignedBy','preparedBy',
+            'approvals' => fn ($q) => $q->with(['steps' => fn ($s) => $s->orderBy('step_order')]),
         ]);
 
         return back()->with('success', 'Schedule updated.');

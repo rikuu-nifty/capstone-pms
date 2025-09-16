@@ -3,23 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type {
-    InventorySchedulingFormData,
-    Scheduled,
-    UnitOrDepartment,
-    User,
-    SchedulingBuildingRoom,
-} from '@/pages/inventory-scheduling/index';
-import { Asset } from '../inventory-list';
+import type { InventorySchedulingFormData, Scheduled, SchedulingBuildingRoom, UnitOrDepartment, User } from '@/pages/inventory-scheduling/index';
 import type { Building, SubArea } from '@/types/custom-index';
-import { useForm, } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import Select from 'react-select';
+import { Asset } from '../inventory-list';
 
-import UnitItem from './UnitItem';
-import BuildingItem from './BuildingItem';
-import WarningModal from './WarningModal';
 import { validateScheduleForm } from '@/types/validateScheduleForm';
+import BuildingItem from './BuildingItem';
+import UnitItem from './UnitItem';
+import WarningModal from './WarningModal';
 
 type Props = {
     schedule: Scheduled;
@@ -45,7 +39,7 @@ export const EditInventorySchedulingModal = ({
     const [warningVisible, setWarningVisible] = useState(false);
     const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
     const [warningDetails, setWarningDetails] = useState<string[]>([]);
-    
+
     const { data, setData, put, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         scope_type: schedule.units && schedule.units.length > 0 ? 'unit' : 'building',
         unit_ids: schedule.units?.map((u) => u.id) ?? [],
@@ -72,7 +66,7 @@ export const EditInventorySchedulingModal = ({
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
-        const cleanRoomIds = (data.room_ids ?? []).filter(id => !!id);
+        const cleanRoomIds = (data.room_ids ?? []).filter((id) => !!id);
 
         if (data.scope_type === 'unit') {
             if (data.unit_ids.length === 0) {
@@ -82,16 +76,12 @@ export const EditInventorySchedulingModal = ({
 
             // Get all room IDs that actually belong to the chosen units
             const unitRoomIds = buildingRooms
-                .filter(r =>
-                    assets.some(a =>
-                        a.unit_or_department_id &&
-                        data.unit_ids.includes(a.unit_or_department_id) &&
-                        a.building_room_id === r.id
-                    )
+                .filter((r) =>
+                    assets.some((a) => a.unit_or_department_id && data.unit_ids.includes(a.unit_or_department_id) && a.building_room_id === r.id),
                 )
-                .map(r => r.id);
+                .map((r) => r.id);
 
-            const hasUnitRoom = cleanRoomIds.some(rid => unitRoomIds.includes(rid));
+            const hasUnitRoom = cleanRoomIds.some((rid) => unitRoomIds.includes(rid));
 
             if (!hasUnitRoom) {
                 setError('room_ids', 'You must select at least one room from the chosen unit(s).');
@@ -114,13 +104,7 @@ export const EditInventorySchedulingModal = ({
         clearErrors('building_ids');
         clearErrors('room_ids');
 
-        const result = validateScheduleForm(
-            { ...data, room_ids: cleanRoomIds },
-            assets,
-            unitOrDepartments,
-            buildings,
-            buildingRooms
-        );
+        const result = validateScheduleForm({ ...data, room_ids: cleanRoomIds }, assets, unitOrDepartments, buildings, buildingRooms);
 
         if (!result.valid) {
             setWarningMessage(result.message ?? 'Validation failed.');
@@ -137,67 +121,54 @@ export const EditInventorySchedulingModal = ({
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-full max-w-[700px] sm:max-w-[800px] p-6 max-h-[90vh] flex flex-col overflow-hidden">
+            <DialogContent className="flex max-h-[90vh] w-full max-w-[700px] flex-col overflow-hidden p-6 sm:max-w-[800px]">
                 <DialogHeader className="shrink-0">
                     <DialogTitle>Edit Inventory Schedule</DialogTitle>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto -mr-2 pr-2">
-                    <form
-                        id="edit-inventory-form"
-                        onSubmit={handleSubmit} 
-                        className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm"
-                    >
+                <div className="-mr-2 flex-1 overflow-y-auto pr-2">
+                    <form id="edit-inventory-form" onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
                         {/* Scope Type */}
                         <div className="col-span-2">
                             <label className="mb-2 block font-medium">Scope Type</label>
+                            {/* Scope Type Buttons */}
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     type="button"
-                                    // onClick={() => handleChange("scope_type", "unit")}
                                     onClick={() => {
-                                        setData({
-                                            ...data,
-                                            scope_type: 'unit',
-                                            unit_ids: [],
-                                            building_ids: [],
-                                            room_ids: [],
-                                            sub_area_ids: [],
-                                        });
+                                        setData((prev) => ({
+                                            ...prev,
+                                            scope_type: 'unit', // ✅ only switch scope, don’t clear arrays
+                                        }));
                                         clearErrors('unit_ids');
                                         clearErrors('building_ids');
                                         clearErrors('room_ids');
                                     }}
-                                    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
-                                        ${data.scope_type === "unit"
-                                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                                        : "border-gray-300 bg-white hover:bg-gray-50"
-                                        }`}
+                                    className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 text-sm font-medium transition ${
+                                        data.scope_type === 'unit'
+                                            ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                            : 'border-gray-300 bg-white hover:bg-gray-50'
+                                    }`}
                                 >
                                     By Units / Departments
                                 </button>
 
                                 <button
                                     type="button"
-                                    // onClick={() => handleChange("scope_type", "building")}
                                     onClick={() => {
-                                        setData({
-                                            ...data,
-                                            scope_type: 'building',
-                                            unit_ids: [],
-                                            building_ids: [],
-                                            room_ids: [],
-                                            sub_area_ids: [],
-                                        });
+                                        setData((prev) => ({
+                                            ...prev,
+                                            scope_type: 'building', // ✅ only switch scope, don’t clear arrays
+                                        }));
                                         clearErrors('unit_ids');
                                         clearErrors('building_ids');
                                         clearErrors('room_ids');
                                     }}
-                                    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
-                                        ${data.scope_type === "building"
-                                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                                        : "border-gray-300 bg-white hover:bg-gray-50"
-                                        }`}
+                                    className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 text-sm font-medium transition ${
+                                        data.scope_type === 'building'
+                                            ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                            : 'border-gray-300 bg-white hover:bg-gray-50'
+                                    }`}
                                 >
                                     By Buildings
                                 </button>
@@ -216,8 +187,7 @@ export const EditInventorySchedulingModal = ({
                                         .map((u) => ({
                                             value: u.id,
                                             label: `${u.name} (${u.code})`,
-                                        }))
-                                    }
+                                        }))}
                                     placeholder="Add another unit..."
                                     value={null}
                                     onChange={(selected) => {
@@ -250,10 +220,7 @@ export const EditInventorySchedulingModal = ({
                                         }
                                     }}
                                 />
-                                {errors.unit_ids && (
-                                    <p className="mt-1 text-xs text-red-500">{String(errors.unit_ids)}</p>
-                                )}
-
+                                {errors.unit_ids && <p className="mt-1 text-xs text-red-500">{String(errors.unit_ids)}</p>}
 
                                 {data.unit_ids.map((uid) => {
                                     const unit = unitOrDepartments.find((u) => u.id === uid);
@@ -266,7 +233,7 @@ export const EditInventorySchedulingModal = ({
                                             unitAssets
                                                 .map((a) => a.building)
                                                 .filter((b): b is Building => b !== null && b !== undefined)
-                                                .map((b) => [b.id, b])
+                                                .map((b) => [b.id, b]),
                                         ).values(),
                                     ];
 
@@ -275,7 +242,7 @@ export const EditInventorySchedulingModal = ({
                                             unitAssets
                                                 .map((a) => a.building_room as SchedulingBuildingRoom | null)
                                                 .filter((r): r is SchedulingBuildingRoom => r !== null && r !== undefined)
-                                                .map((r) => [r.id, r])
+                                                .map((r) => [r.id, r]),
                                         ).values(),
                                     ];
 
@@ -284,7 +251,7 @@ export const EditInventorySchedulingModal = ({
                                             unitAssets
                                                 .map((a) => a.sub_area)
                                                 .filter((sa): sa is SubArea => sa !== null && sa !== undefined)
-                                                .map((sa) => [sa.id, sa])
+                                                .map((sa) => [sa.id, sa]),
                                         ).values(),
                                     ];
 
@@ -300,26 +267,28 @@ export const EditInventorySchedulingModal = ({
                                             selectedRooms={data.room_ids}
                                             selectedSubAreas={data.sub_area_ids}
                                             onToggleBuilding={(buildingId, checked) => {
-                                                const roomsForBuilding = buildingRooms.filter((r: SchedulingBuildingRoom) => r.building_id === buildingId);
+                                                const roomsForBuilding = buildingRooms.filter(
+                                                    (r: SchedulingBuildingRoom) => r.building_id === buildingId,
+                                                );
                                                 const subAreasForBuilding = roomsForBuilding.flatMap((r) =>
-                                                    (r.sub_areas ?? []).map((sa: SubArea) => sa.id)
+                                                    (r.sub_areas ?? []).map((sa: SubArea) => sa.id),
                                                 );
 
-                                                setData(prev => {
+                                                setData((prev) => {
                                                     let nextRooms: number[];
                                                     let nextSubs: number[];
                                                     let nextBuildings: number[];
 
                                                     if (checked) {
-                                                        nextRooms = Array.from(new Set([...prev.room_ids, ...roomsForBuilding.map(r => r.id)]));
+                                                        nextRooms = Array.from(new Set([...prev.room_ids, ...roomsForBuilding.map((r) => r.id)]));
                                                         nextSubs = Array.from(new Set([...prev.sub_area_ids, ...subAreasForBuilding]));
                                                         nextBuildings = prev.building_ids.includes(buildingId)
-                                                        ? prev.building_ids
-                                                        : [...prev.building_ids, buildingId];
+                                                            ? prev.building_ids
+                                                            : [...prev.building_ids, buildingId];
                                                     } else {
-                                                        nextRooms = prev.room_ids.filter(id => !roomsForBuilding.map(r => r.id).includes(id));
-                                                        nextSubs = prev.sub_area_ids.filter(id => !subAreasForBuilding.includes(id));
-                                                        nextBuildings = prev.building_ids.filter(id => id !== buildingId);
+                                                        nextRooms = prev.room_ids.filter((id) => !roomsForBuilding.map((r) => r.id).includes(id));
+                                                        nextSubs = prev.sub_area_ids.filter((id) => !subAreasForBuilding.includes(id));
+                                                        nextBuildings = prev.building_ids.filter((id) => id !== buildingId);
                                                     }
 
                                                     return {
@@ -331,81 +300,90 @@ export const EditInventorySchedulingModal = ({
                                                 });
                                             }}
                                             onToggleRoom={(roomId, buildingId, checked) => {
-                                                const room = buildingRooms.find(r => r.id === roomId);
-                                                const subAreaIds = room?.sub_areas?.map(sa => sa.id) ?? [];
+                                                const room = buildingRooms.find((r) => r.id === roomId);
+                                                const subAreaIds = room?.sub_areas?.map((sa) => sa.id) ?? [];
 
-                                                setData(prev => {
-                                                const hasRoom = prev.room_ids.includes(roomId);
-                                                const nextRooms = checked
-                                                    ? (hasRoom ? prev.room_ids : [...prev.room_ids, roomId])
-                                                    : prev.room_ids.filter(id => id !== roomId);
+                                                setData((prev) => {
+                                                    const hasRoom = prev.room_ids.includes(roomId);
+                                                    const nextRooms = checked
+                                                        ? hasRoom
+                                                            ? prev.room_ids
+                                                            : [...prev.room_ids, roomId]
+                                                        : prev.room_ids.filter((id) => id !== roomId);
 
-                                                const nextSubs = checked
-                                                    ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
-                                                    : prev.sub_area_ids.filter(id => !subAreaIds.includes(id));
+                                                    const nextSubs = checked
+                                                        ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
+                                                        : prev.sub_area_ids.filter((id) => !subAreaIds.includes(id));
 
-                                                const buildingRoomIds = buildingRooms.filter(r => r.building_id === buildingId).map(r => r.id);
-                                                const stillHasRooms = buildingRoomIds.some(id => nextRooms.includes(id));
+                                                    const buildingRoomIds = buildingRooms
+                                                        .filter((r) => r.building_id === buildingId)
+                                                        .map((r) => r.id);
+                                                    const stillHasRooms = buildingRoomIds.some((id) => nextRooms.includes(id));
 
-                                                const nextBuildings = checked
-                                                    ? (prev.building_ids.includes(buildingId) ? prev.building_ids : [...prev.building_ids, buildingId])
-                                                    : stillHasRooms
-                                                    ? prev.building_ids
-                                                    : prev.building_ids.filter(id => id !== buildingId);
+                                                    const nextBuildings = checked
+                                                        ? prev.building_ids.includes(buildingId)
+                                                            ? prev.building_ids
+                                                            : [...prev.building_ids, buildingId]
+                                                        : stillHasRooms
+                                                          ? prev.building_ids
+                                                          : prev.building_ids.filter((id) => id !== buildingId);
 
-                                                return {
-                                                    ...prev,
-                                                    room_ids: nextRooms,
-                                                    sub_area_ids: nextSubs,
-                                                    building_ids: nextBuildings,
-                                                };
+                                                    return {
+                                                        ...prev,
+                                                        room_ids: nextRooms,
+                                                        sub_area_ids: nextSubs,
+                                                        building_ids: nextBuildings,
+                                                    };
                                                 });
                                             }}
                                             onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
-                                                setData(prev => {
-                                                let updatedSubAreas: number[];
+                                                setData((prev) => {
+                                                    let updatedSubAreas: number[];
 
-                                                if (!checked) {
-                                                    updatedSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
-                                                    return {
-                                                    ...prev,
-                                                    sub_area_ids: updatedSubAreas,
-                                                    };
-                                                } else {
-                                                    updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
-                                                    ? prev.sub_area_ids
-                                                    : [...prev.sub_area_ids, subAreaId];
+                                                    if (!checked) {
+                                                        updatedSubAreas = prev.sub_area_ids.filter((id) => id !== subAreaId);
+                                                        return {
+                                                            ...prev,
+                                                            sub_area_ids: updatedSubAreas,
+                                                        };
+                                                    } else {
+                                                        updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
+                                                            ? prev.sub_area_ids
+                                                            : [...prev.sub_area_ids, subAreaId];
 
-                                                    return {
-                                                    ...prev,
-                                                    sub_area_ids: updatedSubAreas,
-                                                    room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
-                                                    building_ids: prev.building_ids.includes(buildingId)
-                                                        ? prev.building_ids
-                                                        : [...prev.building_ids, buildingId],
-                                                    };
-                                                }
+                                                        return {
+                                                            ...prev,
+                                                            sub_area_ids: updatedSubAreas,
+                                                            room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                                            building_ids: prev.building_ids.includes(buildingId)
+                                                                ? prev.building_ids
+                                                                : [...prev.building_ids, buildingId],
+                                                        };
+                                                    }
                                                 });
                                             }}
                                             onRemove={() => {
-                                                setData('unit_ids', data.unit_ids.filter((id) => id !== uid));
+                                                setData(
+                                                    'unit_ids',
+                                                    data.unit_ids.filter((id) => id !== uid),
+                                                );
                                             }}
                                             onClearAll={() => {
-                                                const unitBuildingIds = unitBuildings.map(b => b.id);
-                                                const unitRoomIds = unitRooms.map(r => r.id);
-                                                const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
+                                                const unitBuildingIds = unitBuildings.map((b) => b.id);
+                                                const unitRoomIds = unitRooms.map((r) => r.id);
+                                                const unitSubAreaIds = unitSubAreas.map((sa) => sa.id);
 
                                                 setData({
                                                     ...data,
-                                                    building_ids: data.building_ids.filter(id => !unitBuildingIds.includes(id)),
-                                                    room_ids: data.room_ids.filter(id => !unitRoomIds.includes(id)),
-                                                    sub_area_ids: data.sub_area_ids.filter(id => !unitSubAreaIds.includes(id)),
+                                                    building_ids: data.building_ids.filter((id) => !unitBuildingIds.includes(id)),
+                                                    room_ids: data.room_ids.filter((id) => !unitRoomIds.includes(id)),
+                                                    sub_area_ids: data.sub_area_ids.filter((id) => !unitSubAreaIds.includes(id)),
                                                 });
                                             }}
                                             onSelectAll={() => {
-                                                const unitBuildingIds = unitBuildings.map(b => b.id);
-                                                const unitRoomIds = unitRooms.map(r => r.id);
-                                                const unitSubAreaIds = unitSubAreas.map(sa => sa.id);
+                                                const unitBuildingIds = unitBuildings.map((b) => b.id);
+                                                const unitRoomIds = unitRooms.map((r) => r.id);
+                                                const unitSubAreaIds = unitSubAreas.map((sa) => sa.id);
 
                                                 setData({
                                                     ...data,
@@ -417,9 +395,7 @@ export const EditInventorySchedulingModal = ({
                                         />
                                     );
                                 })}
-                                {errors.room_ids && (
-                                    <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
-                                )}
+                                {errors.room_ids && <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>}
                             </div>
                         )}
 
@@ -430,23 +406,18 @@ export const EditInventorySchedulingModal = ({
 
                                 <Select
                                     className="w-full"
-                                    options={buildings
-                                        .filter((b) => !data.building_ids.includes(b.id))
-                                        .map((b) => ({
-                                            value: b.id,
-                                            label: `${b.name} (${b.code})`,
-                                        }))
-                                    }
+                                    options={buildings.map((b) => ({
+                                        value: b.id,
+                                        label: `${b.name} (${b.code})`,
+                                    }))}
                                     placeholder="Add another building..."
-                                    value={null}
+                                    value={null} // stays null, so Select is always ready to add another
                                     onChange={(selected) => {
                                         if (selected) {
                                             const id = Number(selected.value);
                                             if (!data.building_ids.includes(id)) {
                                                 // collect rooms & subareas tied to this building
-                                                const buildingRoomIds = buildingRooms
-                                                    .filter((r) => r.building_id === id)
-                                                    .map((r) => r.id);
+                                                const buildingRoomIds = buildingRooms.filter((r) => r.building_id === id).map((r) => r.id);
 
                                                 const buildingSubAreaIds = buildingRooms
                                                     .filter((r) => r.building_id === id)
@@ -461,8 +432,8 @@ export const EditInventorySchedulingModal = ({
                                             }
                                         }
                                     }}
-
                                 />
+
                                 {errors.building_ids && <p className="mt-1 text-xs text-red-500">{String(errors.building_ids)}</p>}
 
                                 <div className="flex flex-col gap-3">
@@ -481,22 +452,26 @@ export const EditInventorySchedulingModal = ({
                                                 selectedRooms={data.room_ids}
                                                 selectedSubAreas={data.sub_area_ids}
                                                 onToggleRoom={(roomId, buildingId, checked) => {
-                                                    const room = buildingRooms.find(r => r.id === roomId);
-                                                    const subAreaIds = room?.sub_areas?.map(sa => sa.id) ?? [];
+                                                    const room = buildingRooms.find((r) => r.id === roomId);
+                                                    const subAreaIds = room?.sub_areas?.map((sa) => sa.id) ?? [];
 
-                                                    setData(prev => {
+                                                    setData((prev) => {
                                                         const hasRoom = prev.room_ids.includes(roomId);
                                                         const nextRooms = checked
-                                                        ? (hasRoom ? prev.room_ids : [...prev.room_ids, roomId])
-                                                        : prev.room_ids.filter(id => id !== roomId);
+                                                            ? hasRoom
+                                                                ? prev.room_ids
+                                                                : [...prev.room_ids, roomId]
+                                                            : prev.room_ids.filter((id) => id !== roomId);
 
                                                         const nextSubs = checked
-                                                        ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
-                                                        : prev.sub_area_ids.filter(id => !subAreaIds.includes(id));
+                                                            ? Array.from(new Set([...prev.sub_area_ids, ...subAreaIds]))
+                                                            : prev.sub_area_ids.filter((id) => !subAreaIds.includes(id));
 
                                                         const nextBuildings = checked
-                                                        ? (prev.building_ids.includes(buildingId) ? prev.building_ids : [...prev.building_ids, buildingId])
-                                                        : prev.building_ids;
+                                                            ? prev.building_ids.includes(buildingId)
+                                                                ? prev.building_ids
+                                                                : [...prev.building_ids, buildingId]
+                                                            : prev.building_ids;
 
                                                         return {
                                                             ...prev,
@@ -507,60 +482,65 @@ export const EditInventorySchedulingModal = ({
                                                     });
                                                 }}
                                                 onToggleSubArea={(subAreaId, roomId, buildingId, checked) => {
-                                                    setData(prev => {
+                                                    setData((prev) => {
                                                         let updatedSubAreas: number[];
 
                                                         if (!checked) {
-                                                        // remove this subarea
-                                                        updatedSubAreas = prev.sub_area_ids.filter(id => id !== subAreaId);
+                                                            // remove this subarea
+                                                            updatedSubAreas = prev.sub_area_ids.filter((id) => id !== subAreaId);
 
-                                                        // ✅ Keep the room even if no subareas are left
-                                                        return {
-                                                            ...prev,
-                                                            sub_area_ids: updatedSubAreas,
-                                                        };
+                                                            // ✅ Keep the room even if no subareas are left
+                                                            return {
+                                                                ...prev,
+                                                                sub_area_ids: updatedSubAreas,
+                                                            };
                                                         } else {
-                                                        // add this subarea
-                                                        updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
-                                                            ? prev.sub_area_ids
-                                                            : [...prev.sub_area_ids, subAreaId];
+                                                            // add this subarea
+                                                            updatedSubAreas = prev.sub_area_ids.includes(subAreaId)
+                                                                ? prev.sub_area_ids
+                                                                : [...prev.sub_area_ids, subAreaId];
 
-                                                        return {
-                                                            ...prev,
-                                                            sub_area_ids: updatedSubAreas,
-                                                            room_ids: prev.room_ids.includes(roomId)
-                                                            ? prev.room_ids
-                                                            : [...prev.room_ids, roomId],
-                                                            building_ids: prev.building_ids.includes(buildingId)
-                                                            ? prev.building_ids
-                                                            : [...prev.building_ids, buildingId],
-                                                        };
+                                                            return {
+                                                                ...prev,
+                                                                sub_area_ids: updatedSubAreas,
+                                                                room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId],
+                                                                building_ids: prev.building_ids.includes(buildingId)
+                                                                    ? prev.building_ids
+                                                                    : [...prev.building_ids, buildingId],
+                                                            };
                                                         }
                                                     });
                                                 }}
                                                 onRemove={() => {
-                                                    setData('building_ids', data.building_ids.filter((id) => id !== bid));
+                                                    setData(
+                                                        'building_ids',
+                                                        data.building_ids.filter((id) => id !== bid),
+                                                    );
                                                 }}
                                                 onSelectAll={() => {
-                                                    const buildingRoomIds = rooms.map(r => r.id);
-                                                    const buildingSubAreaIds = rooms.flatMap(r => r.sub_areas?.map(sa => sa.id) ?? []);
+                                                    const buildingRoomIds = rooms.map((r) => r.id);
+                                                    const buildingSubAreaIds = rooms.flatMap((r) => r.sub_areas?.map((sa) => sa.id) ?? []);
 
                                                     setData('room_ids', Array.from(new Set([...data.room_ids, ...buildingRoomIds])));
                                                     setData('sub_area_ids', Array.from(new Set([...data.sub_area_ids, ...buildingSubAreaIds])));
                                                 }}
                                                 onClearAll={() => {
-                                                    const buildingRoomIds = rooms.map(r => r.id);
-                                                    const buildingSubAreaIds = rooms.flatMap(r => r.sub_areas?.map(sa => sa.id) ?? []);
+                                                    const buildingRoomIds = rooms.map((r) => r.id);
+                                                    const buildingSubAreaIds = rooms.flatMap((r) => r.sub_areas?.map((sa) => sa.id) ?? []);
 
-                                                    setData('room_ids', data.room_ids.filter(id => !buildingRoomIds.includes(id)));
-                                                    setData('sub_area_ids', data.sub_area_ids.filter(id => !buildingSubAreaIds.includes(id)));
+                                                    setData(
+                                                        'room_ids',
+                                                        data.room_ids.filter((id) => !buildingRoomIds.includes(id)),
+                                                    );
+                                                    setData(
+                                                        'sub_area_ids',
+                                                        data.sub_area_ids.filter((id) => !buildingSubAreaIds.includes(id)),
+                                                    );
                                                 }}
                                             />
                                         );
                                     })}
-                                    {errors.room_ids && (
-                                        <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>
-                                    )}
+                                    {errors.room_ids && <p className="mt-1 text-xs text-red-500">{String(errors.room_ids)}</p>}
                                 </div>
                             </div>
                         )}
@@ -571,11 +551,7 @@ export const EditInventorySchedulingModal = ({
                         {/* Schedule + Staff + Status */}
                         <div>
                             <label className="mb-1 block font-medium">Inventory Schedule</label>
-                            <PickerInput
-                                type="month"
-                                value={data.inventory_schedule}
-                                onChange={(v) => setData('inventory_schedule', v)}
-                            />
+                            <PickerInput type="month" value={data.inventory_schedule} onChange={(v) => setData('inventory_schedule', v)} />
                             {errors.inventory_schedule && <p className="text-sm text-red-600">{errors.inventory_schedule}</p>}
                         </div>
 
@@ -590,9 +566,9 @@ export const EditInventorySchedulingModal = ({
                                 value={
                                     users.find((u) => u.id === Number(data.designated_employee))
                                         ? {
-                                            value: Number(data.designated_employee),
-                                            label: users.find((u) => u.id === Number(data.designated_employee))?.name,
-                                        }
+                                              value: Number(data.designated_employee),
+                                              label: users.find((u) => u.id === Number(data.designated_employee))?.name,
+                                          }
                                         : null
                                 }
                                 onChange={(selected) => setData('designated_employee', selected ? selected.value : '')}
@@ -621,35 +597,22 @@ export const EditInventorySchedulingModal = ({
                         {/* Dates + Checks */}
                         <div>
                             <label className="mb-1 block font-medium">Actual Date of Inventory</label>
-                            <PickerInput
-                                type="date"
-                                value={data.actual_date_of_inventory}
-                                onChange={(v) => setData('actual_date_of_inventory', v)}
-                            />
+                            <PickerInput type="date" value={data.actual_date_of_inventory} onChange={(v) => setData('actual_date_of_inventory', v)} />
                         </div>
 
                         <div>
                             <label className="mb-1 block font-medium">Checked By</label>
-                            <Input
-                                value={data.checked_by}
-                                onChange={(e) => setData('checked_by', e.target.value)}
-                            />
+                            <Input value={data.checked_by} onChange={(e) => setData('checked_by', e.target.value)} />
                         </div>
 
                         <div>
                             <label className="mb-1 block font-medium">Verified By</label>
-                            <Input
-                                value={data.verified_by}
-                                onChange={(e) => setData('verified_by', e.target.value)}
-                            />
+                            <Input value={data.verified_by} onChange={(e) => setData('verified_by', e.target.value)} />
                         </div>
 
                         <div>
                             <label className="mb-1 block font-medium">Received By</label>
-                            <Input
-                                value={data.received_by}
-                                onChange={(e) => setData('received_by', e.target.value)}
-                            />
+                            <Input value={data.received_by} onChange={(e) => setData('received_by', e.target.value)} />
                         </div>
 
                         <div className="col-span-2">
@@ -661,29 +624,19 @@ export const EditInventorySchedulingModal = ({
                                 onChange={(e) => setData('description', e.target.value)}
                             />
                         </div>
-
                     </form>
                 </div>
                 {/* Footer */}
-                <div className="shrink-0 flex justify-end gap-2 border-t pt-4 mt-4">
-                    <Button 
-                        type="button" 
-                        variant="destructive"
-                        className='cursor-pointer' 
-                        onClick={onClose}
-                    >
+                <div className="mt-4 flex shrink-0 justify-end gap-2 border-t pt-4">
+                    <Button type="button" variant="destructive" className="cursor-pointer" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button 
-                        type="submit" 
-                        form="edit-inventory-form"
-                        className='cursor-pointer'
-                    >
+                    <Button type="submit" form="edit-inventory-form" className="cursor-pointer">
                         Save Changes
                     </Button>
                 </div>
             </DialogContent>
-            
+
             <WarningModal
                 show={warningVisible}
                 onClose={() => setWarningVisible(false)}
@@ -691,7 +644,6 @@ export const EditInventorySchedulingModal = ({
                 message={warningMessage}
                 details={warningDetails}
             />
-
         </Dialog>
     );
 };

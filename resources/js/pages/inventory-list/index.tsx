@@ -623,7 +623,7 @@ export default function InventoryListIndex({
                                         {item.room_building && item.building_room ? (
                                             <>
                                             {item.room_building.name} ({item.building_room.room})
-                                            {item.sub_area?.name ? ` – ${item.sub_area.name}` : ''}
+                                            {/* {item.sub_area?.name ? ` – ${item.sub_area.name}` : ''} */}
                                             </>
                                         ) : (
                                             '—'
