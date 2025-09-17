@@ -174,6 +174,23 @@ export default function ReportsIndex() {
         ),
     },
     {
+      title: 'Inventory Sheet Report',
+      description: 'Generate detailed per-room/per-building inventory sheets.',
+      href: route('reports.inventory-sheet'),
+      icon: <ClipboardList className="h-5 w-5 text-purple-500" />,
+      footer: (
+        <span className="text-xs text-muted-foreground">
+          Download or print room-level inventory sheets
+        </span>
+      ),
+      chart: (
+        <div className="rounded-lg bg-gray-50 p-3 text-center text-sm text-gray-400">
+          Sheets grouped by Units, Buildings, and Rooms
+        </div>
+      ),
+    },
+
+    {
       title: 'Inventory Scheduling Report',
       description: 'Placeholder for scheduling data visualization.',
       href: route('reports.inventory-scheduling'),
