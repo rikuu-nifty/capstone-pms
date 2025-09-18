@@ -1,7 +1,6 @@
 <table>
     <thead>
         <tr>
-            <!-- <th>#</th> -->
             <th>MR No.</th>
             <th>Asset Name (Type)</th>
             <th>Serial No.</th>
@@ -16,13 +15,33 @@
         </tr>
     </thead>
     <tbody>
-        @foreach ($assets as $subArea => $items)
+        @foreach ($assets as $groupKey => $items)
+        @php
+        [$type, $label] = explode(':', $groupKey, 2) + [null, null];
+
+        if ($type) {
+        $type = preg_replace('/([a-z])([A-Z])/', '$1 $2', $type);
+        $type = preg_replace('/[_-]+/', ' ', $type);
+        $type = ucwords(strtolower($type));
+        }
+
+        if ($label) {
+        $label = preg_replace('/([a-z])([A-Z])/', '$1 $2', $label);
+        $label = preg_replace('/[_-]+/', ' ', $label);
+        $label = ucwords(strtolower($label));
+        }
+        @endphp
+
+        @if ($type && $label)
         <tr>
-            <td colspan="12">Sub-Area: {{ $subArea ?? 'No Sub-Area' }}</td>
+            <td colspan="11" style="font-weight:bold; background:#eaeaea;">
+                {{ $type }}: {{ $label }}
+            </td>
         </tr>
-        @foreach ($items as $i => $a)
+        @endif
+
+        @foreach ($items as $a)
         <tr>
-            <!-- <td>{{ $i + 1 }}</td> -->
             <td>{{ $a['memorandum_no'] ?? '—' }}</td>
             <td>{{ $a['asset_name'] }} ({{ $a['asset_type'] }})</td>
             <td>{{ $a['serial_no'] ?? '—' }}</td>
@@ -56,7 +75,7 @@
         })->sum();
         @endphp
         <tr>
-            <td colspan="12" style="font-weight:bold; text-align:left;">
+            <td colspan="11" style="font-weight:bold; text-align:left;">
                 Total Assets: {{ number_format($totalAssets) }}
                 &nbsp; | &nbsp;
                 Total Cost: ₱{{ number_format($totalCost, 2) }}

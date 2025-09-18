@@ -208,8 +208,10 @@ class InventorySheetReportController extends Controller
         ->setPaper('A4', 'landscape')
         ->setOption('isPhpEnabled', true);
 
-        // return $pdf->download('inventory_sheet_report.pdf');
-        return $pdf->stream('inventory_sheet_report.pdf');
+        $timestamp = now()->format('Y-m-d');
+
+        return $pdf->download("Inventory-Sheet-Report-{$timestamp}.pdf");
+        // return $pdf->stream('inventory_sheet_report.pdf');
     }
 
     public function exportExcel(Request $request)
@@ -217,7 +219,14 @@ class InventorySheetReportController extends Controller
         $filters = $request->all();
         $assets  = $this->getAssetsForExport($filters);
 
-        return Excel::download(new class($assets, $filters) implements \Maatwebsite\Excel\Concerns\FromView {
+        $timestamp = now()->format('Y-m-d');
+        $filename = "Inventory-Sheet-Report-{$timestamp}.xlsx";
+
+        return Excel::download(new class($assets, $filters) implements
+            \Maatwebsite\Excel\Concerns\FromView,
+            \Maatwebsite\Excel\Concerns\WithColumnWidths,
+            \Maatwebsite\Excel\Concerns\WithStyles
+        {
             protected $assets;
             protected $filters;
 
@@ -234,7 +243,55 @@ class InventorySheetReportController extends Controller
                     'filters' => $this->filters,
                 ]);
             }
-        }, 'inventory_sheet_report.xlsx');
+
+            public function columnWidths(): array
+            {
+                return [
+                    'A' => 12,  // MR No.
+                    'B' => 30,  // Asset Name (Type)
+                    'C' => 20,  // Serial No.
+                    'D' => 12,  // Price
+                    'E' => 25,  // Supplier
+                    'F' => 18,  // Date Purchased
+                    'G' => 10,  // Per Record
+                    'H' => 10,  // Actual
+                    'I' => 20,  // Inventory Status
+                    'J' => 18,  // Date of Count
+                    'K' => 40,  // Remarks
+                ];
+            }
+
+            public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
+            {
+                $highestRow = $sheet->getHighestRow();
+
+                // Header row center + bold
+                $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal('center');
+                $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+
+                // Loop through rows and apply style
+                for ($row = 2; $row <= $highestRow; $row++) {
+                    $value = trim((string) $sheet->getCell("A{$row}")->getValue());
+
+                    // normalize hyphen types
+                    $normalized = str_replace(['–', '—'], '-', $value);
+
+                    if ($normalized && preg_match('/^(Sub-?Area|Room|Memo)/i', $normalized)) {
+                        // Group label row → left aligned + bold
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getAlignment()->setHorizontal('left');
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getFont()->setBold(true);
+                    } else {
+                        // Normal data row → center align
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getAlignment()->setHorizontal('center');
+                    }
+                }
+
+                return [];
+            }
+        }, $filename);
     }
 
     private function getAssetsForExport($filters)
