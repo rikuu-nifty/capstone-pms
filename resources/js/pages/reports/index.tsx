@@ -180,7 +180,7 @@ export default function ReportsIndex() {
       icon: <ClipboardList className="h-5 w-5 text-purple-500" />,
       footer: (
         <span className="text-xs text-muted-foreground">
-          Download or print room-level inventory sheets
+          Click "View" to see more details
         </span>
       ),
       chart: (

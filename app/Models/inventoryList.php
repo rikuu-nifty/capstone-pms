@@ -15,7 +15,10 @@ class InventoryList extends Model
 
     protected $dates = ['deleted_at'];
 
-    protected $appends = ['current_transfer_status'];
+    protected $appends = [
+        'current_transfer_status',
+        'current_inventory_status',
+    ];
 
     protected $fillable = [
         'memorandum_no',
@@ -101,6 +104,12 @@ class InventoryList extends Model
     public function transferAssets()
     {
         return $this->hasMany(TransferAsset::class, 'asset_id');
+    }
+    public function getCurrentInventoryStatusAttribute(): ?string
+    {
+        return $this->schedulingAssets()
+            ->latest('created_at')
+            ->value('inventory_status');
     }
 
     public function getCurrentTransferStatusAttribute(): ?string

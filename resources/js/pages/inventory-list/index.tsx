@@ -103,6 +103,7 @@ export type Asset = {
     sub_area?: SubArea | null;
 
     current_transfer_status?: string | null;
+    current_inventory_status?: string | null;
 };
 
 export type AssetFormData = {
