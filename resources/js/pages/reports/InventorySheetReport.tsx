@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 import { FileDown, FileSpreadsheet, FileText, Filter, RotateCcw } from 'lucide-react';
 import Select from 'react-select';
 import { Cell, Label, Pie, PieChart, TooltipProps } from 'recharts';
@@ -54,7 +55,23 @@ type Paginator<T> = {
 
 type InventorySheetPageProps = {
     chartData: ChartData[];
-    assets: Paginator<AssetRow>;
+    assets: {
+        data: AssetRow[];
+        meta: {
+        current_page: number;
+        from: number | null;
+        last_page: number;
+        path: string;
+        per_page: number;
+        to: number | null;
+        total: number;
+        };
+        links: {
+        url: string | null;
+        label: string;
+        active: boolean;
+        }[];
+    };
     buildings: { id: number; name: string }[];
     departments: { id: number; name: string }[];
     rooms: { id: number; room: string; building_id: number }[];
@@ -153,17 +170,17 @@ export default function InventorySheetReport() {
             route('reports.inventory-sheet'),
             { ...filters, page },
             {
-            preserveState: true,
-            onSuccess: (pageData) => {
-                const paginator = pageData.props.assets as Paginator<AssetRow>;
-                setDisplayedAssets(paginator.data);
-                setPage(paginator.meta.current_page);
-                setTotal(paginator.meta.total);
-                setPageSize(paginator.meta.per_page);
-            },
+                preserveState: true,
+                onSuccess: (pageData) => {
+                    const paginator = pageData.props.assets as Paginator<AssetRow>;
+                    setDisplayedAssets(paginator.data);
+                    setPage(paginator.meta.current_page);
+                    setTotal(paginator.meta.total);
+                    setPageSize(paginator.meta.per_page);
+                },
             }
         );
-    }, [filters, page]);
+    }, [filters, page,]);
 
     const totalAssets = chartData.reduce((acc, curr) => acc + curr.value, 0);
     const unsortedChartData = chartData.map((d) => ({ ...d, total: totalAssets }));
@@ -295,10 +312,11 @@ export default function InventorySheetReport() {
                             onClick={() => {
                                 setFilters(defaultFilters);
                                 router.get(route('reports.inventory-sheet'), defaultFilters, {
-                                preserveState: true,
-                                onSuccess: (page) => {
-                                    setDisplayedAssets(page.props.assets as AssetRow[]);
-                                },
+                                    preserveState: true,
+                                    onSuccess: (pageData) => {
+                                        const paginator = pageData.props.assets as InventorySheetPageProps['assets'];
+                                        setDisplayedAssets(paginator.data);
+                                    },
                                 });
                             }}
                             className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
@@ -310,10 +328,11 @@ export default function InventorySheetReport() {
                         <button
                                 onClick={() => {
                                     router.get(route('reports.inventory-sheet'), filters, {
-                                    preserveState: true,
-                                    onSuccess: (page) => {
-                                        setDisplayedAssets(page.props.assets as AssetRow[]);
-                                    },
+                                        preserveState: true,
+                                        onSuccess: (pageData) => {
+                                            const paginator = pageData.props.assets as InventorySheetPageProps['assets'];
+                                            setDisplayedAssets(paginator.data);
+                                        },
                                     });
                                 }}
                                 className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
