@@ -346,6 +346,9 @@
     Route::delete('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'destroy'])
         ->name('building-rooms.destroy')
         ->middleware('can:delete-building-rooms');
+    Route::delete('/sub-areas/{subArea}', [BuildingRoomController::class, 'destroySubArea'])
+        ->name('sub-areas.destroy')
+        ->middleware('can:delete-building-rooms');
     Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])
         ->name('building-rooms.view')
         ->middleware('can:view-building-rooms');

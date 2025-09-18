@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import EditModal from '@/components/modals/EditModal';
 import Select from 'react-select';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ export default function EditBuildingRoomModal({
     room,
 }: EditRoomModalProps) {
 
-    const { data, setData, put, processing, reset, errors, clearErrors } = useForm<BuildingRoomFormData>({
+    const { data, setData, processing, reset, errors, clearErrors } = useForm<BuildingRoomFormData>({
         building_id: '',
         room: '',
         description: '',
@@ -92,9 +92,7 @@ export default function EditBuildingRoomModal({
             remove_sub_area_ids: removedIds,
         };
 
-        setData(payload);
-
-        put(`/building-rooms/${room.id}`, {
+        router.put(`/building-rooms/${room.id}`, payload, {
             preserveScroll: true,
             onSuccess: () => {
                 reset();

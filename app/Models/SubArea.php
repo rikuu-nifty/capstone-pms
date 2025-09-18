@@ -16,28 +16,32 @@ class SubArea extends Model
         'description',
     ];
 
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
+
     /**
      * Relationships
      */
 
      protected static function booted()
-{
-    static::saved(function ($subArea) {
-        $room = $subArea->buildingRoom;
-        if ($room) {
-            $room->sub_area_count = $room->subAreas()->count();
-            $room->saveQuietly(); // prevents recursive events
-        }
-    });
+    {
+        static::saved(function ($subArea) {
+            $room = $subArea->buildingRoom;
+            if ($room) {
+                $room->sub_area_count = $room->subAreas()->count();
+                $room->saveQuietly(); // prevents recursive events
+            }
+        });
 
-    static::deleted(function ($subArea) {
-        $room = $subArea->buildingRoom;
-        if ($room) {
-            $room->sub_area_count = $room->subAreas()->count();
-            $room->saveQuietly();
-        }
-    });
-}
+        static::deleted(function ($subArea) {
+            $room = $subArea->buildingRoom;
+            if ($room) {
+                $room->sub_area_count = $room->subAreas()->count();
+                $room->saveQuietly();
+            }
+        });
+    }
 
     public function buildingRoom()
     {

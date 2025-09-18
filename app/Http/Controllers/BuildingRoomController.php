@@ -71,25 +71,32 @@ class BuildingRoomController extends Controller
                     : null,
             ]);
 
-            if (isset($validated['remove_sub_area_ids'])) {
-                SubArea::whereIn('id', $validated['remove_sub_area_ids'])
-                    ->where('building_room_id', $buildingRoom->id)
-                    ->delete()
-                ;
+            if (!empty($validated['remove_sub_area_ids'])) {
+                foreach ($validated['remove_sub_area_ids'] as $id) {
+                    $this->destroySubArea($id, $buildingRoom->id);
+                }
             }
 
+            // Handle updates + new sub areas
             if (!empty($validated['sub_areas'])) {
                 foreach ($validated['sub_areas'] as $sa) {
+                    // Skip if flagged for deletion
+                    if (!empty($sa['id']) && in_array($sa['id'], $validated['remove_sub_area_ids'] ?? [])) {
+                        continue;
+                    }
+
                     if (!empty($sa['id'])) {
-                        // update existing
-                        SubArea::where('id', $sa['id'])
+                        $subArea = SubArea::where('id', $sa['id'])
                             ->where('building_room_id', $buildingRoom->id)
-                            ->update([
+                            ->first();
+
+                        if ($subArea) {
+                            $subArea->update([
                                 'name'        => trim($sa['name']),
                                 'description' => isset($sa['description']) ? trim($sa['description']) : null,
                             ]);
+                        }
                     } else {
-                        // new sub area
                         SubArea::create([
                             'building_room_id' => $buildingRoom->id,
                             'name'             => trim($sa['name']),
@@ -99,7 +106,7 @@ class BuildingRoomController extends Controller
                 }
             }
         });
-        
+
         return redirect()->route('buildings.index')->with('success', "Room “{$buildingRoom->room}” was successfully updated.");
     }
 
@@ -108,5 +115,16 @@ class BuildingRoomController extends Controller
         $buildingRoom->delete();
 
         return redirect()->route('buildings.index')->with('success', 'Room was successfully deleted.');
+    }
+
+    private function destroySubArea(int $subAreaId, int $buildingRoomId): void
+    {
+        $subArea = SubArea::where('id', $subAreaId)
+            ->where('building_room_id', $buildingRoomId)
+            ->first();
+
+        if ($subArea) {
+            $subArea->delete(); // SoftDeletes → sets deleted_at
+        }
     }
 }
