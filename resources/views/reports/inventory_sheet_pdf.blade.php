@@ -2,6 +2,51 @@
 
 @section('title', 'Inventory Sheet Report')
 
+{{-- Page-specific overrides --}}
+@push('styles')
+<style>
+    body {
+        font-size: 11px !important;
+    }
+
+    table {
+        font-size: 11px !important;
+    }
+
+    .acknowledgement {
+        margin-top: 50px;
+        /* distinct spacing so it won’t overlap */
+        font-size: 10px;
+        text-align: justify;
+    }
+
+    .signature-block {
+        margin-top: 40px;
+        width: 100%;
+        page-break-inside: avoid;
+    }
+
+    .signatories-table,
+    .signatories-table td,
+    .signatories-table th {
+        border: none !important;
+        background: none !important;
+        padding: 8px;
+    }
+
+    .signature-block td {
+        text-align: center;
+        vertical-align: top;
+    }
+
+    .footer {
+        font-size: 10px;
+        text-align: right;
+        color: #666;
+    }
+</style>
+@endpush
+
 @section('content')
 @php
 use Carbon\Carbon;
@@ -25,43 +70,6 @@ $reportYear = now()->year . '-' . (now()->year + 1);
 }
 @endphp
 
-<style>
-    body {
-        font-size: 11px;
-    }
-
-    /* 👈 reduced font size */
-    table {
-        font-size: 11px;
-    }
-
-    .signature-block {
-        margin-top: 40px;
-        width: 100%;
-    }
-
-    .signature-block td {
-        text-align: center;
-        padding: 10px;
-        vertical-align: top;
-    }
-
-    .acknowledgement {
-        margin-top: 30px;
-        font-size: 10px;
-        text-align: justify;
-    }
-
-    .footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        font-size: 10px;
-        text-align: right;
-    }
-</style>
-
 {{-- Title --}}
 <div style="text-align:center; margin-bottom:20px;">
     <h3 style="margin-top:10px; margin-bottom:5px; font-weight:bold;">
@@ -69,7 +77,7 @@ $reportYear = now()->year . '-' . (now()->year + 1);
     </h3>
 </div>
 
-<div style="border-top: 2px solid #000000; margin-top: 20px; margin-bottom: 15px;"></div>
+<div style="border-top: 2px solid #000; margin: 20px 0;"></div>
 
 {{-- Filters --}}
 <div class="mb-6">
@@ -107,7 +115,6 @@ $reportYear = now()->year . '-' . (now()->year + 1);
 
 {{-- Totals --}}
 <div class="mb-6 totals">
-
     @php
     $totalAssets = $assets->map->count()->sum();
     $totalCost = $assets->map(function ($group) {
@@ -116,29 +123,26 @@ $reportYear = now()->year . '-' . (now()->year + 1);
     @endphp
 
     <strong>Total Assets:</strong> {{ number_format($totalAssets) }}
-
     &nbsp; | &nbsp;
-
-    <strong>Total Cost:</strong> ₱ {{ number_format($totalCost, 2) }}
+    <strong>Total Cost:</strong> ₱{{ number_format($totalCost, 2) }}
 </div>
 
 {{-- Table --}}
-<table width="100%" cellspacing="0" cellpadding="5" style="border-collapse:collapse; font-size:12px;">
+<table width="100%" cellspacing="0" cellpadding="5" style="border-collapse:collapse;">
     <thead>
-        {{-- Spacer row for cleaner layout --}}
         <tr class="spacer-row">
-            <td colspan="12" style="height:15px; border:none; background:#fff;"></td>
+            <td colspan="11" style="height:20px; border:none; background:#fff;"></td>
         </tr>
-        <tr style="background:#f0f0f0; font-weight:bold; text-align:center;">
-            <th style="width:36px; text-align:center">#</th>
-            <th style="text-align:center">MR No.</th>
+        <tr>
+            <!-- <th style="width:36px; text-align:center">#</th> -->
+            <th style="width:38px; text-align:center">MR No.</th>
             <th style="text-align:center">Asset Name (Type)</th>
             <th style="text-align:center">Serial No.</th>
             <th style="text-align:center">Price</th>
             <th style="text-align:center">Supplier</th>
             <th style="text-align:center">Date Purchased</th>
-            <th style="text-align:center">Per Record</th>
-            <th style="text-align:center">Actual</th>
+            <th style="width:38px; text-align:center">Per Record</th>
+            <th style="width:38px; text-align:center">Actual</th>
             <th style="text-align:center">Inventory Status</th>
             <th style="text-align:center">Date of Count</th>
             <th style="text-align:center">Remarks</th>
@@ -154,16 +158,16 @@ $reportYear = now()->year . '-' . (now()->year + 1);
         </tr>
         @foreach ($items as $i => $a)
         <tr style="text-align:center; border-bottom:1px solid #ddd;">
-            <td>{{ $i + 1 }}</td>
+            <!-- <td>{{ $i + 1 }}</td> -->
             <td>{{ $a['memorandum_no'] ?? '—' }}</td>
             <td>
                 <div>
                     <strong>{{ $a['asset_name'] }}</strong><br />
-                    <small>({{ $a['asset_type'] }})</small>
+                    <small>{{ $a['asset_type'] }}</small>
                 </div>
             </td>
             <td>{{ $a['serial_no'] ?? '—' }}</td>
-            <td>{{ $a['unit_cost'] ? number_format($a['unit_cost'], 2) : '—' }}</td>
+            <td>{{ $a['unit_cost'] ? '₱' . number_format($a['unit_cost'], 2) : '—' }}</td>
             <td>{{ $a['supplier'] ?? '—' }}</td>
             <td>{{ $a['date_purchased'] ? Carbon::parse($a['date_purchased'])->format('M d, Y') : '—' }}</td>
             <td>1</td>
@@ -180,43 +184,70 @@ $reportYear = now()->year . '-' . (now()->year + 1);
                 {{ $val ?: '—' }}
             </td>
             <td>{{ $a['inventoried_at'] ? Carbon::parse($a['inventoried_at'])->format('M d, Y') : '—' }}</td>
-            <td style="white-space:normal; word-wrap:break-word; text-align:center">{{ $a['status'] }}</td>
+            <td style="white-space:normal; word-wrap:break-word; text-align:center">
+                {{ $a['status'] }}
+            </td>
         </tr>
         @endforeach
         @endforeach
     </tbody>
 </table>
 
-{{-- Acknowledgement --}}
-<div class="acknowledgement">
-    We, the undersigned, acknowledge the custody of the above-mentioned property/ies.
-    We also fully agree and understand that we are jointly liable for any damages or losses
-    due to mishandling and negligence. It is also understood that we are going to exercise
-    proper care in the upkeep and maintenance of the said property/ies to prolong their useful lives. <br><br>
-    We are also responsible in informing the Property Management Office regarding any addition,
-    movement, transfer and disposal of property/ies under our custody.
-</div>
+<div style="page-break-before: always; margin-top:80px;"></div>
 
-{{-- Additional signatories --}}
-<table class="signature-block" border="0" cellspacing="0" cellpadding="0">
+{{-- SIGNATORIES – BLOCK 1 --}}
+<table class="signatories-table" width="100%" cellspacing="0" cellpadding="8"
+    style="margin-top:40px; page-break-inside: avoid; font-size:11px; table-layout:fixed; border:none;">
     <tr>
-        <td>
-            <div>Personnel-in-Charge</div>
-            <br><br>_________________________
+        <td style="text-align:center; width:33%; border:none; background:none;">
+            Prepared by:
+            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            Property Clerk
         </td>
-        <td>
-            <div>Immediate Supervisor</div>
-            <br><br>_________________________
+        <td style="text-align:center; width:33%; border:none; background:none;">
+            Verified by:
+            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            Head, PMO
         </td>
-        <td>
-            <div>Dean / Head</div>
-            <br><br>_________________________
+        <td style="text-align:center; width:33%; border:none; background:none;">
+            Noted by:
+            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            Internal Audit
         </td>
     </tr>
 </table>
 
-{{-- Footer --}}
-<div class="footer">
-    Page {PAGE_NUM} of {PAGE_COUNT}
+<div style="margin-top:32px; font-size:10px; text-align:justify; page-break-inside: avoid;">
+    <p style="text-indent:40px; margin:0 0 12px;">
+        We, the undersigned, acknowledge the custody of the above mentioned property/ies.
+        We also fully agree and understand that we are jointly liable for any: damages or
+        loss/es of the said property/ies due to mishandling and negligence. It is also
+        understood that we are going to exercise proper care in the upkeep and maintenance
+        of the said property/ies to prolong their useful lives.
+    </p>
+    <p style="text-indent:40px; margin:0;">
+        We are also responsible in informing the Property Management Office regarding any
+        addition, movement, transfer and disposal of property/ies under our custody.
+    </p>
 </div>
+
+{{-- SIGNATORIES – BLOCK 2 --}}
+<table class="signatories-table" width="100%" cellspacing="0" cellpadding="8"
+    style="margin-top:40px; page-break-inside: avoid; font-size:11px; table-layout:fixed; border:none;">
+    <tr>
+        <td style="text-align:center; width:33%; border:none; background:none;">
+            Personnel-in-Charge:
+            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+        </td>
+        <td style="text-align:center; width:33%; border:none; background:none;">
+            Immediate Supervisor:
+            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+        </td>
+        <td style="text-align:center; width:33%; border:none; background:none;">
+            Dean / Head:
+            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+        </td>
+    </tr>
+</table>
+
 @endsection

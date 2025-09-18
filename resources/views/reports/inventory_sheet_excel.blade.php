@@ -6,7 +6,7 @@
             </th>
         </tr>
         <tr>
-            <th>#</th>
+            <!-- <th>#</th> -->
             <th>MR No.</th>
             <th>Asset Name (Type)</th>
             <th>Serial No.</th>
@@ -27,7 +27,7 @@
         </tr>
         @foreach ($items as $i => $a)
         <tr>
-            <td>{{ $i + 1 }}</td>
+            <!-- <td>{{ $i + 1 }}</td> -->
             <td>{{ $a['memorandum_no'] ?? '—' }}</td>
             <td>{{ $a['asset_name'] }} ({{ $a['asset_type'] }})</td>
             <td>{{ $a['serial_no'] ?? '—' }}</td>

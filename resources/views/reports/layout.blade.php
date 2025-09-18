@@ -135,6 +135,8 @@
             font-style: italic;
         }
     </style>
+    {{-- Allow page-specific overrides --}}
+    @stack('styles')
 </head>
 
 <body>
@@ -151,13 +153,17 @@
     <footer>
         <script type="text/php">
             if (isset($pdf)) {
-                $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
-                $size = 9;
-                $font = $fontMetrics->getFont("DejaVu Sans");
-                $width = $fontMetrics->getTextWidth($text, $font, $size);
-                $x = ($pdf->get_width() - $width) / 2;
-                $y = $pdf->get_height() - 28;
-                $pdf->page_text($x, $y, $text, $font, $size, [0,0,0]);
+                $pdf->page_script('
+                    $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+                    $size = 9;
+                    $text = "Page " . $PAGE_NUM . " of " . $PAGE_COUNT;
+
+                    $width = $fontMetrics->get_text_width($text, $font, $size);
+                    $x = ($pdf->get_width() - $width) / 2;   // center horizontally
+                    $y = $pdf->get_height() - 40;            // adjust vertical position
+
+                    $pdf->text($x, $y, $text, $font, $size);
+                ');
             }
         </script>
     </footer>
@@ -168,9 +174,9 @@
 
         {{-- Optional: if a report includes $filters, show fallback --}}
         @isset($filters)
-            @if (collect($filters)->filter()->isEmpty())
-                <p class="no-filters">No Filters Applied – showing all available records.</p>
-            @endif
+        @if (collect($filters)->filter()->isEmpty())
+        <p class="no-filters">No Filters Applied – showing all available records.</p>
+        @endif
         @endisset
     </main>
 

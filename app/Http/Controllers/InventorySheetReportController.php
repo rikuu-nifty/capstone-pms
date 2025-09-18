@@ -195,9 +195,12 @@ class InventorySheetReportController extends Controller
         $pdf = Pdf::loadView('reports.inventory_sheet_pdf', [
             'assets'  => $assets,
             'filters' => $filters,
-        ])->setPaper('A4', 'landscape');
+        ])
+        ->setPaper('A4', 'landscape')
+        ->setOption('isPhpEnabled', true);
 
-        return $pdf->download('inventory_sheet_report.pdf');
+        // return $pdf->download('inventory_sheet_report.pdf');
+        return $pdf->stream('inventory_sheet_report.pdf');
     }
 
     public function exportExcel(Request $request)
