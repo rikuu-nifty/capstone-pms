@@ -18,13 +18,14 @@ type CategoryData = {
 
 // 🔹 Extend default Inertia props with our custom props
 type ReportsPageProps = InertiaPageProps & {
-  categoryData: CategoryData[]
+  categoryData: CategoryData[],
+  inventorySheetChartData: CategoryData[],
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }]
 
 export default function ReportsIndex() {
-  const { categoryData } = usePage<ReportsPageProps>().props
+  const { categoryData, inventorySheetChartData } = usePage<ReportsPageProps>().props
   const [showOthersModal, setShowOthersModal] = useState(false)
 
   const BASE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA66CC']
@@ -183,11 +184,84 @@ export default function ReportsIndex() {
           Click "View" to see more details
         </span>
       ),
-      chart: (
-        <div className="rounded-lg bg-gray-50 p-3 text-center text-sm text-gray-400">
-          Sheets grouped by Units, Buildings, and Rooms
-        </div>
-      ),
+      chart:
+        inventorySheetChartData.length > 0 ? (
+          <div className="rounded-lg bg-gray-50 p-3">
+            <ChartContainer
+              config={{ assets: { label: 'Assets' } }}
+              className="mx-auto aspect-square max-h-[200px]"
+            >
+              <PieChart>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Pie
+                  data={inventorySheetChartData}
+                  dataKey="value"
+                  nameKey="label"
+                  innerRadius={50}
+                  outerRadius={80}
+                  strokeWidth={5}
+                >
+                  {inventorySheetChartData.map((_, index) => (
+                    <Cell
+                      key={index}
+                      fill={generateColor(index, inventorySheetChartData.length)}
+                    />
+                  ))}
+                  <Label
+                    content={({ viewBox }) => {
+                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+                        const total = inventorySheetChartData.reduce(
+                          (sum, d) => sum + d.value,
+                          0
+                        );
+                        return (
+                          <text
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                          >
+                            <tspan
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              className="fill-foreground text-xl font-bold"
+                            >
+                              {total.toLocaleString()}
+                            </tspan>
+                            <tspan
+                              x={viewBox.cx}
+                              y={(viewBox.cy || 0) + 18}
+                              className="fill-muted-foreground text-xs"
+                            >
+                              Total Assets
+                            </tspan>
+                          </text>
+                        );
+                      }
+                    }}
+                  />
+                </Pie>
+              </PieChart>
+            </ChartContainer>
+
+            {/* ✅ Legend */}
+            <div className="mt-3 flex flex-wrap justify-center gap-3">
+              {inventorySheetChartData.map((d, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span
+                    className="h-3 w-3 rounded-sm"
+                    style={{ backgroundColor: generateColor(i, inventorySheetChartData.length) }}
+                  ></span>
+                  <span className="text-xs text-muted-foreground">{d.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-gray-400">
+            No data available
+          </div>
+        ),
     },
 
     {

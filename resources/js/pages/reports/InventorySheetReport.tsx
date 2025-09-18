@@ -170,17 +170,18 @@ export default function InventorySheetReport() {
             route('reports.inventory-sheet'),
             { ...filters, page },
             {
-                preserveState: true,
-                onSuccess: (pageData) => {
-                    const paginator = pageData.props.assets as Paginator<AssetRow>;
-                    setDisplayedAssets(paginator.data);
-                    setPage(paginator.meta.current_page);
-                    setTotal(paginator.meta.total);
-                    setPageSize(paginator.meta.per_page);
-                },
+            preserveState: true,
+            onSuccess: (pageData) => {
+                const paginator = pageData.props.assets as Paginator<AssetRow>;
+                setDisplayedAssets(paginator.data);
+                setPage(paginator.meta.current_page);
+                setTotal(paginator.meta.total);
+                setPageSize(paginator.meta.per_page);
+            },
             }
         );
-    }, [filters, page,]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]);
 
     const totalAssets = chartData.reduce((acc, curr) => acc + curr.value, 0);
     const unsortedChartData = chartData.map((d) => ({ ...d, total: totalAssets }));
@@ -311,11 +312,15 @@ export default function InventorySheetReport() {
                         <button
                             onClick={() => {
                                 setFilters(defaultFilters);
-                                router.get(route('reports.inventory-sheet'), defaultFilters, {
+                                setPage(1);
+                                router.get(route('reports.inventory-sheet'), { ...defaultFilters, page: 1 }, {
                                     preserveState: true,
                                     onSuccess: (pageData) => {
                                         const paginator = pageData.props.assets as InventorySheetPageProps['assets'];
                                         setDisplayedAssets(paginator.data);
+                                        setPage(paginator.meta.current_page);
+                                        setTotal(paginator.meta.total);
+                                        setPageSize(paginator.meta.per_page);
                                     },
                                 });
                             }}
@@ -327,12 +332,15 @@ export default function InventorySheetReport() {
 
                         <button
                                 onClick={() => {
-                                    router.get(route('reports.inventory-sheet'), filters, {
-                                        preserveState: true,
-                                        onSuccess: (pageData) => {
-                                            const paginator = pageData.props.assets as InventorySheetPageProps['assets'];
-                                            setDisplayedAssets(paginator.data);
-                                        },
+                                    router.get(route('reports.inventory-sheet'), { ...filters, page: 1 }, {
+                                    preserveState: true,
+                                    onSuccess: (pageData) => {
+                                        const paginator = pageData.props.assets as InventorySheetPageProps['assets'];
+                                        setDisplayedAssets(paginator.data);
+                                        setPage(paginator.meta.current_page);
+                                        setTotal(paginator.meta.total);
+                                        setPageSize(paginator.meta.per_page);
+                                    },
                                     });
                                 }}
                                 className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
