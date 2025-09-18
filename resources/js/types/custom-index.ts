@@ -20,6 +20,16 @@ export * from './page-props';
 export const formatDate = (dateStr?: string) =>
     !dateStr ? '' : new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
+export const formatShortDate = (dateStr?: string) =>
+  !dateStr
+    ? ''
+    : new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short', // ✅ "Sep" instead of "September"
+        day: 'numeric',
+      });
+
+
 export const formatDateLong = (d?: string | null) => {
     if (!d) return '—';
     const dt = new Date(d);
@@ -98,8 +108,23 @@ export function formatFullName(
 }
 
 export const formatForInputDate = (dateStr?: string | null) => {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
 };
+
+export function formatCurrency(value: number | null): string {
+    if (value === null || value === undefined) return '—';
+
+    const hasCents = value % 1 !== 0;
+
+    // Format number only (no currency)
+    const formatted = new Intl.NumberFormat('en-PH', {
+        minimumFractionDigits: hasCents ? 2 : 0,
+        maximumFractionDigits: 2,
+    }).format(value);
+
+    return `₱ ${formatted}`;
+}
+

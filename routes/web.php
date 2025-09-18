@@ -124,10 +124,12 @@
 
         Route::get('/inventory-sheet', [InventorySheetReportController::class, 'index'])
             ->name('reports.inventory-sheet');
-
         Route::post('/inventory-sheet/generate', [InventorySheetReportController::class, 'generate'])
             ->name('reports.inventory-sheet.generate');
-        
+        Route::get('/inventory-sheet/export/pdf', [InventorySheetReportController::class, 'exportPdf'])
+            ->name('reports.inventory-sheet.export.pdf');
+        Route::get('/inventory-sheet/export/excel', [InventorySheetReportController::class, 'exportExcel'])
+            ->name('reports.inventory-sheet.export.excel');
     });
 
     Route::get('calendar', function () {
