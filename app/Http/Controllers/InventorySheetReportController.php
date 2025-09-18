@@ -36,13 +36,22 @@ class InventorySheetReportController extends Controller
             'offCampusAssets.offCampus',
             'schedulingAssets',
         ])
-            ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
-            ->when($deptId, fn($q) => $q->where('unit_or_department_id', $deptId))
-            ->when($roomId, fn($q) => $q->where('building_room_id', $roomId))
-            ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId));
+        ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
+        ->when($deptId, fn($q) => $q->where('unit_or_department_id', $deptId))
+        ->when($roomId, fn($q) => $q->where('building_room_id', $roomId))
+        ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId));
 
-        // Pagination (default 25 per page)
-        $paginator = $query->paginate($request->get('per_page', 25))->withQueryString();
+        // Default per_page = 25, but allow override via query string
+        $perPage = (int) $request->get('per_page', 25);
+
+        // Force it to never exceed total count (important for frontend Pagination)
+        if ($perPage <= 0) {
+            $perPage = 25; // fallback
+        }
+
+        $paginator = $query->paginate($perPage)->withQueryString();
+
+        // dd($paginator->toArray());
 
         // Transform each item in the paginator
         $assets = $paginator->getCollection()->map(function ($asset) {
@@ -105,8 +114,18 @@ class InventorySheetReportController extends Controller
             ];
         });
 
-        // Put transformed assets back into paginator
         $paginator->setCollection($assets);
+
+        $chartQuery = InventoryList::with(['schedulingAssets'])
+            ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
+            ->when($deptId, fn($q) => $q->where('unit_or_department_id', $deptId))
+            ->when($roomId, fn($q) => $q->where('building_room_id', $roomId))
+            ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId));
+
+        $allInventoryStatuses = $chartQuery->get()->map(function ($asset) {
+            $latestScheduling = $asset->schedulingAssets()->latest('created_at')->first();
+            return $latestScheduling?->inventory_status ?? 'not_inventoried';
+        });
 
         $labels = [
             'not_inventoried' => 'Not Inventoried',
@@ -114,21 +133,36 @@ class InventorySheetReportController extends Controller
             'inventoried'     => 'Inventoried',
         ];
 
-        $chartData = $assets
-            ->groupBy('inventory_status')
-            ->map(fn($g, $label) => [
-                'label' => $labels[$label] ?? ucfirst(str_replace('_', ' ', $label)),
-                'value' => $g->count(),
-            ])
+        $chartData = collect($allInventoryStatuses)
+            ->countBy()
+            ->map(function ($count, $status) use ($labels) {
+                return [
+                    'label' => $labels[$status] ?? ucfirst(str_replace('_', ' ', $status)),
+                    'value' => $count,
+                ];
+            })
             ->values()
-            ->all();
+            ->toArray();
 
         return Inertia::render('reports/InventorySheetReport', [
             'buildings'   => Building::select('id', 'name')->get(),
             'departments' => UnitOrDepartment::select('id', 'name')->get(),
             'rooms'       => BuildingRoom::select('id', 'room', 'building_id')->get(),
             'subAreas'    => SubArea::select('id', 'name', 'building_room_id')->get(),
-            'assets'      => $paginator, // send paginator instead of array
+            // 'assets'      => $paginator,
+            'assets' => [
+                'data'  => $paginator->items(),
+                'meta'  => [
+                    'current_page' => $paginator->currentPage(),
+                    'from'         => $paginator->firstItem(),
+                    'last_page'    => $paginator->lastPage(),
+                    'path'         => $paginator->path(),
+                    'per_page'     => $paginator->perPage(),
+                    'to'           => $paginator->lastItem(),
+                    'total'        => $paginator->total(),
+                ],
+                'links' => $paginator->linkCollection(),
+            ],
             'chartData'   => $chartData,
         ]);
     }
