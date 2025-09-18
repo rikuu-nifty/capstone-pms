@@ -1,11 +1,6 @@
 <table>
     <thead>
         <tr>
-            <th colspan="12">
-                Date Basis: {{ ucfirst($filters['date_basis'] ?? 'Inventoried') }}
-            </th>
-        </tr>
-        <tr>
             <!-- <th>#</th> -->
             <th>MR No.</th>
             <th>Asset Name (Type)</th>

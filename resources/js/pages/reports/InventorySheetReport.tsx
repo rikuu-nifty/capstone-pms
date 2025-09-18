@@ -144,7 +144,7 @@ export default function InventorySheetReport() {
         department_id: null as number | null,
         room_id: null as number | null,
         sub_area_id: null as number | null,
-        date_basis: 'inventoried' as 'purchased' | 'inventoried' | 'both',
+        inventory_status: null as string | null,
     };
     const [filters, setFilters] = useState(defaultFilters);
 
@@ -154,6 +154,14 @@ export default function InventorySheetReport() {
     ) {
         setFilters((prev) => ({ ...prev, [key]: value }));
     }
+
+    const filteredRooms = filters.building_id
+    ? rooms.filter((r) => r.building_id === filters.building_id)
+    : rooms;
+
+    const filteredSubAreas = filters.room_id
+    ? subAreas.filter((s) => s.building_room_id === filters.room_id)
+    : subAreas;
 
     function buildQuery(filters: typeof defaultFilters): string {
         const params: Record<string, string> = {};
@@ -205,31 +213,6 @@ export default function InventorySheetReport() {
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     {/* Filters Grid */}
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {/* Date Basis */}
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Date Basis
-                            </label>
-                            <Select
-                                className="w-full"
-                                value={{
-                                value: filters.date_basis,
-                                label:
-                                    filters.date_basis === 'purchased'
-                                    ? 'Date Purchased'
-                                    : filters.date_basis === 'inventoried'
-                                    ? 'Date of Count'
-                                    : 'Both',
-                                }}
-                                options={[
-                                    { value: 'inventoried', label: 'Date of Count' },
-                                    { value: 'purchased', label: 'Date Purchased' },
-                                    { value: 'both', label: 'Both' },
-                                ]}
-                                onChange={(opt) => updateFilter('date_basis', opt?.value ?? 'inventoried')}
-                            />
-                        </div>
-
                         {/* From */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -290,11 +273,13 @@ export default function InventorySheetReport() {
                                     : null
                                 }
                                 options={buildings.map((b) => ({ value: b.id, label: b.name }))}
-                                onChange={(opt) => updateFilter('building_id', opt?.value ?? null)}
+                                onChange={(opt) => {
+                                    updateFilter('building_id', opt?.value ?? null);
+                                    updateFilter('room_id', null);
+                                    updateFilter('sub_area_id', null);
+                                }}
                             />
                         </div>
-
-                        
 
                         {/* Room */}
                         <div>
@@ -309,8 +294,12 @@ export default function InventorySheetReport() {
                                     }
                                     : null
                                 }
-                                options={rooms.map((r) => ({ value: r.id, label: r.room }))}
-                                onChange={(opt) => updateFilter('room_id', opt?.value ?? null)}
+                                options={filteredRooms.map((r) => ({ value: r.id, label: r.room }))}
+                                onChange={(opt) => {
+                                    updateFilter('room_id', opt?.value ?? null);
+                                    updateFilter('sub_area_id', null);
+                                }}
+                                isDisabled={!filters.building_id} // disable until building selected
                             />
                         </div>
 
@@ -325,15 +314,41 @@ export default function InventorySheetReport() {
                                 filters.sub_area_id
                                     ? {
                                         value: filters.sub_area_id,
-                                        label:
-                                        subAreas.find((s) => s.id === filters.sub_area_id)?.name || '',
+                                        label: subAreas.find((s) => s.id === filters.sub_area_id)?.name || '',
                                     }
                                     : null
                                 }
-                                options={subAreas.map((s) => ({ value: s.id, label: s.name }))}
+                                options={filteredSubAreas.map((s) => ({ value: s.id, label: s.name }))}
                                 onChange={(opt) => updateFilter('sub_area_id', opt?.value ?? null)}
+                                isDisabled={!filters.room_id} // disable until a room is selected
                             />
                         </div>
+
+                        {/* Inventory Status */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Inventory Status
+                            </label>
+                            <Select
+                                className="w-full"
+                                value={
+                                filters.inventory_status
+                                    ? {
+                                        value: filters.inventory_status,
+                                        label: formatStatusLabel(filters.inventory_status),
+                                    }
+                                    : null
+                                }
+                                options={[
+                                { value: 'not_inventoried', label: 'Not Inventoried' },
+                                { value: 'scheduled', label: 'Scheduled' },
+                                { value: 'inventoried', label: 'Inventoried' },
+                                ]}
+                                onChange={(opt) => updateFilter('inventory_status', opt?.value ?? null)}
+                                isClearable
+                            />
+                        </div>
+
                     </div>
 
                     {/* --- Action Buttons --- */}
