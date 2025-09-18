@@ -39,73 +39,63 @@ class InventorySheetReportController extends Controller
 
         $assets = $query->get();
 
-        // 🔹 Transform each asset
         $assets = $assets->map(function ($asset) {
             $quantity = 1;
-            $remarks = 'Available';
+            $status = 'Available';
 
-            // --- Turnover/Disposal ---
-            if ($asset->turnoverDisposalAsset()->exists()) {
-                $latest = $asset->turnoverDisposalAsset()->latest()->first();
-                if ($latest && $latest->turnoverDisposal) {
+            // --- Turnover/Disposal (final state) ---
+            $td = $asset->turnoverDisposalAsset()->latest()->first();
+            if ($td && $td->turnoverDisposal) {
+                $quantity = 0;
+                $type = $td->turnoverDisposal->type; // 'turnover' | 'disposal'
+                $date = optional($td->turnoverDisposal->document_date)->format('M d, Y');
+                $status = $type === 'disposal' ? "Disposed on {$date}" : "Turned Over on {$date}";
+            } else {
+                // --- Transfer ---
+                $tr = $asset->transferAssets()->latest()->first();
+                if ($tr) {
                     $quantity = 0;
-                    $type = $latest->turnoverDisposal->type;
-                    $date = optional($latest->turnoverDisposal->document_date)->format('M d, Y');
-                    $remarks = $type === 'disposal'
-                        ? "Disposed on {$date}"
-                        : "Turned Over on {$date}";
+                    $toSub  = optional($tr->toSubArea)->name;
+                    $toRoom = optional(optional($tr->transfer)->receivingBuildingRoom)->room;
+                    $toBldg = optional(optional(optional($tr->transfer)->receivingBuildingRoom)->building)->name;
+
+                    $dest = $toSub ?: ($toRoom ? "{$toRoom}, {$toBldg}" : $toBldg);
+                    $date = optional($tr->moved_at)->format('M d, Y');
+                    $status = $dest ? "Transferred to {$dest} on {$date}" : "Transferred on {$date}";
+                } else {
+                    // --- Off-Campus (includes 'repair') ---
+                    $oc = $asset->offCampusAssets()->latest()->first();
+                    if ($oc && $oc->offCampus) {
+                        $quantity = 0;
+                        $date = optional($oc->offCampus->date_issued)->format('M d, Y');
+                        // remarks column on off_campuses is enum ['official_use','repair']
+                        $status = $oc->offCampus->remarks === 'repair'
+                            ? "For Repair (Issued {$date})"
+                            : "Off-Campus – {$oc->offCampus->purpose} ({$date})";
+                    }
                 }
             }
 
-            // --- Transfer ---
-            elseif ($asset->transferAssets()->exists()) {
-                $latest = $asset->transferAssets()->latest()->first();
-                if ($latest) {
-                    $quantity = 0;
-                    $toSub = $latest->toSubArea?->name;
-                    $toRoom = $latest->transfer?->receivingBuildingRoom?->room;
-                    $toBuilding = $latest->transfer?->receivingBuildingRoom?->building?->name;
-                    $location = $toSub ?: ($toRoom ? "{$toRoom}, {$toBuilding}" : $toBuilding);
-                    $date = optional($latest->moved_at)->format('M d, Y');
-                    $remarks = "Transferred to {$location} on {$date}";
-                }
-            }
-
-            // --- Off-Campus ---
-            elseif ($asset->offCampusAssets()->exists()) {
-                $latest = $asset->offCampusAssets()->latest()->first();
-                if ($latest && $latest->offCampus) {
-                    $quantity = 0;
-                    $date = optional($latest->offCampus->date_issued)->format('M d, Y');
-                    $remarks = $latest->offCampus->remarks === 'repair'
-                        ? "For Repair (Issued {$date})"
-                        : "Off-Campus – {$latest->offCampus->purpose} ({$date})";
-                }
-            }
-
-            // --- NFC Inventory Status ---
+            // NFC view helper (Already Inventoried / Scheduled / Not Yet Inventoried)
             $inventoryStatus = $asset->resolveInventoryStatus();
 
             return [
                 'id'               => $asset->id,
                 'asset_name'       => $asset->asset_name,
                 'asset_type'       => $asset->asset_type,
-                'sub_area'         => $asset->subArea?->name,
+                'sub_area'         => optional($asset->subArea)->name,
                 'quantity'         => $quantity,
-                'status'           => $remarks,
+                'status'           => $status,
                 'inventory_status' => $inventoryStatus,
             ];
         })->toArray();
 
-        // 🔹 Chart Data (group by status for now)
+        // group chart by status (can change later to sub_area/room if you want)
         $chartData = collect($assets)
             ->groupBy('status')
-            ->map(fn($group, $label) => [
-                'label' => $label,
-                'value' => count($group),
-            ])
+            ->map(fn($g, $label) => ['label' => $label, 'value' => $g->count()])
             ->values()
-            ->all(); // ✅ ensure plain array
+            ->all();
 
         return Inertia::render('reports/InventorySheetReport', [
             'buildings'   => Building::select('id', 'name')->get(),
