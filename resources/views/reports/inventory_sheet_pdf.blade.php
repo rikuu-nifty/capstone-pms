@@ -44,6 +44,23 @@
         text-align: right;
         color: #666;
     }
+
+    .group-room {
+        font-weight: bold;
+        background: #eaeaea;
+        padding-left: 8px;
+    }
+
+    .group-sub-area {
+        font-style: italic;
+        background: #f5f5f5;
+        padding-left: 30px;
+    }
+
+    .group-memo {
+        background: #fafafa;
+        padding-left: 50px;
+    }
 </style>
 @endpush
 
@@ -140,67 +157,76 @@ $reportYear = now()->year . '-' . (now()->year + 1);
             <th style="width:10px; text-align:center">Actual</th>
             <th style="width:80px; text-align:center">Inventory Status</th>
             <th style="width:70px; text-align:center">Date of Count</th>
-            <th style="text-align:center">Remarks</th>
+            <th style="max-width:150px; text-align:center">Remarks</th>
         </tr>
     </thead>
     <tbody>
         @foreach ($assets as $groupKey => $items)
-            @php
-            [$type, $label] = explode(':', $groupKey, 2) + [null, null];
+        @php
+        [$type, $label] = explode(':', $groupKey, 2) + [null, null];
 
-            if ($type) {
-                $type = preg_replace('/([a-z])([A-Z])/', '$1 $2', $type);
-                $type = preg_replace('/[_-]+/', ' ', $type);
-                $type = ucwords(strtolower($type));
-            }
+        if ($type) {
+        $type = preg_replace('/([a-z])([A-Z])/', '$1 $2', $type);
+        $type = preg_replace('/[_-]+/', ' ', $type);
+        $type = ucwords(strtolower($type));
+        }
 
-            if ($label) {
-                $label = preg_replace('/([a-z])([A-Z])/', '$1 $2', $label);
-                $label = preg_replace('/[_-]+/', ' ', $label);
-                $label = ucwords(strtolower($label));
-            }
-            @endphp
+        if ($label) {
+        $label = preg_replace('/([a-z])([A-Z])/', '$1 $2', $label);
+        $label = preg_replace('/[_-]+/', ' ', $label);
+        $label = ucwords(strtolower($label));
+        }
+        @endphp
 
-            @if ($type && $label)
-                <tr>
-                    <td colspan="12" style="font-weight:bold; background:#eaeaea;">
-                        {{ $type }}: {{ $label }}
-                    </td>
-                </tr>
-            @endif
-            @foreach ($items as $i => $a)
-            <tr style="text-align:center; border-bottom:1px solid #ddd;">
-                <!-- <td>{{ $i + 1 }}</td> -->
-                <td style="width:38px; text-align:center">{{ $a['memorandum_no'] ?? '—' }}</td>
-                <td style="width:120px; text-align:center">
-                    <div>
-                        <strong>{{ $a['asset_name'] }}</strong><br />
-                        <small>{{ $a['asset_type'] }}</small>
-                    </div>
-                </td>
-                <td style="width:80px; text-align:center">{{ $a['serial_no'] ?? '—' }}</td>
-                <td style="width:60px; text-align:center">{{ $a['unit_cost'] ? '₱' . number_format($a['unit_cost'], 2) : '—' }}</td>
-                <td style="width:80px; text-align:center">{{ $a['supplier'] ?? '—' }}</td>
-                <td style="width:90px; text-align:center">{{ $a['date_purchased'] ? Carbon::parse($a['date_purchased'])->format('M d, Y') : '—' }}</td>
-                <td style="width:10px; text-align:center">1</td>
-                <td style="width:10px; text-align:center">{{ $a['quantity'] }}</td>
-                <td style="width:80px; text-align:center">
-                    @php
-                    $val = $a['inventory_status'] ?? '—';
-                    if ($val) {
-                    $val = preg_replace('/([a-z])([A-Z])/', '$1 $2', $val);
-                    $val = preg_replace('/[_-]+/', ' ', $val);
-                    $val = ucwords(strtolower($val));
-                    }
-                    @endphp
-                    {{ $val ?: '—' }}
-                </td>
-                <td style="width:70px; text-align:center">{{ $a['inventoried_at'] ? Carbon::parse($a['inventoried_at'])->format('M d, Y') : '—' }}</td>
-                <td style="white-space:normal; word-wrap:break-word; text-align:center">
-                    {{ $a['status'] }}
-                </td>
-            </tr>
-            @endforeach
+        @if ($type && $label)
+        @php
+        $style = 'font-weight:bold; background:#eaeaea; padding-left:8px;';
+        if (strtolower($type) === 'sub area') {
+        $style = 'font-style:italic; background:#f5f5f5; padding-left:30px;';
+        } elseif (strtolower($type) === 'memo') {
+        $style = 'background:#fafafa; padding-left:50px;';
+        }
+        @endphp
+        <tr>
+            <td colspan="12" class="group-{{ strtolower(str_replace(' ', '-', $type)) }}">
+                {{ $type }}: {{ $label }}
+            </td>
+        </tr>
+        @endif
+
+        @foreach ($items as $i => $a)
+        <tr style="text-align:center; border-bottom:1px solid #ddd;">
+            <!-- <td>{{ $i + 1 }}</td> -->
+            <td style="width:38px; text-align:center">{{ $a['memorandum_no'] ?? '—' }}</td>
+            <td style="width:120px; text-align:center">
+                <div>
+                    <strong>{{ $a['asset_name'] }}</strong><br />
+                    <small>{{ $a['asset_type'] }}</small>
+                </div>
+            </td>
+            <td style="width:80px; text-align:center">{{ $a['serial_no'] ?? '—' }}</td>
+            <td style="width:60px; text-align:center">{{ $a['unit_cost'] ? '₱' . number_format($a['unit_cost'], 2) : '—' }}</td>
+            <td style="width:80px; text-align:center">{{ $a['supplier'] ?? '—' }}</td>
+            <td style="width:90px; text-align:center">{{ $a['date_purchased'] ? Carbon::parse($a['date_purchased'])->format('M d, Y') : '—' }}</td>
+            <td style="width:10px; text-align:center">1</td>
+            <td style="width:10px; text-align:center">{{ $a['quantity'] }}</td>
+            <td style="width:80px; text-align:center">
+                @php
+                $val = $a['inventory_status'] ?? '—';
+                if ($val) {
+                $val = preg_replace('/([a-z])([A-Z])/', '$1 $2', $val);
+                $val = preg_replace('/[_-]+/', ' ', $val);
+                $val = ucwords(strtolower($val));
+                }
+                @endphp
+                {{ $val ?: '—' }}
+            </td>
+            <td style="width:70px; text-align:center">{{ $a['inventoried_at'] ? Carbon::parse($a['inventoried_at'])->format('M d, Y') : '—' }}</td>
+            <td style="white-space:normal; word-wrap:break-word; word-break:break-word; text-align:center; max-width:150px;">
+                {{ $a['status'] }}
+            </td>
+        </tr>
+        @endforeach
         @endforeach
     </tbody>
 </table>

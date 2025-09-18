@@ -233,6 +233,31 @@ export default function InventorySheetReport() {
                                 onChange={(v) => updateFilter('to', v && v.trim() !== '' ? v : null)}
                             />
                         </div>
+
+                        {/* Inventory Status */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Inventory Status
+                            </label>
+                            <Select
+                                className="w-full"
+                                value={
+                                filters.inventory_status
+                                    ? {
+                                        value: filters.inventory_status,
+                                        label: formatStatusLabel(filters.inventory_status),
+                                    }
+                                    : null
+                                }
+                                options={[
+                                { value: 'not_inventoried', label: 'Not Inventoried' },
+                                { value: 'scheduled', label: 'Scheduled' },
+                                { value: 'inventoried', label: 'Inventoried' },
+                                ]}
+                                onChange={(opt) => updateFilter('inventory_status', opt?.value ?? null)}
+                                isClearable
+                            />
+                        </div>
                         
                         {/* Department */}
                         <div>
@@ -324,31 +349,6 @@ export default function InventorySheetReport() {
                             />
                         </div>
 
-                        {/* Inventory Status */}
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Inventory Status
-                            </label>
-                            <Select
-                                className="w-full"
-                                value={
-                                filters.inventory_status
-                                    ? {
-                                        value: filters.inventory_status,
-                                        label: formatStatusLabel(filters.inventory_status),
-                                    }
-                                    : null
-                                }
-                                options={[
-                                { value: 'not_inventoried', label: 'Not Inventoried' },
-                                { value: 'scheduled', label: 'Scheduled' },
-                                { value: 'inventoried', label: 'Inventoried' },
-                                ]}
-                                onChange={(opt) => updateFilter('inventory_status', opt?.value ?? null)}
-                                isClearable
-                            />
-                        </div>
-
                     </div>
 
                     {/* --- Action Buttons --- */}
@@ -409,7 +409,7 @@ export default function InventorySheetReport() {
                                     style={{ backgroundColor: '#155dfc' }}
                                 >
                                     <FileDown className="h-4 w-4" />
-                                    Export
+                                    Export Summary
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-44 p-2">
