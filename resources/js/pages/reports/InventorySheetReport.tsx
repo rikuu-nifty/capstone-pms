@@ -143,6 +143,7 @@ export default function InventorySheetReport() {
         department_id: null as number | null,
         room_id: null as number | null,
         sub_area_id: null as number | null,
+        date_basis: 'inventoried' as 'purchased' | 'inventoried' | 'both',
     };
     const [filters, setFilters] = useState(defaultFilters);
 
@@ -203,6 +204,31 @@ export default function InventorySheetReport() {
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     {/* Filters Grid */}
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {/* Date Basis */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Date Basis
+                            </label>
+                            <Select
+                                className="w-full"
+                                value={{
+                                value: filters.date_basis,
+                                label:
+                                    filters.date_basis === 'purchased'
+                                    ? 'Date Purchased'
+                                    : filters.date_basis === 'inventoried'
+                                    ? 'Date of Count'
+                                    : 'Both',
+                                }}
+                                options={[
+                                    { value: 'inventoried', label: 'Date of Count' },
+                                    { value: 'purchased', label: 'Date Purchased' },
+                                    { value: 'both', label: 'Both' },
+                                ]}
+                                onChange={(opt) => updateFilter('date_basis', opt?.value ?? 'inventoried')}
+                            />
+                        </div>
+
                         {/* From */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -221,6 +247,28 @@ export default function InventorySheetReport() {
                                 type="date"
                                 value={filters.to ?? ''}
                                 onChange={(v) => updateFilter('to', v && v.trim() !== '' ? v : null)}
+                            />
+                        </div>
+                        
+                        {/* Department */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Unit / Department
+                            </label>
+                            <Select
+                                className="w-full"
+                                value={
+                                filters.department_id
+                                    ? {
+                                        value: filters.department_id,
+                                        label:
+                                        departments.find((d) => d.id === filters.department_id)?.name ||
+                                        '',
+                                    }
+                                    : null
+                                }
+                                options={departments.map((d) => ({ value: d.id, label: d.name }))}
+                                onChange={(opt) => updateFilter('department_id', opt?.value ?? null)}
                             />
                         </div>
 
@@ -245,27 +293,7 @@ export default function InventorySheetReport() {
                             />
                         </div>
 
-                        {/* Department */}
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Unit / Department
-                            </label>
-                            <Select
-                                className="w-full"
-                                value={
-                                filters.department_id
-                                    ? {
-                                        value: filters.department_id,
-                                        label:
-                                        departments.find((d) => d.id === filters.department_id)?.name ||
-                                        '',
-                                    }
-                                    : null
-                                }
-                                options={departments.map((d) => ({ value: d.id, label: d.name }))}
-                                onChange={(opt) => updateFilter('department_id', opt?.value ?? null)}
-                            />
-                        </div>
+                        
 
                         {/* Room */}
                         <div>
@@ -311,18 +339,27 @@ export default function InventorySheetReport() {
                     <div className="flex flex-wrap justify-end gap-3 border-t pt-4">
                         <button
                             onClick={() => {
-                                setFilters(defaultFilters);
+                                const resetFilters = { 
+                                    ...defaultFilters, 
+                                    date_basis: 'inventoried' as 'inventoried' | 'purchased' | 'both',
+                                };
+                                setFilters(resetFilters);
                                 setPage(1);
-                                router.get(route('reports.inventory-sheet'), { ...defaultFilters, page: 1 }, {
+
+                                router.get(
+                                route('reports.inventory-sheet'),
+                                { ...resetFilters, page: 1 },
+                                {
                                     preserveState: true,
                                     onSuccess: (pageData) => {
-                                        const paginator = pageData.props.assets as InventorySheetPageProps['assets'];
-                                        setDisplayedAssets(paginator.data);
-                                        setPage(paginator.meta.current_page);
-                                        setTotal(paginator.meta.total);
-                                        setPageSize(paginator.meta.per_page);
+                                    const paginator = pageData.props.assets as InventorySheetPageProps['assets'];
+                                    setDisplayedAssets(paginator.data);
+                                    setPage(paginator.meta.current_page);
+                                    setTotal(paginator.meta.total);
+                                    setPageSize(paginator.meta.per_page);
                                     },
-                                });
+                                }
+                                );
                             }}
                             className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
                         >
