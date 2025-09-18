@@ -150,24 +150,6 @@
         </div>
     </header>
 
-    <footer>
-        <script type="text/php">
-            if (isset($pdf)) {
-                $pdf->page_script('
-                    $font = $fontMetrics->get_font("DejaVu Sans", "normal");
-                    $size = 9;
-                    $text = "Page " . $PAGE_NUM . " of " . $PAGE_COUNT;
-
-                    $width = $fontMetrics->get_text_width($text, $font, $size);
-                    $x = ($pdf->get_width() - $width) / 2;   // center horizontally
-                    $y = $pdf->get_height() - 40;            // adjust vertical position
-
-                    $pdf->text($x, $y, $text, $font, $size);
-                ');
-            }
-        </script>
-    </footer>
-
     <main>
         {{-- Default section for content --}}
         @yield('content')
@@ -179,6 +161,30 @@
         @endif
         @endisset
     </main>
+    
+    <script type="text/php">
+        if (isset($pdf)) {
+            $pdf->page_script('
+                $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+                $size = 9;
+
+                // Capture total pages only once
+                static $totalPages;
+                if (!$totalPages) {
+                    $totalPages = $PAGE_COUNT;
+                }
+
+                // Always use the static $totalPages to avoid stacking
+                $text = sprintf("Page %d of %d", $PAGE_NUM, $totalPages);
+
+                $width = $fontMetrics->get_text_width($text, $font, $size);
+                $x = ($pdf->get_width() - $width) / 2;
+                $y = $pdf->get_height() - 50;
+
+                $pdf->text($x, $y, $text, $font, $size, [0,0,0]);
+            ');
+        }
+    </script>
 
 </body>
 

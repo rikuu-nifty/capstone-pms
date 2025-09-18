@@ -201,17 +201,17 @@ $reportYear = now()->year . '-' . (now()->year + 1);
     <tr>
         <td style="text-align:center; width:33%; border:none; background:none;">
             Prepared by:
-            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            <div style="border-bottom:1px solid #111; width:80%; margin:50px auto 6px;"></div>
             Property Clerk
         </td>
         <td style="text-align:center; width:33%; border:none; background:none;">
             Verified by:
-            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            <div style="border-bottom:1px solid #111; width:80%; margin:50px auto 6px;"></div>
             Head, PMO
         </td>
         <td style="text-align:center; width:33%; border:none; background:none;">
             Noted by:
-            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            <div style="border-bottom:1px solid #111; width:80%; margin:50px auto 6px;"></div>
             Internal Audit
         </td>
     </tr>
@@ -237,15 +237,15 @@ $reportYear = now()->year . '-' . (now()->year + 1);
     <tr>
         <td style="text-align:center; width:33%; border:none; background:none;">
             Personnel-in-Charge:
-            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            <div style="border-bottom:1px solid #111; width:80%; margin:50px auto 6px;"></div>
         </td>
         <td style="text-align:center; width:33%; border:none; background:none;">
             Immediate Supervisor:
-            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            <div style="border-bottom:1px solid #111; width:80%; margin:50px auto 6px;"></div>
         </td>
         <td style="text-align:center; width:33%; border:none; background:none;">
             Dean / Head:
-            <div style="border-bottom:1px solid #111; width:80%; margin:30px auto 6px;"></div>
+            <div style="border-bottom:1px solid #111; width:80%; margin:50px auto 6px;"></div>
         </td>
     </tr>
 </table>

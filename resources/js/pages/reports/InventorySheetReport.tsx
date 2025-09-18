@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { PickerInput } from '@/components/picker-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
