@@ -46,7 +46,7 @@ class InventorySheetReportController extends Controller
 
         // Force it to never exceed total count (important for frontend Pagination)
         if ($perPage <= 0) {
-            $perPage = 25; // fallback
+            $perPage = 10; // fallback
         }
 
         $paginator = $query->paginate($perPage)->withQueryString();
