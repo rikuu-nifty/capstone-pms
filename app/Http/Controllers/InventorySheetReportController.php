@@ -41,7 +41,7 @@ class InventorySheetReportController extends Controller
             ->when($roomId, fn($q) => $q->where('building_room_id', $roomId))
             ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId));
 
-        // ✅ Pagination (default 25 per page)
+        // Pagination (default 25 per page)
         $paginator = $query->paginate($request->get('per_page', 25))->withQueryString();
 
         // Transform each item in the paginator
@@ -128,7 +128,7 @@ class InventorySheetReportController extends Controller
             'departments' => UnitOrDepartment::select('id', 'name')->get(),
             'rooms'       => BuildingRoom::select('id', 'room', 'building_id')->get(),
             'subAreas'    => SubArea::select('id', 'name', 'building_room_id')->get(),
-            'assets'      => $paginator, // 👈 send paginator instead of array
+            'assets'      => $paginator, // send paginator instead of array
             'chartData'   => $chartData,
         ]);
     }

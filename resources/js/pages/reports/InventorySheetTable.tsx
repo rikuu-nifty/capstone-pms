@@ -10,13 +10,13 @@ import { AssetRow } from './InventorySheetReport';
 import { formatDate, formatEnums, formatCurrency } from '@/types/custom-index';
 
 type Props = {
-  assets: (AssetRow & {
-    memorandum_no?: string | null;
-    supplier?: string | null;
-    date_purchased?: string | null;
-    unit_cost?: number | null;
-    inventoried_at?: string | null; // from inventory_scheduling_assets
-  })[];
+    assets: (AssetRow & {
+        memorandum_no?: string | null;
+        supplier?: string | null;
+        date_purchased?: string | null;
+        unit_cost?: number | null;
+        inventoried_at?: string | null; // from inventory_scheduling_assets
+    })[];
 };
 
 export default function InventorySheetTable({ assets }: Props) {
