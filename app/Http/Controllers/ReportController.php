@@ -9,12 +9,13 @@ use App\Models\UnitOrDepartment;
 use App\Models\AssetModel;
 use App\Models\Building;
 use App\Models\Category;
+use App\Models\BuildingRoom;
+use App\Models\SubArea;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\InventoryListReportExport;
 use App\Exports\NewPurchasesSummaryExport;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 
 class ReportController extends Controller
@@ -267,16 +268,6 @@ class ReportController extends Controller
             'brands'      => AssetModel::select('brand')->distinct()->pluck('brand')->filter()->values(),
             'reportType'  => $reportType, // ✅ pass to frontend
         ]);
-    }
-
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**

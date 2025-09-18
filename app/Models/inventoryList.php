@@ -96,9 +96,20 @@ class InventoryList extends Model
         return $this->hasMany(OffCampus::class, 'asset_id');
     }
 
+    public function offCampusAssets()
+    {
+        return $this->hasMany(OffCampusAsset::class, 'asset_id');
+    }
+
     public function transfer()
     {
         return $this->belongsTo(Transfer::class, 'transfer_id');
+    }
+
+    public function resolveInventoryStatus()
+    {
+        // Pseudo logic: check inventory_schedulings + pivot, helper for NFC status
+        return 'Not Yet Inventoried';
     }
 
     public function transferAssets()
