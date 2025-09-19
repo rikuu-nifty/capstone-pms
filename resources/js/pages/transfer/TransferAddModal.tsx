@@ -460,8 +460,8 @@ export default function TransferAddModal({
                                     return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
                                     })
                                     .map((asset) => ({
-                                    value: asset.id,
-                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                        value: asset.id,
+                                        label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
                                     }))}
                                 placeholder={
                                     data.current_building_id && data.current_building_room && data.current_organization
@@ -471,18 +471,23 @@ export default function TransferAddModal({
                                 isDisabled={!data.current_building_id || !data.current_building_room || !data.current_organization}
                                 onChange={(selectedOption) => {
                                     if (selectedOption) {
-                                    const id = Number(selectedOption.value);
-                                    if (!data.transfer_assets.some((x) => x.asset_id === id)) {
-                                        setData('transfer_assets', [
-                                        ...data.transfer_assets,
-                                        { asset_id: id, asset_transfer_status: 'pending' },
-                                        ]);
-                                        setShowAssetDropdown((prev) => {
-                                        const updated = [...prev];
-                                        updated[index] = false;
-                                        return [...updated, true];
-                                        });
-                                    }
+                                        const id = Number(selectedOption.value);
+                                        if (!data.transfer_assets.some((x) => x.asset_id === id)) {
+                                            const asset = assets.find((a) => a.id === id);
+                                            setData('transfer_assets', [
+                                                ...data.transfer_assets,
+                                                {
+                                                    asset_id: id,
+                                                    from_sub_area_id: asset?.sub_area_id ?? null, // pre-fill if available
+                                                    to_sub_area_id: null,
+                                                },
+                                            ]);
+                                            setShowAssetDropdown((prev) => {
+                                                const updated = [...prev];
+                                                updated[index] = false;
+                                                return [...updated, true];
+                                            });
+                                        }
                                     }
                                 }}
                             />

@@ -60,14 +60,13 @@ export default function TransferEditModal({
         received_by: String(transfer.received_by ?? ''),
         status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',
-        // selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
         transfer_assets: transfer.transferAssets?.map((ta) => ({
             asset_id: ta.asset_id,
-            moved_at: ta.moved_at ?? null,
+            // moved_at: ta.moved_at ?? null,
             from_sub_area_id: ta.from_sub_area_id ?? null,
             to_sub_area_id: ta.to_sub_area_id ?? null,
-            asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
-            remarks: ta.remarks ?? null,
+            // asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
+            // remarks: ta.remarks ?? null,
         })) ?? [],
     });
   
@@ -118,14 +117,13 @@ export default function TransferEditModal({
                 received_by: transfer.received_by ? String(transfer.received_by) : null,
                 status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
                 remarks: transfer.remarks ?? '',
-                // selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
                 transfer_assets: transfer.transferAssets?.map((ta) => ({
                     asset_id: ta.asset_id,
-                    moved_at: ta.moved_at ?? null,
+                    // moved_at: ta.moved_at ?? null,
                     from_sub_area_id: ta.from_sub_area_id ?? null,
                     to_sub_area_id: ta.to_sub_area_id ?? null,
-                    asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
-                    remarks: ta.remarks ?? null,
+                    // asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
+                    // remarks: ta.remarks ?? null,
                 })) ?? [],
             });
             clearErrors();
@@ -561,25 +559,25 @@ export default function TransferEditModal({
                             className="w-full"
                             options={assets
                                 .filter((asset) => {
-                                const matchesBuilding = data.current_building_id
-                                    ? asset.building_id === data.current_building_id
-                                    : true;
+                                    const matchesBuilding = data.current_building_id
+                                        ? asset.building_id === data.current_building_id
+                                        : true;
 
-                                const matchesRoom = data.current_building_room
-                                    ? asset.building_room_id === data.current_building_room
-                                    : true;
+                                    const matchesRoom = data.current_building_room
+                                        ? asset.building_room_id === data.current_building_room
+                                        : true;
 
-                                const matchesUnit = data.current_organization
-                                    ? asset.unit_or_department_id === data.current_organization
-                                    : true;
+                                    const matchesUnit = data.current_organization
+                                        ? asset.unit_or_department_id === data.current_organization
+                                        : true;
 
-                                const notAlreadyChosen = !data.transfer_assets.some((x) => x.asset_id === asset.id);
+                                    const notAlreadyChosen = !data.transfer_assets.some((x) => x.asset_id === asset.id);
 
-                                return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
+                                    return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
                                 })
                                 .map((asset) => ({
-                                value: asset.id,
-                                label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                    value: asset.id,
+                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
                                 }))}
                             placeholder={
                                 data.current_building_id && data.current_building_room && data.current_organization
@@ -589,18 +587,23 @@ export default function TransferEditModal({
                             isDisabled={!data.current_building_id || !data.current_building_room || !data.current_organization}
                             onChange={(selectedOption) => {
                                 if (selectedOption) {
-                                const id = Number(selectedOption.value);
-                                if (!data.transfer_assets.some((x) => x.asset_id === id)) {
-                                    setData('transfer_assets', [
-                                    ...data.transfer_assets,
-                                    { asset_id: id, asset_transfer_status: 'pending' },
-                                    ]);
-                                    setShowAssetDropdown((prev) => {
-                                    const updated = [...prev];
-                                    updated[index] = false;
-                                    return [...updated, true];
-                                    });
-                                }
+                                    const id = Number(selectedOption.value);
+                                    if (!data.transfer_assets.some((x) => x.asset_id === id)) {
+                                        const asset = assets.find((a) => a.id === id);
+                                        setData('transfer_assets', [
+                                            ...data.transfer_assets,
+                                            {
+                                                asset_id: id,
+                                                from_sub_area_id: asset?.sub_area_id ?? null, // auto-pre-fill
+                                                to_sub_area_id: null,
+                                            },
+                                        ]);
+                                        setShowAssetDropdown((prev) => {
+                                            const updated = [...prev];
+                                            updated[index] = false;
+                                            return [...updated, true];
+                                        });
+                                    }
                                 }
                             }}
                             />

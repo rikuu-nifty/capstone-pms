@@ -21,7 +21,13 @@ type Props = {
 };
 
 export default function AssetTransferItem({
-    ta, asset, fromSubAreas, toSubAreas, parentStatus, onRemove, onChange,
+    ta, 
+    asset, 
+    fromSubAreas, 
+    toSubAreas, 
+    parentStatus, 
+    onRemove, 
+    onChange,
 }: Props) {
     const [open, setOpen] = useState(false);
 
@@ -69,17 +75,23 @@ export default function AssetTransferItem({
             {/* Details */}
             {open && (
                 <div className="px-2 pb-2">
-                <PerAssetFields
-                    value={ta}
-                    asset={asset}
-                    fromSubAreas={fromSubAreas}
-                    toSubAreas={toSubAreas}
-                    parentStatus={parentStatus}
-                    onChange={onChange}
-                    renderContainer={false}  // no inner border
-                    renderHeader={false}     // no inner toggle header
-                    externalOpen={true} 
-                />
+                    <PerAssetFields
+                        value={ta}
+                        asset={asset}
+                        // fromSubAreas={fromSubAreas}
+                        // toSubAreas={toSubAreas}
+                        fromSubAreas={fromSubAreas.filter(
+                            (sa) => sa.building_room_id === asset.building_room_id
+                        )}
+                        toSubAreas={toSubAreas.filter(
+                            (sa) => sa.building_room_id === ta.to_sub_area_id
+                        )}
+                        parentStatus={parentStatus}
+                        onChange={onChange}
+                        renderContainer={false}  // no inner border
+                        renderHeader={false}     // no inner toggle header
+                        externalOpen={true} 
+                    />
                 </div>
             )}
         </div>

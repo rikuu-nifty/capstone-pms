@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { InventoryList, SubArea } from '@/types/custom-index';
 import type { TransferAssetPivot } from '@/types/transfer-asset';
@@ -27,20 +27,20 @@ export default function PerAssetFields({
   asset,
   fromSubAreas,
   toSubAreas,
-  parentStatus,
+  // parentStatus,
   renderContainer = true,
   renderHeader = true,
   externalOpen,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const isHeaderPending = parentStatus === 'pending_review';
+  // const isHeaderPending = parentStatus === 'pending_review';
 
-  useEffect(() => {
-    if (isHeaderPending && value.asset_transfer_status !== 'pending') {
-      onChange({ ...value, asset_transfer_status: 'pending' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHeaderPending]);
+  // useEffect(() => {
+  //   if (isHeaderPending && value.asset_transfer_status !== 'pending') {
+  //     onChange({ ...value, asset_transfer_status: 'pending' });
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isHeaderPending]);
 
   // Decide visibility: externalOpen wins; otherwise use internal state
   const isOpen = typeof externalOpen === 'boolean' ? externalOpen : open;
@@ -69,7 +69,7 @@ export default function PerAssetFields({
         {isOpen && (
             <div className={`grid w-full grid-cols-5 gap-1.5 ${renderHeader ? 'p-2' : ''} text-[12px]`}>
                 {/* Date Transferred */}
-                <div className="col-span-5 sm:col-span-2">
+                {/* <div className="col-span-5 sm:col-span-2">
                     <label className="mb-0.5 block font-medium">Date Transferred</label>
                     <input
                         type="date"
@@ -77,7 +77,7 @@ export default function PerAssetFields({
                         value={value.moved_at ?? ''}
                         onChange={e => onChange({ ...value, moved_at: e.target.value })}
                     />
-                </div>
+                </div> */}
 
                 {/* From Sub-area */}
                 <div className="col-span-5 sm:col-span-1">
@@ -120,7 +120,7 @@ export default function PerAssetFields({
                 </div>
 
                 {/* Asset Status */}
-                <div className="col-span-5 sm:col-span-1">
+                {/* <div className="col-span-5 sm:col-span-1">
                     <label className="mb-0.5 block font-medium">Asset Status</label>
                     <select
                         className="w-full rounded-md border p-1.5"
@@ -138,10 +138,10 @@ export default function PerAssetFields({
                         <option value="transferred">Transferred</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
-                </div>
+                </div> */}
 
                 {/* Remarks */}
-                <div className="col-span-5">
+                {/* <div className="col-span-5">
                     <label className="mb-0.5 block font-medium">Remarks</label>
                     <input
                         type="text"
@@ -150,7 +150,7 @@ export default function PerAssetFields({
                         onChange={e => onChange({ ...value, remarks: e.target.value })}
                         placeholder="Optional notes specific to this asset"
                     />
-                </div>
+                </div> */}
             </div>
         )}
     </Wrapper>

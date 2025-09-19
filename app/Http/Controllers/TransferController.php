@@ -120,14 +120,14 @@ class TransferController extends Controller
             'status'                  => 'required|in:pending_review,upcoming,in_progress,completed,overdue,cancelled',
             'remarks'                 => 'nullable|string',
 
-            // NEW: rich pivot array
+            // rich pivot array
             'transfer_assets'                         => 'required|array|min:1',
             'transfer_assets.*.asset_id'              => 'required|integer|exists:inventory_lists,id',
-            'transfer_assets.*.moved_at'      => 'nullable|date',
+            // 'transfer_assets.*.moved_at'              => 'nullable|date',
             'transfer_assets.*.from_sub_area_id'      => 'nullable|integer|exists:sub_areas,id',
             'transfer_assets.*.to_sub_area_id'        => 'nullable|integer|exists:sub_areas,id',
-            'transfer_assets.*.asset_transfer_status' => 'nullable|in:pending,transferred,cancelled',
-            'transfer_assets.*.remarks'               => 'nullable|string',
+            // 'transfer_assets.*.asset_transfer_status' => 'nullable|in:pending,transferred,cancelled',
+            // 'transfer_assets.*.remarks'               => 'nullable|string',
         ]);
 
         // these are only used by the UI for filtering; not persisted on Transfer
@@ -143,11 +143,11 @@ class TransferController extends Controller
             foreach ($pivotRows as $row) {
                 $transfer->transferAssets()->create([
                     'asset_id'               => $row['asset_id'],
-                    'moved_at'               => $row['moved_at'] ?? null,
+                    // 'moved_at'               => $row['moved_at'] ?? null,
                     'from_sub_area_id'       => $row['from_sub_area_id'] ?? null,
                     'to_sub_area_id'         => $row['to_sub_area_id'] ?? null,
-                    'asset_transfer_status'  => $row['asset_transfer_status'] ?? 'pending',
-                    'remarks'                => $row['remarks'] ?? null,
+                    'asset_transfer_status'  => 'pending',
+                    // 'remarks'                => $row['remarks'] ?? null,
                 ]);
 
                 // keep your existing behavior: tag the inventory row with this transfer_id
@@ -299,11 +299,11 @@ class TransferController extends Controller
             // NEW: rich pivot array (allow empty only if you want to permit “header-only” edit)
             'transfer_assets'                         => 'required|array|min:1',
             'transfer_assets.*.asset_id'              => 'required|integer|exists:inventory_lists,id',
-            'transfer_assets.*.moved_at'              => 'nullable|date',
+            // 'transfer_assets.*.moved_at'              => 'nullable|date',
             'transfer_assets.*.from_sub_area_id'      => 'nullable|integer|exists:sub_areas,id',
             'transfer_assets.*.to_sub_area_id'        => 'nullable|integer|exists:sub_areas,id',
-            'transfer_assets.*.asset_transfer_status' => 'nullable|in:pending,transferred,cancelled',
-            'transfer_assets.*.remarks'               => 'nullable|string',
+            // 'transfer_assets.*.asset_transfer_status' => 'nullable|in:pending,transferred,cancelled',
+            // 'transfer_assets.*.remarks'               => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($transfer, $validated) {
@@ -320,11 +320,11 @@ class TransferController extends Controller
             foreach ($pivotRows as $row) {
                 $transfer->transferAssets()->create([
                     'asset_id'               => $row['asset_id'],
-                    'moved_at'               => $row['moved_at'] ?? null,
+                    // 'moved_at'               => $row['moved_at'] ?? null,
                     'from_sub_area_id'       => $row['from_sub_area_id'] ?? null,
                     'to_sub_area_id'         => $row['to_sub_area_id'] ?? null,
-                    'asset_transfer_status'  => $row['asset_transfer_status'] ?? 'pending',
-                    'remarks'                => $row['remarks'] ?? null,
+                    'asset_transfer_status'  => 'pending',
+                    // 'remarks'                => $row['remarks'] ?? null,
                 ]);
 
                 // keep your existing behavior
@@ -370,14 +370,21 @@ class TransferController extends Controller
         // Form set to completed => mark all as transferred ---
         if ($transfer->status === 'completed' && $oldStatus !== 'completed') {
             foreach ($transfer->transferAssets as $ta) {
-                if ($ta->asset_transfer_status !== 'transferred') {
-                    $ta->update([
-                        'asset_transfer_status' => 'transferred',
-                        'moved_at'              => now(),
-                    ]);
-                } else {
-                    $ta->update(['moved_at' => now()]);
-                }
+                // if ($ta->asset_transfer_status !== 'transferred') {
+                //     $ta->update([
+                //         'asset_transfer_status' => 'transferred',
+                //         'moved_at'              => now(),
+                //     ]);
+                // } else {
+                //     $ta->update(['moved_at' => now()]);
+                // }
+                $movedDate = $transfer->actual_transfer_date ?? now();
+
+                $ta->update([
+                    'asset_transfer_status' => 'transferred',
+                    'moved_at'              => $movedDate,
+                    'remarks'               => $transfer->remarks, //copying remarks from transfers instead
+                ]);
 
                 $ta->asset?->update([
                     'building_id'           => $transfer->receivingBuildingRoom->building_id,
