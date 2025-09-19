@@ -136,12 +136,7 @@ class InventoryList extends Model
             ->first();
 
         if ($transfer) {
-
-            if ($transfer->status === 'overdue') {
-                return 'overdue';
-            }
-            
-            return $transfer->pivot?->asset_transfer_status;
+            return $transfer->status;
         }
 
         // fallback to latest transfer (completed/cancelled)
@@ -149,7 +144,7 @@ class InventoryList extends Model
             ->latest('transfers.created_at')
             ->first();
 
-        return $latest?->pivot?->asset_transfer_status;
+        return $latest?->status;
     }
 
     // DO NOT DELETE - FOR PIVOT TABLE and INVENTORY SHEET REPORTS
