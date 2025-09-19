@@ -49,14 +49,8 @@ export default function TransferEditModal({
         receiving_organization: extractId(transfer.receiving_organization),
         designated_employee: extractId(transfer.designated_employee),
         assigned_by: currentUser.id,
-        scheduled_date: transfer.scheduled_date
-            ? new Date(transfer.scheduled_date).toISOString().split('T')[0]
-            : ''
-        ,
-        actual_transfer_date: transfer.actual_transfer_date
-            ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
-            : ''
-        ,
+        scheduled_date: transfer.scheduled_date ?? '',
+        actual_transfer_date: transfer.actual_transfer_date ?? '',
         received_by: String(transfer.received_by ?? ''),
         status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',

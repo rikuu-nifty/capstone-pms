@@ -52,13 +52,21 @@ class TransferController extends Controller
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {
                 $array = $transfer->toArray();
-                $array['currentBuildingRoom'] = $array['current_building_room'];
-                $array['currentOrganization'] = $array['current_organization'];
+                $array['scheduled_date'] = $transfer->scheduled_date
+                    ? $transfer->scheduled_date->toDateString()
+                    : null;
+
+                $array['actual_transfer_date'] = $transfer->actual_transfer_date
+                    ? $transfer->actual_transfer_date->toDateString()
+                    : null;
+
+                $array['currentBuildingRoom']   = $array['current_building_room'];
+                $array['currentOrganization']   = $array['current_organization'];
                 $array['receivingBuildingRoom'] = $array['receiving_building_room'];
                 $array['receivingOrganization'] = $array['receiving_organization'];
-                $array['designatedEmployee'] = $array['designated_employee'];
-                $array['assignedBy'] = $array['assigned_by'];
-                $array['status'] = ucfirst($transfer->status);
+                $array['designatedEmployee']    = $array['designated_employee'];
+                $array['assignedBy']            = $array['assigned_by'];
+                $array['status']                = ucfirst($transfer->status);
 
                 $array['transferAssets'] = $transfer->transferAssets->map(function ($ta) {
                     return [
@@ -212,6 +220,12 @@ class TransferController extends Controller
             $array['designatedEmployee']    = $array['designated_employee'];
             $array['assignedBy']            = $array['assigned_by'];
             $array['status']                = ucfirst($t->status);
+            $array['scheduled_date']        = $t->scheduled_date
+                ? $t->scheduled_date->toDateString()
+                : null;
+            $array['actual_transfer_date']  = $t->actual_transfer_date
+                ? $t->actual_transfer_date->toDateString()
+                : null;
 
             $array['transferAssets'] = $t->transferAssets->map(function ($ta) {
                 return [
@@ -239,6 +253,7 @@ class TransferController extends Controller
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {
                 $array = $transfer->toArray();
+                
                 $array['currentBuildingRoom']   = $array['current_building_room'];
                 $array['currentOrganization']   = $array['current_organization'];
                 $array['receivingBuildingRoom'] = $array['receiving_building_room'];
