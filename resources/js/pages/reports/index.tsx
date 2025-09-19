@@ -7,7 +7,18 @@ import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lu
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useState } from 'react'
-import { Cell, Label, Pie, PieChart } from 'recharts'
+import {
+  Cell,
+  Label,
+  Pie,
+  PieChart,
+  AreaChart,
+  Area,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from 'recharts'
+
 import { ReportCard } from './ReportCard'
 
 // 🔹 Type for chart data coming from backend
@@ -16,10 +27,17 @@ type CategoryData = {
   value: number
 }
 
+type InventorySheetChartData = {
+  date: string;
+  inventoried: number;
+  scheduled: number;
+  not_inventoried: number;
+};
+
 // 🔹 Extend default Inertia props with our custom props
 type ReportsPageProps = InertiaPageProps & {
   categoryData: CategoryData[],
-  inventorySheetChartData: CategoryData[],
+  inventorySheetChartData: InventorySheetChartData[],
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }]
@@ -186,82 +204,105 @@ export default function ReportsIndex() {
       ),
       chart:
         inventorySheetChartData.length > 0 ? (
-          <div className="rounded-lg bg-gray-50 p-3">
-            <ChartContainer
-              config={{ assets: { label: 'Assets' } }}
-              className="mx-auto aspect-square max-h-[200px]"
-            >
-              <PieChart>
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                <Pie
-                  data={inventorySheetChartData}
-                  dataKey="value"
-                  nameKey="label"
-                  innerRadius={50}
-                  outerRadius={80}
-                  strokeWidth={5}
-                >
-                  {inventorySheetChartData.map((_, index) => (
-                    <Cell
-                      key={index}
-                      fill={generateColor(index, inventorySheetChartData.length)}
-                    />
-                  ))}
-                  <Label
-                    content={({ viewBox }) => {
-                      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                        const total = inventorySheetChartData.reduce(
-                          (sum, d) => sum + d.value,
-                          0
-                        );
-                        return (
-                          <text
-                            x={viewBox.cx}
-                            y={viewBox.cy}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                          >
-                            <tspan
-                              x={viewBox.cx}
-                              y={viewBox.cy}
-                              className="fill-foreground text-xl font-bold"
-                            >
-                              {total.toLocaleString()}
-                            </tspan>
-                            <tspan
-                              x={viewBox.cx}
-                              y={(viewBox.cy || 0) + 18}
-                              className="fill-muted-foreground text-xs"
-                            >
-                              Total Assets
-                            </tspan>
-                          </text>
-                        );
-                      }
-                    }}
-                  />
-                </Pie>
-              </PieChart>
-            </ChartContainer>
+        <div className="rounded-lg bg-gray-50 p-3">
+          <ChartContainer
+            config={{
+              not_inventoried: { label: "Not Inventoried", color: "#f59e0b" },
+              inventoried: { label: "Inventoried", color: "#00A86B" },
+              scheduled: { label: "Scheduled", color: "#3b82f6" },
+            }}
+            className="mx-auto h-[200px] w-full" 
+          >
+            <AreaChart data={inventorySheetChartData}>
+              <defs>
+                <linearGradient id="fillNotInventoried" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.1} />
+                </linearGradient>
+                <linearGradient id="fillInventoried" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00A86B" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#00A86B" stopOpacity={0.1} />
+                </linearGradient>
+                <linearGradient id="fillScheduled" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                </linearGradient>
+              </defs>
 
-            {/* ✅ Legend */}
-            <div className="mt-3 flex flex-wrap justify-center gap-3">
-              {inventorySheetChartData.map((d, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span
-                    className="h-3 w-3 rounded-sm"
-                    style={{ backgroundColor: generateColor(i, inventorySheetChartData.length) }}
-                  ></span>
-                  <span className="text-xs text-muted-foreground">{d.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-gray-400">
-            No data available
-          </div>
-        ),
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) =>
+                new Date(value as string).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              }
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                allowDecimals={false}
+                label={{
+                  value: "Total Assets",
+                  angle: -90,
+                  position: "insideLeft",
+                  style: { textAnchor: "middle", fontSize: 11, fill: "#6b7280" },
+                }}
+              />
+
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                  indicator="dot"
+                  className="space-y-1"
+                  labelFormatter={(v) =>
+                    new Date(v as string).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  }
+                />
+                }
+              />
+
+              <Area
+                dataKey="not_inventoried"
+                type="monotone"
+                fill="url(#fillNotInventoried)"
+                stroke="#f59e0b"
+                stackId="a"
+              />
+              <Area
+                dataKey="inventoried"
+                type="monotone"
+                fill="url(#fillInventoried)"
+                stroke="#00A86B"
+                stackId="a"
+              />
+              <Area
+                dataKey="scheduled"
+                type="monotone"
+                fill="url(#fillScheduled)"
+                stroke="#3b82f6"
+                stackId="a"
+              />
+            </AreaChart>
+          </ChartContainer>
+        </div>
+      ) : (
+        <div className="flex h-full items-center justify-center text-sm text-gray-400">
+          No data available
+        </div>
+      ),
+
     },
 
     {

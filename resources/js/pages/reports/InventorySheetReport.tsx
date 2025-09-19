@@ -8,7 +8,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { FileDown, FileSpreadsheet, FileText, Filter, RotateCcw } from 'lucide-react';
 import Select from 'react-select';
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -108,6 +108,33 @@ function formatStatusLabel(label: string): string {
   );
 }
 
+// --- Helpers for semester/annual labels ---
+function getWeekKey(d: Date): string {
+  const year = d.getFullYear();
+  const start = new Date(year, 0, 1);
+  const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000) + 1;
+  const week = Math.ceil(dayOfYear / 7);
+  return `${year}-W${week}`;
+}
+
+function formatWeekRangeFromKey(key: string): string {
+  // key like "2025-W3" -> "Week 3 (Jan 15 – Jan 21, 2025)"
+  const [yearStr, wStr] = key.split('-W');
+  const year = Number(yearStr);
+  const week = Number(wStr);
+
+  const start = new Date(year, 0, 1);
+  start.setDate(1 + (week - 1) * 7);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  const startLbl = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const endLbl = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return `Week ${week} (${startLbl} – ${endLbl})`;
+}
+
+
 // ---------------------- Component ----------------------
 export default function InventorySheetReport() {
   const { chartData, assets, buildings, departments, rooms, subAreas } =
@@ -121,7 +148,7 @@ export default function InventorySheetReport() {
   const [displayedAssets, setDisplayedAssets] = useState<AssetRow[]>(assets.data);
 
   // Time-range for chart (front-end filter)
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('90d');
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '18w' | '1y'>('90d');
 
   // Filters (server-side)
   const defaultFilters = {
@@ -184,42 +211,82 @@ const filteredData: ChartData[] = React.useMemo(() => {
   if (!chartData || chartData.length === 0) return [];
 
   const referenceDate = new Date();
-  const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+
+  let days = 0;
+  if (timeRange === '7d') days = 7;
+  else if (timeRange === '30d') days = 30;
+  else if (timeRange === '90d') days = 90;
+  else if (timeRange === '18w') days = 18 * 7; // 126
+  else if (timeRange === '1y') days = 365;
+
   const startDate = new Date(referenceDate);
   startDate.setDate(startDate.getDate() - days);
 
-  // Create map of your real data
-  const dataMap = new Map<string, ChartData>();
-  chartData.forEach((item) => {
-    dataMap.set(item.date, {
-      date: item.date,
-      inventoried: item.inventoried ?? 0,
-      scheduled: item.scheduled ?? 0,
-      not_inventoried: item.not_inventoried ?? 0,
-    });
-  });
+  // keep only what we need, and sort ascending for stable grouping
+  const inRange = chartData
+    .filter((item) => {
+      const d = new Date(item.date);
+      return d >= startDate && d <= referenceDate;
+    })
+    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
 
-  // Fill missing days with zeros
-  const result: ChartData[] = [];
-  for (
-    let d = new Date(startDate);
-    d <= referenceDate;
-    d.setDate(d.getDate() + 1)
-  ) {
-    const key = d.toISOString().split("T")[0]; // yyyy-mm-dd
-    result.push(
-      dataMap.get(key) ?? {
-        date: key,
-        inventoried: 0,
-        scheduled: 0,
-        not_inventoried: 0,
+  // ----- Semester: group by week -----
+  if (timeRange === '18w') {
+    const grouped: Record<string, ChartData> = {};
+    for (const item of inRange) {
+      const key = getWeekKey(new Date(item.date)); // "YYYY-WN"
+      if (!grouped[key]) {
+        grouped[key] = { date: key, inventoried: 0, scheduled: 0, not_inventoried: 0 };
       }
+      grouped[key].inventoried += item.inventoried ?? 0;
+      grouped[key].scheduled += item.scheduled ?? 0;
+      grouped[key].not_inventoried += item.not_inventoried ?? 0;
+    }
+    return Object.values(grouped);
+  }
+
+  // ----- Annual: group by month -----
+  if (timeRange === '1y') {
+    const grouped: Record<string, ChartData> = {};
+    for (const item of inRange) {
+      const d = new Date(item.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; // "YYYY-MM"
+      if (!grouped[key]) {
+        grouped[key] = { date: key, inventoried: 0, scheduled: 0, not_inventoried: 0 };
+      }
+      grouped[key].inventoried += item.inventoried ?? 0;
+      grouped[key].scheduled += item.scheduled ?? 0;
+      grouped[key].not_inventoried += item.not_inventoried ?? 0;
+    }
+    return Object.values(grouped);
+  }
+
+  // ----- Daily (7d/30d/90d): keep your original fill logic -----
+  const dataMap = new Map(
+    chartData.map((item) => [
+      new Date(item.date).toISOString().split('T')[0],
+      {
+        date: new Date(item.date).toISOString().split('T')[0],
+        inventoried: item.inventoried ?? 0,
+        scheduled: item.scheduled ?? 0,
+        not_inventoried: item.not_inventoried ?? 0,
+      },
+    ])
+  );
+
+  const filled: ChartData[] = [];
+  const start = new Date(referenceDate);
+  start.setDate(referenceDate.getDate() - days);
+
+  for (let d = new Date(start); d <= referenceDate; d.setDate(d.getDate() + 1)) {
+    const key = d.toISOString().split('T')[0];
+    filled.push(
+      dataMap.get(key) || { date: key, inventoried: 0, scheduled: 0, not_inventoried: 0 }
     );
   }
 
-  return result;
+  return filled;
 }, [chartData, timeRange]);
-
 
 
   // Sum to detect "all zero" cases gracefully
@@ -543,18 +610,21 @@ const filteredData: ChartData[] = React.useMemo(() => {
               <ShadSelect
                 value={timeRange}
                 onValueChange={(v) =>
-                  setTimeRange((v as '7d' | '30d' | '90d') ?? '90d')
+                    setTimeRange((v as '7d' | '30d' | '90d' | '18w' | '1y') ?? '90d')
                 }
-              >
-                <ShadSelectTrigger className="w-[160px]">
-                  <ShadSelectValue placeholder="Last 90 days" />
+                >
+                <ShadSelectTrigger className="min-w-[220px]">
+                    <ShadSelectValue placeholder="Select range" />
                 </ShadSelectTrigger>
                 <ShadSelectContent>
-                  <ShadSelectItem value="90d">Last 90 days</ShadSelectItem>
-                  <ShadSelectItem value="30d">Last 30 days</ShadSelectItem>
-                  <ShadSelectItem value="7d">Last 7 days</ShadSelectItem>
+                    <ShadSelectItem value="90d">Last 90 days</ShadSelectItem>
+                    <ShadSelectItem value="30d">Last 30 days</ShadSelectItem>
+                    <ShadSelectItem value="7d">Last 7 days</ShadSelectItem>
+                    <ShadSelectItem value="18w">Last Semester (18 weeks)</ShadSelectItem>
+                    <ShadSelectItem value="1y">Last Year</ShadSelectItem>
                 </ShadSelectContent>
-              </ShadSelect>
+                </ShadSelect>
+
 
               {/* View toggle */}
               <div className="inline-flex rounded-md shadow-sm">
@@ -591,97 +661,135 @@ const filteredData: ChartData[] = React.useMemo(() => {
                 </div>
               ) : (
                 <ChartContainer
-                  config={{
-                    not_inventoried: {
-                      label: 'Not Inventoried',
-                      color: 'var(--chart-1)',
-                    },
-                    scheduled: {
-                      label: 'Scheduled',
-                      color: 'var(--chart-2)',
-                    },
-                    inventoried: {
-                      label: 'Inventoried',
-                      color: 'var(--chart-3)',
-                    },
-                  }}
+                    config={{
+                        not_inventoried: {
+                        label: "Not Inventoried",
+                        color: "#f59e0b", // orange
+                        },
+                        inventoried: {
+                        label: "Inventoried",
+                        color: "#00A86B", // green
+                        },
+                        scheduled: {
+                        label: "Scheduled",
+                        color: "#3b82f6", // blue
+                        },
+                    }}
                   className="mx-auto h-[350px] w-full"
                 >
-                  <AreaChart data={filteredData}>
-                    <defs>
-  <linearGradient id="fillInventoried" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="5%" stopColor="var(--chart-3)" stopOpacity={0.8} />
-    <stop offset="95%" stopColor="var(--chart-3)" stopOpacity={0.1} />
-  </linearGradient>
-  <linearGradient id="fillScheduled" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="5%" stopColor="var(--chart-2)" stopOpacity={0.8} />
-    <stop offset="95%" stopColor="var(--chart-2)" stopOpacity={0.1} />
-  </linearGradient>
-  <linearGradient id="fillNotInventoried" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.8} />
-    <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.1} />
-  </linearGradient>
-</defs>
-
+                    <AreaChart data={filteredData}>
+                        <defs>
+                            <linearGradient id="fillNotInventoried" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.1} />
+                            </linearGradient>
+                            <linearGradient id="fillInventoried" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#00A86B" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="#00A86B" stopOpacity={0.1} />
+                            </linearGradient>
+                            <linearGradient id="fillScheduled" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                            </linearGradient>
+                        </defs>
 
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
                     <XAxis
-                      dataKey="date"
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                      minTickGap={32}
-                      tickFormatter={(value) => {
-                        const date = new Date(value as string);
-                        return date.toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        });
-                      }}
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={32}
+                        tickFormatter={(value) => {
+                        const v = String(value);
+
+                        if (timeRange === '18w') {
+                            // "YYYY-WN" -> "Week N"
+                            const wk = v.split('-W')[1];
+                            return wk ? `Week ${wk}` : v;
+                        }
+
+                        if (timeRange === '1y') {
+                            // "YYYY-MM" -> "Jan", "Feb", ...
+                            const [y, m] = v.split('-');
+                            return new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'short' });
+                        }
+
+                        // daily
+                        const date = new Date(v);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }}
                     />
 
+                    <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        allowDecimals={false}   // only integer ticks
+                        label={{
+                            value: "Total Assets",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { textAnchor: "middle", fontSize: 12, fill: "#6b7280" },
+                        }}
+                    />
+
+                    {/* Tooltip with colored indicators */}
                     <ChartTooltip
-                      cursor={false}
-                      content={
-                        <ChartTooltipContent
-                          indicator="dot"
-                          labelFormatter={(value) =>
-                            new Date(value as string).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          }
-                        />
-                      }
+                        cursor={false}
+                        content={
+                            <ChartTooltipContent
+                                indicator="dot"
+                                labelFormatter={(value) => {
+  const v = String(value);
+
+  if (timeRange === '18w') {
+    // Week label with date range
+    return formatWeekRangeFromKey(v);
+  }
+
+  if (timeRange === '1y') {
+    // "YYYY-MM" -> "September 2025"
+    const [y, m] = v.split('-');
+    const monthName = new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'long' });
+    return `${monthName} ${y}`;
+  }
+
+  // daily -> "September 18, 2025"
+  const d = new Date(v);
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}}
+
+                            />
+                        }
                     />
 
+                    {/* Stacking order: bottom → top */}
                     <Area
-  dataKey="inventoried"
-  type="natural"
-  fill="url(#fillInventoried)"
-  stroke="var(--chart-3)"   // instead of var(--color-inventoried)
-  stackId="a"
-/>
-<Area
-  dataKey="scheduled"
-  type="natural"
-  fill="url(#fillScheduled)"
-  stroke="var(--chart-2)"
-  stackId="a"
-/>
-<Area
-  dataKey="not_inventoried"
-  type="natural"
-  fill="url(#fillNotInventoried)"
-  stroke="var(--chart-1)"
-  stackId="a"
-/>
+                        dataKey="not_inventoried"
+                        type="monotone"
+                        fill="url(#fillNotInventoried)"
+                        stroke="#f59e0b"
+                        stackId="a"
+                    />
+                    <Area
+                        dataKey="inventoried"
+                        type="monotone"
+                        fill="url(#fillInventoried)"
+                        stroke="#00A86B"
+                        stackId="a"
+                    />
+                    <Area
+                        dataKey="scheduled"
+                        type="monotone"
+                        fill="url(#fillScheduled)"
+                        stroke="#3b82f6"
+                        stackId="a"
+                    />
 
-
-                    <ChartLegend content={<ChartLegendContent />} />
-                  </AreaChart>
+                        <ChartLegend content={<ChartLegendContent />} />
+                    </AreaChart>
                 </ChartContainer>
               )
             ) : (
