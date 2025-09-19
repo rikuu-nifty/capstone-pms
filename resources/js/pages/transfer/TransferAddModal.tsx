@@ -64,6 +64,36 @@ export default function TransferAddModal({
         clearErrors
     ]);
 
+    useEffect(() => {
+        if (!show) return;
+
+        reset();
+        clearErrors();
+        setShowAssetDropdown([true]);
+
+        // ✅ Initial status based on today's date + scheduled date
+        if (data.scheduled_date) {
+            const scheduledDate = new Date(data.scheduled_date + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let initialStatus: TransferFormData['status'] = 'pending_review';
+
+            if (scheduledDate < today) {
+            initialStatus = 'overdue';
+            } else if (scheduledDate > today) {
+            initialStatus = 'upcoming';
+            } else {
+            initialStatus = 'in_progress';
+            }
+
+            setData('status', initialStatus);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [show]);
+
+
+
     const filteredCurrentRooms = buildingRooms.filter(
         (room) => Number(room.building_id) === Number(data.current_building_id)
     );
@@ -237,24 +267,52 @@ export default function TransferAddModal({
                 <label className="mb-1 block font-medium">Scheduled Date</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2 uppercase "
+                    className="w-full rounded-lg border p-2 uppercase"
                     value={data.scheduled_date}
-                    onChange={(e) => setData('scheduled_date', e.target.value)}
+                    onChange={(e) => {
+                        const newDate = e.target.value;
+                        setData('scheduled_date', newDate);
+
+                        if (newDate) {
+                            const scheduledDate = new Date(newDate + 'T00:00:00');
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            if (scheduledDate < today) {
+                                setData('status', 'overdue');
+                            } else if (scheduledDate > today) {
+                                setData('status', 'upcoming');
+                            } else {
+                                setData('status', 'in_progress');
+                            }
+                        } else {
+                            setData('status', 'pending_review');
+                        }
+                    }}
                 />
                 {errors.scheduled_date && <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>}
             </div>
+
 
             {/* Actual Transfer Date */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Date Completed</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2 uppercase "
+                    className="w-full rounded-lg border p-2 uppercase"
                     value={data.actual_transfer_date ?? ''}
-                    onChange={(e) => setData('actual_transfer_date', e.target.value)}
+                    onChange={(e) => {
+                        const newDate = e.target.value;
+                        setData('actual_transfer_date', newDate);
+
+                        if (newDate) {
+                            setData('status', 'completed'); // Mark completed once filled
+                        }
+                    }}
                 />
                 {errors.actual_transfer_date && <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>}
             </div>
+
 
             {/* Designated Employee */}
             <div className="col-span-1">

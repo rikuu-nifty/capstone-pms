@@ -37,6 +37,7 @@ class TransferController extends Controller
 
             'transferAssets.fromSubArea',
             'transferAssets.toSubArea',
+            'formApproval',
         ])->latest()->get();
 
         $buildings = Building::all();
@@ -87,6 +88,10 @@ class TransferController extends Controller
                 })->values();
 
                 $array['asset_count'] = $transfer->transferAssets->count();
+
+                $array['is_approved'] = $transfer->formApproval
+                    ? $transfer->formApproval->status === 'approved'
+                    : false;
 
                 return $array;
             }),
@@ -189,7 +194,8 @@ class TransferController extends Controller
             'designatedEmployee',
             'assignedBy',
             'transferAssets.asset.assetModel.category',
-
+            
+            'formApproval',
             'formApproval.steps' => 
                 fn($q) => 
                     $q->where('code','approved_by')
@@ -226,6 +232,7 @@ class TransferController extends Controller
             $array['actual_transfer_date']  = $t->actual_transfer_date
                 ? $t->actual_transfer_date->toDateString()
                 : null;
+            
 
             $array['transferAssets'] = $t->transferAssets->map(function ($ta) {
                 return [
@@ -246,6 +253,8 @@ class TransferController extends Controller
             })->values();
 
             $array['asset_count'] = $t->transferAssets->count();
+
+            $array['is_approved'] = $t->formApproval?->status === 'approved';
 
             return $array;
         })($viewingModel);
@@ -320,6 +329,12 @@ class TransferController extends Controller
             // 'transfer_assets.*.asset_transfer_status' => 'nullable|in:pending,transferred,cancelled',
             // 'transfer_assets.*.remarks'               => 'nullable|string',
         ]);
+
+        // Block status updates unless approved
+        if ($transfer->formApproval && $transfer->formApproval->status !== 'approved') {
+            // keep existing status from DB
+            $validated['status'] = $transfer->status;
+        }
 
         DB::transaction(function () use ($transfer, $validated) {
             $oldStatus = $transfer->status;

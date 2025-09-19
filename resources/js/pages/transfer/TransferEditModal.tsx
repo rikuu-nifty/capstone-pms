@@ -12,7 +12,8 @@ import TransferStatusWarningModal from './TransferStatusWarningModal';
 interface TransferEditModalProps {
     show: boolean;
     onClose: () => void;
-    transfer: Transfer;
+    // transfer: Transfer;
+    transfer: Transfer & { is_approved: boolean };
     currentUser: User;
     buildings: Building[];
     buildingRooms: BuildingRoom[];
@@ -143,41 +144,34 @@ export default function TransferEditModal({
         setData,
     ]);
 
+    // Run only once when modal opens (on show)
     useEffect(() => {
-        const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
-        const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
-        const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+        if (!show) return;
 
-        let newStatus: TransferFormData['status'] | null = null;
+        const scheduledDate = transfer.scheduled_date
+            ? new Date(transfer.scheduled_date)
+            : null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        if (pendingCount === 0) {
-            if (transferredCount > 0 && cancelledCount === 0) {
-                newStatus = 'completed';
-            } else if (cancelledCount > 0 && transferredCount === 0) {
-                newStatus = 'cancelled';
-            } else if (transferredCount > 0 && cancelledCount > 0) {
-                // mixed case → don’t force to completed/cancelled
-                newStatus = 'in_progress';
+        let initialStatus: TransferFormData['status'] = (transfer.status?.toLowerCase() ??
+            'pending_review') as TransferFormData['status'];
+
+        if (scheduledDate) {
+            if (scheduledDate < today) {
+                initialStatus = 'overdue';
+            } else if (scheduledDate > today) {
+                initialStatus = 'upcoming';
+            } else {
+                initialStatus = 'in_progress';
             }
-        } else if (pendingCount > 0) {
-            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
-
-            if (['completed'].includes(data.status)) {
-                newStatus = 'in_progress'; // Reverted from completed → in_progress
-            } else if (scheduledDate && scheduledDate < new Date()) {
-                // Past due → overdue
-                newStatus = 'overdue';
-            }
-            // else {
-            //     // Still active → upcoming
-            //     newStatus = 'pending_review';
-            // }
         }
 
-        if (newStatus && newStatus !== data.status) {
-            setData('status', newStatus);
-        }
-    }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
+        // Only set status once when modal opens
+        setData('status', initialStatus);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [show]); // depends only on `show`
+
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -442,10 +436,30 @@ export default function TransferEditModal({
                     type="date"
                     className="w-full rounded-lg border p-2 uppercase"
                     value={data.scheduled_date}
-                    onChange={(e) => setData('scheduled_date', e.target.value)}
-                />
+                    onChange={(e) => {
+                        const newDate = e.target.value;
+                        setData('scheduled_date', newDate);
 
-                {errors.scheduled_date && <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>}
+                        if (!data.actual_transfer_date) {
+                            if (newDate) {
+                            const selected = new Date(newDate);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            if (selected < today) {
+                                setData('status', 'overdue');
+                            } else if (selected > today) {
+                                setData('status', 'upcoming');
+                            } else {
+                                setData('status', 'in_progress');
+                            }
+                            }
+                        }
+                    }}
+                />
+                {errors.scheduled_date && (
+                    <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>
+                )}
             </div>
 
             {/* Actual Transfer Date */}
@@ -453,11 +467,33 @@ export default function TransferEditModal({
                 <label className="mb-1 block font-medium">Date Completed</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2 uppercase "
+                    className="w-full rounded-lg border p-2 uppercase"
                     value={data.actual_transfer_date ?? ''}
-                    onChange={(e) => setData('actual_transfer_date', e.target.value)}
+                    onChange={(e) => {
+                        const newDate = e.target.value;
+                        setData('actual_transfer_date', newDate);
+
+                        if (newDate) {
+                            setData('status', 'completed');
+                        } else if (data.scheduled_date) {
+                            // Recalculate from scheduled date if actual date is cleared
+                            const selected = new Date(data.scheduled_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            if (selected < today) {
+                            setData('status', 'overdue');
+                            } else if (selected > today) {
+                            setData('status', 'upcoming');
+                            } else {
+                            setData('status', 'in_progress');
+                            }
+                        }
+                    }}
                 />
-                {errors.actual_transfer_date && <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>}
+                {errors.actual_transfer_date && (
+                    <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>
+                )}
             </div>
 
             {/* Designated Employee */}
@@ -485,23 +521,58 @@ export default function TransferEditModal({
             {/* Status */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Status</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.status}
-                    onChange={(e) => setData('status', e.target.value as TransferFormData['status'])}
-                >
+                <div className="relative">
+                    <select
+                        className={`w-full rounded-lg border p-2 ${
+                            !transfer.is_approved
+                            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                            : ''
+                        }`}
+                        value={data.status}
+                        onChange={(e) =>
+                            setData('status', e.target.value as TransferFormData['status'])
+                        }
+                        disabled={!transfer.is_approved} // disable if not approved
+                    >
+                    {!data.status && <option value="">Select Status</option>}
+                        <option
+                            value="pending_review"
+                            disabled={transfer.is_approved}
+                            className={transfer.is_approved ? 'text-gray-400' : ''}
+                        >
+                            Pending Review
+                        </option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
 
-                {!data.status && (
-                    <option value="">Select Status</option>
+                    {!transfer.is_approved && (
+                        <div className="mt-1 flex items-center text-xs text-amber-600">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4 mr-1"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 9v2m0 4h.01M4.93 4.93a10 10 0 0114.14 0 10 10 0 010 14.14 10 10 0 01-14.14 0 10 10 0 010-14.14z"
+                            />
+                            </svg>
+                                Status can only be updated after this form is <strong className="ml-1">Approved</strong>.
+                        </div>
+                    )}
+                </div>
+
+                {errors.status && (
+                    <p className="mt-1 text-xs text-red-500">{errors.status}</p>
                 )}
-                    <option value="pending_review">Pending Review</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-                {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
 
             {/* Selected Assets */}
