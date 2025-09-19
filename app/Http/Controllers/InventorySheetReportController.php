@@ -13,6 +13,8 @@ use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
 class InventorySheetReportController extends Controller
 {
@@ -149,25 +151,55 @@ class InventorySheetReportController extends Controller
             ->when($roomId, fn($q) => $q->where('building_room_id', $roomId))
             ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId));
 
-        $allInventoryStatuses = $chartQuery->get()->map(function ($asset) {
-            $latestScheduling = $asset->schedulingAssets()->latest('created_at')->first();
-            return $latestScheduling?->inventory_status ?? 'not_inventoried';
+        // $allInventoryStatuses = $chartQuery->get()->map(function ($asset) {
+        //     $latestScheduling = $asset->schedulingAssets()->latest('created_at')->first();
+        //     return $latestScheduling?->inventory_status ?? 'not_inventoried';
+        // });
+
+        // $labels = [
+        //     'not_inventoried' => 'Not Inventoried',
+        //     'scheduled'       => 'Scheduled',
+        //     'inventoried'     => 'Inventoried',
+        // ];
+
+        // $chartData = collect($allInventoryStatuses)
+        //     ->countBy()
+        //     ->map(function ($count, $status) use ($labels) {
+        //         return [
+        //             'label' => $labels[$status] ?? ucfirst(str_replace('_', ' ', $status)),
+        //             'value' => $count,
+        //         ];
+        //     })
+        //     ->values()
+        //     ->toArray();
+
+        $chartData = $chartQuery->get()->flatMap(function ($asset) {
+            return $asset->schedulingAssets->map(function ($s) {
+                // prefer inventoried_at if present, else created_at
+                if ($s->inventory_status === 'inventoried' && $s->inventoried_at) {
+                    $date = Carbon::parse($s->inventoried_at)->toDateString();
+                } else {
+                    $date = Carbon::parse($s->created_at)->toDateString();
+                }
+
+                return [
+                    'date'             => $date,
+                    'inventory_status' => $s->inventory_status ?? 'not_inventoried',
+                ];
+            });
         });
 
-        $labels = [
-            'not_inventoried' => 'Not Inventoried',
-            'scheduled'       => 'Scheduled',
-            'inventoried'     => 'Inventoried',
-        ];
-
-        $chartData = collect($allInventoryStatuses)
-            ->countBy()
-            ->map(function ($count, $status) use ($labels) {
+        $chartData = $chartData
+            ->groupBy('date')
+            ->map(function (Collection $items, $date) {
                 return [
-                    'label' => $labels[$status] ?? ucfirst(str_replace('_', ' ', $status)),
-                    'value' => $count,
+                    'date'            => $date,
+                    'inventoried'     => $items->where('inventory_status', 'inventoried')->count(),
+                    'scheduled'       => $items->where('inventory_status', 'scheduled')->count(),
+                    'not_inventoried' => $items->where('inventory_status', 'not_inventoried')->count(),
                 ];
             })
+            ->sortKeys()
             ->values()
             ->toArray();
 
