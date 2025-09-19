@@ -100,7 +100,7 @@ export default function TransferViewModal({
             open={open}
             onClose={onClose}
             size="xl"
-            contentClassName="relative max-h-[80vh] overflow-y-auto print:overflow-x-hidden"
+            contentClassName="relative max-h-[80vh] overflow-y-auto print:max-h-none print:overflow-visible"
         >
             {/* Header */}
             <div className="relative flex items-center justify-between">
@@ -343,6 +343,14 @@ export default function TransferViewModal({
                     <p className="text-xs text-gray-500 italic">[Role Here]</p>
                 </div>
             </div>
+            
+            {/* Spacer before footer in print */}
+            <div className="hidden print:block h-10" />
+
+            {/* Footer Form Reference */}
+            <div className="mt-5 italic text-left text-xs text-gray-500 print:fixed print:bottom-2 print:left-0 print:right-0">
+                AUF-FORM-AS/PMO-33 November 22, 2011 Rev. 0
+            </div>
 
             {/* Actions */}
             <div className="text-center print:hidden mt-1">
@@ -362,6 +370,7 @@ export default function TransferViewModal({
                     </Button>
                 )}
             </div>
+
         </ViewModal>
     );
 }
