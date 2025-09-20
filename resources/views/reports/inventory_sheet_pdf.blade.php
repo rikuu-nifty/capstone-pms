@@ -162,7 +162,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
     <tr>
         <td style="width:20%; font-weight:bold;">College/Unit:</td>
         <td style="width:30%;">{{ $first['department'] ?? '—' }}</td>
-        <td style="width:20%; font-weight:bold;">Section:</td>
+        <td style="width:20%; font-weight:bold;">Section (Sub-Area):</td>
         <td style="width:30%;">{{ $first['sub_area'] ?? '—' }}</td>
     </tr>
     <tr>
