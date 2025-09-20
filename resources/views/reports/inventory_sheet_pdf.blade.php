@@ -47,7 +47,7 @@
 
     .group-room {
         font-weight: bold;
-        background: #eaeaea;
+        background: #d3d3d3ff;
         padding-left: 8px;
     }
 
@@ -58,8 +58,9 @@
     }
 
     .group-memo {
-        background: #fafafa;
-        padding-left: 50px;
+        font-style: italic;
+        background: #f5f5f5;
+        padding-left: 30px;
     }
 </style>
 @endpush
@@ -201,43 +202,42 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
             <th style="text-align:center">Remarks</th>
         </tr>
     </thead>
+
     <tbody>
-        @foreach ($assets as $groupKey => $items)
+        @foreach ($assets as $roomKey => $subGroups)
+        {{-- Room header --}}
         @php
-        [$type, $label] = explode(':', $groupKey, 2) + [null, null];
-
-        if ($type) {
-        $type = preg_replace('/([a-z])([A-Z])/', '$1 $2', $type);
-        $type = preg_replace('/[_-]+/', ' ', $type);
-        $type = ucwords(strtolower($type));
-        }
-
-        if ($label) {
-        $label = preg_replace('/([a-z])([A-Z])/', '$1 $2', $label);
-        $label = preg_replace('/[_-]+/', ' ', $label);
-        $label = ucwords(strtolower($label));
-        }
-        @endphp
-
-        @if ($type && $label)
-        @php
-        $style = 'font-weight:bold; background:#eaeaea; padding-left:8px;';
-        if (strtolower($type) === 'sub area') {
-        $style = 'font-style:italic; background:#f5f5f5; padding-left:30px;';
-        } elseif (strtolower($type) === 'memo') {
-        $style = 'background:#fafafa; padding-left:50px;';
-        }
+        [, $roomLabel] = explode(':', $roomKey, 2) + [null, null];
         @endphp
         <tr>
-            <td colspan="10" class="group-{{ strtolower(str_replace(' ', '-', $type)) }}">
-                {{ $type }}: {{ $label }}
+            <td colspan="10" class="group-room">
+                Room: {{ $roomLabel ?? '—' }}
+            </td>
+        </tr>
+
+        {{-- Loop through sub-groups (sub-area, memo, no_sub_area) --}}
+        @foreach ($subGroups as $subKey => $items)
+        @php
+        [, $subLabel] = explode(':', $subKey, 2) + [null, null];
+        @endphp
+
+        @if ($subKey === 'no_sub_area')
+        <tr>
+            <td colspan="10" class="group-sub-area" style="font-weight:bold;">
+                Others (No Sub Area or Shared Memorandum No.):
+            </td>
+        </tr>
+        @else
+        <tr>
+            <td colspan="10" class="group-{{ str_replace('_', '-', strtok($subKey, ':')) }}">
+                {{ ucwords(str_replace('_', ' ', strtok($subKey, ':'))) }}: {{ $subLabel }}
             </td>
         </tr>
         @endif
 
-        @foreach ($items as $i => $a)
+        {{-- Assets inside sub-group --}}
+        @foreach ($items as $a)
         <tr style="text-align:center; border-bottom:1px solid #ddd;">
-            <!-- <td>{{ $i + 1 }}</td> -->
             <td style="width:38px; text-align:center">{{ $a['memorandum_no'] ?? '—' }}</td>
             <td style="width:120px; text-align:center">
                 <div>
@@ -248,7 +248,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
             <td style="width:80px; text-align:center">{{ $a['serial_no'] ?? '—' }}</td>
             <td style="width:80px; text-align:center">{{ $a['unit_cost'] ? '₱ ' . number_format($a['unit_cost'], 2) : '—' }}</td>
             <td style="width:80px; text-align:center">{{ $a['supplier'] ?? '—' }}</td>
-            <td style="width:90px; text-align:center">{{ $a['date_purchased'] ? Carbon::parse($a['date_purchased'])->format('M d, Y') : '—' }}</td>
+            <td style="width:90px; text-align:center">{{ $a['date_purchased'] ? \Carbon\Carbon::parse($a['date_purchased'])->format('M d, Y') : '—' }}</td>
             <td style="width:10px; text-align:center">1</td>
             <td style="width:10px; text-align:center">{{ $a['quantity'] }}</td>
             <td style="width:80px; text-align:center">
@@ -262,20 +262,28 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
                 @endphp
                 {{ $val ?: '—' }}
             </td>
-            <!-- <td style="width:70px; text-align:center">{{ $a['inventoried_at'] ? Carbon::parse($a['inventoried_at'])->format('M d, Y') : '—' }}</td> -->
             <td style="white-space:normal; word-wrap:break-word; word-break:break-word; text-align:center; max-width:150px;">
                 {{ $a['status'] }}
             </td>
         </tr>
         @endforeach
         @endforeach
+        @endforeach
     </tbody>
+
     <tfoot>
         @php
-        $totalAssets = $assets->map->count()->sum();
-        $totalCost = $assets->map(function ($group) {
-        return collect($group)->sum(fn($a) => (float) ($a['unit_cost'] ?? 0));
-        })->sum();
+        $totalAssets = 0;
+        $totalCost = 0.0;
+
+        foreach ($assets as $roomGroups) {
+        foreach ($roomGroups as $subGroup) {
+        foreach ($subGroup as $a) {
+        $totalAssets++;
+        $totalCost += (float) ($a['unit_cost'] ?? 0);
+        }
+        }
+        }
         @endphp
 
         <tr style="font-weight:bold; background:#f9f9f9; border-top:2px solid #000;">
@@ -289,6 +297,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
             </td>
         </tr>
     </tfoot>
+
 </table>
 
 <div style="page-break-before: always; margin-top:80px;"></div>
@@ -370,9 +379,9 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
             $pdf->text(40, $yLine2, $formMeta, $font, $size, [0,0,0]);
 
             // Right: Generated (aligned with second line)
-            $generated = "Generated: ' . now()->format('F d, Y h:i A') . '";
-            $genWidth = $fontMetrics->get_text_width($generated, $font, $size);
-            $pdf->text($pdf->get_width() - 40 - $genWidth, $yRight, $generated, $font, $size, [0,0,0]);
+            // $generated = "Generated: ' . now()->format('F d, Y h:i A') . '";
+            // $genWidth = $fontMetrics->get_text_width($generated, $font, $size);
+            // $pdf->text($pdf->get_width() - 40 - $genWidth, $yRight, $generated, $font, $size, [0,0,0]);
         ');
     }
 </script>

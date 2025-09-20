@@ -146,7 +146,7 @@
             <h1>ANGELES UNIVERSITY FOUNDATION</h1>
             <p>Angeles City</p>
             <p>Property Management Office</p>
-            <!-- <p class="muted">Generated: {{ now()->format('F d, Y h:i A') }}</p> -->
+            <p class="muted">Generated: {{ now()->format('F d, Y h:i A') }}</p>
         </div>
     </header>
 

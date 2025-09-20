@@ -585,6 +585,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
             <button
               onClick={() => {
                 setPage(1);
+                setViewMode('table');
                 router.get(
                   route('reports.inventory-sheet'),
                   { ...filters, page: 1 },
@@ -924,21 +925,19 @@ const filteredData: ChartData[] = React.useMemo(() => {
                           stackId="a"
                         /> */}
                         <Area
-  dataKey="scheduled"
-  type="monotone"
-  fill="url(#fillScheduled)"
-  stroke="#3b82f6"
-  stackId="a"
->
-  <LabelList
-    dataKey="scheduled"
-    content={(props) =>
-      renderTotalLabel({ ...props, data: filteredData })
-    }
-  />
-</Area>
-
-
+                          dataKey="scheduled"
+                          type="monotone"
+                          fill="url(#fillScheduled)"
+                          stroke="#3b82f6"
+                          stackId="a"
+                        >
+                          <LabelList
+                            dataKey="scheduled"
+                            content={(props) =>
+                              renderTotalLabel({ ...props, data: filteredData })
+                            }
+                          />
+                        </Area>
 
                         <ChartLegend content={<ChartLegendContent />} />
 

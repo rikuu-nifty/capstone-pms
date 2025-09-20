@@ -14,32 +14,36 @@
             <th>Remarks</th>
         </tr>
     </thead>
+
     <tbody>
-        @foreach ($assets as $groupKey => $items)
-        @php
-        [$type, $label] = explode(':', $groupKey, 2) + [null, null];
-
-        if ($type) {
-        $type = preg_replace('/([a-z])([A-Z])/', '$1 $2', $type);
-        $type = preg_replace('/[_-]+/', ' ', $type);
-        $type = ucwords(strtolower($type));
-        }
-
-        if ($label) {
-        $label = preg_replace('/([a-z])([A-Z])/', '$1 $2', $label);
-        $label = preg_replace('/[_-]+/', ' ', $label);
-        $label = ucwords(strtolower($label));
-        }
-        @endphp
-
-        @if ($type && $label)
+        @foreach ($assets as $roomKey => $subGroups)
+        {{-- Room header --}}
+        @php [, $roomLabel] = explode(':', $roomKey, 2) + [null, null]; @endphp
         <tr>
-            <td colspan="11" style="font-weight:bold; background:#eaeaea;">
-                {{ $type }}: {{ $label }}
+            <td colspan="11" style="font-weight:bold; background:#eaeaea; text-align:center;">
+                Room: {{ $roomLabel ?? '—' }}
+            </td>
+        </tr>
+
+        {{-- Sub-groups: sub-area, memo, no_sub_area --}}
+        @foreach ($subGroups as $subKey => $items)
+        @php [, $subLabel] = explode(':', $subKey, 2) + [null, null]; @endphp
+
+        @if ($subKey === 'no_sub_area')
+        <tr>
+            <td colspan="11" style="font-weight:bold; background:#f5f5f5; text-align:center;">
+                Others (No Sub Area or Shared Memorandum No.):
+            </td>
+        </tr>
+        @else
+        <tr>
+            <td colspan="11" style="font-weight:bold; background:#f5f5f5; text-align:center;">
+                {{ ucwords(str_replace('_', ' ', strtok($subKey, ':'))) }}: {{ $subLabel }}
             </td>
         </tr>
         @endif
 
+        {{-- Assets inside each sub-group --}}
         @foreach ($items as $a)
         <tr>
             <td>{{ $a['memorandum_no'] ?? '—' }}</td>
@@ -61,23 +65,41 @@
                 @endphp
                 {{ $val ?: '—' }}
             </td>
-            <td>{{ $a['inventoried_at'] ?? '—' }}</td>
+            <td>
+                @if (!empty($a['inventoried_at']))
+                {{ \Carbon\Carbon::parse($a['inventoried_at'])->format('F j, Y g:i:s A') }}
+                @else
+                —
+                @endif
+            </td>
             <td>{{ $a['status'] }}</td>
         </tr>
         @endforeach
         @endforeach
+        @endforeach
     </tbody>
+
     <tfoot>
         @php
-        $totalAssets = $assets->map->count()->sum();
-        $totalCost = $assets->map(function ($group) {
-        return collect($group)->sum(fn($a) => (float) ($a['unit_cost'] ?? 0));
-        })->sum();
+        $totalAssets = 0;
+        $totalCost = 0.0;
+
+        foreach ($assets as $roomGroups) {
+        foreach ($roomGroups as $subGroup) {
+        foreach ($subGroup as $a) {
+        $totalAssets++;
+        $totalCost += (float) ($a['unit_cost'] ?? 0);
+        }
+        }
+        }
         @endphp
         <tr>
-            <td colspan="11" style="font-weight:bold; text-align:left;">
+            <td colspan="11" style="font-weight:bold; text-align:right; border-top:2px solid #000; vertical-align:middle;">
                 Total Assets: {{ number_format($totalAssets) }}
-                &nbsp; | &nbsp;
+            </td>
+        </tr>
+        <tr>
+            <td colspan="11" style="font-weight:bold; text-align:right; border-bottom:2px solid #000; vertical-align:middle;">
                 Total Cost: ₱{{ number_format($totalCost, 2) }}
             </td>
         </tr>

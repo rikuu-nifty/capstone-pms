@@ -280,10 +280,10 @@ class InventorySheetReportController extends Controller
                     'D' => 12,  // Price
                     'E' => 25,  // Supplier
                     'F' => 18,  // Date Purchased
-                    'G' => 10,  // Per Record
-                    'H' => 10,  // Actual
+                    'G' => 12,  // Per Record
+                    'H' => 12,  // Actual
                     'I' => 20,  // Inventory Status
-                    'J' => 18,  // Date of Count
+                    'J' => 30,  // Date of Count
                     'K' => 40,  // Remarks
                 ];
             }
@@ -296,21 +296,52 @@ class InventorySheetReportController extends Controller
                 $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal('center');
                 $sheet->getStyle('A1:K1')->getFont()->setBold(true);
 
-                // Loop through rows and apply style
                 for ($row = 2; $row <= $highestRow; $row++) {
                     $value = trim((string) $sheet->getCell("A{$row}")->getValue());
-
-                    // normalize hyphen types
                     $normalized = str_replace(['–', '—'], '-', $value);
 
-                    if ($normalized && preg_match('/^(Sub-?Area|Room|Memo)/i', $normalized)) {
-                        // Group label row → left aligned + bold
-                        $sheet->getStyle("A{$row}:K{$row}")
-                            ->getAlignment()->setHorizontal('left');
+                    // ✅ Room header rows
+                    if ($normalized && preg_match('/^Room:/i', $normalized)) {
                         $sheet->getStyle("A{$row}:K{$row}")
                             ->getFont()->setBold(true);
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getAlignment()->setHorizontal('left')->setIndent(0);
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                            ->getStartColor()->setARGB('FFEAEAEA'); // darker gray bg
+
+                        // ✅ Sub-Area, Memo, Others (indented under Room)
+                    } elseif (
+                        $normalized &&
+                        (
+                            preg_match('/^(Sub-?Area|Memo)/i', $normalized) ||
+                            stripos($normalized, 'Others (') === 0
+                        )
+                    ) {
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getFont()->setBold(true);
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getAlignment()->setHorizontal('left')->setIndent(2);
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                            ->getStartColor()->setARGB('FFF5F5F5'); // light gray bg
+
+                        // ✅ Totals rows
+                    } elseif (stripos($normalized, 'Total Assets:') === 0 || stripos($normalized, 'Total Cost:') === 0) {
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getFont()->setBold(true);
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getAlignment()->setHorizontal('right');
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                            ->getStartColor()->setARGB('FFDDEBF7'); // light blue bg
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getBorders()->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                        $sheet->getStyle("A{$row}:K{$row}")
+                            ->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+                        // ✅ Normal data rows
                     } else {
-                        // Normal data row → center align
                         $sheet->getStyle("A{$row}:K{$row}")
                             ->getAlignment()->setHorizontal('center');
                     }
@@ -339,22 +370,28 @@ class InventorySheetReportController extends Controller
             'schedulingAssets',
             
         ])
-            ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
-            ->when($deptId, fn($q) => $q->where('unit_or_department_id', $deptId))
-            ->when($roomId, fn($q) => $q->where('building_room_id', $roomId))
-            ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId))
-            ->when(!empty($filters['from']), function ($q) use ($filters) {
-                $from = $filters['from'];
-                $q->whereHas('schedulingAssets', function ($sub) use ($from) {
-                    $sub->whereDate('inventoried_at', '>=', $from);
-                });
-            })
-            ->when(!empty($filters['to']), function ($q) use ($filters) {
-                $to = $filters['to'];
-                $q->whereHas('schedulingAssets', function ($sub) use ($to) {
-                    $sub->whereDate('inventoried_at', '<=', $to);
-                });
+        ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
+        ->when($deptId, fn($q) => $q->where('unit_or_department_id', $deptId))
+        ->when($roomId, fn($q) => $q->where('building_room_id', $roomId))
+        ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId))
+        ->when(!empty($filters['from']), function ($q) use ($filters) {
+            $from = $filters['from'];
+            $q->whereHas('schedulingAssets', function ($sub) use ($from) {
+                $sub->whereDate('inventoried_at', '>=', $from);
             });
+        })
+        ->when(!empty($filters['to']), function ($q) use ($filters) {
+            $to = $filters['to'];
+            $q->whereHas('schedulingAssets', function ($sub) use ($to) {
+                $sub->whereDate('inventoried_at', '<=', $to);
+            });
+        })
+        ->when(!empty($filters['inventory_status']), function ($q) use ($filters) {
+            $status = $filters['inventory_status'];
+            $q->whereHas('schedulingAssets', function ($sub) use ($status) {
+                $sub->latest('created_at')->where('inventory_status', $status);
+            });
+        });
 
         $assets = $query->get()->map(function ($asset) {
             $quantity = 1;
@@ -392,10 +429,53 @@ class InventorySheetReportController extends Controller
             ];
         });
 
-        return $assets->groupBy(function ($a) {
-            return $a['sub_area'] ? 'sub_area:' . $a['sub_area']
-                : ($a['room'] ? 'room:' . $a['room']
-                    : ($a['memorandum_no'] ? 'memo:' . $a['memorandum_no'] : 'ungrouped'));
-        });
+        // return $assets->groupBy(function ($a) {
+        //     return $a['room'] ? 'room:' . $a['room']
+        //         : ($a['sub_area'] ? 'sub_area:' . $a['sub_area']
+        //             : ($a['memorandum_no'] ? 'memo:' . $a['memorandum_no'] : 'ungrouped'));
+        // });
+
+        $grouped = [];
+
+        foreach ($assets as $a) {
+            $rules = [
+                fn($a) => !empty($a['room']) ? 'room:' . $a['room'] : null,
+                fn($a) => !empty($a['sub_area']) ? 'sub_area:' . $a['sub_area'] : null,
+                fn($a) => !empty($a['memorandum_no']) ? 'memo:' . $a['memorandum_no'] : null,
+            ];
+
+            // Room key (first rule only)
+            $roomKey = $rules[0]($a) ?? 'ungrouped';
+            if (!isset($grouped[$roomKey])) {
+                $grouped[$roomKey] = [];
+            }
+
+            // Sub-key (check remaining rules)
+            $subKey = null;
+            foreach (array_slice($rules, 1) as $rule) {
+                $subKey = $rule($a);
+                if ($subKey !== null) break;
+            }
+            $subKey = $subKey ?? 'no_sub_area';
+
+            if (!isset($grouped[$roomKey][$subKey])) {
+                $grouped[$roomKey][$subKey] = [];
+            }
+
+            $grouped[$roomKey][$subKey][] = $a;
+        }
+
+        foreach ($grouped as $roomKey => &$subGroups) {
+            foreach ($subGroups as $subKey => &$assetsList) {
+                if (str_starts_with($subKey, 'memo:') && count($assetsList) === 1) {
+                    // Move the single asset into "no_sub_area"
+                    $subGroups['no_sub_area'][] = $assetsList[0];
+                    unset($subGroups[$subKey]);
+                }
+            }
+        }
+        unset($subGroups);
+
+        return $grouped;
     }
 }
