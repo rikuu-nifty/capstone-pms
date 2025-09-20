@@ -90,74 +90,110 @@ $reportYear = now()->year . '-' . (now()->year + 1);
 {{-- Title --}}
 <div style="text-align:center; margin-bottom:20px;">
     <h3 style="margin-top:10px; margin-bottom:5px; font-weight:bold;">
-        Inventory Sheet Report {{ $reportYear }}
+        <!-- Inventory Sheet Report {{ $reportYear }} -->
+        Office of the Administrative Services
     </h3>
 </div>
 
 <div style="border-top: 2px solid #000; margin: 20px 0;"></div>
 
-{{-- Filters --}}
-<div class="mb-6">
-    <h3 style="color:#000;">Filters</h3>
-    @php $f = $filters ?? []; @endphp
-    @if (collect($f)->filter()->isEmpty())
-    <span class="muted">No Filters Applied – showing all available records.</span>
-    @else
-    @foreach ([
-    'from' => 'From',
-    'to' => 'To',
-    'building_id' => 'Building',
-    'department_id' => 'Department',
-    'room_id' => 'Room',
-    'sub_area_id' => 'Sub-Area',
-    ] as $key => $label)
-    @if (!empty($f[$key]))
-    @if (in_array($key, ['from','to']))
-    <span class="pill mr-2">{{ $label }}:
-        {{ Carbon::parse($f[$key])->format('M d, Y') }}
-    </span>
-    @else
-    <span class="pill mr-2">{{ $label }}: {{ $f[$key] }}</span>
-    @endif
-    @endif
-    @endforeach
-    @endif
+{{-- Report Details --}}
+@php
+// Default blank values for the header
+$first = [
+'department' => null,
+'sub_area' => null,
+'building' => null,
+'assigned_to' => null,
+'room' => null,
+'inventoried_at' => null,
+];
 
-</div>
+// Fill header fields only if that filter was chosen
+if (!empty($filters['department_id'])) {
+$first['department'] = optional(
+\App\Models\UnitOrDepartment::find($filters['department_id'])
+)->name;
+}
 
-{{-- Totals --}}
-<div class="mb-6 totals">
-    @php
-    $totalAssets = $assets->map->count()->sum();
-    $totalCost = $assets->map(function ($group) {
-    return collect($group)->sum(fn($a) => (float) ($a['unit_cost'] ?? 0));
-    })->sum();
-    @endphp
+if (!empty($filters['building_id'])) {
+$first['building'] = optional(
+\App\Models\Building::find($filters['building_id'])
+)->name;
+}
 
-    <strong>Total Assets:</strong> {{ number_format($totalAssets) }}
-    &nbsp; | &nbsp;
-    <strong>Total Cost:</strong> ₱{{ number_format($totalCost, 2) }}
-</div>
+if (!empty($filters['room_id'])) {
+$first['room'] = optional(
+\App\Models\BuildingRoom::find($filters['room_id'])
+)->room;
+}
+
+if (!empty($filters['sub_area_id'])) {
+$first['sub_area'] = optional(
+\App\Models\SubArea::find($filters['sub_area_id'])
+)->name;
+}
+
+// Personnel and date still come from assets (only if available)
+$firstGroup = $assets->first();
+$firstAsset = $firstGroup ? $firstGroup->first() : null;
+if ($firstAsset) {
+// Personnel-in-Charge and Date of Count are not yet implemented → keep them blank
+$first['assigned_to'] = null;
+$first['inventoried_at'] = null;
+}
+@endphp
+
+
+
+@if($first)
+<table width="100%" cellspacing="0" cellpadding="6"
+    style="border-collapse: collapse; margin-bottom:20px; font-size:11px; table-layout: fixed;">
+    <tr>
+        <td style="width:20%; font-weight:bold;">College/Unit:</td>
+        <td style="width:30%;">{{ $first['department'] ?? '—' }}</td>
+        <td style="width:20%; font-weight:bold;">Section:</td>
+        <td style="width:30%;">{{ $first['sub_area'] ?? '—' }}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:bold;">Building:</td>
+        <td>{{ $first['building'] ?? '—' }}</td>
+        <td style="font-weight:bold;">Personnel-in-Charge:</td>
+        <td>{{ $first['assigned_to'] ?? '—' }}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:bold;">Room:</td>
+        <td>{{ $first['room'] ?? '—' }}</td>
+        <td style="font-weight:bold;">Date of Count:</td>
+        <td>
+            {{ !empty($first['inventoried_at'])
+                ? \Carbon\Carbon::parse($first['inventoried_at'])->format('F d, Y')
+                : '—' }}
+        </td>
+    </tr>
+</table>
+@endif
+
 
 {{-- Table --}}
 <table width="100%" cellspacing="0" cellpadding="5" style="border-collapse:collapse;">
     <thead>
         <tr class="spacer-row">
-            <td colspan="11" style="height:20px; border:none; background:#fff;"></td>
+            <td colspan="10" style="height:20px; border:none; background:#fff;"></td>
         </tr>
         <tr>
             <!-- <th style="width:36px; text-align:center">#</th> -->
             <th style="width:38px; text-align:center">MR No.</th>
             <th style="width:120px; text-align:center">Asset Name (Type)</th>
             <th style="width:80px; text-align:center">Serial No.</th>
-            <th style="width:60px; text-align:center">Price</th>
+            <th style="width:80px; text-align:center">Price</th>
             <th style="width:80px; text-align:center">Supplier</th>
             <th style="width:90px; text-align:center">Date Purchased</th>
             <th style="width:10px; text-align:center">Per Record</th>
             <th style="width:10px; text-align:center">Actual</th>
             <th style="width:80px; text-align:center">Inventory Status</th>
-            <th style="width:70px; text-align:center">Date of Count</th>
-            <th style="max-width:150px; text-align:center">Remarks</th>
+            <!-- <th style="width:70px; text-align:center">Date of Count</th> -->
+            <th style="text-align:center">Remarks</th>
         </tr>
     </thead>
     <tbody>
@@ -188,7 +224,7 @@ $reportYear = now()->year . '-' . (now()->year + 1);
         }
         @endphp
         <tr>
-            <td colspan="12" class="group-{{ strtolower(str_replace(' ', '-', $type)) }}">
+            <td colspan="10" class="group-{{ strtolower(str_replace(' ', '-', $type)) }}">
                 {{ $type }}: {{ $label }}
             </td>
         </tr>
@@ -205,7 +241,7 @@ $reportYear = now()->year . '-' . (now()->year + 1);
                 </div>
             </td>
             <td style="width:80px; text-align:center">{{ $a['serial_no'] ?? '—' }}</td>
-            <td style="width:60px; text-align:center">{{ $a['unit_cost'] ? '₱' . number_format($a['unit_cost'], 2) : '—' }}</td>
+            <td style="width:80px; text-align:center">{{ $a['unit_cost'] ? '₱ ' . number_format($a['unit_cost'], 2) : '—' }}</td>
             <td style="width:80px; text-align:center">{{ $a['supplier'] ?? '—' }}</td>
             <td style="width:90px; text-align:center">{{ $a['date_purchased'] ? Carbon::parse($a['date_purchased'])->format('M d, Y') : '—' }}</td>
             <td style="width:10px; text-align:center">1</td>
@@ -221,7 +257,7 @@ $reportYear = now()->year . '-' . (now()->year + 1);
                 @endphp
                 {{ $val ?: '—' }}
             </td>
-            <td style="width:70px; text-align:center">{{ $a['inventoried_at'] ? Carbon::parse($a['inventoried_at'])->format('M d, Y') : '—' }}</td>
+            <!-- <td style="width:70px; text-align:center">{{ $a['inventoried_at'] ? Carbon::parse($a['inventoried_at'])->format('M d, Y') : '—' }}</td> -->
             <td style="white-space:normal; word-wrap:break-word; word-break:break-word; text-align:center; max-width:150px;">
                 {{ $a['status'] }}
             </td>
@@ -229,6 +265,25 @@ $reportYear = now()->year . '-' . (now()->year + 1);
         @endforeach
         @endforeach
     </tbody>
+    <tfoot>
+        @php
+        $totalAssets = $assets->map->count()->sum();
+        $totalCost = $assets->map(function ($group) {
+        return collect($group)->sum(fn($a) => (float) ($a['unit_cost'] ?? 0));
+        })->sum();
+        @endphp
+
+        <tr style="font-weight:bold; background:#f9f9f9; border-top:2px solid #000;">
+            <td colspan="10" style="text-align:right; padding:8px;">
+                Total Assets: {{ number_format($totalAssets) }}
+            </td>
+        </tr>
+        <tr style="font-weight:bold; background:#f9f9f9; border-bottom:2px solid #000;">
+            <td colspan="10" style="text-align:right; padding:8px;">
+                Total Cost: ₱ {{ number_format($totalCost, 2) }}
+            </td>
+        </tr>
+    </tfoot>
 </table>
 
 <div style="page-break-before: always; margin-top:80px;"></div>
@@ -289,3 +344,31 @@ $reportYear = now()->year . '-' . (now()->year + 1);
 </table>
 
 @endsection
+@push('pdf-scripts')
+<script type="text/php">
+    if (isset($pdf)) {
+        $pdf->page_script('
+            $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+            $size = 9;
+
+            // Y positions
+            $yLine1 = $pdf->get_height() - 85; // AUF-FORM
+            $yLine2 = $pdf->get_height() - 70; // Date + Rev
+            $yRight = $yLine2;                 // Align "Generated" with second line
+
+            // Left: AUF-FORM (first line)
+            $formCode = "AUF-FORM-AS/PMO-31";
+            $pdf->text(40, $yLine1, $formCode, $font, $size, [0,0,0]);
+
+            // Left: Date + Revision (second line)
+            $formMeta = "November 22, 2011   Rev. 0";
+            $pdf->text(40, $yLine2, $formMeta, $font, $size, [0,0,0]);
+
+            // Right: Generated (aligned with second line)
+            $generated = "Generated: ' . now()->format('F d, Y h:i A') . '";
+            $genWidth = $fontMetrics->get_text_width($generated, $font, $size);
+            $pdf->text($pdf->get_width() - 40 - $genWidth, $yRight, $generated, $font, $size, [0,0,0]);
+        ');
+    }
+</script>
+@endpush

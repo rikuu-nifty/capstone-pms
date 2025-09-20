@@ -351,6 +351,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
               </label>
               <Select
                 className="w-full"
+                isClearable
                 value={
                   filters.inventory_status
                     ? {
@@ -367,7 +368,6 @@ const filteredData: ChartData[] = React.useMemo(() => {
                 onChange={(opt) =>
                   updateFilter('inventory_status', opt?.value ?? null)
                 }
-                isClearable
               />
             </div>
 
@@ -378,6 +378,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
               </label>
               <Select
                 className="w-full"
+                isClearable
                 value={
                   filters.department_id
                     ? {
@@ -406,6 +407,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
               </label>
               <Select
                 className="w-full"
+                isClearable
                 value={
                   filters.building_id
                     ? {
@@ -435,6 +437,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
               </label>
               <Select
                 className="w-full"
+                isClearable
                 value={
                   filters.room_id
                     ? {
@@ -464,6 +467,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
               </label>
               <Select
                 className="w-full"
+                isClearable
                 value={
                   filters.sub_area_id
                     ? {
@@ -742,25 +746,24 @@ const filteredData: ChartData[] = React.useMemo(() => {
                             <ChartTooltipContent
                                 indicator="dot"
                                 labelFormatter={(value) => {
-  const v = String(value);
+                                  const v = String(value);
 
-  if (timeRange === '18w') {
-    // Week label with date range
-    return formatWeekRangeFromKey(v);
-  }
+                                  if (timeRange === '18w') {
+                                    // Week label with date range
+                                    return formatWeekRangeFromKey(v);
+                                  }
 
-  if (timeRange === '1y') {
-    // "YYYY-MM" -> "September 2025"
-    const [y, m] = v.split('-');
-    const monthName = new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'long' });
-    return `${monthName} ${y}`;
-  }
+                                  if (timeRange === '1y') {
+                                    // "YYYY-MM" -> "September 2025"
+                                    const [y, m] = v.split('-');
+                                    const monthName = new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'long' });
+                                    return `${monthName} ${y}`;
+                                  }
 
-  // daily -> "September 18, 2025"
-  const d = new Date(v);
-  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}}
-
+                                  // daily -> "September 18, 2025"
+                                  const d = new Date(v);
+                                  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                              }}
                             />
                         }
                     />

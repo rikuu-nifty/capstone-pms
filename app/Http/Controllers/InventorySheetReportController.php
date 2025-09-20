@@ -242,8 +242,9 @@ class InventorySheetReportController extends Controller
 
         $timestamp = now()->format('Y-m-d');
 
-        return $pdf->download("Inventory-Sheet-Report-{$timestamp}.pdf");
-        // return $pdf->stream('inventory_sheet_report.pdf');
+        // dd($assets->first());
+        // return $pdf->download("Inventory-Sheet-Report-{$timestamp}.pdf");
+        return $pdf->stream('inventory_sheet_report.pdf');
     }
 
     public function exportExcel(Request $request)
@@ -334,6 +335,7 @@ class InventorySheetReportController extends Controller
         $subAreaId  = $filters['sub_area_id'] ?? null;
 
         $query = InventoryList::with([
+            'building',
             'subArea',
             'buildingRoom',
             'unitOrDepartment',
@@ -341,6 +343,7 @@ class InventorySheetReportController extends Controller
             'transferAssets.transfer.receivingBuildingRoom.building',
             'offCampusAssets.offCampus',
             'schedulingAssets',
+            
         ])
             ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
             ->when($deptId, fn($q) => $q->where('unit_or_department_id', $deptId))
@@ -391,8 +394,13 @@ class InventorySheetReportController extends Controller
                 'status'           => $status,
                 'inventory_status' => $inventoryStatus,
                 'inventoried_at'   => $inventoriedAt,
+
                 'sub_area'         => optional($asset->subArea)->name,
                 'room'             => optional($asset->buildingRoom)->room,
+                'department'       => optional($asset->unitOrDepartment)->name,
+                'building'         => optional($asset->building)->name,
+
+                'assigned_to'      => $asset->assigned_to,
             ];
         });
 

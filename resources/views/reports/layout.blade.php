@@ -146,7 +146,7 @@
             <h1>ANGELES UNIVERSITY FOUNDATION</h1>
             <p>Angeles City</p>
             <p>Property Management Office</p>
-            <p class="muted">Generated: {{ now()->format('F d, Y h:i A') }}</p>
+            <!-- <p class="muted">Generated: {{ now()->format('F d, Y h:i A') }}</p> -->
         </div>
     </header>
 
@@ -161,7 +161,7 @@
         @endif
         @endisset -->
     </main>
-    
+
     <script type="text/php">
         if (isset($pdf)) {
             $pdf->page_script('
@@ -185,6 +185,9 @@
             ');
         }
     </script>
+    {{-- Allow child views to inject PDF scripts --}}
+    @stack('pdf-scripts')
+
 
 </body>
 
