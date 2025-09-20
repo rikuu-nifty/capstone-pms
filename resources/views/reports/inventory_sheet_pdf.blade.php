@@ -99,54 +99,64 @@ $reportYear = now()->year . '-' . (now()->year + 1);
 
 {{-- Report Details --}}
 @php
+
 // Default blank values for the header
 $first = [
 'department' => null,
 'sub_area' => null,
 'building' => null,
-'assigned_to' => null,
+'assigned_to' => null, // keep blank until assignment feature
 'room' => null,
 'inventoried_at' => null,
 ];
 
-// Fill header fields only if that filter was chosen
+// --- Fill header fields only if that filter was chosen ---
+
+// Department
 if (!empty($filters['department_id'])) {
 $first['department'] = optional(
 \App\Models\UnitOrDepartment::find($filters['department_id'])
 )->name;
 }
 
+// Building
 if (!empty($filters['building_id'])) {
 $first['building'] = optional(
 \App\Models\Building::find($filters['building_id'])
 )->name;
 }
 
+// Room
 if (!empty($filters['room_id'])) {
 $first['room'] = optional(
 \App\Models\BuildingRoom::find($filters['room_id'])
 )->room;
 }
 
+// Sub-Area
 if (!empty($filters['sub_area_id'])) {
 $first['sub_area'] = optional(
 \App\Models\SubArea::find($filters['sub_area_id'])
 )->name;
 }
 
-// Personnel and date still come from assets (only if available)
-$firstGroup = $assets->first();
-$firstAsset = $firstGroup ? $firstGroup->first() : null;
-if ($firstAsset) {
-// Personnel-in-Charge and Date of Count are not yet implemented → keep them blank
-$first['assigned_to'] = null;
-$first['inventoried_at'] = null;
+// --- Date of Count (use from/to as range over inventoried_at) ---
+$from = $filters['from'] ?? null;
+$to = $filters['to'] ?? null;
+
+$fromDate = $from ? Carbon::parse($from) : null;
+$toDate = $to ? Carbon::parse($to) : null;
+
+if ($fromDate && $toDate) {
+$first['inventoried_at'] = $fromDate->format('F d, Y') . ' – ' . $toDate->format('F d, Y');
+} elseif ($fromDate) {
+$first['inventoried_at'] = $fromDate->format('F d, Y') . ' – Present';
+} elseif ($toDate) {
+$first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
 }
+// If no filters: keep Date of Count as null → display "—"
 @endphp
 
-
-
-@if($first)
 <table width="100%" cellspacing="0" cellpadding="6"
     style="border-collapse: collapse; margin-bottom:20px; font-size:11px; table-layout: fixed;">
     <tr>
@@ -165,14 +175,9 @@ $first['inventoried_at'] = null;
         <td style="font-weight:bold;">Room:</td>
         <td>{{ $first['room'] ?? '—' }}</td>
         <td style="font-weight:bold;">Date of Count:</td>
-        <td>
-            {{ !empty($first['inventoried_at'])
-                ? \Carbon\Carbon::parse($first['inventoried_at'])->format('F d, Y')
-                : '—' }}
-        </td>
+        <td>{{ $first['inventoried_at'] ?? '—' }}</td>
     </tr>
 </table>
-@endif
 
 
 {{-- Table --}}

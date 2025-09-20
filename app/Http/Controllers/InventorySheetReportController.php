@@ -46,20 +46,14 @@ class InventorySheetReportController extends Controller
         $from = $request->input('from');
         $to   = $request->input('to');
 
-        if ($from || $to) {
-            $query->where(function ($outer) use ($from, $to) {
-                if ($from) {
-                    $outer->whereDate('date_purchased', '>=', $from)
-                        ->orWhereHas('schedulingAssets', function ($s) use ($from) {
-                            $s->whereDate('inventoried_at', '>=', $from);
-                        });
-                }
-                if ($to) {
-                    $outer->whereDate('date_purchased', '<=', $to)
-                        ->orWhereHas('schedulingAssets', function ($s) use ($to) {
-                            $s->whereDate('inventoried_at', '<=', $to);
-                        });
-                }
+        if ($from) {
+            $query->whereHas('schedulingAssets', function ($s) use ($from) {
+                $s->whereDate('inventoried_at', '>=', $from);
+            });
+        }
+        if ($to) {
+            $query->whereHas('schedulingAssets', function ($s) use ($to) {
+                $s->whereDate('inventoried_at', '<=', $to);
             });
         }
 
@@ -351,20 +345,14 @@ class InventorySheetReportController extends Controller
             ->when($subAreaId, fn($q) => $q->where('sub_area_id', $subAreaId))
             ->when(!empty($filters['from']), function ($q) use ($filters) {
                 $from = $filters['from'];
-                $q->where(function ($query) use ($from) {
-                    $query->whereDate('date_purchased', '>=', $from)
-                        ->orWhereHas('schedulingAssets', function ($sub) use ($from) {
-                            $sub->whereDate('inventoried_at', '>=', $from);
-                        });
+                $q->whereHas('schedulingAssets', function ($sub) use ($from) {
+                    $sub->whereDate('inventoried_at', '>=', $from);
                 });
             })
             ->when(!empty($filters['to']), function ($q) use ($filters) {
                 $to = $filters['to'];
-                $q->where(function ($query) use ($to) {
-                    $query->whereDate('date_purchased', '<=', $to)
-                        ->orWhereHas('schedulingAssets', function ($sub) use ($to) {
-                            $sub->whereDate('inventoried_at', '<=', $to);
-                        });
+                $q->whereHas('schedulingAssets', function ($sub) use ($to) {
+                    $sub->whereDate('inventoried_at', '<=', $to);
                 });
             });
 
