@@ -34,7 +34,7 @@ class InventoryList extends Model
         'supplier',
         'unit_cost',
         'depreciation_value',
-        'assigned_to', // ✅ added
+        'assigned_to',
         'date_purchased',
         'asset_type',
         'quantity',
@@ -89,6 +89,25 @@ class InventoryList extends Model
     public function category() 
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(AssetAssignment::class, 'asset_id');
+    }
+
+    public function latestAssignment()
+    {
+        return $this->hasOne(AssetAssignment::class, 'asset_id')
+            ->latestOfMany('date_assigned'); // Gets most recent assignment
+    }
+
+    public function previousAssignments()
+    {
+        // All past assignments EXCLUDING the latest
+        return $this->hasMany(AssetAssignment::class, 'asset_id')
+            ->orderBy('date_assigned', 'desc')
+            ->skip(1);
     }
 
     public function offCampuses()
