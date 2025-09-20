@@ -184,7 +184,7 @@ export default function UnitItem({
                             );
                         })
                     ) : (
-                        <div className="text-muted-foreground">No buildings found for this unit.</div>
+                        <div className="text-muted-foreground">No assets found in these rooms for this unit.</div>
                     )}
                 </div>
             )}

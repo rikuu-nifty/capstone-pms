@@ -7,50 +7,54 @@
         use Carbon\Carbon;
 
         $from = $filters['from'] ?? null;
-        $to   = $filters['to'] ?? null;
+        $to = $filters['to'] ?? null;
 
         $fromDate = $from ? Carbon::parse($from) : null;
-        $toDate   = $to ? Carbon::parse($to) : null;
+        $toDate = $to ? Carbon::parse($to) : null;
 
-        // ✅ Compute Year–Year logic based on filters
-if ($fromDate && $toDate) {
-    // Case 1: Both from & to → fromYear-toYear
-    $schoolYear = $fromDate->year . '-' . $toDate->year;
-} elseif ($fromDate) {
-    // Case 2: Only from → fromYear-(fromYear+1)
-    $schoolYear = $fromDate->year . '-' . ($fromDate->year + 1);
-} elseif ($toDate) {
-    // Case 3: Only to → (toYear-1)-toYear
-    $schoolYear = ($toDate->year - 1) . '-' . $toDate->year;
-} else {
-    // Case 4: No filters → current year-current year+1
-    $year = now()->year;
-    $schoolYear = $year . '-' . ($year + 1);
-}
+        if ($fromDate && $toDate) {
+            // Case 1: Both from & to → fromYear-toYear
+            $schoolYear = $fromDate->year . '-' . $toDate->year;
+        } elseif ($fromDate) {
+            // Case 2: Only from → fromYear–latestYear (based on assets)
+            $latestYear = $assets->max(function ($a) {
+                return $a->date_purchased ? Carbon::parse($a->date_purchased)->year : now()->year;
+            });
+            $schoolYear = $fromDate->year . '-' . $latestYear;
+        } elseif ($toDate) {
+            // Case 3: Only to → (toYear-1)-toYear
+            $schoolYear = $toDate->year - 1 . '-' . $toDate->year;
+        } else {
+            // Case 4: No filters → current year-current year+1
+            $year = now()->year;
+            $schoolYear = $year . '-' . ($year + 1);
+        }
 
         // ✅ Group assets into bulk purchases
-        $groupedAssets = $assets->groupBy(function ($a) {
-            return implode('|', [
-                $a->date_purchased,
-                $a->memorandum_no,
-                $a->supplier,
-                $a->asset_name,
-                $a->unitOrDepartment?->name,
-                $a->unit_cost,
-            ]);
-        })->map(function ($group) {
-            $first = $group->first();
-            return (object) [
-                'date_purchased' => $first->date_purchased,
-                'memorandum_no'  => $first->memorandum_no,
-                'supplier'       => $first->supplier,
-                'asset_name'     => $first->asset_name,
-                'unitOrDepartment' => $first->unitOrDepartment,
-                'unit_cost'      => $first->unit_cost,
-                'qty'            => $group->count(), // ✅ total quantity
-                'amount'         => $group->sum('unit_cost'), // ✅ total cost
-            ];
-        });
+        $groupedAssets = $assets
+            ->groupBy(function ($a) {
+                return implode('|', [
+                    $a->date_purchased,
+                    $a->memorandum_no,
+                    $a->supplier,
+                    $a->asset_name,
+                    $a->unitOrDepartment?->name,
+                    $a->unit_cost,
+                ]);
+            })
+            ->map(function ($group) {
+                $first = $group->first();
+                return (object) [
+                    'date_purchased' => $first->date_purchased,
+                    'memorandum_no' => $first->memorandum_no,
+                    'supplier' => $first->supplier,
+                    'asset_name' => $first->asset_name,
+                    'unitOrDepartment' => $first->unitOrDepartment,
+                    'unit_cost' => $first->unit_cost,
+                    'qty' => $group->count(), // ✅ total quantity
+                    'amount' => $group->sum('unit_cost'), // ✅ total cost
+                ];
+            });
     @endphp
 
     {{-- Dynamic report header --}}
@@ -87,16 +91,23 @@ if ($fromDate && $toDate) {
             <span class="muted">No filters applied</span>
         @else
             @foreach ([
-                'from' => 'From', 'to' => 'To', 'department_id' => 'Department',
-                'category_id' => 'Category','asset_type' => 'Asset Type','brand' => 'Brand',
-                'supplier' => 'Supplier','building_id' => 'Building','condition' => 'Condition',
-                'cost_min' => 'Min Cost','cost_max' => 'Max Cost'
-            ] as $key => $label)
+            'from' => 'From',
+            'to' => 'To',
+            'department_id' => 'Department',
+            'category_id' => 'Category',
+            'asset_type' => 'Asset Type',
+            'brand' => 'Brand',
+            'supplier' => 'Supplier',
+            'building_id' => 'Building',
+            'condition' => 'Condition',
+            'cost_min' => 'Min Cost',
+            'cost_max' => 'Max Cost',
+        ] as $key => $label)
                 @if (!empty($f[$key]))
-                    @if (in_array($key, ['from','to']))
+                    @if (in_array($key, ['from', 'to']))
                         <span class="pill mr-2">{{ $label }}:
                             {{ \Carbon\Carbon::parse($f[$key])->format('M j, Y') }}</span>
-                    @elseif (in_array($key, ['cost_min','cost_max']))
+                    @elseif (in_array($key, ['cost_min', 'cost_max']))
                         <span class="pill mr-2">{{ $label }}: ₱{{ number_format($f[$key], 2) }}</span>
                     @else
                         <span class="pill mr-2">{{ $label }}: {{ $f[$key] }}</span>
@@ -118,7 +129,7 @@ if ($fromDate && $toDate) {
         <thead>
             {{-- Spacer row to create consistent top spacing on every new page (borderless) --}}
             <tr class="spacer-row">
-                <td colspan="8" 
+                <td colspan="8"
                     style="height:20px;
                            border:none;
                            background:#fff;">

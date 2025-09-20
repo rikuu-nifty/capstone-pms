@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\InventorySchedulingReportController;
 use Inertia\Inertia;
 use App\Models\Report;
 use Illuminate\Http\Request;
@@ -14,6 +15,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\InventoryListReportExport;
 use App\Exports\NewPurchasesSummaryExport;
 use Maatwebsite\Excel\Facades\Excel;
+
+
+use App\Models\InventoryScheduling;
 
 
 
@@ -127,7 +131,7 @@ class ReportController extends Controller
 
     public function index()
     {
-        // ✅ Fetch all categories and count their assets
+         // ✅ Asset Inventory List summary
         $categoryData = Category::withCount('inventoryLists')
             ->get()
             ->map(fn($cat) => [
@@ -135,9 +139,13 @@ class ReportController extends Controller
                 'value' => $cat->inventory_lists_count ?? 0, // default to 0
             ]);
 
+        // ✅ Inventory Scheduling summary
+        $schedulingData = (new InventorySchedulingReportController)->summaryForDashboard();
+
         return Inertia::render('reports/index', [
             'title' => 'Reports Dashboard',
             'categoryData' => $categoryData,
+            'schedulingData' => $schedulingData, // 👈 add this
         ]);
     }
 

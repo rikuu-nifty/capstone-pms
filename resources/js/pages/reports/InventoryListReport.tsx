@@ -11,7 +11,6 @@ import Select from 'react-select';
 import { Cell, Label, Pie, PieChart, TooltipProps } from 'recharts';
 import DetailedAssetsTable from './DetailedAssetsTable';
 import NewPurchasedTable from './NewPurchasedTable';
-// import { NewPurchasesSummaryReportType } from './ReportTypes/NewPurchasesSummary';
 
 type ChartData = {
     label: string;
@@ -154,7 +153,7 @@ export default function InventoryListReport() {
                 {/* ✅ Improved & Polished Filter Bar */}
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700">Report Type</label>
+                        <label className="mb-1 block text-sm font-medium text-black">Report Type</label>
                         <Select
                             className="w-full"
                             options={reportTypes}
@@ -170,7 +169,7 @@ export default function InventoryListReport() {
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         {/* Date Range */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">From</label>
+                            <label className="mb-1 block text-sm font-medium text-black">From</label>
                             <PickerInput
                                 type="date"
                                 value={filters.from ?? ''}
@@ -179,13 +178,13 @@ export default function InventoryListReport() {
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">To</label>
+                            <label className="mb-1 block text-sm font-medium text-black">To</label>
                             <PickerInput type="date" value={filters.to ?? ''} onChange={(v) => updateFilter('to', v && v.trim() !== '' ? v : null)} />
                         </div>
 
                         {/* Building */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">Building</label>
+                            <label className="mb-1 block text-sm font-medium text-black">Building</label>
                             <Select
                                 className="w-full"
                                 value={
@@ -203,7 +202,7 @@ export default function InventoryListReport() {
 
                         {/* Department */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">Unit / Department</label>
+                            <label className="text-black-700 mb-1 block text-sm font-medium">Unit / Department</label>
                             <Select
                                 className="w-full"
                                 value={
@@ -221,7 +220,7 @@ export default function InventoryListReport() {
 
                         {/* Brand */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">Brand</label>
+                            <label className="mb-1 block text-sm font-medium text-black">Brand</label>
                             <Select
                                 className="w-full"
                                 value={filters.brand ? { value: filters.brand, label: filters.brand } : null}
@@ -232,7 +231,7 @@ export default function InventoryListReport() {
 
                         {/* Category */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
+                            <label className="mb-1 block text-sm font-medium text-black">Category</label>
                             <Select
                                 className="w-full"
                                 value={
@@ -261,7 +260,7 @@ export default function InventoryListReport() {
 
                         {/* Supplier */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">Supplier</label>
+                            <label className="mb-1 block text-sm font-medium text-black">Supplier</label>
                             <Select
                                 className="w-full"
                                 value={filters.supplier ? { value: filters.supplier, label: filters.supplier } : null}
@@ -282,6 +281,7 @@ export default function InventoryListReport() {
 
                                 router.get(route('reports.inventory-list'), reset, {
                                     preserveState: true,
+                                    preserveScroll: true, // ✅ keep current scroll position
                                     onSuccess: (page) => {
                                         // ✅ reset table to all assets
                                         setDisplayedAssets(page.props.assets as Asset[]);
@@ -300,6 +300,7 @@ export default function InventoryListReport() {
                                 setAppliedFilters(filters); // ✅ lock filters
                                 router.get(route('reports.inventory-list'), filters, {
                                     preserveState: true,
+                                    preserveScroll: true, // ✅ keep current scroll position
                                     onSuccess: (page) => {
                                         // ✅ update displayedAssets only when request completes
                                         setDisplayedAssets(page.props.assets as Asset[]);
@@ -328,57 +329,28 @@ export default function InventoryListReport() {
                             <PopoverContent align="end" className="w-44 p-2">
                                 <p className="text-black-500 px-2 pb-2 text-xs font-medium">Download as</p>
                                 <div className="mb-2 border-t"></div>
-
-                                {/* Export to Excel */}
-                                <button
-                                    onClick={() => {
-                                        const url = route('reports.inventory-list.export.excel', appliedFilters);
-
-                                        // ✅ Match backend filenames
-                                        let fileName = '';
-                                        if (appliedFilters.report_type === 'new_purchases') {
-                                            fileName = 'SummaryOfNewlyPurchasedEquipmentReport.xlsx';
-                                        } else {
-                                            fileName = 'InventoryListReport.xlsx';
-                                        }
-
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.setAttribute('download', fileName);
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                    }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
-                                >
-                                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                    Excel
-                                </button>
-
                                 {/* Export to PDF */}
                                 <button
                                     onClick={() => {
                                         const url = route('reports.inventory-list.export.pdf', appliedFilters);
-
-                                        // ✅ Match backend filenames
-                                        let fileName = '';
-                                        if (appliedFilters.report_type === 'new_purchases') {
-                                            fileName = 'SummaryOfNewlyPurchasedEquipmentReport.pdf';
-                                        } else {
-                                            fileName = 'InventoryListReport.pdf';
-                                        }
-
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.setAttribute('download', fileName);
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
+                                        window.open(url, '_blank'); // 👈 open in new tab
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
                                     PDF
+                                </button>
+
+                                {/* Export to Excel */}
+                                <button
+                                    onClick={() => {
+                                        const url = route('reports.inventory-list.export.excel', appliedFilters);
+                                        window.open(url, '_blank'); // 👈 open in new tab instead of forcing download
+                                    }}
+                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                                >
+                                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                    Excel
                                 </button>
                             </PopoverContent>
                         </Popover>

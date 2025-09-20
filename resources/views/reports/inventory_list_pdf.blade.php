@@ -13,21 +13,25 @@
         $toDate = $to ? Carbon::parse($to) : null;
 
         if ($fromDate && $toDate) {
-            // ✅ Show range based on filter years
-            if ($fromDate->year === $toDate->year) {
-                $reportYear = $fromDate->year; // same year
-            } else {
-                $reportYear = $fromDate->year . ' - ' . $toDate->year; // range
-            }
+            // ✅ Both from & to → fromYear-toYear
+            $reportYear = $fromDate->year . ' - ' . $toDate->year;
         } elseif ($fromDate) {
-            $reportYear = $fromDate->year;
+            // ✅ Only from → fromYear-latestYear
+            $latestYear =
+                $assets->max(function ($a) {
+                    return $a->date_purchased ? Carbon::parse($a->date_purchased)->year : now()->year;
+                }) ?? $fromDate->year;
+
+            $reportYear = $fromDate->year . ' - ' . $latestYear;
         } elseif ($toDate) {
-            $reportYear = $toDate->year;
+            // ✅ Only to → (toYear-1)-toYear
+            $reportYear = $toDate->year - 1 . ' - ' . $toDate->year;
         } else {
-            // ✅ Default school year style
+            // ✅ Default → current year-current year+1
             $reportYear = now()->year . '-' . (now()->year + 1);
         }
     @endphp
+
 
     <div style="text-align:center; margin-bottom:20px;">
         <h3 style="margin-top:10px; margin-bottom:5px; font-weight:bold;">

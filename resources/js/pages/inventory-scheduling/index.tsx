@@ -189,6 +189,8 @@ export default function InventorySchedulingIndex({
     const { signatories } = props; // 👈 extract signatories
     const currentUser = props.auth.user;
 
+     // 👇 Add this line to debug
+    console.log("buildingRooms", buildingRooms);
     const { data, setData, post, reset, processing, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         building_id: '',
         building_room_id: '',

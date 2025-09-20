@@ -79,6 +79,7 @@ class InventoryScheduling extends Model
             ->withTimestamps();
     }
 
+
     public function assets()
     {
         return $this->hasMany(InventorySchedulingAsset::class, 'inventory_scheduling_id');

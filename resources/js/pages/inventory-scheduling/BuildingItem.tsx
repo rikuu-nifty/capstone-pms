@@ -153,7 +153,7 @@ export default function BuildingItem({
                             );
                         })
                     ) : (
-                        <div className="text-muted-foreground">No rooms found for this building.</div>
+                        <div className="text-muted-foreground">No assets found in these rooms for this building.</div>
                     )}
                 </div>
             )}

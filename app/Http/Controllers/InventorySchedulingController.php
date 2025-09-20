@@ -50,7 +50,7 @@ class InventorySchedulingController extends Controller
         ])->get();
 
         $buildings = Building::withCount(['buildingRooms as building_rooms_count', 'assets'])->get();
-        $buildingRooms = BuildingRoom::with('subAreas')->get();
+        $buildingRooms = BuildingRoom::with(['building', 'subAreas'])->get();
         $unitOrDepartments = UnitOrDepartment::all();
         $users = User::with('role:id,name,code')
             ->get()
@@ -135,6 +135,9 @@ class InventorySchedulingController extends Controller
             // Attach pivots + fetch assets
             $schedule->syncScopeAndAssets($data);
 
+            // ✅ Make sure sub-areas pivot is updated
+            $schedule->subAreas()->sync($data['sub_area_ids'] ?? []);
+
             return $schedule;
         });
 
@@ -166,7 +169,7 @@ class InventorySchedulingController extends Controller
         ])->latest()->get();
 
         $buildings         = Building::all();
-        $buildingRooms     = BuildingRoom::with('building')->get();
+        $buildingRooms     = BuildingRoom::with(['building', 'subAreas'])->get(); // ✅ updated
         $unitOrDepartments = UnitOrDepartment::all();
         $users             = User::all();
 
@@ -287,6 +290,9 @@ class InventorySchedulingController extends Controller
             ]);
 
             $inventoryScheduling->syncScopeAndAssets($data);
+
+            // ✅ Make sure sub-areas pivot is updated
+            $inventoryScheduling->subAreas()->sync($data['sub_area_ids'] ?? []);
         });
 
         $inventoryScheduling->load([

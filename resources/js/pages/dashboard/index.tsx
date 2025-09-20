@@ -3,7 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import AssetsByLocationBarChart from './AssetsByLocationBarChart';
 import CategoryDonutChart from './categoryDonutChart';
-import AssetsOverTimeChart  from './AssetsOverTime';
+import AssetsOverTimeChart from './AssetsOverTime';
 import { Boxes, ArrowRightLeft, Clock, CheckCircle2, Building } from 'lucide-react';
 import KpiCard from './KpiCard'; // ✅ now using external component
 
@@ -57,29 +57,40 @@ export default function Dashboard() { //recentTransfers,
           <KpiCard
             title="Total Assets"
             value={stats.totalAssets}
-            icon={<Boxes className="h-6 w-6 text-blue-500" />}
+            color="text-blue-500"
+            icon={<Boxes className="h-6 w-6" />}
+
           />
           <KpiCard
             title="Active Transfers"
             value={stats.activeTransfers}
-            icon={<ArrowRightLeft className="h-6 w-6 text-purple-500" />}
+            color="text-purple-500"
+            icon={<ArrowRightLeft className="h-6 w-6" />}
+
           />
           <KpiCard
             title="Pending Turnover Requests"
             value={stats.pendingRequests}
-            icon={<Clock className="h-6 w-6 text-amber-500" />}
+            color="text-amber-500"
+            icon={<Clock className="h-6 w-6" />}
+
           />
           <KpiCard
             title="Transfers Completed This Month"
             value={stats.completedThisMonth}
-            icon={<CheckCircle2 className="h-6 w-6 text-green-500" />}
+            color="text-green-500"
+            icon={<CheckCircle2 className="h-6 w-6" />}
+
           />
           <KpiCard
             title="Off-Campus Assets"
             value={stats.offCampusAssets}
-            icon={<Building className="h-6 w-6 text-red-500" />}
+            color="text-red-500"
+            icon={<Building className="h-6 w-6" />}
+
           />
         </div>
+
 
         {/* Charts Row: Line Chart + Donut Chart */}
         <div className="grid gap-4 md:grid-cols-3">

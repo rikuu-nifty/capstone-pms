@@ -22,6 +22,7 @@
     use App\Http\Controllers\Settings\PasswordController;
     use App\Http\Controllers\RoleController;
     use App\Http\Controllers\InventoryReportController;
+    use App\Http\Controllers\InventorySchedulingReportController;
 
     // Route::get('/', function () {
     //     return Inertia::render('welcome');
@@ -83,7 +84,7 @@
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
 
-        // Show the Inventory List Report (with filters)
+     // ✅ Asset Inventory List Report
     Route::get('/assets-inventory-list', [ReportController::class, 'inventoryList'])
         ->name('reports.inventory-list');
 
@@ -93,17 +94,23 @@
 
     // Export to Excel
     Route::get('/assets-inventory-list/export/excel', [ReportController::class, 'exportExcel'])
-        ->name('reports.inventory-list.export.excel');
+        ->name('reports.inventory-list.export.excel');  
 
-  
+    //////////
+    // ✅ Inventory Scheduling Report
+    Route::get('/inventory-scheduling', [InventorySchedulingReportController::class, 'index'])
+        ->name('reports.inventory-scheduling');
+
+     // Export to PDF
+    Route::get('/reports/inventory-scheduling/export/pdf', [InventorySchedulingReportController::class, 'exportPdf'])
+        ->name('reports.inventory-scheduling.export.pdf');
+
+    // Export to Excel
+    Route::get('/reports/inventory-scheduling/export/excel', [InventorySchedulingReportController::class, 'exportExcel'])
+    ->name('reports.inventory-scheduling.export.excel');
+
         
     // Placeholders with proper names
-    Route::get('/inventory-scheduling', fn() =>
-        Inertia::render('reports/InventorySchedulingReport', [
-            'title' => 'Inventory Scheduling Report',
-        ])
-    )->name('reports.inventory-scheduling');
-
     Route::get('/transfer', fn() =>
         Inertia::render('reports/PropertyTransferReport', [
             'title' => 'Property Transfer Report',
