@@ -140,27 +140,25 @@ class ReportController extends Controller
 
         // INVENTORY SHEET REPORTS PART
         // $chartQuery = InventoryList::with(['schedulingAssets'])->get();
-        $chartQuery = InventoryList::with(['schedulingAssets'])
-            ->whereHas('schedulingAssets', function ($q) use ($startDate) {
-                $q->whereDate('created_at', '>=', $startDate)
-                    ->orWhereDate('inventoried_at', '>=', $startDate);
-            })
-            ->get();
+        $chartQuery = InventoryList::with(['schedulingAssets'])->get();
 
+        // ✅ Flatten and normalize scheduling assets
         $chartData = $chartQuery->flatMap(function ($asset) {
             return $asset->schedulingAssets->map(function ($s) {
-                if ($s->inventory_status === 'inventoried' && $s->inventoried_at) {
-                    $date = Carbon::parse($s->inventoried_at)->toDateString();
-                } else {
-                    $date = Carbon::parse($s->created_at)->toDateString();
-                }
+                $date = $s->inventory_status === 'inventoried' && $s->inventoried_at
+                    ? Carbon::parse($s->inventoried_at)->toDateString()
+                    : Carbon::parse($s->created_at)->toDateString();
+
                 return [
                     'date'             => $date,
                     'inventory_status' => $s->inventory_status ?? 'not_inventoried',
                 ];
             });
-        });
+        })
+            // ✅ Enforce strict 90-day cutoff here
+            ->filter(fn($item) => $item['date'] >= $startDate);
 
+        // ✅ Group by date and count statuses
         $inventorySheetChartData = $chartData
             ->groupBy('date')
             ->map(function (Collection $items, $date) {
@@ -174,7 +172,6 @@ class ReportController extends Controller
             ->sortKeys()
             ->values()
             ->toArray();
-
 
         return Inertia::render('reports/index', [
             'title' => 'Reports Dashboard',

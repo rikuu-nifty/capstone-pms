@@ -4,7 +4,14 @@ import { type BreadcrumbItem } from '@/types'
 import type { PageProps as InertiaPageProps } from '@inertiajs/core'
 import { Head, usePage } from '@inertiajs/react'
 import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lucide-react'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  // ChartLegendContent,
+} from '@/components/ui/chart'
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useState } from 'react'
 import {
@@ -20,6 +27,7 @@ import {
 } from 'recharts'
 
 import { ReportCard } from './ReportCard'
+import { formatEnums } from '@/types/custom-index'
 
 // 🔹 Type for chart data coming from backend
 type CategoryData = {
@@ -211,7 +219,8 @@ export default function ReportsIndex() {
               inventoried: { label: "Inventoried", color: "#00A86B" },
               scheduled: { label: "Scheduled", color: "#3b82f6" },
             }}
-            className="mx-auto h-[200px] w-full" 
+            // className="mx-auto h-[255px] w-full" 
+            className="mx-auto aspect-[4/3] max-h-[255px] w-full"
           >
             <AreaChart data={inventorySheetChartData}>
               <defs>
@@ -294,6 +303,27 @@ export default function ReportsIndex() {
                 stroke="#3b82f6"
                 stackId="a"
               />
+              {/* <ChartLegend content={<ChartLegendContent />} /> */}
+              <ChartLegend
+                content={({ payload }) => (
+                  <div className="mt-3 flex flex-wrap justify-center gap-3">
+                    {payload?.map((entry, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        {/* Dot in dataset color */}
+                        <span
+                          className="h-3 w-3 rounded-sm"
+                          style={{ backgroundColor: entry.color }}
+                        ></span>
+                        {/* Label muted, like Inventory List */}
+                        <span className="text-xs text-muted-foreground">
+                          {formatEnums(entry.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              />
+
             </AreaChart>
           </ChartContainer>
         </div>

@@ -8,11 +8,11 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { FileDown, FileSpreadsheet, FileText, Filter, RotateCcw } from 'lucide-react';
 import Select from 'react-select';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, LabelList, LabelProps } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
+  // ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
 } from '@/components/ui/chart';
@@ -233,6 +233,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
   // ----- Semester: group by week -----
   if (timeRange === '18w') {
     const grouped: Record<string, ChartData> = {};
+
     for (const item of inRange) {
       const key = getWeekKey(new Date(item.date)); // "YYYY-WN"
       if (!grouped[key]) {
@@ -242,15 +243,28 @@ const filteredData: ChartData[] = React.useMemo(() => {
       grouped[key].scheduled += item.scheduled ?? 0;
       grouped[key].not_inventoried += item.not_inventoried ?? 0;
     }
-    return Object.values(grouped);
+
+    const filled: ChartData[] = [];
+    const start = new Date(referenceDate);
+    start.setDate(start.getDate() - (18 * 7));
+
+    for (let i = 0; i < 18; i++) {
+      const current = new Date(start);
+      current.setDate(start.getDate() + i * 7);
+      const key = getWeekKey(current);
+      filled.push(grouped[key] || { date: key, inventoried: 0, scheduled: 0, not_inventoried: 0 });
+    }
+
+    return filled;
   }
 
   // ----- Annual: group by month -----
   if (timeRange === '1y') {
     const grouped: Record<string, ChartData> = {};
+
     for (const item of inRange) {
       const d = new Date(item.date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; // "YYYY-MM"
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       if (!grouped[key]) {
         grouped[key] = { date: key, inventoried: 0, scheduled: 0, not_inventoried: 0 };
       }
@@ -258,7 +272,17 @@ const filteredData: ChartData[] = React.useMemo(() => {
       grouped[key].scheduled += item.scheduled ?? 0;
       grouped[key].not_inventoried += item.not_inventoried ?? 0;
     }
-    return Object.values(grouped);
+
+    const filled: ChartData[] = [];
+    const start = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 11, 1);
+
+    for (let i = 0; i < 12; i++) {
+      const current = new Date(start.getFullYear(), start.getMonth() + i, 1);
+      const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+      filled.push(grouped[key] || { date: key, inventoried: 0, scheduled: 0, not_inventoried: 0 });
+    }
+
+    return filled;
   }
 
   // ----- Daily (7d/30d/90d): keep your original fill logic -----
@@ -298,6 +322,36 @@ const filteredData: ChartData[] = React.useMemo(() => {
           (d.not_inventoried || 0) >
         0
     );
+
+  function renderTotalLabel(props: LabelProps & { index?: number; data?: ChartData[] }) {
+    const { x, y, index, data } = props;
+
+    // skip if missing coords or data
+    if (x == null || y == null || index === undefined || !data || !data[index]) {
+      return null;
+    }
+
+    const d = data[index];
+    const total =
+      (d.inventoried || 0) +
+      (d.scheduled || 0) +
+      (d.not_inventoried || 0);
+
+    if (total === 0) return null;
+
+    return (
+      <text
+        x={Number(x)}
+        y={Number(y) - 6}
+        textAnchor="middle"
+        fontSize={12}
+        fill="#374151"
+        fontWeight="500"
+      >
+        {total}
+      </text>
+    );
+  }
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -621,7 +675,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
                     <ShadSelectValue placeholder="Select range" />
                 </ShadSelectTrigger>
                 <ShadSelectContent>
-                    <ShadSelectItem value="90d">Last 90 days</ShadSelectItem>
+                    <ShadSelectItem value="90d">Last Quarter (90 days)</ShadSelectItem>
                     <ShadSelectItem value="30d">Last 30 days</ShadSelectItem>
                     <ShadSelectItem value="7d">Last 7 days</ShadSelectItem>
                     <ShadSelectItem value="18w">Last Semester (18 weeks)</ShadSelectItem>
@@ -681,7 +735,10 @@ const filteredData: ChartData[] = React.useMemo(() => {
                     }}
                   className="mx-auto h-[350px] w-full"
                 >
-                    <AreaChart data={filteredData}>
+                    <AreaChart 
+                      data={filteredData}
+                      margin={{right: 25, left: 20, top: 15}}
+                    >
                         <defs>
                             <linearGradient id="fillNotInventoried" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
@@ -704,25 +761,26 @@ const filteredData: ChartData[] = React.useMemo(() => {
                         tickLine={false}
                         axisLine={false}
                         tickMargin={8}
-                        minTickGap={32}
+                        interval={timeRange === '18w' || timeRange === '1y' ? 0 : 'preserveEnd'}
+                        minTickGap={timeRange === '18w' || timeRange === '1y' ? 0 : 32}
                         tickFormatter={(value) => {
-                        const v = String(value);
+                          const v = String(value);
 
-                        if (timeRange === '18w') {
-                            // "YYYY-WN" -> "Week N"
-                            const wk = v.split('-W')[1];
-                            return wk ? `Week ${wk}` : v;
-                        }
+                          if (timeRange === '18w') {
+                              // "YYYY-WN" -> "Week N"
+                              const wk = v.split('-W')[1];
+                              return wk ? `Week ${wk}` : v;
+                          }
 
-                        if (timeRange === '1y') {
-                            // "YYYY-MM" -> "Jan", "Feb", ...
-                            const [y, m] = v.split('-');
-                            return new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'short' });
-                        }
+                          if (timeRange === '1y') {
+                              // "YYYY-MM" -> "Jan", "Feb", ...
+                              const [y, m] = v.split('-');
+                              return new Date(Number(y), Number(m) - 1).toLocaleString('en-US', { month: 'short' });
+                          }
 
-                        // daily
-                        const date = new Date(v);
-                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          // daily
+                          const date = new Date(v);
+                          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         }}
                     />
 
@@ -740,7 +798,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
                     />
 
                     {/* Tooltip with colored indicators */}
-                    <ChartTooltip
+                    {/* <ChartTooltip
                         cursor={false}
                         content={
                             <ChartTooltipContent
@@ -766,10 +824,10 @@ const filteredData: ChartData[] = React.useMemo(() => {
                               }}
                             />
                         }
-                    />
+                    /> */}
 
                     {/* Stacking order: bottom → top */}
-                    <Area
+                    {/* <Area
                         dataKey="not_inventoried"
                         type="monotone"
                         fill="url(#fillNotInventoried)"
@@ -791,7 +849,99 @@ const filteredData: ChartData[] = React.useMemo(() => {
                         stackId="a"
                     />
 
+                        <ChartLegend content={<ChartLegendContent />} /> */}
+                        <ChartTooltip
+                          cursor={false}
+                          content={({ active, label, payload }) => {
+                            if (!active || !payload || payload.length === 0) return null;
+
+                            // custom label formatting (same logic you had before)
+                            const v = String(label);
+                            let formattedLabel = v;
+                            if (timeRange === '18w') {
+                              formattedLabel = formatWeekRangeFromKey(v);
+                            } else if (timeRange === '1y') {
+                              const [y, m] = v.split('-');
+                              const monthName = new Date(Number(y), Number(m) - 1).toLocaleString(
+                                'en-US',
+                                { month: 'long' }
+                              );
+                              formattedLabel = `${monthName} ${y}`;
+                            } else {
+                              const d = new Date(v);
+                              formattedLabel = d.toLocaleDateString('en-US', {
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric',
+                              });
+                            }
+
+                            return (
+                              <div className="rounded-md border bg-white p-3 shadow-sm">
+                                {/* Label with extra bottom spacing */}
+                                <div className="mb-3 text-sm font-semibold">{formattedLabel}</div>
+
+                                {/* Values with spacing */}
+                                <div className="space-y-2">
+                                  {payload.map((entry, i) => (
+                                    <div key={i} className="flex items-center gap-3 text-sm">
+                                      <span
+                                        className="inline-block h-2 w-2 rounded-full"
+                                        style={{ backgroundColor: entry.color }}
+                                      />
+                                      <span className="text-gray-700">
+                                        {formatStatusLabel(String(entry.name))}:{" "}
+                                        {Number(entry.value ?? 0).toLocaleString()}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          }}
+                        />
+
+                        {/* Stacking order: bottom → top */}
+                        <Area
+                          dataKey="not_inventoried"
+                          type="monotone"
+                          fill="url(#fillNotInventoried)"
+                          stroke="#f59e0b"
+                          stackId="a"
+                        />
+                        <Area
+                          dataKey="inventoried"
+                          type="monotone"
+                          fill="url(#fillInventoried)"
+                          stroke="#00A86B"
+                          stackId="a"
+                        />
+                        {/* <Area
+                          dataKey="scheduled"
+                          type="monotone"
+                          fill="url(#fillScheduled)"
+                          stroke="#3b82f6"
+                          stackId="a"
+                        /> */}
+                        <Area
+  dataKey="scheduled"
+  type="monotone"
+  fill="url(#fillScheduled)"
+  stroke="#3b82f6"
+  stackId="a"
+>
+  <LabelList
+    dataKey="scheduled"
+    content={(props) =>
+      renderTotalLabel({ ...props, data: filteredData })
+    }
+  />
+</Area>
+
+
+
                         <ChartLegend content={<ChartLegendContent />} />
+
                     </AreaChart>
                 </ChartContainer>
               )
