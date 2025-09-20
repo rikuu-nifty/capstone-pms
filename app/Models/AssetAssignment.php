@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class AssetAssignment extends Model
 {
+    protected $fillable = [
+        'asset_id',
+        'unit_or_department_id',
+        'personnel_id',
+        'assigned_by',
+        'date_assigned',
+        'remarks',
+    ];
 
     protected $casts = [
         'date_assigned' => 'date',
@@ -16,13 +24,18 @@ class AssetAssignment extends Model
         return $this->belongsTo(InventoryList::class, 'asset_id');
     }
 
-    public function assignedBy()
+    public function personnel()
     {
-        return $this->belongsTo(User::class, 'assigned_by');
+        return $this->belongsTo(Personnel::class, 'personnel_id');
     }
 
     public function unitOrDepartment()
     {
         return $this->belongsTo(UnitOrDepartment::class, 'unit_or_department_id');
+    }
+    
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 }
