@@ -200,6 +200,8 @@ export default function ReportsIndex() {
           </div>
         ),
     },
+
+    //Inventory Sheet Report
     {
       title: 'Inventory Sheet Report',
       description: 'Generate detailed per-room/per-building inventory sheets.',
@@ -219,8 +221,7 @@ export default function ReportsIndex() {
               inventoried: { label: "Inventoried", color: "#00A86B" },
               scheduled: { label: "Scheduled", color: "#3b82f6" },
             }}
-            // className="mx-auto h-[255px] w-full" 
-            className="mx-auto aspect-[4/3] max-h-[255px] w-full"
+            className="mt-3 mx-auto aspect-[4/3] max-h-[245px] w-full flex items-center justify-center"
           >
             <AreaChart data={inventorySheetChartData}>
               <defs>
@@ -332,7 +333,6 @@ export default function ReportsIndex() {
           No data available
         </div>
       ),
-
     },
 
     {
