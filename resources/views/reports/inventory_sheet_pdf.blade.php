@@ -324,19 +324,25 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
     </tr>
 </table>
 
-<div style="margin-top:32px; font-size:10px; text-align:justify; page-break-inside: avoid;">
-    <p style="text-indent:40px; margin:0 0 12px;">
-        We, the undersigned, acknowledge the custody of the above mentioned property/ies.
-        We also fully agree and understand that we are jointly liable for any: damages or
-        loss/es of the said property/ies due to mishandling and negligence. It is also
-        understood that we are going to exercise proper care in the upkeep and maintenance
-        of the said property/ies to prolong their useful lives.
-    </p>
-    <p style="text-indent:40px; margin:0;">
-        We are also responsible in informing the Property Management Office regarding any
-        addition, movement, transfer and disposal of property/ies under our custody.
-    </p>
-</div>
+{{-- ACKNOWLEDGEMENT --}}
+<table class="signatories-table" width="100%" cellspacing="0" cellpadding="8"
+    style="margin-top:20px; font-size:12px; text-align:justify; page-break-inside: avoid; table-layout:fixed; border:none;">
+    <tr>
+        <td colspan="3" style="vertical-align:top; padding:0 40px;">
+            <p style="text-indent:30px; margin:0 0 12px;">
+                We, the undersigned, acknowledge the custody of the above mentioned property/ies.
+                We also fully agree and understand that we are jointly liable for any: damages or
+                loss/es of the said property/ies due to mishandling and negligence. It is also
+                understood that we are going to exercise proper care in the upkeep and maintenance
+                of the said property/ies to prolong their useful lives.
+            </p>
+            <p style="text-indent:30px; margin:0;">
+                We are also responsible in informing the Property Management Office regarding any
+                addition, movement, transfer and disposal of property/ies under our custody.
+            </p>
+        </td>
+    </tr>
+</table>
 
 {{-- SIGNATORIES – BLOCK 2 --}}
 <table class="signatories-table" width="100%" cellspacing="0" cellpadding="8"
