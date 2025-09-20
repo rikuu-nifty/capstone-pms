@@ -1,3 +1,78 @@
+@php
+use Carbon\Carbon;
+
+// Default blank values
+$first = [
+'department' => null,
+'sub_area' => null,
+'building' => null,
+'assigned_to' => null,
+'room' => null,
+'inventoried_at'=> null,
+];
+
+// Fill if filters exist
+if (!empty($filters['department_id'])) {
+$first['department'] = optional(\App\Models\UnitOrDepartment::find($filters['department_id']))->name;
+}
+if (!empty($filters['building_id'])) {
+$first['building'] = optional(\App\Models\Building::find($filters['building_id']))->name;
+}
+if (!empty($filters['room_id'])) {
+$first['room'] = optional(\App\Models\BuildingRoom::find($filters['room_id']))->room;
+}
+if (!empty($filters['sub_area_id'])) {
+$first['sub_area'] = optional(\App\Models\SubArea::find($filters['sub_area_id']))->name;
+}
+
+// Date of Count
+$fromDate = !empty($filters['from']) ? Carbon::parse($filters['from']) : null;
+$toDate = !empty($filters['to']) ? Carbon::parse($filters['to']) : null;
+
+if ($fromDate && $toDate) {
+$first['inventoried_at'] = $fromDate->format('F d, Y') . ' – ' . $toDate->format('F d, Y');
+} elseif ($fromDate) {
+$first['inventoried_at'] = $fromDate->format('F d, Y') . ' – Present';
+} elseif ($toDate) {
+$first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
+}
+@endphp
+
+{{-- Report Title --}}
+<tr>
+    <td colspan="11" style="font-weight:bold; text-align:center; font-size:14px; padding:6px;">
+        Office of the Administrative Services
+    </td>
+</tr>
+<tr>
+    <td colspan="11"></td>
+</tr> {{-- spacer row --}}
+
+{{-- Report Details --}}
+<tr>
+    <td style="font-weight:bold;">College/Unit:</td>
+    <td colspan="4">{{ $first['department'] ?? '—' }}</td>
+    <td style="font-weight:bold;">Section (Sub-Area):</td>
+    <td colspan="5">{{ $first['sub_area'] ?? '—' }}</td>
+</tr>
+<tr>
+    <td style="font-weight:bold;">Building:</td>
+    <td colspan="4">{{ $first['building'] ?? '—' }}</td>
+    <td style="font-weight:bold;">Personnel-in-Charge:</td>
+    <td colspan="5">{{ $first['assigned_to'] ?? '—' }}</td>
+</tr>
+<tr>
+    <td style="font-weight:bold;">Room:</td>
+    <td colspan="4">{{ $first['room'] ?? '—' }}</td>
+    <td style="font-weight:bold;">Date of Count:</td>
+    <td colspan="5">{{ $first['inventoried_at'] ?? '—' }}</td>
+</tr>
+
+<tr>
+    <td colspan="11"></td>
+</tr> {{-- spacer row --}}
+
+
 <table>
     <thead>
         <tr>

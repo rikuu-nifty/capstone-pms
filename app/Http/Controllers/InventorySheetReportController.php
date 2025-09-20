@@ -293,10 +293,45 @@ class InventorySheetReportController extends Controller
                 $highestRow = $sheet->getHighestRow();
 
                 // Header row center + bold
+                $sheet->mergeCells('A1:K1'); // ensure row 1 is merged across all 11 columns
                 $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal('center');
-                $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+                $sheet->getStyle('A1:K1')->getFont()->setBold(true)->setSize(14);
 
-                for ($row = 2; $row <= $highestRow; $row++) {
+                // --- Report details rows (labels only bold) ---
+                // Labels in columns A and F
+                $sheet->getStyle('A2:A5')->getFont()->setBold(true);
+                $sheet->getStyle('F2:F5')->getFont()->setBold(true);
+
+                // Values normal
+                $sheet->getStyle('B2:E5')->getFont()->setBold(false);
+                $sheet->getStyle('G2:K5')->getFont()->setBold(false);
+
+                // Align details left
+                $sheet->getStyle('A2:K5')->getAlignment()->setHorizontal('left');
+
+                // Adjust widths for readability
+                $sheet->getColumnDimension('A')->setWidth(25);
+                $sheet->getColumnDimension('F')->setWidth(28);
+
+                // --- Column headers (Row 7) ---
+                $sheet->getStyle('A7:K7')->getFont()->setBold(true);
+                $sheet->getStyle('A7:K7')->getAlignment()->setHorizontal('center');
+
+                // Force uppercase
+                foreach (range('A', 'K') as $col) {
+                    $cell = $sheet->getCell($col . '7');
+                    $cell->setValue(strtoupper((string) $cell->getValue()));
+                }
+
+                // Header background + borders
+                $sheet->getStyle('A7:K7')
+                    ->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFBFBFBF'); // medium gray
+                $sheet->getStyle('A7:K7')->getBorders()->getTop()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getStyle('A7:K7')->getBorders()->getBottom()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+
+                for ($row = 8; $row <= $highestRow; $row++) {
                     $value = trim((string) $sheet->getCell("A{$row}")->getValue());
                     $normalized = str_replace(['–', '—'], '-', $value);
 
@@ -346,6 +381,9 @@ class InventorySheetReportController extends Controller
                             ->getAlignment()->setHorizontal('center');
                     }
                 }
+
+                $sheet->getStyle("A1:K5")->getFont()->setBold(true);
+                $sheet->getStyle("A1:K5")->getAlignment()->setHorizontal('left');
 
                 return [];
             }
