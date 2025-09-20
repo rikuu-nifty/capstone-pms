@@ -47,7 +47,7 @@
 
     .group-room {
         font-weight: bold;
-        background: #d3d3d3ff;
+        background: #dadadaff;
         padding-left: 8px;
     }
 
