@@ -664,25 +664,25 @@ const filteredData: ChartData[] = React.useMemo(() => {
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>Inventory Sheets</CardTitle>
             <div className="mt-2 flex gap-2 sm:mt-0 items-center">
-              {/* Time Range Dropdown (client-side) */}
-              <ShadSelect
-                value={timeRange}
-                onValueChange={(v) =>
-                    setTimeRange((v as '7d' | '30d' | '90d' | '18w' | '1y') ?? '90d')
-                }
-                >
-                <ShadSelectTrigger className="min-w-[220px]">
-                    <ShadSelectValue placeholder="Select range" />
-                </ShadSelectTrigger>
-                <ShadSelectContent>
-                    <ShadSelectItem value="90d">Last Quarter (90 days)</ShadSelectItem>
-                    <ShadSelectItem value="30d">Last 30 days</ShadSelectItem>
-                    <ShadSelectItem value="7d">Last 7 days</ShadSelectItem>
-                    <ShadSelectItem value="18w">Last Semester (18 weeks)</ShadSelectItem>
-                    <ShadSelectItem value="1y">Last Year</ShadSelectItem>
-                </ShadSelectContent>
-                </ShadSelect>
-
+              {viewMode === 'chart' && (
+                <ShadSelect
+                  value={timeRange}
+                  onValueChange={(v) =>
+                      setTimeRange((v as '7d' | '30d' | '90d' | '18w' | '1y') ?? '90d')
+                  }
+                  >
+                  <ShadSelectTrigger className="min-w-[220px]">
+                      <ShadSelectValue placeholder="Select range" />
+                  </ShadSelectTrigger>
+                  <ShadSelectContent>
+                      <ShadSelectItem value="90d">Last Quarter (90 days)</ShadSelectItem>
+                      <ShadSelectItem value="30d">Last 30 days</ShadSelectItem>
+                      <ShadSelectItem value="7d">Last 7 days</ShadSelectItem>
+                      <ShadSelectItem value="18w">Last Semester (18 weeks)</ShadSelectItem>
+                      <ShadSelectItem value="1y">Last Year</ShadSelectItem>
+                  </ShadSelectContent>
+                  </ShadSelect>
+              )}
 
               {/* View toggle */}
               <div className="inline-flex rounded-md shadow-sm">
