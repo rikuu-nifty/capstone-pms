@@ -22,8 +22,9 @@
     use App\Http\Controllers\Settings\PasswordController;
     use App\Http\Controllers\RoleController;
     use App\Http\Controllers\InventorySheetReportController;
+    use App\Http\Controllers\PersonnelController;
 
-    Route::get('/', function () {
+Route::get('/', function () {
         if (Auth::check()) {
             return redirect()->route('dashboard'); // change to your actual dashboard route
         }
@@ -404,6 +405,21 @@
         ->name('approvals.external_approve')
         ->middleware('can:approve-form-approvals');
 
+    // PERSONNELS
+    Route::get('/personnels', [PersonnelController::class, 'index'])->name('personnels.index')
+        ->middleware('can:view-personnels');
+
+    Route::post('/personnels', [PersonnelController::class, 'store'])->name('personnels.store')
+        ->middleware('can:create-personnels');
+
+    Route::put('/personnels/{personnel}', [PersonnelController::class, 'update'])->name('personnels.update')
+        ->middleware('can:update-personnels');
+
+    Route::get('/personnels/view/{personnel}', [PersonnelController::class, 'show'])->name('personnels.view')
+        ->middleware('can:view-personnels');
+
+    Route::delete('/personnels/{personnel}', [PersonnelController::class, 'destroy'])->name('personnels.destroy')
+        ->middleware('can:delete-personnels');
 
     //ASSIGNMENTS
 
