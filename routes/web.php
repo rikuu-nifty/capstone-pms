@@ -23,6 +23,7 @@
     use App\Http\Controllers\RoleController;
     use App\Http\Controllers\InventorySheetReportController;
     use App\Http\Controllers\PersonnelController;
+    use App\Http\Controllers\AssetAssignmentController;
 
 Route::get('/', function () {
         if (Auth::check()) {
@@ -420,7 +421,18 @@ Route::get('/', function () {
     Route::delete('/personnels/{personnel}', [PersonnelController::class, 'destroy'])->name('personnels.destroy')
         ->middleware('can:delete-personnels');
 
-    //ASSIGNMENTS
+    // ASSIGNMENTS
+    Route::get('/assignments', [AssetAssignmentController::class, 'index'])->name('assignments.index')
+        ->middleware('can:view-assignments');
+
+    Route::post('/assignments', [AssetAssignmentController::class, 'store'])->name('assignments.store')
+        ->middleware('can:create-assignments');
+
+    Route::put('/assignments/{assignment}', [AssetAssignmentController::class, 'update'])->name('assignments.update')
+        ->middleware('can:update-assignments');
+
+    Route::delete('/assignments/{assignment}', [AssetAssignmentController::class, 'destroy'])->name('assignments.destroy')
+        ->middleware('can:delete-assignments');
 
     //PROFILE
 });
