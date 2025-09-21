@@ -28,9 +28,33 @@ class Personnel extends Model
         return $this->hasMany(AssetAssignment::class, 'personnel_id');
     }
 
-    // Accessor: Full name
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
+    public static function listForIndex()
+    {
+        return static::with('unitOrDepartment')
+            ->select('personnels.*')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'full_name' => $p->full_name,
+                    'position' => $p->position,
+                    'status' => $p->status,
+                    'unit_or_department' => $p->unitOrDepartment?->name,
+                ];
+            });
+    }
+
+    public static function totals()
+    {
+        return [
+            'total_personnels' => static::count(),
+            'active_personnels' => static::where('status', 'active')->count(),
+            'inactive_personnels' => static::where('status', 'inactive')->count(),
+        ];
     }
 }
