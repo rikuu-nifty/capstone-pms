@@ -17,7 +17,14 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Assignments', href: '/assignments' },
 ];
 
-export default function AssignmentsIndex({ assignments, totals }: AssignmentPageProps) {
+export default function AssignmentsIndex({ 
+    assignments, 
+    totals, 
+    personnels,
+    units,
+    assets,
+    currentUser,
+}: AssignmentPageProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [toEdit, setToEdit] = useState<AssetAssignment | null>(null);
@@ -92,12 +99,12 @@ export default function AssignmentsIndex({ assignments, totals }: AssignmentPage
           <Table>
             <TableHeader>
               <TableRow className="bg-muted text-foreground">
-                <TableHead className="text-center">Asset</TableHead>
+                <TableHead className="text-center">Reference</TableHead>
                 <TableHead className="text-center">Personnel</TableHead>
                 <TableHead className="text-center">Unit/Department</TableHead>
+                <TableHead className="text-center">Assets Count</TableHead>
                 <TableHead className="text-center">Date Assigned</TableHead>
                 <TableHead className="text-center">Assigned By</TableHead>
-                <TableHead className="text-center">Remarks</TableHead>
                 <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -106,16 +113,17 @@ export default function AssignmentsIndex({ assignments, totals }: AssignmentPage
               {page_items.length > 0 ? (
                 page_items.map((a) => (
                   <TableRow key={a.id}>
+                    <TableCell>#{a.id}</TableCell>
                     <TableCell>
-                      {a.asset
-                        ? `${a.asset.property_number} – ${a.asset.asset_model?.brand ?? ''} ${a.asset.asset_model?.model ?? ''}`
-                        : '—'}
+                      <div className="flex flex-col">
+                        <span>{a.personnel?.full_name ?? '—'}</span>
+                        <span className="text-xs text-muted-foreground">{a.personnel?.position ?? ''}</span>
+                      </div>
                     </TableCell>
-                    <TableCell>{a.personnel?.full_name ?? '—'}</TableCell>
-                    <TableCell>{a.unit_or_department?.name ?? '—'}</TableCell>
+                    <TableCell>{a.personnel?.unit_or_department?.name ?? '—'}</TableCell>
+                    <TableCell>{a.items_count ?? 0}</TableCell>
                     <TableCell>{formatDateLong(a.date_assigned)}</TableCell>
                     <TableCell>{a.assigned_by_user?.name ?? '—'}</TableCell>
-                    <TableCell>{a.remarks ?? '—'}</TableCell>
                     <TableCell>
                       <div className="flex justify-center items-center gap-2">
                         <Button
@@ -146,7 +154,7 @@ export default function AssignmentsIndex({ assignments, totals }: AssignmentPage
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            // optional: view modal
+                            // TODO: open view modal
                           }}
                           className="cursor-pointer"
                         >
@@ -187,7 +195,15 @@ export default function AssignmentsIndex({ assignments, totals }: AssignmentPage
       </div>
 
       {/* Modals */}
-      <AddAssignmentModal show={showAdd} onClose={() => setShowAdd(false)} assets={[]} personnels={[]} units={[]} currentUserId={0} />
+      <AddAssignmentModal
+        show={showAdd}
+        onClose={() => setShowAdd(false)}
+        assets={assets}
+        personnels={personnels}
+        units={units}
+        currentUserId={currentUser?.id ?? 0}
+    />
+
 
       {toEdit && (
         <EditAssignmentModal

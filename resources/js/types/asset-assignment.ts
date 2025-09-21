@@ -1,26 +1,40 @@
 export type AssetAssignment = {
     id: number;
-    asset_id: number;
-    unit_or_department_id: number;
     personnel_id: number;
     assigned_by?: number | null;
     date_assigned: string;
     remarks?: string | null;
 
+    // counts
+    items_count?: number;
+
     // relations
+    personnel?: {
+        id: number;
+        full_name: string;
+        position?: string;
+        unit_or_department?: { id: number; name: string };
+    };
+    assigned_by_user?: { id: number; name: string };
+};
+
+export type AssetAssignmentItem = {
+    id: number;
+    asset_assignment_id: number;
+    asset_id: number;
+
     asset?: {
         id: number;
-        property_number: string;
+        serial_no: string;
+        asset_name?: string;
         asset_model?: {
             id: number;
             brand: string;
             model: string;
             category?: { id: number; name: string };
         };
-    }
-    personnel?: { id: number; full_name: string; position?: string };
-    unit_or_department?: { id: number; name: string };
-    assigned_by_user?: { id: number; name: string };
+        unit_or_department?: { id: number; name: string };
+    };
 };
 
 export type AssignmentTotals = {
@@ -41,4 +55,18 @@ export type AssignmentPageProps = {
     assignments: Paginated<AssetAssignment>;
     totals?: AssignmentTotals;
     viewing?: AssetAssignment | null;
+
+    personnels: { id: number; full_name: string }[];
+    units: { id: number; name: string }[];
+    assets: { id: number; serial_no: string; asset_name?: string }[];
+    currentUser?: { id: number; name: string } | null;
+};
+
+export type MinimalAsset = {
+    id: number;
+    serial_no: string;
+    asset_name?: string;
+    building?: { id: number; name: string };
+    building_room?: { id: number; room: string };
+    sub_area?: { id: number; name: string };
 };

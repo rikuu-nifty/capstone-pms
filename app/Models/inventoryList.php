@@ -91,24 +91,43 @@ class InventoryList extends Model
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    public function assignments()
+    public function assignmentItems()
     {
-        return $this->hasMany(AssetAssignment::class, 'asset_id');
+        return $this->hasMany(AssetAssignmentItem::class, 'asset_id');
     }
 
-    public function latestAssignment()
+    public static function listForAssignments()
     {
-        return $this->hasOne(AssetAssignment::class, 'asset_id')
-            ->latestOfMany('date_assigned'); // Gets most recent assignment
+        return static::query()
+            ->with([
+                'building:id,name',
+                'buildingRoom:id,room,building_id',
+                'subArea:id,name,building_room_id',
+            ])
+            ->select([
+                'id',
+                'serial_no',
+                'asset_name',
+                'building_id',
+                'building_room_id',
+                'sub_area_id',
+            ])
+            ->get();
     }
 
-    public function previousAssignments()
-    {
-        // All past assignments EXCLUDING the latest
-        return $this->hasMany(AssetAssignment::class, 'asset_id')
-            ->orderBy('date_assigned', 'desc')
-            ->skip(1);
-    }
+    // public function latestAssignment()
+    // {
+    //     return $this->hasOne(AssetAssignment::class, 'asset_id')
+    //         ->latestOfMany('date_assigned'); // Gets most recent assignment
+    // }
+
+    // public function previousAssignments()
+    // {
+    //     // All past assignments EXCLUDING the latest
+    //     return $this->hasMany(AssetAssignment::class, 'asset_id')
+    //         ->orderBy('date_assigned', 'desc')
+    //         ->skip(1);
+    // }
 
     public function offCampuses()
     {

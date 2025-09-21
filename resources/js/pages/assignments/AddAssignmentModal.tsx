@@ -2,13 +2,12 @@ import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from '@/components/modals/AddModal';
-
-// import type { AssetAssignment } from '@/types/asset-assignment';
+import AssignmentAssetItemDetails from './AssignmentAssetItemDetails';
 
 interface Props {
   show: boolean;
   onClose: () => void;
-  assets: { id: number; property_number: string; asset_name?: string }[];
+  assets: { id: number; serial_no: string; asset_name?: string }[];
   personnels: { id: number; full_name: string }[];
   units: { id: number; name: string }[];
   currentUserId: number;
@@ -134,54 +133,48 @@ export default function AddAssignmentModal({
         <label className="block font-medium">Assets to Assign</label>
 
         {data.selected_assets.map((assetId, index) => {
-          const asset = assets.find((a) => a.id === assetId);
-          return (
-            <div key={assetId} className="flex items-center justify-between rounded-lg border p-2 text-sm">
-              <span>
-                {asset ? `${asset.property_number} – ${asset.asset_name ?? ''}` : 'Asset not found'}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const updated = [...data.selected_assets];
-                  updated.splice(index, 1);
-                  setData('selected_assets', updated);
+            const asset = assets.find((a) => a.id === assetId);
+            return (
+                asset && (
+                    <AssignmentAssetItemDetails
+                        key={assetId}
+                        asset={asset}
+                        onRemove={() => {
+                            const updated = [...data.selected_assets];
+                            updated.splice(index, 1);
+                            setData('selected_assets', updated);
 
-                  const newDropdowns = [...showAssetDropdown];
-                  newDropdowns.splice(index, 1);
-                  setShowAssetDropdown(newDropdowns);
-                }}
-                className="text-red-500 text-xs hover:underline cursor-pointer"
-              >
-                Remove
-              </button>
-            </div>
-          );
+                            const newDropdowns = [...showAssetDropdown];
+                            newDropdowns.splice(index, 1);
+                            setShowAssetDropdown(newDropdowns);
+                        }}
+                    />
+                )
+            );
         })}
 
         {showAssetDropdown.map(
-          (visible, index) =>
-            visible && (
-              <div key={`asset-${index}`} className="flex items-center gap-2">
-                <Select
-                  className="w-full"
-                  options={assets
-                    .filter((a) => !data.selected_assets.includes(a.id))
-                    .map((a) => ({
-                      value: a.id,
-                      label: `${a.property_number} – ${a.asset_name ?? ''}`,
-                    }))}
-                  onChange={(opt) => {
-                    if (opt && !data.selected_assets.includes(opt.value)) {
-                      setData('selected_assets', [...data.selected_assets, opt.value]);
-                      const updated = [...showAssetDropdown];
-                      updated[index] = false;
-                      setShowAssetDropdown([...updated, true]);
-                    }
-                  }}
-                  placeholder="Select asset to assign"
-                />
-              </div>
+            (visible, index) => visible && (
+                <div key={`asset-${index}`} className="flex items-center gap-2">
+                    <Select
+                    className="w-full"
+                    options={assets
+                        .filter((a) => !data.selected_assets.includes(a.id))
+                        .map((a) => ({
+                        value: a.id,
+                        label: `${a.serial_no} – ${a.asset_name ?? ''}`,
+                        }))}
+                    onChange={(opt) => {
+                        if (opt && !data.selected_assets.includes(opt.value)) {
+                        setData('selected_assets', [...data.selected_assets, opt.value]);
+                        const updated = [...showAssetDropdown];
+                        updated[index] = false;
+                        setShowAssetDropdown([...updated, true]);
+                        }
+                    }}
+                    placeholder="Select assets to assign to Personnel"
+                    />
+                </div>
             )
         )}
 

@@ -107,4 +107,17 @@ class Personnel extends Model
             ->unique('id')
             ->values();
     }
+
+    public static function activeForAssignments()
+    {
+        return static::where('status', 'active')
+            ->select('id', 'first_name', 'last_name', 'position', 'unit_or_department_id')
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'full_name' => trim("{$p->first_name} {$p->last_name}"),
+                'position' => $p->position,
+                'unit_or_department_id' => $p->unit_or_department_id,
+            ]);
+    }
 }

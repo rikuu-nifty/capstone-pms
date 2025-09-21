@@ -3,15 +3,18 @@ import { useForm } from '@inertiajs/react';
 import EditModal from '@/components/modals/EditModal';
 import Select from 'react-select';
 
-import type { AssetAssignment } from '@/types/asset-assignment';
+import type { AssetAssignment, AssetAssignmentItem } from '@/types/asset-assignment';
+import type { Personnel } from '@/types/personnel';
+import type { UnitOrDepartment } from '@/types/unit-or-department';
+import type { InventoryList } from '@/types/inventory-list';
 
 interface Props {
   show: boolean;
   onClose: () => void;
-  assignment: AssetAssignment | null;
-  assets: { id: number; property_number: string; asset_name?: string }[];
-  personnels: { id: number; full_name: string }[];
-  units: { id: number; name: string }[];
+  assignment: (AssetAssignment & { items?: AssetAssignmentItem[] }) | null;
+  assets: InventoryList[];
+  personnels: Personnel[];
+  units: UnitOrDepartment[];
 }
 
 export default function EditAssignmentModal({
@@ -43,10 +46,12 @@ export default function EditAssignmentModal({
 
     setData({
       personnel_id: assignment.personnel_id ?? null,
-      unit_or_department_id: assignment.unit_or_department_id ?? null,
+      unit_or_department_id: assignment.personnel?.unit_or_department?.id ?? null,
       date_assigned: assignment.date_assigned ?? '',
       remarks: assignment.remarks ?? '',
-      selected_assets: assignment.asset_id ? [assignment.asset_id] : [],
+      selected_assets: assignment.items
+        ? assignment.items.map((i: AssetAssignmentItem) => i.asset_id)
+        : [],
     });
     clearErrors();
     setShowAssetDropdown([true]);
@@ -82,7 +87,9 @@ export default function EditAssignmentModal({
           className="w-full"
           value={
             data.personnel_id
-              ? personnels.map((p) => ({ value: p.id, label: p.full_name })).find((opt) => opt.value === data.personnel_id) ?? null
+              ? personnels
+                  .map((p) => ({ value: p.id, label: p.full_name }))
+                  .find((opt) => opt.value === data.personnel_id) ?? null
               : null
           }
           options={personnels.map((p) => ({
@@ -92,6 +99,9 @@ export default function EditAssignmentModal({
           onChange={(opt) => setData('personnel_id', opt ? opt.value : null)}
           isClearable
         />
+        {errors.personnel_id && (
+          <p className="mt-1 text-xs text-red-500">{errors.personnel_id}</p>
+        )}
       </div>
 
       {/* Unit/Department */}
@@ -101,16 +111,23 @@ export default function EditAssignmentModal({
           className="w-full"
           value={
             data.unit_or_department_id
-              ? units.map((u) => ({ value: u.id, label: u.name })).find((opt) => opt.value === data.unit_or_department_id) ?? null
+              ? units
+                  .map((u) => ({ value: u.id, label: u.name }))
+                  .find((opt) => opt.value === data.unit_or_department_id) ?? null
               : null
           }
           options={units.map((u) => ({
             value: u.id,
             label: u.name,
           }))}
-          onChange={(opt) => setData('unit_or_department_id', opt ? opt.value : null)}
+          onChange={(opt) =>
+            setData('unit_or_department_id', opt ? opt.value : null)
+          }
           isClearable
         />
+        {errors.unit_or_department_id && (
+          <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>
+        )}
       </div>
 
       {/* Date Assigned */}
@@ -122,6 +139,9 @@ export default function EditAssignmentModal({
           value={data.date_assigned}
           onChange={(e) => setData('date_assigned', e.target.value)}
         />
+        {errors.date_assigned && (
+          <p className="mt-1 text-xs text-red-500">{errors.date_assigned}</p>
+        )}
       </div>
 
       {/* Assets */}
@@ -131,8 +151,15 @@ export default function EditAssignmentModal({
         {data.selected_assets.map((assetId, index) => {
           const asset = assets.find((a) => a.id === assetId);
           return (
-            <div key={assetId} className="flex items-center justify-between rounded-lg border p-2 text-sm">
-              <span>{asset ? `${asset.property_number} – ${asset.asset_name ?? ''}` : 'Asset not found'}</span>
+            <div
+              key={assetId}
+              className="flex items-center justify-between rounded-lg border p-2 text-sm"
+            >
+              <span>
+                {asset
+                  ? `${asset.serial_no} – ${asset.asset_name ?? ''}`
+                  : 'Asset not found'}
+              </span>
               <button
                 type="button"
                 onClick={() => {
@@ -158,11 +185,14 @@ export default function EditAssignmentModal({
                     .filter((a) => !data.selected_assets.includes(a.id))
                     .map((a) => ({
                       value: a.id,
-                      label: `${a.property_number} – ${a.asset_name ?? ''}`,
+                      label: `${a.serial_no} – ${a.asset_name ?? ''}`,
                     }))}
                   onChange={(opt) => {
                     if (opt && !data.selected_assets.includes(opt.value)) {
-                      setData('selected_assets', [...data.selected_assets, opt.value]);
+                      setData('selected_assets', [
+                        ...data.selected_assets,
+                        opt.value,
+                      ]);
                       const updated = [...showAssetDropdown];
                       updated[index] = false;
                       setShowAssetDropdown([...updated, true]);
@@ -172,6 +202,12 @@ export default function EditAssignmentModal({
                 />
               </div>
             )
+        )}
+
+        {errors.selected_assets && (
+          <p className="mt-1 text-xs text-red-500">
+            {String(errors.selected_assets)}
+          </p>
         )}
       </div>
 
@@ -184,6 +220,9 @@ export default function EditAssignmentModal({
           value={data.remarks}
           onChange={(e) => setData('remarks', e.target.value)}
         />
+        {errors.remarks && (
+          <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>
+        )}
       </div>
     </EditModal>
   );

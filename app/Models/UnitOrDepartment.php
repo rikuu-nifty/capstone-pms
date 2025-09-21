@@ -46,6 +46,11 @@ class UnitOrDepartment extends Model
         return $this->hasMany(AssetAssignment::class, 'unit_or_department_id');
     }
 
+    public static function listForAssignments()
+    {
+        return static::select('id', 'name')->get();
+    }
+
     // Relationship to OffCampus table (via college_or_unit_id FK)
     public function offCampuses()
     {

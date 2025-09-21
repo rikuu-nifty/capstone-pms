@@ -3,6 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssetAssignment;
+use App\Models\AssetAssignmentItem;
+use App\Models\Personnel;
+use App\Models\UnitOrDepartment;
+use App\Models\InventoryList;
+use App\Models\User;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,9 +20,10 @@ class AssetAssignmentController extends Controller
     {
         $perPage = $request->input('per_page', 10);
 
-        return [
-            'assignments' => AssetAssignment::listForIndex($perPage),
-            'totals'      => AssetAssignment::totals(),
+        return AssetAssignment::indexData($perPage) + [
+            'currentUser' => $request->user()
+                ? ['id' => $request->user()->id, 'name' => $request->user()->name]
+                : null,
         ];
     }
 
@@ -29,54 +35,56 @@ class AssetAssignmentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'personnel_id'          => ['required', Rule::exists('personnels', 'id')],
-            'unit_or_department_id' => ['required', Rule::exists('unit_or_departments', 'id')],
-            'assigned_by'           => ['nullable', Rule::exists('users', 'id')],
-            'date_assigned'         => ['required', 'date'],
-            'remarks'               => ['nullable', 'string'],
-            'selected_assets'       => ['required', 'array', 'min:1'],
-            'selected_assets.*'     => ['integer', Rule::exists('inventory_lists', 'id')],
+            'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
+            'assigned_by'       => ['nullable', Rule::exists('users', 'id')],
+            'date_assigned'     => ['required', 'date'],
+            'remarks'           => ['nullable', 'string'],
+            'selected_assets'   => ['required', 'array', 'min:1'],
+            'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
         ]);
 
         DB::transaction(function () use ($data) {
+            $assignment = AssetAssignment::create([
+                'personnel_id'  => $data['personnel_id'],
+                'assigned_by'   => $data['assigned_by'] ?? null,
+                'date_assigned' => $data['date_assigned'],
+                'remarks'       => $data['remarks'] ?? null,
+            ]);
+
             foreach ($data['selected_assets'] as $assetId) {
-                AssetAssignment::create([
-                    'asset_id'              => $assetId,
-                    'personnel_id'          => $data['personnel_id'],
-                    'unit_or_department_id' => $data['unit_or_department_id'],
-                    'assigned_by'           => $data['assigned_by'] ?? null,
-                    'date_assigned'         => $data['date_assigned'],
-                    'remarks'               => $data['remarks'] ?? null,
+                AssetAssignmentItem::create([
+                    'asset_assignment_id' => $assignment->id,
+                    'asset_id'            => $assetId,
                 ]);
             }
         });
 
-        return redirect()->route('assignments.index')->with('success', "Asset(s) assigned successfully.");
+        return redirect()->route('assignments.index')->with('success', "Assets assigned successfully.");
     }
 
     public function update(Request $request, AssetAssignment $assignment)
     {
         $data = $request->validate([
-            'personnel_id'          => ['required', Rule::exists('personnels', 'id')],
-            'unit_or_department_id' => ['required', Rule::exists('unit_or_departments', 'id')],
-            'date_assigned'         => ['required', 'date'],
-            'remarks'               => ['nullable', 'string'],
-            'selected_assets'       => ['required', 'array', 'min:1'],
-            'selected_assets.*'     => ['integer', Rule::exists('inventory_lists', 'id')],
+            'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
+            'date_assigned'     => ['required', 'date'],
+            'remarks'           => ['nullable', 'string'],
+            'selected_assets'   => ['required', 'array', 'min:1'],
+            'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
         ]);
 
         DB::transaction(function () use ($assignment, $data) {
-            // Delete the "current" one (or group) and replace with new selection
-            $assignment->delete();
+            $assignment->update([
+                'personnel_id'  => $data['personnel_id'],
+                'date_assigned' => $data['date_assigned'],
+                'remarks'       => $data['remarks'] ?? null,
+            ]);
 
+            // Replace items
+            $assignment->items()->delete();
             foreach ($data['selected_assets'] as $assetId) {
-                AssetAssignment::create([
-                    'asset_id'              => $assetId,
-                    'personnel_id'          => $data['personnel_id'],
-                    'unit_or_department_id' => $data['unit_or_department_id'],
-                    'assigned_by'           => $assignment->assigned_by, // keep original assigner
-                    'date_assigned'         => $data['date_assigned'],
-                    'remarks'               => $data['remarks'] ?? null,
+                AssetAssignmentItem::create([
+                    'asset_assignment_id' => $assignment->id,
+                    'asset_id'            => $assetId,
                 ]);
             }
         });
