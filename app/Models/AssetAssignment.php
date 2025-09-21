@@ -21,7 +21,8 @@ class AssetAssignment extends Model
 
     public function asset()
     {
-        return $this->belongsTo(InventoryList::class, 'asset_id');
+        return $this->belongsTo(InventoryList::class, 'asset_id')
+            ->with('assetModel.category');
     }
 
     public function personnel()
@@ -37,5 +38,26 @@ class AssetAssignment extends Model
     public function assignedBy()
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public static function listForIndex(int $perPage = 10)
+    {
+        return static::with([
+            'asset.assetModel.category',
+            'personnel',
+            'unitOrDepartment',
+            'assignedBy',
+        ])
+        ->latest()
+        ->paginate($perPage);
+    }
+
+    public static function totals(): array
+    {
+        return [
+            'total_assignments'             => static::count(),
+            'total_personnels_with_assets'  => static::distinct('personnel_id')->count('personnel_id'),
+            'total_assets_assigned'         => static::distinct('asset_id')->count('asset_id'),
+        ];
     }
 }

@@ -408,29 +408,22 @@ Route::get('/', function () {
     // PERSONNELS
     Route::get('/personnels', [PersonnelController::class, 'index'])->name('personnels.index')
         ->middleware('can:view-personnels');
-
     Route::post('/personnels', [PersonnelController::class, 'store'])->name('personnels.store')
         ->middleware('can:create-personnels');
-
     Route::put('/personnels/{personnel}', [PersonnelController::class, 'update'])->name('personnels.update')
         ->middleware('can:update-personnels');
-
     Route::get('/personnels/view/{personnel}', [PersonnelController::class, 'show'])->name('personnels.view')
         ->middleware('can:view-personnels');
-
     Route::delete('/personnels/{personnel}', [PersonnelController::class, 'destroy'])->name('personnels.destroy')
         ->middleware('can:delete-personnels');
 
     // ASSIGNMENTS
     Route::get('/assignments', [AssetAssignmentController::class, 'index'])->name('assignments.index')
         ->middleware('can:view-assignments');
-
     Route::post('/assignments', [AssetAssignmentController::class, 'store'])->name('assignments.store')
         ->middleware('can:create-assignments');
-
     Route::put('/assignments/{assignment}', [AssetAssignmentController::class, 'update'])->name('assignments.update')
         ->middleware('can:update-assignments');
-
     Route::delete('/assignments/{assignment}', [AssetAssignmentController::class, 'destroy'])->name('assignments.destroy')
         ->middleware('can:delete-assignments');
 

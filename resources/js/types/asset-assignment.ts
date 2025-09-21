@@ -29,8 +29,16 @@ export type AssignmentTotals = {
     total_assets_assigned: number;
 };
 
+export type Paginated<T> = {
+    data: T[];
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+};
+
 export type AssignmentPageProps = {
-    assignments: AssetAssignment[];
+    assignments: Paginated<AssetAssignment>;
     totals?: AssignmentTotals;
     viewing?: AssetAssignment | null;
 };
