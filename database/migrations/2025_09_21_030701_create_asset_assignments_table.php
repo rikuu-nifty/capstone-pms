@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
 
             $table->unsignedBigInteger('asset_id');
-            $table->unsignedBigInteger('unit_or_department_id');
             $table->unsignedBigInteger('personnel_id');
 
             $table->unsignedBigInteger('assigned_by')->nullable(); //nullable just in case of historical imports
@@ -26,7 +25,6 @@ return new class extends Migration
             //no soft deletes for audit trail
 
             $table->foreign('asset_id')->references('id')->on('inventory_lists')->cascadeOnDelete();
-            $table->foreign('unit_or_department_id')->references('id')->on('unit_or_departments')->cascadeOnDelete();
             $table->foreign('personnel_id')->references('id')->on('personnels')->cascadeOnDelete();
             $table->foreign('assigned_by')->references('id')->on('users')->nullOnDelete();
         });
