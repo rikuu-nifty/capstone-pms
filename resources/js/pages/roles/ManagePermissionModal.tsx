@@ -96,15 +96,28 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "approve-form-approvals",
         "delete-form-approvals",
     ],
-    "Reports": ["view-reports"],
-    "Audit Logs": ["view-audit-logs"], // ✅ now included properly
+    "Reports": [
+        "view-reports"
+    ],
+    "Audit Logs": [
+        "view-audit-logs"
+    ],
+    "Personnels": [
+        "view-personnels",
+        "create-personnels",
+        "update-personnels",
+        "delete-personnels",
+    ],
     // "Assignments": [
     //     "view-assignments",
     //     "create-assignments",
     //     "update-assignments",
     //     "delete-assignments",
     // ],
-    "Profile": ["view-profile", "manage-profile"],
+    "Profile": [
+        "view-profile", 
+        "manage-profile"
+    ],
 };
 
 export default function ManagePermissionsModal({
