@@ -13,6 +13,8 @@ class Personnel extends Model
         'first_name',
         'middle_name',
         'last_name',
+        'user_id',
+        
         'position',
         'unit_or_department_id',
         'status'
@@ -26,6 +28,11 @@ class Personnel extends Model
     public function assignments()
     {
         return $this->hasMany(AssetAssignment::class, 'personnel_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function getFullNameAttribute(): string
