@@ -12,6 +12,9 @@ export type Personnel = {
     unit_or_department_id?: number | null;
     unit_or_department?: string | null;
     status: 'active' | 'inactive' | 'left_university';
+
+    created_at?: string;
+    updated_at?: string;
 };
 
 export type UserLite = {
@@ -34,6 +37,7 @@ export type PersonnelFormData = {
 export type PersonnelTotals = {
     total_personnels: number;
     active_personnels: number;
+    inactive_personnels: number;
 };
 
 export type UnitLite = {

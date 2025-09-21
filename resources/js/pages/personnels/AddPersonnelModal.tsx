@@ -4,15 +4,21 @@ import { useForm } from '@inertiajs/react';
 import React, { useEffect } from 'react';
 import Select from "react-select";
 
-import type { PersonnelFormData, UserLite } from '@/types/personnel';
+import type { PersonnelFormData, UserLite, UnitLite } from '@/types/personnel';
 
 interface Props {
     show: boolean;
     onClose: () => void;
     users: UserLite[];
+    units: UnitLite[];
 }
 
-export default function AddPersonnelModal({ show, onClose, users }: Props) {
+export default function AddPersonnelModal({ 
+    show, 
+    onClose, 
+    users, 
+    units
+}: Props) {
     const { data, setData, post, processing, reset, errors, clearErrors } = useForm<PersonnelFormData>({
         first_name: '',
         middle_name: '',
@@ -107,6 +113,33 @@ export default function AddPersonnelModal({ show, onClose, users }: Props) {
                 {errors.last_name && <p className="mt-1 text-xs text-red-500">{errors.last_name}</p>}
             </div>
 
+            <div className="col-span-2 border-t"></div>
+
+            {/* Unit/Department */}
+            <div>
+                <label className="mb-1 block font-medium">Unit / Department</label>
+                <Select
+                    className="w-full"
+                    value={
+                        data.unit_or_department_id
+                            ? units
+                                .map((u) => ({ value: u.id, label: u.name }))
+                                .find((opt) => opt.value === data.unit_or_department_id) ?? null
+                            : null
+                    }
+                    options={units.map((u) => ({
+                        value: u.id,
+                        label: u.name,
+                    }))}
+                    onChange={(opt) => setData("unit_or_department_id", opt ? opt.value : null)}
+                    isClearable
+                    placeholder="Select unit/dept/lab"
+                />
+                {errors.unit_or_department_id && (
+                    <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>
+                )}
+            </div>
+            
             {/* Position */}
             <div>
                 <label className="mb-1 block font-medium">Position</label>
@@ -118,6 +151,8 @@ export default function AddPersonnelModal({ show, onClose, users }: Props) {
                     className="w-full cursor-text rounded-lg border p-2"
                 />
             </div>
+
+            <div className="col-span-2 border-t"></div>
 
             {/* User Dropdown */}
             <div>
@@ -156,7 +191,7 @@ export default function AddPersonnelModal({ show, onClose, users }: Props) {
                 >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
-                    <option value="left_university">Left University</option>
+                    <option value="left_university">Left The University</option>
                 </select>
             </div>
         </AddModal>

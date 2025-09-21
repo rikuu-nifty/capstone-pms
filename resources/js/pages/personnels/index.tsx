@@ -3,10 +3,14 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
-import { Eye, Pencil, PlusCircle, Trash2, Users, UserCheck2 } from 'lucide-react';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+
+import { Eye, Pencil, PlusCircle, Trash2, Users, UserCheck2, Check, X } from 'lucide-react';
+import type { VariantProps } from "class-variance-authority";
+import { Badge } from '@/components/ui/badge';
+import { badgeVariants } from "@/components/ui/badge";
 
 import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
@@ -15,9 +19,10 @@ import AddPersonnelModal from './AddPersonnelModal';
 import EditPersonnelModal from './EditPersonnelModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import PersonnelFilterDropdown from '@/components/filters/PersonnelFilterDropdown';
+import ViewPersonnelModal from './ViewPersonnelModal';
 
 import type { Personnel, PersonnelPageProps } from '@/types/personnel';
-import { formatEnums, ucwords } from '@/types/custom-index';
+import { ucwords } from '@/types/custom-index';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Personnels', href: '/personnels' },
@@ -32,6 +37,8 @@ const sortOptions = [
 ] as const;
 
 type SortKey = (typeof sortOptions)[number]['value'];
+
+type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
 
 export default function PersonnelsIndex({
     personnels = [],
@@ -51,6 +58,7 @@ export default function PersonnelsIndex({
 
     const [showAdd, setShowAdd] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
+    const [showView, setShowView] = useState(false);
     const [selected, setSelected] = useState<Personnel | null>(null);
 
     const [showDelete, setShowDelete] = useState(false);
@@ -59,6 +67,15 @@ export default function PersonnelsIndex({
     const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
     const [selectedUnitId, setSelectedUnitId] = useState<number | ''>('');
     const [selectedStatus, setSelectedStatus] = useState('');
+
+    const statusMap: Record<
+        "active" | "inactive" | "left_university",
+        { label: string; variant: BadgeVariant }
+    > = {
+        active: { label: "Active", variant: "personnel_active" },
+        inactive: { label: "Inactive", variant: "personnel_inactive" },
+        left_university: { label: "Left University", variant: "personnel_left" },
+    };
 
     useEffect(() => {
         setPage(1);
@@ -101,7 +118,7 @@ export default function PersonnelsIndex({
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Personnels</h1>
+                        <h1 className="text-2xl font-semibold">Personnels in Charge</h1>
                         <p className="text-sm text-muted-foreground">
                             List of university personnel who may be assigned assets.
                         </p>
@@ -150,7 +167,8 @@ export default function PersonnelsIndex({
 
                 {/* KPIs */}
                 {totals && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {/* Total */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
                                 <Users className="h-7 w-7 text-indigo-600" />
@@ -163,6 +181,7 @@ export default function PersonnelsIndex({
                             </div>
                         </div>
 
+                        {/* Active */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                 <UserCheck2 className="h-7 w-7 text-green-600" />
@@ -174,6 +193,19 @@ export default function PersonnelsIndex({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Inactive */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
+                                <Users className="h-7 w-7 text-gray-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Inactive Personnels</div>
+                                <div className="text-3xl font-bold">
+                                    {Number(totals.inactive_personnels ?? 0).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -182,10 +214,11 @@ export default function PersonnelsIndex({
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="text-center">ID</TableHead>
+                                {/* <TableHead className="text-center">ID</TableHead> */}
                                 <TableHead className="text-center">Full Name</TableHead>
                                 <TableHead className="text-center">Position</TableHead>
                                 <TableHead className="text-center">Unit/Department</TableHead>
+                                <TableHead className="text-center">System User</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
@@ -196,13 +229,27 @@ export default function PersonnelsIndex({
                                 <TableRow
                                     key={p.id}
                                     onClick={() => setSelectedRowId(Number(p.id))}
-                                    className={`cursor-pointer ${selectedRowId === Number(p.id) ? 'bg-muted/50' : ''}`}
+                                    className={`cursor-default ${selectedRowId === Number(p.id) ? 'bg-muted/50' : ''}`}
                                 >
-                                    <TableCell>{p.id}</TableCell>
+                                    {/* <TableCell>{p.id}</TableCell> */}
                                     <TableCell className="font-medium">{ucwords(p.full_name) ?? '—'}</TableCell>
                                     <TableCell>{p.position ?? '—'}</TableCell>
                                     <TableCell>{p.unit_or_department ?? '—'}</TableCell>
-                                    <TableCell>{formatEnums(p.status) ?? '—'}</TableCell>
+                                    <TableCell className="text-center">
+                                        {p.user_id ? (
+                                            <Check className="h-5 w-5 text-green-600 mx-auto" />
+                                        ) : (
+                                            <X className="h-5 w-5 text-red-500 mx-auto" />
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {statusMap[p.status] && (
+                                            <Badge variant={statusMap[p.status].variant} className="text-xs">
+                                                {statusMap[p.status].label}
+                                            </Badge>
+                                        )}
+                                    </TableCell>
+
                                     <TableCell className="h-full">
                                         <div className="flex justify-center items-center gap-2 h-full">
                                             <Button
@@ -229,11 +276,18 @@ export default function PersonnelsIndex({
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
 
-                                            <Button variant="ghost" size="icon" asChild className="cursor-pointer">
-                                                <Link href={`/personnels/view/${p.id}`} preserveScroll>
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                </Link>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    setSelected(p);
+                                                    setShowView(true);
+                                                }}
+                                            >
+                                                <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button>
+
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -257,6 +311,7 @@ export default function PersonnelsIndex({
             <AddPersonnelModal
                 show={showAdd}
                 users={users}
+                units={units} 
                 onClose={() => setShowAdd(false)}
             />
 
@@ -264,11 +319,23 @@ export default function PersonnelsIndex({
                 <EditPersonnelModal
                     show={showEdit}
                     users={users}
+                    units={units} 
                     onClose={() => {
                         setShowEdit(false);
                         setSelected(null);
                     }}
                     record={selected}
+                />
+            )}
+
+            {selected && (
+                <ViewPersonnelModal
+                    open={showView}
+                    onClose={() => {
+                        setShowView(false);
+                        setSelected(null);
+                    }}
+                    personnel={selected}
                 />
             )}
 

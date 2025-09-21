@@ -26,6 +26,10 @@ const badgeVariants = cva(
         pending:  'bg-yellow-100 text-yellow-700 border border-yellow-200',
         overdue:  'bg-red-100 text-red-700 border border-red-200',
 
+        // custom personnel status variants
+        personnel_active:   'bg-emerald-100 text-emerald-800 border border-emerald-400 font-medium',
+        personnel_inactive: 'bg-gray-100 text-gray-800 border border-gray-400 font-medium',
+        personnel_left:     'bg-red-100 text-red-800 border border-red-400 font-medium',
 
         // custom role variants
         pmo_head: 'bg-blue-100 text-blue-700 border border-blue-200 font-medium',

@@ -85,8 +85,8 @@ const institutionalSetUpNavItems = [
         icon: Landmark,
         permission: ['view-buildings', 'view-own-unit-buildings'],
     },
-    { title: 'Organizations', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
-    { title: 'Personnels in Charge', href: '/personnels', icon: User, permission: 'view-personnels' },
+    { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
+    { title: 'Personnels', href: '/personnels', icon: User, permission: 'view-personnels' },
 ];
 
 const userNavItems = [

@@ -76,6 +76,7 @@ export default function PersonnelFilterDropdown({
 
                     <div className="flex gap-2 justify-end pt-1">
                         <Button
+                            className="cursor-pointer"
                             variant="destructive"
                             size="sm"
                             onClick={() => {
@@ -85,9 +86,10 @@ export default function PersonnelFilterDropdown({
                                 setOpen(false);
                             }}
                         >
-                        Clear
+                            Clear
                         </Button>
                         <Button
+                            className="cursor-pointer"
                             size="sm"
                             onClick={() => {
                                 onApply({ unitId: localUnit, status: localStatus });

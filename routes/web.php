@@ -197,7 +197,6 @@ Route::get('/', function () {
     Route::put('/schedules/{schedule}/assets/{asset}', [InventorySchedulingController::class, 'updateAssetStatus'])
         ->name('schedules.updateAssetStatus');
 
-
     // INVENTORY LIST
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
         ->name('inventory-list.index')

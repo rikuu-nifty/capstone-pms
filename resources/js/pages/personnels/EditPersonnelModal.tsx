@@ -3,16 +3,23 @@ import { useForm } from '@inertiajs/react';
 import EditModal from '@/components/modals/EditModal';
 import Select from "react-select";
 
-import type { Personnel, PersonnelFormData, UserLite } from '@/types/personnel';
+import type { Personnel, PersonnelFormData, UserLite, UnitLite } from '@/types/personnel';
 
 interface EditProps {
     show: boolean;
     onClose: () => void;
     record: Personnel | null;
     users: UserLite[];
+    units: UnitLite[];
 }
 
-export default function EditPersonnelModal({ show, onClose, record, users }: EditProps) {
+export default function EditPersonnelModal({ 
+    show, 
+    onClose, 
+    record, 
+    users,
+    units,
+}: EditProps) {
     const { data, setData, put, processing, errors, clearErrors } = useForm<PersonnelFormData>({
         first_name: '',
         middle_name: '',
@@ -114,6 +121,33 @@ export default function EditPersonnelModal({ show, onClose, record, users }: Edi
                 {errors.last_name && <p className="mt-1 text-xs text-red-500">{errors.last_name}</p>}
             </div>
 
+            <div className="col-span-2 border-t"></div>
+
+            {/* Unit/Department */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Unit / Department</label>
+                <Select
+                    className="w-full"
+                    value={
+                        data.unit_or_department_id
+                            ? units
+                                .map((u) => ({ value: u.id, label: u.name }))
+                                .find((opt) => opt.value === data.unit_or_department_id) ?? null
+                            : null
+                    }
+                    options={units.map((u) => ({
+                        value: u.id,
+                        label: u.name,
+                    }))}
+                    onChange={(opt) => setData("unit_or_department_id", opt ? opt.value : null)}
+                    isClearable
+                    placeholder="Select unit/dept/lab"
+                />
+                {errors.unit_or_department_id && (
+                    <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>
+                )}
+            </div>
+
             {/* Position */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Position</label>
@@ -126,6 +160,8 @@ export default function EditPersonnelModal({ show, onClose, record, users }: Edi
                 />
                 {errors.position && <p className="mt-1 text-xs text-red-500">{errors.position}</p>}
             </div>
+
+            <div className="col-span-2 border-t"></div>
 
             {/* Link to User */}
             <div className="col-span-1">
