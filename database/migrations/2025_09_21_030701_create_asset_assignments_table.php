@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('asset_assignments', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('asset_id');
             $table->unsignedBigInteger('personnel_id');
 
             $table->unsignedBigInteger('assigned_by')->nullable(); //nullable just in case of historical imports
@@ -22,9 +21,8 @@ return new class extends Migration
             $table->text('remarks')->nullable();
 
             $table->timestamps();
-            //no soft deletes for audit trail
+            $table->softDeletes();
 
-            $table->foreign('asset_id')->references('id')->on('inventory_lists')->cascadeOnDelete();
             $table->foreign('personnel_id')->references('id')->on('personnels')->cascadeOnDelete();
             $table->foreign('assigned_by')->references('id')->on('users')->nullOnDelete();
         });
