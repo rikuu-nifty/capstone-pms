@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { badgeVariants } from "@/components/ui/badge";
 import type { VariantProps } from "class-variance-authority";
+import { Button } from "@/components/ui/button";
 
 import ViewModal from "@/components/modals/ViewModal";
+import StatusReassignmentModal from "./StatusReassignmentModal";
 import { formatDateLong, formatFullName } from "@/types/custom-index";
 import type { Personnel } from "@/types/personnel";
 
@@ -23,6 +25,8 @@ const statusMap: Record<Personnel["status"], { label: string; variant: BadgeVari
 };
 
 export default function ViewPersonnelModal({ open, onClose, personnel }: Props) {
+    const [showReassign, setShowReassign] = useState(false);
+    
     const initials = useMemo(() => {
         if (!personnel) return "";
         return `${personnel.first_name?.[0] ?? ""}${personnel.last_name?.[0] ?? ""}`.toUpperCase();
@@ -33,11 +37,12 @@ export default function ViewPersonnelModal({ open, onClose, personnel }: Props) 
     const statusConfig = statusMap[personnel.status];
 
     return (
+        <>
         <ViewModal
             open={open}
             onClose={onClose}
             size="lg"
-            contentClassName="relative max-h-[50vh] min-h-[50vh] overflow-y-auto"
+            contentClassName="relative max-h-[55vh] min-h-[55vh] overflow-y-auto"
         >
             {/* Header */}
             <div className="flex items-center gap-6 border-b pb-4">
@@ -100,7 +105,44 @@ export default function ViewPersonnelModal({ open, onClose, personnel }: Props) 
                     <span className="block text-xs font-medium text-muted-foreground">Updated At</span>
                     <p className="text-base">{formatDateLong(personnel.updated_at) ?? "—"}</p>
                 </div>
+
+                <div className="col-span-2 border-t mt-4 mb-8"></div>
+
+                {/* Actions */}
+                <div className="col-span-2 flex flex-wrap justify-center gap-4">
+                    <Button
+                        // variant="outline"
+                        onClick={() =>
+                        console.log("Placeholder: assign asset for", personnel.id)
+                        }
+                        className="cursor-pointer"
+                    >
+                        Assign Assets
+                    </Button>
+                    
+                    <Button
+                        variant="primary"
+                        onClick={() =>
+                        console.log("Placeholder: view assigned assets for", personnel.id)
+                        }
+                        className="cursor-pointer"
+                    >
+                        View Assigned Assets
+                    </Button>
+                    
+                </div>
             </div>
         </ViewModal>
+
+        {/* Status Reassignment Modal */}
+        {personnel && (
+            <StatusReassignmentModal
+            show={showReassign}
+            onClose={() => setShowReassign(false)}
+            personnelId={personnel.id}
+            action="reassign"
+            />
+        )}
+        </>
     );
 }
