@@ -23,10 +23,6 @@
     use App\Http\Controllers\RoleController;
     use App\Http\Controllers\InventorySheetReportController;
 
-    // Route::get('/', function () {
-    //     return Inertia::render('welcome');
-    // })->name('home');
-
     Route::get('/', function () {
         if (Auth::check()) {
             return redirect()->route('dashboard'); // change to your actual dashboard route
@@ -44,22 +40,6 @@
         ]);
     })->name('approval.pending');
 
-    //     // ----- Email OTP verification (must be logged in, but NOT necessarily verified) -----
-    //     Route::middleware('auth')->group(function () {
-    //     Route::get('/verify-email', [EmailOtpController::class, 'show'])->name('verification.notice');
-    //     Route::post('/verify-email/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
-    //     Route::post('/verify-email/resend', [EmailOtpController::class, 'resend'])->middleware('throttle:60,1')->name('verification.resend');
-    // });
-
-    // // Email OTP verification (must be logged in, but not verified yet)
-    //     Route::middleware('auth')->group(function () {
-    //     Route::get('/verify-email-otp', [EmailOtpController::class, 'show'])->name('verification.notice');
-    //     Route::post('/verify-email-otp/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
-    //     Route::post('/verify-email-otp/resend', [EmailOtpController::class, 'resend'])
-    //         ->middleware('throttle:60,1')
-    //         ->name('verification.resend');
-    // });
-
     // OTP flow (guest; uses a session key, not auth)
     Route::middleware('guest')->group(function () {
         Route::get('/verify-email-otp',    [EmailOtpController::class, 'showGuest'])->name('otp.notice');
@@ -72,9 +52,7 @@
     // Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
     //     ->name('asset-summary.show');
 
-
-
-    // 🔒 Everything below requires auth
+    // Everything below requires auth
     Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     
     Route::get('dashboard', [DashboardController::class, 'index'])
