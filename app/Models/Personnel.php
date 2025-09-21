@@ -14,7 +14,7 @@ class Personnel extends Model
         'middle_name',
         'last_name',
         'user_id',
-        
+
         'position',
         'unit_or_department_id',
         'status'
@@ -37,25 +37,35 @@ class Personnel extends Model
 
     public function getFullNameAttribute(): string
     {
-        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+        $middleInitial = $this->middle_name
+            ? strtoupper(substr(trim($this->middle_name), 0, 1)) . '.'
+            : '';
+
+        return trim("{$this->first_name} {$middleInitial} {$this->last_name}");
     }
 
     public static function listForIndex()
     {
-        return static::with('unitOrDepartment')
+        return static::with(['unitOrDepartment', 'user'])
             ->select('personnels.*')
             ->get()
             ->map(function ($p) {
                 return [
                     'id' => $p->id,
-                    'full_name' => $p->full_name,
+                    'first_name' => $p->first_name,
+                    'middle_name' => $p->middle_name,
+                    'last_name' => $p->last_name,
+                    'full_name' =>$p->full_name,
                     'position' => $p->position,
                     'status' => $p->status,
+                    'unit_or_department_id' => $p->unit_or_department_id,
                     'unit_or_department' => $p->unitOrDepartment?->name,
+                    'user_id' => $p->user_id,
+                    'user_name' => $p->user?->name,
                 ];
             });
     }
-
+    
     public static function totals()
     {
         return [
@@ -63,5 +73,38 @@ class Personnel extends Model
             'active_personnels' => static::where('status', 'active')->count(),
             'inactive_personnels' => static::where('status', 'inactive')->count(),
         ];
+    }
+
+    public static function availableUsers()
+    {
+        // exclude superuser role + already linked users
+        $linkedIds = static::pluck('user_id')->filter()->toArray();
+
+        return User::select('id', 'name', 'email')
+            ->whereHas('role', function ($q) {
+                $q->where('code', '!=', 'superuser');
+            })
+            ->whereNotIn('id', $linkedIds)
+            ->get();
+    }
+
+    public static function currentLinkedUsers()
+    {
+        $linkedIds = static::pluck('user_id')->filter()->toArray();
+
+        return User::select('id', 'name', 'email')
+            ->whereHas('role', function ($q) {
+                $q->where('code', '!=', 'superuser');
+            })
+            ->whereIn('id', $linkedIds)
+            ->get();
+    }
+
+    public static function usersForDropdown()
+    {
+        return static::availableUsers()
+            ->merge(static::currentLinkedUsers())
+            ->unique('id')
+            ->values();
     }
 }

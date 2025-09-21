@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Personnel;
+use App\Models\UnitOrDepartment;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,8 +16,10 @@ class PersonnelController extends Controller
     private function indexProps(): array
     {
         return [
-            'personnels' => Personnel::listForIndex(),
-            'totals' => Personnel::totals(),
+            'personnels'    => Personnel::listForIndex(),
+            'users'         => Personnel::usersForDropdown(),
+            'units'         => UnitOrDepartment::listLite(),
+            'totals'        => Personnel::totals(),
         ];
     }
 

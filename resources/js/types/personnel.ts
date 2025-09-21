@@ -4,7 +4,7 @@ export type Personnel = {
     middle_name?: string | null;
     last_name: string;
     full_name: string;
-    
+
     user_id?: number | null;
     user_name?: string | null;
 
@@ -36,8 +36,14 @@ export type PersonnelTotals = {
     active_personnels: number;
 };
 
+export type UnitLite = {
+    id: number;
+    name: string;
+};
+
 export type PersonnelPageProps = {
     personnels: Personnel[];
     users: UserLite[];
+    units: UnitLite[];
     totals?: PersonnelTotals;
 };

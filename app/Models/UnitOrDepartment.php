@@ -57,6 +57,12 @@ class UnitOrDepartment extends Model
         return $this->hasMany(Personnel::class, 'unit_or_department_id');
     }
 
+    public static function listLite()
+    {
+        return static::select('id', 'name')->get();
+    }
+
+
     public function assetAssignments()
     {
         return $this->hasMany(AssetAssignment::class, 'unit_or_department_id');
