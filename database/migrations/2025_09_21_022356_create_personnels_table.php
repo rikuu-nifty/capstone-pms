@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('middle_name')->nullable();
             $table->string('last_name');
 
+            $table->unsignedBigInteger('user_id')->nullable(); // added just in case pmo wants personnel become users
+
             $table->string('position')->nullable();
             $table->unsignedBigInteger('unit_or_department_id')->nullable(); //just in case for the view own unit permission
             $table->enum('status', ['active', 'inactive', 'left_university'])->default('active'); //inactive for on leave and left_university
@@ -26,6 +28,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->foreign('unit_or_department_id')->references('id')->on('unit_or_departments')->nullOnDelete();
+            $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
         });
     }
 
