@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { badgeVariants } from "@/components/ui/badge";
@@ -6,7 +6,6 @@ import type { VariantProps } from "class-variance-authority";
 import { Button } from "@/components/ui/button";
 
 import ViewModal from "@/components/modals/ViewModal";
-import StatusReassignmentModal from "./StatusReassignmentModal";
 import { formatDateLong, formatFullName } from "@/types/custom-index";
 import type { Personnel } from "@/types/personnel";
 
@@ -25,7 +24,6 @@ const statusMap: Record<Personnel["status"], { label: string; variant: BadgeVari
 };
 
 export default function ViewPersonnelModal({ open, onClose, personnel }: Props) {
-    const [showReassign, setShowReassign] = useState(false);
     
     const initials = useMemo(() => {
         if (!personnel) return "";
@@ -134,15 +132,6 @@ export default function ViewPersonnelModal({ open, onClose, personnel }: Props) 
             </div>
         </ViewModal>
 
-        {/* Status Reassignment Modal */}
-        {personnel && (
-            <StatusReassignmentModal
-            show={showReassign}
-            onClose={() => setShowReassign(false)}
-            personnelId={personnel.id}
-            action="reassign"
-            />
-        )}
         </>
     );
 }
