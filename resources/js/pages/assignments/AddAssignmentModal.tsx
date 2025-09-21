@@ -70,7 +70,7 @@ export default function AddAssignmentModal({
         clearErrors();
         setShowAssetDropdown([true]);
       }}
-      title="Assign Assets"
+      title="Add New Assignment"
       onSubmit={handleSubmit}
       processing={processing}
     >

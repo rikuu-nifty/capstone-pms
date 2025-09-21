@@ -20,7 +20,7 @@ export default function AssignmentAssetItemDetails({
                 <div className="min-w-0">
                 <div className="flex items-center gap-2">
                     <span className="truncate text-base font-semibold text-gray-900">
-                    {asset.asset_name ?? 'Unnamed Asset'}
+                        {asset.asset_name ?? 'Unnamed Asset'}
                     </span>
                     {asset.serial_no && (
                     <span className="inline-block rounded-md bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">
@@ -30,7 +30,7 @@ export default function AssignmentAssetItemDetails({
                 </div>
                 {!open && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                    Click to view asset details
+                    View asset details
                     </p>
                 )}
                 </div>
@@ -61,37 +61,39 @@ export default function AssignmentAssetItemDetails({
 
             {/* Details */}
             {open && (
-                <div className="px-4 pb-3 pt-2 text-sm text-gray-700">
-                <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
-                    <div>
-                    <dt className="text-xs font-medium text-gray-500 uppercase">
-                        Building
+            <div className="px-4 pb-3 pt-2 text-sm text-gray-700">
+                <dl className="grid grid-cols-2 gap-4">
+                <div className="rounded-md bg-blue-50 p-2">
+                    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide ml-2">
+                    Building
                     </dt>
-                    <dd className="mt-0.5 font-medium text-gray-900">
-                        {asset.building?.name ?? '—'}
+                    <dd className="mt-1 text-sm font-semibold text-gray-900 ml-2">
+                    {asset.building?.name ?? '—'}
                     </dd>
-                    </div>
-
-                    <div>
-                    <dt className="text-xs font-medium text-gray-500 uppercase">
-                        Room
-                    </dt>
-                    <dd className="mt-0.5 font-medium text-gray-900">
-                        {asset.building_room?.room ?? '—'}
-                    </dd>
-                    </div>
-
-                    <div className="col-span-2">
-                    <dt className="text-xs font-medium text-gray-500 uppercase">
-                        Sub-area
-                    </dt>
-                    <dd className="mt-0.5 font-medium text-gray-900">
-                        {asset.sub_area?.name ?? '—'}
-                    </dd>
-                    </div>
-                </dl>
                 </div>
+
+                <div className="rounded-md bg-blue-50 p-2">
+                    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide ml-2">
+                    Room
+                    </dt>
+                    <dd className="mt-1 text-sm font-semibold text-gray-900 ml-2">
+                    {asset.building_room?.room ?? '—'}
+                    </dd>
+                </div>
+
+                <div className="col-span-1 rounded-md bg-blue-50 p-2">
+                    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide ml-2">
+                    Sub-area
+                    </dt>
+                    <dd className="mt-1 text-sm font-semibold text-gray-900 ml-2">
+                    {asset.sub_area?.name ?? '—'}
+                    </dd>
+                </div>
+                </dl>
+            </div>
             )}
+
+
         </div>
     );
 }
