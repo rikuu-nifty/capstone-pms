@@ -293,7 +293,6 @@ export default function AssignmentsIndex({
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => {
-                                                    // setReassignPersonnel(a.personnel?.id ?? null);
                                                     setReassignPersonnel(a.id);
                                                     setShowReassign(true);
                                                 }}
@@ -413,9 +412,9 @@ export default function AssignmentsIndex({
                 <ReassignAssetsModal
                     open={showReassign}
                     onClose={() => {
-                    setShowReassign(false);
-                    setReassignPersonnel(null);
-                    refreshAssignments();
+                        setShowReassign(false);
+                        setReassignPersonnel(null);
+                        refreshAssignments();
                     }}
                     assignmentId={reassignPersonnel} 
                     personnels={personnels}

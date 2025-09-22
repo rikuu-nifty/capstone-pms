@@ -146,33 +146,81 @@ class AssetAssignmentController extends Controller
         ];
     }
 
-    public function reassignItem(Request $request, AssetAssignmentItem $item)
+    // public function reassignItem(Request $request, AssetAssignmentItem $item)
+    // {
+    //     $data = $request->validate([
+    //         'new_personnel_id' => ['required', Rule::exists('personnels', 'id')],
+    //     ]);
+
+    //     AssetAssignment::reassignItemToPersonnel($item, $data['new_personnel_id'], $request->user()->id);
+
+    //     return back()->with('success', 'Asset reassigned successfully.');
+    // }
+
+    // SINGLE MODE but all saved at the same time
+    public function bulkReassignItems(Request $request, AssetAssignment $assignment)
     {
-        $data = $request->validate([
-            'new_personnel_id' => ['required', Rule::exists('personnels', 'id')],
-        ]);
+        $changes = $request->validate([
+            'changes' => ['required', 'array'],
+            'changes.*.item_id' => ['required', 'integer', Rule::exists('asset_assignment_items', 'id')],
+            'changes.*.new_personnel_id' => ['required', 'integer', Rule::exists('personnels', 'id')],
+        ])['changes'];
 
-        AssetAssignment::reassignItemToPersonnel($item, $data['new_personnel_id'], $request->user()->id);
+        foreach ($changes as $change) {
+            $item = AssetAssignmentItem::where('id', $change['item_id'])
+                ->where('asset_assignment_id', $assignment->id)
+                ->first();
 
-        return back()->with('success', 'Asset reassigned successfully.');
+            if (!$item) {
+                continue;
+            }
+
+            // 🔹 Check if this personnel already has an assignment
+            $newAssignment = AssetAssignment::firstOrCreate(
+                [
+                    'personnel_id' => $change['new_personnel_id'],
+                ],
+                [
+                    'assigned_by' => $request->user()->id,
+                    'date_assigned' => now()->toDateString(),
+                    'remarks' => null,
+                ]
+            );
+
+            // 🔹 Move the item to the correct assignment
+            $item->update([
+                'asset_assignment_id' => $newAssignment->id,
+            ]);
+        }
+
+        return response()->json(['status' => 'ok']);
     }
 
-    public function bulkReassign(Request $request, Personnel $personnel)
+    public function bulkReassign(Request $request, AssetAssignment $assignment)
     {
         $data = $request->validate([
             'new_personnel_id' => ['required', Rule::exists('personnels', 'id')],
         ]);
 
-        AssetAssignment::bulkReassignPersonnelAssets(
-            $personnel->id,
-            $data['new_personnel_id'],
-            $request->user()->id
-        );
+        DB::transaction(function () use ($assignment, $data, $request) {
+            // Find or create target assignment
+            $newAssignment = AssetAssignment::firstOrCreate(
+                ['personnel_id' => $data['new_personnel_id']],
+                [
+                    'assigned_by' => $request->user()->id,
+                    'date_assigned' => now()->toDateString(),
+                    'remarks' => null,
+                ]
+            );
+
+            // Move all items of this assignment
+            AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
+                ->update(['asset_assignment_id' => $newAssignment->id]);
+        });
 
         return back()->with('success', 'All assets reassigned successfully.');
     }
 }
-
 
 // public function create()
     // {
