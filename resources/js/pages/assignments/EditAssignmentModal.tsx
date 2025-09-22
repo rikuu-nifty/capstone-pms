@@ -21,6 +21,8 @@ interface Props {
     assets: MinimalAsset[];
     personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
     units: { id: number; name: string }[];
+    currentUserId: number;
+    users: { id: number; name: string }[];
 }
 
 export default function EditAssignmentModal({
@@ -30,17 +32,21 @@ export default function EditAssignmentModal({
     assets,
     personnels,
     units,
+    currentUserId,
+    users,
 }: Props) {
     const { data, setData, put, processing, errors, clearErrors } = useForm<{
         personnel_id: number | null;
         date_assigned: string;
         remarks: string;
         selected_assets: number[];
+        assigned_by: number;
     }>({
         personnel_id: null,
         date_assigned: '',
         remarks: '',
         selected_assets: [],
+        assigned_by: 0,
     });
 
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
@@ -49,13 +55,20 @@ export default function EditAssignmentModal({
     useEffect(() => {
         if (!show || !assignment) return;
 
+        const today = new Date().toISOString().split('T')[0];
+
+        const assignedDate = assignment.date_assigned
+            ? new Date(assignment.date_assigned).toISOString().split('T')[0]
+            : today;
+
         setData({
             personnel_id: assignment.personnel_id ?? null,
-            date_assigned: assignment.date_assigned ?? '',
+            date_assigned: assignedDate,
             remarks: assignment.remarks ?? '',
             selected_assets: assignment.items
                 ? assignment.items.map((i: AssetAssignmentItem) => i.asset_id)
                 : [],
+            assigned_by: assignment.assigned_by ?? currentUserId,
         });
 
         if (assignment.personnel?.unit_or_department?.id) {
@@ -66,7 +79,7 @@ export default function EditAssignmentModal({
 
         clearErrors();
         setShowAssetDropdown([true]);
-    }, [show, assignment, setData, clearErrors]);
+    }, [show, assignment, setData, currentUserId, clearErrors]);
 
     // Filter personnels (but always keep current one)
     const filteredPersonnels = selectedUnit
@@ -174,10 +187,34 @@ export default function EditAssignmentModal({
                                 value={data.date_assigned}
                                 onChange={(e) => setData('date_assigned', e.target.value)}
                             />
-                            {errors.date_assigned && (
-                                <p className="mt-1 text-xs text-red-500">You must set the date the assets were assigned.</p>
+                            {!assignment?.date_assigned && (
+                                <p className="mt-1 text-xs text-amber-600 italic">
+                                    No date was set — defaulted to today.
+                                </p>
                             )}
                         </div>
+
+                        {/* Assigned By */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Assigned By</label>
+                            <Select
+                                className="w-full"
+                                value={
+                                    users
+                                    .map((u) => ({ value: u.id, label: u.name }))
+                                    .find((opt) => opt.value === data.assigned_by) ?? null
+                                }
+                                options={users.map((u) => ({ value: u.id, label: u.name }))}
+                                onChange={(opt) => setData('assigned_by', opt ? opt.value : currentUserId)}
+                                placeholder="Select user"
+                            />
+                            {!assignment?.assigned_by && (
+                                <p className="mt-1 text-xs text-amber-600 italic">
+                                    Leaving this empty will default to the current user.
+                                </p>
+                            )}
+                        </div>
+
 
                         <div className="col-span-2 border-t mt-2 mb-2"></div>
 

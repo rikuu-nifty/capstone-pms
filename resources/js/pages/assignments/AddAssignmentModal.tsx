@@ -12,6 +12,7 @@ interface Props {
     personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
     units: { id: number; name: string }[];
     currentUserId: number;
+    users: { id: number; name: string }[];
 }
 
 export default function AddAssignmentModal({
@@ -21,6 +22,7 @@ export default function AddAssignmentModal({
     personnels,
     units,
     currentUserId,
+    users,
 }: Props) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<{
         personnel_id: number | null;
@@ -48,8 +50,10 @@ export default function AddAssignmentModal({
             clearErrors();
             setShowAssetDropdown([true]);
             setSelectedUnit(null);
+
+            setData('assigned_by', currentUserId);
         }
-    }, [show, reset, clearErrors]);
+    }, [show, reset, clearErrors, currentUserId, setData]);
 
     // Filter personnels by selectedUnit
     const filteredPersonnels = selectedUnit
@@ -63,6 +67,14 @@ export default function AddAssignmentModal({
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        if (!data.date_assigned) {
+            setData('date_assigned', new Date().toISOString().split('T')[0]);
+        }
+
+        if (!data.assigned_by) {
+            setData('assigned_by', currentUserId);
+        }
 
         post('/assignments', {
             preserveScroll: true,
@@ -150,7 +162,39 @@ export default function AddAssignmentModal({
                     value={data.date_assigned}
                     onChange={(e) => setData('date_assigned', e.target.value)}
                 />
-                {errors.date_assigned && <p className="mt-1 text-xs text-red-500">{errors.date_assigned}</p>}
+                {!data.date_assigned && (
+                    <p className="mt-1 text-xs text-amber-600 italic">
+                        Leaving this empty will default it to today's date.
+                    </p>
+                )}
+                {/* {errors.date_assigned && <p className="mt-1 text-xs text-red-500">{errors.date_assigned}</p>} */}
+            </div>
+
+           {/* Assigned By */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Assigned By</label>
+                <Select
+                    className="w-full"
+                    value={
+                    data.assigned_by
+                        ? users.map((u: { id: number; name: string }) => ({ value: u.id, label: u.name }))
+                            .find((opt) => opt.value === data.assigned_by) ?? null
+                        : null
+                    }
+                    options={users.map((u: { id: number; name: string }) => ({
+                        value: u.id,
+                        label: u.name,
+                    }))}
+                    onChange={(opt: { value: number; label: string } | null) =>
+                        setData('assigned_by', opt ? opt.value : currentUserId)
+                    }
+                    placeholder="Select user"
+                />
+                {!data.assigned_by && (
+                    <p className="mt-1 text-xs text-amber-600 italic">
+                        Leaving this empty will default to the current user.
+                    </p>
+                )}
             </div>
 
             <div className="col-span-2 border-t mt-2 mb-2"></div>

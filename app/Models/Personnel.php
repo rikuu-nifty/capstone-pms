@@ -20,6 +20,8 @@ class Personnel extends Model
         'status'
     ];
 
+    protected $appends = ['full_name'];
+
     public function unitOrDepartment()
     {
         return $this->belongsTo(UnitOrDepartment::class, 'unit_or_department_id');

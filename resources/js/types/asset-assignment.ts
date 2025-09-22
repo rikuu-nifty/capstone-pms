@@ -40,7 +40,10 @@ export type AssetAssignmentItem = {
 export type AssignmentTotals = {
     total_assignments: number;
     total_personnels_with_assets: number;
+    total_inactive_personnels_with_assets: number;
     total_assets_assigned: number;
+
+    assets_assigned_to_left_university: number;
 };
 
 export type Paginated<T> = {
@@ -70,6 +73,7 @@ export type AssignmentPageProps = {
         id: number; 
         name: string 
     } | null;
+    users: { id: number; name: string }[];
 };
 
 export type MinimalAsset = {

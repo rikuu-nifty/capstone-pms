@@ -24,6 +24,8 @@ class AssetAssignmentController extends Controller
             'currentUser' => $request->user()
                 ? ['id' => $request->user()->id, 'name' => $request->user()->name]
                 : null,
+            'users' => User::select('id', 'name')->get(),
+
         ];
     }
 
@@ -36,18 +38,18 @@ class AssetAssignmentController extends Controller
     {
         $data = $request->validate([
             'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
-            'assigned_by'       => ['nullable', Rule::exists('users', 'id')],
+            'assigned_by'       => ['sometimes', Rule::exists('users', 'id')],
             'date_assigned'     => ['required', 'date'],
             'remarks'           => ['nullable', 'string'],
             'selected_assets'   => ['required', 'array', 'min:1'],
             'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
         ]);
 
-        DB::transaction(function () use ($data) {
+        DB::transaction(function () use ($data, $request) {
             $assignment = AssetAssignment::create([
                 'personnel_id'  => $data['personnel_id'],
-                'assigned_by'   => $data['assigned_by'] ?? null,
-                'date_assigned' => $data['date_assigned'],
+                'assigned_by'   => $data['assigned_by'] ?? $request->user()->id,
+                'date_assigned' => $data['date_assigned'] ?: now()->toDateString(), // default here
                 'remarks'       => $data['remarks'] ?? null,
             ]);
 
@@ -67,16 +69,18 @@ class AssetAssignmentController extends Controller
         $data = $request->validate([
             'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
             'date_assigned'     => ['required', 'date'],
+            'assigned_by'       => ['sometimes', Rule::exists('users', 'id')],
             'remarks'           => ['nullable', 'string'],
             'selected_assets'   => ['required', 'array', 'min:1'],
             'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
         ]);
 
-        DB::transaction(function () use ($assignment, $data) {
+        DB::transaction(function () use ($assignment, $data, $request) {
             $assignment->update([
                 'personnel_id'  => $data['personnel_id'],
                 'date_assigned' => $data['date_assigned'],
                 'remarks'       => $data['remarks'] ?? null,
+                'assigned_by'   => $data['assigned_by'] ?? $assignment->assigned_by ?? $request->user()->id,
             ]);
 
             // Replace items
