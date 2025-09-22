@@ -48,24 +48,36 @@ class Personnel extends Model
 
     public static function listForIndex()
     {
-        return static::with(['unitOrDepartment', 'user'])
-            ->select('personnels.*')
-            ->get()
-            ->map(function ($p) {
-                return [
-                    'id' => $p->id,
-                    'first_name' => $p->first_name,
-                    'middle_name' => $p->middle_name,
-                    'last_name' => $p->last_name,
-                    'full_name' =>$p->full_name,
-                    'position' => $p->position,
-                    'status' => $p->status,
-                    'unit_or_department_id' => $p->unit_or_department_id,
-                    'unit_or_department' => $p->unitOrDepartment?->name,
-                    'user_id' => $p->user_id,
-                    'user_name' => $p->user?->name,
-                ];
-            });
+        return static::with([
+            'unitOrDepartment', 
+            'user',
+            'assignments.items.asset',
+        ])
+        ->select('personnels.*')
+        ->get()
+        ->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'first_name' => $p->first_name,
+                'middle_name' => $p->middle_name,
+                'last_name' => $p->last_name,
+                'full_name' =>$p->full_name,
+                'position' => $p->position,
+                'status' => $p->status,
+                'unit_or_department_id' => $p->unit_or_department_id,
+                'unit_or_department' => $p->unitOrDepartment?->name,
+                'user_id' => $p->user_id,
+                'user_name' => $p->user?->name,
+                'assignments_count' => $p->assignments->count(),
+                'assigned_assets' => $p->assignments->flatMap(
+                    fn($a) =>
+                    $a->items->map(fn($i) => [
+                        'id' => $i->asset?->id,
+                        'name' => $i->asset?->asset_name ?? $i->asset?->serial_no,
+                    ])
+                )->filter()->values(),
+            ];
+        });
     }
     
     public static function totals()
@@ -74,6 +86,7 @@ class Personnel extends Model
             'total_personnels' => static::count(),
             'active_personnels' => static::where('status', 'active')->count(),
             'inactive_personnels' => static::where('status', 'inactive')->count(),
+            'former_personnels' => static::where('status', 'left_university')->count(),
         ];
     }
 

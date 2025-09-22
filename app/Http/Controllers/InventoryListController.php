@@ -118,6 +118,22 @@ class InventoryListController extends Controller
         ];
     }
 
+    public function fetch(InventoryList $inventory_list) // DO NOT DELETE, THIS IS FOR ASSET ASSIGNMENT
+    {
+        $inventory_list->load([
+            'assetModel.category',
+            'category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom',
+            'subArea',
+            'transfer',
+            'schedulingAssets',
+        ]);
+
+        return response()->json($inventory_list);
+    }
+
     //   $assets = InventoryList::latest()->get();
 
     //   $assets = inventoryList::with([

@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import EditModal from '@/components/modals/EditModal';
 import Select from "react-select";
 
 import type { Personnel, PersonnelFormData, UserLite, UnitLite } from '@/types/personnel';
+import WarningModal from '../inventory-scheduling/WarningModal';
 
 interface EditProps {
     show: boolean;
@@ -30,6 +31,8 @@ export default function EditPersonnelModal({
         status: 'active',
     });
 
+    const [showWarning, setShowWarning] = useState(false);
+
     useEffect(() => {
         if (!show || !record) return;
 
@@ -53,6 +56,15 @@ export default function EditPersonnelModal({
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!record?.id) return;
+
+        //  Prevent reassign if unit changed while personnel still has assets
+        if (
+            record.unit_or_department_id !== data.unit_or_department_id &&
+            (record.assignments_count ?? 0) > 0
+        ) {
+            setShowWarning(true);
+            return;
+        }
 
         const payload: PersonnelFormData = {
             first_name: (data.first_name ?? '').trim(),
@@ -203,6 +215,14 @@ export default function EditPersonnelModal({
                 </select>
                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
+
+            <WarningModal
+                show={showWarning}
+                onClose={() => setShowWarning(false)}
+                title="Cannot Change Unit/Department"
+                message="This personnel has assigned assets. Please reassign or unassign them first before moving them to another unit/department."
+                details={record?.assigned_assets?.map((a: { id: number | null; name: string }) => a.name) ?? []}
+            />
         </EditModal>
     );
 }

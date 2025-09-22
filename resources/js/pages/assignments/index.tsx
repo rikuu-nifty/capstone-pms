@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,12 @@ import type { AssignmentPageProps, AssetAssignment } from '@/types/asset-assignm
 import AddAssignmentModal from './AddAssignmentModal';
 import EditAssignmentModal from './EditAssignmentModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import ViewAssignmentModal from './ViewAssignmentModal';
+
+import { Input } from '@/components/ui/input';
+import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
+import PersonnelFilterDropdown from '@/components/filters/PersonnelFilterDropdown';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Assignments', href: '/assignments' },
@@ -26,14 +32,84 @@ export default function AssignmentsIndex({
     currentUser,
     users
 }: AssignmentPageProps) {
+    const { props } = usePage<AssignmentPageProps>();
+
     const [showAdd, setShowAdd] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [toEdit, setToEdit] = useState<AssetAssignment | null>(null);
 
+    const [showView, setShowView] = useState(false);
+    const [viewAssignment, setViewAssignment] = useState<AssetAssignment | null>(null);
+
     const [showDelete, setShowDelete] = useState(false);
     const [toDelete, setToDelete] = useState<AssetAssignment | null>(null);
 
-    const page_items = assignments.data;
+    const [rawSearch, setRawSearch] = useState('');
+    const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase();
+
+    const sortOptions = [
+    { value: 'date_assigned', label: 'Date Assigned' },
+    { value: 'updated_at', label: 'Date Updated' },
+    { value: 'items_count', label: 'Assets Count' },
+    ] as const;
+
+    type SortKey = (typeof sortOptions)[number]['value'];
+
+    const [sortKey, setSortKey] = useState<SortKey>('date_assigned');
+    const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+    const [selectedUnitId, setSelectedUnitId] = useState<number | ''>('');
+    const [selectedStatus, setSelectedStatus] = useState('');
+
+    // Filter
+    const filtered = assignments.data.filter((a) => {
+        const name = a.personnel?.full_name?.toLowerCase() ?? '';
+        const matchesSearch = !search || name.includes(search);
+
+        const matchesUnit = !selectedUnitId || a.personnel?.unit_or_department?.id === selectedUnitId;
+        const matchesStatus = !selectedStatus || a.personnel?.status === selectedStatus;
+
+        return matchesSearch && matchesUnit && matchesStatus;
+    });
+
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
+        const dir = sortDir === 'asc' ? 1 : -1;
+        if (sortKey === 'date_assigned' || sortKey === 'updated_at') {
+            const da = new Date(a[sortKey] ?? '').getTime();
+            const db = new Date(b[sortKey] ?? '').getTime();
+            return (da - db) * dir;
+        }
+        if (sortKey === 'items_count') {
+            return ((a.items_count ?? 0) - (b.items_count ?? 0)) * dir;
+        }
+        return 0;
+    });
+
+    const page_items = sorted;
+
+    useEffect(() => {
+        if (props.viewing) {
+            setViewAssignment(props.viewing);
+            setShowView(true);
+        }
+    }, [props.viewing]);
+
+    const closeView = () => {
+        setShowView(false);
+        setViewAssignment(null);
+        if (/^\/?assignments\/\d+\/?$/.test(window.location.pathname)) {
+            history.back();
+        }
+    };
+
+    const hasFilters =
+        rawSearch.trim() !== '' ||
+        selectedUnitId !== '' ||
+        selectedStatus !== '' ||
+        sortKey !== 'date_assigned' ||
+        sortDir !== 'desc'
+    ;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -41,17 +117,71 @@ export default function AssignmentsIndex({
 
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2">
+                    <div>
                         <h1 className="text-2xl font-semibold">Asset Assignments</h1>
                         <p className="text-sm text-muted-foreground">
                             Records of assets assigned to personnels.
                         </p>
                     </div>
 
-                    <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
-                        <PlusCircle className="mr-1 h-4 w-4" /> New Assignment
-                    </Button>
+                    {/* Actions Row */}
+                    <div className="flex items-center justify-between gap-2">
+                        <Input
+                            type="text"
+                            placeholder="Search by personnel name..."
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
+                            className="w-72"
+                        />
+
+                        {/* Actions (sort, filter, add) */}
+                        <div className="flex items-center gap-2">
+                            <SortDropdown<SortKey>
+                                sortKey={sortKey}
+                                sortDir={sortDir}
+                                options={sortOptions}
+                                onChange={(key, dir) => {
+                                    setSortKey(key);
+                                    setSortDir(dir);
+                                }}
+                            />
+                            
+                            {hasFilters && (
+                                <Button
+                                    variant="destructive"
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        setRawSearch('');
+                                        setSelectedUnitId('');
+                                        setSelectedStatus('');
+                                        setSortKey('date_assigned');
+                                        setSortDir('desc');
+                                    }}
+                                >
+                                    Clear Filters
+                                </Button>
+                            )}
+
+                            <PersonnelFilterDropdown
+                                units={units}
+                                selectedUnitId={selectedUnitId}
+                                selectedStatus={selectedStatus}
+                                onApply={({ unitId, status }) => {
+                                    setSelectedUnitId(unitId);
+                                    setSelectedStatus(status);
+                                }}
+                                onClear={() => {
+                                    setSelectedUnitId('');
+                                    setSelectedStatus('');
+                                }}
+                            />
+
+                            <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
+                                <PlusCircle className="mr-1 h-4 w-4" /> New Assignment
+                            </Button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* KPIs */}
@@ -85,8 +215,8 @@ export default function AssignmentsIndex({
 
                         {/* Inactive Personnels */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
-                                <UserX className="h-7 w-7 text-yellow-600" />
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
+                                <UserX className="h-7 w-7 text-gray-600" />
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Inactive Personnels w/ Assets</div>
@@ -125,6 +255,7 @@ export default function AssignmentsIndex({
                                 <TableHead className="text-center">Assets Count</TableHead>
                                 <TableHead className="text-center">Date Assigned</TableHead>
                                 <TableHead className="text-center">Assigned By</TableHead>
+                                <TableHead className="text-center">Date Updated</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -144,6 +275,7 @@ export default function AssignmentsIndex({
                                     <TableCell>{a.items_count ?? 0}</TableCell>
                                     <TableCell>{formatDateLong(a.date_assigned)}</TableCell>
                                     <TableCell>{a.assigned_by_user?.name ?? '—'}</TableCell>
+                                    <TableCell>{formatDateLong(a.updated_at) ?? '—'}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center items-center gap-2">
                                             <Button
@@ -173,12 +305,11 @@ export default function AssignmentsIndex({
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => {
-                                                    // TODO: open view modal
-                                                }}
                                                 className="cursor-pointer"
                                             >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                                <Link href={`/assignments/${a.id}`} preserveScroll>
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Link>
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -238,6 +369,15 @@ export default function AssignmentsIndex({
                     units={units}  
                     currentUserId={currentUser?.id ?? 0}
                     users={users}       
+                />
+            )}
+
+            {viewAssignment && props.viewing_items && (
+                <ViewAssignmentModal
+                    open={showView}
+                    onClose={closeView}
+                    assignment={viewAssignment}
+                    items={props.viewing_items}
                 />
             )}
 

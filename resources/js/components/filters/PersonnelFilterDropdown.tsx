@@ -61,7 +61,7 @@ export default function PersonnelFilterDropdown({
 
                     {/* Status filter */}
                     <div className="grid gap-1">
-                        <label className="text-xs font-medium">Status</label>
+                        <label className="text-xs font-medium">Personnel Status</label>
                         <select
                             className="border rounded-md p-2 text-sm cursor-pointer"
                             value={localStatus}

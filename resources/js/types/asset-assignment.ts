@@ -5,6 +5,8 @@ export type AssetAssignment = {
     date_assigned: string;
     remarks?: string | null;
 
+    updated_at?: string;
+
     // counts
     items_count?: number;
 
@@ -14,6 +16,7 @@ export type AssetAssignment = {
         full_name: string;
         position?: string;
         unit_or_department?: { id: number; name: string };
+        status?: 'active' | 'inactive' | 'left_university';
     };
     assigned_by_user?: { id: number; name: string };
 };
@@ -58,6 +61,7 @@ export type AssignmentPageProps = {
     assignments: Paginated<AssetAssignment>;
     totals?: AssignmentTotals;
     viewing?: AssetAssignment | null;
+    viewing_items?: Paginated<AssetAssignmentItem>;
 
     personnels: { 
         id: number; 

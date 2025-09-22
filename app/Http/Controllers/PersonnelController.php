@@ -69,6 +69,16 @@ class PersonnelController extends Controller
             'status'                => ['required', Rule::in(['active', 'inactive', 'left_university'])],
         ]);
 
+        // Prevent unit change if personnel has assets
+        if (
+            $personnel->unit_or_department_id !== $data['unit_or_department_id'] &&
+            $personnel->assignments()->exists()
+        ) {
+            return back()->withErrors([
+                'unit_or_department_id' => "This personnel has assigned assets. Please reassign or unassign them first."
+            ]);
+        }
+
         DB::transaction(function () use ($personnel, $data) {
             $personnel->update($data);
         });

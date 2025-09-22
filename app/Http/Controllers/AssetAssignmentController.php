@@ -103,28 +103,73 @@ class AssetAssignmentController extends Controller
         return redirect()->route('assignments.index')->with('success', "Assignment deleted successfully.");
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show(Request $request, AssetAssignment $assignment)
     {
-        //
-    }
-    
-    /**
-     * Display the specified resource.
-     */
-    public function show(AssetAssignment $assetAssignment)
-    {
-        //
+        $assignment->load([
+            'personnel.unitOrDepartment',
+            'assignedBy',
+        ]);
+
+        $items = AssetAssignmentItem::with([
+            'asset.assetModel.category',
+            'asset.unitOrDepartment',
+            'asset.building',
+            'asset.buildingRoom',
+            'asset.subArea',
+            'asset.transfer',
+        ])
+        ->where('asset_assignment_id', $assignment->id)
+        ->paginate($request->input('per_page', 10));
+
+        return Inertia::render('assignments/index', [
+            ...$this->indexProps($request),
+            'viewing' => $assignment,
+            'viewing_items' => $items, // paginated items
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(AssetAssignment $assetAssignment)
+    public function personnelAssets(Request $request, Personnel $personnel)
     {
-        //
+        return AssetAssignment::paginatedAssetsForPersonnel(
+            $personnel->id,
+            $request->input('per_page', 10)
+        );
     }
-    
+
+    public function reassignItem(Request $request, AssetAssignmentItem $item)
+    {
+        $data = $request->validate([
+            'new_personnel_id' => ['required', Rule::exists('personnels', 'id')],
+        ]);
+
+        AssetAssignment::reassignItemToPersonnel($item, $data['new_personnel_id'], $request->user()->id);
+
+        return back()->with('success', 'Asset reassigned successfully.');
+    }
+
+    public function bulkReassign(Request $request, Personnel $personnel)
+    {
+        $data = $request->validate([
+            'new_personnel_id' => ['required', Rule::exists('personnels', 'id')],
+        ]);
+
+        AssetAssignment::bulkReassignPersonnelAssets(
+            $personnel->id,
+            $data['new_personnel_id'],
+            $request->user()->id
+        );
+
+        return back()->with('success', 'All assets reassigned successfully.');
+    }
 }
+
+
+// public function create()
+    // {
+    //     //Show the form for creating a new resource.
+    // }
+    
+    // public function edit(AssetAssignment $assetAssignment)
+    // {
+    //     //Show the form for editing the specified resource.
+    // }

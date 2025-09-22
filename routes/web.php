@@ -424,8 +424,12 @@ Route::get('/', function () {
         ->middleware('can:create-assignments');
     Route::put('/assignments/{assignment}', [AssetAssignmentController::class, 'update'])->name('assignments.update')
         ->middleware('can:update-assignments');
+    Route::get('/assignments/{assignment}', [AssetAssignmentController::class, 'show'])->name('assignments.show')
+        ->middleware('can:view-assignments');
     Route::delete('/assignments/{assignment}', [AssetAssignmentController::class, 'destroy'])->name('assignments.destroy')
         ->middleware('can:delete-assignments');
+    Route::get('/inventory-list/{inventory_list}/json', [InventoryListController::class, 'fetch'])
+        ->name('inventory-list.fetch'); //this is for seeing the asset
 
     //PROFILE
 });

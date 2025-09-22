@@ -7,7 +7,7 @@ import { Head, router } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
-import { Eye, Pencil, PlusCircle, Trash2, Users, UserCheck2, Check, X } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, Users, UserCheck2, Check, X, AlertTriangle } from 'lucide-react';
 import type { VariantProps } from "class-variance-authority";
 import { Badge } from '@/components/ui/badge';
 import { badgeVariants } from "@/components/ui/badge";
@@ -67,6 +67,7 @@ export default function PersonnelsIndex({
     const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
     const [selectedUnitId, setSelectedUnitId] = useState<number | ''>('');
     const [selectedStatus, setSelectedStatus] = useState('');
+    
 
     const statusMap: Record<
         "active" | "inactive" | "left_university",
@@ -116,58 +117,80 @@ export default function PersonnelsIndex({
 
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2">
+                    <div>
                         <h1 className="text-2xl font-semibold">Personnels in Charge</h1>
                         <p className="text-sm text-muted-foreground">
                             List of university personnel who may be assigned assets.
                         </p>
-
-                        <div className="flex items-center gap-2 w-96">
-                            <Input
-                                type="text"
-                                placeholder="Search by name, position, or unit..."
-                                value={rawSearch}
-                                onChange={(e) => setRawSearch(e.target.value)}
-                                className="max-w-xs"
-                            />
-                        </div>
                     </div>
 
-                    <div className="flex gap-2">
-                        <SortDropdown<SortKey>
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            options={sortOptions}
-                            onChange={(key, dir) => {
-                                setSortKey(key);
-                                setSortDir(dir);
-                            }}
+                    <div className="flex items-center justify-between gap-2">
+                        {/* Search */}
+                        <Input
+                            type="text"
+                            placeholder="Search by name, position, or unit..."
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
+                            className="w-72"
                         />
 
-                        <PersonnelFilterDropdown
-                            units={units}
-                            selectedUnitId={selectedUnitId}
-                            selectedStatus={selectedStatus}
-                            onApply={({ unitId, status }) => {
-                                setSelectedUnitId(unitId);
-                                setSelectedStatus(status);
-                            }}
-                            onClear={() => {
-                                setSelectedUnitId('');
-                                setSelectedStatus('');
-                            }}
-                        />
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
+                            <SortDropdown<SortKey>
+                                sortKey={sortKey}
+                                sortDir={sortDir}
+                                options={sortOptions}
+                                onChange={(key, dir) => {
+                                    setSortKey(key);
+                                    setSortDir(dir);
+                                }}
+                            />
 
-                        <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
-                            <PlusCircle className="mr-1 h-4 w-4" /> Add New Personnel
-                        </Button>
+                            {(rawSearch.trim() !== '' ||
+                                selectedUnitId !== '' ||
+                                selectedStatus !== '' ||
+                                sortKey !== 'id' ||
+                                sortDir !== 'asc') && (
+                                <Button
+                                    variant="destructive"
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        setRawSearch('');
+                                        setSelectedUnitId('');
+                                        setSelectedStatus('');
+                                        setSortKey('id');
+                                        setSortDir('asc');
+                                    }}
+                                >
+                                    Clear Filters
+                                </Button>
+                            )}
+
+                            <PersonnelFilterDropdown
+                                units={units}
+                                selectedUnitId={selectedUnitId}
+                                selectedStatus={selectedStatus}
+                                onApply={({ unitId, status }) => {
+                                    setSelectedUnitId(unitId);
+                                    setSelectedStatus(status);
+                                }}
+                                onClear={() => {
+                                    setSelectedUnitId('');
+                                    setSelectedStatus('');
+                                }}
+                            />
+
+                            <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
+                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Personnel
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
                 {/* KPIs */}
                 {totals && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                         {/* Total */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
@@ -203,6 +226,19 @@ export default function PersonnelsIndex({
                                 <div className="text-sm text-muted-foreground">Inactive Personnels</div>
                                 <div className="text-3xl font-bold">
                                     {Number(totals.inactive_personnels ?? 0).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Left University */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                                <AlertTriangle className="h-7 w-7 text-red-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Left University</div>
+                                <div className="text-3xl font-bold">
+                                {Number(totals.former_personnels ?? 0).toLocaleString()}
                                 </div>
                             </div>
                         </div>

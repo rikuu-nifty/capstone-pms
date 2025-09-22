@@ -15,6 +15,12 @@ export type Personnel = {
 
     created_at?: string;
     updated_at?: string;
+
+    assignments_count?: number;
+    assigned_assets?: {
+        id: number | null;
+        name: string;
+    }[];
 };
 
 export type UserLite = {
@@ -38,6 +44,7 @@ export type PersonnelTotals = {
     total_personnels: number;
     active_personnels: number;
     inactive_personnels: number;
+    former_personnels: number;
 };
 
 export type UnitLite = {

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class AssetAssignment extends Model
 {
@@ -20,6 +21,8 @@ class AssetAssignment extends Model
 
     protected $casts = [
         'date_assigned' => 'date',
+        'created_at'    => 'datetime',
+        'updated_at'    => 'datetime',
     ];
 
     public function personnel()
@@ -48,6 +51,7 @@ class AssetAssignment extends Model
     public static function indexData(int $perPage = 10): array
     {
         $assignments = static::with([
+            'personnel:id,first_name,middle_name,last_name,position,unit_or_department_id,status',
             'personnel.unitOrDepartment',
             'assignedBy',
             'items.asset.assetModel.category',
@@ -60,6 +64,7 @@ class AssetAssignment extends Model
         $assignments->getCollection()->transform(function ($assignment) {
             return array_merge($assignment->toArray(), [
                 'assigned_by' => $assignment->assigned_by,
+                'updated_at'  => $assignment->updated_at,
             ]);
         });
 
@@ -87,5 +92,44 @@ class AssetAssignment extends Model
                 $q->whereIn('personnel_id', $leftUniversityPersonnels);
             })->distinct('asset_id')->count('asset_id'),
         ];
+    }
+
+    public static function paginatedAssetsForPersonnel(int $personnelId, int $perPage = 10)
+    {
+        return AssetAssignmentItem::with('asset')
+            ->whereHas('assignment', fn($q) => $q->where('personnel_id', $personnelId))
+            ->paginate($perPage);
+    }
+
+    public static function reassignItemToPersonnel(AssetAssignmentItem $item, int $newPersonnelId, int $userId)
+    {
+        return DB::transaction(function () use ($item, $newPersonnelId, $userId) {
+            $assignment = AssetAssignment::firstOrCreate(
+                ['personnel_id' => $newPersonnelId],
+                [
+                    'assigned_by' => $userId,
+                    'date_assigned' => now(),
+                ]
+            );
+
+            $item->update(['asset_assignment_id' => $assignment->id]);
+            return $item;
+        });
+    }
+
+    public static function bulkReassignPersonnelAssets(int $fromPersonnelId, int $toPersonnelId, int $userId)
+    {
+        return DB::transaction(function () use ($fromPersonnelId, $toPersonnelId, $userId) {
+            $assignment = AssetAssignment::firstOrCreate(
+                ['personnel_id' => $toPersonnelId],
+                [
+                    'assigned_by' => $userId,
+                    'date_assigned' => now(),
+                ]
+            );
+
+            return AssetAssignmentItem::whereHas('assignment', fn($q) => $q->where('personnel_id', $fromPersonnelId))
+                ->update(['asset_assignment_id' => $assignment->id]);
+        });
     }
 }
