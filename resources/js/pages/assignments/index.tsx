@@ -213,9 +213,12 @@ export default function AssignmentsIndex({
             setToEdit(null);
           }}
           assignment={toEdit}
-          assets={[]} personnels={[]} units={[]}
+          assets={assets}          
+          personnels={personnels}  
+          units={units}         
         />
       )}
+
 
       <DeleteConfirmationModal
         show={showDelete}

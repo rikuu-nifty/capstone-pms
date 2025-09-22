@@ -111,6 +111,7 @@ class InventoryList extends Model
                 'building_id',
                 'building_room_id',
                 'sub_area_id',
+                'unit_or_department_id',
             ])
             ->get();
     }
@@ -311,6 +312,7 @@ class InventoryList extends Model
             }
         }
     }
+}
 
 // IF WANT MO KASAMA PATI VP ADMIN UNCOMMENT MOTO
 //     protected static function checkAndNotify($asset)
@@ -353,5 +355,3 @@ class InventoryList extends Model
 //         }
 //     }
 // }
-
-}

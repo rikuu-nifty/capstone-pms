@@ -56,17 +56,37 @@ export type AssignmentPageProps = {
     totals?: AssignmentTotals;
     viewing?: AssetAssignment | null;
 
-    personnels: { id: number; full_name: string }[];
-    units: { id: number; name: string }[];
-    assets: { id: number; serial_no: string; asset_name?: string }[];
-    currentUser?: { id: number; name: string } | null;
+    personnels: { 
+        id: number; 
+        full_name: string;
+        unit_or_department_id?: number | null;
+    }[];
+    units: { 
+        id: number; 
+        name: string 
+    }[];
+    assets: MinimalAsset[];
+    currentUser?: { 
+        id: number; 
+        name: string 
+    } | null;
 };
 
 export type MinimalAsset = {
     id: number;
     serial_no: string;
     asset_name?: string;
-    building?: { id: number; name: string };
-    building_room?: { id: number; room: string };
-    sub_area?: { id: number; name: string };
+    building?: { 
+        id: number; 
+        name: string 
+    };
+    building_room?: { 
+        id: number; 
+        room: string 
+    };
+    sub_area?: { 
+        id: number; 
+        name: string 
+    };
+    unit_or_department_id?: number | null;
 };
