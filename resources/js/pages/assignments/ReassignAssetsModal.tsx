@@ -72,11 +72,36 @@ export default function ReassignAssetsModal({
     }, [open, assignmentId, fetchAssets]);
 
     const bulkReassign = () => {
-  if (!toPersonnel || !assignmentId) return;
+        if (!toPersonnel || !assignmentId) return;
+
+        router.put(
+            route('assignments.bulkReassign', { assignment: assignmentId }),
+            { new_personnel_id: toPersonnel },
+            {
+            preserveScroll: true,
+            onSuccess: () => {
+                onClose();
+            },
+            onError: (errors) => {
+                console.error(errors);
+            },
+            }
+        );
+    };
+
+    const saveSingleReassignments = () => {
+  const changes = Object.entries(rowSelections)
+    .filter(([, targetId]) => targetId != null)
+    .map(([itemIdStr, targetId]) => ({
+      item_id: Number(itemIdStr),
+      new_personnel_id: targetId!,
+    }));
+
+  if (changes.length === 0) return;
 
   router.put(
-    route('assignments.bulkReassign', { assignment: assignmentId }),
-    { new_personnel_id: toPersonnel },
+    route('assignments.bulkReassignItems', { assignment: assignmentId }),
+    { changes },
     {
       preserveScroll: true,
       onSuccess: () => {
@@ -88,23 +113,6 @@ export default function ReassignAssetsModal({
     }
   );
 };
-
-    const saveSingleReassignments = async () => {
-        const changes = Object.entries(rowSelections)
-            .filter(([, targetId]) => targetId != null)
-            .map(([itemIdStr, targetId]) => ({
-            item_id: Number(itemIdStr),
-            new_personnel_id: targetId!,
-            }));
-
-        if (changes.length === 0) return;
-
-        await axios.put(
-            route('assignments.bulkReassignItems', { assignment: assignmentId }),
-            { changes }
-        );
-        onClose();
-    };
 
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>

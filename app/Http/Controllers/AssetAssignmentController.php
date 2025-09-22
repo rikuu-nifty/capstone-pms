@@ -175,7 +175,7 @@ class AssetAssignmentController extends Controller
                 continue;
             }
 
-            // 🔹 Check if this personnel already has an assignment
+            // Check if this personnel already has an assignment
             $newAssignment = AssetAssignment::firstOrCreate(
                 [
                     'personnel_id' => $change['new_personnel_id'],
@@ -187,13 +187,14 @@ class AssetAssignmentController extends Controller
                 ]
             );
 
-            // 🔹 Move the item to the correct assignment
+            // Move the item to the correct assignment
             $item->update([
                 'asset_assignment_id' => $newAssignment->id,
             ]);
         }
 
-        return response()->json(['status' => 'ok']);
+        // return response()->json(['status' => 'ok']);
+        return back()->with('success', 'Assets reassigned successfully.');
     }
 
     public function bulkReassign(Request $request, AssetAssignment $assignment)
