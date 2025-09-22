@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, UserCheck2, UserX, AlertTriangle } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, UserCheck2, UserX, AlertTriangle, UserPen } from 'lucide-react';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { formatDateLong } from '@/types/custom-index';
 import type { AssignmentPageProps, AssetAssignment } from '@/types/asset-assignment';
@@ -32,7 +32,8 @@ export default function AssignmentsIndex({
     units,
     assets,
     currentUser,
-    users
+    users,
+    available_personnels,
 }: AssignmentPageProps) {
     const { props } = usePage<AssignmentPageProps>();
 
@@ -298,7 +299,7 @@ export default function AssignmentsIndex({
                                                 }}
                                                 className="cursor-pointer"
                                             >
-                                                <UserCheck2 className="h-4 w-4 text-blue-600" />
+                                                <UserPen className="h-4 w-4 text-blue-600" />
                                             </Button>
 
                                             <Button
@@ -376,7 +377,8 @@ export default function AssignmentsIndex({
                     refreshAssignments();
                 }}
                 assets={assets}
-                personnels={personnels}
+                // personnels={personnels}
+                available_personnels={available_personnels}
                 units={units}
                 currentUserId={currentUser?.id ?? 0}
                 users={users}
@@ -392,7 +394,8 @@ export default function AssignmentsIndex({
                     }}
                     assignment={toEdit}
                     assets={assets}          
-                    personnels={personnels}  
+                    // personnels={personnels}  
+                    available_personnels={available_personnels}
                     units={units}  
                     currentUserId={currentUser?.id ?? 0}
                     users={users}       

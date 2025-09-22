@@ -126,11 +126,27 @@ class Personnel extends Model
     public static function activeForAssignments()
     {
         return static::where('status', 'active')
-            ->select('id', 'first_name', 'last_name', 'position', 'unit_or_department_id')
+            ->select('id', 'first_name', 'middle_name', 'last_name', 'position', 'unit_or_department_id')
             ->get()
             ->map(fn($p) => [
                 'id' => $p->id,
-                'full_name' => trim("{$p->first_name} {$p->last_name}"),
+                'full_name' => $p->full_name,
+                'position' => $p->position,
+                'unit_or_department_id' => $p->unit_or_department_id,
+            ]);
+    }
+
+    public static function availableForNewAssignments()
+    {
+        $assignedIds = AssetAssignment::pluck('personnel_id')->unique();
+
+        return static::where('status', 'active')
+            ->whereNotIn('id', $assignedIds)
+            ->select('id', 'first_name', 'middle_name', 'last_name', 'position', 'unit_or_department_id')
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'full_name' => $p->full_name,
                 'position' => $p->position,
                 'unit_or_department_id' => $p->unit_or_department_id,
             ]);

@@ -118,27 +118,34 @@ export default function ReassignAssetsModal({
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
             <DialogContent className="flex max-h-[90vh] min-h-[75vh] w-full max-w-[750px] flex-col overflow-hidden p-6 sm:max-w-[850px]">
                 <DialogHeader>
-                    <DialogTitle>Reassign Assets</DialogTitle>
+                    <DialogTitle>
+                        Reassign Assets
+                        {/* {fromPersonnel && (
+                            <span className="ml-1 font-bold text-blue-700">
+                                {personnels.find((p) => p.id === fromPersonnel)?.full_name ?? ''}
+                            </span>
+                        )} */}
+                    </DialogTitle>
                     <DialogDescription>
                         Select personnel and reassign assets as needed.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="mb-4 flex gap-2">
-                <Button
-                    variant={mode === 'single' ? 'default' : 'outline'}
-                    onClick={() => setMode('single')}
-                    className="cursor-pointer"
-                >
-                    Single Asset Mode
-                </Button>
-                <Button
-                    variant={mode === 'bulk' ? 'default' : 'outline'}
-                    onClick={() => setMode('bulk')}
-                    className="cursor-pointer"
-                >
-                    Bulk Mode
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant={mode === 'single' ? 'default' : 'outline'}
+                        onClick={() => setMode('single')}
+                        className="cursor-pointer"
+                    >
+                        Single Asset Mode
+                    </Button>
+                    <Button
+                        variant={mode === 'bulk' ? 'default' : 'outline'}
+                        onClick={() => setMode('bulk')}
+                        className="cursor-pointer"
+                    >
+                        Bulk Mode
+                    </Button>
                 </div>
 
                 {/* <div className="flex-1 overflow-y-auto pr-2 -mr-2 text-sm"> */}
@@ -146,38 +153,40 @@ export default function ReassignAssetsModal({
 
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                        <label className="mb-1 block font-medium">Current Personnel</label>
-                        <div className="font-semibold text-gray-900">
-                            {fromPersonnel
-                            ? personnels.find((p) => p.id === fromPersonnel)?.full_name ?? '—'
-                            : '—'}
-                        </div>
+                            <label className="mb-1 block text-sm font-medium text-muted-foreground">
+                                Current Personnel
+                            </label>
+                            <div className="text-xl font-bold tracking-wide text-blue-700">
+                                {fromPersonnel
+                                ? personnels.find((p) => p.id === fromPersonnel)?.full_name ?? '—'
+                                : '—'}
+                            </div>
                         </div>
 
                         {mode === 'bulk' && (
-                        <div>
-                            <label className="mb-1 block font-medium">Transfer To</label>
-                            <Select
-                            className="w-full"
-                            value={
-                                toPersonnel
-                                ? personnels.find((p) => p.id === toPersonnel) ?? null
-                                : null
-                            }
-                            options={personnels.filter((p) => p.id !== fromPersonnel)}
-                            getOptionValue={(p) => String(p.id)}
-                            getOptionLabel={(p) => p.full_name}
-                            onChange={(opt) => setToPersonnel(opt ? opt.id : null)}
-                            isClearable
-                            placeholder="Select target personnel"
-                            styles={{
-                                control: (base) => ({ ...base, minHeight: 36, textAlign: 'left' }),
-                                valueContainer: (base) => ({ ...base, textAlign: 'left' }),
-                                placeholder: (base) => ({ ...base, marginLeft: 2 }),
-                                menu: (base) => ({ ...base, zIndex: 50 }),
-                            }}
-                            />
-                        </div>
+                            <div>
+                                <label className="mb-1 block font-medium">Transfer To</label>
+                                <Select
+                                    className="w-full"
+                                    value={
+                                        toPersonnel
+                                        ? personnels.find((p) => p.id === toPersonnel) ?? null
+                                        : null
+                                    }
+                                    options={personnels.filter((p) => p.id !== fromPersonnel)}
+                                    getOptionValue={(p) => String(p.id)}
+                                    getOptionLabel={(p) => p.full_name}
+                                    onChange={(opt) => setToPersonnel(opt ? opt.id : null)}
+                                    isClearable
+                                    placeholder="Select target personnel"
+                                    styles={{
+                                        control: (base) => ({ ...base, minHeight: 36, textAlign: 'left' }),
+                                        valueContainer: (base) => ({ ...base, textAlign: 'left' }),
+                                        placeholder: (base) => ({ ...base, marginLeft: 2 }),
+                                        menu: (base) => ({ ...base, zIndex: 50 }),
+                                    }}
+                                />
+                            </div>
                         )}
                     </div>
 
@@ -188,8 +197,8 @@ export default function ReassignAssetsModal({
                                     <thead className="bg-gray-100 text-gray-700">
                                         <tr>
                                             <th className="px-3 py-2 text-center w-12">#</th>
-                                            <th className="px-3 py-2 text-center w-50 bg-gray-300">Serial No</th>
-                                            <th className="px-3 py-2 text-center w-50 bg-gray-200">Asset Name</th>
+                                            <th className="px-3 py-2 text-center w-50">Serial No</th>
+                                            <th className="px-3 py-2 text-center w-50">Asset Name</th>
                                             <th className="px-3 py-2 text-center" style={{ width: '18rem' }}>
                                                 Action
                                             </th>

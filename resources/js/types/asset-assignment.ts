@@ -68,6 +68,13 @@ export type AssignmentPageProps = {
         full_name: string;
         unit_or_department_id?: number | null;
     }[];
+
+    available_personnels: {
+        id: number; 
+        full_name: string;
+        unit_or_department_id?: number | null;
+    }[];
+
     units: { 
         id: number; 
         name: string 
@@ -97,6 +104,7 @@ export type MinimalAsset = {
         name: string 
     };
     unit_or_department_id?: number | null;
+    is_assigned?: boolean;
 };
 
 export type AssignmentAssetsResponse = {

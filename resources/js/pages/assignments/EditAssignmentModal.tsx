@@ -19,7 +19,9 @@ interface Props {
     onClose: () => void;
     assignment: (AssetAssignment & { items?: AssetAssignmentItem[] }) | null;
     assets: MinimalAsset[];
-    personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
+    // personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
+    available_personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
+
     units: { id: number; name: string }[];
     currentUserId: number;
     users: { id: number; name: string }[];
@@ -30,7 +32,8 @@ export default function EditAssignmentModal({
     onClose,
     assignment,
     assets,
-    personnels,
+    // personnels,
+    available_personnels,
     units,
     currentUserId,
     users,
@@ -82,22 +85,61 @@ export default function EditAssignmentModal({
     }, [show, assignment, setData, currentUserId, clearErrors]);
 
     // Filter personnels (but always keep current one)
+    // const filteredPersonnels = selectedUnit
+    //     ? personnels.filter(
+    //         (p) =>
+    //         p.unit_or_department_id === selectedUnit ||
+    //         p.id === data.personnel_id
+    //     )
+    //     : personnels;
+
+    // Filter personnels: allow only available_personnels + current personnel
+    const basePersonnels = [
+    ...available_personnels,
+    ...(assignment?.personnel
+        ? [{
+            id: assignment.personnel.id,
+            full_name: assignment.personnel.full_name,
+            unit_or_department_id: assignment.personnel.unit_or_department?.id ?? null,
+        }]
+        : []),
+    ];
+
+
+    // Deduplicate by ID
+    const uniquePersonnels = basePersonnels.filter(
+        (p, idx, arr) => arr.findIndex(pp => pp.id === p.id) === idx
+    );
+
     const filteredPersonnels = selectedUnit
-        ? personnels.filter(
+        ? uniquePersonnels.filter(
             (p) =>
-            p.unit_or_department_id === selectedUnit ||
-            p.id === data.personnel_id
+                p.unit_or_department_id === selectedUnit ||
+                p.id === data.personnel_id
         )
-        : personnels;
+        : uniquePersonnels;
+
+    const currentAssignmentAssetIds = assignment?.items?.map(i => i.asset_id) ?? [];
+
+    const filteredAssets = selectedUnit
+    ? assets.filter(
+        (a) =>
+            a.unit_or_department_id === selectedUnit &&
+            (!a.is_assigned || currentAssignmentAssetIds.includes(a.id))
+        )
+    : assets.filter(
+        (a) =>
+            !a.is_assigned || currentAssignmentAssetIds.includes(a.id)
+        );
 
     // Filter assets (only those in the selected unit and not already assigned)
-    const filteredAssets = selectedUnit
-        ? assets.filter(
-            (a) =>
-            a.unit_or_department_id === selectedUnit &&
-            !data.selected_assets.includes(a.id)
-        )
-        : assets.filter((a) => !data.selected_assets.includes(a.id));
+    // const filteredAssets = selectedUnit
+    //     ? assets.filter(
+    //         (a) =>
+    //         a.unit_or_department_id === selectedUnit &&
+    //         !data.selected_assets.includes(a.id)
+    //     )
+    //     : assets.filter((a) => !data.selected_assets.includes(a.id));
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -248,41 +290,37 @@ export default function EditAssignmentModal({
                             })}
 
                             {showAssetDropdown.map(
-                                (visible, index) =>
-                                visible && (
+                                (visible, index) =>  visible && (
                                     <div key={`asset-${index}`} className="flex items-center gap-2">
-                                    <Select
-                                        className="w-full"
-                                        options={filteredAssets.map((a) => {
-                                        const locationParts: string[] = [];
-                                        if (a.building?.name) locationParts.push(a.building.name);
-                                        if (a.building_room?.room)
-                                            locationParts.push(a.building_room.room);
-                                        if (a.sub_area?.name) locationParts.push(a.sub_area.name);
+                                        <Select
+                                            className="w-full"
+                                            options={filteredAssets
+                                                .filter(a => !data.selected_assets.includes(a.id))
+                                                .filter(a => !a.is_assigned || currentAssignmentAssetIds.includes(a.id))
+                                                .map((a) => {
+                                                    const locationParts: string[] = [];
+                                                    if (a.building?.name) locationParts.push(a.building.name);
+                                                    if (a.building_room?.room) locationParts.push(a.building_room.room);
+                                                    if (a.sub_area?.name) locationParts.push(a.sub_area.name);
 
-                                        const location =
-                                            locationParts.length > 0
-                                            ? ` (${locationParts.join(', ')})`
-                                            : '';
+                                                    const location =
+                                                        locationParts.length > 0 ? ` (${locationParts.join(', ')})` : '';
 
-                                        return {
-                                            value: a.id,
-                                            label: `${a.serial_no} – ${a.asset_name ?? ''}${location}`,
-                                        };
-                                        })}
-                                        onChange={(opt) => {
-                                        if (opt && !data.selected_assets.includes(opt.value)) {
-                                            setData('selected_assets', [
-                                            ...data.selected_assets,
-                                            opt.value,
-                                            ]);
-                                            const updated = [...showAssetDropdown];
-                                            updated[index] = false;
-                                            setShowAssetDropdown([...updated, true]);
-                                        }
-                                        }}
-                                        placeholder="Select assets"
-                                    />
+                                                    return {
+                                                        value: a.id,
+                                                        label: `${a.serial_no} – ${a.asset_name ?? ''}${location}`,
+                                                    };
+                                                })}
+                                            onChange={(opt) => {
+                                                if (opt && !data.selected_assets.includes(opt.value)) {
+                                                    setData('selected_assets', [...data.selected_assets, opt.value]);
+                                                    const updated = [...showAssetDropdown];
+                                                    updated[index] = false;
+                                                    setShowAssetDropdown([...updated, true]);
+                                                }
+                                            }}
+                                            placeholder="Select assets for assignment"
+                                        />
                                     </div>
                                 )
                             )}

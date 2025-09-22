@@ -9,7 +9,9 @@ interface Props {
     show: boolean;
     onClose: () => void;
     assets: MinimalAsset[];
-    personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
+    // personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
+    available_personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
+
     units: { id: number; name: string }[];
     currentUserId: number;
     users: { id: number; name: string }[];
@@ -19,7 +21,8 @@ export default function AddAssignmentModal({
     show,
     onClose,
     assets,
-    personnels,
+    // personnels,
+    available_personnels,
     units,
     currentUserId,
     users,
@@ -57,13 +60,15 @@ export default function AddAssignmentModal({
 
     // Filter personnels by selectedUnit
     const filteredPersonnels = selectedUnit
-        ? personnels.filter((p) => p.unit_or_department_id === selectedUnit)
-        : personnels;
+        ? available_personnels.filter((p) => p.unit_or_department_id === selectedUnit)
+        : available_personnels;
 
     // Filter assets by selectedUnit
     const filteredAssets = selectedUnit
-        ? assets.filter((a) => a.unit_or_department_id === selectedUnit)
-        : assets;
+    ? assets.filter(
+        (a) => a.unit_or_department_id === selectedUnit && !a.is_assigned
+        )
+    : assets.filter((a) => !a.is_assigned);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

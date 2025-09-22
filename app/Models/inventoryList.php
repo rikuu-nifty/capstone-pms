@@ -113,6 +113,7 @@ class InventoryList extends Model
                 'sub_area_id',
                 'unit_or_department_id',
             ])
+            ->withExists(['assignmentItems as is_assigned'])
             ->get();
     }
 

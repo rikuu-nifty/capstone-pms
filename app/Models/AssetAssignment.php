@@ -56,9 +56,9 @@ class AssetAssignment extends Model
             'assignedBy',
             'items.asset.assetModel.category',
         ])
-            ->withCount('items')
-            ->latest()
-            ->paginate($perPage);
+        ->withCount('items')
+        ->latest()
+        ->paginate($perPage);
 
         // force include assigned_by in JSON
         $assignments->getCollection()->transform(function ($assignment) {
@@ -72,6 +72,7 @@ class AssetAssignment extends Model
             'assignments' => $assignments,
             'totals'      => static::totals(),
             'personnels'  => Personnel::activeForAssignments(),
+            'available_personnels' => Personnel::availableForNewAssignments(),
             'units'       => UnitOrDepartment::listForAssignments(),
             'assets'      => InventoryList::listForAssignments(),
         ];
@@ -94,20 +95,6 @@ class AssetAssignment extends Model
         ];
     }
 
-    // public static function paginatedAssetsForPersonnel(int $personnelId, int $perPage = 10)
-    // {
-    //     return AssetAssignmentItem::with([
-    //         'asset.assetModel.category',
-    //         'asset.unitOrDepartment',
-    //         'asset.building',
-    //         'asset.buildingRoom',
-    //         'asset.subArea',
-    //         'assignment',
-    //     ])
-    //     ->whereHas('assignment', fn($q) => $q->where('personnel_id', $personnelId))
-    //     ->paginate($perPage);
-    // }
-
     public static function paginatedAssetsForPersonnel(int $personnelId, int $perPage = 10)
     {
         return AssetAssignmentItem::with([
@@ -121,7 +108,6 @@ class AssetAssignment extends Model
             ->whereHas('assignment', fn($q) => $q->withTrashed()->where('personnel_id', $personnelId))
             ->paginate($perPage);
     }
-
 
     public static function reassignItemToPersonnel(AssetAssignmentItem $item, int $newPersonnelId, int $userId)
     {
