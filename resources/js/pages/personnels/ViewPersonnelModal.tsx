@@ -91,12 +91,19 @@ export default function ViewPersonnelModal({
 
             {/* Details */}
             <div className="mt-6 grid grid-cols-1 gap-y-3 sm:grid-cols-2 sm:gap-x-12">
-                <div className="col-span-2 mb-2">
+                <div className="mb-2">
                     <span className="block text-xs font-medium text-muted-foreground">Unit / Department</span>
                     <p className="text-base font-semibold">{personnel.unit_or_department ?? "—"}</p>
                 </div>
                 
                <div>
+                    <span className="block text-xs font-medium text-muted-foreground">Assets Assigned</span>
+                    <p className="text-base font-semibold">
+                        {personnel.assigned_assets ? personnel.assigned_assets.length : 0}
+                    </p>
+                </div>
+                
+                <div>
                     <span className="block text-xs font-medium text-muted-foreground">System User</span>
                     <p className="flex items-center gap-2 text-base font-semibold">
                         {personnel.user_id ? (

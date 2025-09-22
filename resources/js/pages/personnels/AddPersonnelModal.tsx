@@ -156,7 +156,7 @@ export default function AddPersonnelModal({
 
             {/* User Dropdown */}
             <div>
-                <label className="mb-1 block font-medium">Link to User (optional)</label>
+                <label className="mb-1 block font-medium">System User Account</label>
                 <Select
                     className="w-full"
                     value={ data.user_id
@@ -176,7 +176,7 @@ export default function AddPersonnelModal({
                     }))}
                     onChange={(opt) => setData("user_id", opt ? opt.value : null)}
                     isClearable
-                    placeholder="Link user account"
+                    placeholder="Link system user account"
                 />
                 {errors.user_id && <p className="mt-1 text-xs text-red-500">{errors.user_id}</p>}
             </div>

@@ -79,6 +79,8 @@ class Personnel extends Model
 
                 'latest_assignment_id' => $p->assignments->first()?->id,
 
+                'created_at' => $p->created_at,
+                'updated_at' => $p->updated_at,
             ];
         });
     }
