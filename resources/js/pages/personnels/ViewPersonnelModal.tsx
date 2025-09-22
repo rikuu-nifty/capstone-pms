@@ -4,11 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { badgeVariants } from "@/components/ui/badge";
 import type { VariantProps } from "class-variance-authority";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 
 import ViewModal from "@/components/modals/ViewModal";
 import { formatDateLong, formatFullName } from "@/types/custom-index";
+import type { AssetAssignment, AssetAssignmentItem, Paginated } from "@/types/asset-assignment";
+
 import type { Personnel } from "@/types/personnel";
 import ReassignAssetsModal from "../assignments/ReassignAssetsModal";
+import ViewAssignmentModal from "../assignments/ViewAssignmentModal";
 
 interface Props {
     open: boolean;
@@ -32,6 +36,9 @@ export default function ViewPersonnelModal({
     personnels,
 }: Props) {
     const [showReassign, setShowReassign] = useState(false);
+    const [showViewAssignment, setShowViewAssignment] = useState(false);
+    const [assignmentData, setAssignmentData] = useState<AssetAssignment | null>(null);
+    const [assignmentItems, setAssignmentItems] = useState<Paginated<AssetAssignmentItem> | null>(null);
     
     const initials = useMemo(() => {
         if (!personnel) return "";
@@ -39,6 +46,17 @@ export default function ViewPersonnelModal({
     }, [personnel]);
 
     if (!personnel) return null;
+
+    const openAssignment = async (assignmentId: number) => {
+        try {
+            const res = await axios.get(route("assignments.show.json", { assignment: assignmentId }));
+            setAssignmentData(res.data.assignment);
+            setAssignmentItems(res.data.items);
+            setShowViewAssignment(true);
+        } catch (err) {
+            console.error("Failed to load assignment:", err);
+        }
+    };
 
     const statusConfig = statusMap[personnel.status];
 
@@ -124,19 +142,33 @@ export default function ViewPersonnelModal({
                         }}
                         className="cursor-pointer"
                     >
-                        Re-assign Assets
+                        Transfer Asset Assignment
                     </Button>
                     
-                    <Button
-                        variant="primary"
-                        onClick={() =>
-                            console.log("Placeholder: view assigned assets for", personnel.id)
-                        }
-                        className="cursor-pointer"
-                    >
-                        View Assigned Assets
-                    </Button>
-                    
+                    {/* {personnel.latest_assignment_id ? (
+                        <Button
+                            variant="primary"
+                            onClick={() => openAssignment(personnel.latest_assignment_id!)}
+                            className="cursor-pointer"
+                        >
+                            View Assigned Assets
+                        </Button>
+                    ) : (
+                        <Button variant="outline" disabled className="cursor-not-allowed">
+                            No Assigned Assets
+                        </Button>
+                    )} */}
+
+                    {personnel.assigned_assets && personnel.assigned_assets.length > 0 && personnel.latest_assignment_id && (
+                        <Button
+                            variant="primary"
+                            onClick={() => openAssignment(personnel.latest_assignment_id!)}
+                            className="cursor-pointer"
+                        >
+                            View Assigned Assets
+                        </Button>
+                    )}
+
                 </div>
             </div>
 
@@ -144,12 +176,21 @@ export default function ViewPersonnelModal({
                 <ReassignAssetsModal
                     open={showReassign}
                     onClose={() => setShowReassign(false)}
-                    personnels={personnels} // ✅ from props, not allPersonnels
+                    personnels={personnels} // from props, not allPersonnels
                     assignmentId={personnel?.latest_assignment_id ?? null}
                 />
             )}
-        </ViewModal>
 
+            {/* View Assignment Modal */}
+            {showViewAssignment && assignmentData && assignmentItems && (
+                <ViewAssignmentModal
+                    open={showViewAssignment}
+                    onClose={() => setShowViewAssignment(false)}
+                    assignment={assignmentData}
+                    items={assignmentItems}
+                />
+            )}
+        </ViewModal>
         </>
     );
 }

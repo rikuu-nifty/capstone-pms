@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, UserCheck2, UserX, AlertTriangle, UserPen } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, UserCheck2, UserX, AlertTriangle, UserPen, UserRoundMinus } from 'lucide-react';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { formatDateLong } from '@/types/custom-index';
 import type { AssignmentPageProps, AssetAssignment } from '@/types/asset-assignment';
@@ -198,7 +198,7 @@ export default function AssignmentsIndex({
 
                 {/* KPIs */}
                 {totals && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
                         {/* Total Assignments */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
@@ -208,6 +208,19 @@ export default function AssignmentsIndex({
                                 <div className="text-sm text-muted-foreground">Total Assignments</div>
                                 <div className="text-3xl font-bold">
                                     {Number(totals.total_assignments ?? 0).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Assignments with No Assets */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
+                                <UserRoundMinus className="h-7 w-7 text-yellow-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Assignments w/o Assets</div>
+                                <div className="text-3xl font-bold">
+                                    {Number(totals.assignments_with_no_assets ?? 0).toLocaleString()}
                                 </div>
                             </div>
                         </div>
@@ -377,7 +390,6 @@ export default function AssignmentsIndex({
                     refreshAssignments();
                 }}
                 assets={assets}
-                // personnels={personnels}
                 available_personnels={available_personnels}
                 units={units}
                 currentUserId={currentUser?.id ?? 0}
@@ -394,7 +406,6 @@ export default function AssignmentsIndex({
                     }}
                     assignment={toEdit}
                     assets={assets}          
-                    // personnels={personnels}  
                     available_personnels={available_personnels}
                     units={units}  
                     currentUserId={currentUser?.id ?? 0}

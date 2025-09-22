@@ -128,6 +128,28 @@ class AssetAssignmentController extends Controller
         ]);
     }
 
+    public function showJson(Request $request, AssetAssignment $assignment)
+    {
+        $assignment->load([
+            'personnel.unitOrDepartment',
+            'assignedBy',
+        ]);
+
+        $items = AssetAssignmentItem::with([
+            'asset.assetModel.category',
+            'asset.unitOrDepartment',
+            'asset.building',
+            'asset.buildingRoom',
+        ])
+            ->where('asset_assignment_id', $assignment->id)
+            ->paginate($request->input('per_page', 10));
+
+        return response()->json([
+            'assignment' => $assignment,
+            'items' => $items,
+        ]);
+    }
+
     public function assignmentAssets(Request $request, AssetAssignment $assignment)
     {
         $items = AssetAssignmentItem::with([
@@ -145,17 +167,6 @@ class AssetAssignmentController extends Controller
             'items' => $items,
         ];
     }
-
-    // public function reassignItem(Request $request, AssetAssignmentItem $item)
-    // {
-    //     $data = $request->validate([
-    //         'new_personnel_id' => ['required', Rule::exists('personnels', 'id')],
-    //     ]);
-
-    //     AssetAssignment::reassignItemToPersonnel($item, $data['new_personnel_id'], $request->user()->id);
-
-    //     return back()->with('success', 'Asset reassigned successfully.');
-    // }
 
     // SINGLE MODE but all saved at the same time
     public function bulkReassignItems(Request $request, AssetAssignment $assignment)

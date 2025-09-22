@@ -83,6 +83,8 @@ class AssetAssignment extends Model
         $activePersonnels = Personnel::where('status', 'active')->pluck('id');
         $inactivePersonnels = Personnel::where('status', 'inactive')->pluck('id');
         $leftUniversityPersonnels = Personnel::where('status', 'left_university')->pluck('id');
+        
+        
 
         return [
             'total_assignments'             => static::count(),
@@ -92,6 +94,7 @@ class AssetAssignment extends Model
             'assets_assigned_to_left_university' => AssetAssignmentItem::whereHas('assignment', function ($q) use ($leftUniversityPersonnels) {
                 $q->whereIn('personnel_id', $leftUniversityPersonnels);
             })->distinct('asset_id')->count('asset_id'),
+            'assignments_with_no_assets'          => static::doesntHave('items')->count(),
         ];
     }
 

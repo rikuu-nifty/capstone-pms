@@ -47,6 +47,7 @@ export type AssignmentTotals = {
     total_assets_assigned: number;
 
     assets_assigned_to_left_university: number;
+    assignments_with_no_assets: number;
 };
 
 export type Paginated<T> = {
