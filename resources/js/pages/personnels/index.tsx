@@ -372,6 +372,7 @@ export default function PersonnelsIndex({
                         setSelected(null);
                     }}
                     personnel={selected}
+                    personnels={personnels}
                 />
             )}
 

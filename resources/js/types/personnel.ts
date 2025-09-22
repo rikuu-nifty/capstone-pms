@@ -21,6 +21,8 @@ export type Personnel = {
         id: number | null;
         name: string;
     }[];
+
+    latest_assignment_id?: number | null;
 };
 
 export type UserLite = {
@@ -57,4 +59,5 @@ export type PersonnelPageProps = {
     users: UserLite[];
     units: UnitLite[];
     totals?: PersonnelTotals;
+    
 };

@@ -55,6 +55,7 @@ export default function AddAssignmentModal({
             setSelectedUnit(null);
 
             setData('assigned_by', currentUserId);
+            setData('date_assigned', new Date().toISOString().split('T')[0]);
         }
     }, [show, reset, clearErrors, currentUserId, setData]);
 
@@ -167,12 +168,12 @@ export default function AddAssignmentModal({
                     value={data.date_assigned}
                     onChange={(e) => setData('date_assigned', e.target.value)}
                 />
-                {!data.date_assigned && (
+                {/* {!data.date_assigned && (
                     <p className="mt-1 text-xs text-amber-600 italic">
                         Leaving this empty will default it to today's date.
                     </p>
-                )}
-                {/* {errors.date_assigned && <p className="mt-1 text-xs text-red-500">{errors.date_assigned}</p>} */}
+                )} */}
+                {errors.date_assigned && <p className="mt-1 text-xs text-red-500">Date assigned was not filled out, defaulting to today's date.</p>}
             </div>
 
            {/* Assigned By */}

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { badgeVariants } from "@/components/ui/badge";
@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import ViewModal from "@/components/modals/ViewModal";
 import { formatDateLong, formatFullName } from "@/types/custom-index";
 import type { Personnel } from "@/types/personnel";
+import ReassignAssetsModal from "../assignments/ReassignAssetsModal";
 
 interface Props {
     open: boolean;
     onClose: () => void;
     personnel: Personnel | null;
+    personnels: Personnel[];
 }
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
@@ -23,7 +25,13 @@ const statusMap: Record<Personnel["status"], { label: string; variant: BadgeVari
     left_university: { label: "Left University", variant: "personnel_left" },
 };
 
-export default function ViewPersonnelModal({ open, onClose, personnel }: Props) {
+export default function ViewPersonnelModal({ 
+    open, 
+    onClose, 
+    personnel,
+    personnels,
+}: Props) {
+    const [showReassign, setShowReassign] = useState(false);
     
     const initials = useMemo(() => {
         if (!personnel) return "";
@@ -110,18 +118,19 @@ export default function ViewPersonnelModal({ open, onClose, personnel }: Props) 
                 <div className="col-span-2 flex flex-wrap justify-center gap-4">
                     <Button
                         // variant="outline"
-                        onClick={() =>
-                        console.log("Placeholder: assign asset for", personnel.id)
-                        }
+                        onClick={() => {
+                            // open reassign modal
+                            setShowReassign(true);
+                        }}
                         className="cursor-pointer"
                     >
-                        Assign Assets
+                        Re-assign Assets
                     </Button>
                     
                     <Button
                         variant="primary"
                         onClick={() =>
-                        console.log("Placeholder: view assigned assets for", personnel.id)
+                            console.log("Placeholder: view assigned assets for", personnel.id)
                         }
                         className="cursor-pointer"
                     >
@@ -130,6 +139,15 @@ export default function ViewPersonnelModal({ open, onClose, personnel }: Props) 
                     
                 </div>
             </div>
+
+           {showReassign && (
+                <ReassignAssetsModal
+                    open={showReassign}
+                    onClose={() => setShowReassign(false)}
+                    personnels={personnels} // ✅ from props, not allPersonnels
+                    assignmentId={personnel?.latest_assignment_id ?? null}
+                />
+            )}
         </ViewModal>
 
         </>

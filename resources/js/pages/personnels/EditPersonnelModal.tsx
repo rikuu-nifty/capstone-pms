@@ -177,7 +177,7 @@ export default function EditPersonnelModal({
 
             {/* Link to User */}
             <div className="col-span-1">
-                <label className="mb-1 block font-medium">Link to User</label>
+                <label className="mb-1 block font-medium">System User Account</label>
                 <Select
                     className="w-full"
                     value={

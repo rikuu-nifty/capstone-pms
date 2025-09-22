@@ -76,6 +76,9 @@ class Personnel extends Model
                         'name' => $i->asset?->asset_name ?? $i->asset?->serial_no,
                     ])
                 )->filter()->values(),
+
+                'latest_assignment_id' => $p->assignments->first()?->id,
+
             ];
         });
     }
