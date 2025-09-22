@@ -431,6 +431,20 @@ Route::get('/', function () {
     Route::get('/inventory-list/{inventory_list}/json', [InventoryListController::class, 'fetch'])
         ->name('inventory-list.fetch'); //this is for seeing the asset
 
+    Route::get('/assignments/personnel/{personnel}/assets', [AssetAssignmentController::class, 'personnelAssets'])->name('assignments.personnelAssets')
+        ->middleware('can:view-assignments');
+
+    Route::put('/assignments/item/{item}/reassign', [AssetAssignmentController::class, 'reassignItem'])->name('assignments.reassignItem')
+        ->middleware('can:update-assignments');
+
+    Route::put('/assignments/personnel/{personnel}/bulk-reassign', [AssetAssignmentController::class, 'bulkReassign'])->name('assignments.bulkReassign')
+        ->middleware('can:update-assignments');
+
+    Route::get('/assignments/{assignment}/assets', [AssetAssignmentController::class, 'assignmentAssets'])
+        ->name('assignments.assignmentAssets')
+        ->middleware('can:view-assignments');
+
+
     //PROFILE
 });
 

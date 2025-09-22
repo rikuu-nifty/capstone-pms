@@ -98,3 +98,8 @@ export type MinimalAsset = {
     };
     unit_or_department_id?: number | null;
 };
+
+export type AssignmentAssetsResponse = {
+    personnel_id: number;
+    items: Paginated<AssetAssignmentItem>;
+};

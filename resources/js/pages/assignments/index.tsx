@@ -9,15 +9,17 @@ import Pagination, { PageInfo } from '@/components/Pagination';
 import { formatDateLong } from '@/types/custom-index';
 import type { AssignmentPageProps, AssetAssignment } from '@/types/asset-assignment';
 
+import { Input } from '@/components/ui/input';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
+
+import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
+import PersonnelFilterDropdown from '@/components/filters/PersonnelFilterDropdown';
+
 import AddAssignmentModal from './AddAssignmentModal';
 import EditAssignmentModal from './EditAssignmentModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import ViewAssignmentModal from './ViewAssignmentModal';
-
-import { Input } from '@/components/ui/input';
-import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
-import PersonnelFilterDropdown from '@/components/filters/PersonnelFilterDropdown';
-import useDebouncedValue from '@/hooks/useDebouncedValue';
+import ReassignAssetsModal from './ReassignAssetsModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Assignments', href: '/assignments' },
@@ -41,16 +43,25 @@ export default function AssignmentsIndex({
     const [showView, setShowView] = useState(false);
     const [viewAssignment, setViewAssignment] = useState<AssetAssignment | null>(null);
 
+    const [showReassign, setShowReassign] = useState(false);
+    const [reassignPersonnel, setReassignPersonnel] = useState<number | null>(null);
+
     const [showDelete, setShowDelete] = useState(false);
     const [toDelete, setToDelete] = useState<AssetAssignment | null>(null);
 
     const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase();
 
+    const refreshAssignments = () => {
+        router.reload({
+            only: ['assignments', 'totals'],
+        });
+    };
+
     const sortOptions = [
-    { value: 'date_assigned', label: 'Date Assigned' },
-    { value: 'updated_at', label: 'Date Updated' },
-    { value: 'items_count', label: 'Assets Count' },
+        { value: 'date_assigned', label: 'Date Assigned' },
+        { value: 'updated_at', label: 'Date Updated' },
+        { value: 'items_count', label: 'Assets Count' },
     ] as const;
 
     type SortKey = (typeof sortOptions)[number]['value'];
@@ -282,6 +293,19 @@ export default function AssignmentsIndex({
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => {
+                                                    // setReassignPersonnel(a.personnel?.id ?? null);
+                                                    setReassignPersonnel(a.id);
+                                                    setShowReassign(true);
+                                                }}
+                                                className="cursor-pointer"
+                                            >
+                                                <UserCheck2 className="h-4 w-4 text-blue-600" />
+                                            </Button>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
                                                     setToEdit(a);
                                                     setShowEdit(true);
                                                 }}
@@ -348,7 +372,10 @@ export default function AssignmentsIndex({
             {/* Modals */}
             <AddAssignmentModal
                 show={showAdd}
-                onClose={() => setShowAdd(false)}
+                onClose={() => {
+                    setShowAdd(false)
+                    refreshAssignments();
+                }}
                 assets={assets}
                 personnels={personnels}
                 units={units}
@@ -362,6 +389,7 @@ export default function AssignmentsIndex({
                     onClose={() => {
                         setShowEdit(false);
                         setToEdit(null);
+                        refreshAssignments();
                     }}
                     assignment={toEdit}
                     assets={assets}          
@@ -378,6 +406,19 @@ export default function AssignmentsIndex({
                     onClose={closeView}
                     assignment={viewAssignment}
                     items={props.viewing_items}
+                />
+            )}
+
+            {reassignPersonnel && (
+                <ReassignAssetsModal
+                    open={showReassign}
+                    onClose={() => {
+                    setShowReassign(false);
+                    setReassignPersonnel(null);
+                    refreshAssignments();
+                    }}
+                    assignmentId={reassignPersonnel} 
+                    personnels={personnels}
                 />
             )}
 

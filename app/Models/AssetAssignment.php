@@ -94,12 +94,34 @@ class AssetAssignment extends Model
         ];
     }
 
+    // public static function paginatedAssetsForPersonnel(int $personnelId, int $perPage = 10)
+    // {
+    //     return AssetAssignmentItem::with([
+    //         'asset.assetModel.category',
+    //         'asset.unitOrDepartment',
+    //         'asset.building',
+    //         'asset.buildingRoom',
+    //         'asset.subArea',
+    //         'assignment',
+    //     ])
+    //     ->whereHas('assignment', fn($q) => $q->where('personnel_id', $personnelId))
+    //     ->paginate($perPage);
+    // }
+
     public static function paginatedAssetsForPersonnel(int $personnelId, int $perPage = 10)
     {
-        return AssetAssignmentItem::with('asset')
-            ->whereHas('assignment', fn($q) => $q->where('personnel_id', $personnelId))
+        return AssetAssignmentItem::with([
+            'asset.assetModel.category',
+            'asset.unitOrDepartment',
+            'asset.building',
+            'asset.buildingRoom',
+            'asset.subArea',
+            'assignment' => fn($q) => $q->withTrashed(),
+        ])
+            ->whereHas('assignment', fn($q) => $q->withTrashed()->where('personnel_id', $personnelId))
             ->paginate($perPage);
     }
+
 
     public static function reassignItemToPersonnel(AssetAssignmentItem $item, int $newPersonnelId, int $userId)
     {

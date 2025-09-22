@@ -128,12 +128,22 @@ class AssetAssignmentController extends Controller
         ]);
     }
 
-    public function personnelAssets(Request $request, Personnel $personnel)
+    public function assignmentAssets(Request $request, AssetAssignment $assignment)
     {
-        return AssetAssignment::paginatedAssetsForPersonnel(
-            $personnel->id,
-            $request->input('per_page', 10)
-        );
+        $items = AssetAssignmentItem::with([
+            'asset.assetModel.category',
+            'asset.unitOrDepartment',
+            'asset.building',
+            'asset.buildingRoom',
+            'asset.subArea',
+        ])
+        ->where('asset_assignment_id', $assignment->id)
+        ->paginate($request->input('per_page', 10));
+
+        return [
+            'personnel_id' => $assignment->personnel_id,
+            'items' => $items,
+        ];
     }
 
     public function reassignItem(Request $request, AssetAssignmentItem $item)

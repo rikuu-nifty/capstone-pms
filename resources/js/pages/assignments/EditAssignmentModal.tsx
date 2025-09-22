@@ -215,7 +215,6 @@ export default function EditAssignmentModal({
                             )}
                         </div>
 
-
                         <div className="col-span-2 border-t mt-2 mb-2"></div>
 
                         {/* Assets */}
