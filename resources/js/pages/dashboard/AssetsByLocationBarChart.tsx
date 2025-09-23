@@ -72,8 +72,8 @@ export default function AssetsByLocationBarChart({ datasets, title, description 
                         <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis
                             dataKey="location"
-                            tickLine={false}
-                            axisLine={false}
+                            tickLine={true}
+                            axisLine={true}
                             tickMargin={10}
                             interval={0}
                             angle={activeData.length > 6 ? -30 : 0}
