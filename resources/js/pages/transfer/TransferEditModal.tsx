@@ -49,14 +49,8 @@ export default function TransferEditModal({
         receiving_organization: extractId(transfer.receiving_organization),
         designated_employee: extractId(transfer.designated_employee),
         assigned_by: currentUser.id,
-        scheduled_date: transfer.scheduled_date
-            ? new Date(transfer.scheduled_date).toISOString().split('T')[0]
-            : ''
-        ,
-        actual_transfer_date: transfer.actual_transfer_date
-            ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
-            : ''
-        ,
+        scheduled_date: transfer.scheduled_date ?? '', // NEW
+        actual_transfer_date: transfer.actual_transfer_date ?? '', // NEW
         received_by: String(transfer.received_by ?? ''),
         status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',
@@ -107,14 +101,8 @@ export default function TransferEditModal({
                 receiving_organization: extractId(transfer.receiving_organization),
                 designated_employee: extractId(transfer.designated_employee),
                 assigned_by: currentUser.id,
-                scheduled_date: transfer.scheduled_date
-                    ? new Date(transfer.scheduled_date).toISOString().split('T')[0]
-                    : ''
-                ,
-                actual_transfer_date: transfer.actual_transfer_date
-                    ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
-                    : ''
-                ,
+                scheduled_date: transfer.scheduled_date ?? '',
+                actual_transfer_date: transfer.actual_transfer_date ?? '',
                 received_by: transfer.received_by ? String(transfer.received_by) : null,
                 status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
                 remarks: transfer.remarks ?? '',
@@ -152,12 +140,14 @@ export default function TransferEditModal({
     ]);
 
     useEffect(() => {
-        const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
-        const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
-        const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+    const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
+    const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
+    const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
 
-        let newStatus: TransferFormData['status'] | null = null;
+    let newStatus: TransferFormData['status'] | null = null;
 
+    // ✅ Only auto-recalculate if current status is auto-managed (pending_review or upcoming)
+    if (['pending_review', 'upcoming'].includes(data.status)) {
         if (pendingCount === 0) {
             if (transferredCount > 0 && cancelledCount === 0) {
                 newStatus = 'completed';
@@ -170,22 +160,29 @@ export default function TransferEditModal({
         } else if (pendingCount > 0) {
             const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
 
-            if (['completed'].includes(data.status)) {
-                newStatus = 'in_progress'; // Reverted from completed → in_progress
+            if (data.status === 'completed') {
+                // ⚠️ Do nothing here — let handleSubmit + warning modal decide
+                return;
             } else if (scheduledDate && scheduledDate < new Date()) {
                 // Past due → overdue
                 newStatus = 'overdue';
+            } else if (scheduledDate && scheduledDate >= new Date()) {
+                if (data.status !== 'pending_review') {
+                    newStatus = 'upcoming';
+                }
             }
             // else {
-            //     // Still active → upcoming
-            //     newStatus = 'pending_review';
+            //     still active with pending → keep whatever the user selected (default: pending_review)
             // }
         }
+    }
 
-        if (newStatus && newStatus !== data.status) {
-            setData('status', newStatus);
-        }
-    }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
+    if (newStatus && newStatus !== data.status) {
+        setData('status', newStatus);
+    }
+}, [data.transfer_assets, data.scheduled_date, data.status, setData]);
+
+
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

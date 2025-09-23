@@ -30,6 +30,7 @@ export default function DetailedAssetsTable({ assets }: DetailedAssetsTableProps
                 <table className="w-full border-collapse text-sm">
                     <thead>
                         <tr className="bg-gray-100 text-left text-gray-800">
+                            <th className="px-4 py-3 font-semibold">MR No.</th> {/* ✅ new */}
                             <th className="px-4 py-3 font-semibold">Asset Name</th>
                             <th className="px-4 py-3 font-semibold">Brand</th>
                             <th className="px-4 py-3 font-semibold">Model</th>
@@ -44,6 +45,7 @@ export default function DetailedAssetsTable({ assets }: DetailedAssetsTableProps
                     <tbody>
                         {currentRows.map((asset, idx) => (
                             <tr key={asset.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-t transition hover:bg-gray-100`}>
+                                 <td className="px-4 py-3">{asset.memorandum_no ?? '—'}</td> {/* ✅ MR No. */}
                                 <td className="px-4 py-3">{asset.asset_name}</td>
                                 <td className="px-4 py-3">{asset.brand}</td>
                                 <td className="px-4 py-3">{asset.model}</td>

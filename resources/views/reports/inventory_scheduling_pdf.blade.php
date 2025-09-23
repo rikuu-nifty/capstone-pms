@@ -28,8 +28,8 @@
 
             $reportYear = $fromDate->year . '-' . $latestYear;
         } elseif ($toDate) {
-            // Case 3: only to → (toYear-1)-toYear
-            $reportYear = $toDate->year - 1 . '-' . $toDate->year;
+            // Case 3: only 'to' date provided → currentYear-toYear
+           $reportYear = ($toDate->year - 1) . '-' . $toDate->year;
         } else {
             // Case 4: default
             $year = now()->year;
@@ -136,7 +136,7 @@
                     <td>
                         {{ $s->actual_date_of_inventory ? Carbon::parse($s->actual_date_of_inventory)->format('M d, Y') : '—' }}
                     </td>
-                    <td>{{ $s->scheduling_status }}</td>
+                    <td>{{ str_replace('_', ' ', $s->scheduling_status) }}</td>
                     <td>{{ $s->assets()->count() }}</td>
                 </tr>
             @endforeach

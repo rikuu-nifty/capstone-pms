@@ -4,21 +4,32 @@ import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Head, usePage } from '@inertiajs/react';
 import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lucide-react';
 import { AssetInventoryListChart } from './charts/AssetInventoryListChart';
-import { InventorySchedulingStatusChart } from './charts/InventorySchedulingStatusChart'; // ✅ new import
+import { InventorySchedulingStatusChart } from './charts/InventorySchedulingStatusChart';
+import TransferStatusChart from './charts/TransferStatusChart';
 import { ReportCard } from './ReportCard';
 
 type CategoryData = { label: string; value: number };
 type SchedulingData = { label: string; value: number };
+type TransferStatusData = {
+    month: string;
+    completed: number;
+    pending_review: number;
+    upcoming: number;
+    in_progress: number;
+    overdue: number;
+    cancelled: number;
+};
 
 type ReportsPageProps = InertiaPageProps & {
     categoryData: CategoryData[];
-    schedulingData: SchedulingData[]; // ✅ extend props to include scheduling data
+    schedulingData: SchedulingData[];
+    transferData: TransferStatusData[]; // ✅ now monthly trends dataset
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }];
 
 export default function ReportsIndex() {
-    const { categoryData, schedulingData } = usePage<ReportsPageProps>().props; // ✅ get schedulingData from props
+    const { categoryData, schedulingData, transferData } = usePage<ReportsPageProps>().props;
 
     const reports = [
         {
@@ -35,14 +46,15 @@ export default function ReportsIndex() {
             href: route('reports.inventory-scheduling'),
             icon: <CalendarCheck2 className="h-5 w-5 text-green-500" />,
             footer: <span className="text-xs text-muted-foreground">Click "View" to see more details</span>,
-            chart: <InventorySchedulingStatusChart data={schedulingData} />, // ✅ add chart here
+            chart: <InventorySchedulingStatusChart data={schedulingData} />,
         },
         {
             title: 'Property Transfer Report',
-            description: 'Placeholder for transfer report.',
+            description: 'Overview of transfers across buildings and departments.',
             href: route('reports.transfer'),
             icon: <ArrowRightLeft className="h-5 w-5 text-orange-500" />,
             footer: <span className="text-xs text-muted-foreground">Click "View" to see more details</span>,
+            chart: <TransferStatusChart data={transferData} />, // ✅ only data mode
         },
         {
             title: 'Turnover/Disposal Report',

@@ -24,8 +24,8 @@
 
             $reportYear = $fromDate->year . ' - ' . $latestYear;
         } elseif ($toDate) {
-            // ✅ Only to → (toYear-1)-toYear
-            $reportYear = $toDate->year - 1 . ' - ' . $toDate->year;
+            // Case 3: only 'to' date provided → currentYear-toYear
+             $reportYear = ($toDate->year - 1) . '-' . $toDate->year;
         } else {
             // ✅ Default → current year-current year+1
             $reportYear = now()->year . '-' . (now()->year + 1);

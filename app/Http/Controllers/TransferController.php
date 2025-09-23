@@ -463,38 +463,38 @@ class TransferController extends Controller
         $allCancelled   = $assets->every(fn($ta) => $ta->asset_transfer_status === 'cancelled');
         $hasPending     = $assets->contains(fn($ta) => $ta->asset_transfer_status === 'pending');
 
-        if ($allTransferred) {
-            $transfer->update([
-                'status' => 'completed'
-            ]);
-        } elseif ($allCancelled) {
-            $transfer->update([
-                'status' => 'cancelled'
-            ]);
-        } elseif (!$hasPending) {   // Mix of transferred + cancelled → still treated as completed
-            $transfer->update([
-                'status' => 'in_progress'
-            ]); 
-        } elseif ($hasPending) {
-            if ($oldStatus === 'completed') {
-                // Reverted from completed → check overdue vs in_progress
-                if ($transfer->scheduled_date && $transfer->scheduled_date < now()) {
-                    $transfer->update([
-                        'status' => 'overdue'
-                    ]);
-                } else {
-                    $transfer->update([
-                        'status' => 'in_progress'
-                    ]);
-                }
-            } elseif ($transfer->scheduled_date < now()) {
-                // Normal overdue case
-                $transfer->update(['status' => 'overdue']);
-            } else {
-                // Normal still active case
+        // --- Auto-status resolution (skip if user explicitly set upcoming/pending_review) ---
+        if (! in_array($transfer->status, ['upcoming', 'pending_review'])) {
+            if ($allTransferred) {
+                // every asset transferred
+                $transfer->update(['status' => 'completed']);
+
+            } elseif ($allCancelled) {
+                // every asset cancelled
+                $transfer->update(['status' => 'cancelled']);
+
+            } elseif (!$hasPending) {
+                // mixed: some transferred, some cancelled → not completed, not cancelled → in progress
                 $transfer->update(['status' => 'in_progress']);
+
+            } elseif ($hasPending) {
+                if ($oldStatus === 'completed') {
+                    // reverted from completed → check overdue vs in_progress
+                    if ($transfer->scheduled_date && $transfer->scheduled_date < now()) {
+                        $transfer->update(['status' => 'overdue']);
+                    } else {
+                        $transfer->update(['status' => 'in_progress']);
+                    }
+                } elseif ($transfer->scheduled_date && $transfer->scheduled_date < now()) {
+                    // normal overdue case
+                    $transfer->update(['status' => 'overdue']);
+                } else {
+                    // still active but with pending → in progress
+                    $transfer->update(['status' => 'in_progress']);
+                }
             }
         }
+
 
         foreach ($transfer->transferAssets as $ta) {
             $asset = $ta->asset;

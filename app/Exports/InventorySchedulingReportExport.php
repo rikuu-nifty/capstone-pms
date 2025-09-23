@@ -92,33 +92,35 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
         ];
     }
 
-    protected function getHeaderDateRange(): string
+   protected function getHeaderDateRange(): string
     {
         $from = $this->filters['from'] ?? null;
         $to   = $this->filters['to'] ?? null;
 
         if ($from && $to) {
+            // Case 1: both from and to
             $fromYear = Carbon::parse($from)->year;
             $toYear   = Carbon::parse($to)->year;
             return $fromYear . '-' . $toYear;
         }
 
         if ($from) {
+            // Case 2: only from → fromYear to (fromYear + 1)
             $fromYear = Carbon::parse($from)->year;
-            $latestYear = InventoryScheduling::max('actual_date_of_inventory')
-                ? Carbon::parse(InventoryScheduling::max('actual_date_of_inventory'))->year
-                : $fromYear + 1;
-            return $fromYear . '-' . $latestYear;
+            return $fromYear . '-' . ($fromYear + 1);
         }
 
         if ($to) {
+            // Case 3: only to → (toYear - 1) to toYear
             $toYear = Carbon::parse($to)->year;
             return ($toYear - 1) . '-' . $toYear;
         }
 
+        // Case 4: none → currentYear to (currentYear + 1)
         $baseYear = now()->year;
         return $baseYear . '-' . ($baseYear + 1);
     }
+
 
     public function styles(Worksheet $sheet)
     {
@@ -229,18 +231,18 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
     // ✅ Center align values under B → L + apply borders to ALL values
     $lastRow = $event->sheet->getHighestRow();
     $event->sheet->getStyle("A" . ($newHeaderRow+1) . ":L{$lastRow}")->applyFromArray([
-        'alignment' => [
-            'horizontal' => 'center',
-            'vertical'   => 'center',
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
-}
+                    'alignment' => [
+                        'horizontal' => 'center',
+                        'vertical'   => 'center',
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+            }
 
         ];
     }
@@ -248,7 +250,7 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
     public function columnWidths(): array
     {
         return [
-            'A' => 6,  // #
+            'A' => 16,  // #
             'B' => 20, // Unit/Dept
             'C' => 20, // Building
             'D' => 45, // Room

@@ -2,18 +2,22 @@
 
 namespace App\Http\Controllers;
 use App\Http\Controllers\InventorySchedulingReportController;
+use App\Http\Controllers\PropertyTransferReportController;
 use Inertia\Inertia;
 use App\Models\Report;
 use Illuminate\Http\Request;
+use App\Models\Transfer;
 use App\Models\InventoryList;
 use App\Models\UnitOrDepartment;
 use App\Models\AssetModel;
 use App\Models\Building;
 use App\Models\Category;
 
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;  
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\InventoryListReportExport;
-use App\Exports\NewPurchasesSummaryExport;
+use App\Exports\NewPurchasesSummaryExport;  
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -129,25 +133,105 @@ class ReportController extends Controller
         }
 
 
-    public function index()
+  public function index(Request $request)
     {
-         // ✅ Asset Inventory List summary
+        // ✅ Asset Inventory List summary
         $categoryData = Category::withCount('inventoryLists')
             ->get()
             ->map(fn($cat) => [
                 'label' => $cat->name,
-                'value' => $cat->inventory_lists_count ?? 0, // default to 0
+                'value' => $cat->inventory_lists_count ?? 0,
             ]);
 
         // ✅ Inventory Scheduling summary
         $schedulingData = (new InventorySchedulingReportController)->summaryForDashboard();
 
-        return Inertia::render('reports/index', [
-            'title' => 'Reports Dashboard',
-            'categoryData' => $categoryData,
-            'schedulingData' => $schedulingData, // 👈 add this
-        ]);
+        // 🔹 Optional filters (same as in PropertyTransferReportController)
+        $from = $request->input('from');
+        $to = $request->input('to');
+        $status = $request->input('status');
+        $currentBuilding = $request->input('current_building_id');
+        $receivingBuilding = $request->input('receiving_building_id');
+        $department = $request->input('department_id');
+
+        // ✅ Base query with filters
+        $query = Transfer::query()
+            ->when($from, fn($q) => $q->whereDate('created_at', '>=', Carbon::parse($from)))
+            ->when($to, fn($q) => $q->whereDate('created_at', '<=', Carbon::parse($to)))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($currentBuilding, fn($q) => $q->whereHas('currentBuildingRoom', fn($q2) => $q2->where('building_id', $currentBuilding)))
+            ->when($receivingBuilding, fn($q) => $q->whereHas('receivingBuildingRoom', fn($q2) => $q2->where('building_id', $receivingBuilding)))
+            ->when($department, fn($q) => $q->where('current_organization', $department));
+
+        $transfers = $query->get();
+
+        // ✅ Monthly trends by status (continuous range)
+        // If no from/to filter → use all transfers for chart
+            if (empty($from) && empty($to)) {
+                $chartSource = Transfer::all();
+            } else {
+                // Respect filters for chart
+                $chartSource = $transfers;
+            }
+
+            // Always show last 12 months if no from/to filters are applied
+            // if (empty($from) && empty($to)) {
+            //     $endDate = now()->endOfMonth();
+            //     $startDate = now()->subMonths(11)->startOfMonth(); // last 12 months
+            // } else {
+            //     // Use actual min/max of filtered dataset
+            //     $startDate = $chartSource->min('created_at');
+            //     $endDate   = $chartSource->max('created_at');
+            // }
+
+            // Always show last 6 months if no from/to filters are applied
+
+            if (empty($from) && empty($to)) {
+                $endDate = now()->endOfMonth();
+                 $startDate = now()->subMonths(5)->startOfMonth(); // last 6 months
+            } else {
+                // Use actual min/max of filtered dataset
+                 $startDate = $chartSource->min('created_at');
+                 $endDate   = $chartSource->max('created_at');
+            }
+
+            if ($startDate && $endDate) {
+                $period = CarbonPeriod::create(
+                    Carbon::parse($startDate)->startOfMonth(),
+                    '1 month',
+                    Carbon::parse($endDate)->endOfMonth()
+                );
+
+        $monthlyStatusTrends = collect($period)->map(function ($date) use ($chartSource) {
+            $monthKey = $date->format('Y-m');
+            $group = $chartSource->filter(fn($t) =>
+                Carbon::parse($t->created_at)->format('Y-m') === $monthKey
+            );
+
+            return [
+                'month'          => $date->format('M Y'),
+                'completed'      => $group->where('status', 'completed')->count(),
+                'pending_review' => $group->where('status', 'pending_review')->count(),
+                'upcoming'       => $group->where('status', 'upcoming')->count(),
+                'in_progress'    => $group->where('status', 'in_progress')->count(),
+                'overdue'        => $group->where('status', 'overdue')->count(),
+                'cancelled'      => $group->where('status', 'cancelled')->count(),
+            ];
+        })->values();
+    } else {
+        $monthlyStatusTrends = collect();
     }
+
+    return Inertia::render('reports/index', [
+        'title'          => 'Reports Dashboard',
+        'categoryData'   => $categoryData,
+        'schedulingData' => $schedulingData,
+        'transferData'   => $monthlyStatusTrends, // ✅ filtered + continuous months
+        'filters'        => $request->only(['from','to','status','current_building_id','receiving_building_id','department_id']),
+    ]);
+}
+
+
 
     public function inventoryList(Request $request)
     {
@@ -275,55 +359,5 @@ class ReportController extends Controller
             'brands'      => AssetModel::select('brand')->distinct()->pluck('brand')->filter()->values(),
             'reportType'  => $reportType, // ✅ pass to frontend
         ]);
-    }
-
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Report $report)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Report $report)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Report $report)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Report $report)
-    {
-        //
     }
 }

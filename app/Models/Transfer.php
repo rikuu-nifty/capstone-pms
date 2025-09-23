@@ -30,8 +30,8 @@ class Transfer extends Model
 
     protected $casts = [
         'deleted_at' => 'datetime',
-        'scheduled_date' => 'date',
-        'actual_transfer_date' => 'date',
+        'scheduled_date' => 'date:Y-m-d',
+        'actual_transfer_date' => 'date:Y-m-d',
     ];
 
     protected $appends = ['approved_by_name'];

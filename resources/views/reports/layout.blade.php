@@ -166,12 +166,12 @@
         {{-- Default section for content --}}
         @yield('content')
 
-        {{-- Optional: if a report includes $filters, show fallback --}}
+        {{-- Optional: if a report includes $filters, show fallback
         @isset($filters)
             @if (collect($filters)->filter()->isEmpty())
                 <p class="no-filters">No Filters Applied – showing all available records.</p>
             @endif
-        @endisset
+        @endisset --}}
     </main>
 
 </body>

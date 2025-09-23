@@ -84,35 +84,35 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
     ];
 }
 
-    protected function getHeaderDateRange(): string
-    {
-        $from = $this->filters['from'] ?? null;
-        $to   = $this->filters['to'] ?? null;
+   protected function getHeaderDateRange(): string
+{
+    $from = $this->filters['from'] ?? null;
+    $to   = $this->filters['to'] ?? null;
 
-        if ($from && $to) {
-            $fromYear = Carbon::parse($from)->year;
-            $toYear   = Carbon::parse($to)->year;
-
-            if ($fromYear === $toYear) {
-                return $fromYear . '-' . ($fromYear + 1);
-            }
-
-            return $fromYear . '-' . $toYear;
-        }
-
-        if ($from) {
-            $fromYear = Carbon::parse($from)->year;
-            return $fromYear . '-' . ($fromYear + 1);
-        }
-
-        if ($to) {
-            $toYear = Carbon::parse($to)->year;
-            return ($toYear - 1) . '-' . $toYear;
-        }
-
-        $baseYear = now()->year;
-        return $baseYear . '-' . ($baseYear + 1);
+    if ($from && $to) {
+        // Case 1: both from and to → fromYear-toYear
+        $fromYear = Carbon::parse($from)->year;
+        $toYear   = Carbon::parse($to)->year;
+        return $fromYear . '-' . $toYear;
     }
+
+    if ($from) {
+        // Case 2: only from → fromYear-(fromYear+1)
+        $fromYear = Carbon::parse($from)->year;
+        return $fromYear . '-' . ($fromYear + 1);
+    }
+
+    if ($to) {
+        // Case 3: only to → (toYear-1)-toYear
+        $toYear = Carbon::parse($to)->year;
+        return ($toYear - 1) . '-' . $toYear;
+    }
+
+    // Case 4: none → currentYear-(currentYear+1)
+    $baseYear = now()->year;
+    return $baseYear . '-' . ($baseYear + 1);
+}
+
 
     public function styles(Worksheet $sheet)
     {

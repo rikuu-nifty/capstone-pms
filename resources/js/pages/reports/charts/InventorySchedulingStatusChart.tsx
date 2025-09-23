@@ -1,8 +1,9 @@
 // reports/charts/InventorySchedulingStatusChart.tsx
+// import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from 'recharts';
 'use client';
 
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts';
 
 type SchedulingData = { label: string; value: number };
 
@@ -14,7 +15,7 @@ type Props = {
 
 export function InventorySchedulingStatusChart({
     data,
-    height = 'max-h-[220px]', // default for dashboard
+    height = 'max-h-[220px]', // default for dashboard // InventorySchedulingStatusChart → horizontal bars → max-h-[220px] works well
     barSize = 35, // default bar size
 }: Props) {
     if (!data || data.length === 0) {
@@ -53,28 +54,34 @@ export function InventorySchedulingStatusChart({
         <div className="rounded-lg bg-gray-50 p-3">
             <ChartContainer config={chartConfig} className={`mx-auto w-full ${height}`}>
                 <BarChart data={orderedData} layout="vertical" margin={{ right: 16 }}>
-                    <CartesianGrid stroke="#b0b4ba" strokeDasharray="3 3" horizontal={true} vertical={true} />
+                    <CartesianGrid stroke="#dadfe6" strokeDasharray="3 3" horizontal={true} vertical={true} />
                     <YAxis
                         dataKey="label"
                         type="category"
-                        tickLine={false}
-                        axisLine={false}
-                        width={100} // ✅ enough space for labels
+                        tickLine={true} // ✅ show ticks with style
+                        axisLine={true} // ✅ show axis line
+                        width={100}
                         tick={({ y, payload }) => {
                             const status = payload.value;
                             return (
-                                <text x={1} y={y} dy={4} textAnchor="start" fontSize={12} fontWeight="500" fill={COLORS[status] ?? '#374151'}>
+                                <text x={1} y={y} dy={4} textAnchor="start" fontSize={12} fontWeight="1" fill={COLORS[status] ?? '#374151'}>
                                     {status}
                                 </text>
                             );
                         }}
                     />
-                    <XAxis type="number" hide />
+
+                    <XAxis
+                        type="number"
+                        tickLine={true} // ✅ show ticks with style
+                        axisLine={true} // ✅ show axis line
+                    />
+
                     <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
 
                     <Bar dataKey="value" layout="vertical" radius={4} barSize={barSize}>
                         {/* ✅ Only keep clean numeric labels */}
-                        <LabelList dataKey="value" position="right" offset={8} className="fill-gray-800" fontSize={12} fontWeight="600" />
+                        {/* <LabelList dataKey="value" position="right" offset={8} className="fill-gray-800" fontSize={12} fontWeight="600" /> */}
                         {orderedData.map((entry, i) => (
                             <Cell key={`cell-${i}`} fill={COLORS[entry.label] ?? '#94a3b8'} />
                         ))}

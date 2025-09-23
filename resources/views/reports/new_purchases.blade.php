@@ -22,8 +22,8 @@
             });
             $schoolYear = $fromDate->year . '-' . $latestYear;
         } elseif ($toDate) {
-            // Case 3: Only to → (toYear-1)-toYear
-            $schoolYear = $toDate->year - 1 . '-' . $toDate->year;
+            // Case 3: only 'to' date provided → currentYear-toYear
+            $schoolYear = ($toDate->year - 1) . '-' . $toDate->year;
         } else {
             // Case 4: No filters → current year-current year+1
             $year = now()->year;

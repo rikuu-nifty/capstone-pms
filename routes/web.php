@@ -23,6 +23,7 @@
     use App\Http\Controllers\RoleController;
     use App\Http\Controllers\InventoryReportController;
     use App\Http\Controllers\InventorySchedulingReportController;
+    use App\Http\Controllers\PropertyTransferReportController;
 
     // Route::get('/', function () {
     //     return Inertia::render('welcome');
@@ -109,14 +110,22 @@
     Route::get('/reports/inventory-scheduling/export/excel', [InventorySchedulingReportController::class, 'exportExcel'])
     ->name('reports.inventory-scheduling.export.excel');
 
+
+    // ✅ Property Transfer Report
+    Route::get('/transfer', [PropertyTransferReportController::class, 'index'])
+        ->name('reports.transfer');
+
+    // Export to PDF
+    Route::get('/transfer/export/pdf', [PropertyTransferReportController::class, 'exportPdf'])
+        ->name('reports.transfer.export.pdf');
+
+    // Export to Excel
+    Route::get('/transfer/export/excel', [PropertyTransferReportController::class, 'exportExcel'])
+        ->name('reports.transfer.export.excel');
+
+
         
     // Placeholders with proper names
-    Route::get('/transfer', fn() =>
-        Inertia::render('reports/PropertyTransferReport', [
-            'title' => 'Property Transfer Report',
-        ])
-    )->name('reports.transfer');
-
     Route::get('/turnover-disposal', fn() =>
         Inertia::render('reports/TurnoverDisposalReport', [
             'title' => 'Turnover/Disposal Report',
