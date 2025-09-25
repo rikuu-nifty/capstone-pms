@@ -129,7 +129,6 @@ export default function TransferStatusChart({ data, height = 'max-h-[220px]' }: 
                         interval="preserveStartEnd"
                         minTickGap={20}
                         height={40}
-                        padding={{ left: 5, right: 5 }}
                         tick={{ fill: '#9ca3af', fontSize: 12 }}
                         tickFormatter={(value) => {
                             const first = dayjs(data[0]?.month);
