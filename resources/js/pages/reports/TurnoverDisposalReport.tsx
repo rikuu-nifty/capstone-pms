@@ -48,12 +48,14 @@ type Paginator<T> = {
 type PageProps = {
     records: Paginator<RecordRow>;
     departments: { id: number; name: string }[];
+    categories: { id: number; name: string }[];
     filters: {
         from?: string | null;
         to?: string | null;
         status?: string | null;
         issuing_office_id?: number | null;
         receiving_office_id?: number | null;
+        category_id?: number | null;
     };
 }
 
@@ -65,7 +67,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function TurnoverDisposalReport() {
     const firstLoadRef = React.useRef(true);
     
-    const { records, departments, filters: initialFilters } = usePage<PageProps>().props;
+    const { records, departments, categories, filters: initialFilters } = usePage<PageProps>().props
 
     const [page, setPage] = useState(records.meta.current_page ?? 1);
     const [total, setTotal] = useState(records.meta.total ?? 0);
@@ -78,6 +80,7 @@ export default function TurnoverDisposalReport() {
         status: null as string | null,
         issuing_office_id: null as number | null,
         receiving_office_id: null as number | null,
+        category_id: null as number | null,
     };
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
@@ -149,6 +152,7 @@ export default function TurnoverDisposalReport() {
                 {/* Filters */}
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        
                         {/* From */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -185,6 +189,7 @@ export default function TurnoverDisposalReport() {
                         <Select
                             className="w-full"
                             isClearable
+                            placeholder="Select an issuing unit/office"
                             value={
                             filters.issuing_office_id
                                 ? {
@@ -194,11 +199,11 @@ export default function TurnoverDisposalReport() {
                                 : null
                             }
                             options={departments.map((d) => ({
-                            value: d.id,
-                            label: d.name,
+                                value: d.id,
+                                label: d.name,
                             }))}
                             onChange={(opt) =>
-                            updateFilter("issuing_office_id", opt?.value ?? null)
+                                updateFilter("issuing_office_id", opt?.value ?? null)
                             }
                         />
                         </div>
@@ -211,6 +216,7 @@ export default function TurnoverDisposalReport() {
                         <Select
                             className="w-full"
                             isClearable
+                            placeholder="Select a receiving unit/office"
                             value={
                             filters.receiving_office_id
                                 ? {
@@ -220,15 +226,40 @@ export default function TurnoverDisposalReport() {
                                 : null
                             }
                             options={departments.map((d) => ({
-                            value: d.id,
-                            label: d.name,
+                                value: d.id,
+                                label: d.name,
                             }))}
                             onChange={(opt) =>
-                            updateFilter("receiving_office_id", opt?.value ?? null)
+                                updateFilter("receiving_office_id", opt?.value ?? null)
                             }
                         />
                         </div>
-                        
+
+                        {/* Category */}
+                        <div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                            Category
+                        </label>
+                        <Select
+                            className="w-full"
+                            isClearable
+                            placeholder="Select a category"
+                            value={
+                            filters.category_id
+                                ? {
+                                    value: filters.category_id,
+                                    label: categories.find((c: { id: number; name: string }) => c.id === filters.category_id)?.name || "",
+                                }
+                                : null
+                            }
+                            options={categories.map((c: { id: number; name: string }) => ({
+                            value: c.id,
+                            label: c.name,
+                            }))}
+                            onChange={(opt) => updateFilter("category_id", opt?.value ?? null)}
+                        />
+                        </div>
+
                         {/* Status */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -237,11 +268,14 @@ export default function TurnoverDisposalReport() {
                             <Select
                                 className="w-full"
                                 isClearable
+                                placeholder="Select an asset type"
                                 value={
                                     filters.status
                                         ? {
                                             value: filters.status,
-                                            label: filters.status.replace("_", " "),
+                                            label: filters.status
+                                            .replace("_", " ")
+                                            .replace(/\b\w/g, (c) => c.toUpperCase()),
                                         }
                                         : null
                                     }

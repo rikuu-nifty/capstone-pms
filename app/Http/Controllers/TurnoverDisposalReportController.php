@@ -11,6 +11,7 @@ use App\Models\TurnoverDisposal;
 use App\Models\Building;
 use App\Models\BuildingRoom;
 use App\Models\UnitOrDepartment;
+use App\Models\Category;
 use App\Exports\TurnoverDisposalReportExport;
 
 class TurnoverDisposalReportController extends Controller
@@ -26,6 +27,7 @@ class TurnoverDisposalReportController extends Controller
                 'room_id',
                 'issuing_office_id',
                 'receiving_office_id',
+                'category_id',
             ]),
             fn($value) => !is_null($value) && $value !== ''
         );
@@ -50,7 +52,7 @@ class TurnoverDisposalReportController extends Controller
                     'asset_id'          => $asset->id ?? null,
                     'serial_no'         => $asset->serial_no ?? '—',
                     'asset_name'        => $asset->asset_name ?? '—',
-                    'category'          => $category?->name ?? '—',
+                    'category'          => $asset->assetModel?->category?->name ?? '—',
                     'brand'             => $model?->brand ?? '—',
                     'model'             => $model?->model ?? '—',
                     'building'          => $asset->building->name ?? '—',
@@ -84,6 +86,7 @@ class TurnoverDisposalReportController extends Controller
             ],
             'buildings'     => Building::select('id', 'name')->get(),
             'departments'   => UnitOrDepartment::select('id', 'name')->get(),
+            'categories'    => Category::select('id', 'name')->get(),
             'rooms'         => BuildingRoom::select('id', 'room as name', 'building_id')->get(),
             'filters'       => $filters,
         ]);

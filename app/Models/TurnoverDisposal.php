@@ -418,12 +418,18 @@ class TurnoverDisposal extends Model
             ->when($filters['room_id'] ?? null, function ($q, $room) {
                 $q->whereHas('turnoverDisposalAssets.assets', fn($qa) => $qa->where('building_room_id', $room));
             })
+            ->when($filters['category_id'] ?? null, function ($q, $catId) {
+                $q->whereHas('turnoverDisposalAssets.assets.assetModel', function ($qa) use ($catId) {
+                    $qa->where('category_id', $catId);
+                });
+            })
             ->when($filters['brand'] ?? null, function ($q, $brand) {
                 $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('brand', 'like', "%{$brand}%"));
             })
             ->when($filters['model'] ?? null, function ($q, $model) {
                 $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('model', 'like', "%{$model}%"));
             });
+            
 
         return $query->paginate($perPage)->withQueryString();
     }
