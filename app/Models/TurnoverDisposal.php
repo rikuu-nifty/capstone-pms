@@ -388,5 +388,59 @@ class TurnoverDisposal extends Model
         return $step ? ($step->is_external ? ($step->external_title ?: null) : null) : null;
     }
 
+    /*
+        REPORTS
+    */
+
+    public static function filterAndPaginate(array $filters, int $perPage = 10)
+    {
+        $query = static::with([
+            'issuingOffice:id,name,code',
+            'receivingOffice:id,name,code',
+            'turnoverDisposalAssets.assets.assetModel:id,brand,model',
+            'turnoverDisposalAssets.assets.unitOrDepartment:id,name',
+            'turnoverDisposalAssets.assets.building:id,name',
+            'turnoverDisposalAssets.assets.buildingRoom:id,room,building_id',
+            'turnoverDisposalAssets.assets.subArea:id,name,building_room_id',
+        ])
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('document_date', '<=', $to))
+            ->when($filters['department_id'] ?? null, fn($q, $dept) => $q->where('issuing_office_id', $dept))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['building_id'] ?? null, function ($q, $bldg) {
+                $q->whereHas('turnoverDisposalAssets.assets', fn($qa) => $qa->where('building_id', $bldg));
+            })
+            ->when($filters['room_id'] ?? null, function ($q, $room) {
+                $q->whereHas('turnoverDisposalAssets.assets', fn($qa) => $qa->where('building_room_id', $room));
+            });
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
+    public static function summaryCounts(): array
+    {
+        return [
+            'total_turnovers' => static::where('type', 'turnover')->count(),
+            'total_disposals' => static::where('type', 'disposal')->count(),
+            'completed'       => static::where('status', 'completed')->count(),
+            'pending_review'  => static::where('status', 'pending_review')->count(),
+            'approved'        => static::where('status', 'approved')->count(),
+            'rejected'        => static::where('status', 'rejected')->count(),
+            'cancelled'       => static::where('status', 'cancelled')->count(),
+        ];
+    }
+
+    public static function monthlyTrendData()
+    {
+        return static::selectRaw("
+                DATE_FORMAT(document_date, '%Y-%m') as ym,
+                SUM(CASE WHEN type = 'turnover' THEN 1 ELSE 0 END) as turnovers,
+                SUM(CASE WHEN type = 'disposal' THEN 1 ELSE 0 END) as disposals
+            ")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get();
+    }
+
 
 }
