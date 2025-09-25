@@ -18,7 +18,15 @@ class TurnoverDisposalReportController extends Controller
     public function index(Request $request)
     {
         $filters = array_filter(
-            $request->only(['from', 'to', 'status', 'department_id', 'building_id', 'room_id']),
+            $request->only([
+                'from',
+                'to',
+                'status',
+                'building_id',
+                'room_id',
+                'issuing_office_id',
+                'receiving_office_id',
+            ]),
             fn($value) => !is_null($value) && $value !== ''
         );
 
@@ -28,18 +36,32 @@ class TurnoverDisposalReportController extends Controller
 
         $paginator->appends($filters);
 
-        $rows = $paginator->getCollection()->map(fn($td) => [
-            'id'              => $td->id,
-            'issuing_office'  => $td->issuingOffice->name ?? '—',
-            'issuing_code'    => $td->issuingOffice->code ?? '—',
-            'type'            => ucfirst($td->type),
-            'receiving_office' => $td->receivingOffice->name ?? null,
-            'receiving_code'  => $td->receivingOffice->code ?? null,
-            'asset_count'     => $td->turnoverDisposalAssets->count(),
-            'document_date'   => optional($td->document_date)->format('Y-m-d'),
-            'status'          => $td->status,
-            'remarks'         => $td->remarks,
-        ]);
+        $rows = $paginator->getCollection()->flatMap(function ($td) {
+            return $td->turnoverDisposalAssets->map(function ($assetLine) use ($td) {
+                $asset = $assetLine->assets; // InventoryList
+                $model = $asset?->assetModel;
+                $category = $model?->category;
+
+                return [
+                    'id'                => $td->id,
+                    'type'              => ucfirst($td->type),
+                    'issuing_office'    => $td->issuingOffice->name ?? '—',
+                    'receiving_office'  => $td->receivingOffice->name ?? '—',
+                    'asset_id'          => $asset->id ?? null,
+                    'serial_no'         => $asset->serial_no ?? '—',
+                    'asset_name'        => $asset->asset_name ?? '—',
+                    'category'          => $category?->name ?? '—',
+                    'brand'             => $model?->brand ?? '—',
+                    'model'             => $model?->model ?? '—',
+                    'building'          => $asset->building->name ?? '—',
+                    'room'              => $asset->buildingRoom->room ?? '—',
+                    'status'            => $td->status,
+                    'asset_status'      => $assetLine->asset_status,
+                    'document_date'     => optional($td->document_date)->format('Y-m-d'),
+                    'remarks'           => $assetLine->remarks ?? $td->remarks,
+                ];
+            });
+        });
 
         $paginator->setCollection($rows);
 

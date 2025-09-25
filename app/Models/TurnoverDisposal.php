@@ -397,7 +397,7 @@ class TurnoverDisposal extends Model
         $query = static::with([
             'issuingOffice:id,name,code',
             'receivingOffice:id,name,code',
-            'turnoverDisposalAssets.assets.assetModel:id,brand,model',
+            'turnoverDisposalAssets.assets.assetModel.category:id,name', 
             'turnoverDisposalAssets.assets.unitOrDepartment:id,name',
             'turnoverDisposalAssets.assets.building:id,name',
             'turnoverDisposalAssets.assets.buildingRoom:id,room,building_id',
@@ -405,17 +405,29 @@ class TurnoverDisposal extends Model
         ])
             ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('document_date', '>=', $from))
             ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('document_date', '<=', $to))
-            ->when($filters['department_id'] ?? null, fn($q, $dept) => $q->where('issuing_office_id', $dept))
+            ->when($filters['issuing_office_id'] ?? null, function ($q, $issuing) {
+                $q->where('issuing_office_id', $issuing);
+            })
+            ->when($filters['receiving_office_id'] ?? null, function ($q, $receiving) {
+                $q->where('receiving_office_id', $receiving);
+            })
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
             ->when($filters['building_id'] ?? null, function ($q, $bldg) {
                 $q->whereHas('turnoverDisposalAssets.assets', fn($qa) => $qa->where('building_id', $bldg));
             })
             ->when($filters['room_id'] ?? null, function ($q, $room) {
                 $q->whereHas('turnoverDisposalAssets.assets', fn($qa) => $qa->where('building_room_id', $room));
+            })
+            ->when($filters['brand'] ?? null, function ($q, $brand) {
+                $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('brand', 'like', "%{$brand}%"));
+            })
+            ->when($filters['model'] ?? null, function ($q, $model) {
+                $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('model', 'like', "%{$model}%"));
             });
 
         return $query->paginate($perPage)->withQueryString();
     }
+
 
     public static function summaryCounts(): array
     {
