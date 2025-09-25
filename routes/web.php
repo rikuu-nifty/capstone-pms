@@ -107,9 +107,9 @@ Route::get('/', function () {
             ->name('reports.inventory-sheet.export.excel');
 
         // Turnover / Disposal Report
-        Route::get('/reports/turnover-disposal', [TurnoverDisposalReportController::class, 'index']) ->name('reports.turnover-disposal');
-        Route::get('/reports/turnover-disposal/export/pdf', [TurnoverDisposalReportController::class, 'exportPdf'])->name('reports.turnover-disposal.export.pdf');
-        Route::get('/reports/turnover-disposal/export/excel', [TurnoverDisposalReportController::class, 'exportExcel'])->name('reports.turnover-disposal.export.excel');
+        Route::get('/turnover-disposal', [TurnoverDisposalReportController::class, 'index']) ->name('reports.turnover-disposal');
+        Route::get('/turnover-disposal/export/pdf', [TurnoverDisposalReportController::class, 'exportPdf'])->name('reports.turnover-disposal.export.pdf');
+        Route::get('/turnover-disposal/export/excel', [TurnoverDisposalReportController::class, 'exportExcel'])->name('reports.turnover-disposal.export.excel');
     });
 
     Route::get('calendar', function () {

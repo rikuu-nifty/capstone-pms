@@ -62,6 +62,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 export default function TurnoverDisposalReport() {
+    const firstLoadRef = React.useRef(true)
+    
     const { records, buildings, departments, rooms, filters: initialFilters } =
         usePage<PageProps>().props
 
@@ -102,23 +104,36 @@ export default function TurnoverDisposalReport() {
         return new URLSearchParams(params).toString()
     }
 
+    function cleanFilters(obj: typeof filters) {
+    const result: Record<string, string | number> = {}
+    Object.entries(obj).forEach(([k, v]) => {
+        if (v !== null && v !== undefined && v !== '') result[k] = String(v)
+    })
+    return result
+    }
+
     // Refetch when page changes
     useEffect(() => {
-        router.get(
-        route("reports.turnover-disposal"),
-        { ...filters, page },
+    if (firstLoadRef.current) {
+        firstLoadRef.current = false
+        return
+    }
+
+    router.get(
+        route('reports.turnover-disposal'),
+        { ...cleanFilters(filters), page },
         {
-            preserveState: true,
-            onSuccess: (pageData) => {
+        preserveState: true,
+        replace: true,
+        onSuccess: (pageData) => {
             const paginator = pageData.props.records as Paginator<RecordRow>
             setDisplayed(paginator.data)
-            setPage(paginator.meta.current_page ?? 1)
             setTotal(paginator.meta.total ?? 0)
             setPageSize(paginator.meta.per_page ?? 10)
-            },
+        },
         }
-        )
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page])
 
     return (
@@ -284,9 +299,9 @@ export default function TurnoverDisposalReport() {
                 onClick={() => {
                     setFilters(defaultFilters)
                     setPage(1)
-                    router.get(route("reports.turnover-disposal"), {
-                    ...defaultFilters,
-                    page: 1,
+                    router.get(route('reports.turnover-disposal'), {}, {  // ✅ no params
+                    preserveState: true,
+                    replace: true,
                     })
                 }}
                 className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
@@ -299,10 +314,11 @@ export default function TurnoverDisposalReport() {
                 <button
                 onClick={() => {
                     setPage(1)
-                    router.get(route("reports.turnover-disposal"), {
-                    ...filters,
-                    page: 1,
-                    })
+                    router.get(
+                    route('reports.turnover-disposal'),
+                    { ...cleanFilters(filters), page: 1 },             // ✅ only non-empty
+                    { preserveState: true, replace: true }
+                    )
                 }}
                 className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
                 >
@@ -362,54 +378,58 @@ export default function TurnoverDisposalReport() {
             </div>
 
             {/* Chart + Table Card */}
-<Card className="rounded-2xl shadow-md">
-  <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-    <CardTitle>Turnover / Disposal Records</CardTitle>
-    <div className="mt-2 flex gap-2 sm:mt-0">
-      <div className="inline-flex rounded-md shadow-sm">
-        <button
-          onClick={() => setViewMode('chart')}
-          className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
-            viewMode === 'chart'
-              ? 'border-blue-600 bg-blue-600 text-white'
-              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-          } rounded-l-md`}
-        >
-          Chart
-        </button>
-        <button
-          onClick={() => setViewMode('table')}
-          className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
-            viewMode === 'table'
-              ? 'border-blue-600 bg-blue-600 text-white'
-              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-          } rounded-r-md`}
-        >
-          Table
-        </button>
-      </div>
-    </div>
-  </CardHeader>
+            <Card className="rounded-2xl shadow-md">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle>Turnover / Disposal Records</CardTitle>
+                <div className="mt-2 flex gap-2 sm:mt-0">
+                <div className="inline-flex rounded-md shadow-sm">
+                    <button
+                    onClick={() => setViewMode('chart')}
+                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
+                        viewMode === 'chart'
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    } rounded-l-md`}
+                    >
+                    Chart
+                    </button>
+                    <button
+                    onClick={() => setViewMode('table')}
+                    className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
+                        viewMode === 'table'
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    } rounded-r-md`}
+                    >
+                    Table
+                    </button>
+                </div>
+                </div>
+            </CardHeader>
 
-  <CardContent className="h-96">
-    {viewMode === 'chart' ? (
-      <div className="flex h-full items-center justify-center text-gray-500">
-        {/* Placeholder until we add RadarChart */}
-        <p>No chart yet – coming soon</p>
-      </div>
-    ) : (
-      <TurnoverDisposalTable
-        records={displayed}
-        page={page}
-        total={total}
-        pageSize={pageSize}
-        onPageChange={(newPage) => setPage(newPage)}
-      />
-    )}
-  </CardContent>
-</Card>
+            <CardContent className="h-96">
+                {viewMode === 'chart' ? (
+                <div className="flex h-full items-center justify-center text-gray-500">
+                    {/* Placeholder until we add RadarChart */}
+                    <p>No chart yet – coming soon</p>
+                </div>
+                ) : (
+                <TurnoverDisposalTable
+                    records={displayed}
+                    page={page}
+                    total={total}
+                    pageSize={pageSize}
+                    onPageChange={(newPage) => setPage(newPage)}
+                />
+                )}
+            </CardContent>
+            </Card>
 
+            {/* <pre className="mt-4 rounded bg-gray-100 p-2 text-xs text-black overflow-x-auto">
+                {JSON.stringify(testPage, null, 2)}
+            </pre> */}
         </div>
         </AppLayout>
+        
     )
 }

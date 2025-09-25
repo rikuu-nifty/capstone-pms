@@ -17,10 +17,16 @@ class TurnoverDisposalReportController extends Controller
 {
     public function index(Request $request)
     {
-        $filters = $request->only(['from', 'to', 'status', 'department_id', 'building_id', 'room_id']);
+        $filters = array_filter(
+            $request->only(['from', 'to', 'status', 'department_id', 'building_id', 'room_id']),
+            fn($value) => !is_null($value) && $value !== ''
+        );
+
         $perPage = (int) $request->get('per_page', 10);
 
         $paginator = TurnoverDisposal::filterAndPaginate($filters, $perPage);
+
+        $paginator->appends($filters);
 
         $rows = $paginator->getCollection()->map(fn($td) => [
             'id'              => $td->id,
