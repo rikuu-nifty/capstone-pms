@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\TurnoverDisposal;
 use App\Models\Building;
@@ -13,6 +14,8 @@ use App\Models\BuildingRoom;
 use App\Models\UnitOrDepartment;
 use App\Models\Category;
 use App\Exports\TurnoverDisposalReportExport;
+
+use Carbon\CarbonPeriod;
 
 class TurnoverDisposalReportController extends Controller
 {
@@ -67,6 +70,31 @@ class TurnoverDisposalReportController extends Controller
 
         $paginator->setCollection($rows);
 
+        $rawData = DB::table('turnover_disposals as td')
+                ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
+                ->selectRaw("
+            DATE_FORMAT(td.document_date, '%Y-%m') as ym,
+            SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,
+            SUM(CASE WHEN td.type = 'disposal' THEN 1 ELSE 0 END) as disposal
+        ")
+        ->groupBy('ym')
+        ->orderBy('ym')
+        ->get()
+        ->keyBy('ym');
+
+        // Generate Jan–Dec for current year
+        $year = now()->year;
+        $months = CarbonPeriod::create("{$year}-01-01", '1 month', "{$year}-12-01");
+
+        $chartData = collect($months)->map(function ($date) use ($rawData) {
+            $ym = $date->format('Y-m');
+            return [
+                'month'    => $date->format('F'), // January, February...
+                'turnover' => (int) ($rawData[$ym]->turnover ?? 0),
+                'disposal' => (int) ($rawData[$ym]->disposal ?? 0),
+            ];
+        });
+
         return Inertia::render('reports/TurnoverDisposalReport', [
             'title'         => 'Turnover/Disposal Report',
             'summary'       => TurnoverDisposal::summaryCounts(),
@@ -89,6 +117,7 @@ class TurnoverDisposalReportController extends Controller
             'categories'    => Category::select('id', 'name')->get(),
             'rooms'         => BuildingRoom::select('id', 'room as name', 'building_id')->get(),
             'filters'       => $filters,
+            'chartData'     => $chartData,
         ]);
     }
 
