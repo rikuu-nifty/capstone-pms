@@ -42,34 +42,6 @@ class TurnoverDisposalReportController extends Controller
         $paginator = TurnoverDisposal::filterAndPaginateAssets($filters, $perPage);
         $paginator->appends($filters);
 
-        // $rows = $paginator->getCollection()->flatMap(function ($td) {
-        //     return $td->turnoverDisposalAssets->map(function ($assetLine) use ($td) {
-        //         $asset = $assetLine->assets; // InventoryList
-        //         $model = $asset?->assetModel;
-
-        //         return [
-        //             'id'                => $td->id,
-        //             'type'              => ucfirst($td->type),
-        //             'issuing_office'    => $td->issuingOffice->name ?? '—',
-        //             'receiving_office'  => $td->receivingOffice->name ?? '—',
-        //             'asset_id'          => $asset->id ?? null,
-        //             'serial_no'         => $asset->serial_no ?? '—',
-        //             'asset_name'        => $asset->asset_name ?? '—',
-        //             'category'          => $asset->assetModel?->category?->name ?? '—',
-        //             'brand'             => $model?->brand ?? '—',
-        //             'model'             => $model?->model ?? '—',
-        //             'building'          => $asset->building->name ?? '—',
-        //             'room'              => $asset->buildingRoom->room ?? '—',
-        //             'status'            => $td->status,
-        //             'asset_status'      => $assetLine->asset_status,
-        //             'document_date'     => optional($td->document_date)->format('Y-m-d'),
-        //             'remarks'           => $assetLine->remarks ?? $td->remarks,
-        //         ];
-        //     });
-        // });
-
-        // $paginator->setCollection($rows);
-
         $rawData = TurnoverDisposal::monthlyCompletedTrendData();
 
         // Generate Jan–Dec for current year
@@ -117,7 +89,7 @@ class TurnoverDisposalReportController extends Controller
         $records = TurnoverDisposal::filterAndPaginateAssets($filters, 2000);
 
         $timestamp = now()->format('Y-m-d');
-        $filename  = "TurnoverDisposalReport-{$timestamp}.xlsx";
+        $filename  = "Turnover_Disposal_Report-{$timestamp}.xlsx";
 
         return Excel::download(
             new \App\Exports\TurnoverDisposalReportExport($records->items(), $filters),
@@ -136,7 +108,7 @@ class TurnoverDisposalReportController extends Controller
         ])->setPaper('A4', 'landscape')
         ->setOption('isPhpEnabled', true);
 
-        // return $pdf->download('TurnoverDisposalReport-' . now()->format('Y-m-d') . '.pdf');
-        return $pdf->stream('TurnoverDisposalReport');
+        // return $pdf->download('Turnover_Disposal_Report-' . now()->format('Y-m-d') . '.pdf');
+        return $pdf->stream('Turnover_Disposal_Report');
     }
 }

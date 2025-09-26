@@ -277,7 +277,7 @@ class InventorySheetReportController extends Controller
                     'A' => 12,  // MR No.
                     'B' => 30,  // Asset Name (Type)
                     'C' => 20,  // Serial No.
-                    'D' => 12,  // Price
+                    'D' => 18,  // Unit Cost
                     'E' => 25,  // Supplier
                     'F' => 18,  // Date Purchased
                     'G' => 12,  // Per Record
@@ -466,12 +466,6 @@ class InventorySheetReportController extends Controller
                 'assigned_to'      => $asset->assigned_to,
             ];
         });
-
-        // return $assets->groupBy(function ($a) {
-        //     return $a['room'] ? 'room:' . $a['room']
-        //         : ($a['sub_area'] ? 'sub_area:' . $a['sub_area']
-        //             : ($a['memorandum_no'] ? 'memo:' . $a['memorandum_no'] : 'ungrouped'));
-        // });
 
         $grouped = [];
 

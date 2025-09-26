@@ -79,7 +79,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
             <th>MR No.</th>
             <th>Asset Name (Type)</th>
             <th>Serial No.</th>
-            <th>Price</th>
+            <th>Unit Cost</th>
             <th>Supplier</th>
             <th>Date Purchased</th>
             <th>Per Record</th>
@@ -124,11 +124,26 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
             <td>{{ $a['memorandum_no'] ?? '—' }}</td>
             <td>{{ $a['asset_name'] }} ({{ $a['asset_type'] }})</td>
             <td>{{ $a['serial_no'] ?? '—' }}</td>
-            <td>{{ $a['unit_cost'] }}</td>
+
+            {{-- Unit Cost formatted --}}
+            <td>
+                {{ isset($a['unit_cost']) ? '₱ ' . number_format((float)$a['unit_cost'], 2) : '—' }}
+            </td>
+
             <td>{{ $a['supplier'] ?? '—' }}</td>
-            <td>{{ $a['date_purchased'] }}</td>
+
+            {{-- Date Purchased formatted --}}
+            <td>
+                @if (!empty($a['date_purchased']))
+                {{ \Carbon\Carbon::parse($a['date_purchased'])->format('M d, Y') }}
+                @else
+                —
+                @endif
+            </td>
+
             <td>1</td>
             <td>{{ $a['quantity'] }}</td>
+
             <td>
                 @php
                 $val = $a['inventory_status'] ?? '—';
@@ -140,13 +155,16 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
                 @endphp
                 {{ $val ?: '—' }}
             </td>
+
+            {{-- Date of Count formatted --}}
             <td>
                 @if (!empty($a['inventoried_at']))
-                {{ \Carbon\Carbon::parse($a['inventoried_at'])->format('F j, Y g:i:s A') }}
+                {{ \Carbon\Carbon::parse($a['inventoried_at'])->format('M d, Y') }}
                 @else
                 —
                 @endif
             </td>
+
             <td>{{ $a['status'] }}</td>
         </tr>
         @endforeach
