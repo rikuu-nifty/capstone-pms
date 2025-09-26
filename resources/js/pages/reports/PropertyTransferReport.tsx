@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowRightLeft, Calendar, ClipboardList, FileDown, FileSpreadsheet, FileText, Filter, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Calendar, ClipboardList, FileDown, FileSpreadsheet, FileText, Filter, RotateCcw, Trash2, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import Select from 'react-select';
 import TransferStatusChart from './charts/TransferStatusChart';
@@ -123,15 +123,16 @@ export default function PropertyTransferReport() {
     const summaryCards = [
         { label: 'Total Transfers', value: summary.total, color: 'text-primary', icon: <ArrowRightLeft className="h-5 w-5 text-primary" /> },
         { label: 'Completed', value: summary.completed, color: 'text-green-600', icon: <FileText className="h-5 w-5 text-green-600" /> },
+        { label: 'Upcoming', value: summary.upcoming ?? 0, color: 'text-blue-600', icon: <Calendar className="h-5 w-5 text-blue-600" /> },
         {
             label: 'Pending Review',
             value: summary.pending_review ?? 0,
             color: 'text-amber-500',
             icon: <ClipboardList className="h-6 w-6 text-amber-500" />,
         },
-        { label: 'Upcoming', value: summary.upcoming ?? 0, color: 'text-blue-600', icon: <Calendar className="h-5 w-5 text-blue-600" /> },
+        
         { label: 'In Progress', value: summary.in_progress ?? 0, color: 'text-purple-600', icon: <FileDown className="h-5 w-5 text-purple-600" /> },
-        { label: 'Overdue', value: summary.overdue ?? 0, color: 'text-[#800000]', icon: <RotateCcw className="h-5 w-5 text-[#800000]" /> },
+        { label: 'Overdue', value: summary.overdue ?? 0, color: 'text-[#800000]', icon: <AlertTriangle className="h-5 w-5 text-[#800000]" />,},
         { label: 'Cancelled', value: summary.cancelled, color: 'text-gray-600', icon: <Trash2 className="h-5 w-5 text-gray-600" /> },
     ];
 

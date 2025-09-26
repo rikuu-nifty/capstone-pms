@@ -90,7 +90,7 @@ public function exportPdf(Request $request)
     ])->setPaper('A4', 'landscape');
 
     return $pdf->download('PropertyTransferReport.pdf');
-    // return $pdf->stream('PropertyTransferReport.pdf');
+//     return $pdf->stream('PropertyTransferReport.pdf');
 }
 
 

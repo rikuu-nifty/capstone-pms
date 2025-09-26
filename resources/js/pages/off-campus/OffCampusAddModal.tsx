@@ -131,21 +131,18 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
     // });
 
     // Only keep assets that belong to the chosen unit/department
-    const filteredAssets = data.college_or_unit_id
-    ? assets.filter((a) => a.unit_or_department_id === Number(data.college_or_unit_id))
-    : assets;
+    const filteredAssets = data.college_or_unit_id ? assets.filter((a) => a.unit_or_department_id === Number(data.college_or_unit_id)) : assets;
 
     const assetOptions: AssetOption[] = filteredAssets.map((a) => {
         const model = assetModels.find((m) => m.id === a.asset_model_id);
         return {
             value: a.id,
             label: `${a.asset_name} | ${model ? `${model.brand} ${model.model}` : ''}${
-            a.serial_no ? ` | SN: ${a.serial_no}` : ''
+                a.serial_no ? ` | SN: ${a.serial_no}` : ''
             }${a.description ? ` | ${a.description}` : ''}`,
             model_id: model ? model.id : null,
         };
     });
-
 
     // How many assets can be selected based on Quantity
     const maxSelectable = Number(data.quantity) || 0;
@@ -222,7 +219,13 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                 onChange={(e) => {
                                     const val = e.target.value === '' ? '' : Number(e.target.value);
                                     setData('college_or_unit_id', val);
-                                    setData('selected_assets', []);
+
+                                    // ✅ Clear any assets that don’t belong to this department
+                                    const validAssets = assets.filter((a) => a.unit_or_department_id === val);
+                                    setData(
+                                        'selected_assets',
+                                        data.selected_assets.filter((sa) => validAssets.some((va) => va.id === sa.asset_id)),
+                                    );
                                 }}
                             >
                                 <option value="">Select Unit/Department</option>
@@ -264,8 +267,6 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                             </select>
                             {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                         </div>
-
-
 
                         {/* Purpose */}
                         <div className="col-span-2">
@@ -325,6 +326,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
 
                         <div className="col-span-2">
                             <label className="mb-1 block font-medium">Assets Covered</label>
+
                             <Select<AssetOption, true>
                                 isMulti
                                 options={assetOptions}
@@ -339,20 +341,23 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                     const limited = maxSelectable ? picked.slice(0, maxSelectable) : picked;
                                     handleAssetsChange(limited);
                                 }}
-                                isDisabled={!data.quantity || Number(data.quantity) <= 0}
+                                // ✅ disable if no department OR invalid quantity
+                                isDisabled={!data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0}
                             />
 
                             {/* 🔴 Inline error (only after save attempt) */}
                             {quantityError && <p className="mt-1 text-xs text-red-500">{quantityError}</p>}
 
                             {/* Helper / limit message */}
-                            {maxSelectable > 0 && (
+                            {!data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0 ? (
+                                <p className="mt-1 text-xs text-muted-foreground">Please select a Unit/Dept/Lab and enter the quantity first.</p>
+                            ) : maxSelectable > 0 ? (
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     {data.selected_assets.length >= maxSelectable
                                         ? 'You have reached your limit based on your chosen quantity.'
                                         : `You can select up to ${maxSelectable} asset${maxSelectable > 1 ? 's' : ''}.`}
                                 </p>
-                            )}
+                            ) : null}
                         </div>
 
                         {/* Remarks */}

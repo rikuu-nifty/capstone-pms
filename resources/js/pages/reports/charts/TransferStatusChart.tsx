@@ -30,7 +30,7 @@ export const STATUS_LABELS: Record<string, string> = {
     cancelled: 'Cancelled',
 };
 
-const STATUS_ORDER = ['completed', 'pending_review', 'upcoming', 'in_progress', 'overdue', 'cancelled'];
+const STATUS_ORDER = ['completed', 'upcoming', 'pending_review', 'in_progress', 'overdue', 'cancelled'];
 
 const COLORS: Record<string, string> = {
     Completed: '#22c55e',
@@ -40,25 +40,33 @@ const COLORS: Record<string, string> = {
     Overdue: '#ef4444',
     Cancelled: '#6b7280',
 };
-
-// ✅ Custom tooltip renderer
+// ✅ Custom tooltip renderer with right-aligned numbers (extra spacing for large values)
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
     if (!active || !payload || payload.length === 0) return null;
 
     return (
         <div className="rounded-md border bg-white p-3 text-xs shadow-md">
             {/* Month Label */}
-            <p className="mb-2 font-semibold text-gray-700">{label}</p>
+            <p className="mb-2 font-semibold text-gray-900">{label}</p>
 
             {/* Status rows in proper order */}
             {STATUS_ORDER.map((key) => {
                 const item = payload.find((p) => p.dataKey === key);
                 if (!item) return null;
 
+                const status = STATUS_LABELS[key];
+                const color = COLORS[status];
+
                 return (
-                    <div key={key} className="mb-1 flex last:mb-0">
-                        <span className="w-28 text-gray-600">{STATUS_LABELS[key]}</span>
-                        <span className="font-medium text-gray-900">{item.value as number}</span>
+                    <div key={key} className="mb-1 flex items-center justify-between last:mb-0">
+                        {/* Left side: colored square + status */}
+                        <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: color }} />
+                            <span className="text-gray-950">{status}</span>
+                        </div>
+
+                        {/* Right side: value (reserve space for big numbers) */}
+                        <span className="w-12 text-right font-medium text-gray-500">{item.value as number}</span>
                     </div>
                 );
             })}
@@ -90,7 +98,6 @@ export default function TransferStatusChart({ data, height = 'max-h-[220px]' }: 
                 className={`mx-auto w-full ${height}`}
             >
                 <AreaChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: -10 }}>
-                    {/* ✅ Full grid */}
                     <CartesianGrid stroke="#dadfe6" strokeDasharray="3 3" horizontal={true} vertical={true} />
 
                     {/* ✅ Define gradients */}
@@ -121,7 +128,6 @@ export default function TransferStatusChart({ data, height = 'max-h-[220px]' }: 
                         </linearGradient>
                     </defs>
 
-                    {/* ✅ Axes */}
                     <XAxis
                         dataKey="month"
                         axisLine={true}
@@ -134,14 +140,7 @@ export default function TransferStatusChart({ data, height = 'max-h-[220px]' }: 
                             const first = dayjs(data[0]?.month);
                             const last = dayjs(data[data.length - 1]?.month);
                             const diffYears = last.diff(first, 'year');
-
-                            // ✅ If range spans multiple years → show Month + Year
-                            if (diffYears >= 1) {
-                                return dayjs(value).format('MMM YYYY'); // e.g. "Sep 2025"
-                            }
-
-                            // ✅ If within 1 year → show only Month
-                            return dayjs(value).format('MMM'); // e.g. "Sep"
+                            return diffYears >= 1 ? dayjs(value).format('MMM YYYY') : dayjs(value).format('MMM');
                         }}
                     />
                     <YAxis
@@ -159,11 +158,9 @@ export default function TransferStatusChart({ data, height = 'max-h-[220px]' }: 
                         }}
                     />
 
-                    {/* ✅ Tooltip with custom format */}
                     <ChartTooltip cursor={false} content={<CustomTooltip />} />
 
                     {/* ✅ Apply gradient fills */}
-                    {/* ✅ Draw top-to-bottom so stacking matches legend order */}
                     <Area type="monotone" dataKey="cancelled" stroke={COLORS.Cancelled} fill="url(#colorCancelled)" stackId="1" />
                     <Area type="monotone" dataKey="overdue" stroke={COLORS.Overdue} fill="url(#colorOverdue)" stackId="1" />
                     <Area type="monotone" dataKey="in_progress" stroke={COLORS['In Progress']} fill="url(#colorInProgress)" stackId="1" />
@@ -173,7 +170,7 @@ export default function TransferStatusChart({ data, height = 'max-h-[220px]' }: 
                 </AreaChart>
             </ChartContainer>
 
-            {/* ✅ Manual Legend (Title Case) */}
+            {/* ✅ Manual Legend */}
             <div className="mt-3 flex flex-wrap justify-center gap-4">
                 {STATUS_ORDER.map((key) => (
                     <div key={key} className="flex items-center gap-2">

@@ -38,7 +38,7 @@ class OffCampusController extends Controller
                 'collegeOrUnit:id,name,code',
                 'issuedBy:id,name',
             ])
-            ->latest('date_issued')
+            ->latest('id') // ✅ still ordered latest first
             ->paginate(20)
             ->withQueryString();
 

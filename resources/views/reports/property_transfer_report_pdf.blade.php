@@ -3,31 +3,38 @@
 @section('title', 'Property Transfer Report')
 
 @section('content')
-    @php
-        use Carbon\Carbon;
+   @php
+    use Carbon\Carbon;
 
-        $from = $filters['from'] ?? null;
-        $to = $filters['to'] ?? null;
+    $from = $filters['from'] ?? null;
+    $to   = $filters['to'] ?? null;
 
-        $fromDate = $from ? Carbon::parse($from) : null;
-        $toDate = $to ? Carbon::parse($to) : null;
+    $fromDate = $from ? Carbon::parse($from) : null;
+    $toDate   = $to ? Carbon::parse($to) : null;
 
-        if ($fromDate && $toDate) {
-            // Case 1: both provided
-            $reportYear = $fromDate->year . '-' . $toDate->year;
-        } elseif ($fromDate) {
-            // Case 2: only 'from' provided → fromYear up to latest available year
-            $reportYear = $fromDate->year . '-' . ($fromDate->year + 1);
+    if ($fromDate && $toDate) {
+        // Case 1: both from + to provided
+        $reportYear = $fromDate->year . '-' . $toDate->year;
+    } elseif ($fromDate) {
+        // Case 2: only 'from' provided → get latest date from transfers
+        $latestRecord = collect($transfers)
+            ->pluck('scheduled_date') // 👈 or 'created_at' if scheduled_date is null
+            ->filter()
+            ->map(fn($d) => Carbon::parse($d))
+            ->max();
 
-        } elseif ($toDate) {
-            // Case 3: only 'to' date provided → currentYear-toYear
-             $reportYear = ($toDate->year - 1) . '-' . $toDate->year;
-        } else {
-            // Case 4: default
-            $year = now()->year;
-            $reportYear = $year . '-' . ($year + 1);
-        }
-    @endphp
+        $latestYear = $latestRecord ? $latestRecord->year : ($fromDate->year + 1);
+        $reportYear = $fromDate->year . '-' . $latestYear;
+    } elseif ($toDate) {
+        // Case 3: only 'to' provided → assume one year before
+        $reportYear = ($toDate->year - 1) . '-' . $toDate->year;
+    } else {
+        // Case 4: no filters → default current year span
+        $year = now()->year;
+        $reportYear = $year . '-' . ($year + 1);
+    }
+@endphp
+
 
     <div style="text-align:center; margin-bottom:20px;">
         <h3 style="margin-top:10px; margin-bottom:5px; font-weight:bold;">
@@ -37,13 +44,13 @@
 
     <div style="border-top: 2px solid #000000; margin-top: 20px; margin-bottom: 15px;"></div>
 
-    {{-- Filters summary --}}
-    <div class="mb-6">
-        <h3 style="color:#000;">Filters</h3>
-        @php $f = $filters ?? []; @endphp
+   {{-- Filters summary --}}
+<div class="mb-6">
+    <h3 style="color:#000;">Filters</h3>
+    @php $f = $filters ?? []; @endphp
 
-        @if (!empty($f) && collect($f)->filter()->isNotEmpty())
-            @foreach ([
+    @if (!empty($f) && collect($f)->filter()->isNotEmpty())
+        @foreach ([
             'from' => 'From',
             'to' => 'To',
             'department_id' => 'Department',
@@ -51,24 +58,24 @@
             'room_id' => 'Room',
             'status' => 'Status',
         ] as $key => $label)
-                @if (!empty($f[$key]))
-                    @if (in_array($key, ['from', 'to']))
-                        <span class="pill mr-2">
-                            {{ $label }}: {{ Carbon::parse($f[$key])->format('M d, Y') }}
-                        </span>
-                    @elseif ($key === 'status')
-                        <span class="pill mr-2">
-                            {{ str_replace('_', ' ', $f[$key]) }}
-                        </span>
-                    @else
-                        <span class="pill mr-2">{{ $label }}: {{ $f[$key] }}</span>
-                    @endif
+            @if (!empty($f[$key]))
+                @if (in_array($key, ['from', 'to']))
+                    <span class="pill mr-2">
+                        {{ $label }}: {{ Carbon::parse($f[$key])->format('M d, Y') }}
+                    </span>
+                @elseif ($key === 'status')
+                    <span class="pill mr-2">
+                        {{ $label }}: {{ ucwords(str_replace('_', ' ', $f[$key])) }}
+                    </span>
+                @else
+                    <span class="pill mr-2">{{ $label }}: {{ $f[$key] }}</span>
                 @endif
-            @endforeach
-        @else
-            <span class="muted">No Filters Applied – showing all available records.</span>
-        @endif
-    </div>
+            @endif
+        @endforeach
+    @else
+        <span class="muted">No Filters Applied – showing all available records.</span>
+    @endif
+</div>
 
 
 

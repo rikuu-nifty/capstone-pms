@@ -22,6 +22,7 @@ class PropertyTransferReportExport implements FromCollection, WithHeadings, With
     protected $filters;
     protected $generatedAt;
     protected $rowCount = 0;
+    protected $transfers; // ✅ store dataset
 
     public function __construct($filters = [])
     {
@@ -53,12 +54,12 @@ class PropertyTransferReportExport implements FromCollection, WithHeadings, With
                 $q->where('current_building_room', $id)->orWhere('receiving_building_room', $id)
             );
 
-        $transfers = $query->get();
+        // ✅ store results
+        $this->transfers = $query->get();
+
         $counter = 1;
-
-        return $transfers->map(function ($t) use (&$counter) {
+        return $this->transfers->map(function ($t) use (&$counter) {
             $this->rowCount++;
-
             return [
                 '#'                 => $counter++,
                 'Current Building'  => $t->currentBuildingRoom->building->name ?? '—',
@@ -75,21 +76,26 @@ class PropertyTransferReportExport implements FromCollection, WithHeadings, With
         });
     }
 
-    public function headings(): array
-    {
+   public function headings(): array
+   {
+        // ✅ Ensure transfers are loaded before building header
+        if ($this->transfers === null) {
+            $this->collection();
+        }
+
         return [
             ['ANGELES UNIVERSITY FOUNDATION'],
             ['Angeles City'],
             ['Property Management Office'],
             ['Generated: ' . $this->generatedAt],
-            ['Property Transfer Report ' . $this->getHeaderDateRange()],
+            ['Property Transfer Report ' . $this->getHeaderDateRange($this->transfers)], // ✅ now works in Excel
             [], // spacer row
             ['#','Current Building','Current Room','Receiving Building','Receiving Room',
-             'Current Dept','Receiving Dept','Assigned By','Status','Assets','Scheduled Date']
+            'Current Dept','Receiving Dept','Assigned By','Status','Assets','Scheduled Date']
         ];
-    }
+   }
 
-    protected function getHeaderDateRange(): string
+    protected function getHeaderDateRange($records = null): string
     {
         $from = $this->filters['from'] ?? null;
         $to   = $this->filters['to'] ?? null;
@@ -97,11 +103,23 @@ class PropertyTransferReportExport implements FromCollection, WithHeadings, With
         if ($from && $to) {
             return Carbon::parse($from)->year . '-' . Carbon::parse($to)->year;
         } elseif ($from) {
-            $year = Carbon::parse($from)->year;
-            return $year . '-' . ($year + 1);
+            $fromYear = Carbon::parse($from)->year;
+
+            if ($records && $records->count() > 0) {
+                $latestDate = collect($records)
+                    ->map(fn($r) => $r->scheduled_date ?? $r->created_at)
+                    ->filter()
+                    ->max();
+
+                if ($latestDate) {
+                    return $fromYear . '-' . Carbon::parse($latestDate)->year;
+                }
+            }
+
+            return $fromYear . '-' . ($fromYear + 1);
         } elseif ($to) {
-            $year = Carbon::parse($to)->year;
-            return ($year - 1) . '-' . $year;
+            $toYear = Carbon::parse($to)->year;
+            return ($toYear - 1) . '-' . $toYear;
         }
 
         $year = now()->year;
@@ -159,6 +177,9 @@ class PropertyTransferReportExport implements FromCollection, WithHeadings, With
                                 $display = Building::find($val)?->name ?? $val;
                             } elseif ($key === 'room_id') {
                                 $display = BuildingRoom::find($val)?->room ?? $val;
+                            } elseif ($key === 'status') {
+                                // ✅ Fix raw DB value -> Human friendly
+                                $display = ucwords(str_replace('_', ' ', $val));
                             }
 
                             $event->sheet->setCellValue("{$col}{$row}", "{$label}: {$display}");
@@ -235,7 +256,7 @@ class PropertyTransferReportExport implements FromCollection, WithHeadings, With
             'B' => 25, // Current Building
             'C' => 20, // Current Room
             'D' => 25, // Receiving Building
-            'E' => 20, // Receiving Room
+            'E' => 40, // Receiving Room
             'F' => 25, // Current Dept
             'G' => 25, // Receiving Dept
             'H' => 20, // Assigned By

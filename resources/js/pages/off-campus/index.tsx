@@ -1,19 +1,20 @@
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import type { Paginator } from '@/types/paginatorOffCampus';
-import { Head, router, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { type VariantProps } from 'class-variance-authority';
 import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge'
+import { useEffect, useMemo, useState } from 'react';
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import { formatStatusLabel } from '@/types/custom-index';
 import OffCampusAddModal from './OffCampusAddModal';
 import OffCampusEditModal from './OffCampusEditModal';
 import OffCampusViewModal from './OffCampusViewModal';
-import { formatStatusLabel } from '@/types/custom-index';
 
 // -------------------- TYPES --------------------
 
@@ -53,7 +54,14 @@ export type OffCampus = {
     issued_by?: { id: number; name: string } | null;
 };
 
-export type Asset = { id: number; asset_model_id: number | null; asset_name: string; serial_no: string | null };
+export type Asset = {
+    id: number;
+    asset_model_id: number | null;
+    asset_name: string;
+    serial_no: string | null;
+    description?: string | null; // ✅ optional if needed
+    unit_or_department_id: number; // ✅ add this missing field
+};
 export type AssetModel = { id: number; brand: string; model: string };
 export type User = { id: number; name: string };
 export type UnitOrDepartment = { id: number; name: string; code: string };
@@ -78,22 +86,30 @@ function formatDate(d?: string | null) {
     return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' | 'primary' {
-  switch (status) {
-    case 'returned':
-      return 'default'      // green
-    case 'overdue':
-      return 'destructive'  // red
-    case 'pending_review':
-      return 'secondary'    // gray/blue
-    case 'pending_return':
-      return 'primary'      // neutral outline
-    case 'cancelled':
-      return 'destructive'  // red as well
-    default:
-      return 'secondary'
-  }
-}
+const offCampusStatusMap: Record<OffCampus['status'], VariantProps<typeof badgeVariants>['variant']> = {
+    pending_review: 'Pending_Review',
+    pending_return: 'Pending',
+    returned: 'Completed',
+    overdue: 'Overdue',
+    cancelled: 'Cancelled',
+};
+
+// function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' | 'primary' {
+//     switch (status) {
+//         case 'returned':
+//             return 'default'; // green
+//         case 'overdue':
+//             return 'destructive'; // red
+//         case 'pending_review':
+//             return 'secondary'; // gray/blue
+//         case 'pending_return':
+//             return 'primary'; // neutral outline
+//         case 'cancelled':
+//             return 'destructive'; // red as well
+//         default:
+//             return 'secondary';
+//     }
+// }
 
 // function humanizeRemarks(v: string) {
 //     if (!v) return '—';
@@ -123,17 +139,17 @@ export default function OffCampusIndex({
     const [offCampusToDelete, setOffCampusToDelete] = useState<Pick<OffCampus, 'id'> | null>(null);
 
     type PagePropsWithViewing = Props & {
-    viewing?: OffCampus | null;
+        viewing?: OffCampus | null;
     };
 
     const { props } = usePage<PagePropsWithViewing>();
 
     useEffect(() => {
-    if (!props.viewing) return;
-    setSelectedOffCampus(props.viewing);
-    setShowViewOffCampus(true);
+        if (!props.viewing) return;
+        setSelectedOffCampus(props.viewing);
+        setShowViewOffCampus(true);
     }, [props.viewing]);
-    
+
     const confirmDelete = () => {
         if (!offCampusToDelete) return;
         router.delete(route('off-campus.destroy', offCampusToDelete.id), {
@@ -151,13 +167,12 @@ export default function OffCampusIndex({
 
         if (/^\/?off-campus\/\d+\/view\/?$/.test(window.location.pathname)) {
             if (window.history.length > 1) {
-            history.back();
+                history.back();
             } else {
-            router.visit(route('off-campus.index'), { replace: true, preserveScroll: true });
+                router.visit(route('off-campus.index'), { replace: true, preserveScroll: true });
             }
         }
     };
-
 
     const filtered = useMemo(() => {
         const q = search.toLowerCase().trim();
@@ -254,11 +269,8 @@ export default function OffCampusIndex({
                                         <TableCell>{row.quantity}</TableCell>
                                         <TableCell>{row.units}</TableCell>
                                         <TableCell>
-                                            <Badge variant={statusVariant(row.status)}>
-                                                {formatStatusLabel(row.status)}
-                                            </Badge>
+                                            <Badge variant={offCampusStatusMap[row.status] ?? 'default'}>{formatStatusLabel(row.status)}</Badge>
                                         </TableCell>
-
 
                                         <TableCell className="flex justify-center gap-2">
                                             <Button
@@ -295,16 +307,8 @@ export default function OffCampusIndex({
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button> */}
-                                            <Button 
-                                                size="icon" 
-                                                variant="ghost" 
-                                                asChild 
-                                                className="cursor-pointer"
-                                            >
-                                                <Link 
-                                                    href={route('off-campus.view', row.id)} 
-                                                    preserveScroll
-                                                >
+                                            <Button size="icon" variant="ghost" asChild className="cursor-pointer">
+                                                <Link href={route('off-campus.view', row.id)} preserveScroll>
                                                     <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Link>
                                             </Button>
@@ -361,11 +365,7 @@ export default function OffCampusIndex({
                 )} */}
 
                 {showViewOffCampus && selectedOffCampus && (
-                    <OffCampusViewModal
-                        open={showViewOffCampus}
-                        onClose={onCloseView}
-                        offCampus={selectedOffCampus}
-                    />
+                    <OffCampusViewModal open={showViewOffCampus} onClose={onCloseView} offCampus={selectedOffCampus} />
                 )}
 
                 {/* Delete (Archive) Modal */}

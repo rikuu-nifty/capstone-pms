@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 use App\Http\Controllers\InventorySchedulingReportController;
 use App\Http\Controllers\PropertyTransferReportController;
+use App\Http\Controllers\OffCampusReportController;
 use Inertia\Inertia;
 use App\Models\Report;
 use Illuminate\Http\Request;
+
 use App\Models\Transfer;
+use App\Models\OffCampus;
 use App\Models\InventoryList;
 use App\Models\UnitOrDepartment;
 use App\Models\AssetModel;
@@ -134,73 +137,62 @@ class ReportController extends Controller
 
 
   public function index(Request $request)
-    {
-        // ✅ Asset Inventory List summary
-        $categoryData = Category::withCount('inventoryLists')
-            ->get()
-            ->map(fn($cat) => [
-                'label' => $cat->name,
-                'value' => $cat->inventory_lists_count ?? 0,
-            ]);
+{
+    // ✅ Asset Inventory List summary
+    $categoryData = Category::withCount('inventoryLists')
+        ->get()
+        ->map(fn($cat) => [
+            'label' => $cat->name,
+            'value' => $cat->inventory_lists_count ?? 0,
+        ]);
 
-        // ✅ Inventory Scheduling summary
-        $schedulingData = (new InventorySchedulingReportController)->summaryForDashboard();
+    // ✅ Inventory Scheduling summary
+    $schedulingData = (new InventorySchedulingReportController)->summaryForDashboard();
 
-        // 🔹 Optional filters (same as in PropertyTransferReportController)
-        $from = $request->input('from');
-        $to = $request->input('to');
-        $status = $request->input('status');
-        $currentBuilding = $request->input('current_building_id');
-        $receivingBuilding = $request->input('receiving_building_id');
-        $department = $request->input('department_id');
+    // 🔹 Optional filters (same as in PropertyTransferReportController)
+    $from = $request->input('from');
+    $to = $request->input('to');
+    $status = $request->input('status');
+    $currentBuilding = $request->input('current_building_id');
+    $receivingBuilding = $request->input('receiving_building_id');
+    $department = $request->input('department_id');
 
-        // ✅ Base query with filters
-        $query = Transfer::query()
-            ->when($from, fn($q) => $q->whereDate('created_at', '>=', Carbon::parse($from)))
-            ->when($to, fn($q) => $q->whereDate('created_at', '<=', Carbon::parse($to)))
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($currentBuilding, fn($q) => $q->whereHas('currentBuildingRoom', fn($q2) => $q2->where('building_id', $currentBuilding)))
-            ->when($receivingBuilding, fn($q) => $q->whereHas('receivingBuildingRoom', fn($q2) => $q2->where('building_id', $receivingBuilding)))
-            ->when($department, fn($q) => $q->where('current_organization', $department));
+    // ✅ Base query with filters
+    $query = Transfer::query()
+        ->when($from, fn($q) => $q->whereDate('created_at', '>=', Carbon::parse($from)))
+        ->when($to, fn($q) => $q->whereDate('created_at', '<=', Carbon::parse($to)))
+        ->when($status, fn($q) => $q->where('status', $status))
+        ->when($currentBuilding, fn($q) => $q->whereHas('currentBuildingRoom', fn($q2) => $q2->where('building_id', $currentBuilding)))
+        ->when($receivingBuilding, fn($q) => $q->whereHas('receivingBuildingRoom', fn($q2) => $q2->where('building_id', $receivingBuilding)))
+        ->when($department, fn($q) => $q->where('current_organization', $department));
 
-        $transfers = $query->get();
+    $transfers = $query->get();
 
-        // ✅ Monthly trends by status (continuous range)
-        // If no from/to filter → use all transfers for chart
-            if (empty($from) && empty($to)) {
-                $chartSource = Transfer::all();
-            } else {
-                // Respect filters for chart
-                $chartSource = $transfers;
-            }
+    // ✅ Monthly trends by status (continuous range)
+    // If no from/to filter → use all transfers for chart
+    if (empty($from) && empty($to)) {
+        $chartSource = Transfer::all();
+    } else {
+        // Respect filters for chart
+        $chartSource = $transfers;
+    }
 
-            // Always show last 12 months if no from/to filters are applied
-            // if (empty($from) && empty($to)) {
-            //     $endDate = now()->endOfMonth();
-            //     $startDate = now()->subMonths(11)->startOfMonth(); // last 12 months
-            // } else {
-            //     // Use actual min/max of filtered dataset
-            //     $startDate = $chartSource->min('created_at');
-            //     $endDate   = $chartSource->max('created_at');
-            // }
+    // Always show last 6 months if no from/to filters are applied
+    if (empty($from) && empty($to)) {
+        $endDate = now()->endOfMonth();
+        $startDate = now()->subMonths(5)->startOfMonth(); // last 6 months
+    } else {
+        // Use actual min/max of filtered dataset
+        $startDate = $chartSource->min('created_at');
+        $endDate   = $chartSource->max('created_at');
+    }
 
-            // Always show last 6 months if no from/to filters are applied
-
-            if (empty($from) && empty($to)) {
-                $endDate = now()->endOfMonth();
-                 $startDate = now()->subMonths(5)->startOfMonth(); // last 6 months
-            } else {
-                // Use actual min/max of filtered dataset
-                 $startDate = $chartSource->min('created_at');
-                 $endDate   = $chartSource->max('created_at');
-            }
-
-            if ($startDate && $endDate) {
-                $period = CarbonPeriod::create(
-                    Carbon::parse($startDate)->startOfMonth(),
-                    '1 month',
-                    Carbon::parse($endDate)->endOfMonth()
-                );
+    if ($startDate && $endDate) {
+        $period = CarbonPeriod::create(
+            Carbon::parse($startDate)->startOfMonth(),
+            '1 month',
+            Carbon::parse($endDate)->endOfMonth()
+        );
 
         $monthlyStatusTrends = collect($period)->map(function ($date) use ($chartSource) {
             $monthKey = $date->format('Y-m');
@@ -222,14 +214,35 @@ class ReportController extends Controller
         $monthlyStatusTrends = collect();
     }
 
+    // ✅ Off-Campus summary
+    $offCampusRecords = OffCampus::all();
+    $offCampusData = [
+        'statusSummary' => [
+            'pending_review' => $offCampusRecords->where('status', 'pending_review')->count(),
+            'pending_return' => $offCampusRecords->where('status', 'pending_return')->count(),
+            'returned'       => $offCampusRecords->where('status', 'returned')->count(),
+            'overdue'        => $offCampusRecords->where('status', 'overdue')->count(),
+            'cancelled'      => $offCampusRecords->where('status', 'cancelled')->count(),
+            'missing'        => $offCampusRecords->where('status', 'missing')->count(),
+        ],
+        'purposeSummary' => [
+            'official_use' => $offCampusRecords->where('remarks', 'official_use')->count(),
+            'repair'       => $offCampusRecords->where('remarks', 'repair')->count(),
+        ],
+    ];
+
     return Inertia::render('reports/index', [
         'title'          => 'Reports Dashboard',
         'categoryData'   => $categoryData,
         'schedulingData' => $schedulingData,
         'transferData'   => $monthlyStatusTrends, // ✅ filtered + continuous months
-        'filters'        => $request->only(['from','to','status','current_building_id','receiving_building_id','department_id']),
+        'offCampusData'  => $offCampusData,       // ✅ added for Off-Campus chart
+        'filters'        => $request->only([
+            'from','to','status','current_building_id','receiving_building_id','department_id'
+        ]),
     ]);
 }
+
 
 
 

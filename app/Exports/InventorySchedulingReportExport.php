@@ -22,13 +22,12 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
     protected $filters;
     protected $generatedAt;
     protected $rowCount = 0;
-    protected $schedules; // ✅ add this
+    protected $schedules; // ✅ dataset storage
 
-    public function __construct($filters = [], $schedules = [])
+    public function __construct($filters = [])
     {
         $this->filters   = $filters;
-        $this->schedules = $schedules;
-        $this->generatedAt = Carbon::now()->format('F d, Y h:i A'); // 👈 add this
+        $this->generatedAt = Carbon::now()->format('F d, Y h:i A');
     }
 
     public function collection()
@@ -44,47 +43,49 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
             ->when($this->filters['room_id'] ?? null, fn($q, $id) => $q->where('building_room_id', $id))
             ->when($this->filters['scheduling_status'] ?? null, fn($q, $status) => $q->where('scheduling_status', $status));
 
-        $schedules = $query->get();
+        // ✅ Store dataset for dynamic header
+        $this->schedules = $query->get();
 
         $counter = 1;
 
-        return $schedules->map(function ($s) use (&$counter) {
+        return $this->schedules->map(function ($s) use (&$counter) {
             $this->rowCount++;
 
-              // ✅ Normalize status
-                $status = $s->scheduling_status;
-                if ($status === 'pending_review' || $status === 'Pending_Review') {
-                    $status = 'Pending Review';
-                }
+            $status = $s->scheduling_status
+                ? ucwords(str_replace('_', ' ', strtolower($s->scheduling_status)))
+                : '—';
 
             return [
-                '#'          => $counter++,
-                'Unit/Dept'  => $s->unitOrDepartment->name ?? '—',
-                'Building'   => $s->building->name ?? ($s->buildings->pluck('name')->implode(', ') ?: '—'),
-                'Room'       => $s->rooms->pluck('room')->implode(', ') ?: ($s->buildingRoom->room ?? '—'),
-                'Sub-Areas'  => $s->subAreas->pluck('name')->implode(', ') ?: '—',
-                'Prepared By' => $s->preparedBy->name ?? '—',
+                '#'                   => $counter++,
+                'Unit/Dept'           => $s->unitOrDepartment->name ?? '—',
+                'Building'            => $s->building->name ?? ($s->buildings->pluck('name')->implode(', ') ?: '—'),
+                'Room'                => $s->rooms->pluck('room')->implode(', ') ?: ($s->buildingRoom->room ?? '—'),
+                'Sub-Areas'           => $s->subAreas->pluck('name')->implode(', ') ?: '—',
+                'Prepared By'         => $s->preparedBy->name ?? '—',
                 'Designated Employee' => $s->designatedEmployee->name ?? '—',
-                'Assigned By' => $s->assignedBy->name ?? '—',
-                'Inventory Month' => $s->inventory_schedule ?? '—',
-                'Actual Date' => $s->actual_date_of_inventory
+                'Assigned By'         => $s->assignedBy->name ?? '—',
+                'Inventory Month'     => $s->inventory_schedule ?? '—',
+                'Actual Date'         => $s->actual_date_of_inventory
                     ? Carbon::parse($s->actual_date_of_inventory)->format('M d, Y')
                     : '—',
-                // ✅ Fix status label
-                'Status'     => $status, // ✅ fixed
-                'Assets'     => $s->assets->count(),
+                'Status'              => $status,
+                'Assets'              => $s->assets->count(),
             ];
         });
     }
 
     public function headings(): array
     {
+        if ($this->schedules === null) {
+            $this->collection();
+        }
+
         return [
             ['ANGELES UNIVERSITY FOUNDATION'],
             ['Angeles City'],
             ['Property Management Office'],
             ['Generated: ' . $this->generatedAt],
-            ['Inventory Scheduling Report ' . $this->getHeaderDateRange()],
+            ['Inventory Scheduling Report ' . $this->getHeaderDateRange($this->schedules)], // ✅ dynamic header
             [], // spacer row
             ['#', 'Unit/Dept', 'Building', 'Room', 'Sub-Areas', 'Prepared By',
              'Designated Employee', 'Assigned By', 'Inventory Month',
@@ -92,35 +93,36 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
         ];
     }
 
-   protected function getHeaderDateRange(): string
+    protected function getHeaderDateRange($records = null): string
     {
         $from = $this->filters['from'] ?? null;
         $to   = $this->filters['to'] ?? null;
 
         if ($from && $to) {
-            // Case 1: both from and to
+            return Carbon::parse($from)->year . '-' . Carbon::parse($to)->year;
+        } elseif ($from) {
             $fromYear = Carbon::parse($from)->year;
-            $toYear   = Carbon::parse($to)->year;
-            return $fromYear . '-' . $toYear;
-        }
 
-        if ($from) {
-            // Case 2: only from → fromYear to (fromYear + 1)
-            $fromYear = Carbon::parse($from)->year;
+            if ($records && $records->count() > 0) {
+                $latestDate = collect($records)
+                    ->map(fn($r) => $r->actual_date_of_inventory ?? $r->created_at)
+                    ->filter()
+                    ->max();
+
+                if ($latestDate) {
+                    return $fromYear . '-' . Carbon::parse($latestDate)->year;
+                }
+            }
+
             return $fromYear . '-' . ($fromYear + 1);
-        }
-
-        if ($to) {
-            // Case 3: only to → (toYear - 1) to toYear
+        } elseif ($to) {
             $toYear = Carbon::parse($to)->year;
             return ($toYear - 1) . '-' . $toYear;
         }
 
-        // Case 4: none → currentYear to (currentYear + 1)
-        $baseYear = now()->year;
-        return $baseYear . '-' . ($baseYear + 1);
+        $year = now()->year;
+        return $year . '-' . ($year + 1);
     }
-
 
     public function styles(Worksheet $sheet)
     {
@@ -173,6 +175,8 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
                                 $display = Building::find($val)?->name ?? $val;
                             } elseif ($key === 'room_id') {
                                 $display = BuildingRoom::find($val)?->room ?? $val;
+                            } elseif ($key === 'scheduling_status') {
+                                $display = ucwords(str_replace('_', ' ', $val));
                             }
 
                             $event->sheet->setCellValue("{$col}{$row}", "{$label}: {$display}");
@@ -182,86 +186,45 @@ class InventorySchedulingReportExport implements FromCollection, WithHeadings, W
                 }
             },
 
-           AfterSheet::class => function (AfterSheet $event) {
-    $headerRow = 7;
-    $newHeaderRow = $headerRow + 1;
+            AfterSheet::class => function (AfterSheet $event) {
+                $headerRow = 7;
+                $newHeaderRow = $headerRow + 1;
 
-    // Insert totals row
-    $event->sheet->insertNewRowBefore($headerRow, 1);
-    $totalsRow = $headerRow;
+                $event->sheet->insertNewRowBefore($headerRow, 1);
+                $totalsRow = $headerRow;
 
-    // Merge across the full width (A → L)
-    $event->sheet->mergeCells("A{$totalsRow}:L{$totalsRow}");
+                $event->sheet->mergeCells("A{$totalsRow}:L{$totalsRow}");
+                $event->sheet->setCellValue("A{$totalsRow}", "Total Schedules: {$this->rowCount}");
 
-    // ✅ Only total schedules
-    $event->sheet->setCellValue("A{$totalsRow}", "Total Schedules: {$this->rowCount}");
+                $event->sheet->getStyle("A{$totalsRow}:L{$totalsRow}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'alignment' => ['horizontal' => 'center'],
+                    'fill' => ['fillType' => 'solid','color' => ['rgb' => 'D9E1F2']],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN,'color' => ['rgb' => '000000']]],
+                ]);
 
-    // Style totals row
-    $event->sheet->getStyle("A{$totalsRow}:L{$totalsRow}")->applyFromArray([
-        'font' => ['bold' => true],
-        'alignment' => ['horizontal' => 'center'],
-        'fill' => [
-            'fillType' => 'solid',
-            'color' => ['rgb' => 'D9E1F2'],
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
+                $event->sheet->getStyle("A{$newHeaderRow}:L{$newHeaderRow}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'alignment' => ['horizontal' => 'center'],
+                    'fill' => ['fillType' => 'solid','color' => ['rgb' => 'D9E1F2']],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN,'color' => ['rgb' => '000000']]],
+                ]);
 
-    // ✅ Style headers (row 8 now)
-    $event->sheet->getStyle("A{$newHeaderRow}:L{$newHeaderRow}")->applyFromArray([
-        'font' => ['bold' => true],
-        'alignment' => ['horizontal' => 'center'],
-        'fill' => [
-            'fillType' => 'solid',
-            'color' => ['rgb' => 'D9E1F2'],
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
-
-    // ✅ Center align values under B → L + apply borders to ALL values
-    $lastRow = $event->sheet->getHighestRow();
-    $event->sheet->getStyle("A" . ($newHeaderRow+1) . ":L{$lastRow}")->applyFromArray([
-                    'alignment' => [
-                        'horizontal' => 'center',
-                        'vertical'   => 'center',
-                    ],
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
-                    ],
+                $lastRow = $event->sheet->getHighestRow();
+                $event->sheet->getStyle("A" . ($newHeaderRow+1) . ":L{$lastRow}")->applyFromArray([
+                    'alignment' => ['horizontal' => 'center','vertical' => 'center'],
+                    'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN,'color' => ['rgb' => '000000']]],
                 ]);
             }
-
         ];
     }
 
     public function columnWidths(): array
     {
         return [
-            'A' => 16,  // #
-            'B' => 20, // Unit/Dept
-            'C' => 20, // Building
-            'D' => 45, // Room
-            'E' => 55, // Sub-Areas
-            'F' => 20, // Prepared By
-            'G' => 20, // Designated Employee
-            'H' => 20, // Assigned By
-            'I' => 18, // Inventory Month
-            'J' => 18, // Actual Date
-            'K' => 18, // Status
-            'L' => 10, // Assets
+            'A' => 16, 'B' => 20, 'C' => 20, 'D' => 45,
+            'E' => 55, 'F' => 38, 'G' => 20, 'H' => 20,
+            'I' => 18, 'J' => 18, 'K' => 18, 'L' => 10,
         ];
     }
 }

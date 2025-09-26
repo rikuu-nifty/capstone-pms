@@ -6,10 +6,13 @@ import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lu
 import { AssetInventoryListChart } from './charts/AssetInventoryListChart';
 import { InventorySchedulingStatusChart } from './charts/InventorySchedulingStatusChart';
 import TransferStatusChart from './charts/TransferStatusChart';
+import OffCampusStatusChart from './charts/OffCampusStatusChart'; // ✅ import chart
 import { ReportCard } from './ReportCard';
 
 type CategoryData = { label: string; value: number };
+
 type SchedulingData = { label: string; value: number };
+
 type TransferStatusData = {
     month: string;
     completed: number;
@@ -20,16 +23,23 @@ type TransferStatusData = {
     cancelled: number;
 };
 
+type OffCampusSummary = {
+  statusSummary: Record<string, number>;
+  purposeSummary: Record<string, number>;
+};
+
+
 type ReportsPageProps = InertiaPageProps & {
     categoryData: CategoryData[];
     schedulingData: SchedulingData[];
     transferData: TransferStatusData[]; // ✅ now monthly trends dataset
+    offCampusData: OffCampusSummary; // ✅ added OffCampus data
 };
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }];
 
 export default function ReportsIndex() {
-    const { categoryData, schedulingData, transferData } = usePage<ReportsPageProps>().props;
+    const { categoryData, schedulingData, transferData, offCampusData } = usePage<ReportsPageProps>().props;
 
     const reports = [
         {
@@ -63,13 +73,24 @@ export default function ReportsIndex() {
             icon: <Trash2 className="h-5 w-5 text-red-500" />,
             footer: <span className="text-xs text-muted-foreground">Click "View" to see more details</span>,
         },
-        {
-            title: 'Off-Campus Report',
-            description: 'Placeholder for off-campus reporting.',
-            href: route('reports.off-campus'),
-            icon: <Truck className="h-5 w-5 text-indigo-800" />,
-            footer: <span className="text-xs text-muted-foreground">Click "View" to see more details</span>,
-        },
+       {
+  title: 'Off-Campus Report',
+  description: 'Overview of off-campus requests by status and purpose.',
+  href: route('reports.off-campus'),
+  icon: <Truck className="h-5 w-5 text-indigo-800" />,
+  footer: (
+    <span className="text-xs text-muted-foreground">
+      Click "View" to see more details
+    </span>
+  ),
+  chart: (
+    <OffCampusStatusChart
+      chartMode="status"
+      statusSummary={offCampusData.statusSummary}
+      purposeSummary={offCampusData.purposeSummary}
+    />
+  ),
+}
     ];
 
     return (

@@ -1,9 +1,8 @@
-// reports/charts/InventorySchedulingStatusChart.tsx
-// import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from 'recharts';
 'use client';
 
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, Cell, TooltipProps, XAxis, YAxis } from 'recharts';
+import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 type SchedulingData = { label: string; value: number };
 
@@ -15,7 +14,7 @@ type Props = {
 
 export function InventorySchedulingStatusChart({
     data,
-    height = 'max-h-[220px]', // default for dashboard // InventorySchedulingStatusChart → horizontal bars → max-h-[220px] works well
+    height = 'max-h-[220px]', // default for dashboard
     barSize = 35, // default bar size
 }: Props) {
     if (!data || data.length === 0) {
@@ -50,16 +49,36 @@ export function InventorySchedulingStatusChart({
         ]),
     );
 
+    // ✅ Custom Tooltip
+    const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+        if (active && payload && payload.length > 0) {
+            const { label, value } = payload[0].payload as SchedulingData;
+            const color = COLORS[label] || '#000';
+            return (
+                <div className="rounded-md border bg-white px-3 py-2 shadow-md">
+                    <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: color }}></span>
+                        <span className="text-sm font-medium text-gray-800">{label}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-gray-600">Value: {value.toLocaleString()}</div>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <div className="rounded-lg bg-gray-50 p-3">
             <ChartContainer config={chartConfig} className={`mx-auto w-full ${height}`}>
                 <BarChart data={orderedData} layout="vertical" margin={{ right: 16 }}>
                     <CartesianGrid stroke="#dadfe6" strokeDasharray="3 3" horizontal={true} vertical={true} />
+
                     <YAxis
+                        domain={[0, 'auto']}
                         dataKey="label"
                         type="category"
-                        tickLine={true} // ✅ show ticks with style
-                        axisLine={true} // ✅ show axis line
+                        tickLine={true}
+                        axisLine={true}
                         width={100}
                         tick={({ y, payload }) => {
                             const status = payload.value;
@@ -71,23 +90,19 @@ export function InventorySchedulingStatusChart({
                         }}
                     />
 
-                    <XAxis
-                        type="number"
-                        tickLine={true} // ✅ show ticks with style
-                        axisLine={true} // ✅ show axis line
-                    />
+                    <XAxis type="number" tickLine={true} axisLine={true} />
 
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                    {/* ✅ Custom Tooltip applied */}
+                    <ChartTooltip cursor={false} content={<CustomTooltip />} />
 
                     <Bar dataKey="value" layout="vertical" radius={4} barSize={barSize}>
-                        {/* ✅ Only keep clean numeric labels */}
-                        {/* <LabelList dataKey="value" position="right" offset={8} className="fill-gray-800" fontSize={12} fontWeight="600" /> */}
                         {orderedData.map((entry, i) => (
                             <Cell key={`cell-${i}`} fill={COLORS[entry.label] ?? '#94a3b8'} />
                         ))}
                     </Bar>
                 </BarChart>
             </ChartContainer>
+
             {/* ✅ Manual Legend */}
             <div className="mt-3 flex flex-wrap justify-center gap-4">
                 {STATUS_ORDER.map((status) => (

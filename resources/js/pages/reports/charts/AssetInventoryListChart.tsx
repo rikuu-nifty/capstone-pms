@@ -1,13 +1,18 @@
 // reports/charts/AssetInventoryListChart.tsx
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+'use client';
+
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useState } from 'react';
-import { Cell, Label, Pie, PieChart } from 'recharts';
+import { useMemo, useState } from 'react';
+import { Cell, Label, Pie, PieChart, Sector, TooltipProps } from 'recharts';
+import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import type { PieSectorDataItem } from 'recharts/types/polar/Pie';
 
 type CategoryData = { label: string; value: number };
 
 export function AssetInventoryListChart({ categoryData }: { categoryData: CategoryData[] }) {
     const [showOthersModal, setShowOthersModal] = useState(false);
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     const BASE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA66CC'];
 
@@ -35,15 +40,51 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
         });
     }
 
+    // ✅ Default active index → largest slice
+    const defaultActiveIndex = useMemo(() => {
+        if (displayedData.length === 0) return null;
+        let maxIdx = 0;
+        let maxVal = displayedData[0].value;
+        displayedData.forEach((d, i) => {
+            if (d.value > maxVal) {
+                maxVal = d.value;
+                maxIdx = i;
+            }
+        });
+        return maxIdx;
+    }, [displayedData]);
+
+    const currentActiveIndex = activeIndex !== null ? activeIndex : defaultActiveIndex;
+
     if (displayedData.length === 0) {
-        return <div className="flex h-full items-center justify-center text-sm text-gray-00">No data available</div>;
+        return <div className="flex h-full items-center justify-center text-sm text-gray-500">No data available</div>;
     }
+
+    // ✅ Custom Tooltip with consistent colors
+    const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
+        if (active && payload && payload.length > 0) {
+            const { label, value } = payload[0].payload as CategoryData;
+            const index = displayedData.findIndex((d) => d.label === label);
+            const color = generateColor(index, displayedData.length);
+
+            return (
+                <div className="rounded-md border bg-white px-3 py-2 shadow-md">
+                    <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: color }}></span>
+                        <span className="text-sm font-medium text-gray-800">{label}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-gray-600">Value: {value.toLocaleString()}</div>
+                </div>
+            );
+        }
+        return null;
+    };
 
     return (
         <div className="rounded-lg bg-gray-50 p-3">
             <ChartContainer config={{ assets: { label: 'Assets' } }} className="mx-auto max-h-[220px] w-full">
                 <PieChart>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                    <ChartTooltip cursor={false} content={<CustomTooltip />} />
                     <Pie
                         data={displayedData}
                         dataKey="value"
@@ -51,6 +92,10 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
                         innerRadius={50}
                         outerRadius={80}
                         strokeWidth={5}
+                        activeIndex={currentActiveIndex ?? undefined}
+                        activeShape={({ outerRadius = 0, ...props }: PieSectorDataItem) => <Sector {...props} outerRadius={outerRadius + 8} />}
+                        onMouseEnter={(_, index) => setActiveIndex(index)}
+                        onMouseLeave={() => setActiveIndex(null)}
                         onClick={(data) => {
                             if (data && data.name === 'Others') setShowOthersModal(true);
                         }}
@@ -85,8 +130,6 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
                     </div>
                 ))}
             </div>
-
-
 
             {/* ✅ Others Categories Modal */}
             <Dialog open={showOthersModal} onOpenChange={setShowOthersModal}>

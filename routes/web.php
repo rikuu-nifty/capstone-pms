@@ -24,6 +24,7 @@
     use App\Http\Controllers\InventoryReportController;
     use App\Http\Controllers\InventorySchedulingReportController;
     use App\Http\Controllers\PropertyTransferReportController;
+    use App\Http\Controllers\OffCampusReportController;
 
     // Route::get('/', function () {
     //     return Inertia::render('welcome');
@@ -85,7 +86,7 @@
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
 
-     // ✅ Asset Inventory List Report
+     // (✅) Asset Inventory List Report
     Route::get('/assets-inventory-list', [ReportController::class, 'inventoryList'])
         ->name('reports.inventory-list');
 
@@ -124,6 +125,18 @@
         ->name('reports.transfer.export.excel');
 
 
+ // ✅ Off-Campus Report
+    Route::get('/off-campus', [OffCampusReportController::class, 'index'])
+        ->name('reports.off-campus');
+
+    // Export to PDF
+    Route::get('/off-campus/export/pdf', [OffCampusReportController::class, 'exportPdf'])
+        ->name('reports.off-campus.export.pdf');
+
+    // Export to Excel 
+    Route::get('/off-campus/export/excel', [OffCampusReportController::class, 'exportExcel'])
+        ->name('reports.off-campus.export.excel');
+
         
     // Placeholders with proper names
     Route::get('/turnover-disposal', fn() =>
@@ -132,11 +145,6 @@
         ])
     )->name('reports.turnover-disposal');
 
-    Route::get('/off-campus', fn() =>
-        Inertia::render('reports/OffCampusReport', [
-            'title' => 'Off-Campus Report',
-        ])
-    )->name('reports.off-campus');
 });
 
 

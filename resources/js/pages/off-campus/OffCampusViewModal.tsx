@@ -27,27 +27,23 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
         const s = (status ?? '').toLowerCase().replace(/_/g, ' ');
         const formattedStatus = s
             .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
 
         const cls =
             s === 'returned'
                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-            : s === 'pending review'
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-            : s === 'pending return'
-                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-            : s === 'overdue'
-                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-            : s === 'cancelled'
-                ? 'bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300'
-            : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
+                : s === 'pending review'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                  : s === 'pending return'
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                    : s === 'overdue'
+                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                      : s === 'cancelled'
+                        ? 'bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:text-gray-300'
+                        : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
 
-        return (
-            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
-                {status ? formattedStatus : '—'}
-            </span>
-        );
+        return <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{status ? formattedStatus : '—'}</span>;
     };
 
     return (
@@ -83,8 +79,8 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
             {/* ---------- Authorization Line (new) ---------- */}
             <div className="mt-4 text-sm">
                 <p>
-                    This is to authorize Mr./Mrs. <span className="font-semibold">{offCampus.requester_name }</span>,{' '} College/Unit 
-                    <span className="font-semibold"> 
+                    This is to authorize Mr./Mrs. <span className="font-semibold">{offCampus.requester_name}</span>, College/Unit{' '}
+                    <span className="font-semibold">
                         {offCampus.college_or_unit ? `${offCampus.college_or_unit.name} (${offCampus.college_or_unit.code})` : 'College/Unit _______'}
                     </span>
                     , to bring in / take out from the Angeles University Foundation premises the following properties/equipment described as follows:
@@ -174,7 +170,7 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
                 >
                     ← Back to Off-Campus
                 </a>
-                {(offCampus.status !== 'pending_review') && (
+                {offCampus.status !== 'pending_review' && (
                     <Button
                         onClick={() => window.print()}
                         className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"

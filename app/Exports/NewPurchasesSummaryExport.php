@@ -25,10 +25,11 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
     protected $generatedAt;
     protected $rowCount = 0;
     protected $totalCost = 0;
+    protected $assets; // ✅ store dataset
 
     public function __construct($filters = [])
     {
-        $this->filters = $filters;
+        $this->filters     = $filters;
         $this->generatedAt = Carbon::now()->format('F d, Y h:i A');
     }
 
@@ -41,9 +42,10 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
             ->when($this->filters['category_id'] ?? null, fn($q, $id) => $q->where('category_id', $id))
             ->when($this->filters['supplier'] ?? null, fn($q, $supplier) => $q->where('supplier', $supplier));
 
-        $assets = $query->get();
+        // ✅ store dataset
+        $this->assets = $query->get();
 
-        $grouped = $assets->groupBy(function ($asset) {
+        $grouped = $this->assets->groupBy(function ($asset) {
             return implode('|', [
                 $asset->date_purchased,
                 $asset->memorandum_no,
@@ -56,43 +58,47 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
             ]);
         });
 
-      $mapped = $grouped->map(function ($group) {
-    $first = $group->first();
-    $qty = $group->count();
-    $amount = $qty * ($first->unit_cost ?? 0);
+        $mapped = $grouped->map(function ($group) {
+            $first = $group->first();
+            $qty   = $group->count();
+            $amount = $qty * ($first->unit_cost ?? 0);
 
-    // ✅ Track totals correctly
-    $this->rowCount += $qty; // count ALL assets, not just rows
-    $this->totalCost += $amount;
+            // ✅ Track totals correctly
+            $this->rowCount += $qty;
+            $this->totalCost += $amount;
 
-    return [
-        'Date'        => $first->date_purchased
-            ? Carbon::parse($first->date_purchased)->format('M d, Y')
-            : '',
-        'MR No.'      => $first->memorandum_no ?? '',
-        'Supplier'    => $first->supplier,
-        'Item / Desc' => $first->asset_name
-            . ' (' . ($first->assetModel->brand ?? '') . ' / ' . ($first->assetModel->model ?? '') . ')'
-            . ($first->description ? ' - ' . $first->description : ''),
-        'Unit / Dept' => $first->unitOrDepartment->name ?? '',
-        'Qty'         => $qty,
-        'Unit Cost'   => $first->unit_cost ?? 0,
-        'Amount'      => $amount,
-    ];
-})->values();
-
+            return [
+                'Date'        => $first->date_purchased
+                    ? Carbon::parse($first->date_purchased)->format('M d, Y')
+                    : '',
+                'MR No.'      => $first->memorandum_no ?? '',
+                'Supplier'    => $first->supplier,
+                'Item / Desc' => $first->asset_name
+                    . ' (' . ($first->assetModel->brand ?? '') . ' / ' . ($first->assetModel->model ?? '') . ')'
+                    . ($first->description ? ' - ' . $first->description : ''),
+                'Unit / Dept' => $first->unitOrDepartment->name ?? '',
+                'Qty'         => $qty,
+                'Unit Cost'   => $first->unit_cost ?? 0,
+                'Amount'      => $amount,
+            ];
+        })->values();
 
         return $mapped;
     }
 
     public function headings(): array
     {
+        // ✅ ensure dataset is loaded before building header
+        if ($this->assets === null) {
+            $this->collection();
+        }
+
         return [
             ['ANGELES UNIVERSITY FOUNDATION'],
             ['Angeles City'],
             ['Property Management Office'],
             ['Generated: ' . $this->generatedAt],
-            ['Summary of Newly Purchased Equipment ' . $this->getHeaderDateRange()],
+            ['Summary of Newly Purchased Equipment ' . $this->getHeaderDateRange($this->assets)], // ✅ dynamic range
             [], // spacer row
             [
                 'Date',
@@ -107,35 +113,36 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
         ];
     }
 
-   protected function getHeaderDateRange(): string
+    protected function getHeaderDateRange($records = null): string
     {
         $from = $this->filters['from'] ?? null;
         $to   = $this->filters['to'] ?? null;
 
         if ($from && $to) {
-            // Case 1: both from and to → fromYear-toYear
+            return Carbon::parse($from)->year . '-' . Carbon::parse($to)->year;
+        } elseif ($from) {
             $fromYear = Carbon::parse($from)->year;
-            $toYear   = Carbon::parse($to)->year;
-            return $fromYear . '-' . $toYear;
-        }
 
-        if ($from) {
-            // Case 2: only from → fromYear-(fromYear+1)
-            $fromYear = Carbon::parse($from)->year;
+            if ($records && $records->count() > 0) {
+                $latestDate = collect($records)
+                    ->map(fn($r) => $r->date_purchased ?? $r->created_at)
+                    ->filter()
+                    ->max();
+
+                if ($latestDate) {
+                    return $fromYear . '-' . Carbon::parse($latestDate)->year;
+                }
+            }
+
             return $fromYear . '-' . ($fromYear + 1);
-        }
-
-        if ($to) {
-            // Case 3: only to → (toYear-1)-toYear
+        } elseif ($to) {
             $toYear = Carbon::parse($to)->year;
             return ($toYear - 1) . '-' . $toYear;
         }
 
-        // Case 4: none → currentYear-(currentYear+1)
-        $baseYear = now()->year;
-        return $baseYear . '-' . ($baseYear + 1);
+        $year = now()->year;
+        return $year . '-' . ($year + 1);
     }
-
 
     public function styles(Worksheet $sheet)
     {
@@ -156,7 +163,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                 'alignment' => ['horizontal' => 'center'],
                 'fill' => [
                     'fillType' => 'solid',
-                    'color' => ['rgb' => 'FCE4D6'], // light orange header background
+                    'color' => ['rgb' => 'FCE4D6'],
                 ],
             ],
         ];
@@ -197,7 +204,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
 
                     foreach ($this->filters as $key => $val) {
                         if (!empty($val) && isset($labels[$key])) {
-                            $label = $labels[$key];
+                            $label   = $labels[$key];
                             $display = $val;
 
                             if (in_array($key, ['from', 'to'])) {
@@ -223,83 +230,64 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                 }
             },
 
-        AfterSheet::class => function (AfterSheet $event) {
-    $sheet = $event->sheet->getDelegate();
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
 
-    // Row where headers are currently written (row 7: Date | MR No. ...)
-    $headerRow = 7;
+                $headerRow = 7;
+                $sheet->insertNewRowBefore($headerRow, 1);
 
-    // Insert a new row BEFORE headers for totals
-    $sheet->insertNewRowBefore($headerRow, 1);
+                $totalsRow   = $headerRow;
+                $newHeaderRow = $headerRow + 1;
 
-    $totalsRow = $headerRow;        // Totals row goes here
-    $newHeaderRow = $headerRow + 1; // Headers are pushed down
+                $sheet->mergeCells("A{$totalsRow}:D{$totalsRow}");
+                $sheet->mergeCells("E{$totalsRow}:H{$totalsRow}");
 
-    // Merge totals row cells
-    $sheet->mergeCells("A{$totalsRow}:D{$totalsRow}");
-    $sheet->mergeCells("E{$totalsRow}:H{$totalsRow}");
+                $formattedAmount = '₱' . number_format($this->totalCost, 2);
 
-    // Format peso sign
-    $formattedAmount = '₱' . number_format($this->totalCost, 2);
+                $sheet->setCellValue("A{$totalsRow}", "Total Assets: {$this->rowCount}");
+                $sheet->setCellValue("E{$totalsRow}", "Total Amount: {$formattedAmount}");
 
-    // Set totals text
-    $sheet->setCellValue("A{$totalsRow}", "Total Assets: {$this->rowCount}");
-    $sheet->setCellValue("E{$totalsRow}", "Total Amount: {$formattedAmount}");
+                $sheet->getStyle("A{$totalsRow}:H{$totalsRow}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+                    'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'FCE4D6']],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
 
-    // --- Style totals row ---
-    $sheet->getStyle("A{$totalsRow}:H{$totalsRow}")->applyFromArray([
-        'font' => ['bold' => true],
-        'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
-        'fill' => [
-            'fillType' => 'solid',
-            'color' => ['rgb' => 'FCE4D6'], // light yellow background
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
+                $headers = [
+                    'Date', 'MR No.', 'Supplier', 'Item / Description',
+                    'Unit / Department', 'Qty', 'Unit Cost', 'Amount'
+                ];
+                $sheet->fromArray([$headers], null, "A{$newHeaderRow}");
 
-    // --- Rewrite header row (now row 8) ---
-    $headers = [
-        'Date', 'MR No.', 'Supplier', 'Item / Description',
-        'Unit / Department', 'Qty', 'Unit Cost', 'Amount'
-    ];
-    $sheet->fromArray([$headers], null, "A{$newHeaderRow}");
+                $sheet->getStyle("A{$newHeaderRow}:H{$newHeaderRow}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+                    'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'FCE4D6']],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
 
-    // Style headers row
-    $sheet->getStyle("A{$newHeaderRow}:H{$newHeaderRow}")->applyFromArray([
-        'font' => ['bold' => true],
-        'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
-        'fill' => [
-            'fillType' => 'solid',
-            'color' => ['rgb' => 'FCE4D6'], // light orange header
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
-
-    // --- Apply borders + center alignment to data ---
-    $lastRow = $sheet->getHighestRow();
-    $sheet->getStyle("A{$newHeaderRow}:H{$lastRow}")->applyFromArray([
-        'alignment' => [
-            'horizontal' => 'center',
-            'vertical'   => 'center',
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
-}
+                $lastRow = $sheet->getHighestRow();
+                $sheet->getStyle("A" . ($newHeaderRow+1) . ":H{$lastRow}")->applyFromArray([
+                    'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+                    'borders'   => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+            }
         ];
     }
 
@@ -312,17 +300,17 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
         ];
     }
 
-     public function columnWidths(): array
-{
-    return [
-        'A' => 16, // Date
-        'B' => 18, // MR No.
-        'C' => 18, // Supplier
-        'D' => 120, // Item / Description (widest)
-        'E' => 25, // Unit / Department
-        'F' => 25,  // Qty
-        'G' => 25, // Unit Cost
-        'H' => 25, // Amount
-    ];
-}
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 16,
+            'B' => 18,
+            'C' => 20,
+            'D' => 120,
+            'E' => 25,
+            'F' => 25,
+            'G' => 25,
+            'H' => 25,
+        ];
+    }
 }

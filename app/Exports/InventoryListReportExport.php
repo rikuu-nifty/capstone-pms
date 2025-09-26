@@ -23,10 +23,11 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
     protected $generatedAt;
     protected $rowCount = 0;
     protected $totalCost = 0;
+    protected $assets; // ✅ store dataset
 
     public function __construct($filters = [])
     {
-        $this->filters = $filters;
+        $this->filters     = $filters;
         $this->generatedAt = Carbon::now()->format('F d, Y h:i A');
     }
 
@@ -44,11 +45,12 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
                 $q->whereHas('assetModel', fn($m) => $m->where('brand', $brand));
             });
 
-        $assets = $query->get();
+        // ✅ store results
+        $this->assets = $query->get();
 
         $counter = 1;
 
-        return $assets->map(function ($asset) use (&$counter) {
+        return $this->assets->map(function ($asset) use (&$counter) {
             $this->rowCount++;
             $this->totalCost += $asset->unit_cost ?? 0;
 
@@ -69,50 +71,56 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
         });
     }
 
-   public function headings(): array
-{
-    return [
-        ['ANGELES UNIVERSITY FOUNDATION'],
-        ['Angeles City'],
-        ['Property Management Office'],
-        ['Generated: ' . $this->generatedAt],
-        ['Asset Inventory List Report ' . $this->getHeaderDateRange()],
-        [], // spacer row
-        ['#', 'MR No.', 'Asset Name', 'Brand / Model', 'Asset Type',
-         'Category', 'Unit / Department', 'Building / Room',
-         'Supplier', 'Date Purchased']
-    ];
-}
+    public function headings(): array
+    {
+        // ✅ Ensure dataset is loaded before building header
+        if ($this->assets === null) {
+            $this->collection();
+        }
 
-   protected function getHeaderDateRange(): string
-{
-    $from = $this->filters['from'] ?? null;
-    $to   = $this->filters['to'] ?? null;
-
-    if ($from && $to) {
-        // Case 1: both from and to → fromYear-toYear
-        $fromYear = Carbon::parse($from)->year;
-        $toYear   = Carbon::parse($to)->year;
-        return $fromYear . '-' . $toYear;
+        return [
+            ['ANGELES UNIVERSITY FOUNDATION'],
+            ['Angeles City'],
+            ['Property Management Office'],
+            ['Generated: ' . $this->generatedAt],
+            ['Asset Inventory List Report ' . $this->getHeaderDateRange($this->assets)], // ✅ now dynamic
+            [], // spacer row
+            ['#', 'MR No.', 'Asset Name', 'Brand / Model', 'Asset Type',
+             'Category', 'Unit / Department', 'Building / Room',
+             'Supplier', 'Date Purchased']
+        ];
     }
 
-    if ($from) {
-        // Case 2: only from → fromYear-(fromYear+1)
-        $fromYear = Carbon::parse($from)->year;
-        return $fromYear . '-' . ($fromYear + 1);
+    protected function getHeaderDateRange($records = null): string
+    {
+        $from = $this->filters['from'] ?? null;
+        $to   = $this->filters['to'] ?? null;
+
+        if ($from && $to) {
+            return Carbon::parse($from)->year . '-' . Carbon::parse($to)->year;
+        } elseif ($from) {
+            $fromYear = Carbon::parse($from)->year;
+
+            if ($records && $records->count() > 0) {
+                $latestDate = collect($records)
+                    ->map(fn($r) => $r->date_purchased ?? $r->created_at)
+                    ->filter()
+                    ->max();
+
+                if ($latestDate) {
+                    return $fromYear . '-' . Carbon::parse($latestDate)->year;
+                }
+            }
+
+            return $fromYear . '-' . ($fromYear + 1);
+        } elseif ($to) {
+            $toYear = Carbon::parse($to)->year;
+            return ($toYear - 1) . '-' . $toYear;
+        }
+
+        $year = now()->year;
+        return $year . '-' . ($year + 1);
     }
-
-    if ($to) {
-        // Case 3: only to → (toYear-1)-toYear
-        $toYear = Carbon::parse($to)->year;
-        return ($toYear - 1) . '-' . $toYear;
-    }
-
-    // Case 4: none → currentYear-(currentYear+1)
-    $baseYear = now()->year;
-    return $baseYear . '-' . ($baseYear + 1);
-}
-
 
     public function styles(Worksheet $sheet)
     {
@@ -183,92 +191,72 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
                 }
             },
 
-      AfterSheet::class => function (AfterSheet $event) {
-    // Where the headers are right now (# MR No. ...)
-    $headerRow = 7;
+            AfterSheet::class => function (AfterSheet $event) {
+                $headerRow = 7;
+                $event->sheet->insertNewRowBefore($headerRow, 1);
 
-    // Insert totals row above them
-    $event->sheet->insertNewRowBefore($headerRow, 1);
+                $totalsRow = $headerRow;
+                $newHeaderRow = $headerRow + 1;
 
-    $totalsRow = $headerRow;        // Totals will go here
-    $newHeaderRow = $headerRow + 1; // Headers are pushed down
+                $event->sheet->mergeCells("A{$totalsRow}:E{$totalsRow}");
+                $event->sheet->mergeCells("F{$totalsRow}:J{$totalsRow}");
 
-    // --- Totals row ---
-    $event->sheet->mergeCells("A{$totalsRow}:E{$totalsRow}");
-    $event->sheet->mergeCells("F{$totalsRow}:J{$totalsRow}");
+                $formattedAmount = '₱' . number_format($this->totalCost, 2);
 
-    $formattedAmount = '₱' . number_format($this->totalCost, 2);
+                $event->sheet->setCellValue("A{$totalsRow}", "Total Assets: {$this->rowCount}");
+                $event->sheet->setCellValue("F{$totalsRow}", "Total Amount: {$formattedAmount}");
 
-    $event->sheet->setCellValue("A{$totalsRow}", "Total Assets: {$this->rowCount}");
-    $event->sheet->setCellValue("F{$totalsRow}", "Total Amount: {$formattedAmount}");
+                $event->sheet->getStyle("A{$totalsRow}:J{$totalsRow}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'alignment' => ['horizontal' => 'center'],
+                    'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'D9E1F2']],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
 
-    // --- Style totals row ---
-    $event->sheet->getStyle("A{$totalsRow}:J{$totalsRow}")->applyFromArray([
-        'font' => ['bold' => true],
-        'alignment' => ['horizontal' => 'center'],
-        'fill' => [
-            'fillType' => 'solid',
-            'color' => ['rgb' => 'D9E1F2'],
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
+                $event->sheet->getStyle("A{$newHeaderRow}:J{$newHeaderRow}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'alignment' => ['horizontal' => 'center'],
+                    'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'D9E1F2']],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
 
-
-    // --- Style headers row (now row 8) ---
-    $event->sheet->getStyle("A{$newHeaderRow}:J{$newHeaderRow}")->applyFromArray([
-        'font' => ['bold' => true],
-        'alignment' => ['horizontal' => 'center'],
-        'fill' => [
-            'fillType' => 'solid',
-            'color' => ['rgb' => 'D9E1F2'],
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => Border::BORDER_THIN,
-                'color' => ['rgb' => '000000'],
-            ],
-        ],
-    ]);
-
-    // --- Apply table borders and center values ---
-$lastRow = $event->sheet->getHighestRow(); // finds the last row with data
-$event->sheet->getStyle("A{$newHeaderRow}:J{$lastRow}")->applyFromArray([
-    'alignment' => [
-        'horizontal' => 'center',
-        'vertical'   => 'center',
-    ],
-    'borders' => [
-        'allBorders' => [
-            'borderStyle' => Border::BORDER_THIN,
-            'color' => ['rgb' => '000000'],
-        ],
-    ],
-]);
-
-}
-
-
+                $lastRow = $event->sheet->getHighestRow();
+                $event->sheet->getStyle("A" . ($newHeaderRow+1) . ":J{$lastRow}")->applyFromArray([
+                    'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => '000000'],
+                        ],
+                    ],
+                ]);
+            }
         ];
     }
 
     public function columnWidths(): array
     {
         return [
-            'A' => 15,   // #
-            'B' => 12,   // MR No.
-            'C' => 20,   // Asset Name
-            'D' => 40,   // Brand / Model
-            'E' => 15,   // Asset Type
-            'F' => 25,   // Category
-            'G' => 25,   // Unit / Department
-            'H' => 25,   // Building / Room
-            'I' => 40,   // Supplier
-            'J' => 18,   // Date Purchased
+            'A' => 16,
+            'B' => 16,
+            'C' => 20,
+            'D' => 40,
+            'E' => 25,
+            'F' => 25,
+            'G' => 25,
+            'H' => 25,
+            'I' => 40,
+            'J' => 18,
         ];
     }
 }

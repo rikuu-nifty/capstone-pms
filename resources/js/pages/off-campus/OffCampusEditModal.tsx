@@ -356,12 +356,12 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                                     setData('quantity', num);
                                 }}
                             />
-                            {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
+                            {/* {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
                             {Number(data.quantity) > 0 && (
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     You can select up to {data.quantity} asset{Number(data.quantity) > 1 ? 's' : ''}.
                                 </p>
-                            )}
+                            )} */}
                         </div>
 
                         {/* Units */}
@@ -379,32 +379,56 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                         </div>
 
                         {/* Assets Covered */}
-                        <div className="col-span-2">
-                            <Label>Assets Covered</Label>
-                            <Select<AssetOption, true>
-                                isMulti
-                                options={assetOptions}
-                                placeholder="Select one or more assets..."
-                                className="text-sm"
-                                isClearable
-                                isOptionDisabled={isOptionDisabled}
-                                closeMenuOnSelect={false}
-                                value={selectedValue}
-                                onChange={(selected) => {
-                                    const arr = (selected ?? []) as AssetOption[];
-                                    handleAssetsChange(arr);
-                                }}
-                                isDisabled={!data.quantity || Number(data.quantity) <= 0}
-                            />
-                            {(!data.quantity || Number(data.quantity) <= 0) && (
-                                <p className="mt-1 text-xs text-muted-foreground">Please enter a quantity first to select assets.</p>
-                            )}
-                            {errors.selected_assets && <p className="mt-1 text-xs text-red-500">{String(errors.selected_assets)}</p>}
+                        {/* Assets Covered */}
+<div className="col-span-2">
+  <Label>Assets Covered</Label>
+  <Select<AssetOption, true>
+    isMulti
+    options={assetOptions}
+    placeholder="Select one or more assets..."
+    className="text-sm"
+    isClearable
+    isOptionDisabled={isOptionDisabled}
+    closeMenuOnSelect={false}
+    value={selectedValue}
+    onChange={(selected) => {
+      const arr = (selected ?? []) as AssetOption[];
+      handleAssetsChange(arr);
+    }}
+    // ✅ Disable if no unit/department OR invalid quantity
+    isDisabled={
+      !data.college_or_unit_id ||
+      !data.quantity ||
+      Number(data.quantity) <= 0
+    }
+  />
 
-                            {maxSelectable > 0 && data.selected_assets.length >= maxSelectable && (
-                                <p className="mt-1 text-xs text-muted-foreground">You have reached your limit based on your chosen quantity.</p>
-                            )}
-                        </div>
+  {/* Helper message if disabled */}
+  {!data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0 ? (
+    <p className="mt-1 text-xs text-muted-foreground">
+      Please select a Unit/Dept/Lab and enter the quantity first.
+    </p>
+  ) : null}
+
+  {/* Validation error */}
+  {errors.selected_assets && (
+    <p className="mt-1 text-xs text-red-500">
+      {String(errors.selected_assets)}
+    </p>
+  )}
+
+  {/* Limit guidance */}
+  {maxSelectable > 0 ? (
+    <p className="mt-1 text-xs text-muted-foreground">
+      {data.selected_assets.length >= maxSelectable
+        ? "You have reached your limit based on your chosen quantity."
+        : `You can select up to ${maxSelectable} asset${
+            maxSelectable > 1 ? "s" : ""
+          }.`}
+    </p>
+  ) : null}
+</div>
+
 
                         {/* Remarks */}
                         <div>

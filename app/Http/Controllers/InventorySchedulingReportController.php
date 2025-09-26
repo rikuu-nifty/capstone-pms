@@ -123,6 +123,7 @@ public function exportPdf(Request $request)
     ])->setPaper('a4', 'landscape');
 
     return $pdf->download('InventorySchedulingReport.pdf');
+    // return $pdf->stream('InventorySchedulingReport.pdf');
 }
 
 
