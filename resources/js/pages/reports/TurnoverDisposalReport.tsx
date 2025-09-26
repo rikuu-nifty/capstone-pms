@@ -5,10 +5,10 @@ import { Head, router, usePage } from "@inertiajs/react";
 import { route } from "ziggy-js";
 import { PickerInput } from "@/components/picker-input";
 import Select from "react-select";
-import { Filter, RotateCcw, FileDown, FileSpreadsheet, FileText } from "lucide-react";
+import { Filter, RotateCcw, FileDown, FileSpreadsheet, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import TurnoverDisposalTable from "./TurnoverDisposalTable";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import {
     ChartConfig,
@@ -135,29 +135,29 @@ export default function TurnoverDisposalReport() {
         return result;
     };
 
-    // Add this helper
-    function refreshData(page = 1, filtersOverride?: typeof filters) {
-        const finalFilters = filtersOverride ?? filters;
+    // // Add this helper
+    // function refreshData(page = 1, filtersOverride?: typeof filters) {
+    //     const finalFilters = filtersOverride ?? filters;
 
-        router.get(
-            route("reports.turnover-disposal"),
-            { ...cleanFilters(finalFilters), page },
-            {
-            preserveState: true,
-            replace: true,
-            onSuccess: (pageData) => {
-                const paginator = pageData.props.records as Paginator<RecordRow>;
-                setDisplayed(paginator.data);
-                setTotal(paginator.meta.total ?? 0);
-                setPageSize(paginator.meta.per_page ?? 10);
+    //     router.get(
+    //         route("reports.turnover-disposal"),
+    //         { ...cleanFilters(finalFilters), page },
+    //         {
+    //         preserveState: true,
+    //         replace: true,
+    //         onSuccess: (pageData) => {
+    //             const paginator = pageData.props.records as Paginator<RecordRow>;
+    //             setDisplayed(paginator.data);
+    //             setTotal(paginator.meta.total ?? 0);
+    //             setPageSize(paginator.meta.per_page ?? 10);
 
-                // 🔥 refresh chartData too
-                // setChartData(pageData.props.chartData);
-                setChartData(pageData.props.chartData as ChartRow[]);
-            },
-            }
-        );
-    }
+    //             // 🔥 refresh chartData too
+    //             // setChartData(pageData.props.chartData);
+    //             setChartData(pageData.props.chartData as ChartRow[]);
+    //         },
+    //         }
+    //     );
+    // }
 
     // Refetch when page changes
     useEffect(() => {
@@ -168,20 +168,54 @@ export default function TurnoverDisposalReport() {
 
         router.get(
             route('reports.turnover-disposal'),
-            { ...cleanFilters(filters), page },
+            // { ...cleanFilters(filters), page },
+            { ...cleanFilters(appliedFilters), page },
             {
-            preserveState: true,
-            replace: true,
-            onSuccess: (pageData) => {
-                const paginator = pageData.props.records as Paginator<RecordRow>
-                setDisplayed(paginator.data)
-                setTotal(paginator.meta.total ?? 0)
-                setPageSize(paginator.meta.per_page ?? 10)
-            },
+                preserveState: true,
+                replace: true,
+                onSuccess: (pageData) => {
+                    const paginator = pageData.props.records as Paginator<RecordRow>
+                    setDisplayed(paginator.data);
+                    setTotal(paginator.meta.total ?? 0);
+                    setPageSize(paginator.meta.per_page ?? 10);
+
+                    setChartData(pageData.props.chartData as ChartRow[]);
+                },
             }
         )
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page]);
+
+    // 🔢 Compute trend vs last month
+    const currentMonthIndex = new Date().getMonth(); // 0 = January
+    const thisMonth = chartData[currentMonthIndex];
+    const lastMonth = chartData[currentMonthIndex - 1];
+
+    let trendLabel: string | null = null;
+    let TrendIcon: React.ElementType = Minus;
+    let trendColor = "text-muted-foreground";
+
+    if (thisMonth && lastMonth) {
+        const thisTotal = (thisMonth.turnover ?? 0) + (thisMonth.disposal ?? 0);
+        const lastTotal = (lastMonth.turnover ?? 0) + (lastMonth.disposal ?? 0);
+
+        if (lastTotal > 0) {
+            const change = ((thisTotal - lastTotal) / lastTotal) * 100;
+
+            if (change > 0) {
+            trendLabel = `Completed turnovers/disposals increased by ${change.toFixed(1)}% this month`;
+            TrendIcon = TrendingUp;
+            trendColor = "text-green-600";
+            } else if (change < 0) {
+            trendLabel = `Completed turnovers/disposals decreased by ${Math.abs(change).toFixed(1)}% this month`;
+            TrendIcon = TrendingDown;
+            trendColor = "text-red-600";
+            } else {
+            trendLabel = "No change in completed turnovers/disposals this month";
+            TrendIcon = Minus;
+            }
+        }
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -454,7 +488,7 @@ export default function TurnoverDisposalReport() {
                                 <button
                                     onClick={() => {
                                         setViewMode("chart");
-                                        refreshData(page); // 🔄 reload data + chart
+                                        // refreshData(page); // reload data + chart
                                     }}
                                     className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
                                         viewMode === 'chart'
@@ -466,9 +500,9 @@ export default function TurnoverDisposalReport() {
                                 </button>
                                 <button
                                     onClick={() => {
-    setViewMode("table");
-    refreshData(page); // 🔄 reload data + chart
-  }}
+                                        setViewMode("table");
+                                        // refreshData(page); // 🔄 reload data + chart
+                                    }}
                                     className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
                                         viewMode === 'table'
                                         ? 'border-blue-600 bg-blue-600 text-white'
@@ -531,6 +565,20 @@ export default function TurnoverDisposalReport() {
 
                         )}
                     </CardContent>
+                    {viewMode === 'chart' && (
+                        <CardFooter className="flex-col gap-2 pt-4 text-sm">
+                            {trendLabel ? (
+                                <div className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}>
+                                {trendLabel} <TrendIcon className="h-4 w-4" />
+                                </div>
+                            ) : (
+                                <div className="text-muted-foreground">No data to compare</div>
+                            )}
+                            <div className="text-muted-foreground flex items-center gap-2 leading-none">
+                                January – {new Date().toLocaleString("default", { month: "long" })} {new Date().getFullYear()}
+                            </div>
+                        </CardFooter>
+                    )}
                 </Card>
             </div>
         </AppLayout>

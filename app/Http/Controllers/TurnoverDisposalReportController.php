@@ -70,17 +70,7 @@ class TurnoverDisposalReportController extends Controller
 
         $paginator->setCollection($rows);
 
-        $rawData = DB::table('turnover_disposals as td')
-                ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
-                ->selectRaw("
-            DATE_FORMAT(td.document_date, '%Y-%m') as ym,
-            SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,
-            SUM(CASE WHEN td.type = 'disposal' THEN 1 ELSE 0 END) as disposal
-        ")
-        ->groupBy('ym')
-        ->orderBy('ym')
-        ->get()
-        ->keyBy('ym');
+        $rawData = TurnoverDisposal::monthlyCompletedTrendData();
 
         // Generate Jan–Dec for current year
         $year = now()->year;

@@ -434,7 +434,6 @@ class TurnoverDisposal extends Model
         return $query->paginate($perPage)->withQueryString();
     }
 
-
     public static function summaryCounts(): array
     {
         return [
@@ -446,6 +445,22 @@ class TurnoverDisposal extends Model
             'rejected'        => static::where('status', 'rejected')->count(),
             'cancelled'       => static::where('status', 'cancelled')->count(),
         ];
+    }
+
+    public static function monthlyCompletedTrendData()
+    {
+        return DB::table('turnover_disposals as td')
+            ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
+            ->where('tda.asset_status', '=', 'completed') // ✅ Only completed assets
+            ->selectRaw("
+                DATE_FORMAT(td.document_date, '%Y-%m') as ym,
+                SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,
+                SUM(CASE WHEN td.type = 'disposal' THEN 1 ELSE 0 END) as disposal
+            ")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get()
+            ->keyBy('ym');
     }
 
     public static function monthlyTrendData()
