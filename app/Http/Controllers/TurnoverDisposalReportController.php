@@ -26,6 +26,7 @@ class TurnoverDisposalReportController extends Controller
                 'from',
                 'to',
                 'status',
+                'type',
                 'building_id',
                 'room_id',
                 'issuing_office_id',
@@ -132,7 +133,8 @@ class TurnoverDisposalReportController extends Controller
         $pdf = Pdf::loadView('reports.turnover_disposal_pdf', [
             'records' => $records->items(),
             'filters' => $filters,
-        ])->setPaper('A4', 'landscape');
+        ])->setPaper('A4', 'landscape')
+        ->setOption('isPhpEnabled', true);
 
         // return $pdf->download('TurnoverDisposalReport-' . now()->format('Y-m-d') . '.pdf');
         return $pdf->stream('TurnoverDisposalReport');

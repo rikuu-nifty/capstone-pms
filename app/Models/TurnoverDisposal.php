@@ -460,6 +460,7 @@ class TurnoverDisposal extends Model
             ])
             ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
             ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('td.type', $type))
             ->when($filters['issuing_office_id'] ?? null, fn($q, $issuing) => $q->where('td.issuing_office_id', $issuing))
             ->when($filters['receiving_office_id'] ?? null, fn($q, $receiving) => $q->where('td.receiving_office_id', $receiving))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))

@@ -73,6 +73,7 @@ type PageProps = {
         issuing_office_id?: number | null;
         receiving_office_id?: number | null;
         category_id?: number | null;
+        type?: string | null;
     };
     chartData: ChartRow[];
 }
@@ -106,6 +107,7 @@ export default function TurnoverDisposalReport() {
         issuing_office_id: null as number | null,
         receiving_office_id: null as number | null,
         category_id: null as number | null,
+        type: null as string | null,
     };
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
@@ -264,6 +266,59 @@ export default function TurnoverDisposalReport() {
                             />
                         </div>
 
+                        {/* Type */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Type
+                            </label>
+                            <Select
+                                className="w-full"
+                                isClearable
+                                placeholder="Select type"
+                                value={
+                                    filters.type
+                                        ? { value: filters.type, label: filters.type.charAt(0).toUpperCase() + filters.type.slice(1) }
+                                        : null
+                                }
+                                options={[
+                                    { value: "turnover", label: "Turnover" },
+                                    { value: "disposal", label: "Disposal" },
+                                ]}
+                                onChange={(opt) => updateFilter("type", opt?.value ?? null)}
+                            />
+                        </div>
+                        
+                        {/* Status */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Status
+                            </label>
+                            <Select
+                                className="w-full"
+                                isClearable
+                                placeholder="Select an asset type"
+                                value={
+                                    filters.status
+                                        ? {
+                                            value: filters.status,
+                                            label: filters.status
+                                            .replace("_", " ")
+                                            .replace(/\b\w/g, (c) => c.toUpperCase()),
+                                        }
+                                        : null
+                                    }
+                                    options={[
+                                        { value: "pending_review", label: "Pending Review" },
+                                        { value: "approved", label: "Approved" },
+                                        { value: "rejected", label: "Rejected" },
+                                        { value: "cancelled", label: "Cancelled" },
+                                        { value: "completed", label: "Completed" },
+                                    ]
+                                }
+                                onChange={(opt) => updateFilter("status", opt?.value ?? null)}
+                            />
+                        </div>
+
                         {/* Issuing Office */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -340,37 +395,6 @@ export default function TurnoverDisposalReport() {
                                 label: c.name,
                                 }))}
                                 onChange={(opt) => updateFilter("category_id", opt?.value ?? null)}
-                            />
-                        </div>
-
-                        {/* Status */}
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Status
-                            </label>
-                            <Select
-                                className="w-full"
-                                isClearable
-                                placeholder="Select an asset type"
-                                value={
-                                    filters.status
-                                        ? {
-                                            value: filters.status,
-                                            label: filters.status
-                                            .replace("_", " ")
-                                            .replace(/\b\w/g, (c) => c.toUpperCase()),
-                                        }
-                                        : null
-                                    }
-                                    options={[
-                                        { value: "pending_review", label: "Pending Review" },
-                                        { value: "approved", label: "Approved" },
-                                        { value: "rejected", label: "Rejected" },
-                                        { value: "cancelled", label: "Cancelled" },
-                                        { value: "completed", label: "Completed" },
-                                    ]
-                                }
-                                onChange={(opt) => updateFilter("status", opt?.value ?? null)}
                             />
                         </div>
                     </div>
