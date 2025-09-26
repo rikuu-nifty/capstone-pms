@@ -1,7 +1,7 @@
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { formatDate, formatEnums } from '@/types/custom-index'
+import { formatDate, formatEnums, ucwords } from '@/types/custom-index'
 import Pagination, { PageInfo } from '@/components/Pagination'
 
 import type { RecordRow } from './TurnoverDisposalReport';
@@ -32,7 +32,8 @@ export default function TurnoverDisposalTable({ records, page, total, pageSize, 
                     <TableHeader className="bg-gray-50">
                         <TableRow>
                             <TableHead className="w-[80px] text-center">Code No.</TableHead>
-                            <TableHead className="w-[200px] text-center">Asset Name</TableHead>
+                            <TableHead className="w-[150px] text-center">Asset Name</TableHead>
+                            <TableHead className="w-[80px] text-center">Record #</TableHead>
                             <TableHead className="w-[120px] text-center">Type</TableHead>
                             <TableHead className="w-[150px] text-center">Issuing Office</TableHead>
                             <TableHead className="w-[150px] text-center">Receiving Office</TableHead>
@@ -44,9 +45,9 @@ export default function TurnoverDisposalTable({ records, page, total, pageSize, 
 
                     <TableBody>
                         {records.map((r) => (
-                            <TableRow key={`${r.id}-${r.asset_id}`} className="text-center">
-                                <TableCell>{r.id}</TableCell>
-                                <TableCell>
+                            <TableRow key={`${r.turnover_disposal_id}-${r.asset_id}`} className="text-center">
+                                <TableCell>{r.turnover_disposal_id}</TableCell>
+                                <TableCell className="whitespace-normal break-words text-center">
                                     <div>
                                         <p className="font-medium">{r.asset_name}</p>
                                         <p className="text-xs text-gray-500">{r.category}</p>
@@ -57,10 +58,11 @@ export default function TurnoverDisposalTable({ records, page, total, pageSize, 
                                         )}
                                     </div>
                                 </TableCell>
-                                <TableCell>{r.type}</TableCell>
+                                <TableCell>{r.turnover_disposal_id}</TableCell>
+                                <TableCell>{ucwords(r.type)}</TableCell>
                                 <TableCell>{r.issuing_office}</TableCell>
                                 <TableCell>{r.receiving_office || '—'}</TableCell>
-                                <TableCell>{formatEnums(r.status)}</TableCell>
+                                <TableCell>{formatEnums(r.td_status)}</TableCell>
                                 <TableCell>{formatDate(r.document_date)}</TableCell>
                                 <TableCell className="whitespace-normal break-words text-center">
                                     {r.remarks || '—'}

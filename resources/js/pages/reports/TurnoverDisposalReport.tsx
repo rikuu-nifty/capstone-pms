@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/chart";
 
 export type RecordRow = {
-    id: number;
+    // id: number;
+    turnover_disposal_id: number;
     type: string;
     issuing_office: string;
     receiving_office?: string | null;
@@ -28,7 +29,8 @@ export type RecordRow = {
     serial_no: string;
     asset_name: string;
     category: string;
-    status: string     ;       // turnover/disposal status
+    // status: string;      // turnover/disposal status
+    td_status: string;
     asset_status: string;      // per-asset status
     document_date: string;
     remarks?: string | null;

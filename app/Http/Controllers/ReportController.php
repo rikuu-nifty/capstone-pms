@@ -11,6 +11,7 @@ use App\Models\Building;
 use App\Models\Category;
 use App\Models\BuildingRoom;
 use App\Models\SubArea;
+use App\Models\TurnoverDisposal;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\InventoryListReportExport;
@@ -18,6 +19,7 @@ use App\Exports\NewPurchasesSummaryExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Carbon\CarbonPeriod;
 
 class ReportController extends Controller
 {
@@ -128,7 +130,7 @@ class ReportController extends Controller
 
     public function index()
     {
-        // ✅ Fetch all categories and count their assets
+        // Fetch all categories and count their assets
         $categoryData = Category::withCount('inventoryLists')
             ->get()
             ->map(fn($cat) => [
@@ -139,10 +141,9 @@ class ReportController extends Controller
         $startDate = Carbon::now()->subDays(90)->toDateString();
 
         // INVENTORY SHEET REPORTS PART
-        // $chartQuery = InventoryList::with(['schedulingAssets'])->get();
         $chartQuery = InventoryList::with(['schedulingAssets'])->get();
 
-        // ✅ Flatten and normalize scheduling assets
+        // Flatten and normalize scheduling assets
         $chartData = $chartQuery->flatMap(function ($asset) {
             return $asset->schedulingAssets->map(function ($s) {
                 $date = $s->inventory_status === 'inventoried' && $s->inventoried_at
@@ -155,10 +156,9 @@ class ReportController extends Controller
                 ];
             });
         })
-            // ✅ Enforce strict 90-day cutoff here
-            ->filter(fn($item) => $item['date'] >= $startDate);
+        ->filter(fn($item) => $item['date'] >= $startDate); // Enforce strict 90-day cutoff here
 
-        // ✅ Group by date and count statuses
+        // Group by date and count statuses
         $inventorySheetChartData = $chartData
             ->groupBy('date')
             ->map(function (Collection $items, $date) {
@@ -171,12 +171,27 @@ class ReportController extends Controller
             })
             ->sortKeys()
             ->values()
-            ->toArray();
+            ->toArray()
+        ;
+
+        $rawData = TurnoverDisposal::monthlyCompletedTrendData();
+        $year = now()->year;
+        $months = CarbonPeriod::create("{$year}-01-01", '1 month', "{$year}-12-01");
+
+        $turnoverDisposalChartData = collect($months)->map(function ($date) use ($rawData) {
+            $ym = $date->format('Y-m');
+            return [
+                'month'    => $date->format('F'),
+                'turnover' => (int) ($rawData[$ym]->turnover ?? 0),
+                'disposal' => (int) ($rawData[$ym]->disposal ?? 0),
+            ];
+        })->toArray();
 
         return Inertia::render('reports/index', [
             'title' => 'Reports Dashboard',
             'categoryData' => $categoryData,
             'inventorySheetChartData' => $inventorySheetChartData,
+            'turnoverDisposalChartData' => $turnoverDisposalChartData,
         ]);
     }
 

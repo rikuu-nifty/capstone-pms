@@ -37,38 +37,37 @@ class TurnoverDisposalReportController extends Controller
 
         $perPage = (int) $request->get('per_page', 10);
 
-        $paginator = TurnoverDisposal::filterAndPaginate($filters, $perPage);
-
+        // $paginator = TurnoverDisposal::filterAndPaginate($filters, $perPage);
+        $paginator = TurnoverDisposal::filterAndPaginateAssets($filters, $perPage);
         $paginator->appends($filters);
 
-        $rows = $paginator->getCollection()->flatMap(function ($td) {
-            return $td->turnoverDisposalAssets->map(function ($assetLine) use ($td) {
-                $asset = $assetLine->assets; // InventoryList
-                $model = $asset?->assetModel;
-                $category = $model?->category;
+        // $rows = $paginator->getCollection()->flatMap(function ($td) {
+        //     return $td->turnoverDisposalAssets->map(function ($assetLine) use ($td) {
+        //         $asset = $assetLine->assets; // InventoryList
+        //         $model = $asset?->assetModel;
 
-                return [
-                    'id'                => $td->id,
-                    'type'              => ucfirst($td->type),
-                    'issuing_office'    => $td->issuingOffice->name ?? '—',
-                    'receiving_office'  => $td->receivingOffice->name ?? '—',
-                    'asset_id'          => $asset->id ?? null,
-                    'serial_no'         => $asset->serial_no ?? '—',
-                    'asset_name'        => $asset->asset_name ?? '—',
-                    'category'          => $asset->assetModel?->category?->name ?? '—',
-                    'brand'             => $model?->brand ?? '—',
-                    'model'             => $model?->model ?? '—',
-                    'building'          => $asset->building->name ?? '—',
-                    'room'              => $asset->buildingRoom->room ?? '—',
-                    'status'            => $td->status,
-                    'asset_status'      => $assetLine->asset_status,
-                    'document_date'     => optional($td->document_date)->format('Y-m-d'),
-                    'remarks'           => $assetLine->remarks ?? $td->remarks,
-                ];
-            });
-        });
+        //         return [
+        //             'id'                => $td->id,
+        //             'type'              => ucfirst($td->type),
+        //             'issuing_office'    => $td->issuingOffice->name ?? '—',
+        //             'receiving_office'  => $td->receivingOffice->name ?? '—',
+        //             'asset_id'          => $asset->id ?? null,
+        //             'serial_no'         => $asset->serial_no ?? '—',
+        //             'asset_name'        => $asset->asset_name ?? '—',
+        //             'category'          => $asset->assetModel?->category?->name ?? '—',
+        //             'brand'             => $model?->brand ?? '—',
+        //             'model'             => $model?->model ?? '—',
+        //             'building'          => $asset->building->name ?? '—',
+        //             'room'              => $asset->buildingRoom->room ?? '—',
+        //             'status'            => $td->status,
+        //             'asset_status'      => $assetLine->asset_status,
+        //             'document_date'     => optional($td->document_date)->format('Y-m-d'),
+        //             'remarks'           => $assetLine->remarks ?? $td->remarks,
+        //         ];
+        //     });
+        // });
 
-        $paginator->setCollection($rows);
+        // $paginator->setCollection($rows);
 
         $rawData = TurnoverDisposal::monthlyCompletedTrendData();
 
@@ -114,30 +113,28 @@ class TurnoverDisposalReportController extends Controller
     public function exportExcel(Request $request)
     {
         $filters = $request->all();
-        $records = TurnoverDisposal::filterAndPaginate($filters, 1000); // big page size
+        $records = TurnoverDisposal::filterAndPaginateAssets($filters, 2000);
 
-        $exportData = [
-            'records' => $records->items(),
-            'filters' => $filters,
-        ];
+        $timestamp = now()->format('Y-m-d');
+        $filename  = "TurnoverDisposalReport-{$timestamp}.xlsx";
 
-        return Excel::download(new TurnoverDisposalReportExport($exportData), 'TurnoverDisposalReport.xlsx');
+        return Excel::download(
+            new \App\Exports\TurnoverDisposalReportExport($records->items(), $filters),
+            $filename
+        );
     }
 
     public function exportPdf(Request $request)
     {
         $filters = $request->all();
-
-        // fetch with large page size (no pagination limit for export)
-        $records = TurnoverDisposal::filterAndPaginate($filters, 2000);
+        $records = TurnoverDisposal::filterAndPaginateAssets($filters, 2000);
 
         $pdf = Pdf::loadView('reports.turnover_disposal_pdf', [
             'records' => $records->items(),
             'filters' => $filters,
-        ])
-            ->setPaper('a4', 'landscape');
+        ])->setPaper('A4', 'landscape');
 
-        $timestamp = now()->format('Y-m-d');
-        return $pdf->download("TurnoverDisposalReport-{$timestamp}.pdf");
+        // return $pdf->download('TurnoverDisposalReport-' . now()->format('Y-m-d') . '.pdf');
+        return $pdf->stream('TurnoverDisposalReport');
     }
 }

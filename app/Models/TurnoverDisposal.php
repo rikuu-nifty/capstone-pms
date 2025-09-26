@@ -434,6 +434,40 @@ class TurnoverDisposal extends Model
         return $query->paginate($perPage)->withQueryString();
     }
 
+    public static function filterAndPaginateAssets(array $filters, int $perPage = 10)
+    {
+        return DB::table('turnover_disposal_assets as tda')
+            ->join('turnover_disposals as td', 'td.id', '=', 'tda.turnover_disposal_id')
+            ->leftJoin('inventory_lists as il', 'il.id', '=', 'tda.asset_id')
+            ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
+            ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
+            ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
+            ->leftJoin('unit_or_departments as receiving', 'receiving.id', '=', 'td.receiving_office_id')
+            ->select([
+                'td.id as turnover_disposal_id',
+                'td.type',
+                'td.status as td_status',
+                'td.document_date',
+                'issuing.name as issuing_office',
+                'receiving.name as receiving_office',
+                'il.id as asset_id',
+                'il.serial_no',
+                'il.asset_name',
+                'il.unit_cost',
+                'c.name as category',
+                'tda.asset_status',
+                DB::raw('COALESCE(tda.remarks, td.remarks) as remarks'),
+            ])
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
+            ->when($filters['issuing_office_id'] ?? null, fn($q, $issuing) => $q->where('td.issuing_office_id', $issuing))
+            ->when($filters['receiving_office_id'] ?? null, fn($q, $receiving) => $q->where('td.receiving_office_id', $receiving))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
+            ->when($filters['category_id'] ?? null, fn($q, $cat) => $q->where('c.id', $cat))
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
     public static function summaryCounts(): array
     {
         return [

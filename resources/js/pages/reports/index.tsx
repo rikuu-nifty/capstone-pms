@@ -1,19 +1,19 @@
 // import { Input } from '@/components/ui/input'
-import AppLayout from '@/layouts/app-layout'
-import { type BreadcrumbItem } from '@/types'
-import type { PageProps as InertiaPageProps } from '@inertiajs/core'
-import { Head, usePage } from '@inertiajs/react'
-import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lucide-react'
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import type { PageProps as InertiaPageProps } from '@inertiajs/core';
+import { Head, usePage } from '@inertiajs/react';
+import { ArrowRightLeft, CalendarCheck2, ClipboardList, Trash2, Truck } from 'lucide-react';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
   // ChartLegendContent,
-} from '@/components/ui/chart'
+} from '@/components/ui/chart';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useState } from 'react';
 import {
   Cell,
   Label,
@@ -24,10 +24,15 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
-} from 'recharts'
+  RadarChart,         // ✅ add
+  Radar,              // ✅ add
+  PolarGrid,          // ✅ add
+  PolarAngleAxis,     // ✅ add
+  ResponsiveContainer
+} from 'recharts';
 
-import { ReportCard } from './ReportCard'
-import { formatEnums } from '@/types/custom-index'
+import { ReportCard } from './ReportCard';
+import { formatEnums } from '@/types/custom-index';
 
 // 🔹 Type for chart data coming from backend
 type CategoryData = {
@@ -42,16 +47,23 @@ type InventorySheetChartData = {
   not_inventoried: number;
 };
 
+type TurnoverDisposalChartData = {
+  month: string
+  turnover: number
+  disposal: number
+};
+
 // 🔹 Extend default Inertia props with our custom props
 type ReportsPageProps = InertiaPageProps & {
   categoryData: CategoryData[],
   inventorySheetChartData: InventorySheetChartData[],
+  turnoverDisposalChartData: TurnoverDisposalChartData[],
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }]
 
 export default function ReportsIndex() {
-  const { categoryData, inventorySheetChartData } = usePage<ReportsPageProps>().props
+  const { categoryData, inventorySheetChartData, turnoverDisposalChartData } = usePage<ReportsPageProps>().props
   const [showOthersModal, setShowOthersModal] = useState(false)
 
   const BASE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA66CC']
@@ -200,8 +212,6 @@ export default function ReportsIndex() {
           </div>
         ),
     },
-
-    //Inventory Sheet Report
     {
       title: 'Inventory Sheet Report',
       description: 'Generate detailed per-room/per-building inventory sheets.',
@@ -334,7 +344,6 @@ export default function ReportsIndex() {
         </div>
       ),
     },
-
     {
       title: 'Inventory Scheduling Report',
       description: 'Placeholder for scheduling data visualization.',
@@ -349,9 +358,111 @@ export default function ReportsIndex() {
     },
     {
       title: 'Turnover/Disposal Report',
-      description: 'Placeholder for turnover/disposal.',
+      description: 'Summary of completed turnovers and disposals this year.',
       href: route('reports.turnover-disposal'),
       icon: <Trash2 className="h-5 w-5 text-red-500" />,
+      footer: (
+        <span className="text-xs text-muted-foreground">
+          Click "View" to see more details
+        </span>
+      ),
+
+      // chart: turnoverDisposalChartData.length > 0 ? (
+      //   <div className="rounded-lg bg-gray-50 p-3">
+      //     <ChartContainer
+      //       config={{
+      //         turnover: { label: 'Turnover', color: 'var(--chart-1)' },
+      //         disposal: { label: 'Disposal', color: 'var(--chart-2)' },
+      //       }}
+      //       // className="mx-auto aspect-square max-h-[220px]"
+      //       className="mx-auto aspect-[4/3] max-h-[245px] w-full flex items-center justify-center"
+      //     >
+      //       <ResponsiveContainer width="100%" height="100%">
+      //         <RadarChart 
+      //           data={turnoverDisposalChartData}
+      //         >
+      //           <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+      //           <PolarAngleAxis 
+      //             dataKey="month"
+      //             tickFormatter={(value) => value.slice(0, 3)}
+      //           />
+      //           <PolarGrid />
+      //           <Radar
+      //             name="Turnover"
+      //             dataKey="turnover"
+      //             stroke="var(--chart-1)"
+      //             fill="var(--chart-1)"
+      //             fillOpacity={0.6}
+      //           />
+      //           <Radar
+      //             name="Disposal"
+      //             dataKey="disposal"
+      //             stroke="var(--chart-2)"
+      //             fill="var(--chart-2)"
+      //             fillOpacity={0.4}
+      //           />
+      //           <ChartLegend 
+      //             content={<ChartLegendContent/>}
+      //           />
+      //         </RadarChart>
+      //       </ResponsiveContainer>
+      //     </ChartContainer>
+      //   </div>
+      // ) : (
+      //   <div className="flex h-full items-center justify-center text-sm text-gray-400">
+      //     No data available
+      //   </div>
+      // ),
+      chart: turnoverDisposalChartData.length > 0 ? (
+        <div className="rounded-lg bg-gray-50 p-3">
+          <ChartContainer
+            config={{
+              turnover: { label: 'Turnover', color: 'var(--chart-1)' },
+              disposal: { label: 'Disposal', color: 'var(--chart-2)' },
+            }}
+            className="mx-auto aspect-[4/3] max-h-[245px] w-full"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={turnoverDisposalChartData}>
+                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                <PolarAngleAxis dataKey="month" tickFormatter={(v) => String(v).slice(0, 3)} />
+                <PolarGrid />
+                <Radar
+                  name="Turnover"
+                  dataKey="turnover"
+                  stroke="var(--chart-1)"
+                  fill="var(--chart-1)"
+                  fillOpacity={0.6}
+                />
+                <Radar
+                  name="Disposal"
+                  dataKey="disposal"
+                  stroke="var(--chart-2)"
+                  fill="var(--chart-2)"
+                  fillOpacity={0.4}
+                />
+                {/* ⛔️ No <ChartLegend /> inside the chart */}
+              </RadarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+
+          {/* ✅ Custom legend outside the chart, with explicit spacing */}
+          <div className="mt-2 flex flex-wrap justify-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-sm" style={{ background: 'var(--chart-1)' }} />
+              <span className="text-xs text-muted-foreground">Turnover</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-sm" style={{ background: 'var(--chart-2)' }} />
+              <span className="text-xs text-muted-foreground">Disposal</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex h-full items-center justify-center text-sm text-gray-400">
+          No data available
+        </div>
+      ),
     },
     {
       title: 'Off-Campus Report',
