@@ -21,6 +21,9 @@ use App\Notifications\UserDeniedNotification;
 use App\Notifications\UserRoleReassignedNotification;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+// 🔹 Import the RoleChanged event
+use App\Events\RoleChanged;
+
 class User extends Authenticatable implements MustVerifyEmail  
 {
     use HasFactory, Notifiable, SoftDeletes;
@@ -180,12 +183,19 @@ class User extends Authenticatable implements MustVerifyEmail
             return;
         }
 
+        $oldRoleName = $this->role?->name ?? 'Unassigned';
+
         $this->update([
             'status'         => 'approved',
             'role_id'        => $role->id,
             'approved_at'    => now(),
             'approval_notes' => $notes,
         ]);
+
+        $newRoleName = $role->name;
+
+        // 🔹 Fire RoleChanged event
+        RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
 
         $this->notify(new UserApprovedNotification($notes));
     }
@@ -217,9 +227,14 @@ class User extends Authenticatable implements MustVerifyEmail
             'role_change_notes' => $notes,
         ]);
 
+        $newRoleName = $role->name;
+
+        // 🔹 Fire RoleChanged event
+        RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
+
         $this->notify(new UserRoleReassignedNotification(
             $oldRoleName, 
-            $role->name, 
+            $newRoleName, 
             $notes
         ));
     }

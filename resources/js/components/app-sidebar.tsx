@@ -18,7 +18,7 @@ import {
     Building2,
     ChevronRight,
     ClipboardList,
-    File,
+    FileText,
     FileCheck2,
     ChartColumnIncreasing,
     Landmark,
@@ -55,6 +55,13 @@ const reportsNavItem = {
     href: '/reports',
     icon: ChartColumnIncreasing,
     permission: 'view-reports',
+};
+
+const auditLogItem = {  
+    title: 'Audit Trail', 
+    href: '/audit-log', 
+    icon: FileText, 
+    permission: 'view-audit-logs', 
 };
 
 // const InventorySheetReportsNavItem = {
@@ -99,8 +106,7 @@ const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals' },
-    { title: 'Audit Log', href: '/audit-log', icon: File, permission: 'view-audit-logs' },
-    { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
+    // { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
 ];
 
 const configNavItems = [
@@ -246,8 +252,25 @@ export function AppSidebar() {
                             <SidebarMenuItem key={reportsNavItem.href}>
                                 <SidebarMenuButton asChild className="px-3 py-2">
                                     <Link href={reportsNavItem.href} className="flex items-center space-x-2">
-                                        <reportsNavItem.icon className="h-4 w-4" />
+                                        {(() => {
+                                            const Icon = reportsNavItem.icon
+                                            return <Icon className="h-4 w-4" />
+                                        })()}
                                         <span>{reportsNavItem.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+
+                        {canView(auditLogItem, permissions) && (
+                            <SidebarMenuItem key={auditLogItem.href}>
+                                <SidebarMenuButton asChild className="px-3 py-2">
+                                    <Link href={auditLogItem.href} className="flex items-center space-x-2">
+                                        {(() => {
+                                            const Icon = auditLogItem.icon
+                                            return <Icon className="h-4 w-4" />
+                                        })()}
+                                        <span>{auditLogItem.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

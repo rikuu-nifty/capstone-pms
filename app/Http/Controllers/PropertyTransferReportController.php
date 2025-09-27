@@ -138,38 +138,38 @@ public function index(Request $request)
                     });
             });
 
-    // If department is set, enforce it alongside building
-    if ($department) {
-        $q->where(function ($sub) use ($department) {
-            $sub->where('current_organization', $department)
-                ->orWhere('receiving_organization', $department);
-        });
-    }
-})
+            // If department is set, enforce it alongside building
+            if ($department) {
+                $q->where(function ($sub) use ($department) {
+                    $sub->where('current_organization', $department)
+                        ->orWhere('receiving_organization', $department);
+                });
+            }
+        })
 
-// ✅ Room filter (applies alongside building/department if provided)
-->when($room, function ($q) use ($room, $department, $building) {
-    $q->where(function ($sub) use ($room) {
-        $sub->where('current_building_room', $room)  // ✅ FIX: correct column
-            ->orWhere('receiving_building_room', $room); // ✅ FIX: correct column
-    });
+        // ✅ Room filter (applies alongside building/department if provided)
+        ->when($room, function ($q) use ($room, $department, $building) {
+            $q->where(function ($sub) use ($room) {
+                $sub->where('current_building_room', $room)  // ✅ FIX: correct column
+                    ->orWhere('receiving_building_room', $room); // ✅ FIX: correct column
+            });
 
-    if ($department) {
-        $q->where(function ($sub) use ($department) {
-            $sub->where('current_organization', $department)
-                ->orWhere('receiving_organization', $department);
-        });
-    }
+            if ($department) {
+                $q->where(function ($sub) use ($department) {
+                    $sub->where('current_organization', $department)
+                        ->orWhere('receiving_organization', $department);
+                });
+            }
 
-    if ($building) {
-        $q->where(function ($sub) use ($building) {
-            $sub->whereHas('currentBuildingRoom', fn($q2) => $q2->where('building_id', $building))
-                ->orWhereHas('receivingBuildingRoom', fn($q2) => $q2->where('building_id', $building));
-        });
-    }
-        });
+            if ($building) {
+                $q->where(function ($sub) use ($building) {
+                    $sub->whereHas('currentBuildingRoom', fn($q2) => $q2->where('building_id', $building))
+                        ->orWhereHas('receivingBuildingRoom', fn($q2) => $q2->where('building_id', $building));
+                });
+            }
+                });
 
-    $transfers = $query->get();
+            $transfers = $query->get();
 
     // KPI summary (unfiltered)
     $allTransfers = Transfer::all();

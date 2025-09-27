@@ -18,8 +18,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
+// Audit Trail
+use App\Traits\LogsAuditTrail;
+
 class InventoryListController extends Controller
 {
+
+    use LogsAuditTrail; 
     /**
      * Display a listing of the resource.
      */
@@ -67,6 +72,9 @@ class InventoryListController extends Controller
             'transfer', // ✅ eager load transfer
             'subArea',
         ]);
+
+          // ✅ Log the viewing action in audit_trails
+         $this->logViewing($inventory_list);
         
 
         return Inertia::render('inventory-list/index', array_merge(
@@ -117,25 +125,6 @@ class InventoryListController extends Controller
         ];
     }
 
-    //   $assets = InventoryList::latest()->get();
-
-    //   $assets = inventoryList::with([
-    //         'assetModel.category',
-    //         'unitOrDepartment',
-    //         'building',
-    //         'buildingRoom'
-    //     ])->latest()->get();
-  
-    //     return Inertia::render('inventory-list/index', [
-    //         'assets' => $assets,
-    //         'units' => $units,  for dropdown, display, etc.
-            
-    //     ]);
-
-        // 'inventory-list' => inventoryList::paginate(10)->withQueryString(),
-        // return Inertia::render('inventory-list/index');
-            
-    
 
     /**
      * Show the form for creating a new resource.

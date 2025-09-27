@@ -28,6 +28,14 @@ class FormApproval extends Model
         'reviewed_at'  => 'datetime',
     ];
 
+    public function getCurrentStepAttribute()
+{
+    return $this->steps()
+        ->where('status', 'pending')
+        ->orderBy('step_order')
+        ->first();
+}
+
     protected function applyStepSideEffects(FormApprovalSteps $step): void
     {
         $model = $this->approvable; 

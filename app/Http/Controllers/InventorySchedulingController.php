@@ -16,11 +16,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
+// Audit Trail
+use App\Traits\LogsAuditTrail;
+
 class InventorySchedulingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+    use LogsAuditTrail;
     public function index()
     {
         $schedules = InventoryScheduling::with([
@@ -365,13 +369,36 @@ class InventorySchedulingController extends Controller
             'inventory_status' => ['required', Rule::in(['not_inventoried', 'scheduled', 'inventoried'])],
         ]);
 
+        // get the pivot record before updating
+        $pivot = $schedule->assets()->where('inventory_list_id', $assetId)->first();
+        $oldStatus = $pivot?->inventory_status;
+
         // update the pivot model (InventorySchedulingAsset)
         $schedule->assets()
             ->where('inventory_list_id', $assetId)
             ->update(['inventory_status' => $data['inventory_status']]);
 
+        // log action with explicit action + subject_type
+        $log = \App\Models\AuditTrail::create([
+            'auditable_type'        => get_class($schedule),
+            'auditable_id'          => $schedule->id,
+            'actor_id'              => auth()->id(),
+            'actor_name'            => auth()->user()?->name,
+            'unit_or_department_id' => auth()->user()?->unit_or_department_id,
+            'action'                => 'singleAsset_update',   // 👈 custom action
+            'subject_type'          => 'InventoryAssetStatus', // 👈 explicit subject
+            'old_values'            => ['inventory_status' => $oldStatus],
+            'new_values'            => ['inventory_status' => $data['inventory_status']],
+            'ip_address'            => $request->ip(),
+            'user_agent'            => $request->header('User-Agent'),
+            'route'                 => $request->path(),
+        ]);
+
         return response()->json(['success' => true]);
     }
+
+
+
 
     public function bulkUpdateAssetStatus(Request $request, InventoryScheduling $schedule, int $rowId)
     {
@@ -398,8 +425,26 @@ class InventorySchedulingController extends Controller
             }
         });
 
+        // collect affected assets before update
+        $affectedAssets = $query->get(['inventory_list_id', 'inventory_status']);
+
         $query->update(['inventory_status' => $data['inventory_status']]);
+
+        // log one bulk action
+        $this->logAction(
+            'bulk_update',
+            $schedule,
+            ['affected_assets' => $affectedAssets->pluck('inventory_status', 'inventory_list_id')],
+            ['new_status' => $data['inventory_status'], 'count' => $affectedAssets->count()]
+        );
+
+        // override subject_type
+        \App\Models\AuditTrail::latest()->first()->update([
+            'subject_type' => 'InventoryAssetStatus',
+        ]);
 
         return response()->json(['success' => true]);
     }
+
+
 }

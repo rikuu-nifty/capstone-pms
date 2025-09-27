@@ -25,6 +25,7 @@
     use App\Http\Controllers\InventorySchedulingReportController;
     use App\Http\Controllers\PropertyTransferReportController;
     use App\Http\Controllers\OffCampusReportController;
+    use App\Http\Controllers\AuditTrailController;
 
     // Route::get('/', function () {
     //     return Inertia::render('welcome');
@@ -75,10 +76,13 @@
     // Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
     //     ->name('asset-summary.show');
 
-
-
     // 🔒 Everything below requires auth
     Route::middleware(['auth', 'verified', 'approved'])->group(function () {
+
+    // AUDIT-TRAIL
+    Route::get('/audit-log', [AuditTrailController::class, 'index'])
+    ->name('audit-trail.index');
+    
     
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -146,6 +150,9 @@
     )->name('reports.turnover-disposal');
 
 });
+
+
+   
 
 
 

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 // use App\Http\Requests\InventoryListAddNewAssetFormRequest;
 
+use App\Events\RoleChanged;
 use Inertia\Inertia;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -13,6 +15,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class RoleController extends Controller
 {
     use AuthorizesRequests;
+
     /**
      * Display a listing of the resource.
      */
@@ -69,15 +72,20 @@ class RoleController extends Controller
             'permissions' => ['array'],
         ]);
 
+        // Capture old values before update
+        $oldRole = $role->name;
+
         Role::updateRole($role, $validated);
 
         if ($request->has('permissions')) {
             $role->permissions()->sync($request->permissions);
         }
 
+        // 🔹 No RoleChanged event here — handled by RoleObserver for model updates
+        $newRole = $role->name;
+
         return redirect()->route('role-management.index')->with('success', 'Role updated successfully.');
     }
-
 
     /**
      * Remove the specified resource from storage.
@@ -105,5 +113,30 @@ class RoleController extends Controller
 
         return redirect()->route('role-management.index')
             ->with('success', 'Permissions updated successfully.');
+    }
+
+    /**
+     * 🔹 Assign a role to a specific user and dispatch RoleChanged event
+     */
+    public function assignRoleToUser(Request $request, User $user)
+    {
+        $this->authorize('manage-roles');
+
+        $request->validate([
+            'role_id' => ['required', 'exists:roles,id'],
+        ]);
+
+        $oldRole = $user->role?->name;
+
+        $user->role_id = $request->role_id;
+        $user->save();
+
+        $newRole = $user->role?->name;
+
+        // Dispatch RoleChanged event (user’s role assignment updated)
+        RoleChanged::dispatch($user, $oldRole, $newRole);
+
+        return redirect()->route('role-management.index')
+            ->with('success', 'User role updated successfully and logged in audit trail.');
     }
 }

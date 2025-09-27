@@ -7,6 +7,9 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+// 🔹 Import the event
+use App\Events\FormApproved;
+
 class FormApprovalController extends Controller
 {
     use AuthorizesRequests;
@@ -92,6 +95,11 @@ class FormApprovalController extends Controller
             $approval->updateParentFormStatus();
         }
 
+        // 🔹 Dispatch event for audit trail (guard against null)
+        if ($approval->currentStep) {
+            FormApproved::dispatch($approval->currentStep, 'approved');
+        }
+
         return back()->with('success', 'Step approved.');
     }
 
@@ -102,6 +110,11 @@ class FormApprovalController extends Controller
         $approval->rejectCurrentStep($request->string('notes')->toString() ?: null);
 
         $approval->updateParentFormStatus('rejected');
+
+        // 🔹 Dispatch event for audit trail (guard against null)
+        if ($approval->currentStep) {
+            FormApproved::dispatch($approval->currentStep, 'rejected');
+        }
 
         return back()->with('success', 'Step rejected.');
     }
@@ -124,6 +137,11 @@ class FormApprovalController extends Controller
             $approval->updateParentFormStatus();
         }
 
+        // 🔹 Dispatch event for audit trail (guard against null)
+        if ($approval->currentStep) {
+            FormApproved::dispatch($approval->currentStep, 'approved'); // external approvals count as approved
+        }
+
         return back()->with('success', 'External approval recorded.');
     }
 
@@ -132,7 +150,7 @@ class FormApprovalController extends Controller
         $this->authorize('review', $approval);
 
         // If it’s already pending, do nothing (idempotent)
-         $approval->resetToPending();
+        $approval->resetToPending();
 
         return back()->with('success', 'Moved back to Pending Review.');
     }
