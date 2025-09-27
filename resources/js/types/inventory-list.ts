@@ -11,6 +11,8 @@ export type InventoryList = {
     unit_or_department_id: number;
     building_id: number;
     building_room_id: number;
+    sub_area_id?: number | null;
+    
     serial_no: string;
     supplier: string;
     unit_cost: number;

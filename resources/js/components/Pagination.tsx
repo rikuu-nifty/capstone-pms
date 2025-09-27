@@ -24,10 +24,10 @@ export default function Pagination({
     disabled = false,
 }: PaginationProps) {
 
-    const effectivePageSize = Math.min(pageSize, 10);
-      const totalPages = Math.max(1, Math.ceil(total / effectivePageSize));
+    // const effectivePageSize = Math.min(pageSize, 10);
+    const effectivePageSize = pageSize;
+    const totalPages = Math.max(1, Math.ceil(total / effectivePageSize));
     if (totalPages <= 1) return null;
-
    
 
     const go = (p: number) => {
@@ -135,7 +135,8 @@ export function PageInfo({
     className?: string;
     label?: string;
 }) {
-    const effectivePageSize = Math.min(pageSize, 10); // ✅ cap at 10
+    // const effectivePageSize = Math.min(pageSize, 10); // ✅ cap at 10
+    const effectivePageSize = pageSize;
     const start = total ? (page - 1) * effectivePageSize + 1 : 0;
     const end = Math.min(page * effectivePageSize, total);
     return (

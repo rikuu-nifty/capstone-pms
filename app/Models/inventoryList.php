@@ -15,7 +15,10 @@ class InventoryList extends Model
 
     protected $dates = ['deleted_at'];
 
-    protected $appends = ['current_transfer_status'];
+    protected $appends = [
+        'current_transfer_status',
+        'current_inventory_status',
+    ];
 
     protected $fillable = [
         'memorandum_no',
@@ -93,14 +96,31 @@ class InventoryList extends Model
         return $this->hasMany(OffCampus::class, 'asset_id');
     }
 
+    public function offCampusAssets()
+    {
+        return $this->hasMany(OffCampusAsset::class, 'asset_id');
+    }
+
     public function transfer()
     {
         return $this->belongsTo(Transfer::class, 'transfer_id');
     }
 
+    public function resolveInventoryStatus()
+    {
+        // Pseudo logic: check inventory_schedulings + pivot, helper for NFC status
+        return 'Not Yet Inventoried';
+    }
+
     public function transferAssets()
     {
         return $this->hasMany(TransferAsset::class, 'asset_id');
+    }
+    public function getCurrentInventoryStatusAttribute(): ?string
+    {
+        return $this->schedulingAssets()
+            ->latest('created_at')
+            ->value('inventory_status');
     }
 
     public function getCurrentTransferStatusAttribute(): ?string
@@ -116,12 +136,7 @@ class InventoryList extends Model
             ->first();
 
         if ($transfer) {
-
-            if ($transfer->status === 'overdue') {
-                return 'overdue';
-            }
-            
-            return $transfer->pivot?->asset_transfer_status;
+            return $transfer->status;
         }
 
         // fallback to latest transfer (completed/cancelled)
@@ -129,7 +144,7 @@ class InventoryList extends Model
             ->latest('transfers.created_at')
             ->first();
 
-        return $latest?->pivot?->asset_transfer_status;
+        return $latest?->status;
     }
 
     // DO NOT DELETE - FOR PIVOT TABLE and INVENTORY SHEET REPORTS

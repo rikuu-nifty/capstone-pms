@@ -71,11 +71,11 @@ class InventoryListController extends Controller
             'buildingRoom',
             'transfer', // ✅ eager load transfer
             'subArea',
+            'schedulingAssets',
         ]);
 
           // ✅ Log the viewing action in audit_trails
          $this->logViewing($inventory_list);
-        
 
         return Inertia::render('inventory-list/index', array_merge(
             $this->pageProps(),
@@ -104,6 +104,7 @@ class InventoryListController extends Controller
             'transfers' => function ($q) {
                 $q->latest('transfers.created_at'); // just order for accessor
             },
+            'schedulingAssets',
         ])
         ->orderBy('id', 'desc');
 

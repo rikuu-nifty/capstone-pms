@@ -135,6 +135,8 @@
             font-style: italic;
         }
     </style>
+    {{-- Allow page-specific overrides --}}
+    @stack('styles')
 </head>
 
 <body>
@@ -148,31 +150,44 @@
         </div>
     </header>
 
-    <footer>
-        <script type="text/php">
-            if (isset($pdf)) {
-                $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
-                $size = 9;
-                $font = $fontMetrics->getFont("DejaVu Sans");
-                $width = $fontMetrics->getTextWidth($text, $font, $size);
-                $x = ($pdf->get_width() - $width) / 2;
-                $y = $pdf->get_height() - 28;
-                $pdf->page_text($x, $y, $text, $font, $size, [0,0,0]);
-            }
-        </script>
-    </footer>
-
     <main>
         {{-- Default section for content --}}
         @yield('content')
 
-        {{-- Optional: if a report includes $filters, show fallback
+        <!-- {{-- Optional: if a report includes $filters, show fallback
         @isset($filters)
             @if (collect($filters)->filter()->isEmpty())
                 <p class="no-filters">No Filters Applied – showing all available records.</p>
             @endif
         @endisset --}}
     </main>
+
+    <script type="text/php">
+        if (isset($pdf)) {
+            $pdf->page_script('
+                $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+                $size = 9;
+
+                // Capture total pages only once
+                static $totalPages;
+                if (!$totalPages) {
+                    $totalPages = $PAGE_COUNT;
+                }
+
+                // Always use the static $totalPages to avoid stacking
+                $text = sprintf("Page %d of %d", $PAGE_NUM, $totalPages);
+
+                $width = $fontMetrics->get_text_width($text, $font, $size);
+                $x = ($pdf->get_width() - $width) / 2;
+                $y = $pdf->get_height() - 50;
+
+                $pdf->text($x, $y, $text, $font, $size, [0,0,0]);
+            ');
+        }
+    </script>
+    {{-- Allow child views to inject PDF scripts --}}
+    @stack('pdf-scripts')
+
 
 </body>
 

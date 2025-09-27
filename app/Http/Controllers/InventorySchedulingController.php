@@ -196,6 +196,7 @@ class InventorySchedulingController extends Controller
             'assets.asset.buildingRoom',
             'assets.asset.subArea',
             'assets.asset.assetModel.category',
+            'assets.asset.schedulingAssets',
         ])->findOrFail($inventory_scheduling->id);
 
         

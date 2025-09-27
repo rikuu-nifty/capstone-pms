@@ -12,8 +12,7 @@ import TransferStatusWarningModal from './TransferStatusWarningModal';
 interface TransferEditModalProps {
     show: boolean;
     onClose: () => void;
-    // transfer: Transfer;
-    transfer: Transfer & { is_approved: boolean };
+    transfer: Transfer;
     currentUser: User;
     buildings: Building[];
     buildingRooms: BuildingRoom[];
@@ -50,18 +49,25 @@ export default function TransferEditModal({
         receiving_organization: extractId(transfer.receiving_organization),
         designated_employee: extractId(transfer.designated_employee),
         assigned_by: currentUser.id,
-        scheduled_date: transfer.scheduled_date ?? '',
-        actual_transfer_date: transfer.actual_transfer_date ?? '',
+        scheduled_date: transfer.scheduled_date
+            ? new Date(transfer.scheduled_date).toISOString().split('T')[0]
+            : ''
+        ,
+        actual_transfer_date: transfer.actual_transfer_date
+            ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
+            : ''
+        ,
         received_by: String(transfer.received_by ?? ''),
         status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
         remarks: transfer.remarks ?? '',
+        // selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
         transfer_assets: transfer.transferAssets?.map((ta) => ({
             asset_id: ta.asset_id,
-            // moved_at: ta.moved_at ?? null,
+            moved_at: ta.moved_at ?? null,
             from_sub_area_id: ta.from_sub_area_id ?? null,
             to_sub_area_id: ta.to_sub_area_id ?? null,
-            // asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
-            // remarks: ta.remarks ?? null,
+            asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
+            remarks: ta.remarks ?? null,
         })) ?? [],
     });
   
@@ -101,18 +107,25 @@ export default function TransferEditModal({
                 receiving_organization: extractId(transfer.receiving_organization),
                 designated_employee: extractId(transfer.designated_employee),
                 assigned_by: currentUser.id,
-                scheduled_date: transfer.scheduled_date ?? '',
-                actual_transfer_date: transfer.actual_transfer_date ?? '',
+                scheduled_date: transfer.scheduled_date
+                    ? new Date(transfer.scheduled_date).toISOString().split('T')[0]
+                    : ''
+                ,
+                actual_transfer_date: transfer.actual_transfer_date
+                    ? new Date(transfer.actual_transfer_date).toISOString().split('T')[0]
+                    : ''
+                ,
                 received_by: transfer.received_by ? String(transfer.received_by) : null,
                 status: (transfer.status?.toLowerCase() ?? 'pending_review') as TransferFormData['status'],
                 remarks: transfer.remarks ?? '',
+                // selected_assets: transfer.transferAssets?.map((ta) => ta.asset_id) ?? [],
                 transfer_assets: transfer.transferAssets?.map((ta) => ({
                     asset_id: ta.asset_id,
-                    // moved_at: ta.moved_at ?? null,
+                    moved_at: ta.moved_at ?? null,
                     from_sub_area_id: ta.from_sub_area_id ?? null,
                     to_sub_area_id: ta.to_sub_area_id ?? null,
-                    // asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
-                    // remarks: ta.remarks ?? null,
+                    asset_transfer_status: (ta.asset_transfer_status ?? 'pending') as 'pending' | 'transferred' | 'cancelled',
+                    remarks: ta.remarks ?? null,
                 })) ?? [],
             });
             clearErrors();
@@ -138,16 +151,13 @@ export default function TransferEditModal({
         setData,
     ]);
 
-    // Run only once when modal opens (on show)
     useEffect(() => {
-    const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
-    const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
-    const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+        const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
+        const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
+        const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
 
-    let newStatus: TransferFormData['status'] | null = null;
+        let newStatus: TransferFormData['status'] | null = null;
 
-    // ✅ Only auto-recalculate if current status is auto-managed (pending_review or upcoming)
-    if (['pending_review', 'upcoming'].includes(data.status)) {
         if (pendingCount === 0) {
             if (transferredCount > 0 && cancelledCount === 0) {
                 newStatus = 'completed';
@@ -160,29 +170,22 @@ export default function TransferEditModal({
         } else if (pendingCount > 0) {
             const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
 
-            if (data.status === 'completed') {
-                // ⚠️ Do nothing here — let handleSubmit + warning modal decide
-                return;
+            if (['completed'].includes(data.status)) {
+                newStatus = 'in_progress'; // Reverted from completed → in_progress
             } else if (scheduledDate && scheduledDate < new Date()) {
                 // Past due → overdue
                 newStatus = 'overdue';
-            } else if (scheduledDate && scheduledDate >= new Date()) {
-                if (data.status !== 'pending_review') {
-                    newStatus = 'upcoming';
-                }
             }
             // else {
-            //     still active with pending → keep whatever the user selected (default: pending_review)
+            //     // Still active → upcoming
+            //     newStatus = 'pending_review';
             // }
         }
-    }
 
-    if (newStatus && newStatus !== data.status) {
-        setData('status', newStatus);
-    }
-}, [data.transfer_assets, data.scheduled_date, data.status, setData]);
-
-
+        if (newStatus && newStatus !== data.status) {
+            setData('status', newStatus);
+        }
+    }, [data.transfer_assets, data.scheduled_date, data.status, setData]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -447,30 +450,10 @@ export default function TransferEditModal({
                     type="date"
                     className="w-full rounded-lg border p-2 uppercase"
                     value={data.scheduled_date}
-                    onChange={(e) => {
-                        const newDate = e.target.value;
-                        setData('scheduled_date', newDate);
-
-                        if (!data.actual_transfer_date) {
-                            if (newDate) {
-                            const selected = new Date(newDate);
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-
-                            if (selected < today) {
-                                setData('status', 'overdue');
-                            } else if (selected > today) {
-                                setData('status', 'upcoming');
-                            } else {
-                                setData('status', 'in_progress');
-                            }
-                            }
-                        }
-                    }}
+                    onChange={(e) => setData('scheduled_date', e.target.value)}
                 />
-                {errors.scheduled_date && (
-                    <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>
-                )}
+
+                {errors.scheduled_date && <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>}
             </div>
 
             {/* Actual Transfer Date */}
@@ -478,33 +461,11 @@ export default function TransferEditModal({
                 <label className="mb-1 block font-medium">Date Completed</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2 uppercase"
+                    className="w-full rounded-lg border p-2 uppercase "
                     value={data.actual_transfer_date ?? ''}
-                    onChange={(e) => {
-                        const newDate = e.target.value;
-                        setData('actual_transfer_date', newDate);
-
-                        if (newDate) {
-                            setData('status', 'completed');
-                        } else if (data.scheduled_date) {
-                            // Recalculate from scheduled date if actual date is cleared
-                            const selected = new Date(data.scheduled_date);
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-
-                            if (selected < today) {
-                            setData('status', 'overdue');
-                            } else if (selected > today) {
-                            setData('status', 'upcoming');
-                            } else {
-                            setData('status', 'in_progress');
-                            }
-                        }
-                    }}
+                    onChange={(e) => setData('actual_transfer_date', e.target.value)}
                 />
-                {errors.actual_transfer_date && (
-                    <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>
-                )}
+                {errors.actual_transfer_date && <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>}
             </div>
 
             {/* Designated Employee */}
@@ -532,58 +493,23 @@ export default function TransferEditModal({
             {/* Status */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Status</label>
-                <div className="relative">
-                    <select
-                        className={`w-full rounded-lg border p-2 ${
-                            !transfer.is_approved
-                            ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                            : ''
-                        }`}
-                        value={data.status}
-                        onChange={(e) =>
-                            setData('status', e.target.value as TransferFormData['status'])
-                        }
-                        disabled={!transfer.is_approved} // disable if not approved
-                    >
-                    {!data.status && <option value="">Select Status</option>}
-                        <option
-                            value="pending_review"
-                            disabled={transfer.is_approved}
-                            className={transfer.is_approved ? 'text-gray-400' : ''}
-                        >
-                            Pending Review
-                        </option>
-                        <option value="upcoming">Upcoming</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="overdue">Overdue</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.status}
+                    onChange={(e) => setData('status', e.target.value as TransferFormData['status'])}
+                >
 
-                    {!transfer.is_approved && (
-                        <div className="mt-1 flex items-center text-xs text-amber-600">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4 mr-1"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 9v2m0 4h.01M4.93 4.93a10 10 0 0114.14 0 10 10 0 010 14.14 10 10 0 01-14.14 0 10 10 0 010-14.14z"
-                            />
-                            </svg>
-                                Status can only be updated after this form is <strong className="ml-1">Approved</strong>.
-                        </div>
-                    )}
-                </div>
-
-                {errors.status && (
-                    <p className="mt-1 text-xs text-red-500">{errors.status}</p>
+                {!data.status && (
+                    <option value="">Select Status</option>
                 )}
+                    <option value="pending_review">Pending Review</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
 
             {/* Selected Assets */}
@@ -635,25 +561,25 @@ export default function TransferEditModal({
                             className="w-full"
                             options={assets
                                 .filter((asset) => {
-                                    const matchesBuilding = data.current_building_id
-                                        ? asset.building_id === data.current_building_id
-                                        : true;
+                                const matchesBuilding = data.current_building_id
+                                    ? asset.building_id === data.current_building_id
+                                    : true;
 
-                                    const matchesRoom = data.current_building_room
-                                        ? asset.building_room_id === data.current_building_room
-                                        : true;
+                                const matchesRoom = data.current_building_room
+                                    ? asset.building_room_id === data.current_building_room
+                                    : true;
 
-                                    const matchesUnit = data.current_organization
-                                        ? asset.unit_or_department_id === data.current_organization
-                                        : true;
+                                const matchesUnit = data.current_organization
+                                    ? asset.unit_or_department_id === data.current_organization
+                                    : true;
 
-                                    const notAlreadyChosen = !data.transfer_assets.some((x) => x.asset_id === asset.id);
+                                const notAlreadyChosen = !data.transfer_assets.some((x) => x.asset_id === asset.id);
 
-                                    return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
+                                return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
                                 })
                                 .map((asset) => ({
-                                    value: asset.id,
-                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                value: asset.id,
+                                label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
                                 }))}
                             placeholder={
                                 data.current_building_id && data.current_building_room && data.current_organization
@@ -663,23 +589,18 @@ export default function TransferEditModal({
                             isDisabled={!data.current_building_id || !data.current_building_room || !data.current_organization}
                             onChange={(selectedOption) => {
                                 if (selectedOption) {
-                                    const id = Number(selectedOption.value);
-                                    if (!data.transfer_assets.some((x) => x.asset_id === id)) {
-                                        const asset = assets.find((a) => a.id === id);
-                                        setData('transfer_assets', [
-                                            ...data.transfer_assets,
-                                            {
-                                                asset_id: id,
-                                                from_sub_area_id: asset?.sub_area_id ?? null, // auto-pre-fill
-                                                to_sub_area_id: null,
-                                            },
-                                        ]);
-                                        setShowAssetDropdown((prev) => {
-                                            const updated = [...prev];
-                                            updated[index] = false;
-                                            return [...updated, true];
-                                        });
-                                    }
+                                const id = Number(selectedOption.value);
+                                if (!data.transfer_assets.some((x) => x.asset_id === id)) {
+                                    setData('transfer_assets', [
+                                    ...data.transfer_assets,
+                                    { asset_id: id, asset_transfer_status: 'pending' },
+                                    ]);
+                                    setShowAssetDropdown((prev) => {
+                                    const updated = [...prev];
+                                    updated[index] = false;
+                                    return [...updated, true];
+                                    });
+                                }
                                 }
                             }}
                             />

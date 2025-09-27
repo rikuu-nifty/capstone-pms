@@ -21,7 +21,7 @@
     use App\Http\Controllers\ReportController;
     use App\Http\Controllers\Settings\PasswordController;
     use App\Http\Controllers\RoleController;
-    use App\Http\Controllers\InventoryReportController;
+    use App\Http\Controllers\InventorySheetReportController;
     use App\Http\Controllers\InventorySchedulingReportController;
     use App\Http\Controllers\PropertyTransferReportController;
     use App\Http\Controllers\OffCampusReportController;
@@ -94,9 +94,9 @@
     Route::get('/assets-inventory-list', [ReportController::class, 'inventoryList'])
         ->name('reports.inventory-list');
 
-    // Export to PDF
-    Route::get('/assets-inventory-list/export/pdf', [ReportController::class, 'exportPdf'])
-        ->name('reports.inventory-list.export.pdf');
+        // Export to PDF
+        Route::get('/assets-inventory-list/export/pdf', [ReportController::class, 'exportPdf'])
+            ->name('reports.inventory-list.export.pdf');
 
     // Export to Excel
     Route::get('/assets-inventory-list/export/excel', [ReportController::class, 'exportExcel'])
@@ -142,19 +142,40 @@
         ->name('reports.off-campus.export.excel');
 
         
-    // Placeholders with proper names
-    Route::get('/turnover-disposal', fn() =>
-        Inertia::render('reports/TurnoverDisposalReport', [
-            'title' => 'Turnover/Disposal Report',
-        ])
-    )->name('reports.turnover-disposal');
+        // Placeholders with proper names
+        Route::get('/inventory-scheduling', fn() =>
+            Inertia::render('reports/InventorySchedulingReport', [
+                'title' => 'Inventory Scheduling Report',
+            ])
+        )->name('reports.inventory-scheduling');
 
-});
+        Route::get('/transfer', fn() =>
+            Inertia::render('reports/PropertyTransferReport', [
+                'title' => 'Property Transfer Report',
+            ])
+        )->name('reports.transfer');
 
+        Route::get('/turnover-disposal', fn() =>
+            Inertia::render('reports/TurnoverDisposalReport', [
+                'title' => 'Turnover/Disposal Report',
+            ])
+        )->name('reports.turnover-disposal');
 
-   
+        Route::get('/off-campus', fn() =>
+            Inertia::render('reports/OffCampusReport', [
+                'title' => 'Off-Campus Report',
+            ])
+        )->name('reports.off-campus');
 
-
+        Route::get('/inventory-sheet', [InventorySheetReportController::class, 'index'])
+            ->name('reports.inventory-sheet');
+        Route::post('/inventory-sheet/generate', [InventorySheetReportController::class, 'generate'])
+            ->name('reports.inventory-sheet.generate');
+        Route::get('/inventory-sheet/export/pdf', [InventorySheetReportController::class, 'exportPdf'])
+            ->name('reports.inventory-sheet.export.pdf');
+        Route::get('/inventory-sheet/export/excel', [InventorySheetReportController::class, 'exportExcel'])
+            ->name('reports.inventory-sheet.export.excel');
+    });
 
     Route::get('calendar', function () {
         return Inertia::render('calendar');
@@ -372,6 +393,9 @@
     Route::delete('/building-rooms/{buildingRoom}', [BuildingRoomController::class, 'destroy'])
         ->name('building-rooms.destroy')
         ->middleware('can:delete-building-rooms');
+    Route::delete('/sub-areas/{subArea}', [BuildingRoomController::class, 'destroySubArea'])
+        ->name('sub-areas.destroy')
+        ->middleware('can:delete-building-rooms');
     Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])
         ->name('building-rooms.view')
         ->middleware('can:view-building-rooms');
@@ -447,10 +471,6 @@
         ->name('approvals.external_approve')
         ->middleware('can:approve-form-approvals');
 
-
-    //REPORTS
-    Route::get('/reports/inventory-sheet', [InventoryReportController::class, 'index'])->name('reports.inventory-sheet');
-    Route::post('/reports/inventory-sheet/generate', [InventoryReportController::class, 'generate'])->name('reports.inventory-sheet.generate');
 
     //ASSIGNMENTS
 

@@ -27,11 +27,11 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
-        // return parent::version($request);
         try {
-            return parent::version($request);
+            // parent::version() will try to read your mix-manifest.json or vite manifest
+            return parent::version($request) ?? 'dev';
         } catch (\Throwable $e) {
-            return 'dev'; // fallback value so version is never null
+            return 'dev'; // 👈 always a fallback
         }
     }
 

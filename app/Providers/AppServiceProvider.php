@@ -93,16 +93,16 @@ class AppServiceProvider extends ServiceProvider
         Inertia::share('notifications', function () {
             $user = auth()->user();
 
-            return $user
-                ? [
-                    'items' => $user->notifications()->latest()->take(10)->get(),
-                    'unread_count' => $user->unreadNotifications()->count(),
-                ]
-                : [
-                    'items' => [],
-                    'unread_count' => 0,
-                ];
-        });
+    return $user
+        ? [
+            'items' => $user->notifications()->latest()->take(10)->get(),
+            'unread_count' => $user->unreadNotifications()->count(),
+        ]
+        : [
+            'items' => [],
+            'unread_count' => 0,
+        ];
+});
 
         
       

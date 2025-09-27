@@ -64,6 +64,36 @@ export default function TransferAddModal({
         clearErrors
     ]);
 
+    useEffect(() => {
+        if (!show) return;
+
+        reset();
+        clearErrors();
+        setShowAssetDropdown([true]);
+
+        // ✅ Initial status based on today's date + scheduled date
+        if (data.scheduled_date) {
+            const scheduledDate = new Date(data.scheduled_date + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let initialStatus: TransferFormData['status'] = 'pending_review';
+
+            if (scheduledDate < today) {
+            initialStatus = 'overdue';
+            } else if (scheduledDate > today) {
+            initialStatus = 'upcoming';
+            } else {
+            initialStatus = 'in_progress';
+            }
+
+            setData('status', initialStatus);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [show]);
+
+
+
     const filteredCurrentRooms = buildingRooms.filter(
         (room) => Number(room.building_id) === Number(data.current_building_id)
     );
@@ -237,24 +267,52 @@ export default function TransferAddModal({
                 <label className="mb-1 block font-medium">Scheduled Date</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2 uppercase "
+                    className="w-full rounded-lg border p-2 uppercase"
                     value={data.scheduled_date}
-                    onChange={(e) => setData('scheduled_date', e.target.value)}
+                    onChange={(e) => {
+                        const newDate = e.target.value;
+                        setData('scheduled_date', newDate);
+
+                        if (newDate) {
+                            const scheduledDate = new Date(newDate + 'T00:00:00');
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            if (scheduledDate < today) {
+                                setData('status', 'overdue');
+                            } else if (scheduledDate > today) {
+                                setData('status', 'upcoming');
+                            } else {
+                                setData('status', 'in_progress');
+                            }
+                        } else {
+                            setData('status', 'pending_review');
+                        }
+                    }}
                 />
                 {errors.scheduled_date && <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>}
             </div>
+
 
             {/* Actual Transfer Date */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Date Completed</label>
                 <input
                     type="date"
-                    className="w-full rounded-lg border p-2 uppercase "
+                    className="w-full rounded-lg border p-2 uppercase"
                     value={data.actual_transfer_date ?? ''}
-                    onChange={(e) => setData('actual_transfer_date', e.target.value)}
+                    onChange={(e) => {
+                        const newDate = e.target.value;
+                        setData('actual_transfer_date', newDate);
+
+                        if (newDate) {
+                            setData('status', 'completed'); // Mark completed once filled
+                        }
+                    }}
                 />
                 {errors.actual_transfer_date && <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>}
             </div>
+
 
             {/* Designated Employee */}
             <div className="col-span-1">
@@ -460,8 +518,8 @@ export default function TransferAddModal({
                                     return matchesBuilding && matchesRoom && matchesUnit && notAlreadyChosen;
                                     })
                                     .map((asset) => ({
-                                    value: asset.id,
-                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
+                                        value: asset.id,
+                                        label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
                                     }))}
                                 placeholder={
                                     data.current_building_id && data.current_building_room && data.current_organization
@@ -471,18 +529,23 @@ export default function TransferAddModal({
                                 isDisabled={!data.current_building_id || !data.current_building_room || !data.current_organization}
                                 onChange={(selectedOption) => {
                                     if (selectedOption) {
-                                    const id = Number(selectedOption.value);
-                                    if (!data.transfer_assets.some((x) => x.asset_id === id)) {
-                                        setData('transfer_assets', [
-                                        ...data.transfer_assets,
-                                        { asset_id: id, asset_transfer_status: 'pending' },
-                                        ]);
-                                        setShowAssetDropdown((prev) => {
-                                        const updated = [...prev];
-                                        updated[index] = false;
-                                        return [...updated, true];
-                                        });
-                                    }
+                                        const id = Number(selectedOption.value);
+                                        if (!data.transfer_assets.some((x) => x.asset_id === id)) {
+                                            const asset = assets.find((a) => a.id === id);
+                                            setData('transfer_assets', [
+                                                ...data.transfer_assets,
+                                                {
+                                                    asset_id: id,
+                                                    from_sub_area_id: asset?.sub_area_id ?? null, // pre-fill if available
+                                                    to_sub_area_id: null,
+                                                },
+                                            ]);
+                                            setShowAssetDropdown((prev) => {
+                                                const updated = [...prev];
+                                                updated[index] = false;
+                                                return [...updated, true];
+                                            });
+                                        }
                                     }
                                 }}
                             />

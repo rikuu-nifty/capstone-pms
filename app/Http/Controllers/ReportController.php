@@ -15,6 +15,8 @@ use App\Models\UnitOrDepartment;
 use App\Models\AssetModel;
 use App\Models\Building;
 use App\Models\Category;
+use App\Models\BuildingRoom;
+use App\Models\SubArea;
 
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;  
@@ -25,8 +27,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 
 use App\Models\InventoryScheduling;
-
-
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
@@ -35,105 +37,105 @@ class ReportController extends Controller
      */
 
    public function exportExcel(Request $request)
-{
-    $filters = $request->all();
+    {
+        $filters = $request->all();
 
-        if (($filters['report_type'] ?? null) === 'new_purchases') {
+            if (($filters['report_type'] ?? null) === 'new_purchases') {
+                return Excel::download(
+                    new NewPurchasesSummaryExport($filters),
+                    'SummaryOfNewlyPurchasedEquipmentReport.xlsx'
+                );
+            }
+
             return Excel::download(
-                new NewPurchasesSummaryExport($filters),
-                'SummaryOfNewlyPurchasedEquipmentReport.xlsx'
+                new InventoryListReportExport($filters),
+                'InventoryListReport.xlsx'
             );
-        }
+    }
 
-        return Excel::download(
-            new InventoryListReportExport($filters),
-            'InventoryListReport.xlsx'
-        );
-}
-
- public function exportPdf(Request $request)
-{
-    // Build the same filtered query you use for the screen
-    $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
-        ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
-        ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
-        ->when($request->filled('department_id'), fn($q) => $q->where('unit_or_department_id', $request->input('department_id')))
-        ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->input('category_id')))
-        ->when($request->filled('asset_type'), fn($q) => $q->where('asset_type', $request->input('asset_type')))
-        ->when($request->filled('supplier'), fn($q) => $q->where('supplier', $request->input('supplier')))
-        ->when($request->filled('condition'), fn($q) => $q->where('condition', $request->input('condition')))
-        ->when($request->filled('cost_min'), fn($q) => $q->where('unit_cost', '>=', $request->input('cost_min')))
-        ->when($request->filled('cost_max'), fn($q) => $q->where('unit_cost', '<=', $request->input('cost_max')))
-        ->when($request->filled('building_id'), fn($q) => $q->where('building_id', $request->input('building_id')))
-        ->when($request->filled('brand'), fn($q) =>
-            $q->whereHas('assetModel', fn($aq) => $aq->where('brand', $request->input('brand')))
+    public function exportPdf(Request $request)
+    {
+        // Build the same filtered query you use for the screen
+        $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
+            ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
+            ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
+            ->when($request->filled('department_id'), fn($q) => $q->where('unit_or_department_id', $request->input('department_id')))
+            ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->input('category_id')))
+            ->when($request->filled('asset_type'), fn($q) => $q->where('asset_type', $request->input('asset_type')))
+            ->when($request->filled('supplier'), fn($q) => $q->where('supplier', $request->input('supplier')))
+            ->when($request->filled('condition'), fn($q) => $q->where('condition', $request->input('condition')))
+            ->when($request->filled('cost_min'), fn($q) => $q->where('unit_cost', '>=', $request->input('cost_min')))
+            ->when($request->filled('cost_max'), fn($q) => $q->where('unit_cost', '<=', $request->input('cost_max')))
+            ->when($request->filled('building_id'), fn($q) => $q->where('building_id', $request->input('building_id')))
+            ->when($request->filled('brand'), fn($q) =>
+                $q->whereHas('assetModel', fn($aq) => $aq->where('brand', $request->input('brand')))
         )
         ->get();
 
-            // ✅ Asset Type mapping
-            $assetTypeLabels = [
-                'fixed' => 'Fixed',
-                'not_fixed' => 'Not Fixed',
-            ];
+        // ✅ Asset Type mapping
+        $assetTypeLabels = [
+            'fixed' => 'Fixed',
+            'not_fixed' => 'Not Fixed',
+        ];
 
-            // ✅ Map asset_type for each asset
-            $assets = $assets->map(function ($a) use ($assetTypeLabels) {
-                $a->asset_type = $assetTypeLabels[$a->asset_type] ?? ($a->asset_type ?? '-');
-                return $a;
-            });
+        // ✅ Map asset_type for each asset
+        $assets = $assets->map(function ($a) use ($assetTypeLabels) {
+            $a->asset_type = $assetTypeLabels[$a->asset_type] ?? ($a->asset_type ?? '-');
+            return $a;
+        });
 
-            // Derived values for the template
-            $totals = [
-                'count'       => $assets->count(),
-                'total_cost'  => $assets->sum('unit_cost'),   // if you store unit_cost per asset
-            ];
+        // Derived values for the template
+        $totals = [
+            'count'       => $assets->count(),
+            'total_cost'  => $assets->sum('unit_cost'),   // if you store unit_cost per asset
+        ];
 
-            // Get filters from request
-            $filters = $request->only([
-                'from','to','department_id','category_id','asset_type','supplier',
-                'condition','cost_min','cost_max','building_id','brand','report_type'
-            ]);
+        // Get filters from request
+        $filters = $request->only([
+            'from','to','department_id','category_id','asset_type','supplier',
+            'condition','cost_min','cost_max','building_id','brand','report_type'
+        ]);
 
-            // ✅ Replace IDs with actual names for display
-            if (!empty($filters['department_id'])) {
-                $filters['department_id'] = UnitOrDepartment::find($filters['department_id'])->name ?? $filters['department_id'];
-            }
-            if (!empty($filters['category_id'])) {
-                $filters['category_id'] = Category::find($filters['category_id'])->name ?? $filters['category_id'];
-            }
-            if (!empty($filters['building_id'])) {
-                $filters['building_id'] = Building::find($filters['building_id'])->name ?? $filters['building_id'];
-            }
-            // ✅ Map asset_type filter value
-            if (!empty($filters['asset_type'])) {
-                $filters['asset_type'] = $assetTypeLabels[$filters['asset_type']] ?? $filters['asset_type'];
-            }
-
-            // ✅ Normalize and choose the Blade view based on report_type
-            $reportType = $request->input('report_type', 'inventory_list');
-
-            switch ($reportType) {
-                case 'new_purchases':
-                    $view = 'reports.new_purchases';
-                    $fileName = 'SummaryOfNewlyPurchasedEquipmentReport.pdf';
-                    break;
-
-                case 'inventory_list':
-                default:
-                    $view = 'reports.inventory_list_pdf';
-                    $fileName = 'InventoryListReport.pdf';
-                    break;
-            }
-
-            $pdf = Pdf::loadView($view, [
-                    'assets'  => $assets,
-                    'filters' => $filters,
-                    'totals'  => $totals,
-                ])
-                ->setPaper('a4', 'landscape');
-
-            return $pdf->download($fileName);
+        // ✅ Replace IDs with actual names for display
+        if (!empty($filters['department_id'])) {
+            $filters['department_id'] = UnitOrDepartment::find($filters['department_id'])->name ?? $filters['department_id'];
         }
+        if (!empty($filters['category_id'])) {
+            $filters['category_id'] = Category::find($filters['category_id'])->name ?? $filters['category_id'];
+        }
+        if (!empty($filters['building_id'])) {
+            $filters['building_id'] = Building::find($filters['building_id'])->name ?? $filters['building_id'];
+        }
+        // ✅ Map asset_type filter value
+        if (!empty($filters['asset_type'])) {
+            $filters['asset_type'] = $assetTypeLabels[$filters['asset_type']] ?? $filters['asset_type'];
+        }
+
+        // ✅ Normalize and choose the Blade view based on report_type
+        $reportType = $request->input('report_type', 'inventory_list');
+
+        switch ($reportType) {
+            case 'new_purchases':
+                $view = 'reports.new_purchases';
+                $fileName = 'SummaryOfNewlyPurchasedEquipmentReport.pdf';
+                break;
+
+            case 'inventory_list':
+            default:
+                $view = 'reports.inventory_list_pdf';
+                $fileName = 'InventoryListReport.pdf';
+                break;
+        }
+
+        $pdf = Pdf::loadView($view, [
+                'assets'  => $assets,
+                'filters' => $filters,
+                'totals'  => $totals,
+            ])
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download($fileName);
+    }
 
 
   public function index(Request $request)
@@ -245,6 +247,59 @@ class ReportController extends Controller
 
 
 
+    public function index()
+    {
+        // ✅ Fetch all categories and count their assets
+        $categoryData = Category::withCount('inventoryLists')
+            ->get()
+            ->map(fn($cat) => [
+                'label' => $cat->name,
+                'value' => $cat->inventory_lists_count ?? 0, // default to 0
+            ]);
+
+        $startDate = Carbon::now()->subDays(90)->toDateString();
+
+        // INVENTORY SHEET REPORTS PART
+        // $chartQuery = InventoryList::with(['schedulingAssets'])->get();
+        $chartQuery = InventoryList::with(['schedulingAssets'])->get();
+
+        // ✅ Flatten and normalize scheduling assets
+        $chartData = $chartQuery->flatMap(function ($asset) {
+            return $asset->schedulingAssets->map(function ($s) {
+                $date = $s->inventory_status === 'inventoried' && $s->inventoried_at
+                    ? Carbon::parse($s->inventoried_at)->toDateString()
+                    : Carbon::parse($s->created_at)->toDateString();
+
+                return [
+                    'date'             => $date,
+                    'inventory_status' => $s->inventory_status ?? 'not_inventoried',
+                ];
+            });
+        })
+            // ✅ Enforce strict 90-day cutoff here
+            ->filter(fn($item) => $item['date'] >= $startDate);
+
+        // ✅ Group by date and count statuses
+        $inventorySheetChartData = $chartData
+            ->groupBy('date')
+            ->map(function (Collection $items, $date) {
+                return [
+                    'date'            => $date,
+                    'inventoried'     => $items->where('inventory_status', 'inventoried')->count(),
+                    'scheduled'       => $items->where('inventory_status', 'scheduled')->count(),
+                    'not_inventoried' => $items->where('inventory_status', 'not_inventoried')->count(),
+                ];
+            })
+            ->sortKeys()
+            ->values()
+            ->toArray();
+
+        return Inertia::render('reports/index', [
+            'title' => 'Reports Dashboard',
+            'categoryData' => $categoryData,
+            'inventorySheetChartData' => $inventorySheetChartData,
+        ]);
+    }
 
     public function inventoryList(Request $request)
     {
@@ -372,5 +427,55 @@ class ReportController extends Controller
             'brands'      => AssetModel::select('brand')->distinct()->pluck('brand')->filter()->values(),
             'reportType'  => $reportType, // ✅ pass to frontend
         ]);
+    }
+
+
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Report $report)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Report $report)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Report $report)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Report $report)
+    {
+        //
     }
 }
