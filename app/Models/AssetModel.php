@@ -19,14 +19,18 @@ class AssetModel extends Model
 
     public function category()
     {
-        return $this->belongsTo(Category::class, 'category_id')
-            ->whereNull('categories.deleted_at');
+        return $this->belongsTo(Category::class, 'category_id')->whereNull('categories.deleted_at');
     }
 
     public function assets()
     {
         return $this->hasMany(InventoryList::class, 'asset_model_id')
             ->whereNull('inventory_lists.deleted_at');
+    }
+
+    public function equipmentCode()
+    {
+        return $this->belongsTo(EquipmentCode::class, 'equipment_code_id');
     }
 
     public function scopeWithCategoryAndCounts($query)

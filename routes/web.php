@@ -25,6 +25,7 @@
     use App\Http\Controllers\PersonnelController;
     use App\Http\Controllers\AssetAssignmentController;
     use App\Http\Controllers\TurnoverDisposalReportController;
+    use App\Http\Controllers\EquipmentCodeController;
 
 Route::get('/', function () {
         if (Auth::check()) {
@@ -431,20 +432,29 @@ Route::get('/', function () {
     Route::get('/inventory-list/{inventory_list}/json', [InventoryListController::class, 'fetch'])
         ->name('inventory-list.fetch'); //this is for seeing the asset
 
+
     Route::get('/assignments/personnel/{personnel}/assets', [AssetAssignmentController::class, 'personnelAssets'])->name('assignments.personnelAssets')
         ->middleware('can:view-assignments');
-
     Route::put('/assignments/{assignment}/bulk-reassign-items', [AssetAssignmentController::class, 'bulkReassignItems'])
         ->name('assignments.bulkReassignItems');
     Route::put('/assignments/{assignment}/bulk-reassign', [AssetAssignmentController::class, 'bulkReassign'])
         ->name('assignments.bulkReassign');
-
     Route::get('/assignments/{assignment}/assets', [AssetAssignmentController::class, 'assignmentAssets'])->name('assignments.assignmentAssets')
         ->middleware('can:view-assignments');
-
     Route::get('/assignments/{assignment}/json', [AssetAssignmentController::class, 'showJson'])->name('assignments.show.json')
         ->middleware('can:view-assignments');
 
+    // EQUIPMENT CODES
+    Route::get('/equipment-codes', [EquipmentCodeController::class, 'index'])->name('equipment-codes.index')
+        ->middleware('can:view-equipment-codes');
+    Route::post('/equipment-codes', [EquipmentCodeController::class, 'store'])->name('equipment-codes.store')
+        ->middleware('can:create-equipment-codes');
+    Route::put('/equipment-codes/{equipmentCode}', [EquipmentCodeController::class, 'update'])->name('equipment-codes.update')
+        ->middleware('can:update-equipment-codes');
+    Route::get('/equipment-codes/view/{equipmentCode}', [EquipmentCodeController::class, 'show'])->name('equipment-codes.view')
+        ->middleware('can:view-equipment-codes');
+    Route::delete('/equipment-codes/{equipmentCode}', [EquipmentCodeController::class, 'destroy'])->name('equipment-codes.destroy')
+        ->middleware('can:delete-equipment-codes');
 
     //PROFILE
 });
