@@ -5,6 +5,7 @@ export type AssetModel = {
     brand: string | null;
     model: string | null;
     category_id: number;
+    equipment_code_id: number | null;
     status: 'active' | 'is_archived';
 
     created_at?: string | null;
@@ -17,6 +18,8 @@ export type AssetModel = {
         id: number;
         name: string;
     } | null;
+
+    equipment_code?: { id: number; code: string; description?: string | null } | null;
 };
 
 export type AssetModelWithCounts = AssetModel & {
@@ -28,6 +31,13 @@ export type AssetModelsPageProps = {
     asset_models: AssetModelWithCounts[];
     
     categories: { id: number; name: string }[];
+    equipment_codes: {
+        id: number;
+        code: string;
+        description?: string | null;
+        category_id: number;
+    }[];
+
     viewing?: AssetModelWithCounts;
     
     totals: {
@@ -45,11 +55,13 @@ export type AssetModelFilters = {
     status: StatusOption;
     brand?: string;
     model?: string;
+    equipment_code_id?: number | '';
 };
 
 export type AssetModelFormData = {
     brand: string;
     model: string;
     category_id: number;
+    equipment_code_id: number | '' | null;
     status: '' | 'active' | 'is_archived';
 };

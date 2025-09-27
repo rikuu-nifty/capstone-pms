@@ -14,6 +14,7 @@ class AssetModel extends Model
         'brand',
         'model',
         'category_id',
+        'equipment_code_id',
         'status',
     ];
 
@@ -57,7 +58,9 @@ class AssetModel extends Model
 
     public static function forIndex()
     {
-        return static::withCategoryAndCounts()->get();
+        return static::withCategoryAndCounts()
+            ->with(['equipmentCode:id,code,description'])
+            ->get();
     }
 
     public static function findForView($id)
@@ -67,7 +70,9 @@ class AssetModel extends Model
 
     public function scopeForViewing($query)
     {
-        return $query->withCategoryAndCounts()->withAssetsMinimal();
+        return $query->withCategoryAndCounts()
+            ->withAssetsMinimal()
+            ->with(['equipmentCode:id,code,description']);
     }
 
     //KPIs

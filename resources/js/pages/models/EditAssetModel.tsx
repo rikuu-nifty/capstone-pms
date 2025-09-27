@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
 import EditModal from '@/components/modals/EditModal';
@@ -12,6 +12,7 @@ interface UpdateModelProps {
         id: number; 
         name: string 
     }[];
+    equipment_codes: { id: number; code: string; description?: string | null; category_id: number }[];
 };
 
 type CategoryOption = { 
@@ -24,14 +25,20 @@ export default function EditAssetModelModal({
     onClose,
     model,
     categories,
+    equipment_codes,
 }: UpdateModelProps) {
 
     const { data, setData, put, processing, errors, clearErrors } = useForm<AssetModelFormData>({
         category_id: model.category_id,
         brand: model.brand ?? '',
         model: model.model ?? '',
+        equipment_code_id: model.equipment_code_id ?? null,
         status: model.status,
     });
+
+    const filteredEquipmentCodes = useMemo(() => {
+        return equipment_codes.filter((ec) => ec.category_id === data.category_id);
+    }, [equipment_codes, data.category_id]);
 
     useEffect(() => {
         if (!show) return;
@@ -75,7 +82,7 @@ export default function EditAssetModelModal({
             processing={processing}
         >
         {/* Category */}
-        <div className="col-span-2">
+        <div>
             <label className="mb-1 block font-medium">Category</label>
             <Select<CategoryOption, false>
                 className="w-full"
@@ -96,6 +103,38 @@ export default function EditAssetModelModal({
             />
             {errors.category_id && (
                 <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>
+            )}
+        </div>
+
+        {/* Equipment Code */}
+        <div>
+            <label className="mb-1 block font-medium">Equipment Code</label>
+            <Select
+                className="w-full"
+                options={filteredEquipmentCodes.map((ec) => ({
+                    value: ec.id,
+                    label: `${ec.code} ${ec.description ? `- ${ec.description}` : ''}`,
+                }))}
+                value={
+                    data.equipment_code_id
+                        ? {
+                            value: data.equipment_code_id,
+                            label:
+                                filteredEquipmentCodes.find((ec) => ec.id === data.equipment_code_id)?.code || '',
+                            }
+                        : null
+                }
+                onChange={(opt) => setData('equipment_code_id', opt ? opt.value : null)}
+                placeholder={
+                    data.category_id
+                        ? "Search or select an equipment code..."
+                        : "Select a Category first"
+                }
+                isDisabled={!data.category_id}
+                isSearchable
+            />
+            {errors.equipment_code_id && (
+                <p className="mt-1 text-xs text-red-500">{errors.equipment_code_id}</p>
             )}
         </div>
 

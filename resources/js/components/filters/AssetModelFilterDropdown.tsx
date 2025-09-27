@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Filter } from 'lucide-react';
 import type { StatusOption, AssetModelFilters } from '@/types/asset-model';
-// import { formatStatusLabel } from '@/types/custom-index';
+import Select from 'react-select';
 
 type DropdownProps = {
     onApply: (filters: AssetModelFilters) => void;
@@ -12,18 +12,18 @@ type DropdownProps = {
     selected_category_id: number | '';
     selected_status: StatusOption;
     categories: { id: number; name: string }[];
+    equipment_codes: { id: number; code: string; description?: string | null; category_id: number }[];
 
     selected_brand?: string;
     selected_model?: string;
+    selected_equipment_code_id?: number | '';
 };
 
 function parseStatus(v: string): StatusOption {
-        return v === 'active' ? 'active'
-            : v === 'is_archived' ? 'is_archived'
-            : '';
-    }
-
-// const DEFAULT_STATUS = ['active', 'is_archived'];
+    return v === 'active' ? 'active'
+        : v === 'is_archived' ? 'is_archived'
+        : '';
+}
 
 export default function AssetModelFilterDropdown({
     onApply,
@@ -33,6 +33,8 @@ export default function AssetModelFilterDropdown({
     categories,
     selected_brand = '',
     selected_model = '',
+    equipment_codes,
+    selected_equipment_code_id = '',
 }: DropdownProps) {
 
     const [open, setOpen] = useState(false);
@@ -40,32 +42,43 @@ export default function AssetModelFilterDropdown({
     const [localStatus, setLocalStatus] = useState<StatusOption>(selected_status);
     const [localBrand, setLocalBrand] = useState<string>(selected_brand ?? '');
     const [localModel, setLocalModel] = useState<string>(selected_model ?? '');
+    const [localEquipmentCodeId, setLocalEquipmentCodeId] = useState<number | ''>(
+        selected_equipment_code_id ?? ''
+    );
 
     useEffect(() => {
         setLocalCategoryId(selected_category_id);
         setLocalStatus(selected_status);
         setLocalBrand(selected_brand);
         setLocalModel(selected_model);
+        setLocalEquipmentCodeId(selected_equipment_code_id ?? '');
     }, [
         selected_category_id, 
         selected_status,
         selected_brand,
-        selected_model
+        selected_model,
+        selected_equipment_code_id,
     ]);
+
+    // Filter equipment codes based on the selected category
+    const filteredEquipmentCodes = useMemo(() => {
+        if (!localCategoryId) return equipment_codes;
+        return equipment_codes.filter(ec => ec.category_id === Number(localCategoryId));
+    }, [equipment_codes, localCategoryId]);
 
     const hasAny = 
         localCategoryId !== '' || 
         !!localStatus ||
         localBrand.trim().length > 0 ||
-        localModel.trim().length > 0
-    ;
+        localModel.trim().length > 0 ||
+        localEquipmentCodeId !== '';
 
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="cursor-pointer">
-                <Filter className="mr-1 h-4 w-4" /> Filter
-                {hasAny && <Badge className="ml-2" variant="secondary">Active</Badge>}
+                    <Filter className="mr-1 h-4 w-4" /> Filter
+                    {hasAny && <Badge className="ml-2" variant="secondary">Active</Badge>}
                 </Button>
             </DropdownMenuTrigger>
 
@@ -74,16 +87,24 @@ export default function AssetModelFilterDropdown({
                     {/* Category */}
                     <div className="grid gap-1">
                         <label className="text-xs font-medium">Category</label>
-                        <select
-                            className="border rounded-md p-2 text-sm cursor-pointer"
-                            value={localCategoryId === '' ? '' : String(localCategoryId)}
-                            onChange={(e) => setLocalCategoryId(e.target.value ? Number(e.target.value) : '')}
-                        >
-                        <option value="">All</option>
-                        {categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                        </select>
+                        <Select
+                            className="text-sm"
+                            value={
+                                localCategoryId
+                                    ? { value: localCategoryId, label: categories.find(c => c.id === localCategoryId)?.name ?? '' }
+                                    : null
+                            }
+                            onChange={(opt) => {
+                                setLocalCategoryId(opt ? Number(opt.value) : '');
+                                setLocalEquipmentCodeId(''); // reset equipment code when category changes
+                            }}
+                            options={categories.map(c => ({
+                                value: c.id,
+                                label: c.name,
+                            }))}
+                            isClearable
+                            placeholder="All"
+                        />
                     </div>
 
                     {/* Status */}
@@ -98,6 +119,43 @@ export default function AssetModelFilterDropdown({
                             <option value="active">Active</option>
                             <option value="is_archived">Archived</option>
                         </select>
+                    </div>
+
+                    {/* Equipment Code */}
+                    <div className="grid gap-1">
+                        <label className="text-xs font-medium">Equipment Code</label>
+                        <Select
+                            className="text-sm"
+                            value={
+                                localEquipmentCodeId
+                                    ? { 
+                                        value: localEquipmentCodeId, 
+                                        label: filteredEquipmentCodes.find(ec => ec.id === localEquipmentCodeId)
+                                            ? `${filteredEquipmentCodes.find(ec => ec.id === localEquipmentCodeId)?.code}${filteredEquipmentCodes.find(ec => ec.id === localEquipmentCodeId)?.description ? ` - ${filteredEquipmentCodes.find(ec => ec.id === localEquipmentCodeId)?.description}` : ''}`
+                                            : ''
+                                    }
+                                    : null
+                            }
+                            onChange={(opt) => setLocalEquipmentCodeId(opt ? Number(opt.value) : '')}
+                            options={filteredEquipmentCodes.map(ec => ({
+                                value: ec.id,
+                                label: `${ec.code}${ec.description ? ` - ${ec.description}` : ''}`,
+                            }))}
+                            isClearable
+                            placeholder={localCategoryId ? "All" : "Select a category first"}
+                            isDisabled={!localCategoryId}
+                            styles={{
+                                control: (base) => ({
+                                    ...base,
+                                    backgroundColor: !localCategoryId ? '#f9fafb' : base.backgroundColor,
+                                    color: !localCategoryId ? '#9ca3af' : base.color,
+                                }),
+                                placeholder: (base) => ({
+                                    ...base,
+                                    color: !localCategoryId ? '#9ca3af' : base.color,
+                                }),
+                            }}
+                        />
                     </div>
 
                     {/* Brand contains */}
@@ -133,6 +191,7 @@ export default function AssetModelFilterDropdown({
                                 setLocalStatus('');
                                 setLocalBrand('');
                                 setLocalModel('');
+                                setLocalEquipmentCodeId('');
                                 onClear();
                             }}
                             className="cursor-pointer"
@@ -143,9 +202,10 @@ export default function AssetModelFilterDropdown({
                             size="sm"
                             onClick={() => onApply({
                                 category_id: localCategoryId,
-                                status: localStatus, // StatusOption -> string OK
+                                status: localStatus,
                                 brand: localBrand,
                                 model: localModel,
+                                equipment_code_id: localEquipmentCodeId,
                             })}
                             className="cursor-pointer"
                         >
