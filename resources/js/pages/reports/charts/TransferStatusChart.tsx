@@ -74,7 +74,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
     );
 };
 
-export default function TransferStatusChart({ data, height = 'max-h-[220px]' }: Props) {
+export default function TransferStatusChart({ data, height = 'max-h-[250px]' }: Props) {
     if (!data || data.length === 0) {
         return (
             <div className="flex h-full w-full flex-col items-center justify-center text-center text-gray-500">

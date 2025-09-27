@@ -125,24 +125,8 @@ Route::get('/', function () {
         ->name('reports.off-campus.export.excel');
 
         
-        // Placeholders with proper names
-        Route::get('/inventory-scheduling', fn() =>
-            Inertia::render('reports/InventorySchedulingReport', [
-                'title' => 'Inventory Scheduling Report',
-            ])
-        )->name('reports.inventory-scheduling');
 
-        Route::get('/transfer', fn() =>
-            Inertia::render('reports/PropertyTransferReport', [
-                'title' => 'Property Transfer Report',
-            ])
-        )->name('reports.transfer');
 
-        Route::get('/off-campus', fn() =>
-            Inertia::render('reports/OffCampusReport', [
-                'title' => 'Off-Campus Report',
-            ])
-        )->name('reports.off-campus');
 
         Route::get('/inventory-sheet', [InventorySheetReportController::class, 'index'])
             ->name('reports.inventory-sheet');
