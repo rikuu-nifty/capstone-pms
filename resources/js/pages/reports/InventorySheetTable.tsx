@@ -51,8 +51,8 @@ export default function InventorySheetTable({
                             <TableHead className="w-[120px] text-center">Price</TableHead>
                             <TableHead className="w-[150px] text-center">Supplier</TableHead>
                             <TableHead className="w-[150px] text-center">Date Purchased</TableHead>
-                            <TableHead className="w-[90px] text-center">Per Record</TableHead>
-                            <TableHead className="w-[90px] text-center">Actual</TableHead>
+                            <TableHead className="w-[90px]  text-center">Per Record</TableHead>
+                            <TableHead className="w-[90px]  text-center">Actual</TableHead>
                             <TableHead className="w-[150px] text-center">Inventory Status</TableHead>
                             <TableHead className="w-[150px] text-center">Date of Count</TableHead>
                             <TableHead className="w-[180px] text-center">Remarks</TableHead>
@@ -61,7 +61,7 @@ export default function InventorySheetTable({
                     <TableBody>
                         {assets.map((asset) => (
                             <TableRow key={asset.id} className="text-center">
-                                <TableCell>{asset.memorandum_no || '—'}</TableCell>
+                                <TableCell>{asset.equipment_code || '—'}</TableCell>
                                 <TableCell>
                                     <div>
                                         <p className="font-medium">{asset.asset_name}</p>

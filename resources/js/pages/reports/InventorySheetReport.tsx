@@ -47,6 +47,8 @@ export type AssetRow = {
   unit_cost?: number | null;
   inventoried_at?: string | null;
   serial_no?: string | null;
+
+  equipment_code?: string | null;
 };
 
 type PaginationLinks = {

@@ -76,6 +76,12 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'update-categories', 'name' => 'Update Categories'],
             ['code' => 'delete-categories', 'name' => 'Delete Categories'],
 
+            // EQUIPMENT CODES
+            ['code' => 'view-equipment-codes', 'name' => 'View Equipment Codes'],
+            ['code' => 'create-equipment-codes', 'name' => 'Create Equipment Codes'],
+            ['code' => 'update-equipment-codes', 'name' => 'Update Equipment Codes'],
+            ['code' => 'delete-equipment-codes', 'name' => 'Delete Equipment Codes'],
+
             //ASSET MODELS
             ['code' => 'view-asset-models', 'name' => 'View Asset Models'],
             ['code' => 'create-asset-models', 'name' => 'Create Asset Models'],

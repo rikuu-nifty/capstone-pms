@@ -34,6 +34,7 @@ const sortOptions = [
     { value: 'id', label: 'ID' },
     { value: 'brand', label: 'Brand' },
     { value: 'model', label: 'Model' },
+    { value: 'equipment_code', label: 'Equipment Code' },
     { value: 'category', label: 'Category' },
     { value: 'assets_count', label: 'Total Assets' },
     { value: 'active_assets_count', label: 'Active Assets' },
@@ -46,6 +47,7 @@ type PageProps = AssetModelsPageProps;
 export default function AssetModelsIndex({
     asset_models = [],
     categories = [],
+    equipment_codes = [],
     totals,
 }: AssetModelsPageProps) {
     const { props } = usePage<PageProps>();
@@ -61,6 +63,7 @@ export default function AssetModelsIndex({
 
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
     const [selected_status, setSelected_status] = useState<StatusOption>('');
+    const [selectedEquipmentCodeId, setSelectedEquipmentCodeId] = useState<number | ''>('');
 
     const [showAddModel, setShowAddModel] = useState(false);
     const [showEditModel, setShowEditModel] = useState(false);
@@ -71,11 +74,13 @@ export default function AssetModelsIndex({
     const clearFilters = () => {
         setSelectedCategoryId('');
         setSelected_status('');
+        setSelectedEquipmentCodeId('');
     };
 
     const applyFilters = (f: AssetModelFilters) => {
         setSelectedCategoryId(f.category_id);
         setSelected_status(f.status);
+        setSelectedEquipmentCodeId(f.equipment_code_id ?? '');
     };
 
     const [sortKey, setSortKey] = useState<SortKey>('id');
@@ -88,20 +93,23 @@ export default function AssetModelsIndex({
 
     const filtered = useMemo(() => {
         return asset_models.filter((m) => {
-        const haystack = `${m.id} ${m.brand ?? ''} ${m.model ?? ''} ${m.category?.name ?? ''}`.toLowerCase();
-        const matchesSearch = !search || haystack.includes(search);
+            const haystack = `${m.id} ${m.brand ?? ''} ${m.model ?? ''} ${m.category?.name ?? ''} ${m.equipment_code?.code ?? ''} ${m.equipment_code?.description ?? ''}`.toLowerCase();
+            const matchesSearch = !search || haystack.includes(search);
 
-        const matchesCategory = !selectedCategoryId || Number(m.category_id) === Number(selectedCategoryId);
-        const matchesStatus = !selected_status || (m.status === selected_status);
+            const matchesCategory = !selectedCategoryId || Number(m.category_id) === Number(selectedCategoryId);
+            const matchesStatus = !selected_status || (m.status === selected_status);
+            const matchesEquipmentCode = !selectedEquipmentCodeId || Number(m.equipment_code_id) === Number(selectedEquipmentCodeId);
 
-        return matchesSearch && matchesCategory && matchesStatus;
+            return matchesSearch && matchesCategory && matchesStatus && matchesEquipmentCode;
         });
-    }, [asset_models, search, selectedCategoryId, selected_status]);
+    }, [asset_models, search, selectedCategoryId, selected_status, selectedEquipmentCodeId]);
+
 
     const textKey = (m: AssetModelWithCounts, k: SortKey) =>
         k === 'brand' ? (m.brand ?? '') :
         k === 'model' ? (m.model ?? '') :
         k === 'category' ? (m.category?.name ?? '') :
+        k === 'equipment_code' ? (m.equipment_code?.code ?? '') :
         '';
 
     const numberKey = (m: AssetModelWithCounts, k: SortKey) =>
@@ -130,46 +138,113 @@ export default function AssetModelsIndex({
             <Head title="Asset Models" />
 
             <div className="flex flex-col gap-4 p-4">
-                {/* Header */}
+                {/* Page Title */}
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold">Asset Models</h1>
+                    <p className="text-sm text-muted-foreground">
+                        List of asset models with category, equipment code, brand, and asset counts.
+                    </p>
+                </div>
+
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                        {/* Total Models */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                                <ListChecks className="h-7 w-7 text-sky-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Models</div>
+                                <div className="text-3xl font-bold">
+                                    {formatNumber(totals.asset_models)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Distinct Brands */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                                <Tags className="h-7 w-7 text-indigo-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Distinct Brands</div>
+                                <div className="text-3xl font-bold">
+                                    {formatNumber(totals.distinct_brands)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Total Assets (All Models) */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
+                                <Boxes className="h-7 w-7 text-teal-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Assets (All Models)</div>
+                                <div className="text-3xl font-bold">
+                                    {formatNumber(totalAssets)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Active Assets */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                <CheckCircle2 className="h-7 w-7 text-green-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Active Assets</div>
+                                <div className="text-3xl font-bold">
+                                    {formatNumber(activeAssets)}
+                                </div>
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                    {formatNumber(inactiveAssets)} inactive • {activeRate.toFixed(1)}% active
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Asset Models</h1>
-                        <p className="text-sm text-muted-foreground">
-                        List of asset models with category, brand, and asset counts.
-                        </p>
-
+                        {/* Search input */}
                         <div className="flex items-center gap-2 w-96">
                             <Input
                                 type="text"
-                                placeholder="Search by id, brand, model, or category..."
+                                placeholder="Search by id, equipment code, brand, or category..."
                                 value={rawSearch}
-                                onChange={(e) => 
-                                    setRawSearch(e.target.value)
-                                }
+                                onChange={(e) => setRawSearch(e.target.value)}
                                 className="max-w-xs"
                             />
                         </div>
 
+                        {/* Active filters badges */}
                         <div className="flex flex-wrap gap-2 pt-1">
                             {selectedCategoryId !== '' && (
                                 <Badge variant="darkOutline">
-                                    Category: {categories.find(c => c.id === selectedCategoryId)?.name ?? selectedCategoryId}
+                                Category: {categories.find(c => c.id === selectedCategoryId)?.name ?? selectedCategoryId}
                                 </Badge>
                             )}
                             {selected_status && (
                                 <Badge variant="darkOutline">
-                                    Status: {selected_status === 'active' ? 'Active' : 'Archived'}
+                                Status: {selected_status === 'active' ? 'Active' : 'Archived'}
                                 </Badge>
                             )}
-
-                            {(selectedCategoryId !== '' || selected_status) && (
+                            {selectedEquipmentCodeId !== '' && (
+                                <Badge variant="darkOutline">
+                                Equipment Code: {
+                                    equipment_codes.find(ec => ec.id === selectedEquipmentCodeId)?.code ?? selectedEquipmentCodeId
+                                }
+                                </Badge>
+                            )}
+                            {(selectedCategoryId !== '' || selected_status || selectedEquipmentCodeId !== '') && (
                                 <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={clearFilters}
-                                    className="cursor-pointer"
+                                size="sm"
+                                variant="destructive"
+                                onClick={clearFilters}
+                                className="cursor-pointer"
                                 >
-                                    Clear filters
+                                Clear filters
                                 </Button>
                             )}
                         </div>
@@ -180,26 +255,22 @@ export default function AssetModelsIndex({
                             sortKey={sortKey}
                             sortDir={sortDir}
                             options={sortOptions}
-                            onChange={
-                                (key, dir) => { 
-                                    setSortKey(key); 
-                                    setSortDir(dir); 
-                                }
-                            }
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
                         />
-
                         <AssetModelFilterDropdown
                             onApply={applyFilters}
                             onClear={clearFilters}
                             selected_category_id={selectedCategoryId}
                             selected_status={selected_status}
+                            selected_equipment_code_id={selectedEquipmentCodeId}
                             categories={categories}
+                            equipment_codes={equipment_codes}
                         />
-
                         <Button
-                            onClick={() => {
-                                setShowAddModel(true);
-                            }}
+                            onClick={() => setShowAddModel(true)}
                             className="cursor-pointer"
                         >
                             <PlusCircle className="mr-1 h-4 w-4" /> Add New Model
@@ -207,72 +278,13 @@ export default function AssetModelsIndex({
                     </div>
                 </div>
 
-                {totals && (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-        {/* Total Models */}
-        <div className="rounded-2xl border p-4 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
-                <ListChecks className="h-7 w-7 text-sky-600" />
-            </div>
-            <div>
-                <div className="text-sm text-muted-foreground">Total Models</div>
-                <div className="text-3xl font-bold">
-                    {formatNumber(totals.asset_models)}
-                </div>
-            </div>
-        </div>
-
-        {/* Distinct Brands */}
-        <div className="rounded-2xl border p-4 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
-                <Tags className="h-7 w-7 text-indigo-600" />
-            </div>
-            <div>
-                <div className="text-sm text-muted-foreground">Distinct Brands</div>
-                <div className="text-3xl font-bold">
-                    {formatNumber(totals.distinct_brands)}
-                </div>
-            </div>
-        </div>
-
-        {/* Total Assets (All Models) */}
-        <div className="rounded-2xl border p-4 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
-                <Boxes className="h-7 w-7 text-teal-600" />
-            </div>
-            <div>
-                <div className="text-sm text-muted-foreground">Total Assets (All Models)</div>
-                <div className="text-3xl font-bold">
-                    {formatNumber(totalAssets)}
-                </div>
-            </div>
-        </div>
-
-        {/* Active Assets */}
-        <div className="rounded-2xl border p-4 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                <CheckCircle2 className="h-7 w-7 text-green-600" />
-            </div>
-            <div>
-                <div className="text-sm text-muted-foreground">Active Assets</div>
-                <div className="text-3xl font-bold">
-                    {formatNumber(activeAssets)}
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                    {formatNumber(inactiveAssets)} inactive • {activeRate.toFixed(1)}% active
-                </div>
-            </div>
-        </div>
-    </div>
-)}
-
-
                 {/* MODELS Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">
                     <Table>
                         <TableHeader>
                         <TableRow className="bg-muted text-foreground">
                             <TableHead className="text-center">ID</TableHead>
+                            <TableHead className="text-center">Equipment Code</TableHead>
                             <TableHead className="text-center">Brand</TableHead>
                             <TableHead className="text-center">Model / Specification</TableHead>
                             <TableHead className="text-center">Category</TableHead>
@@ -286,6 +298,11 @@ export default function AssetModelsIndex({
                             {page_items.length > 0 ? page_items.map((m) => (
                             <TableRow key={m.id}>
                                 <TableCell>{m.id}</TableCell>
+                                <TableCell className="font-medium">
+                                    {m.equipment_code 
+                                        ? `${m.equipment_code.code}${m.equipment_code.description ? ` - ${m.equipment_code.description}` : ''}`
+                                        : '—'}
+                                </TableCell>
                                 <TableCell>{m.brand ?? '—'}</TableCell>
                                 <TableCell>{m.model ?? '—'}</TableCell>
                                 <TableCell className="font-medium">{m.category?.name ?? '—'}</TableCell>
@@ -333,7 +350,7 @@ export default function AssetModelsIndex({
                             </TableRow>
                         )) : (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
                                     No asset models found.
                                 </TableCell>
                             </TableRow>
@@ -354,6 +371,7 @@ export default function AssetModelsIndex({
                     setShowAddModel(false)
                 }
                 categories={categories}
+                equipment_codes={equipment_codes}
             />
 
             {selectedModel && (
@@ -366,6 +384,7 @@ export default function AssetModelsIndex({
                     }}
                     model={selectedModel}
                     categories={categories}
+                    equipment_codes={equipment_codes}
                 />
             )}
 

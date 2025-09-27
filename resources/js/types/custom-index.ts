@@ -16,6 +16,7 @@ export type { Permission } from './permission';
 export type { SubArea } from './sub-area';
 export type { InventoryReportRow } from './reports';
 export type { Personnel } from './personnel';
+export type { EquipmentCode } from './equipment-code';
 
 export * from './page-props';
 

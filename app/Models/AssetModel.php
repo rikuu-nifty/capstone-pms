@@ -14,19 +14,24 @@ class AssetModel extends Model
         'brand',
         'model',
         'category_id',
+        'equipment_code_id',
         'status',
     ];
 
     public function category()
     {
-        return $this->belongsTo(Category::class, 'category_id')
-            ->whereNull('categories.deleted_at');
+        return $this->belongsTo(Category::class, 'category_id')->whereNull('categories.deleted_at');
     }
 
     public function assets()
     {
         return $this->hasMany(InventoryList::class, 'asset_model_id')
             ->whereNull('inventory_lists.deleted_at');
+    }
+
+    public function equipmentCode()
+    {
+        return $this->belongsTo(EquipmentCode::class, 'equipment_code_id');
     }
 
     public function scopeWithCategoryAndCounts($query)
@@ -53,7 +58,9 @@ class AssetModel extends Model
 
     public static function forIndex()
     {
-        return static::withCategoryAndCounts()->get();
+        return static::withCategoryAndCounts()
+            ->with(['equipmentCode:id,code,description'])
+            ->get();
     }
 
     public static function findForView($id)
@@ -63,7 +70,9 @@ class AssetModel extends Model
 
     public function scopeForViewing($query)
     {
-        return $query->withCategoryAndCounts()->withAssetsMinimal();
+        return $query->withCategoryAndCounts()
+            ->withAssetsMinimal()
+            ->with(['equipmentCode:id,code,description']);
     }
 
     //KPIs

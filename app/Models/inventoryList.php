@@ -91,6 +91,18 @@ class InventoryList extends Model
         return $this->belongsTo(Category::class, 'category_id');
     }
 
+    public function equipmentCode()
+    {
+        return $this->hasOneThrough(
+            EquipmentCode::class,
+            AssetModel::class,
+            'id',                // PK on asset_models
+            'id',                // PK on equipment_codes
+            'asset_model_id',    // FK on inventory_lists → asset_models
+            'equipment_code_id'  // FK on asset_models → equipment_codes
+        );
+    }
+
     public function assignmentItems()
     {
         return $this->hasMany(AssetAssignmentItem::class, 'asset_id');

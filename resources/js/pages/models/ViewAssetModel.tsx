@@ -98,6 +98,20 @@ export default function ViewAssetModelModal({
                                 <td className="px-3 py-2 font-medium">{model.category?.name ?? '—'}</td>
                             </tr>
                             <tr className="border-b border-gray-200 dark:border-gray-800">
+                                <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                    Equipment Code
+                                </td>
+                                <td className="px-3 py-2 font-medium">
+                                    {model.equipment_code
+                                    ? `${model.equipment_code.code}${
+                                        model.equipment_code.description
+                                            ? ` - ${model.equipment_code.description}`
+                                            : ''
+                                        }`
+                                    : '—'}
+                                </td>
+                            </tr>
+                            <tr className="border-b border-gray-200 dark:border-gray-800">
                                 <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Brand</td>
                                 <td className="px-3 py-2 font-medium">{model.brand ?? '—'}</td>
                             </tr>

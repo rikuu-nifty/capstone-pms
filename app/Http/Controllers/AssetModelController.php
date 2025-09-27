@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 // use App\Http\Requests\InventoryListAddNewAssetFormRequest;
 use Inertia\Inertia;
-use App\Models\AssetModel;
+
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 
+use App\Models\AssetModel;
+use App\Models\EquipmentCode;
 
 class AssetModelController extends Controller
 {
@@ -17,6 +19,7 @@ class AssetModelController extends Controller
             'asset_models' => AssetModel::forIndex(),
             'totals' => AssetModel::getTotals(),
             'categories' => AssetModel::categoriesForDropdown(),
+            'equipment_codes' => EquipmentCode::orderBy('code')->get(['id', 'code', 'description', 'category_id']),
         ];
     }
 
@@ -42,8 +45,7 @@ class AssetModelController extends Controller
 
         $validated = $request->validate([
             'brand' => ['nullable', 'string', 'max:255'],
-            'model' => ['required', 'string', 'max:255',
-                Rule::unique('asset_models', 'model')->where(function ($q) use ($request) {
+            'model' => ['required', 'string', 'max:255', Rule::unique('asset_models', 'model')->where(function ($q) use ($request) {
                     $q->where('category_id', $request->integer('category_id'))
                     ->whereNull('deleted_at');
 
@@ -54,9 +56,8 @@ class AssetModelController extends Controller
                     }
                 }),
             ],
-            'category_id' => ['required', 'integer',
-                Rule::exists('categories', 'id')->whereNull('deleted_at'),
-            ],
+            'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->whereNull('deleted_at') ],
+            'equipment_code_id' => ['nullable', 'integer', 'exists:equipment_codes,id'],
             'status' => ['required', Rule::in(['active', 'is_archived'])],
         ], [
             'model.unique' => 'This brand/model already exists in the selected category.',
@@ -83,21 +84,21 @@ class AssetModelController extends Controller
             'brand'       => ['nullable', 'string', 'max:255'],
             'model'       => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'equipment_code_id' => ['nullable', 'integer', 'exists:equipment_codes,id'],
             'status'      => ['required', Rule::in(['active', 'is_archived'])],
         ]);
 
         $request->validate([
-            'model' => [
-                Rule::unique('asset_models', 'model')
-                    ->ignore($assetModel->id)
-                    ->where(fn ($q) => $q
-                        ->where('category_id', $request->integer('category_id'))
-                        ->when($request->filled('brand'),
-                            fn($q) => $q->where('brand', $request->input('brand')),
-                            fn($q) => $q->whereNull('brand')
-                        )
-                        ->whereNull('deleted_at')
-                    ),
+            'model' => [ Rule::unique('asset_models', 'model')
+                ->ignore($assetModel->id)
+                ->where(fn ($q) => $q
+                    ->where('category_id', $request->integer('category_id'))
+                    ->when($request->filled('brand'),
+                        fn($q) => $q->where('brand', $request->input('brand')),
+                        fn($q) => $q->whereNull('brand')
+                    )
+                    ->whereNull('deleted_at')
+                ),
             ],
         ]);
 

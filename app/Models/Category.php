@@ -18,9 +18,14 @@ class Category extends Model
     ];
 
     public function inventoryLists()
-{
-    return $this->hasMany(InventoryList::class);
-}
+    {
+        return $this->hasMany(InventoryList::class);
+    }
+
+    public function equipmentCodes()
+    {
+        return $this->hasMany(EquipmentCode::class, 'category_id');
+    }
 
     public function assetModels(): HasMany
     {
