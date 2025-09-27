@@ -28,6 +28,7 @@
     use App\Http\Controllers\AuditTrailController;
     use App\Http\Controllers\PersonnelController;
     use App\Http\Controllers\AssetAssignmentController;
+    use App\Http\Controllers\TurnoverDisposalReportController;
 
 Route::get('/', function () {
         if (Auth::check()) {
@@ -137,12 +138,6 @@ Route::get('/', function () {
             ])
         )->name('reports.transfer');
 
-        Route::get('/turnover-disposal', fn() =>
-            Inertia::render('reports/TurnoverDisposalReport', [
-                'title' => 'Turnover/Disposal Report',
-            ])
-        )->name('reports.turnover-disposal');
-
         Route::get('/off-campus', fn() =>
             Inertia::render('reports/OffCampusReport', [
                 'title' => 'Off-Campus Report',
@@ -157,6 +152,11 @@ Route::get('/', function () {
             ->name('reports.inventory-sheet.export.pdf');
         Route::get('/inventory-sheet/export/excel', [InventorySheetReportController::class, 'exportExcel'])
             ->name('reports.inventory-sheet.export.excel');
+
+        // Turnover / Disposal Report
+        Route::get('/turnover-disposal', [TurnoverDisposalReportController::class, 'index']) ->name('reports.turnover-disposal');
+        Route::get('/turnover-disposal/export/pdf', [TurnoverDisposalReportController::class, 'exportPdf'])->name('reports.turnover-disposal.export.pdf');
+        Route::get('/turnover-disposal/export/excel', [TurnoverDisposalReportController::class, 'exportExcel'])->name('reports.turnover-disposal.export.excel');
     });
 
     Route::get('calendar', function () {

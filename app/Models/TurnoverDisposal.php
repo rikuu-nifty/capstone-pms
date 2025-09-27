@@ -388,5 +388,127 @@ class TurnoverDisposal extends Model
         return $step ? ($step->is_external ? ($step->external_title ?: null) : null) : null;
     }
 
+    /*
+        REPORTS
+    */
+
+    public static function filterAndPaginate(array $filters, int $perPage = 10)
+    {
+        $query = static::with([
+            'issuingOffice:id,name,code',
+            'receivingOffice:id,name,code',
+            'turnoverDisposalAssets.assets.assetModel.category:id,name', 
+            'turnoverDisposalAssets.assets.unitOrDepartment:id,name',
+            'turnoverDisposalAssets.assets.building:id,name',
+            'turnoverDisposalAssets.assets.buildingRoom:id,room,building_id',
+            'turnoverDisposalAssets.assets.subArea:id,name,building_room_id',
+        ])
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('document_date', '<=', $to))
+            ->when($filters['issuing_office_id'] ?? null, function ($q, $issuing) {
+                $q->where('issuing_office_id', $issuing);
+            })
+            ->when($filters['receiving_office_id'] ?? null, function ($q, $receiving) {
+                $q->where('receiving_office_id', $receiving);
+            })
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['building_id'] ?? null, function ($q, $bldg) {
+                $q->whereHas('turnoverDisposalAssets.assets', fn($qa) => $qa->where('building_id', $bldg));
+            })
+            ->when($filters['room_id'] ?? null, function ($q, $room) {
+                $q->whereHas('turnoverDisposalAssets.assets', fn($qa) => $qa->where('building_room_id', $room));
+            })
+            ->when($filters['category_id'] ?? null, function ($q, $catId) {
+                $q->whereHas('turnoverDisposalAssets.assets.assetModel', function ($qa) use ($catId) {
+                    $qa->where('category_id', $catId);
+                });
+            })
+            ->when($filters['brand'] ?? null, function ($q, $brand) {
+                $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('brand', 'like', "%{$brand}%"));
+            })
+            ->when($filters['model'] ?? null, function ($q, $model) {
+                $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('model', 'like', "%{$model}%"));
+            });
+            
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
+    public static function filterAndPaginateAssets(array $filters, int $perPage = 10)
+    {
+        return DB::table('turnover_disposal_assets as tda')
+            ->join('turnover_disposals as td', 'td.id', '=', 'tda.turnover_disposal_id')
+            ->leftJoin('inventory_lists as il', 'il.id', '=', 'tda.asset_id')
+            ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
+            ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
+            ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
+            ->leftJoin('unit_or_departments as receiving', 'receiving.id', '=', 'td.receiving_office_id')
+            ->select([
+                'td.id as turnover_disposal_id',
+                'td.type',
+                'td.status as td_status',
+                'td.document_date',
+                'issuing.name as issuing_office',
+                'receiving.name as receiving_office',
+                'il.id as asset_id',
+                'il.serial_no',
+                'il.asset_name',
+                'il.unit_cost',
+                'c.name as category',
+                'tda.asset_status',
+                DB::raw('COALESCE(tda.remarks, td.remarks) as remarks'),
+            ])
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('td.type', $type))
+            ->when($filters['issuing_office_id'] ?? null, fn($q, $issuing) => $q->where('td.issuing_office_id', $issuing))
+            ->when($filters['receiving_office_id'] ?? null, fn($q, $receiving) => $q->where('td.receiving_office_id', $receiving))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
+            ->when($filters['category_id'] ?? null, fn($q, $cat) => $q->where('c.id', $cat))
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    public static function summaryCounts(): array
+    {
+        return [
+            'total_turnovers' => static::where('type', 'turnover')->count(),
+            'total_disposals' => static::where('type', 'disposal')->count(),
+            'completed'       => static::where('status', 'completed')->count(),
+            'pending_review'  => static::where('status', 'pending_review')->count(),
+            'approved'        => static::where('status', 'approved')->count(),
+            'rejected'        => static::where('status', 'rejected')->count(),
+            'cancelled'       => static::where('status', 'cancelled')->count(),
+        ];
+    }
+
+    public static function monthlyCompletedTrendData()
+    {
+        return DB::table('turnover_disposals as td')
+            ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
+            ->where('tda.asset_status', '=', 'completed') // ✅ Only completed assets
+            ->selectRaw("
+                DATE_FORMAT(td.document_date, '%Y-%m') as ym,
+                SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,
+                SUM(CASE WHEN td.type = 'disposal' THEN 1 ELSE 0 END) as disposal
+            ")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get()
+            ->keyBy('ym');
+    }
+
+    public static function monthlyTrendData()
+    {
+        return static::selectRaw("
+                DATE_FORMAT(document_date, '%Y-%m') as ym,
+                SUM(CASE WHEN type = 'turnover' THEN 1 ELSE 0 END) as turnovers,
+                SUM(CASE WHEN type = 'disposal' THEN 1 ELSE 0 END) as disposals
+            ")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get();
+    }
+
 
 }
