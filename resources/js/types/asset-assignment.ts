@@ -1,9 +1,114 @@
 export type AssetAssignment = {
     id: number;
-    asset_id: number;
-    unit_or_department_id: number;
-    assigned_to: string;
-    assigned_by: number;
+    personnel_id: number;
+    assigned_by?: number | null;
     date_assigned: string;
-    remarks: string | null;
+    remarks?: string | null;
+
+    updated_at?: string;
+
+    // counts
+    items_count?: number;
+
+    // relations
+    personnel?: {
+        id: number;
+        full_name: string;
+        position?: string;
+        unit_or_department?: { id: number; name: string };
+        status?: 'active' | 'inactive' | 'left_university';
+    };
+    assigned_by_user?: { id: number; name: string };
+};
+
+export type AssetAssignmentItem = {
+    id: number;
+    asset_assignment_id: number;
+    asset_id: number;
+
+    asset?: {
+        id: number;
+        serial_no: string;
+        asset_name?: string;
+        asset_model?: {
+            id: number;
+            brand: string;
+            model: string;
+            category?: { id: number; name: string };
+        };
+        unit_or_department?: { id: number; name: string };
+    };
+};
+
+export type AssignmentTotals = {
+    total_assignments: number;
+    total_personnels_with_assets: number;
+    total_inactive_personnels_with_assets: number;
+    total_assets_assigned: number;
+
+    assets_assigned_to_left_university: number;
+    assignments_with_no_assets: number;
+};
+
+export type Paginated<T> = {
+    data: T[];
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+};
+
+export type AssignmentPageProps = {
+    assignments: Paginated<AssetAssignment>;
+    totals?: AssignmentTotals;
+    viewing?: AssetAssignment | null;
+    viewing_items?: Paginated<AssetAssignmentItem>;
+
+    personnels: { 
+        id: number; 
+        full_name: string;
+        unit_or_department_id?: number | null;
+    }[];
+
+    available_personnels: {
+        id: number; 
+        full_name: string;
+        unit_or_department_id?: number | null;
+    }[];
+
+    units: { 
+        id: number; 
+        name: string 
+    }[];
+    assets: MinimalAsset[];
+    currentUser?: { 
+        id: number; 
+        name: string 
+    } | null;
+    users: { id: number; name: string }[];
+};
+
+export type MinimalAsset = {
+    id: number;
+    serial_no: string;
+    asset_name?: string;
+    building?: { 
+        id: number; 
+        name: string 
+    };
+    building_room?: { 
+        id: number; 
+        room: string 
+    };
+    sub_area?: { 
+        id: number; 
+        name: string 
+    };
+    unit_or_department_id?: number | null;
+    is_assigned?: boolean;
+};
+
+export type AssignmentAssetsResponse = {
+    personnel_id: number;
+    items: Paginated<AssetAssignmentItem>;
 };

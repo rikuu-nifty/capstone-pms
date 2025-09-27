@@ -31,6 +31,7 @@ import {
     User,
     UserCheck2,
     ShieldCheck,
+    FileUser,
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -83,13 +84,12 @@ const inventoryNavItems = [
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
     
-    // { title: 'Inventory Sheet Report', href: '/reports/inventory-sheet', icon: ClipboardList, permission: 'view-reports' },
 ];
 
 const assetsNavItems = [
     { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
     { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
-    { title: 'Assignment', href: '/assignment', icon: PackageCheck, permission: 'view-assignments' },
+    { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
 ];
 
 const institutionalSetUpNavItems = [
@@ -99,7 +99,8 @@ const institutionalSetUpNavItems = [
         icon: Landmark,
         permission: ['view-buildings', 'view-own-unit-buildings'],
     },
-    { title: 'Organizations', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
+    { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
+    { title: 'Personnels', href: '/personnels', icon: User, permission: 'view-personnels' },
 ];
 
 const userNavItems = [
@@ -276,16 +277,6 @@ export function AppSidebar() {
                             </SidebarMenuItem>
                         )}
 
-                        {/* {canView(InventorySheetReportsNavItem, permissions) && (
-                            <SidebarMenuItem key={InventorySheetReportsNavItem.href}>
-                                <SidebarMenuButton asChild className="px-3 py-2">
-                                    <Link href={InventorySheetReportsNavItem.href} className="flex items-center space-x-2">
-                                        <InventorySheetReportsNavItem.icon className="h-4 w-4" />
-                                        <span>{InventorySheetReportsNavItem.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )} */}
                     </SidebarMenu>
                 </div>
 

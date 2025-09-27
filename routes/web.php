@@ -26,12 +26,10 @@
     use App\Http\Controllers\PropertyTransferReportController;
     use App\Http\Controllers\OffCampusReportController;
     use App\Http\Controllers\AuditTrailController;
+    use App\Http\Controllers\PersonnelController;
+    use App\Http\Controllers\AssetAssignmentController;
 
-    // Route::get('/', function () {
-    //     return Inertia::render('welcome');
-    // })->name('home');
-
-    Route::get('/', function () {
+Route::get('/', function () {
         if (Auth::check()) {
             return redirect()->route('dashboard'); // change to your actual dashboard route
         }
@@ -47,22 +45,6 @@
             'message' => session('status') ?? 'Your account is awaiting admin approval.',
         ]);
     })->name('approval.pending');
-
-    //     // ----- Email OTP verification (must be logged in, but NOT necessarily verified) -----
-    //     Route::middleware('auth')->group(function () {
-    //     Route::get('/verify-email', [EmailOtpController::class, 'show'])->name('verification.notice');
-    //     Route::post('/verify-email/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
-    //     Route::post('/verify-email/resend', [EmailOtpController::class, 'resend'])->middleware('throttle:60,1')->name('verification.resend');
-    // });
-
-    // // Email OTP verification (must be logged in, but not verified yet)
-    //     Route::middleware('auth')->group(function () {
-    //     Route::get('/verify-email-otp', [EmailOtpController::class, 'show'])->name('verification.notice');
-    //     Route::post('/verify-email-otp/verify', [EmailOtpController::class, 'verify'])->name('verification.verify');
-    //     Route::post('/verify-email-otp/resend', [EmailOtpController::class, 'resend'])
-    //         ->middleware('throttle:60,1')
-    //         ->name('verification.resend');
-    // });
 
     // OTP flow (guest; uses a session key, not auth)
     Route::middleware('guest')->group(function () {
@@ -262,7 +244,6 @@
         ->name('schedules.bulkUpdateAssetStatus');
     Route::put('/schedules/{schedule}/assets/{asset}', [InventorySchedulingController::class, 'updateAssetStatus'])
         ->name('schedules.updateAssetStatus');
-
 
     // INVENTORY LIST
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
@@ -471,8 +452,46 @@
         ->name('approvals.external_approve')
         ->middleware('can:approve-form-approvals');
 
+    // PERSONNELS
+    Route::get('/personnels', [PersonnelController::class, 'index'])->name('personnels.index')
+        ->middleware('can:view-personnels');
+    Route::post('/personnels', [PersonnelController::class, 'store'])->name('personnels.store')
+        ->middleware('can:create-personnels');
+    Route::put('/personnels/{personnel}', [PersonnelController::class, 'update'])->name('personnels.update')
+        ->middleware('can:update-personnels');
+    Route::get('/personnels/view/{personnel}', [PersonnelController::class, 'show'])->name('personnels.view')
+        ->middleware('can:view-personnels');
+    Route::delete('/personnels/{personnel}', [PersonnelController::class, 'destroy'])->name('personnels.destroy')
+        ->middleware('can:delete-personnels');
 
-    //ASSIGNMENTS
+    // ASSIGNMENTS
+    Route::get('/assignments', [AssetAssignmentController::class, 'index'])->name('assignments.index')
+        ->middleware('can:view-assignments');
+    Route::post('/assignments', [AssetAssignmentController::class, 'store'])->name('assignments.store')
+        ->middleware('can:create-assignments');
+    Route::put('/assignments/{assignment}', [AssetAssignmentController::class, 'update'])->name('assignments.update')
+        ->middleware('can:update-assignments');
+    Route::get('/assignments/{assignment}', [AssetAssignmentController::class, 'show'])->name('assignments.show')
+        ->middleware('can:view-assignments');
+    Route::delete('/assignments/{assignment}', [AssetAssignmentController::class, 'destroy'])->name('assignments.destroy')
+        ->middleware('can:delete-assignments');
+    Route::get('/inventory-list/{inventory_list}/json', [InventoryListController::class, 'fetch'])
+        ->name('inventory-list.fetch'); //this is for seeing the asset
+
+    Route::get('/assignments/personnel/{personnel}/assets', [AssetAssignmentController::class, 'personnelAssets'])->name('assignments.personnelAssets')
+        ->middleware('can:view-assignments');
+
+    Route::put('/assignments/{assignment}/bulk-reassign-items', [AssetAssignmentController::class, 'bulkReassignItems'])
+        ->name('assignments.bulkReassignItems');
+    Route::put('/assignments/{assignment}/bulk-reassign', [AssetAssignmentController::class, 'bulkReassign'])
+        ->name('assignments.bulkReassign');
+
+    Route::get('/assignments/{assignment}/assets', [AssetAssignmentController::class, 'assignmentAssets'])->name('assignments.assignmentAssets')
+        ->middleware('can:view-assignments');
+
+    Route::get('/assignments/{assignment}/json', [AssetAssignmentController::class, 'showJson'])->name('assignments.show.json')
+        ->middleware('can:view-assignments');
+
 
     //PROFILE
 });

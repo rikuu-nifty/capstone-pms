@@ -31,7 +31,6 @@ class UnitOrDepartment extends Model
         return $this->belongsToMany(InventoryScheduling::class, 'inventory_scheduling_units')->withTimestamps();
     }
 
-
     public function issuingOffice()
     {
         return $this->hasMany(TurnoverDisposal::class, 'issuing_office');
@@ -47,11 +46,33 @@ class UnitOrDepartment extends Model
         return $this->hasMany(AssetAssignment::class, 'unit_or_department_id');
     }
 
+    public static function listForAssignments()
+    {
+        return static::select('id', 'name')->get();
+    }
+
     // Relationship to OffCampus table (via college_or_unit_id FK)
     public function offCampuses()
     {
         return $this->hasMany(OffCampus::class, 'college_or_unit_id');
     }
+
+    public function personnels()
+    {
+        return $this->hasMany(Personnel::class, 'unit_or_department_id');
+    }
+
+    public static function listLite()
+    {
+        return static::select('id', 'name')->get();
+    }
+
+
+    public function assetAssignments()
+    {
+        return $this->hasMany(AssetAssignment::class, 'unit_or_department_id');
+    }
+
     public function scopewithAssetsCount($query)
     {
         return $query->withCount(['inventoryLists as assets_count']);

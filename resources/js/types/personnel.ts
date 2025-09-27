@@ -1,0 +1,63 @@
+export type Personnel = {
+    id: number;
+    first_name: string;
+    middle_name?: string | null;
+    last_name: string;
+    full_name: string;
+
+    user_id?: number | null;
+    user_name?: string | null;
+
+    position?: string | null;
+    unit_or_department_id?: number | null;
+    unit_or_department?: string | null;
+    status: 'active' | 'inactive' | 'left_university';
+
+    created_at?: string;
+    updated_at?: string;
+
+    assignments_count?: number;
+    assigned_assets?: {
+        id: number | null;
+        name: string;
+    }[];
+
+    latest_assignment_id?: number | null;
+};
+
+export type UserLite = {
+    id: number;
+    name: string;
+    email: string;
+};
+
+export type PersonnelFormData = {
+    first_name: string;
+    middle_name?: string | null;
+    last_name: string;
+    user_id?: number | null | string;
+
+    position?: string | null;
+    unit_or_department_id?: number | null | string;
+    status: 'active' | 'inactive' | 'left_university';
+};
+
+export type PersonnelTotals = {
+    total_personnels: number;
+    active_personnels: number;
+    inactive_personnels: number;
+    former_personnels: number;
+};
+
+export type UnitLite = {
+    id: number;
+    name: string;
+};
+
+export type PersonnelPageProps = {
+    personnels: Personnel[];
+    users: UserLite[];
+    units: UnitLite[];
+    totals?: PersonnelTotals;
+    
+};

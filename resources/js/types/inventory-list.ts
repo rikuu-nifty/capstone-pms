@@ -24,4 +24,8 @@ export type InventoryList = {
     assetModel?: AssetModel;
     category?: Category;
     unitOrDepartment?: UnitOrDepartment;
+
+    building?: { id: number; name: string };
+    building_room?: { id: number; room: string };
+    sub_area?: { id: number; name: string };
 }

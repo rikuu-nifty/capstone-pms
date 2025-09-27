@@ -126,6 +126,41 @@ class InventoryListController extends Controller
         ];
     }
 
+    public function fetch(InventoryList $inventory_list) // DO NOT DELETE, THIS IS FOR ASSET ASSIGNMENT
+    {
+        $inventory_list->load([
+            'assetModel.category',
+            'category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom',
+            'subArea',
+            'transfer',
+            'schedulingAssets',
+        ]);
+
+        return response()->json($inventory_list);
+    }
+
+    //   $assets = InventoryList::latest()->get();
+
+    //   $assets = inventoryList::with([
+    //         'assetModel.category',
+    //         'unitOrDepartment',
+    //         'building',
+    //         'buildingRoom'
+    //     ])->latest()->get();
+  
+    //     return Inertia::render('inventory-list/index', [
+    //         'assets' => $assets,
+    //         'units' => $units,  for dropdown, display, etc.
+            
+    //     ]);
+
+        // 'inventory-list' => inventoryList::paginate(10)->withQueryString(),
+        // return Inertia::render('inventory-list/index');
+            
+    
 
     /**
      * Show the form for creating a new resource.
