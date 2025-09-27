@@ -27,7 +27,6 @@ use Maatwebsite\Excel\Facades\Excel;
 
 
 use App\Models\InventoryScheduling;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class ReportController extends Controller
@@ -233,33 +232,7 @@ class ReportController extends Controller
         ],
     ];
 
-    return Inertia::render('reports/index', [
-        'title'          => 'Reports Dashboard',
-        'categoryData'   => $categoryData,
-        'schedulingData' => $schedulingData,
-        'transferData'   => $monthlyStatusTrends, // ✅ filtered + continuous months
-        'offCampusData'  => $offCampusData,       // ✅ added for Off-Campus chart
-        'filters'        => $request->only([
-            'from','to','status','current_building_id','receiving_building_id','department_id'
-        ]),
-    ]);
-}
-
-
-
-    public function index()
-    {
-        // ✅ Fetch all categories and count their assets
-        $categoryData = Category::withCount('inventoryLists')
-            ->get()
-            ->map(fn($cat) => [
-                'label' => $cat->name,
-                'value' => $cat->inventory_lists_count ?? 0, // default to 0
-            ]);
-
-        $startDate = Carbon::now()->subDays(90)->toDateString();
-
-        // INVENTORY SHEET REPORTS PART
+    // INVENTORY SHEET REPORTS PART
         // $chartQuery = InventoryList::with(['schedulingAssets'])->get();
         $chartQuery = InventoryList::with(['schedulingAssets'])->get();
 
@@ -294,12 +267,20 @@ class ReportController extends Controller
             ->values()
             ->toArray();
 
-        return Inertia::render('reports/index', [
-            'title' => 'Reports Dashboard',
-            'categoryData' => $categoryData,
-            'inventorySheetChartData' => $inventorySheetChartData,
-        ]);
-    }
+    return Inertia::render('reports/index', [
+        'title'          => 'Reports Dashboard',
+        'categoryData'   => $categoryData,
+        'inventorySheetChartData' => $inventorySheetChartData,
+        'schedulingData' => $schedulingData,
+        'transferData'   => $monthlyStatusTrends, // ✅ filtered + continuous months
+        'offCampusData'  => $offCampusData,       // ✅ added for Off-Campus chart
+        'filters'        => $request->only([
+            'from','to','status','current_building_id','receiving_building_id','department_id'
+        ]),
+    ]);
+}
+
+
 
     public function inventoryList(Request $request)
     {

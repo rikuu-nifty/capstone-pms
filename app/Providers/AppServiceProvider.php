@@ -75,10 +75,7 @@ class AppServiceProvider extends ServiceProvider
         Building::observe(BuildingObserver::class);
         BuildingRoom::observe(BuildingRoomObserver::class);
         UnitOrDepartment::observe(UnitOrDepartmentObserver::class);
-       
-
-
-
+    
         
         // ✅ Existing nav metrics
         Inertia::share('nav_metrics', function () {
@@ -102,9 +99,8 @@ class AppServiceProvider extends ServiceProvider
             'items' => [],
             'unread_count' => 0,
         ];
-});
+    });
 
-        
       
     }
 }
