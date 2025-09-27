@@ -76,7 +76,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
 <table>
     <thead>
         <tr>
-            <th>MR No.</th>
+            <th>Code No.</th>
             <th>Asset Name (Type)</th>
             <th>Serial No.</th>
             <th>Unit Cost</th>
@@ -121,7 +121,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
         {{-- Assets inside each sub-group --}}
         @foreach ($items as $a)
         <tr>
-            <td>{{ $a['memorandum_no'] ?? '—' }}</td>
+            <td>{{ $a['equipment_code'] ?? '—' }}</td>
             <td>{{ $a['asset_name'] }} ({{ $a['asset_type'] }})</td>
             <td>{{ $a['serial_no'] ?? '—' }}</td>
 

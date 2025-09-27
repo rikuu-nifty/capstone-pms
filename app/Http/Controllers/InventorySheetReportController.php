@@ -134,6 +134,8 @@ class InventorySheetReportController extends Controller
                 'unit_cost'        => $asset->unit_cost,
                 'inventoried_at'   => $inventoriedAt,
                 'serial_no'        => $asset->serial_no,
+
+                'equipment_code'   => optional($asset->assetModel?->equipmentCode)->code,
             ];
         });
 
@@ -464,6 +466,8 @@ class InventorySheetReportController extends Controller
                 'building'         => optional($asset->building)->name,
 
                 'assigned_to'      => $asset->assigned_to,
+
+                'equipment_code'   => optional($asset->assetModel?->equipmentCode)->code,
             ];
         });
 

@@ -189,7 +189,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
         </tr>
         <tr>
             <!-- <th style="width:36px; text-align:center">#</th> -->
-            <th style="width:38px; text-align:center">MR No.</th>
+            <th style="width:38px; text-align:center">Code No.</th>
             <th style="width:120px; text-align:center">Asset Name (Type)</th>
             <th style="width:80px; text-align:center">Serial No.</th>
             <th style="width:80px; text-align:center">Price</th>
@@ -238,7 +238,7 @@ $first['inventoried_at'] = 'Until ' . $toDate->format('F d, Y');
         {{-- Assets inside sub-group --}}
         @foreach ($items as $a)
         <tr style="text-align:center; border-bottom:1px solid #ddd;">
-            <td style="width:38px; text-align:center">{{ $a['memorandum_no'] ?? '—' }}</td>
+            <td style="width:38px; text-align:center">{{ $a['equipment_code'] ?? '—' }}</td>
             <td style="width:120px; text-align:center">
                 <div>
                     <strong>{{ $a['asset_name'] }}</strong><br />
