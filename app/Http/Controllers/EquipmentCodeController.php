@@ -29,15 +29,15 @@ class EquipmentCodeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code_number' => ['required', 'string', 'max:10', Rule::unique('equipment_codes', 'code_number')],
-            'description' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:10', Rule::unique('equipment_codes', 'code')],
+            'description' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'exists:categories,id'],
         ]);
 
         $record = EquipmentCode::create($validated);
 
         return redirect()->route('equipment-codes.index')
-            ->with('success', "Equipment Code #{$record->id} ({$record->code_number}) was successfully created.");
+            ->with('success', "Equipment Code #{$record->id} ({$record->code}) was successfully created.");
     }
 
     public function show(EquipmentCode $equipmentCode)
@@ -53,8 +53,8 @@ class EquipmentCodeController extends Controller
     public function update(Request $request, EquipmentCode $equipmentCode)
     {
         $validated = $request->validate([
-            'code_number' => ['required', 'string', 'max:10', Rule::unique('equipment_codes', 'code_number')->ignore($equipmentCode->id)],
-            'description' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:10', Rule::unique('equipment_codes', 'code')->ignore($equipmentCode->id)],
+            'description' => ['nullable', 'string', 'max:255'],
             'category_id' => ['required', 'exists:categories,id'],
         ]);
 
