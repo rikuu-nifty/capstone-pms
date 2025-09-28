@@ -182,18 +182,37 @@ export default function InventorySheetReport() {
   function buildQuery(filtersObj: typeof defaultFilters): string {
     const params: Record<string, string> = {};
     Object.entries(filtersObj).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
+      if (
+        value !== null &&
+        value !== undefined &&
+        value !== ''
+      ) {
         params[key] = String(value);
       }
     });
     return new URLSearchParams(params).toString();
   }
 
+  function cleanedFilters(filtersObj: typeof defaultFilters): Record<string, string | number> {
+    const result: Record<string, string | number> = {};
+    Object.entries(filtersObj).forEach(([k, v]) => {
+      if (v !== null && v !== undefined && v !== '') {
+        if (typeof v === 'number') {
+          result[k] = v;
+        } else {
+          result[k] = String(v);
+        }
+      }
+    });
+    return result;
+  }
+
   // Re-fetch paginated table data when page changes (keeps existing filters)
   useEffect(() => {
     router.get(
       route('reports.inventory-sheet'),
-      { ...filters, page },
+      // { ...filters, page },
+      { ...cleanedFilters(filters), page },
       {
         preserveState: true,
         onSuccess: (pageData) => {
@@ -563,7 +582,8 @@ const filteredData: ChartData[] = React.useMemo(() => {
 
                 router.get(
                   route('reports.inventory-sheet'),
-                  { ...resetFilters, page: 1 },
+                  // { ...resetFilters, page: 1 },
+                  { ...cleanedFilters(resetFilters), page: 1 },
                   {
                     preserveState: true,
                     onSuccess: (pageData) => {
@@ -590,7 +610,8 @@ const filteredData: ChartData[] = React.useMemo(() => {
                 setViewMode('table');
                 router.get(
                   route('reports.inventory-sheet'),
-                  { ...filters, page: 1 },
+                  // { ...filters, page: 1 },
+                  { ...cleanedFilters(filters), page: 1 },
                   {
                     preserveState: true,
                     onSuccess: (pageData) => {
@@ -956,7 +977,8 @@ const filteredData: ChartData[] = React.useMemo(() => {
                   setPage(newPage);
                   router.get(
                     route('reports.inventory-sheet'),
-                    { ...filters, page: newPage },
+                    // { ...filters, page: newPage },
+                    { ...cleanedFilters(filters), page: newPage },
                     { preserveState: true, preserveScroll: true }
                   );
                 }}
