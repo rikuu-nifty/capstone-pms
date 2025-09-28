@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
 import { formatEnums } from '@/types/custom-index';
 import { Asset } from '../inventory-list';
@@ -336,6 +337,11 @@ export const ViewScheduleModal = ({
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]">
+                <DialogHeader>
+                    <DialogTitle>
+                        <VisuallyHidden>Schedule Record #{recordNo}</VisuallyHidden>
+                    </DialogTitle>
+                </DialogHeader>
                 <div className="print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
                 {/* Header */}
                     <div className="relative flex items-center justify-between">
