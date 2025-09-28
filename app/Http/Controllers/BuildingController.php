@@ -15,40 +15,74 @@ use App\Http\Requests\StoreBuildingRequest;
 
 class BuildingController extends Controller
 {
-    
+
+    // private function indexProps(): array
+    // {
+    //     $user = Auth::user();
+
+    //     $buildings = Building::indexProps();
+
+    //     $totals = [
+    //         'total_buildings' => $buildings->count(),
+    //         'total_rooms' => $buildings->sum('building_rooms_count'),
+    //         'total_assets' => $buildings->sum('assets_count'),
+    //     ];
+
+    //     $totals['avg_assets_per_building'] = $totals['total_buildings'] > 0
+    //         ? round($totals['total_assets'] / $totals['total_buildings'], 2)
+    //         : 0
+    //     ;
+
+    //     $totals['avg_assets_per_room'] = $totals['total_rooms'] > 0
+    //         ? round($totals['total_assets'] / $totals['total_rooms'], 2)
+    //         : 0
+    //     ;
+
+    //     // Filtered buildings + rooms depending on user permissions
+    //     $buildings = Building::indexProps($user);
+    //     $rooms     = BuildingRoom::listAllRoomsWithAssetShare(
+    //         (int) $totals['total_assets'], 
+    //         $user
+    //     );
+
+    //     return [
+    //         'buildings' => $buildings,
+    //         'totals' => $totals,
+    //         'rooms' => $rooms,
+    //     ];
+    // }
+
     private function indexProps(): array
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $buildings = Building::indexProps();
-        
+        // Use the user-aware query for both the buildings list and totals
+        $buildings = Building::indexProps($user);
+
         $totals = [
             'total_buildings' => $buildings->count(),
-            'total_rooms' => $buildings->sum('building_rooms_count'),
-            'total_assets' => $buildings->sum('assets_count'),
+            'total_rooms'     => $buildings->sum('building_rooms_count'),
+            'total_assets'    => $buildings->sum('assets_count'),
         ];
-        
+
         $totals['avg_assets_per_building'] = $totals['total_buildings'] > 0
             ? round($totals['total_assets'] / $totals['total_buildings'], 2)
-            : 0
-        ;
+            : 0;
 
         $totals['avg_assets_per_room'] = $totals['total_rooms'] > 0
             ? round($totals['total_assets'] / $totals['total_rooms'], 2)
-            : 0
-        ;
+            : 0;
 
-        // Filtered buildings + rooms depending on user permissions
-        $buildings = Building::indexProps($user);
-        $rooms     = BuildingRoom::listAllRoomsWithAssetShare(
-            (int) $totals['total_assets'], 
+        $rooms = BuildingRoom::listAllRoomsWithAssetShare(
+            (int) $totals['total_assets'],
             $user
         );
 
         return [
             'buildings' => $buildings,
-            'totals' => $totals,
-            'rooms' => $rooms,
+            'totals'    => $totals,
+            'rooms'     => $rooms,
         ];
     }
 

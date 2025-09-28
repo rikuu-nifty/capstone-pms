@@ -69,7 +69,7 @@ class BuildingRoom extends Model
             ->withCount([
                 'assets as assets_count' => fn($q) => $q->where('unit_or_department_id', $unitId),
                 'subAreas as sub_areas_count' => fn($q) =>
-                    $q->whereHas('inventoryLists', fn($qa) => $qa->where('unit_or_department_id', $unitId))
+                    $q->whereHas('assets', fn($qa) => $qa->where('unit_or_department_id', $unitId))
             ])
             ->whereHas(
                 'assets',
