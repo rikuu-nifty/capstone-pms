@@ -429,7 +429,9 @@ export default function InventorySchedulingIndex({
                                         {formatMonth(item.inventory_schedule) || '—'}
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap">
-                                        {formatDate(item.actual_date_of_inventory ?? '—')}
+                                        {item.actual_date_of_inventory
+                                            ? formatDate(item.actual_date_of_inventory)
+                                            : '—'}
                                     </TableCell>
                                     <TableCell>{item.checked_by || '—'}</TableCell>
                                     <TableCell>{item.verified_by || '—'}</TableCell>
