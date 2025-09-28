@@ -14,7 +14,7 @@ import AssetModelFilterDropdown from '@/components/filters/AssetModelFilterDropd
 import { Eye, Pencil, PlusCircle, Trash2, ListChecks, Tags, Boxes, CheckCircle2 } from 'lucide-react';
 
 import type { BreadcrumbItem } from '@/types';
-import { formatNumber } from '@/types/custom-index';
+import { formatNumber, ucwords } from '@/types/custom-index';
 import type { AssetModelsPageProps, AssetModelWithCounts, AssetModelFilters, StatusOption } from '@/types/asset-model';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
@@ -284,9 +284,10 @@ export default function AssetModelsIndex({
                         <TableHeader>
                         <TableRow className="bg-muted text-foreground">
                             <TableHead className="text-center">ID</TableHead>
-                            <TableHead className="text-center">Equipment Code</TableHead>
-                            <TableHead className="text-center">Brand</TableHead>
                             <TableHead className="text-center">Model / Specification</TableHead>
+                            <TableHead className="text-center">Brand</TableHead>
+                            <TableHead className="text-center">Equipment Code</TableHead>
+                            
                             <TableHead className="text-center">Category</TableHead>
                             <TableHead className="text-center">Active Assets</TableHead>
                             <TableHead className="text-center">Total Assets</TableHead>
@@ -298,13 +299,9 @@ export default function AssetModelsIndex({
                             {page_items.length > 0 ? page_items.map((m) => (
                             <TableRow key={m.id}>
                                 <TableCell>{m.id}</TableCell>
-                                <TableCell className="font-medium">
-                                    {m.equipment_code 
-                                        ? `${m.equipment_code.code}${m.equipment_code.description ? ` - ${m.equipment_code.description}` : ''}`
-                                        : '—'}
-                                </TableCell>
-                                <TableCell>{m.brand ?? '—'}</TableCell>
                                 <TableCell>{m.model ?? '—'}</TableCell>
+                                <TableCell>{m.brand ?? '—'}</TableCell>
+                                <TableCell>{m.equipment_code?.code ?? '—'}</TableCell>
                                 <TableCell className="font-medium">{m.category?.name ?? '—'}</TableCell>
                                 <TableCell>{m.active_assets_count}</TableCell>
                                 <TableCell>{m.assets_count}</TableCell>
