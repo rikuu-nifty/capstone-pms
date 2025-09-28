@@ -80,14 +80,7 @@ class TurnoverDisposalController extends Controller
             'remarks'             => ['nullable', 'string'],
 
             'turnover_disposal_assets'                  => ['required', 'array', 'min:1'],
-            'turnover_disposal_assets.*.asset_id'       => [
-                'required',
-                'integer',
-                Rule::exists('inventory_lists', 'id'),
-            ],
-            'turnover_disposal_assets.*.asset_status'   => ['nullable', Rule::in(['pending', 'completed', 'cancelled'])],
-            'turnover_disposal_assets.*.date_finalized' => ['nullable', 'date'],
-            'turnover_disposal_assets.*.remarks'        => ['nullable', 'string'],
+            'turnover_disposal_assets.*.asset_id'       => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
         ]);
 
         $lines = $validated['turnover_disposal_assets'];
@@ -115,14 +108,7 @@ class TurnoverDisposalController extends Controller
             'remarks'             => ['nullable', 'string'],
 
             'turnover_disposal_assets'                  => ['required', 'array', 'min:1'],
-            'turnover_disposal_assets.*.asset_id'       => [
-                'required',
-                'integer',
-                Rule::exists('inventory_lists', 'id'),
-            ],
-            'turnover_disposal_assets.*.asset_status'   => ['nullable', Rule::in(['pending', 'completed', 'cancelled'])],
-            'turnover_disposal_assets.*.date_finalized' => ['nullable', 'date'],
-            'turnover_disposal_assets.*.remarks'        => ['nullable', 'string'],
+            'turnover_disposal_assets.*.asset_id'       => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
         ]);
 
         $lines = $validated['turnover_disposal_assets'];

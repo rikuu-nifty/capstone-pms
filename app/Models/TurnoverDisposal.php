@@ -163,25 +163,25 @@ class TurnoverDisposal extends Model
         foreach ($lineItems as $item) {
             if (!is_array($item)) continue;
 
-            $assetId       = isset($item['asset_id']) ? (int) $item['asset_id'] : 0;
+            $assetId = isset($item['asset_id']) ? (int) $item['asset_id'] : 0;
             if ($assetId <= 0) continue;
-
-            $newStatus     = isset($item['asset_status']) ? (string) $item['asset_status'] : 'pending';
-            $dateFinalized = $item['date_finalized'] ?? null;
-            $remarks       = $item['remarks'] ?? null;
 
             /** @var TurnoverDisposalAsset $detail */
             $detail = $this->turnoverDisposalAssets()->firstOrNew(['asset_id' => $assetId]);
             $prevStatus = $detail->exists ? (string) $detail->asset_status : null;
 
-            $detail->asset_status   = $newStatus;
-            $detail->date_finalized = $dateFinalized;
-            $detail->remarks        = $remarks;
-            $detail->save();
+            // Force asset values from record
+            $detail->asset_status = match ($this->status) {
+                'completed' => 'completed',
+                'cancelled' => 'cancelled',
+                default     => 'pending', // pending_review, approved, rejected
+            };
+            $detail->date_finalized = $this->document_date;
+            $detail->remarks        = $this->remarks;
 
+            $detail->save();
             $keptIds[] = $detail->id;
 
-            // Apply forward (to completed) OR reverse (away from completed)
             $this->applySideEffectsTransition($detail, $prevStatus);
         }
 
