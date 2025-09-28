@@ -34,7 +34,10 @@ class Transfer extends Model
         'actual_transfer_date' => 'date:Y-m-d',
     ];
 
-    protected $appends = ['approved_by_name'];
+    protected $appends = [
+        'approved_by_name', 
+        'approved_by_role'
+    ];
     
     public function currentBuildingRoom()
     {
@@ -129,6 +132,7 @@ class Transfer extends Model
                     ->where('status','approved')
                     ->orderByDesc('acted_at'),
                     'steps.actor:id,name',
+                    'steps.actor.role:id,name',
             ])->first();
 
         $step = $fa?->steps->first();
@@ -145,5 +149,24 @@ class Transfer extends Model
     public function approvalFormTitle(): string
     {
         return 'Transfer -  #' . $this->id;
+    }
+
+    public function getApprovedByRoleAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval')
+            ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) =>
+                $q->where('code', 'approved_by')
+                    ->where('status', 'approved')
+                    ->orderByDesc('acted_at'),
+                'steps.actor:id,name,role_id',
+                'steps.actor.role:id,name',
+            ])->first();
+
+        $step = $fa?->steps->first();
+        return $step && !$step->is_external
+            ? ($step->actor->role->name ?? null)
+            : null;
     }
 }

@@ -289,8 +289,10 @@ export default function TransferViewModal({
                     <div className="text-center">
                         <p className="font-semibold mb-8">Prepared By:</p>
                         <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                        <p className="font-bold text-gray-700">{transfer.assignedBy.name}</p>
-                        <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                        <p className="font-bold text-gray-700">{(transfer.assignedBy.name).toUpperCase()}</p>
+                        <p className="text-xs text-gray-500 italic">
+                            {transfer.assignedBy.role?.name ?? '—'}
+                        </p>
                     </div>
                 )}
 
@@ -298,8 +300,10 @@ export default function TransferViewModal({
                     <div className="text-center">
                         <p className="font-semibold mb-8">Designated To:</p>
                         <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                        <p className="font-bold text-gray-800">{transfer.designatedEmployee.name}</p>
-                        <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                        <p className="font-bold text-gray-800">{(transfer.designatedEmployee.name).toUpperCase()}</p>
+                        <p className="text-xs text-gray-500 italic">
+                            {transfer.designatedEmployee.role?.name ?? '—'}
+                        </p>
                     </div>
                 )}
 
@@ -316,8 +320,10 @@ export default function TransferViewModal({
                 <div className="text-center">
                     <p className="font-semibold mb-8">Approved By:</p>
                     <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                    <p className="font-bold text-gray-800">{transfer.approved_by_name ?? '—'}</p>
-                    <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                    <p className="font-bold text-gray-800">{(transfer.approved_by_name)?.toUpperCase() ?? '—'}</p>
+                    <p className="text-xs text-gray-500 italic">
+                        {transfer.approved_by_role ?? '—'}
+                    </p>
                 </div>
             </div>
             

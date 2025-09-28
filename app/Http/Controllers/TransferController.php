@@ -203,7 +203,8 @@ class TransferController extends Controller
                     $q->where('code','approved_by')
                         ->where('status','approved')
                         ->orderByDesc('acted_at'),
-            'formApproval.steps.actor:id,name',
+            'formApproval.steps.actor:id,name,role_id',
+            'formApproval.steps.actor.role:id,name',
 
             'transferAssets.fromSubArea',
             'transferAssets.toSubArea',
