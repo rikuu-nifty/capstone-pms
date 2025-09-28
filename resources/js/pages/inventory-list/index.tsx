@@ -212,9 +212,9 @@ export default function InventoryListIndex({
         };
     };
 
-
     const canViewAll = auth.permissions.includes('view-inventory-list');
     const canViewOwn = auth.permissions.includes('view-own-unit-inventory-list');
+    const canCreate = auth.permissions.includes('create-inventory-list');
 
     const [search, setSearch] = useState('');
     const [showAddAsset, setShowAddAsset] = useState(false);
@@ -567,16 +567,18 @@ export default function InventoryListIndex({
                                 setSelectedStatus('');
                             }}
                         />
-                        <Button
+                        {canCreate && ( // only show if user has create permission
+                            <Button
                             onClick={() => {
                                 reset();
                                 clearErrors();
                                 setChooseAddVisible(true);
                             }}
                             className="cursor-pointer"
-                        >
+                            >
                             <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
-                        </Button>
+                            </Button>
+                        )}
                     </div>
                 </div>
 
