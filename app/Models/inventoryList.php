@@ -20,6 +20,7 @@ class InventoryList extends Model
     protected $appends = [
         'current_transfer_status',
         'current_inventory_status',
+        'assigned_to_name',
     ];
 
     protected $fillable = [
@@ -110,6 +111,13 @@ class InventoryList extends Model
         return $this->hasMany(AssetAssignmentItem::class, 'asset_id');
     }
 
+    public function getAssignedToNameAttribute(): ?string
+    {
+        $item = $this->latestAssignment; // call the relationship (will be eager loaded if controller uses with)
+
+        return $item?->assignment?->personnel?->full_name;
+    }
+
     public static function listForAssignments()
     {
         return static::query()
@@ -131,11 +139,10 @@ class InventoryList extends Model
             ->get();
     }
 
-    // public function latestAssignment()
-    // {
-    //     return $this->hasOne(AssetAssignment::class, 'asset_id')
-    //         ->latestOfMany('date_assigned'); // Gets most recent assignment
-    // }
+    public function latestAssignment()
+    {
+        return $this->hasOne(AssetAssignmentItem::class, 'asset_id')->latestOfMany();
+    }
 
     // public function previousAssignments()
     // {

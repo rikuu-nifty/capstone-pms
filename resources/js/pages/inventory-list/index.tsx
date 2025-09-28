@@ -92,7 +92,8 @@ export type Asset = {
     depreciation_value?: number | string | null; // ✅ NEW
     date_purchased: string;
     quantity: number;
-    assigned_to?: string | null; // ✅ add this
+    assigned_to?: string | null;
+    assigned_to_name?: string | null;
 
     // ✅ Changed: transfer relation instead of transfer_status
     transfer?: Transfer | null;

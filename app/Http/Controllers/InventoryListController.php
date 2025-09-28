@@ -55,7 +55,6 @@ class InventoryListController extends Controller
         ]);
     }
 
-
     public function index(Request $request)
     {
         return Inertia::render('inventory-list/index', $this->pageProps());
@@ -72,6 +71,8 @@ class InventoryListController extends Controller
             'transfer', // ✅ eager load transfer
             'subArea',
             'schedulingAssets',
+
+            'latestAssignment.assignment.personnel',
         ]);
 
           // ✅ Log the viewing action in audit_trails
@@ -105,6 +106,8 @@ class InventoryListController extends Controller
                 $q->latest('transfers.created_at'); // just order for accessor
             },
             'schedulingAssets',
+
+            'latestAssignment.assignment.personnel',
         ])
         ->orderBy('id', 'desc');
 
