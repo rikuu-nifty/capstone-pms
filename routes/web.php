@@ -256,6 +256,9 @@ Route::get('/', function () {
     Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
         ->name('inventory-list.view')
         ->middleware('can:view-inventory-list');
+    Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
+        ->name('inventory-list.view')
+        ->middleware('can:view-own-unit-inventory-list');
 
     // TRANSFERS
     Route::get('/transfers', [TransferController::class, 'index'])
