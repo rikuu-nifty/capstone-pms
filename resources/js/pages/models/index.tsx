@@ -14,7 +14,7 @@ import AssetModelFilterDropdown from '@/components/filters/AssetModelFilterDropd
 import { Eye, Pencil, PlusCircle, Trash2, ListChecks, Tags, Boxes, CheckCircle2 } from 'lucide-react';
 
 import type { BreadcrumbItem } from '@/types';
-import { formatNumber, ucwords } from '@/types/custom-index';
+import { formatNumber } from '@/types/custom-index';
 import type { AssetModelsPageProps, AssetModelWithCounts, AssetModelFilters, StatusOption } from '@/types/asset-model';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
