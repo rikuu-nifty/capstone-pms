@@ -16,6 +16,7 @@ interface EditModalProps {
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
     processing?: boolean;
     children: React.ReactNode;
+    contentClassName?: string;
 }
 
 const EditModal: React.FC<EditModalProps> = ({
@@ -25,11 +26,13 @@ const EditModal: React.FC<EditModalProps> = ({
     onSubmit,
     processing,
     children,
+    contentClassName,
 }) => {
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="w-full max-w-[700px] p-6 sm:max-w-[800px] max-h-[90vh] overflow-y-auto"
+                // className="w-full max-w-[700px] p-6 sm:max-w-[800px] max-h-[90vh] overflow-y-auto"
+                className={`w-full max-w-[700px] sm:max-w-[800px] p-6 ${contentClassName ?? ''}`}
             >
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
