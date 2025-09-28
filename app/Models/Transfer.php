@@ -97,6 +97,7 @@ class Transfer extends Model
             ->map(function ($ta) {
                 $a  = $ta->asset;
                 $am = optional($a)->assetModel;
+                $ec = optional($am)->equipmentCode;
 
                 return [
                     'id'          => optional($a)->id,
@@ -106,6 +107,10 @@ class Transfer extends Model
                         'brand'    => optional($am)->brand,
                         'category' => [
                             'name' => optional(optional($am)->category)->name,
+                        ],
+                        'equipment_code' => [
+                            'code'        => optional($ec)->code,
+                            'description' => optional($ec)->description,
                         ],
                     ],
                 ];

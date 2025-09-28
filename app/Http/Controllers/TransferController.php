@@ -34,6 +34,7 @@ class TransferController extends Controller
             'designatedEmployee',
             'assignedBy',
             'transferAssets.asset.assetModel.category',
+            'transferAssets.asset.assetModel.equipmentCode',
 
             'transferAssets.fromSubArea',
             'transferAssets.toSubArea',
@@ -194,6 +195,7 @@ class TransferController extends Controller
             'designatedEmployee',
             'assignedBy',
             'transferAssets.asset.assetModel.category',
+            'transferAssets.asset.assetModel.equipmentCode',
             
             'formApproval',
             'formApproval.steps' => 

@@ -94,7 +94,6 @@ export default function TransferViewModal({
         return map;
     }, [transfer.transferAssets]);
 
-
     return (
         <ViewModal
             open={open}
@@ -134,42 +133,31 @@ export default function TransferViewModal({
             <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
                 {/* Current Location */}
                 <section className="md:w-[400px]">
-                    <h3 className="mb-2 text-base font-semibold">Current Location</h3>
+                    <h3 className="mb-2 text-base font-semibold">TRANSFER FROM</h3>
                     <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                         <table className="w-full text-sm">
                             <tbody>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                        Building
-                                    </td>
-                                    <td className="px-3 py-2 font-medium">
-                                        {/* {transfer.currentBuildingRoom?.building?.name ?? '—'} (
-                                            {formatEnums(transfer.currentBuildingRoom?.building?.code ?? '—')}
-                                        ) */}
-                                        {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')}
-                                    </td>
-                                </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                        Room
-                                    </td>
-                                    <td className="px-3 py-2 font-medium">
-                                        {transfer.currentBuildingRoom?.room ?? '—'}
-                                    </td>
-                                </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
                                     <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
                                         Unit/Dept/Lab
                                     </td>
-                                    <td className="px-3 py-2 font-medium">
+                                    <td className="px-3 py-2 font-medium text-right">
                                         {formatEnums(transfer.currentOrganization?.code ?? '—')}
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                    <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                        Building (Room)
+                                    </td>
+                                    <td className="px-3 py-2 font-medium text-right">
+                                        {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')} ({transfer.currentBuildingRoom?.room ?? '—'})
                                     </td>
                                 </tr>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
                                     <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
                                         Scheduled Date
                                     </td>
-                                    <td className="px-3 py-2 font-medium">
+                                    <td className="px-3 py-2 font-medium text-right">
                                         {formatDateLong(transfer.scheduled_date)}
                                     </td>
                                 </tr>
@@ -180,35 +168,24 @@ export default function TransferViewModal({
 
                 {/* Receiving Location */}
                 <section className="md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
-                    <h3 className="mb-2 text-base font-semibold">Receiving Location</h3>
+                    <h3 className="mb-2 text-base font-semibold">TRANSFER TO</h3>
                     <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                         <table className="w-full text-sm">
                             <tbody>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                        Building
-                                    </td>
-                                    <td className="px-3 py-2 font-medium">
-                                        {/* {transfer.receivingBuildingRoom?.building?.name ?? '—'} (
-                                            {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')}
-                                        ) */}
-                                        {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')}
-                                    </td>
-                                </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                        Room
-                                    </td>
-                                    <td className="px-3 py-2 font-medium">
-                                        {transfer.receivingBuildingRoom?.room ?? '—'}
-                                    </td>
-                                </tr>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
                                     <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
                                         Unit/Dept/Lab
                                     </td>
                                     <td className="px-3 py-2 font-medium">
                                         {formatEnums(transfer.receivingOrganization?.code ?? '—')}
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                    <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                        Building (Room)
+                                    </td>
+                                    <td className="px-3 py-2 font-medium">
+                                        {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')} ({transfer.receivingBuildingRoom?.room ?? '—'})
                                     </td>
                                 </tr>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
@@ -233,14 +210,13 @@ export default function TransferViewModal({
                 <table className="w-full text-sm text-center">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                        {/* <th className="px-3 py-2 text-center font-medium">Brand</th> */}
-                        {/* <th className="px-3 py-2 text-center font-medium">Category</th> */}
-                        <th className="px-3 py-2 text-center font-medium">Asset Name</th>
-                        <th className="px-3 py-2 text-center font-medium">Serial No.</th>
-                        <th className="px-3 py-2 text-center font-medium">From Sub-Area</th>
-                        <th className="px-3 py-2 text-center font-medium">To Sub-Area</th>
-                        <th className="px-3 py-2 text-center font-medium">Status</th>
-                        <th className="px-3 py-2 text-center font-medium">Date Transferred</th>
+                            <th className="px-3 py-2 text-center font-medium">Code No.</th>
+                            <th className="px-3 py-2 text-center font-medium">Asset Name</th>
+                            <th className="px-3 py-2 text-center font-medium">Serial No.</th>
+                            <th className="px-3 py-2 text-center font-medium">From Sub-Area</th>
+                            <th className="px-3 py-2 text-center font-medium">To Sub-Area</th>
+                            <th className="px-3 py-2 text-center font-medium">Status</th>
+                            <th className="px-3 py-2 text-center font-medium">Date Transferred</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -249,8 +225,7 @@ export default function TransferViewModal({
 
                                 return (
                                     <tr key={asset.id} className="border-t">
-                                        {/* <td className="px-3 py-2">{asset.asset_model?.brand ?? '—'}</td> */}
-                                        {/* <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td> */}
+                                        <td className="px-3 py-2">{asset.asset_model?.equipment_code?.code ?? '—'}</td>
                                         <td className="px-3 py-2">{formatLabel(asset.asset_name ?? '—')}</td>
                                         <td className="px-3 py-2">{(asset.serial_no ?? '—').toUpperCase()}</td>
                                         <td className="px-3 py-2">{pivot.from_sub_area ?? '—'}</td>
@@ -269,7 +244,9 @@ export default function TransferViewModal({
 
             {/* Remarks */}
             <div className="flex justify-between items-start mb-1 mt-4">
-                <h4 className="text-sm font-semibold text-gray-800">Remarks:</h4>
+                {transfer.remarks && (
+                    <h4 className="text-sm font-semibold text-gray-800">Remarks:</h4>
+                )}
                 <p className="text-sm font-medium text-gray-800">
                     <strong>Total Assets:</strong> {assets.length}
                 </p>
