@@ -387,42 +387,6 @@ export default function InventoryListIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Inventory List" />
 
-            {/* <div className="flex flex-col gap-4 p-4"> */}
-            {/* <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Inventory List</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Provides a comprehensive overview of all university assets to facilitate accurate tracking and auditing.
-                        </p>
-                        <Input
-                            type="text"
-                            placeholder="Search by asset name..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="max-w-xs"
-                        />
-                    </div>
-
-                    <div className="flex gap-2">
-                        <Button variant="outline">
-                            <Grid className="mr-1 h-4 w-4" /> Category
-                        </Button>
-                        <Button variant="outline">
-                            <Filter className="mr-1 h-4 w-4" /> Filter
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                reset();
-                                clearErrors();
-                                setShowAddAsset(true);
-                            }}
-                            className="cursor-pointer"
-                        >
-                            <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
-                        </Button>
-                    </div>
-                </div> */}
-
             <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold">Inventory List</h1>
@@ -431,7 +395,7 @@ export default function InventoryListIndex({
                     </p>
                 </div>
 
-                {canViewAll && kpis && (
+                {kpis && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                         {/* Total Assets */}
                         <div className="flex items-center gap-3 rounded-2xl border p-4">
@@ -482,6 +446,19 @@ export default function InventoryListIndex({
                         </div>
                     </div>
                 )}
+                {/* 🔹 Unit restriction notice */}
+                {canViewOwn && !canViewAll && (
+                    <div className="mt-2 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 text-sm">
+                        You are viewing <strong>only the assets assigned to your unit/department</strong>
+                        {auth.unit_or_department && (
+                        <> :
+                            <span className="ml-1 text-sm font-bold text-blue-800">
+                                {auth.unit_or_department.name}
+                            </span>
+                        </>
+                        )}.
+                    </div>
+                )}
 
                 {/* Controls row — search on the left, buttons on the right */}
                 <div className="flex items-center justify-between">
@@ -514,21 +491,17 @@ export default function InventoryListIndex({
                                 </Badge>
                             )}
 
-                            {/* 🔹 Unit chip */}
-                            {selectedUnitId && (
+                            {/* 🔹 If user can view all, keep normal filter chip */}
+                            {canViewAll && selectedUnitId && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
-                                Unit/Dept:{" "}
-                                {canViewOwn && auth.unit_or_department
-                                    ? `${auth.unit_or_department.name} (${auth.unit_or_department.code})`
-                                    : unitOrDepartments.find(u => u.id === selectedUnitId)?.name ?? selectedUnitId}
-
-                                {canViewAll && (
+                                    Unit/Dept:{" "}
+                                    {unitOrDepartments.find(u => u.id === selectedUnitId)?.name ?? selectedUnitId}
                                     <button onClick={() => setSelectedUnitId('')} className="ml-1 hover:text-red-600">
                                         <X className="h-4 w-4" />
                                     </button>
-                                )}
                                 </Badge>
                             )}
+
 
                             {(selectedStatus || selectedCategoryId || (selectedUnitId && canViewAll)) && (
                                 <Button
