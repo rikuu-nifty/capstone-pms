@@ -215,6 +215,8 @@ export default function InventoryListIndex({
     const canViewAll = auth.permissions.includes('view-inventory-list');
     const canViewOwn = auth.permissions.includes('view-own-unit-inventory-list');
     const canCreate = auth.permissions.includes('create-inventory-list');
+    const canEdit = auth.permissions.includes('update-inventory-list');
+    const canDelete = auth.permissions.includes('delete-inventory-list');
 
     const [search, setSearch] = useState('');
     const [showAddAsset, setShowAddAsset] = useState(false);
@@ -502,7 +504,6 @@ export default function InventoryListIndex({
                                 </Badge>
                             )}
 
-
                             {(selectedStatus || selectedCategoryId || (selectedUnitId && canViewAll)) && (
                                 <Button
                                 size="sm"
@@ -658,31 +659,38 @@ export default function InventoryListIndex({
                                     </TableCell> */}
 
                                     <TableCell className="text-center">
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            onClick={() => {
-                                                setSelectedAsset(item);
-                                                setEditModalVisible(true);
-                                            }}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
+                                        {canEdit && (
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedAsset(item);
+                                                    setEditModalVisible(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
+
+                                        {canDelete && (
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedAsset(item);
+                                                    setDeleteModalVisible(true);
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        )}
 
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            onClick={() => {
-                                                setSelectedAsset(item);
-                                                setDeleteModalVisible(true);
-                                            }}
-                                        >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
+                                            className="cursor-pointer"
                                             onClick={() => {
                                                 setSelectedAsset(item); // ✅ set the current asset
                                                 setChooseViewVisible(true); // ✅ open ChooseViewModal

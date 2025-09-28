@@ -115,14 +115,15 @@ class InventoryListController extends Controller
         $assets = $query->get();
 
         return [
-            'assets' => $assets,
-            'assetModels' => AssetModel::all(),
+            'assets'            => $assets,
+            'assetModels'       => AssetModel::all(),
             'unitOrDepartments' => UnitOrDepartment::all(),
-            'buildings' => Building::all(),
-            'buildingRooms' => BuildingRoom::all(),
-            'categories' => Category::all(),
-            'subAreas' => SubArea::all(),
-            'kpis' => InventoryList::kpis(),
+            'buildings'         => Building::all(),
+            'buildingRooms'     => BuildingRoom::all(),
+            'categories'        => Category::all(),
+            'subAreas'          => SubArea::all(),
+            // 'kpis'           => InventoryList::kpis(),
+            'kpis'              => InventoryList::kpis($user),
         ];
     }
 

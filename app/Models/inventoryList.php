@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Notifications\MaintenanceDueNotification;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\DB;
+
 class InventoryList extends Model   
 {
     use SoftDeletes;
@@ -229,17 +231,20 @@ class InventoryList extends Model
         return $this->belongsTo(User::class, 'deleted_by_id');
     }
 
-    public static function kpis(): array
+    public static function kpis(?User $user = null): array
     {
-        $total = static::count();
+        $query = static::query();
 
-        $active = static::where('status', 'active')->count();
-        $archived = static::where('status', 'archived')->count();
+        if ($user && !$user->hasPermission('view-inventory-list')) {
+            $query->where('unit_or_department_id', $user->unit_or_department_id);
+        }
 
-        $fixed = static::where('asset_type', 'fixed')->count();
-        $notFixed = static::where('asset_type', 'not_fixed')->count();
-
-        $valueSum = static::sumInventoryValue();
+        $total    = (clone $query)->count();
+        $active   = (clone $query)->where('status', 'active')->count();
+        $archived = (clone $query)->where('status', 'archived')->count();
+        $fixed    = (clone $query)->where('asset_type', 'fixed')->count();
+        $notFixed = (clone $query)->where('asset_type', 'not_fixed')->count();
+        $valueSum = (clone $query)->sum(DB::raw('quantity * unit_cost'));
 
         $statusDen = max($active + $archived, 0);
         $typeDen = max($fixed + $notFixed, 0);
