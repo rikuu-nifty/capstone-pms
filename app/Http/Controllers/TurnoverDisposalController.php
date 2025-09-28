@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Personnel;
 
 class TurnoverDisposalController extends Controller
 {
@@ -29,6 +30,8 @@ class TurnoverDisposalController extends Controller
             ->first();
 
         $unitOrDepartments = UnitOrDepartment::all();
+
+        $personnels = Personnel::activeForAssignments(); // only active personnels
 
         $turnoverDisposals = TurnoverDisposal::with([
             'turnoverDisposalAssets.assets.assetModel.category',
@@ -66,6 +69,8 @@ class TurnoverDisposalController extends Controller
             'unitOrDepartments'      => $unitOrDepartments,
             'assignedBy'             => $assignedBy,
             'pmoHead'                => $pmoHead,
+
+            'personnels'             => $personnels,
         ];
 }
     /**
@@ -86,7 +91,8 @@ class TurnoverDisposalController extends Controller
             'type'                => ['required', Rule::in(['turnover', 'disposal'])],
             'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
             'description'         => ['nullable', 'string'],
-            'personnel_in_charge' => ['required', 'string'],
+            'personnel_in_charge' => ['nullable', 'string'],
+            'personnel_id'          => ['required', 'integer', Rule::exists('personnels', 'id')],
             'document_date'       => ['required', 'date'],
             'status'              => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
             'remarks'             => ['nullable', 'string'],
@@ -114,7 +120,8 @@ class TurnoverDisposalController extends Controller
             'type'                => ['required', Rule::in(['turnover', 'disposal'])],
             'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
             'description'         => ['nullable', 'string'],
-            'personnel_in_charge' => ['required', 'string'],
+            'personnel_in_charge' => ['nullable', 'string'],
+            'personnel_id'          => ['required', 'integer', Rule::exists('personnels', 'id')],
             'document_date'       => ['required', 'date'],
             'status'              => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
             'remarks'             => ['nullable', 'string'],

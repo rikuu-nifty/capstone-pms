@@ -21,6 +21,7 @@ class TurnoverDisposal extends Model
         'receiving_office_id',
         'description',
         'personnel_in_charge',
+        'personnel_id',
         'document_date',
         'status',
         'remarks',
@@ -46,6 +47,11 @@ class TurnoverDisposal extends Model
     public function receivingOffice() 
     {
         return $this->belongsTo(UnitOrDepartment::class, 'receiving_office_id');
+    }
+
+    public function personnel()
+    {
+        return $this->belongsTo(Personnel::class, 'personnel_id');
     }
 
     public static function assetBelongsToOffice(array $assetIds, int $officeId): void

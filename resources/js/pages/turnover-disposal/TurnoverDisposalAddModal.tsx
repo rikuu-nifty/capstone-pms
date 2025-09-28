@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Select, { SingleValue } from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from '@/components/modals/AddModal';
-import { UnitOrDepartment, User, InventoryList, formatEnums, ucwords } from '@/types/custom-index';
+import { UnitOrDepartment, User, InventoryList, formatEnums, Personnel } from '@/types/custom-index';
 import { TurnoverDisposalFormData } from '@/types/turnover-disposal';
 import type { TurnoverDisposalAssetInput, TdaStatus } from '@/types/turnover-disposal-assets';
 import AssetTdaItem from './AssetTdaItem';
@@ -15,6 +15,7 @@ interface TurnoverDisposalAddModalProps {
   assignedBy: User;
   unitOrDepartments: UnitOrDepartment[];
   assets: InventoryList[];
+  personnels: Personnel[];
 }
 
 const typeOptions = ['turnover', 'disposal'] as const;
@@ -25,6 +26,7 @@ export default function TurnoverDisposalAddModal({
   onClose,
   unitOrDepartments,
   assets,
+  personnels,
 }: TurnoverDisposalAddModalProps) {
   const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TurnoverDisposalFormData>({
     issuing_office_id: 0,
@@ -36,6 +38,8 @@ export default function TurnoverDisposalAddModal({
     status: 'pending_review',
     remarks: '',
     turnover_disposal_assets: [],
+
+    personnel_id: null,
   });
 
   const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
@@ -136,42 +140,62 @@ export default function TurnoverDisposalAddModal({
       {/* Issuing Office */}
       <div className="col-span-1">
         <label className="mb-1 block font-medium">Issuing Office</label>
-        <select
-          className="w-full rounded-lg border p-2"
-          value={data.issuing_office_id}
-          onChange={(e) => {
-            const id = Number(e.target.value);
+        <Select
+          className="w-full text-sm"
+          isClearable
+          value={
+            unitOrDepartments
+              .map((unit) => ({
+                value: unit.id,
+                label: ` ${unit.name}`,
+              }))
+              .find((opt) => opt.value === data.issuing_office_id) ?? null
+          }
+          onChange={(opt) => {
+            const id = opt ? opt.value : 0;
             setData('issuing_office_id', id);
-            setData('turnover_disposal_assets', []);
+            setData('personnel_id', null);
+            setData('turnover_disposal_assets', []); // reset assets when office changes
             setShowAssetDropdown([true]);
           }}
-        >
-          <option value={0}>Select Unit/Dept/Lab</option>
-          {unitOrDepartments.map((unit) => (
-            <option key={unit.id} value={unit.id}>
-              {unit.code.toUpperCase()} - {unit.name}
-            </option>
-          ))}
-        </select>
-        {errors.issuing_office_id && <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>}
+          options={unitOrDepartments.map((unit) => ({
+            value: unit.id,
+            label: `${unit.name}`,
+          }))}
+          placeholder="Select Unit/Dept/Lab"
+        />
+        {errors.issuing_office_id && (
+          <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
+        )}
       </div>
 
       {/* Receiving Office */}
       <div className="col-span-1">
         <label className="mb-1 block font-medium">Receiving Office</label>
-        <select
-          className="w-full rounded-lg border p-2"
-          value={data.receiving_office_id}
-          onChange={(e) => setData('receiving_office_id', Number(e.target.value))}
-        >
-          <option value={0}>Select Unit/Dept/Lab</option>
-          {unitOrDepartments.map((unit) => (
-            <option key={unit.id} value={unit.id}>
-              {unit.code.toUpperCase()} - {unit.name}
-            </option>
-          ))}
-        </select>
-        {errors.receiving_office_id && <p className="mt-1 text-xs text-red-500">{errors.receiving_office_id}</p>}
+        <Select
+          className="w-full text-sm"
+          isClearable
+          value={
+            unitOrDepartments
+              .map((unit) => ({
+                value: unit.id,
+                label: `${unit.name}`,
+              }))
+              .find((opt) => opt.value === data.receiving_office_id) ?? null
+          }
+          onChange={(opt) => {
+            const id = opt ? opt.value : 0;
+            setData('receiving_office_id', id);
+          }}
+          options={unitOrDepartments.map((unit) => ({
+            value: unit.id,
+            label: `${unit.name}`,
+          }))}
+          placeholder="Select Unit/Dept/Lab"
+        />
+        {errors.receiving_office_id && (
+          <p className="mt-1 text-xs text-red-500">{errors.receiving_office_id}</p>
+        )}
       </div>
 
       {/* Description */}
@@ -190,14 +214,23 @@ export default function TurnoverDisposalAddModal({
       {/* PIC */}
       <div className="col-span-1">
         <label className="mb-1 block font-medium">Personnel in Charge</label>
-        <input
-          placeholder="Enter full name"
-          type="text"
-          className="w-full rounded-lg border p-2"
-          value={data.personnel_in_charge ?? ''}
-          onChange={(e) => setData('personnel_in_charge', ucwords(e.target.value))}
+        <Select
+          className="w-full"
+          isClearable
+          isDisabled={!data.issuing_office_id}
+          options={personnels
+            .filter(p => p.unit_or_department_id === data.issuing_office_id)
+            .map(p => ({ value: p.id, label: p.full_name }))
+          }
+          placeholder={data.issuing_office_id ? "Select Personnel..." : "Select an Issuing Office first"}
+          value={
+            personnels.find(p => p.id === data.personnel_id)
+              ? { value: data.personnel_id!, label: personnels.find(p => p.id === data.personnel_id)!.full_name }
+              : null
+          }
+          onChange={(opt) => setData('personnel_id', opt?.value ?? null)}
         />
-        {errors.personnel_in_charge && <p className="mt-1 text-xs text-red-500">{errors.personnel_in_charge}</p>}
+        {errors.personnel_id && <p className="mt-1 text-xs text-red-500">{errors.personnel_id}</p>}
       </div>
 
       {/* Document Date */}

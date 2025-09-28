@@ -1,4 +1,4 @@
-import { UnitOrDepartment, AssetAssignment } from "./custom-index";
+import { UnitOrDepartment, AssetAssignment, Personnel } from "./custom-index";
 import { TurnoverDisposalAssets, TurnoverDisposalAssetInput } from "./turnover-disposal-assets";
 
 export type TurnoverDisposals = {
@@ -8,6 +8,7 @@ export type TurnoverDisposals = {
     receiving_office_id: number;
     description: string | null;
     personnel_in_charge: string;
+    personnel_id?: number | null;
     document_date: string;
     status: 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed';
     remarks: string | null;
@@ -24,6 +25,8 @@ export type TurnoverDisposals = {
 
     noted_by_name?: string | null;
     noted_by_title?: string | null;
+
+    personnel?: Personnel;
 };
 
 export type TurnoverDisposalFormData = {
@@ -38,6 +41,8 @@ export type TurnoverDisposalFormData = {
 
     // selected_assets: number[];
     turnover_disposal_assets: TurnoverDisposalAssetInput[];
+
+    personnel_id?: number | null;
 };
 
 export function labelLineStatus(

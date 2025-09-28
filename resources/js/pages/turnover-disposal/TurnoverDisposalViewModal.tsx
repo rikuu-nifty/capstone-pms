@@ -294,9 +294,9 @@ export default function TurnoverDisposalViewModal({
                     <div className="text-center">
                         <p className="font-semibold mb-8 invisible aria-hidden=true">Head/Unit:</p>
                             <div className="border-t border-black w-48 mx-auto mb-1" />
-                            <p className="font-bold text-gray-800">Head / Unit</p>
+                            <p className="font-bold text-gray-800">{(turnoverDisposal.issuing_office?.unit_head ?? '—').toUpperCase()}</p>
                             <p className="text-xs text-gray-500 italic">
-                            {turnoverDisposal.issuing_office?.name}
+                            Head / Unit
                         </p>
                     </div>
                 )}
@@ -304,14 +304,14 @@ export default function TurnoverDisposalViewModal({
                 <div className="text-center">
                     <p className="font-semibold mb-8">Noted By:</p>
                     <div className="border-t border-black w-48 mx-auto mb-1" />
-                    <p className="font-bold text-gray-800">{turnoverDisposal.noted_by_name ?? '—'}</p>
-                    <p className="text-xs text-gray-500 italic">{turnoverDisposal.noted_by_title ?? 'Dean / Head'}</p>
+                    <p className="font-bold text-gray-800">{(turnoverDisposal.noted_by_name ?? '—').toUpperCase()}</p>
+                    <p className="text-xs text-gray-500 italic">{ucwords(turnoverDisposal.noted_by_title ?? 'Dean / Head')}</p>
                 </div>
                 
                 <div className="text-center">
                     <p className="font-semibold mb-8 invisible aria-hidden=true">PMO Head</p>
                     <div className="border-t border-black w-48 mx-auto mb-1" />
-                    <p className="font-bold text-gray-800">{pmoHead?.name ?? '—'}</p>
+                    <p className="font-bold text-gray-800">{(pmoHead?.name ?? '—').toUpperCase()}</p>
                     <p className="text-xs text-gray-500 italic">Head, PMO</p>
                 </div>
                 

@@ -8,6 +8,7 @@ import {
     TurnoverDisposals, 
     TurnoverDisposalAssets,
     SubArea, 
+    Personnel,
 } from './custom-index';
 
 export type TransferPageProps = {
@@ -66,6 +67,7 @@ export type TurnoverDisposalPageProps = {
     assignedBy: User;
     unitOrDepartments: UnitOrDepartment[];
     assets: InventoryList[];
+    personnels: Personnel[];
 
     asset_count: number;
 }

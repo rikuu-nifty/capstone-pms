@@ -378,6 +378,7 @@ export default function TurnoverDisposalsIndex({
                 assignedBy={assignedBy}
                 unitOrDepartments={unitOrDepartments}
                 assets={assets}
+                personnels={props.personnels}
             />
 
             {selectedTurnoverDisposals && (
@@ -390,6 +391,7 @@ export default function TurnoverDisposalsIndex({
                     turnoverDisposal={selectedTurnoverDisposals}
                     unitOrDepartments={unitOrDepartments}
                     assets={assets}
+                    personnels={props.personnels}
                 />
             )}
 
