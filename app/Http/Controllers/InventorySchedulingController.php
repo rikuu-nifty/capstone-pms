@@ -288,16 +288,26 @@ class InventorySchedulingController extends Controller
             $inventoryScheduling->update([
                 ...$data,
 
-                // 👇 Always keep single FKs aligned with pivot arrays
+                // Always keep single FKs aligned with pivot arrays
                 'building_id'           => $data['building_ids'][0] ?? $data['building_id'] ?? null,
                 'building_room_id'      => $data['room_ids'][0] ?? $data['building_room_id'] ?? null,
                 'unit_or_department_id' => $data['unit_ids'][0] ?? $data['unit_or_department_id'] ?? null,
             ]);
 
             $inventoryScheduling->syncScopeAndAssets($data);
+            $inventoryScheduling->subAreas()->sync($data['sub_area_ids'] ?? []); // Make sure sub-areas pivot is updated
 
-            // ✅ Make sure sub-areas pivot is updated
-            $inventoryScheduling->subAreas()->sync($data['sub_area_ids'] ?? []);
+            // Update related asset statuses based on scheduling_status
+            $status = strtolower($data['scheduling_status']);
+
+            if ($status === 'completed') {
+                // Set to inventoried, but keep not_inventoried untouched
+                $inventoryScheduling->assets()->where('inventory_status', '!=', 'not_inventoried')->update(['inventory_status' => 'inventoried']);
+            } elseif ($status === 'pending') {
+                $inventoryScheduling->assets()->update(['inventory_status' => 'scheduled']);
+            } elseif ($status === 'cancelled') {
+                $inventoryScheduling->assets()->update(['inventory_status' => 'not_inventoried']);
+            }
         });
 
         $inventoryScheduling->load([
