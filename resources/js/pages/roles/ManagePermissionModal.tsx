@@ -14,6 +14,9 @@ interface Props {
 }
 
 const PERMISSION_GROUPS: Record<string, string[]> = {
+    "Audit Logs": [
+        "view-audit-logs"
+    ],
     "Users Management": [
         "view-users-page",
         "approve-users",
@@ -21,12 +24,36 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "send-email-change-request",
         "delete-users",
     ],
+    "Reports": [
+        "view-reports"
+    ],
+    "Form Approvals": [
+        "view-form-approvals",
+        "approve-form-approvals",
+        "delete-form-approvals",
+    ],
     "Roles & Permissions": [
         "view-roles-page",
         "create-roles",
         "update-roles",
         "delete-role",
         "update-permissions",
+    ],
+    "Personnels": [
+        "view-personnels",
+        "create-personnels",
+        "update-personnels",
+        "delete-personnels",
+    ],
+    "Assignments": [
+        "view-assignments",
+        "create-assignments",
+        "update-assignments",
+        "delete-assignments",
+    ],
+    "Profile": [
+        "view-profile", 
+        "manage-profile"
     ],
     "Inventory Scheduling": [
         "view-inventory-scheduling",
@@ -91,33 +118,8 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "update-unit-or-departments",
         "delete-unit-or-departments",
     ],
-    "Form Approvals": [
-        "view-form-approvals",
-        "approve-form-approvals",
-        "delete-form-approvals",
-    ],
-    "Reports": [
-        "view-reports"
-    ],
-    "Audit Logs": [
-        "view-audit-logs"
-    ],
-    "Personnels": [
-        "view-personnels",
-        "create-personnels",
-        "update-personnels",
-        "delete-personnels",
-    ],
-    // "Assignments": [
-    //     "view-assignments",
-    //     "create-assignments",
-    //     "update-assignments",
-    //     "delete-assignments",
-    // ],
-    "Profile": [
-        "view-profile", 
-        "manage-profile"
-    ],
+    
+    
 };
 
 export default function ManagePermissionsModal({
@@ -167,6 +169,7 @@ export default function ManagePermissionsModal({
             title={`Manage Permissions for ${role.name}`}
             onSubmit={handleSubmit}
             processing={processing}
+            contentClassName="flex max-h-[80vh] min-h-[80vh] flex-col overflow-hidden"
         >
             <div className="col-span-2 mb-4">
                 <Input
@@ -179,7 +182,7 @@ export default function ManagePermissionsModal({
             </div>
 
             {/* Permission groups */}
-            <div className="col-span-2 space-y-6 max-h-[500px] overflow-y-auto rounded-lg p-4 bg-muted/10">
+            <div className="col-span-2 space-y-6 max-h-[500px] min-h-[500px] overflow-y-auto rounded-lg p-4 bg-muted/10">
                 {Object.entries(PERMISSION_GROUPS).map(([group, codes]) => {
                     const groupPerms = codes
                         .map((code) => permMap[code])
@@ -196,7 +199,7 @@ export default function ManagePermissionsModal({
                     return (
                         <div key={group} className="space-y-2">
                             <div className="flex items-center border-b pb-1 mb-2">
-                                <h3 className="text-sm font-semibold text-foreground/80">
+                                <h3 className="text-lg font-semibold text-blue-600">
                                     {group}
                                 </h3>
                             </div>
