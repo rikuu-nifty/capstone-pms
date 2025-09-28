@@ -73,6 +73,8 @@ class InventoryListController extends Controller
             'schedulingAssets',
 
             'latestAssignment.assignment.personnel',
+            'assetModel.equipmentCode',
+            'equipmentCode',
         ]);
 
           // ✅ Log the viewing action in audit_trails
@@ -108,6 +110,8 @@ class InventoryListController extends Controller
             'schedulingAssets',
 
             'latestAssignment.assignment.personnel',
+            'assetModel.equipmentCode',
+            'equipmentCode',
         ])
         ->orderBy('id', 'desc');
 

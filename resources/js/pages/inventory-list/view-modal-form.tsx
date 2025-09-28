@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import type { Asset } from '@/pages/inventory-list/index';
+import { ucwords } from '@/types/custom-index';
 import { CreditCard, Home, Info, Package, ShieldCheck } from 'lucide-react';
 
 // -------------------- HELPERS --------------------
@@ -96,7 +97,16 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <Info size={18} /> General Information
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <InfoCard label="Type" value={humanize(asset.asset_type)} />
+                                {/* <InfoCard label="Type" value={humanize(asset.asset_type)} /> */}
+                                <InfoCard
+                                    label="Equipment Code"
+                                    value={
+                                        asset.asset_model?.equipment_code
+                                        ? `${ucwords(asset.asset_model.equipment_code.description ?? '')} [${asset.asset_model.equipment_code.code}]`
+                                        : humanize(asset.asset_type)
+                                    }
+                                />
+
                                 <InfoCard label="Category" value={humanize(asset.asset_model?.category?.name ?? asset.category?.name)} />
                                 <InfoCard label="Brand" value={humanize(asset.asset_model?.brand)} />
                                 <InfoCard label="Model" value={humanize(asset.asset_model?.model)} />

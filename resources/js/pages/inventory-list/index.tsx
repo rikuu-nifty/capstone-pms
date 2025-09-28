@@ -36,12 +36,22 @@ export type Category = {
     description: string;
 };
 
+export type EquipmentCode = {
+    id: number;
+    code: string;
+    description: string | null;
+    category_id: number;
+};
+
 export type AssetModel = {
     id: number;
     category_id: number;
     brand: string;
     model: string;
     category?: Category;
+
+    equipment_code?: EquipmentCode | null;
+    equipment_code_id?: number | null;
 };
 
 export type Building = {
@@ -105,6 +115,8 @@ export type Asset = {
 
     current_transfer_status?: string | null;
     current_inventory_status?: string | null;
+
+    equipment_code?: EquipmentCode | null;
 };
 
 export type AssetFormData = {
