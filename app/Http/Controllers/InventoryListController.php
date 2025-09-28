@@ -75,6 +75,7 @@ class InventoryListController extends Controller
             'latestAssignment.assignment.personnel',
             'assetModel.equipmentCode',
             'equipmentCode',
+            'turnoverDisposalAsset.turnoverDisposal',
         ]);
 
           // ✅ Log the viewing action in audit_trails
@@ -112,6 +113,7 @@ class InventoryListController extends Controller
             'latestAssignment.assignment.personnel',
             'assetModel.equipmentCode',
             'equipmentCode',
+            'turnoverDisposalAsset.turnoverDisposal',
         ])
         ->orderBy('id', 'desc');
 

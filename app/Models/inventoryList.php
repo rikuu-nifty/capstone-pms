@@ -21,6 +21,7 @@ class InventoryList extends Model
         'current_transfer_status',
         'current_inventory_status',
         'assigned_to_name',
+        'current_turnover_disposal_status',
     ];
 
     protected $fillable = [
@@ -177,6 +178,7 @@ class InventoryList extends Model
     {
         return $this->hasMany(TransferAsset::class, 'asset_id');
     }
+
     public function getCurrentInventoryStatusAttribute(): ?string
     {
         return $this->schedulingAssets()
@@ -206,6 +208,28 @@ class InventoryList extends Model
             ->first();
 
         return $latest?->status;
+    }
+
+    public function getCurrentTurnoverDisposalStatusAttribute(): ?string
+    {
+        $latest = TurnoverDisposalAsset::with('turnoverDisposal')
+            ->where('asset_id', $this->id)
+            ->latest('created_at')
+            ->first();
+
+        if (!$latest || !$latest->turnoverDisposal) {
+            return null;
+        }
+
+        $td = $latest->turnoverDisposal;
+
+        if ($td->status === 'completed') {
+            return $td->type === 'turnover'
+                ? 'Turned Over'
+                : ($td->type === 'disposal' ? 'Disposed' : 'Completed');
+        }
+
+        return ucfirst(str_replace('_', ' ', $td->status));
     }
 
     // DO NOT DELETE - FOR PIVOT TABLE and INVENTORY SHEET REPORTS

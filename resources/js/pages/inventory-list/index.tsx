@@ -115,6 +115,7 @@ export type Asset = {
 
     current_transfer_status?: string | null;
     current_inventory_status?: string | null;
+    current_turnover_disposal_status?: string | null;
 
     equipment_code?: EquipmentCode | null;
 };
