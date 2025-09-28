@@ -281,12 +281,12 @@ export default function TurnoverDisposalViewModal({
 
             {/* Signatures */}
             <div className="grid grid-cols-2 gap-x-5 gap-y-8 mt-2 text-sm mb-8">
-                {(turnoverDisposal.personnel_in_charge) && (
+                {turnoverDisposal.personnel && (
                     <div className="text-center">
                         <p className="font-semibold mb-8">Personnel In Charge:</p>
                         <div className="border-t border-black w-48 mx-auto mb-1"></div>
-                        <p className="font-bold text-gray-700">{turnoverDisposal.personnel_in_charge}</p>
-                        <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                        <p className="font-bold text-gray-700">{(turnoverDisposal.personnel.full_name).toUpperCase()}</p>
+                        <p className="text-xs text-gray-500 italic">{(turnoverDisposal.personnel.position ?? 'PMO Staff')}</p>
                     </div>
                 )}
 

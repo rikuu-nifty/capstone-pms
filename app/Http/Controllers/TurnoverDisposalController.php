@@ -155,6 +155,7 @@ class TurnoverDisposalController extends Controller
             'formApproval.steps.actor:id,name',
 
             'turnoverDisposalAssets.assets.assetModel.equipmentCode',
+            'personnel',
         ]);
 
         $turnoverDisposal->append([
