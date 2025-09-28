@@ -149,7 +149,7 @@ export default function ReportsIndex() {
                 inventoried: { label: 'Inventoried', color: '#00A86B' },
                 scheduled: { label: 'Scheduled', color: '#3b82f6' },
               }}
-              className="mt-3 mx-auto aspect-[4/3] max-h-[245px] w-full flex items-center justify-center"
+              className="mt-3 mx-auto aspect-[4/3] max-h-[265px] w-full flex items-center justify-center"
             >
               <AreaChart data={inventorySheetChartData}>
                 <defs>
@@ -287,53 +287,6 @@ export default function ReportsIndex() {
           Click "View" to see more details
         </span>
       ),
-
-      // chart: turnoverDisposalChartData.length > 0 ? (
-      //   <div className="rounded-lg bg-gray-50 p-3">
-      //     <ChartContainer
-      //       config={{
-      //         turnover: { label: 'Turnover', color: 'var(--chart-1)' },
-      //         disposal: { label: 'Disposal', color: 'var(--chart-2)' },
-      //       }}
-      //       // className="mx-auto aspect-square max-h-[220px]"
-      //       className="mx-auto aspect-[4/3] max-h-[245px] w-full flex items-center justify-center"
-      //     >
-      //       <ResponsiveContainer width="100%" height="100%">
-      //         <RadarChart 
-      //           data={turnoverDisposalChartData}
-      //         >
-      //           <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-      //           <PolarAngleAxis 
-      //             dataKey="month"
-      //             tickFormatter={(value) => value.slice(0, 3)}
-      //           />
-      //           <PolarGrid />
-      //           <Radar
-      //             name="Turnover"
-      //             dataKey="turnover"
-      //             stroke="var(--chart-1)"
-      //             fill="var(--chart-1)"
-      //             fillOpacity={0.6}
-      //           />
-      //           <Radar
-      //             name="Disposal"
-      //             dataKey="disposal"
-      //             stroke="var(--chart-2)"
-      //             fill="var(--chart-2)"
-      //             fillOpacity={0.4}
-      //           />
-      //           <ChartLegend 
-      //             content={<ChartLegendContent/>}
-      //           />
-      //         </RadarChart>
-      //       </ResponsiveContainer>
-      //     </ChartContainer>
-      //   </div>
-      // ) : (
-      //   <div className="flex h-full items-center justify-center text-sm text-gray-400">
-      //     No data available
-      //   </div>
-      // ),
       chart: turnoverDisposalChartData.length > 0 ? (
         <div className="rounded-lg bg-gray-50 p-3">
           <ChartContainer
@@ -341,7 +294,7 @@ export default function ReportsIndex() {
               turnover: { label: 'Turnover', color: 'var(--chart-1)' },
               disposal: { label: 'Disposal', color: 'var(--chart-2)' },
             }}
-            className="mx-auto aspect-[4/3] max-h-[245px] w-full"
+            className="mx-auto aspect-[4/3] max-h-[277px] w-full"
           >
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={turnoverDisposalChartData}>
