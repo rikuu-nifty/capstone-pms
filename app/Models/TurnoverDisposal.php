@@ -219,6 +219,18 @@ class TurnoverDisposal extends Model
             return;
         }
 
+        // Handle when type changes but status stays completed
+        if ($line->asset_status === 'completed' && $previous === 'completed') {
+            if ($this->type === 'disposal' && $asset->status !== 'archived') {
+                $asset->status = 'archived';
+                $asset->save();
+            } elseif ($this->type === 'turnover' && $this->receiving_office_id) {
+                $asset->unit_or_department_id = $this->receiving_office_id;
+                $asset->status = 'active'; // ensure un-archived
+                $asset->save();
+            }
+        }
+
         if ($previous === 'completed' && $line->asset_status !== 'completed') {
             if ($this->type === 'turnover') {
                 if ($this->issuing_office_id) {
