@@ -14,7 +14,7 @@ import { type TransferFilters } from '@/components/filters/TransferFilterModal';
 import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
 import TransferSortDropdown, { type SortKey, type SortDir } from '@/components/filters/TransferSortDropdown';
 
-import { Transfer, InventoryList, statusVariantMap, formatDate, formatStatusLabel } from '@/types/custom-index';
+import { Transfer, InventoryList, statusVariantMap, formatDate, formatStatusLabel, formatEnums } from '@/types/custom-index';
 
 import { TransferPageProps } from '@/types/page-props';
 import TransferAddModal from './TransferAddModal';
@@ -293,10 +293,10 @@ export default function TransferIndex({
                                     <TableRow key={transfer.id}>
                                         <TableCell>{transfer.id}</TableCell>
                                         <TableCell>{transfer.asset_count}</TableCell>
-                                        <TableCell>{transfer.currentBuildingRoom?.building?.code ?? '—'} ({transfer.currentBuildingRoom?.room ?? '—'})</TableCell>
-                                        <TableCell>{transfer.currentOrganization?.code ?? '—'}</TableCell>
-                                        <TableCell>{transfer.receivingBuildingRoom?.building?.code ?? '—'} ({transfer.receivingBuildingRoom?.room ?? '—'})</TableCell>
-                                        <TableCell>{transfer.receivingOrganization?.code ?? '—'}</TableCell>
+                                        <TableCell>{(formatEnums(transfer.currentBuildingRoom?.building?.code)).toUpperCase() ?? '—'} ({transfer.currentBuildingRoom?.room ?? '—'})</TableCell>
+                                        <TableCell>{(formatEnums(transfer.currentOrganization?.code)).toUpperCase() ?? '—'}</TableCell>
+                                        <TableCell>{(formatEnums(transfer.receivingBuildingRoom?.building?.code)).toUpperCase() ?? '—'} ({transfer.receivingBuildingRoom?.room ?? '—'})</TableCell>
+                                        <TableCell>{(formatEnums(transfer.receivingOrganization?.code)).toUpperCase() ?? '—'}</TableCell>
                                         <TableCell>{formatDate(transfer.scheduled_date)}</TableCell>
 
                                         <TableCell>
@@ -379,7 +379,7 @@ export default function TransferIndex({
                         setShowEditTransfer(false);
                         setSelectedTransfer(null);
                     }}
-                    transfer={selectedTransfer}
+                    transfer={{ ...selectedTransfer, is_approved: true }}
                     currentUser={currentUser}
                     buildings={buildings}
                     buildingRooms={buildingRooms}
