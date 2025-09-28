@@ -1,4 +1,4 @@
-import { Role, UserDetail } from "./custom-index";
+import { Role, UserDetail, UnitOrDepartment } from "./custom-index";
 
 export type User = {
     id: number;
@@ -13,6 +13,9 @@ export type User = {
     created_at?: string;
     updated_at?: string;
     can_delete?: boolean;
+
+    unit_or_department_id?: number | null;
+    unit_or_department?: UnitOrDepartment | null;
 };
 
 export type UserPageProps = {
@@ -20,6 +23,8 @@ export type UserPageProps = {
     onClose: () => void;
     user: User | null;
     roles: Role[];
+
+    unitOrDepartments: { id: number; name: string }[];
 };
 
 export type TabKey = 'system' | 'approvals';

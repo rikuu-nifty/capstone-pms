@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { router } from "@inertiajs/react";
 import {
   Dialog,
@@ -12,8 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-// import { Role, RolePageProps } from "@/types/role";
+import Select, { SingleValue } from "react-select";
 import { RolePageProps } from "@/types/role";
+
+type Option = { value: number; label: string };
+
+interface ExtendedProps extends RolePageProps {
+    unitOrDepartments: { id: number; name: string }[];
+    currentRoleId?: number | null;
+    currentUnitOrDeptId?: number | null;   
+}
 
 export default function RoleAssignmentModal({
     show,
@@ -21,93 +29,118 @@ export default function RoleAssignmentModal({
     userId,
     roles,
     action,
-}: RolePageProps) {
-
+    unitOrDepartments,
+    currentRoleId,
+    currentUnitOrDeptId,
+}: ExtendedProps) {
     const [roleId, setRoleId] = useState<number | "">("");
+    const [unitOrDeptId, setUnitOrDeptId] = useState<number | "">("");
     const [notes, setNotes] = useState("");
+
+    useEffect(() => {
+        if (show) {
+            setRoleId(currentRoleId ?? ""); 
+            setUnitOrDeptId(currentUnitOrDeptId ?? "");
+        }
+    }, [show, currentRoleId, currentUnitOrDeptId]);
 
     const handleSubmit = () => {
         if (!userId || !roleId) return;
 
+        const payload = {
+        role_id: roleId,
+        notes,
+        unit_or_department_id: unitOrDeptId || null,
+        };
+
         if (action === "approve") {
-        router.post(
-            route("users.approve", userId),
-            { role_id: roleId, notes },
-            {
+        router.post(route("users.approve", userId), payload, {
             preserveScroll: true,
             onSuccess: onClose,
-            }
-        );
+        });
         } else if (action === "reassign") {
-        router.post(
-            route("users.reassignRole", userId),
-            { role_id: roleId, notes },
-            {
+        router.post(route("users.reassignRole", userId), payload, {
             preserveScroll: true,
             onSuccess: onClose,
-            }
-        );
+        });
         }
     };
 
+    const roleOptions: Option[] = (roles ?? []).map((r) => ({
+        value: r.id,
+        label: r.name,
+    }));
+
+    const unitOptions: Option[] = (unitOrDepartments ?? []).map((u) => ({
+        value: u.id,
+        label: u.name,
+    }));
+
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-full max-w-md space-y-4">
-                <DialogHeader>
-                    <DialogTitle>
-                        {action === "approve" ? "Assign Role on Approval" : "Reassign Role"}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {action === "approve"
-                        ? "Select a role before approving this user."
-                        : "Select a new role for this user."}
-                    </DialogDescription>
-                </DialogHeader>
+        <DialogContent className="w-full max-w-md space-y-4">
+            <DialogHeader>
+            <DialogTitle>
+                {action === "approve" ? "Assign Role & Unit" : "Reassign Role & Unit"}
+            </DialogTitle>
+            <DialogDescription>
+                {action === "approve"
+                ? "Select a role and unit before approving this user."
+                : "Select a new role and/or unit for this user."}
+            </DialogDescription>
+            </DialogHeader>
 
-                <div className="grid gap-4">
-                    {/* Role Select */}
-                    <div className="grid gap-1">
-                        <Label htmlFor="role">Role</Label>
-                        <select
-                            id="role"
-                            value={roleId}
-                            onChange={(e) =>
-                            setRoleId(e.target.value ? Number(e.target.value) : "")
-                            }
-                            className="border rounded-md p-2"
-                        >
-                            <option value="">-- Select Role --</option>
-                            {(roles ?? []).map((r) => (
-                            <option key={r.id} value={r.id}>
-                                {r.name}
-                            </option>
-                            ))}
-                        </select>
-                    </div>
+            <div className="grid gap-4">
+            {/* Role Select */}
+            <div className="grid gap-1">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                    options={roleOptions}
+                    value={roleOptions.find((o) => o.value === roleId) || null}
+                    onChange={(opt: SingleValue<Option>) =>
+                        setRoleId(opt ? opt.value : "")
+                    }
+                    placeholder="Select a role..."
+                />
+            </div>
 
-                    {/* Notes */}
-                    <div className="grid gap-1">
-                        <Label htmlFor="notes">Notes (optional)</Label>
-                        <Input
-                            id="notes"
-                            placeholder="Add notes..."
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                        />
-                    </div>
-                </div>
+            {/* Unit/Department Select */}
+            <div className="grid gap-1">
+                <Label htmlFor="unit">Unit / Department</Label>
+                <Select
+                    options={unitOptions}
+                    value={unitOptions.find((o) => o.value === unitOrDeptId) || null}
+                    onChange={(opt: SingleValue<Option>) =>
+                        setUnitOrDeptId(opt ? opt.value : "")
+                    }
+                    placeholder="Select a unit/department..."
+                    isClearable
+                />
+            </div>
 
-                <DialogFooter className="flex justify-end gap-2">
-                    <DialogClose asChild>
-                        <Button variant="outline" className="cursor-pointer">
-                            Cancel
-                        </Button>
-                    </DialogClose>
-                    <Button onClick={handleSubmit} className="cursor-pointer">
-                        {action === "approve" ? "Approve & Assign" : "Reassign"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
+            {/* Notes */}
+            <div className="grid gap-1">
+                <Label htmlFor="notes">Notes (optional)</Label>
+                <Input
+                id="notes"
+                placeholder="Add notes..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                />
+            </div>
+            </div>
+
+            <DialogFooter className="flex justify-end gap-2">
+            <DialogClose asChild>
+                <Button variant="outline" className="cursor-pointer">
+                Cancel
+                </Button>
+            </DialogClose>
+            <Button onClick={handleSubmit} className="cursor-pointer">
+                {action === "approve" ? "Approve & Assign" : "Reassign"}
+            </Button>
+            </DialogFooter>
+        </DialogContent>
         </Dialog>
     );
 }

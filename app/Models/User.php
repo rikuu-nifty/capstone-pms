@@ -161,7 +161,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return static::query()
             ->with([
                 'detail:id,user_id,first_name,middle_name,last_name', 
-                'role:id,name,code'
+                'role:id,name,code',
+                'unitOrDepartment:id,name',
             ])
             ->approved()
             ->search($q)

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from '@/components/ui/input';
 import { Users, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { useMemo, useState } from 'react';
-import { formatDateTime, Role, User, QueryParams, formatNumber, formatFullName } from '@/types/custom-index';
+import { formatDateTime, Role, User, QueryParams, formatNumber, formatFullName, UnitOrDepartment } from '@/types/custom-index';
 
 import RoleAssignmentModal from '@/components/modals/RoleAssignmentModal';
 import ViewUserModal from '@/components/modals/ViewUserModal';
@@ -32,6 +32,8 @@ type UserManagementPageProps = {
     tab: 'system' | 'approvals';
     filter?: string;
     roles: Role[];
+    unitOrDepartments: UnitOrDepartment[];
+
     totals: {
         users: number;
         approved: number;
@@ -245,7 +247,8 @@ export default function UserApprovals() {
                                 <TableRow className="bg-muted/40">
                                     <TableHead className="text-center">Full Name</TableHead>
                                     <TableHead className="text-center">Email</TableHead>
-                                    <TableHead className="text-center">Roles</TableHead>
+                                    <TableHead className="text-center">Unit / Department</TableHead>
+                                    <TableHead className="text-center">Role</TableHead>
                                     <TableHead className="text-center">Approved On</TableHead>
                                     <TableHead className="text-center">Updated On</TableHead>
                                     <TableHead className="text-center">Actions</TableHead>
@@ -265,6 +268,9 @@ export default function UserApprovals() {
                                             : u.name}
                                         </TableCell>
                                         <TableCell>{u.email}</TableCell>
+                                        <TableCell className="font-medium">
+                                            {u.unit_or_department?.name ?? "—"}
+                                        </TableCell>
 
                                         <TableCell>
                                             {u.role ? (
@@ -433,6 +439,7 @@ export default function UserApprovals() {
                     onClose={() => setShowRoleModal(false)}
                     userId={selectedUserId}
                     roles={props.roles}
+                    unitOrDepartments={props.unitOrDepartments}
                     action="approve"
                 />
 
@@ -441,6 +448,7 @@ export default function UserApprovals() {
                     onClose={() => setShowViewUser(false)}
                     user={selectedUser}
                     roles={props.roles}
+                    unitOrDepartments={props.unitOrDepartments}
                 />
 
                 {selectedUser && (

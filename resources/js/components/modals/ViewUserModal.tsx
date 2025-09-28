@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import RoleAssignmentModal from "@/components/modals/RoleAssignmentModal";
 import { formatDateLong, UserPageProps, formatFullName } from "@/types/custom-index";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
+import { CheckCircle2, XCircle, Clock } from "lucide-react";
 
-export default function ViewUserModal({ open, onClose, user, roles }: UserPageProps) {
+export default function ViewUserModal({ open, onClose, user, roles, unitOrDepartments }: UserPageProps) {
     const [showReassign, setShowReassign] = useState(false);
     const [showDelete, setShowDelete] = useState(false);
 
@@ -55,7 +56,32 @@ export default function ViewUserModal({ open, onClose, user, roles }: UserPagePr
                     </div>
                     <div>
                         <span className="block text-xs font-medium text-muted-foreground">Status</span>
-                        <p className="text-base font-semibold capitalize">{user.status}</p>
+                        <p className="flex items-center gap-1 text-base font-semibold capitalize">
+                            {user.status === "approved" && (
+                            <>
+                                <CheckCircle2 className="h-5 w-5 text-green-600" /> Approved
+                            </>
+                            )}
+                            {user.status === "denied" && (
+                            <>
+                                <XCircle className="h-5 w-5 text-red-600" /> Denied
+                            </>
+                            )}
+                            {user.status === "pending" && (
+                            <>
+                                <Clock className="h-5 w-5 text-yellow-600" /> Pending
+                            </>
+                            )}
+                            {!["approved", "denied", "pending"].includes(user.status) && (
+                            <span className="text-gray-500">—</span>
+                            )}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="block text-xs font-medium text-muted-foreground">Unit / Department</span>
+                        <p className="text-base font-semibold text-blue-600">
+                            {user.unit_or_department?.name ?? '—'}
+                        </p>
                     </div>
                     <div>
                         <span className="block text-xs font-medium text-muted-foreground">Approved On</span>
@@ -99,7 +125,7 @@ export default function ViewUserModal({ open, onClose, user, roles }: UserPagePr
                         className="cursor-pointer"
                         onClick={() => setShowReassign(true)}
                     >
-                        Reassign Role
+                        Reassign Role/Unit
                     </Button>
                     <Button
                         variant="destructive"
@@ -118,6 +144,9 @@ export default function ViewUserModal({ open, onClose, user, roles }: UserPagePr
                 userId={user.id}
                 roles={roles}
                 action="reassign"
+                unitOrDepartments={unitOrDepartments}
+                currentRoleId={user.role?.id ?? null}
+                currentUnitOrDeptId={user.unit_or_department_id ?? null}
             />
 
             <DeleteConfirmationModal

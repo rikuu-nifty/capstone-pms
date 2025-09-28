@@ -15,6 +15,7 @@ use App\Notifications\PasswordResetNotification;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\UnitOrDepartment;
 
 class UserApprovalController extends Controller
 {
@@ -33,6 +34,7 @@ class UserApprovalController extends Controller
                 'totals' => User::fetchTotals(),
                 'roles'  => Role::all(['id', 'name', 'code']),
                 'filterRole' => $request->integer('filter_role') ?: '',
+                'unitOrDepartments' => UnitOrDepartment::all(['id', 'name']),
             ]);
         }
 
@@ -43,6 +45,7 @@ class UserApprovalController extends Controller
                 'users'  => User::fetchApprovals($filter, $q),
                 'totals' => User::fetchTotals(),
                 'roles'  => Role::all(['id', 'name', 'code']),
+                'unitOrDepartments' => UnitOrDepartment::all(['id', 'name']),
             ]);
         }
 
@@ -55,6 +58,9 @@ class UserApprovalController extends Controller
         $role   = Role::findOrFail($roleId);
 
         $this->authorize('assign-role', $role->code);
+
+        $user->unit_or_department_id = $request->input('unit_or_department_id') ?: null;
+        $user->save();
 
         $user->approveWithRoleAndNotify($role, $request->input('notes'));
 
@@ -72,6 +78,9 @@ class UserApprovalController extends Controller
     {
         $request->validate(['role_id' => 'required|exists:roles,id']);
         $role = Role::findOrFail($request->role_id);
+
+        $user->unit_or_department_id = $request->unit_or_department_id ?: null;
+        $user->save();
 
         $user->reassignRoleWithNotify($role, $request->input('notes'));
 

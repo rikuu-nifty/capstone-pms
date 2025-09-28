@@ -427,11 +427,11 @@ export default function InventoryListIndex({
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold">Inventory List</h1>
                     <p className="text-sm text-muted-foreground">
-                        Provides a comprehensive overview of all university assets to facilitate accurate tracking and auditing.
+                        Provides a comprehensive overview of university assets to facilitate accurate tracking and auditing.
                     </p>
                 </div>
 
-                {kpis && (
+                {canViewAll && kpis && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                         {/* Total Assets */}
                         <div className="flex items-center gap-3 rounded-2xl border p-4">
