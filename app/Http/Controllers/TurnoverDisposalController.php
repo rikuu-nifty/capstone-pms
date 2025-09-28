@@ -25,6 +25,9 @@ class TurnoverDisposalController extends Controller
             'turnoverDisposalAssets.assets.assetModel.category',
             'issuingOffice',
             'receivingOffice',
+            'turnoverDisposalAssets.assets.building',
+            'turnoverDisposalAssets.assets.buildingRoom',
+            'turnoverDisposalAssets.assets.subArea',
         ])
         ->withCount('turnoverDisposalAssets as asset_count')
         ->latest()
@@ -38,7 +41,12 @@ class TurnoverDisposalController extends Controller
         })
         ->get();
 
-        $assets = InventoryList::with(['assetModel.category'])->get();
+        $assets = InventoryList::with([
+            'assetModel.category',
+            'building:id,name',
+            'buildingRoom:id,room,building_id',
+            'subArea:id,name,building_room_id',
+        ])->get();
 
         return [
             'turnoverDisposals'      => $turnoverDisposals,
@@ -132,6 +140,9 @@ class TurnoverDisposalController extends Controller
             'issuingOffice',
             'receivingOffice',
             'turnoverDisposalAssets.assets.assetModel.category',
+            'turnoverDisposalAssets.assets.building',
+            'turnoverDisposalAssets.assets.buildingRoom',
+            'turnoverDisposalAssets.assets.subArea',
             'formApproval.steps' => fn($q) =>
                 $q->whereIn('code', ['external_noted_by','noted_by'])
                 ->whereIn('status', ['pending', 'approved'])

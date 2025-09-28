@@ -1,74 +1,45 @@
 // PerTdaFields.tsx
-import { useEffect } from 'react';
 import type { InventoryList } from '@/types/custom-index';
-import type { TurnoverDisposalAssetInput, TdaStatus } from '@/types/turnover-disposal-assets';
-
-type HeaderStatus = 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed';
+import type { TurnoverDisposalAssetInput } from '@/types/turnover-disposal-assets';
 
 type Props = {
   value: TurnoverDisposalAssetInput;
-  onChange: (next: TurnoverDisposalAssetInput) => void;
   asset: InventoryList;
-  parentStatus?: HeaderStatus;
+  onChange: (next: TurnoverDisposalAssetInput) => void;
+  parentStatus?: string;
 };
 
-export default function PerTdaFields({ value, onChange, asset, parentStatus }: Props) {
-  // If header is pending_review, lock each per-asset status to 'pending'
-  const headerPending = parentStatus === 'pending_review';
-
-  useEffect(() => {
-    if (headerPending && value.asset_status !== 'pending') {
-      onChange({ ...value, asset_status: 'pending' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headerPending]);
-
+export default function PerTdaFields({ asset }: Props) {
   return (
-    <div className="grid w-full grid-cols-5 gap-1.5 text-[12px]">
-      {/* Asset label (readonly, just context) */}
-      <div className="col-span-5">
-        <div className="text-xs text-gray-600">
-          {asset.asset_name} {asset.serial_no ? `(${asset.serial_no})` : ''}
-        </div>
+    <div className="grid w-full grid-cols-2 gap-3 text-sm">
+      {/* Building */}
+      <div className="rounded-md bg-blue-50 p-2">
+        <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          Building
+        </dt>
+        <dd className="mt-1 font-semibold text-gray-900">
+          {asset.building?.name ?? '—'}
+        </dd>
       </div>
 
-      {/* Asset Status */}
-      <div className="col-span-5 sm:col-span-2">
-        <label className="mb-0.5 block font-medium">Asset Status</label>
-        <select
-          className="w-full rounded-md border p-1.5"
-          value={value.asset_status}
-          onChange={(e) => onChange({ ...value, asset_status: e.target.value as TdaStatus })}
-          disabled={headerPending}
-          title={headerPending ? 'Disabled while record is Pending Review' : undefined}
-        >
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+      {/* Room */}
+      <div className="rounded-md bg-blue-50 p-2">
+        <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          Room
+        </dt>
+        <dd className="mt-1 font-semibold text-gray-900">
+          {asset.building_room?.room ?? '—'}
+        </dd>
       </div>
 
-      {/* Date Finalized */}
-      <div className="col-span-5 sm:col-span-2">
-        <label className="mb-0.5 block font-medium">Date Finalized</label>
-        <input
-          type="date"
-          className="w-full rounded-md border p-1.5"
-          value={value.date_finalized ?? ''}
-          onChange={(e) => onChange({ ...value, date_finalized: e.target.value || null })}
-        />
-      </div>
-
-      {/* Remarks */}
-      <div className="col-span-5">
-        <label className="mb-0.5 block font-medium">Remarks</label>
-        <input
-          type="text"
-          className="w-full rounded-md border p-1.5"
-          value={value.remarks}
-          onChange={(e) => onChange({ ...value, remarks: e.target.value })}
-          placeholder="Optional notes for this asset"
-        />
+      {/* Sub-area */}
+      <div className="col-span-2 rounded-md bg-blue-50 p-2">
+        <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          Sub-area
+        </dt>
+        <dd className="mt-1 font-semibold text-gray-900">
+          {asset.sub_area?.name ?? '—'}
+        </dd>
       </div>
     </div>
   );
