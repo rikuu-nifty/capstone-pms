@@ -76,6 +76,7 @@ class InventoryListController extends Controller
             'assetModel.equipmentCode',
             'equipmentCode',
             'turnoverDisposalAsset.turnoverDisposal',
+            'offCampusAssets.offCampus',
         ]);
 
           // ✅ Log the viewing action in audit_trails
@@ -114,6 +115,7 @@ class InventoryListController extends Controller
             'assetModel.equipmentCode',
             'equipmentCode',
             'turnoverDisposalAsset.turnoverDisposal',
+            'offCampusAssets.offCampus',
         ])
         ->orderBy('id', 'desc');
 

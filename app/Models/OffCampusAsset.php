@@ -21,7 +21,7 @@ class OffCampusAsset extends Model
 
     public function offCampus()   
     { 
-         return $this->belongsTo(OffCampus::class)->withTrashed();
+         return $this->belongsTo(OffCampus::class, 'off_campus_id')->withTrashed();
     }
     
     // Optional convenience scopes

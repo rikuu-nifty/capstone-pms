@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Notifications\MaintenanceDueNotification;
 use Carbon\Carbon;
 
+use App\Models\OffCampusAsset;
+
 use Illuminate\Support\Facades\DB;
 
 class InventoryList extends Model   
@@ -22,6 +24,7 @@ class InventoryList extends Model
         'current_inventory_status',
         'assigned_to_name',
         'current_turnover_disposal_status',
+        'current_off_campus_status',
     ];
 
     protected $fillable = [
@@ -230,6 +233,29 @@ class InventoryList extends Model
         }
 
         return ucfirst(str_replace('_', ' ', $td->status));
+    }
+
+    public function getCurrentOffCampusStatusAttribute(): ?string
+    {
+        $latest = OffCampusAsset::with('offCampus')
+            ->where('asset_id', $this->id)
+            ->latest('created_at')
+            ->first();
+
+        if (!$latest || !$latest->offCampus) {
+            return null;
+        }
+
+        $oc = $latest->offCampus;
+
+        // Combine status + remark
+        $remark = $oc->remarks ? ucfirst(str_replace('_', ' ', $oc->remarks)) : null;
+
+        if ($remark) {
+            return ucfirst(str_replace('_', ' ', $oc->status)) . " ({$remark})";
+        }
+
+        return ucfirst(str_replace('_', ' ', $oc->status));
     }
 
     // DO NOT DELETE - FOR PIVOT TABLE and INVENTORY SHEET REPORTS
