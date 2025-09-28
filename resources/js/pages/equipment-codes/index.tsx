@@ -183,10 +183,9 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
-                                <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Code</TableHead>
-                                <TableHead className="text-center">Category</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
+                                <TableHead className="text-center">Category</TableHead>
                                 <TableHead className="text-center">Models Count</TableHead>
                                 <TableHead className="text-center">Assets Count</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
@@ -195,18 +194,17 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                         <TableBody className="text-center">
                             {page_items.length > 0 ? page_items.map((c) => (
                                 <TableRow key={c.id} className="cursor-pointer">
-                                    <TableCell>{c.id}</TableCell>
                                     <TableCell className="font-medium">{(c.code).toUpperCase()}</TableCell>
-                                    <TableCell>{c.category_name ?? '—'}</TableCell>
                                     <TableCell 
-                                        className={`max-w-[250px] whitespace-normal break-words ${
+                                        className={`max-w-[150px] whitespace-normal break-words ${
                                             c.description && c.description !== '-' 
-                                            ? 'text-justify' 
-                                            : 'text-center'
+                                            ? 'text-center' 
+                                            : 'text-justify'
                                         }`}
                                     >
                                         {c.description ?? '—'}
                                     </TableCell>
+                                    <TableCell className="max-w-[150px] min-w-[150px] whitespace-normal break-words">{c.category_name ?? '—'}</TableCell>
                                     <TableCell>{c.asset_models_count ?? 0}</TableCell>
                                     <TableCell>{c.assets_count ?? 0}</TableCell>
                                     <TableCell>
@@ -244,7 +242,7 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                                         No equipment codes found.
                                     </TableCell>
                                 </TableRow>
