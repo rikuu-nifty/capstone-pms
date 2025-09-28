@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { InventorySchedulingFormData, Scheduled, SchedulingBuildingRoom, UnitOrDepartment, User } from '@/pages/inventory-scheduling/index';
-import type { Building, SubArea } from '@/types/custom-index';
+import { formatEnums, type Building, type SubArea } from '@/types/custom-index';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import Select from 'react-select';
@@ -40,8 +40,6 @@ export const EditInventorySchedulingModal = ({
     const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
     const [warningDetails, setWarningDetails] = useState<string[]>([]);
 
-  
-
     const { data, setData, put, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         scope_type: schedule.units && schedule.units.length > 0 ? 'unit' : 'building',
         unit_ids: schedule.units?.map((u) => u.id) ?? [],
@@ -65,25 +63,31 @@ export const EditInventorySchedulingModal = ({
         scheduled_assets: [],
     });
 
-    // 2. Now you can safely create selections using `data`
-const [unitSelections, setUnitSelections] = useState({
-    unit_ids: data.unit_ids,
-    building_ids: data.building_ids,
-    room_ids: data.room_ids,
-    sub_area_ids: data.sub_area_ids,
-    expanded: [] as number[],
-});
+    const [unitSelections, setUnitSelections] = useState({
+        unit_ids: data.unit_ids,
+        building_ids: data.building_ids,
+        room_ids: data.room_ids,
+        sub_area_ids: data.sub_area_ids,
+        expanded: [] as number[],
+    });
 
-const [buildingSelections, setBuildingSelections] = useState({
-    building_ids: data.building_ids,
-    room_ids: data.room_ids,
-    sub_area_ids: data.sub_area_ids,
-    expanded: [] as number[],
-});
+    const [buildingSelections, setBuildingSelections] = useState({
+        building_ids: data.building_ids,
+        room_ids: data.room_ids,
+        sub_area_ids: data.sub_area_ids,
+        expanded: [] as number[],
+    });
 
-// 3. Track expanded rows
-const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
-const [expandedBuildings, setExpandedBuildings] = useState<number[]>([]);
+    const doSubmit = () => {
+        put(`/inventory-scheduling/${schedule.id}`, {
+            preserveScroll: true,
+            onSuccess: () => onClose(),
+        });
+    };
+
+    const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
+    const [expandedBuildings, setExpandedBuildings] = useState<number[]>([]);
+    const [pendingSubmit, setPendingSubmit] = useState(false);
 
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -132,7 +136,58 @@ const [expandedBuildings, setExpandedBuildings] = useState<number[]>([]);
             setWarningMessage(result.message ?? 'Validation failed.');
             setWarningDetails(result.details ?? []);
             setWarningVisible(true);
+            setPendingSubmit(true);
             return;
+        }
+
+        if (data.scheduling_status === 'Completed') {
+            const conflictingAssets = schedule.assets?.filter(sa => sa.inventory_status === 'not_inventoried') ?? [];
+            if (conflictingAssets.length > 0) {
+                setWarningMessage("Some assets are still marked as Not Inventoried. All other assets will be auto-updated to Inventoried.");
+                setWarningDetails(conflictingAssets.map(sa =>
+                    `${formatEnums(sa.inventory_status)} : ${sa.asset.asset_name || 'Unnamed Asset'} (${sa.asset.serial_no || 'no serial'})`
+                ));
+                setWarningVisible(true);
+                setPendingSubmit(true);
+                return;
+            }
+        }
+
+        if (data.scheduling_status === 'Pending') {
+            const inventoriedAssets = schedule.assets?.filter(sa => sa.inventory_status === 'inventoried') ?? [];
+            if (inventoriedAssets.length > 0) {
+                setWarningMessage("Reverting to Pending will reset the following assets back to Pending:");
+                setWarningDetails(inventoriedAssets.map(sa =>
+                    `${formatEnums(sa.inventory_status)} : ${sa.asset.asset_name || 'Unnamed Asset'} (${sa.asset.serial_no || 'no serial'})`
+                ));
+                setWarningVisible(true);
+                setPendingSubmit(true);
+                return;
+            }
+        }
+
+        if (data.scheduling_status === 'Cancelled') {
+            const inventoriedAssets = schedule.assets?.filter(sa => sa.inventory_status === 'inventoried') ?? [];
+            if (inventoriedAssets.length > 0) {
+                setWarningMessage("Cancelling will revert the following assets back to Not Inventoried:");
+                setWarningDetails(inventoriedAssets.map(sa =>
+                    `${formatEnums(sa.inventory_status)} : ${sa.asset.asset_name || 'Unnamed Asset'} (${sa.asset.serial_no || 'no serial'})`
+                ));
+                setWarningVisible(true);
+                setPendingSubmit(true);
+                return;
+            }
+        }
+
+        if (data.scheduling_status === 'Overdue') {
+            const notInventoriedAssets = schedule.assets?.filter(sa => sa.inventory_status === 'not_inventoried') ?? [];
+            if (notInventoriedAssets.length === 0) {
+                setWarningMessage("This schedule has no pending assets and cannot be marked as Overdue.");
+                setWarningDetails([]);
+                setWarningVisible(true);
+                setPendingSubmit(true);
+                return;
+            }
         }
 
         put(`/inventory-scheduling/${schedule.id}`, {
@@ -155,77 +210,77 @@ const [expandedBuildings, setExpandedBuildings] = useState<number[]>([]);
                             <label className="mb-2 block font-medium">Scope Type</label>
                             <div className="grid grid-cols-2 gap-4">
                                {/* By Units */}
-<button
-    type="button"
-    onClick={() => {
-        // Save building selections
-        setBuildingSelections({
-            building_ids: data.building_ids,
-            room_ids: data.room_ids,
-            sub_area_ids: data.sub_area_ids,
-            expanded: expandedBuildings,
-        });
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        // Save building selections
+                                        setBuildingSelections({
+                                            building_ids: data.building_ids,
+                                            room_ids: data.room_ids,
+                                            sub_area_ids: data.sub_area_ids,
+                                            expanded: expandedBuildings,
+                                        });
 
-        // Restore unit selections
-        setData(prev => ({
-            ...prev,
-            scope_type: 'unit',
-            unit_ids: unitSelections.unit_ids,
-            building_ids: unitSelections.building_ids,
-            room_ids: unitSelections.room_ids,
-            sub_area_ids: unitSelections.sub_area_ids,
-        }));
-        setExpandedUnits(unitSelections.expanded);
+                                        // Restore unit selections
+                                        setData(prev => ({
+                                            ...prev,
+                                            scope_type: 'unit',
+                                            unit_ids: unitSelections.unit_ids,
+                                            building_ids: unitSelections.building_ids,
+                                            room_ids: unitSelections.room_ids,
+                                            sub_area_ids: unitSelections.sub_area_ids,
+                                        }));
+                                        setExpandedUnits(unitSelections.expanded);
 
-        clearErrors('unit_ids');
-        clearErrors('building_ids');
-        clearErrors('room_ids');
-    }}
-    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
-        ${data.scope_type === "unit"
-            ? "border-blue-600 bg-blue-50 text-blue-700"
-            : "border-gray-300 bg-white hover:bg-gray-50"
-        }`}
->
-    By Units / Departments
-</button>
+                                        clearErrors('unit_ids');
+                                        clearErrors('building_ids');
+                                        clearErrors('room_ids');
+                                    }}
+                                    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+                                        ${data.scope_type === "unit"
+                                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                                            : "border-gray-300 bg-white hover:bg-gray-50"
+                                        }`}
+                                >
+                                    By Units / Departments
+                                </button>
 
                                 {/* By Buildings */}
-<button
-    type="button"
-    onClick={() => {
-        // Save unit selections
-        setUnitSelections({
-            unit_ids: data.unit_ids,
-            building_ids: data.building_ids,
-            room_ids: data.room_ids,
-            sub_area_ids: data.sub_area_ids,
-            expanded: expandedUnits,
-        });
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        // Save unit selections
+                                        setUnitSelections({
+                                            unit_ids: data.unit_ids,
+                                            building_ids: data.building_ids,
+                                            room_ids: data.room_ids,
+                                            sub_area_ids: data.sub_area_ids,
+                                            expanded: expandedUnits,
+                                        });
 
-        // Restore building selections
-        setData(prev => ({
-            ...prev,
-            scope_type: 'building',
-            building_ids: buildingSelections.building_ids,
-            room_ids: buildingSelections.room_ids,
-            sub_area_ids: buildingSelections.sub_area_ids,
-            unit_ids: [], // optional: usually empty in building scope
-        }));
-        setExpandedBuildings(buildingSelections.expanded);
+                                        // Restore building selections
+                                        setData(prev => ({
+                                            ...prev,
+                                            scope_type: 'building',
+                                            building_ids: buildingSelections.building_ids,
+                                            room_ids: buildingSelections.room_ids,
+                                            sub_area_ids: buildingSelections.sub_area_ids,
+                                            unit_ids: [], // optional: usually empty in building scope
+                                        }));
+                                        setExpandedBuildings(buildingSelections.expanded);
 
-        clearErrors('unit_ids');
-        clearErrors('building_ids');
-        clearErrors('room_ids');
-    }}
-    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
-        ${data.scope_type === "building"
-            ? "border-blue-600 bg-blue-50 text-blue-700"
-            : "border-gray-300 bg-white hover:bg-gray-50"
-        }`}
->
-    By Buildings
-</button>
+                                        clearErrors('unit_ids');
+                                        clearErrors('building_ids');
+                                        clearErrors('room_ids');
+                                    }}
+                                    className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium cursor-pointer transition
+                                        ${data.scope_type === "building"
+                                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                                            : "border-gray-300 bg-white hover:bg-gray-50"
+                                        }`}
+                                >
+                                    By Buildings
+                                </button>
                             </div>
                         </div>
 
@@ -321,11 +376,11 @@ const [expandedBuildings, setExpandedBuildings] = useState<number[]>([]);
                                             selectedRooms={data.room_ids}
                                             selectedSubAreas={data.sub_area_ids}
                                             expanded={expandedUnits.includes(uid)}
-onToggleExpand={() => {
-    setExpandedUnits(prev => 
-        prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
-    );
-}}
+                                            onToggleExpand={() => {
+                                                setExpandedUnits(prev => 
+                                                    prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+                                                );
+                                            }}
 
                                             onToggleBuilding={(buildingId, checked) => {
                                                 const roomsForBuilding = buildingRooms.filter(
@@ -513,12 +568,12 @@ onToggleExpand={() => {
                                                 assets={assets}
                                                 selectedRooms={data.room_ids}
                                                 selectedSubAreas={data.sub_area_ids}
-                                               expanded={expandedBuildings.includes(bid)}
-onToggleExpand={() => {
-    setExpandedBuildings(prev => 
-        prev.includes(bid) ? prev.filter(id => id !== bid) : [...prev, bid]
-    );
-}}
+                                                expanded={expandedBuildings.includes(bid)}
+                                                onToggleExpand={() => {
+                                                    setExpandedBuildings(prev => 
+                                                        prev.includes(bid) ? prev.filter(id => id !== bid) : [...prev, bid]
+                                                    );
+                                                }}
                                                 onToggleRoom={(roomId, buildingId, checked) => {
                                                     const room = buildingRooms.find((r) => r.id === roomId);
                                                     const subAreaIds = room?.sub_areas?.map((sa) => sa.id) ?? [];
@@ -694,6 +749,7 @@ onToggleExpand={() => {
                         </div>
                     </form>
                 </div>
+                
                 {/* Footer */}
                 <div className="mt-4 flex shrink-0 justify-end gap-2 border-t pt-4">
                     <Button type="button" variant="destructive" className="cursor-pointer" onClick={onClose}>
@@ -707,7 +763,17 @@ onToggleExpand={() => {
 
             <WarningModal
                 show={warningVisible}
-                onClose={() => setWarningVisible(false)}
+                onCancel={() => {
+                    setWarningVisible(false);
+                    setPendingSubmit(false);
+                }}
+                onConfirm={() => {
+                    setWarningVisible(false);
+                    if (pendingSubmit) {
+                        doSubmit();
+                        setPendingSubmit(false);
+                    }
+                }}
                 title="Validation Warning"
                 message={warningMessage}
                 details={warningDetails}

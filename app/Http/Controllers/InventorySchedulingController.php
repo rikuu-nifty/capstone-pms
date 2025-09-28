@@ -41,6 +41,7 @@ class InventorySchedulingController extends Controller
             'rooms.subAreas',
             'subAreas',
             'units',
+            'assets.asset',
         ])
         ->withCount('assets')
         ->latest()

@@ -300,6 +300,7 @@ export default function InventorySchedulingIndex({
 
     const [expandedUnits, setExpandedUnits] = useState<number[]>([]);
     const [expandedBuildings, setExpandedBuildings] = useState<number[]>([]);
+    const [pendingSubmit, setPendingSubmit] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -312,7 +313,7 @@ export default function InventorySchedulingIndex({
                 return;
             }
 
-            // ✅ validate that at least one room belongs to chosen units
+            // validate that at least one room belongs to chosen units
             const unitRoomIds = buildingRooms
                 .filter((r) =>
                     assets.some((a) => a.unit_or_department_id && data.unit_ids.includes(a.unit_or_department_id) && a.building_room_id === r.id),
@@ -344,12 +345,17 @@ export default function InventorySchedulingIndex({
         const result = validateScheduleForm(data, assets, unitOrDepartments, buildings, buildingRooms);
 
         if (!result.valid) {
-            setWarningMessage(result.message ?? 'Validation failed.');
+            setWarningMessage(result.message ?? 'Validation warning.');
             setWarningDetails(result.details ?? []);
             setWarningVisible(true);
+            setPendingSubmit(true); // remember we need to proceed
             return;
         }
 
+        doSubmit();
+    };
+
+    const doSubmit = () => {
         post('/inventory-scheduling', {
             onSuccess: () => {
                 reset();
@@ -1203,7 +1209,17 @@ export default function InventorySchedulingIndex({
             </div>
             <WarningModal
                 show={warningVisible}
-                onClose={() => setWarningVisible(false)}
+                onCancel={() => {
+                    setWarningVisible(false);
+                    setPendingSubmit(false);
+                }}
+                onConfirm={() => {
+                    setWarningVisible(false);
+                    if (pendingSubmit) {
+                        doSubmit();
+                        setPendingSubmit(false);
+                    }
+                }}
                 title="Validation Warning"
                 message={warningMessage}
                 details={warningDetails}

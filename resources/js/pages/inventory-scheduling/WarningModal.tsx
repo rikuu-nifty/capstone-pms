@@ -12,7 +12,8 @@ import { XCircle } from 'lucide-react';
 
 interface WarningModalProps {
     show: boolean;
-    onClose: () => void;
+    onConfirm: () => void;
+    onCancel: () => void;
     title?: string;
     message?: React.ReactNode;
     details?: string[];
@@ -20,13 +21,14 @@ interface WarningModalProps {
 
 const WarningModal = ({
     show,
-    onClose,
+    onConfirm,
+    onCancel,
     title = 'Validation Warning',
     message = 'Something went wrong.',
     details = [],
 }: WarningModalProps) => {
     return (
-        <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={show} onOpenChange={(open) => !open && onCancel()}>
             <DialogContent className="w-full max-w-md space-y-4 p-6 text-center">
                 {/* Icon */}
                 <div className="flex justify-center">
@@ -45,9 +47,9 @@ const WarningModal = ({
 
                 {/* Extra details */}
                 {details.length > 0 && (
-                    <div className="mt-2 text-left">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Affected:</p>
-                        <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-400">
+                    <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3 text-sm text-left">
+                        <p className="mb-2 font-semibold">Affected Assets :</p>
+                        <ul className="list-disc pl-5 space-y-1 text-red-600">
                             {details.map((d, i) => (
                                 <li key={i}>{d}</li>
                             ))}
@@ -57,10 +59,23 @@ const WarningModal = ({
 
                 {/* Footer */}
                 <DialogFooter>
-                    <div className="flex w-full justify-center">
+                    <div className="flex w-full justify-center gap-4">
                         <DialogClose asChild>
-                            <Button className="px-6 cursor-pointer">OK</Button>
+                            <Button
+                                variant="outline"
+                                className="px-6 cursor-pointer"
+                                onClick={onCancel}
+                            >
+                                Cancel
+                            </Button>
                         </DialogClose>
+                        <Button
+                            variant="destructive"
+                            className="px-6 cursor-pointer"
+                            onClick={onConfirm}
+                        >
+                            Proceed Anyway
+                        </Button>
                     </div>
                 </DialogFooter>
             </DialogContent>
