@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { Asset } from '../inventory-list';
 
-import type { Building, SubArea } from '@/types/custom-index';
+import { formatDate, type Building, type SubArea } from '@/types/custom-index';
 import { validateScheduleForm } from '@/types/validateScheduleForm';
 import BuildingItem from './BuildingItem';
 import UnitItem from './UnitItem';
@@ -407,11 +407,9 @@ export default function InventorySchedulingIndex({
                             <TableRow className="bg-muted text-foreground">
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Inventory Schedule</TableHead>
-                                <TableHead className="text-center">Total Buildings</TableHead>
-                                <TableHead className="text-center">Total Rooms</TableHead>
-                                <TableHead className="text-center">Total Assets</TableHead>
-                                <TableHead className="text-center">Designated Staff</TableHead>
-
+                                <TableHead className="text-center">Actual Date of Inventory</TableHead>
+                                <TableHead className="text-center">Checked By</TableHead>
+                                <TableHead className="text-center">Verified By</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-center">Action</TableHead>
                             </TableRow>
@@ -421,14 +419,18 @@ export default function InventorySchedulingIndex({
                             {filtered.map((item) => (
                                 <TableRow key={item.id} className="text-center">
                                     <TableCell>{item.id}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{formatMonth(item.inventory_schedule) || '—'}</TableCell>
-                                    <TableCell>{item.buildings?.length ?? 0}</TableCell>
-                                    <TableCell>{item.rooms?.length ?? 0}</TableCell>
-                                    <TableCell>{item.assets_count ?? 0}</TableCell>
-                                    <TableCell className="whitespace-nowrap">{item.designated_employee?.name ?? '—'}</TableCell>
-
+                                    <TableCell className="whitespace-nowrap">
+                                        {formatMonth(item.inventory_schedule) || '—'}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {formatDate(item.actual_date_of_inventory ?? '—')}
+                                    </TableCell>
+                                    <TableCell>{item.checked_by || '—'}</TableCell>
+                                    <TableCell>{item.verified_by || '—'}</TableCell>
                                     <TableCell>
-                                        <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
+                                        <Badge
+                                            variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}
+                                        >
                                             {item.scheduling_status.replace('_', ' ')}
                                         </Badge>
                                     </TableCell>
@@ -459,7 +461,10 @@ export default function InventorySchedulingIndex({
                                             </Button>
 
                                             <Button size="icon" variant="ghost" asChild>
-                                                <Link href={route('inventory-scheduling.view', item.id)} preserveScroll>
+                                                <Link
+                                                    href={route('inventory-scheduling.view', item.id)}
+                                                    preserveScroll
+                                                >
                                                     <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Link>
                                             </Button>
@@ -1096,6 +1101,25 @@ export default function InventorySchedulingIndex({
                                 </div>
 
                                 <div>
+                                    <label className="mb-1 block font-medium">Scheduling Status</label>
+                                    <select
+                                        className="w-full rounded-lg border p-2"
+                                        value={data.scheduling_status}
+                                        onChange={(e) => setData('scheduling_status', e.target.value)}
+                                    >
+                                        <option value="Pending_Review">Pending Review</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Overdue">Overdue</option>
+                                        <option value="Completed" disabled>
+                                            Completed
+                                        </option>
+                                        <option value="Cancelled" disabled>
+                                            Cancelled
+                                        </option>
+                                    </select>
+                                </div>
+                                
+                                <div>
                                     <label className="mb-1 block font-medium">Designated Staff</label>
                                     <Select
                                         className="w-full"
@@ -1121,25 +1145,6 @@ export default function InventorySchedulingIndex({
                                         }}
                                     />
                                     {errors.designated_employee && <p className="mt-1 text-xs text-red-500">{String(errors.designated_employee)}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="mb-1 block font-medium">Scheduling Status</label>
-                                    <select
-                                        className="w-full rounded-lg border p-2"
-                                        value={data.scheduling_status}
-                                        onChange={(e) => setData('scheduling_status', e.target.value)}
-                                    >
-                                        <option value="Pending_Review">Pending Review</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Overdue">Overdue</option>
-                                        <option value="Completed" disabled>
-                                            Completed
-                                        </option>
-                                        <option value="Cancelled" disabled>
-                                            Cancelled
-                                        </option>
-                                    </select>
                                 </div>
                             </div>
 

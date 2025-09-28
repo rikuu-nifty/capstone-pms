@@ -624,6 +624,21 @@ onToggleExpand={() => {
                         </div>
 
                         <div>
+                            <label className="mb-1 block font-medium">Scheduling Status</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.scheduling_status}
+                                onChange={(e) => setData('scheduling_status', e.target.value)}
+                            >
+                                {statusOptions.map((s) => (
+                                    <option key={s} value={s}>
+                                        {s.replace('_', ' ')}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div>
                             <label className="mb-1 block font-medium">Designated Staff</label>
                             <Select
                                 className="w-full"
@@ -642,21 +657,6 @@ onToggleExpand={() => {
                                 onChange={(selected) => setData('designated_employee', selected ? selected.value : '')}
                             />
                             {errors.designated_employee && <p className="text-sm text-red-600">{errors.designated_employee}</p>}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block font-medium">Scheduling Status</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.scheduling_status}
-                                onChange={(e) => setData('scheduling_status', e.target.value)}
-                            >
-                                {statusOptions.map((s) => (
-                                    <option key={s} value={s}>
-                                        {s.replace('_', ' ')}
-                                    </option>
-                                ))}
-                            </select>
                         </div>
 
                         {/* Divider */}
