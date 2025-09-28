@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+// import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import ViewModal from '@/components/modals/ViewModal';
-import { TurnoverDisposals, InventoryList, AssetModel, formatEnums  } from '@/types/custom-index';
+import { TurnoverDisposals, InventoryList, AssetModel, formatEnums, ucwords  } from '@/types/custom-index';
 import { DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
@@ -10,6 +10,7 @@ interface TurnoverDisposalViewModalProps {
     onClose: () => void;
     turnoverDisposal: TurnoverDisposals;
     assets: InventoryListWithSnake[];
+    pmoHead?: { id: number; name: string } | null;
 };
 
 export type InventoryListWithSnake = InventoryList & { 
@@ -21,17 +22,18 @@ export default function TurnoverDisposalViewModal({
     onClose, 
     turnoverDisposal,
     assets,
+    pmoHead,
 }: 
     TurnoverDisposalViewModalProps
 ) {
     const recordNo = String(turnoverDisposal.id).padStart(2, '0');
-    type TdaStatus = 'pending' | 'completed' | 'cancelled';
+    // type TdaStatus = 'pending' | 'completed' | 'cancelled';
 
-    type TdaPivot = {
-        asset_id: number;
-        asset_status?: TdaStatus;
-        date_finalized?: string | null;
-    }
+    // type TdaPivot = {
+    //     asset_id: number;
+    //     asset_status?: TdaStatus;
+    //     date_finalized?: string | null;
+    // }
 
     const formatDateLong = (d?: string | null) => {
         if (!d) return '—';
@@ -65,33 +67,33 @@ export default function TurnoverDisposalViewModal({
         );
     };
 
-    const AssetStatusPill = ({ status }: { status?: string | null }) => {
-        const s = (status ?? 'pending').toLowerCase();
-        const label = s.charAt(0).toUpperCase() + s.slice(1);
+    // const AssetStatusPill = ({ status }: { status?: string | null }) => {
+    //     const s = (status ?? 'pending').toLowerCase();
+    //     const label = s.charAt(0).toUpperCase() + s.slice(1);
 
-        const cls =
-            s === 'cancelled'
-            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-            : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300'; // pending
+    //     const cls =
+    //         s === 'cancelled'
+    //         ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+    //         : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300'; // pending
 
-        return (
-            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
-                {label}
-            </span>
-        );
-    };
+    //     return (
+    //         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
+    //             {label}
+    //         </span>
+    //     );
+    // };
 
 
-    const pivotByAssetId = useMemo<Record<number, TdaPivot>>(() => {
-        const map: Record<number, TdaPivot> = {};
-        (turnoverDisposal.turnover_disposal_assets ?? []).forEach((li) => {
-            const asset_id = Number(li.asset_id);
-            const asset_status = (li.asset_status ?? 'pending') as TdaStatus;
-            const date_finalized = li.date_finalized ?? null;
-            map[asset_id] = { asset_id, asset_status, date_finalized };
-        });
-        return map;
-    }, [turnoverDisposal.turnover_disposal_assets]);
+    // const pivotByAssetId = useMemo<Record<number, TdaPivot>>(() => {
+    //     const map: Record<number, TdaPivot> = {};
+    //     (turnoverDisposal.turnover_disposal_assets ?? []).forEach((li) => {
+    //         const asset_id = Number(li.asset_id);
+    //         const asset_status = (li.asset_status ?? 'pending') as TdaStatus;
+    //         const date_finalized = li.date_finalized ?? null;
+    //         map[asset_id] = { asset_id, asset_status, date_finalized };
+    //     });
+    //     return map;
+    // }, [turnoverDisposal.turnover_disposal_assets]);
 
     return (
         <ViewModal 
@@ -132,40 +134,68 @@ export default function TurnoverDisposalViewModal({
 
             {/* Offices */}
             <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
-                <section>
-                    <h3 className="mb-2 text-base font-semibold">Issuing Office</h3>
-                    <p className="text-sm">
-                        {/* <span className="font-semibold">Unit/Dept/Lab:</span>{' '} */}
-                        {turnoverDisposal.issuing_office?.code ? (
-                        <>
-                            {turnoverDisposal.issuing_office.name} ({turnoverDisposal.issuing_office.code})
-                        </>
-                        ) : (
-                        '—'
-                        )}
-                    </p>
-                    <p className="text-sm">
-                        <span className="font-semibold">Document Date:</span>{' '}
-                        {formatDateLong(turnoverDisposal.document_date)}
-                    </p>
+                {/* Issuing Office (LEFT) */}
+                <section className="md:w-[400px]">
+                    <h3 className="mb-2 text-base font-semibold">ISSUING OFFICE</h3>
+                    <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                        <table className="w-full text-sm">
+                            <tbody>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                        Unit/Dept/Lab
+                                    </td>
+                                    <td className="px-3 py-2 font-medium text-right whitespace-normal break-words">
+                                        {turnoverDisposal.issuing_office?.code ? (
+                                            <>
+                                            <div>{turnoverDisposal.issuing_office.name}</div>
+                                            <div className="text-gray-600">
+                                                ({formatEnums(turnoverDisposal.issuing_office.code).toUpperCase()})
+                                            </div>
+                                            </>
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                        Document Date
+                                    </td>
+                                    <td className="px-3 py-2 font-medium text-right">
+                                        {formatDateLong(turnoverDisposal.document_date)}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
 
-                <section className="md:text-right print:justify-self-end print:text-right">
-                    <h3 className="mb-2 text-base font-semibold">Receiving Office</h3>
-                    <p className="text-sm">
-                        {/* <span className="font-semibold">Unit/Dept/Lab:</span>{' '} */}
-                        {turnoverDisposal.receiving_office?.code ? (
-                        <>
-                            {turnoverDisposal.receiving_office.name} ({turnoverDisposal.receiving_office.code})
-                        </>
-                        ) : (
-                        '—'
-                        )}
-                    </p>
-                    {/* <p className="text-sm">
-                        <span className="font-semibold">Document Date:</span>{' '}
-                        {formatDateLong(turnoverDisposal.document_date)}
-                    </p> */}
+                {/* Receiving Office (RIGHT) */}
+                <section className="md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
+                    <h3 className="mb-2 text-base font-semibold">RECEIVING OFFICE</h3>
+                    <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                        <table className="w-full text-sm">
+                            <tbody>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                        Unit/Dept/Lab
+                                    </td>
+                                    <td className="px-3 py-2 font-medium whitespace-normal break-words">
+                                        {turnoverDisposal.receiving_office?.code ? (
+                                            <>
+                                            <div>{turnoverDisposal.receiving_office.name}</div>
+                                            <div className="text-gray-600">
+                                                ({formatEnums(turnoverDisposal.receiving_office.code).toUpperCase()})
+                                            </div>
+                                            </>
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
             </div>
             
@@ -174,42 +204,34 @@ export default function TurnoverDisposalViewModal({
                 <table className="w-full text-sm text-center">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                            <th className="px-3 py-2 text-center font-medium">Brand</th>
-                            <th className="px-3 py-2 text-center font-medium">Category</th>
+                            <th className="px-3 py-2 text-center font-medium">Code No.</th>
                             <th className="px-3 py-2 text-center font-medium">Asset Name</th>
+                            <th className="px-3 py-2 text-center font-medium">Equipment Description</th>
+                            <th className="px-3 py-2 text-center font-medium">Category</th>
                             <th className="px-3 py-2 text-center font-medium">Serial No.</th>
-                            <th className="px-3 py-2 text-center font-medium">Asset Status</th>
-                            <th className="px-3 py-2 text-center font-medium">Date Finalized</th>
+                            {/* <th className="px-3 py-2 text-center font-medium">Asset Status</th> */}
+                            {/* <th className="px-3 py-2 text-center font-medium">Date Finalized</th> */}
                         </tr>
                     </thead>
-                    {/* <tbody>
-                        {assets.map((asset) => (
-                            <tr key={asset.id} className="border-t">
-                                <td className="px-3 py-2">{asset.asset_model?.brand ?? '—'}</td>
-                                <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td>
-                                <td className="px-3 py-2">{asset.asset_name ?? '—'}</td>
-                                <td className="px-3 py-2">{asset.serial_no ?? '—'}</td>
-                            </tr>
-                        ))}
-                    </tbody> */}
                     <tbody>
                         {assets.map((asset) => {
-                            const pivot = pivotByAssetId[Number(asset.id)];
-                            const perStatus: TdaStatus | undefined = pivot?.asset_status ?? 'pending';
-                            const dateFinalized = pivot?.date_finalized ? formatDateLong(pivot.date_finalized) : '—';
+                            // const pivot = pivotByAssetId[Number(asset.id)];
+                            // const perStatus: TdaStatus | undefined = pivot?.asset_status ?? 'pending';
+                            // const dateFinalized = pivot?.date_finalized ? formatDateLong(pivot.date_finalized) : '—';
 
                             return (
                             <tr key={asset.id} className="border-t">
-                                <td className="px-3 py-2">{asset.asset_model?.brand ?? '—'}</td>
-                                <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td>
+                                <td className="px-3 py-2">{asset.asset_model?.equipment_code?.code ?? '—'}</td>
                                 <td className="px-3 py-2">{asset.asset_name ?? '—'}</td>
+                                <td className="px-3 py-2">{ucwords(asset.asset_model?.equipment_code?.description ?? '—')}</td>
+                                <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td>
                                 <td className="px-3 py-2">{asset.serial_no ?? '—'}</td>
 
-                                <td className="px-3 py-2">
+                                {/* <td className="px-3 py-2">
                                     <AssetStatusPill status={perStatus}/>
-                                </td>
+                                </td> */}
 
-                                <td className="px-3 py-2">{dateFinalized}</td>
+                                {/* <td className="px-3 py-2">{dateFinalized}</td> */}
                             </tr>
                             );
                         })}
@@ -230,7 +252,9 @@ export default function TurnoverDisposalViewModal({
 
             {/* Description */}
             <div className="flex justify-between items-start mb-1 mt-1">
-                <h4 className="text-sm font-semibold text-gray-800">Description:</h4>
+                {turnoverDisposal.description && (
+                    <h4 className="text-sm font-semibold text-gray-800">Description:</h4>
+                )}
                 <p className="text-sm font-medium text-gray-800">
                     <strong>Total Assets:</strong> {assets.length}
                 </p>
@@ -243,9 +267,11 @@ export default function TurnoverDisposalViewModal({
             {/* Remarks */}
             <div className="h-4" />
 
-            <div className="flex justify-between items-start mb-1 mt-1">
-                <h4 className="text-sm font-semibold text-gray-800">Remarks:</h4>
-            </div>
+            {turnoverDisposal.remarks && (
+                <div className="flex justify-between items-start mb-1 mt-1">
+                    <h4 className="text-sm font-semibold text-gray-800">Remarks:</h4>
+                </div>
+            )}
 
             {turnoverDisposal.remarks && (
                 <p className="text-sm italic text-blue-700 mt-2 w-200 ml-15">{turnoverDisposal.remarks?.trim() || '—'}</p>
@@ -267,10 +293,10 @@ export default function TurnoverDisposalViewModal({
                 {turnoverDisposal.issuing_office?.unit_head && (
                     <div className="text-center">
                         <p className="font-semibold mb-8 invisible aria-hidden=true">Head/Unit:</p>
-                        <div className="border-t border-black w-48 mx-auto mb-1" />
-                        <p className="font-bold text-gray-800">Head / Unit</p>
-                        <p className="text-xs text-gray-500 italic">
-                        {turnoverDisposal.issuing_office?.name} ({turnoverDisposal.issuing_office?.code})
+                            <div className="border-t border-black w-48 mx-auto mb-1" />
+                            <p className="font-bold text-gray-800">Head / Unit</p>
+                            <p className="text-xs text-gray-500 italic">
+                            {turnoverDisposal.issuing_office?.name}
                         </p>
                     </div>
                 )}
@@ -285,8 +311,8 @@ export default function TurnoverDisposalViewModal({
                 <div className="text-center">
                     <p className="font-semibold mb-8 invisible aria-hidden=true">PMO Head</p>
                     <div className="border-t border-black w-48 mx-auto mb-1" />
-                    <p className="font-bold text-gray-800">PMO Head</p>
-                    <p className="text-xs text-gray-500 italic">{turnoverDisposal.issuing_office?.name} ({turnoverDisposal.issuing_office?.code})</p>
+                    <p className="font-bold text-gray-800">{pmoHead?.name ?? '—'}</p>
+                    <p className="text-xs text-gray-500 italic">Head, PMO</p>
                 </div>
                 
             </div>

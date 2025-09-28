@@ -510,5 +510,15 @@ class TurnoverDisposal extends Model
             ->get();
     }
 
+    private function fetchPmoHead(): ?array
+    {
+        $roleId = Role::where('code', 'pmo_head')->value('id'); // respects SoftDeletes
+        if (!$roleId) return null;
 
+        $u = User::select('id', 'name') // keep payload minimal
+            ->where('role_id', $roleId)             // no joins/whereHas
+            ->first();
+
+        return $u?->only(['id', 'name']);            // avoid hidden/serialization surprises
+    }
 }

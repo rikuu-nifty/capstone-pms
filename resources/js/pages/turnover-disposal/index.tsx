@@ -38,6 +38,7 @@ type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
 
 type PageProps = TurnoverDisposalPageProps & {
     viewing?: TurnoverDisposals;
+    pmoHead?: { id: number; name: string } | null;
 };
 
 export default function TurnoverDisposalsIndex({
@@ -398,6 +399,7 @@ export default function TurnoverDisposalsIndex({
                     onClose={closeViewTurnoverDisposal}
                     turnoverDisposal={selectedTurnoverDisposals}
                     assets={selectedTurnoverDisposalAssets}
+                    pmoHead={props.pmoHead}
                 />
             )}
 

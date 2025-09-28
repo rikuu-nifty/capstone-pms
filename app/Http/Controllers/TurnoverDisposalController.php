@@ -13,11 +13,20 @@ use App\Models\UnitOrDepartment;
 use App\Models\TurnoverDisposalAsset;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\User;
+use App\Models\Role;
+
 class TurnoverDisposalController extends Controller
 {
     private function indexProps(): array
     {
         $assignedBy = Auth::user();
+
+        $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
+
+        $pmoHead = User::where('role_id', $pmoHeadRoleId)
+            ->where('status', 'approved') // optional filter if you only want active users
+            ->first();
 
         $unitOrDepartments = UnitOrDepartment::all();
 
@@ -28,6 +37,8 @@ class TurnoverDisposalController extends Controller
             'turnoverDisposalAssets.assets.building',
             'turnoverDisposalAssets.assets.buildingRoom',
             'turnoverDisposalAssets.assets.subArea',
+
+            'turnoverDisposalAssets.assets.assetModel.equipmentCode',
         ])
         ->withCount('turnoverDisposalAssets as asset_count')
         ->latest()
@@ -54,6 +65,7 @@ class TurnoverDisposalController extends Controller
             'assets'                 => $assets,
             'unitOrDepartments'      => $unitOrDepartments,
             'assignedBy'             => $assignedBy,
+            'pmoHead'                => $pmoHead,
         ];
 }
     /**
@@ -134,6 +146,8 @@ class TurnoverDisposalController extends Controller
                 ->whereIn('status', ['pending', 'approved'])
                 ->orderByDesc('step_order'),
             'formApproval.steps.actor:id,name',
+
+            'turnoverDisposalAssets.assets.assetModel.equipmentCode',
         ]);
 
         $turnoverDisposal->append([
@@ -158,5 +172,17 @@ class TurnoverDisposalController extends Controller
         });
 
         return redirect()->route('turnover-disposal.index')->with('success', "Record deleted successfully");
+    }
+
+    private function fetchPmoHead(): ?array
+    {
+        $roleId = Role::where('code', 'pmo_head')->value('id'); // respects SoftDeletes
+        if (!$roleId) return null;
+
+        $u = User::select('id', 'name') // keep payload minimal
+            ->where('role_id', $roleId)             // no joins/whereHas
+            ->first();
+
+        return $u?->only(['id', 'name']);            // avoid hidden/serialization surprises
     }
 }
