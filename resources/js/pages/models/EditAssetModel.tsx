@@ -80,6 +80,7 @@ export default function EditAssetModelModal({
             title={`Edit Asset Model #${model.id}`}
             onSubmit={handleSubmit}
             processing={processing}
+            // contentClassName="flex max-h-[90vh] min-h-[75vh] flex-col overflow-hidden"
         >
         {/* Category */}
         <div>
@@ -132,6 +133,8 @@ export default function EditAssetModelModal({
                 }
                 isDisabled={!data.category_id}
                 isSearchable
+                menuPlacement="auto"
+                maxMenuHeight={6 * 38}
             />
             {errors.equipment_code_id && (
                 <p className="mt-1 text-xs text-red-500">{errors.equipment_code_id}</p>
