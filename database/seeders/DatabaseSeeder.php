@@ -17,6 +17,7 @@ use Database\Seeders\CategoriesTableSeeder;
 use Database\Seeders\AssetModelsTableSeeder;
 use Database\Seeders\InventoryListsTableSeeder;
 use Database\Seeders\PersonnelsTableSeeder;
+use Database\Seeders\EquipmentCodesTableSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -45,6 +46,7 @@ class DatabaseSeeder extends Seeder
             InventoryListsTableSeeder::class,
             InventorySchedulingSignatoriesSeeder::class,
             PersonnelsTableSeeder::class,
+            EquipmentCodesTableSeeder::class,
         ]);
     }
 }

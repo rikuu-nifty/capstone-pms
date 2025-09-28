@@ -44,7 +44,7 @@ class UsersTableSeeder extends Seeder
         $vpAdmin = User::updateOrCreate(
             ['email' => 'vpadmin@example.com'],
             [
-                'name' => 'VP Admin',
+                'name' => 'Larry Carbonel',
                 'password' => Hash::make('password'),
                 'status' => 'approved',
                 'role_id' => $vpRole?->id,
@@ -55,7 +55,7 @@ class UsersTableSeeder extends Seeder
         );
         UserDetail::updateOrCreate(
             ['user_id' => $vpAdmin->id],
-            ['first_name' => 'VP', 'last_name' => 'Admin']
+            ['first_name' => 'Larry', 'last_name' => 'Carbonel']
         );
 
         // 🔹 PMO Head
@@ -63,7 +63,7 @@ class UsersTableSeeder extends Seeder
         $pmoHead = User::updateOrCreate(
             ['email' => 'pmohead@example.com'],
             [
-                'name' => 'PMO Head',
+                'name' => 'Maricel Capitulo',
                 'password' => Hash::make('password'),
                 'status' => 'approved',
                 'role_id' => $headRole?->id,
@@ -74,7 +74,7 @@ class UsersTableSeeder extends Seeder
         );
         UserDetail::updateOrCreate(
             ['user_id' => $pmoHead->id],
-            ['first_name' => 'PMO', 'last_name' => 'Head']
+            ['first_name' => 'Maricel', 'last_name' => 'Capitulo']
         );
 
         // 🔹 PMO Staff (assigned to PMO unit by default)
