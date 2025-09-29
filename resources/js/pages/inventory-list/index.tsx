@@ -473,7 +473,7 @@ export default function InventoryListIndex({
                                 {auth.unit_or_department.name}
                             </span>
                         </>
-                        )}.
+                        )}
                     </div>
                 )}
 

@@ -70,6 +70,14 @@ export default function BuildingIndex({
     const canViewAll = auth.permissions.includes('view-buildings');
     const canViewOwn = auth.permissions.includes('view-own-unit-buildings');
 
+    const canCreateBuilding = auth.permissions.includes('create-buildings');
+    const canUpdateBuilding = auth.permissions.includes('update-buildings');
+    const canDeleteBuilding = auth.permissions.includes('delete-buildings');
+
+    const canCreateRoom = auth.permissions.includes('create-building-rooms');
+    const canUpdateRoom = auth.permissions.includes('update-building-rooms');
+    const canDeleteRoom = auth.permissions.includes('delete-building-rooms');
+
     useEffect(() => {
         if (props.selected) setSelectedBuildingId(Number(props.selected));
     }, [props.selected]);
@@ -122,12 +130,12 @@ export default function BuildingIndex({
                             <div className="mt-2 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 text-sm">
                                 You are viewing <strong>only the buildings and rooms assigned to your unit/department</strong>
                                 {auth.user?.unit_or_department && (
-                                <> (
-                                    <span className="text-base font-bold text-yellow-900">
-                                    {auth.user.unit_or_department.name} – {auth.user.unit_or_department.code}
+                                <> :
+                                    <span className="ml-1 text-sm font-bold text-blue-800">
+                                        {auth.user.unit_or_department.name}
                                     </span>
-                                )</>
-                                )}.
+                                </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -146,6 +154,7 @@ export default function BuildingIndex({
                         onAdd={() => 
                             setShowAddBuilding(true)
                         }
+                        canCreate={canCreateBuilding}
                     />
                 </div>
 
@@ -165,6 +174,8 @@ export default function BuildingIndex({
                         setToDelete(b); 
                         setShowDeleteModal(true); 
                     }}
+                    canUpdate={canUpdateBuilding}
+                    canDelete={canDeleteBuilding}
                 />
 
                 {/* Rooms section */}
@@ -185,6 +196,9 @@ export default function BuildingIndex({
                         setRoomToDelete(room); 
                         setShowDeleteRoomModal(true); 
                     }}
+                    canCreate={canCreateRoom}
+                    canUpdate={canUpdateRoom}
+                    canDelete={canDeleteRoom}
                 />
             </div>
 

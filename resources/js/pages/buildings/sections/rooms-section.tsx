@@ -25,6 +25,9 @@ type Props = {
     onAddRoomClick: () => void;
     onEditRoomClick: (room: BuildingRoom) => void;
     onDeleteRoomClick: (room: BuildingRoom) => void;
+    canCreate: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
 };
 
 export default function RoomsSection({
@@ -35,6 +38,9 @@ export default function RoomsSection({
     onAddRoomClick,
     onEditRoomClick,
     onDeleteRoomClick,
+    canCreate,
+    canUpdate,
+    canDelete,
 }: Props) {
     const [roomSearch, setRoomSearch] = useState('');
     const [roomSortKey, setRoomSortKey] = useState<RoomSortKey>('id');
@@ -121,13 +127,15 @@ export default function RoomsSection({
 
                     {selectedBuildingId !== null && (
                         <Button variant="destructive" onClick={onClearSelectedBuilding} className="cursor-pointer">
-                        Clear Building Filter
+                            Clear Building Filter
                         </Button>
                     )}
 
-                    <Button className="cursor-pointer" onClick={onAddRoomClick}>
-                        <PlusCircle className="mr-1 h-4 w-4" /> Add New Room
-                    </Button>
+                    {canCreate && (
+                        <Button className="cursor-pointer" onClick={onAddRoomClick}>
+                            <PlusCircle className="mr-1 h-4 w-4" /> Add New Room
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -163,25 +171,29 @@ export default function RoomsSection({
                             </TableCell>
                             <TableCell className="h-full">
                                 <div className="flex justify-center items-center gap-2 h-full">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="cursor-pointer"
-                                        onClick={() => 
-                                            onEditRoomClick(r)
-                                        }
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
+                                    {canUpdate && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="cursor-pointer"
+                                            onClick={() => 
+                                                onEditRoomClick(r)
+                                            }
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    )}
 
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => onDeleteRoomClick(r)}
-                                        className="cursor-pointer"
-                                    >
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                    {canDelete && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => onDeleteRoomClick(r)}
+                                            className="cursor-pointer"
+                                        >
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    )}
 
                                     <Button 
                                             variant="ghost" 

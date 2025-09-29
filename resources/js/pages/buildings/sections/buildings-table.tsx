@@ -17,9 +17,22 @@ type Props = {
     onSelect: (id: number | null) => void;
     onEdit: (b: Building) => void;
     onDelete: (b: Building) => void;
+    canUpdate: boolean;
+    canDelete: boolean;
 };
 
-export default function BuildingsTable({ buildings, sortKey, sortDir, search, selectedBuildingId, onSelect, onEdit, onDelete }: Props) {
+export default function BuildingsTable({ 
+    buildings, 
+    sortKey, 
+    sortDir, 
+    search, 
+    selectedBuildingId, 
+    onSelect, 
+    onEdit, 
+    onDelete,
+    canUpdate,
+    canDelete,
+}: Props) {
     const [page, setPage] = useState(1);
 
     useEffect(() => {
@@ -86,29 +99,33 @@ export default function BuildingsTable({ buildings, sortKey, sortDir, search, se
                                     <TableCell>{b.assets_count ?? 0}</TableCell>
                                     <TableCell className="h-full">
                                         <div className="flex h-full items-center justify-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="cursor-pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEdit(b);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            {canUpdate && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="cursor-pointer"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onEdit(b);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDelete(b);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDelete(b);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
 
                                             <Button
                                                 variant="ghost"

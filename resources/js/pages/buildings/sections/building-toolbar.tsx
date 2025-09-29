@@ -11,12 +11,14 @@ type Props = {
     sortDir: SortDir;
     onSortChange: (key: BuildingSortKey, dir: SortDir) => void;
     onAdd: () => void;
+    canCreate: boolean;
 };
 
 export default function BuildingToolbar({
     search, onSearchChange,
     sortKey, sortDir, onSortChange,
     onAdd,
+    canCreate,
 }: Props) {
     return (
         <div className="flex items-center justify-between">
@@ -37,9 +39,11 @@ export default function BuildingToolbar({
                     options={buildingSortOptions}
                     onChange={onSortChange}
                 />
-                <Button onClick={onAdd} className="cursor-pointer">
-                    <PlusCircle className="mr-1 h-4 w-4" /> Add New Building
-                </Button>
+                {canCreate && (
+                    <Button onClick={onAdd} className="cursor-pointer">
+                        <PlusCircle className="mr-1 h-4 w-4" /> Add New Building
+                    </Button>
+                )}
             </div>
         </div>
     );
