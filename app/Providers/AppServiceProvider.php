@@ -45,6 +45,19 @@ use App\Observers\BuildingRoomObserver;
 use App\Models\UnitOrDepartment;
 use App\Observers\UnitOrDepartmentObserver;
 
+use App\Models\AssetAssignment;
+use App\Observers\AssetAssignmentObserver;
+
+use App\Models\AssetAssignmentItem;
+use App\Observers\AssetAssignmentItemObserver;
+
+use App\Models\EquipmentCode;
+use App\Observers\EquipmentCodeObserver;
+
+use App\Models\Personnel;
+use App\Observers\PersonnelObserver;
+
+
 
 
 class AppServiceProvider extends ServiceProvider
@@ -62,7 +75,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-
         InventoryList::observe(InventoryListObserver::class);
         InventoryScheduling::observe(InventorySchedulingObserver::class);
         Transfer::observe(PropertyTransferObserver::class);
@@ -75,7 +87,10 @@ class AppServiceProvider extends ServiceProvider
         Building::observe(BuildingObserver::class);
         BuildingRoom::observe(BuildingRoomObserver::class);
         UnitOrDepartment::observe(UnitOrDepartmentObserver::class);
-    
+        AssetAssignment::observe(AssetAssignmentObserver::class);
+        AssetAssignmentItem::observe(AssetAssignmentItemObserver::class);
+        EquipmentCode::observe(EquipmentCodeObserver::class);
+        Personnel::observe(PersonnelObserver::class);
         
         // ✅ Existing nav metrics
         Inertia::share('nav_metrics', function () {

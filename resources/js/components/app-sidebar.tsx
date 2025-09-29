@@ -88,21 +88,16 @@ const inventoryNavItems = [
 ];
 
 const assetsNavItems = [
-    { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
-    { title: 'Equipment Codes', href: '/equipment-codes', icon: FileDigit, permission: 'view-equipment-codes' },
     { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
+    { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
     { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
+    { title: 'Equipment Codes', href: '/equipment-codes', icon: FileDigit, permission: 'view-equipment-codes' },
 ];
 
 const institutionalSetUpNavItems = [
-    {
-        title: 'Buildings',
-        href: '/buildings',
-        icon: Landmark,
-        permission: ['view-buildings', 'view-own-unit-buildings'],
-    },
-    { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
+    { title: 'Buildings', href: '/buildings', icon: Landmark, permission: ['view-buildings', 'view-own-unit-buildings'],},
     { title: 'Personnels', href: '/personnels', icon: User, permission: 'view-personnels' },
+    { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
 ];
 
 const userNavItems = [
