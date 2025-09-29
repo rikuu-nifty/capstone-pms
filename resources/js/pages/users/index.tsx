@@ -314,7 +314,7 @@ export default function UserApprovals() {
                                             >
                                                 View
                                             </Button>
-                                            {u.can_delete && u.role?.code !== "superuser" && (
+                                            {u.can_delete && u.role?.code !== "superuser" && u.role?.code !== "vp_admin" && u.role?.code !== "pmo_head" && (
                                                 <Button
                                                     variant="destructive"
                                                     className="cursor-pointer"
@@ -377,14 +377,14 @@ export default function UserApprovals() {
 
                                             <TableCell>
                                                 <div className="flex justify-center gap-2">
-                                                {u.role?.code !== "superuser" && (
+                                                {!["superuser", "vp_admin", "pmo_head"].includes(u.role?.code ?? "") && (
                                                     <Button
                                                         className="cursor-pointer"
                                                         onClick={() => {
-                                                        setSelectedUserId(u.id);
-                                                        setShowRoleModal(true);
+                                                            setSelectedUserId(u.id);
+                                                            setShowRoleModal(true);
                                                         }}
-                                                        disabled={u.status == 'approved'}
+                                                        disabled={u.status === "approved"}
                                                     >
                                                         Approve
                                                     </Button>
@@ -405,7 +405,7 @@ export default function UserApprovals() {
                                                         Reject
                                                     </Button>
                                                 )} */}
-                                                {u.role?.code === "superuser" ? (
+                                                {["superuser", "vp_admin", "pmo_head"].includes(u.role?.code ?? "") ? (
                                                     <Badge variant="outline" className="text-base cursor-default">Protected</Badge>
                                                     ) : (
                                                         <Button
