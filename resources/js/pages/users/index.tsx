@@ -314,7 +314,7 @@ export default function UserApprovals() {
                                             >
                                                 View
                                             </Button>
-                                            {u.can_delete && (
+                                            {u.can_delete && u.role?.code !== "superuser" && (
                                                 <Button
                                                     variant="destructive"
                                                     className="cursor-pointer"
@@ -323,7 +323,7 @@ export default function UserApprovals() {
                                                         setShowDelete(true);
                                                     }}
                                                 >
-                                                Delete
+                                                    Delete
                                                 </Button>
                                             )}
                                             </div>
@@ -363,46 +363,68 @@ export default function UserApprovals() {
                                 {filteredUsers.length > 0 ? (
                                     filteredUsers.map((u) => (
                                         <TableRow key={u.id} className="text-center">
-                                        <TableCell>{u.name}</TableCell>
-                                        <TableCell>{u.email}</TableCell>
-                                        <TableCell>{u.email_verified_at ? 'Yes' : 'No'}</TableCell>
-                                        <TableCell>
-                                            {u.created_at ? formatDateTime(u.created_at) : '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {u.status === "approved" && <Badge variant="success">Approved</Badge>}
-                                            {u.status === "pending" && <Badge variant="primary">Pending</Badge>}
-                                            {u.status === "denied" && <Badge variant="destructive">Rejected</Badge>}
-                                        </TableCell>
+                                            <TableCell>{u.name}</TableCell>
+                                            <TableCell>{u.email}</TableCell>
+                                            <TableCell>{u.email_verified_at ? 'Yes' : 'No'}</TableCell>
+                                            <TableCell>
+                                                {u.created_at ? formatDateTime(u.created_at) : '—'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {u.status === "approved" && <Badge variant="success">Approved</Badge>}
+                                                {u.status === "pending" && <Badge variant="primary">Pending</Badge>}
+                                                {u.status === "denied" && <Badge variant="destructive">Rejected</Badge>}
+                                            </TableCell>
 
-                                        <TableCell>
-                                            <div className="flex justify-center gap-2">
-                                            <Button
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                setSelectedUserId(u.id);
-                                                setShowRoleModal(true);
-                                                }}
-                                                disabled={u.status == 'approved'}
-                                            >
-                                                Approve
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                className="cursor-pointer"
-                                                onClick={() =>
-                                                router.post(
-                                                    route('users.deny', u.id),
-                                                    {},
-                                                    { preserveScroll: true }
-                                                )
-                                                }
-                                                disabled={u.status == 'denied'}
-                                            >
-                                                Reject
-                                            </Button>
-                                            </div>
-                                        </TableCell>
+                                            <TableCell>
+                                                <div className="flex justify-center gap-2">
+                                                {u.role?.code !== "superuser" && (
+                                                    <Button
+                                                        className="cursor-pointer"
+                                                        onClick={() => {
+                                                        setSelectedUserId(u.id);
+                                                        setShowRoleModal(true);
+                                                        }}
+                                                        disabled={u.status == 'approved'}
+                                                    >
+                                                        Approve
+                                                    </Button>
+                                                )}
+                                                {/* {u.role?.code !== "superuser" && (
+                                                    <Button
+                                                        variant="destructive"
+                                                        className="cursor-pointer"
+                                                        onClick={() =>
+                                                        router.post(
+                                                            route('users.deny', u.id),
+                                                            {},
+                                                            { preserveScroll: true }
+                                                        )
+                                                        }
+                                                        disabled={u.status == 'denied'}
+                                                    >
+                                                        Reject
+                                                    </Button>
+                                                )} */}
+                                                {u.role?.code === "superuser" ? (
+                                                    <Badge variant="outline" className="text-base cursor-default">Protected</Badge>
+                                                    ) : (
+                                                        <Button
+                                                            variant="destructive"
+                                                            className="cursor-pointer"
+                                                            onClick={() =>
+                                                                router.post(
+                                                                    route('users.deny', u.id),
+                                                                    {},
+                                                                    { preserveScroll: true }
+                                                                )
+                                                            }
+                                                            disabled={u.status === 'denied'}
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                )}
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
