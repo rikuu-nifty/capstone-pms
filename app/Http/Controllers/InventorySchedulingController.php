@@ -21,10 +21,8 @@ use App\Traits\LogsAuditTrail;
 
 class InventorySchedulingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     use LogsAuditTrail;
+
     public function index()
     {
         $schedules = InventoryScheduling::with([
@@ -89,6 +87,8 @@ class InventorySchedulingController extends Controller
             // 'auth' => ['user' => auth()->user()], // 👈 make sure this is included
             'signatories' => $signatories, // 👈 pass signatories
             'assets' => $assets,
+
+            'totals' => InventoryScheduling::kpiStats(),
         ]);
     }
 
