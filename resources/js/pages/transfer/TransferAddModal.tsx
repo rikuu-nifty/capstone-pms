@@ -272,27 +272,12 @@ export default function TransferAddModal({
                     onChange={(e) => {
                         const newDate = e.target.value;
                         setData('scheduled_date', newDate);
-
-                        if (newDate) {
-                            const scheduledDate = new Date(newDate + 'T00:00:00');
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-
-                            if (scheduledDate < today) {
-                                setData('status', 'overdue');
-                            } else if (scheduledDate > today) {
-                                setData('status', 'upcoming');
-                            } else {
-                                setData('status', 'in_progress');
-                            }
-                        } else {
-                            setData('status', 'pending_review');
-                        }
+                        setData('status', 'pending_review'); // always pending review until approval
                     }}
+
                 />
                 {errors.scheduled_date && <p className="mt-1 text-xs text-red-500">{errors.scheduled_date}</p>}
             </div>
-
 
             {/* Actual Transfer Date */}
             <div className="col-span-1">
@@ -312,7 +297,6 @@ export default function TransferAddModal({
                 />
                 {errors.actual_transfer_date && <p className="mt-1 text-xs text-red-500">{errors.actual_transfer_date}</p>}
             </div>
-
 
             {/* Designated Employee */}
             <div className="col-span-1">
@@ -336,20 +320,32 @@ export default function TransferAddModal({
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Status</label>
                 <select
-                    className="w-full rounded-lg border p-2"
+                    className="w-full rounded-lg border p-2 cursor-pointer"
                     value={data.status}
                     onChange={(e) =>
-                        setData('status', e.target.value as 'pending_review' | 'upcoming' | 'in_progress' | 'completed' | 'overdue' | 'cancelled')
+                        setData(
+                        'status',
+                        e.target.value as
+                            | 'pending_review'
+                            | 'upcoming'
+                            | 'in_progress'
+                            | 'completed'
+                            | 'overdue'
+                            | 'cancelled'
+                        )
                     }
                 >
-                    <option value="">Select Status</option>
-
                     {statusOptions.map((status) => (
-                        <option key={status} value={status}>
+                        <option
+                            key={status}
+                            value={status}
+                            disabled={status !== 'pending_review'} // only allow pending_review
+                        >
                             {formatEnums(status)}
                         </option>
                     ))}
                 </select>
+
                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
             
