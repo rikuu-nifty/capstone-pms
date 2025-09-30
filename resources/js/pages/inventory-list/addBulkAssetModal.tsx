@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import type { AssetModel, Building, BuildingRoom, Category } from './index';
-import type { UnitOrDepartment, SubArea } from '@/types/custom-index';
+import type { UnitOrDepartment, SubArea, Personnel } from '@/types/custom-index';
 import { WebcamCapture } from './WebcamCapture';
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
     categories: Category[];
     assetModels: AssetModel[];
     subAreas: SubArea[];
+    personnels: Personnel[]; // ✅ add this
 };
 
 export function AddBulkAssetModalForm({ 
@@ -26,6 +27,7 @@ export function AddBulkAssetModalForm({
     categories, 
     assetModels,
     subAreas,
+    personnels,   // ✅ add this
 }: Props) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         building_id: '',
@@ -40,7 +42,7 @@ export function AddBulkAssetModalForm({
         supplier: '',
         unit_cost: '',
         depreciation_value: '', // ✅ added
-        assigned_to: '', // ✅ new
+        assigned_to: '' as number | string | null, // ✅ fix type
         memorandum_no: '',
         // ❌ removed transfer_status
         description: '',
@@ -203,16 +205,22 @@ export function AddBulkAssetModalForm({
                         </div>
 
                         {/* ✅ Assigned To */}
-                        <div className="col-span-2">
-                            <label className="mb-1 block font-medium">Assigned To</label>
-                            <input
-                                type="text"
-                                className="w-full rounded-lg border p-2"
-                                placeholder="Enter person assigned"
-                                value={data.assigned_to ?? ''}
-                                onChange={(e) => setData('assigned_to', e.target.value)}
-                            />
-                        </div>
+<div className="col-span-2">
+  <label className="mb-1 block font-medium">Assigned To</label>
+  <select
+    className="w-full rounded-lg border p-2"
+    value={data.assigned_to ?? ''}
+    onChange={(e) => setData('assigned_to', e.target.value ? Number(e.target.value) : null)}
+  >
+    <option value="">— Select Personnel —</option>
+    {personnels.map((p) => (
+      <option key={p.id} value={p.id}>
+        {p.full_name}{p.position ? ` – ${p.position}` : ''}
+      </option>
+    ))}
+  </select>
+  {errors.assigned_to && <p className="mt-1 text-xs text-red-500">{errors.assigned_to}</p>}
+</div>
 
                         {/* Divider */}
                         <div className="col-span-2 border-t"></div>

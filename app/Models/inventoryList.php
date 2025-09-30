@@ -51,6 +51,11 @@ class InventoryList extends Model
         'maintenance_due_date',
     ];
 
+    public function assignedTo()
+{
+    return $this->belongsTo(Personnel::class, 'assigned_to');
+}
+
     public function assetModel()
     {
         return $this->belongsTo(AssetModel::class, 'asset_model_id')->whereNull('asset_models.deleted_at');
@@ -114,6 +119,16 @@ class InventoryList extends Model
     {
         return $this->hasMany(AssetAssignmentItem::class, 'asset_id');
     }
+
+    public function personnel()
+{
+    return $this->belongsTo(Personnel::class, 'assigned_to');
+}
+
+public function assignments()
+{
+    return $this->hasMany(AssetAssignment::class, 'asset_id');
+}
 
     public function getAssignedToNameAttribute(): ?string
     {

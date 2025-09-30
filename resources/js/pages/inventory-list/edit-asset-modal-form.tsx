@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category } from '@/pages/inventory-list/index';
-import type { UnitOrDepartment, SubArea } from '@/types/custom-index';
+import type { UnitOrDepartment, SubArea,} from '@/types/custom-index';
 import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';// ✅ new import
+
+
 
 type Props = {
     asset: Asset;
@@ -20,6 +22,7 @@ type Props = {
     assetModels: AssetModel[];
     uniqueBrands: string[];
     subAreas: SubArea[];
+    personnels: { id: number; full_name: string; position?: string | null }[]; // ✅ new
 };
 
 export const EditAssetModalForm = ({ 
@@ -31,7 +34,8 @@ export const EditAssetModalForm = ({
     buildingRooms, 
     categories, 
     assetModels, 
-    uniqueBrands 
+    uniqueBrands,
+    personnels,   // ✅ add this
 }: Props) => {
     const [form, setForm] = useState<AssetFormData>({
         asset_name: asset.asset_name,
@@ -195,16 +199,22 @@ export const EditAssetModalForm = ({
             </select>
         </div>
 
-        {/* Assigned To */}
-        <div className="col-span-2">
-            <Label>Assigned To</Label>
-            <Input
-                type="text"
-                placeholder="Enter person assigned"
-                value={form.assigned_to ?? ''} // ✅ fixes TS error
-                onChange={(e) => handleChange('assigned_to', e.target.value)}
-            />
-        </div>
+       {/* Assigned To */}
+<div className="col-span-2">
+  <Label>Assigned To</Label>
+  <select
+    className="w-full rounded-lg border p-2"
+    value={form.assigned_to ?? ''}
+    onChange={(e) => handleChange('assigned_to', e.target.value ? Number(e.target.value) : null)}
+  >
+    <option value="">— Select Personnel —</option>
+    {personnels.map((p) => (
+      <option key={p.id} value={p.id}>
+        {p.full_name}{p.position ? ` – ${p.position}` : ''}
+      </option>
+    ))}
+  </select>
+</div>
 
         {/* Divider */}
         <div className="col-span-2 border-t"></div>

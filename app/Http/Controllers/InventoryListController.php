@@ -11,6 +11,7 @@ use App\Models\BuildingRoom;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\SubArea;
+use App\Models\Personnel;
 
 use App\Models\InventoryList;
 use Illuminate\Http\Request;
@@ -134,6 +135,7 @@ class InventoryListController extends Controller
             'categories'        => Category::all(),
             'subAreas'          => SubArea::all(),
             // 'kpis'           => InventoryList::kpis(),
+           'personnels'        => Personnel::activeForAssignments(), // ✅ will include id, full_name, position
             'kpis'              => InventoryList::kpis($user),
         ];
     }
@@ -212,41 +214,76 @@ class InventoryListController extends Controller
         // 🚫 transfer_status removed — no need to unset anymore
         // unset($data['transfer_status']);
 
-        // ✅ Bulk mode
-        if ($request->input('mode') === 'bulk') {
-            $created = [];
-            $serialNumbers = $request->input('serial_numbers', []);
-            $qty = (int) $request->input('quantity', 1);
+       // ✅ Bulk mode
+if ($request->input('mode') === 'bulk') {
+    $created = [];
+    $serialNumbers = $request->input('serial_numbers', []);
+    $qty = (int) $request->input('quantity', 1);
 
-            if (!empty($serialNumbers)) {
-                foreach ($serialNumbers as $serial) {
-                    $newData = $data;
-                    $newData['serial_no'] = $serial;
-                    $newData['quantity'] = 1;
+    if (!empty($serialNumbers)) {
+        foreach ($serialNumbers as $serial) {
+            $newData = $data;
+            $newData['serial_no'] = $serial;
+            $newData['quantity'] = 1;
 
-                    if ($request->filled('sub_area_id')) {
-                        $newData['sub_area_id'] = $request->input('sub_area_id');
-                    }
-
-                    $created[] = InventoryList::create($newData);
-                }
-            } else {
-                for ($i = 0; $i < $qty; $i++) {
-                    $newData = $data;
-                    $newData['quantity'] = 1;
-
-                    if ($request->filled('sub_area_id')) {
-                        $newData['sub_area_id'] = $request->input('sub_area_id');
-                    }
-
-                    $created[] = InventoryList::create($newData);
-                }
+            if ($request->filled('sub_area_id')) {
+                $newData['sub_area_id'] = $request->input('sub_area_id');
             }
 
-            return redirect()->back()->with([
-                'success' => count($created) . ' bulk assets added successfully.',
-            ]);
+            $asset = InventoryList::create($newData);
+            $created[] = $asset;
+
+            // ✅ Sync assignment if assigned_to is set
+            if (!empty($newData['assigned_to'])) {
+                $assignment = \App\Models\AssetAssignment::firstOrCreate(
+                    ['personnel_id' => $newData['assigned_to']],
+                    [
+                        'assigned_by'   => auth()->id(),
+                        'date_assigned' => now(),
+                    ]
+                );
+
+                \App\Models\AssetAssignmentItem::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    ['asset_assignment_id' => $assignment->id]
+                );
+            }
         }
+    } else {
+        for ($i = 0; $i < $qty; $i++) {
+            $newData = $data;
+            $newData['quantity'] = 1;
+
+            if ($request->filled('sub_area_id')) {
+                $newData['sub_area_id'] = $request->input('sub_area_id');
+            }
+
+            $asset = InventoryList::create($newData);
+            $created[] = $asset;
+
+            // ✅ Sync assignment if assigned_to is set
+            if (!empty($newData['assigned_to'])) {
+                $assignment = \App\Models\AssetAssignment::firstOrCreate(
+                    ['personnel_id' => $newData['assigned_to']],
+                    [
+                        'assigned_by'   => auth()->id(),
+                        'date_assigned' => now(),
+                    ]
+                );
+
+                \App\Models\AssetAssignmentItem::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    ['asset_assignment_id' => $assignment->id]
+                );
+            }
+        }
+    }
+
+    return redirect()->back()->with([
+        'success' => count($created) . ' bulk assets added successfully.',
+    ]);
+}
+
 
         // ✅ Single mode
         $asset = InventoryList::create($data);
@@ -285,53 +322,80 @@ class InventoryListController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, InventoryList $inventoryList): RedirectResponse
-    {
-        $data = $request->validate([
-            'asset_name' => 'nullable|string|max:255',
-            'supplier' => 'nullable|string|max:255',
-            'serial_no' => 'nullable|string|max:255',
-            'unit_cost' => 'nullable|numeric|min:0',
-            'quantity' => 'nullable|integer|min:1',
-            'asset_type' => 'nullable|string|max:255',
-            'category_id' => 'nullable|integer|exists:categories,id', //KABIT TO IF MERON TAYONG COLUMN FOR CATEGORY ID PERO WALA KASE CINACALL NATIN THROUGH MODEL
-            'brand' => 'nullable|string|max:255',
-            'memorandum_no' => 'nullable|numeric|min:0',
-            'description' => 'nullable|string|max:1000',
-            'date_purchased' => 'nullable|date',
-            'maintenance_due_date' => 'nullable|date', // ✅ added here
-            'depreciation_value' => 'nullable|numeric|min:0', // ✅ added
-            'assigned_to' => 'nullable|string|max:255', // ✅ added
-            // 🚫 removed transfer_status validation
-            'asset_model_id' => 'nullable|integer',
-            'building_id' => 'nullable|exists:buildings,id',
-            'building_room_id' => 'nullable|exists:building_rooms,id',
-            'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
-            'status' => 'nullable|string|in:active,archived',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // ✅ image validation
+{
+    $data = $request->validate([
+        'asset_name' => 'nullable|string|max:255',
+        'supplier' => 'nullable|string|max:255',
+        'serial_no' => 'nullable|string|max:255',
+        'unit_cost' => 'nullable|numeric|min:0',
+        'quantity' => 'nullable|integer|min:1',
+        'asset_type' => 'nullable|string|max:255',
+        'category_id' => 'nullable|integer|exists:categories,id', 
+        'brand' => 'nullable|string|max:255',
+        'memorandum_no' => 'nullable|numeric|min:0',
+        'description' => 'nullable|string|max:1000',
+        'date_purchased' => 'nullable|date',
+        'maintenance_due_date' => 'nullable|date', // ✅ added here
+        'depreciation_value' => 'nullable|numeric|min:0', // ✅ added
+        'assigned_to' => 'nullable|integer|exists:personnels,id', // ✅ changed from string → FK validation
+        'asset_model_id' => 'nullable|integer',
+        'building_id' => 'nullable|exists:buildings,id',
+        'building_room_id' => 'nullable|exists:building_rooms,id',
+        'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
+        'status' => 'nullable|string|in:active,archived',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // ✅ image validation
+        'sub_area_id' => 'nullable|exists:sub_areas,id',
+    ]);
 
-            'sub_area_id' => 'nullable|exists:sub_areas,id',
-        ]);
-
-        // Convert empty sub_area_id to null
-        if (empty($data['sub_area_id'])) {
-            $data['sub_area_id'] = null;
-        }
-
-        // ✅ ensure maintenance_due_date is passed
-        if ($request->filled('maintenance_due_date')) {
-            $data['maintenance_due_date'] = $request->input('maintenance_due_date');
-        }
-
-        // Handle image upload if provided
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('assets', 'public'); 
-            $data['image_path'] = $path;
-        }
-
-        $inventoryList->update($data);
-
-        return redirect()->back()->with('success', 'Asset updated successfully.');
+    // Convert empty sub_area_id to null
+    if (empty($data['sub_area_id'])) {
+        $data['sub_area_id'] = null;
     }
+
+    // ✅ ensure maintenance_due_date is passed
+    if ($request->filled('maintenance_due_date')) {
+        $data['maintenance_due_date'] = $request->input('maintenance_due_date');
+    }
+
+    // Handle image upload if provided
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('assets', 'public'); 
+        $data['image_path'] = $path;
+    }
+
+           // ✅ Update the inventory list
+$inventoryList->update($data);
+
+// ✅ Sync assignment if assigned_to is set
+if (!empty($data['assigned_to'])) {
+    // Check if latest assignment is already the same
+    $latestAssignment = \App\Models\AssetAssignment::whereHas('items', function ($q) use ($inventoryList) {
+        $q->where('asset_id', $inventoryList->id);
+    })->latest()->first();
+
+    if (!$latestAssignment || $latestAssignment->personnel_id != $data['assigned_to']) {
+        // ✅ Reuse existing assignment or create if missing
+        $assignment = \App\Models\AssetAssignment::firstOrCreate(
+            ['personnel_id' => $data['assigned_to']], // look up by personnel_id
+            [
+                'assigned_by'   => auth()->id(),
+                'date_assigned' => now(),
+            ]
+        );
+
+        // ✅ Ensure only one item record exists per asset
+        \App\Models\AssetAssignmentItem::updateOrCreate(
+            ['asset_id' => $inventoryList->id], // condition
+            ['asset_assignment_id' => $assignment->id] // update if found
+        );
+    }
+
+
+    }
+
+    return redirect()->back()->with('success', 'Asset updated successfully.');
+}
+
 
 
 

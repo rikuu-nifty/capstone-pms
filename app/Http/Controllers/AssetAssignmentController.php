@@ -25,7 +25,6 @@ class AssetAssignmentController extends Controller
                 ? ['id' => $request->user()->id, 'name' => $request->user()->name]
                 : null,
             'users' => User::select('id', 'name')->get(),
-
         ];
     }
 
@@ -49,14 +48,19 @@ class AssetAssignmentController extends Controller
             $assignment = AssetAssignment::create([
                 'personnel_id'  => $data['personnel_id'],
                 'assigned_by'   => $data['assigned_by'] ?? $request->user()->id,
-                'date_assigned' => $data['date_assigned'] ?: now()->toDateString(), // default here
+                'date_assigned' => $data['date_assigned'] ?: now()->toDateString(),
                 'remarks'       => $data['remarks'] ?? null,
             ]);
 
+            // ✅ Attach assets and sync assigned_to
             foreach ($data['selected_assets'] as $assetId) {
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
+                ]);
+
+                InventoryList::where('id', $assetId)->update([
+                    'assigned_to' => $assignment->personnel_id,
                 ]);
             }
         });
@@ -83,12 +87,16 @@ class AssetAssignmentController extends Controller
                 'assigned_by'   => $data['assigned_by'] ?? $assignment->assigned_by ?? $request->user()->id,
             ]);
 
-            // Replace items
+            // Replace items + sync
             $assignment->items()->delete();
             foreach ($data['selected_assets'] as $assetId) {
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
+                ]);
+
+                InventoryList::where('id', $assetId)->update([
+                    'assigned_to' => $assignment->personnel_id,
                 ]);
             }
         });
@@ -96,12 +104,29 @@ class AssetAssignmentController extends Controller
         return redirect()->route('assignments.index')->with('success', "Assignment updated successfully.");
     }
 
-    public function destroy(AssetAssignment $assignment)
-    {
-        DB::transaction(fn() => $assignment->delete());
+public function destroy(AssetAssignment $assignment)
+{
+    DB::transaction(function () use ($assignment) {
+        // Get all asset IDs from this assignment
+        $assetIds = $assignment->items()->pluck('asset_id');
 
-        return redirect()->route('assignments.index')->with('success', "Assignment deleted successfully.");
-    }
+        // Nullify assigned_to in inventory_lists for those assets
+        if ($assetIds->isNotEmpty()) {
+            \App\Models\InventoryList::whereIn('id', $assetIds)->update([
+                'assigned_to' => null,
+            ]);
+        }
+
+        // Delete related items first (optional but cleaner)
+        $assignment->items()->delete();
+
+        // Delete the assignment itself
+        $assignment->delete();
+    });
+
+    return redirect()->route('assignments.index')->with('success', "Assignment deleted successfully, and assets were unassigned.");
+}
+
 
     public function show(Request $request, AssetAssignment $assignment)
     {
@@ -124,7 +149,7 @@ class AssetAssignmentController extends Controller
         return Inertia::render('assignments/index', [
             ...$this->indexProps($request),
             'viewing' => $assignment,
-            'viewing_items' => $items, // paginated items
+            'viewing_items' => $items,
         ]);
     }
 
@@ -168,7 +193,6 @@ class AssetAssignmentController extends Controller
         ];
     }
 
-    // SINGLE MODE but all saved at the same time
     public function bulkReassignItems(Request $request, AssetAssignment $assignment)
     {
         $changes = $request->validate([
@@ -186,25 +210,25 @@ class AssetAssignmentController extends Controller
                 continue;
             }
 
-            // Check if this personnel already has an assignment
             $newAssignment = AssetAssignment::firstOrCreate(
+                ['personnel_id' => $change['new_personnel_id']],
                 [
-                    'personnel_id' => $change['new_personnel_id'],
-                ],
-                [
-                    'assigned_by' => $request->user()->id,
+                    'assigned_by'   => $request->user()->id,
                     'date_assigned' => now()->toDateString(),
-                    'remarks' => null,
+                    'remarks'       => null,
                 ]
             );
 
-            // Move the item to the correct assignment
             $item->update([
                 'asset_assignment_id' => $newAssignment->id,
             ]);
+
+            // ✅ Sync inventory_lists.assigned_to
+            $item->asset->update([
+                'assigned_to' => $newAssignment->personnel_id,
+            ]);
         }
 
-        // return response()->json(['status' => 'ok']);
         return back()->with('success', 'Assets reassigned successfully.');
     }
 
@@ -215,31 +239,29 @@ class AssetAssignmentController extends Controller
         ]);
 
         DB::transaction(function () use ($assignment, $data, $request) {
-            // Find or create target assignment
             $newAssignment = AssetAssignment::firstOrCreate(
                 ['personnel_id' => $data['new_personnel_id']],
                 [
-                    'assigned_by' => $request->user()->id,
+                    'assigned_by'   => $request->user()->id,
                     'date_assigned' => now()->toDateString(),
-                    'remarks' => null,
+                    'remarks'       => null,
                 ]
             );
 
-            // Move all items of this assignment
+            $assetIds = AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
+                ->pluck('asset_id');
+
             AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
                 ->update(['asset_assignment_id' => $newAssignment->id]);
+
+            // ✅ Sync assigned_to for all affected assets
+            InventoryList::whereIn('id', $assetIds)->update([
+                'assigned_to' => $newAssignment->personnel_id,
+            ]);
         });
 
         return back()->with('success', 'All assets reassigned successfully.');
     }
-}
 
-// public function create()
-    // {
-    //     //Show the form for creating a new resource.
-    // }
     
-    // public function edit(AssetAssignment $assetAssignment)
-    // {
-    //     //Show the form for editing the specified resource.
-    // }
+}

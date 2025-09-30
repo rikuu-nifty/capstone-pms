@@ -10,7 +10,7 @@ import { EditAssetModalForm } from '@/pages/inventory-list/edit-asset-modal-form
 import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Banknote, Boxes, Eye, Pencil, PlusCircle, Trash2, FolderArchive, Pin, X } from 'lucide-react';
+import { Banknote, Boxes, Eye, FolderArchive, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
@@ -18,10 +18,11 @@ import { ChooseAddTypeModal } from './chooseAddTypeModal';
 import { ChooseViewModal } from './chooseViewModal';
 import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 // import { WebcamCaptureModal } from './WebcamCaptureModal';
-import { WebcamCapture } from './WebcamCapture';
 import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
-import { UnitOrDepartment, SubArea } from '@/types/custom-index';
-import { ucwords } from '@/types/custom-index';
+import { SubArea, ucwords, UnitOrDepartment } from '@/types/custom-index';
+import { WebcamCapture } from './WebcamCapture';
+// ✅ instead use the shared type
+import type { Personnel } from '@/types/personnel';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -91,7 +92,7 @@ export type Asset = {
 
     building_room_id?: number | null;
     sub_area_id?: number | null;
-    
+
     building_room?: BuildingRoom | null;
 
     room_building?: Building | null;
@@ -102,8 +103,8 @@ export type Asset = {
     depreciation_value?: number | string | null; // ✅ NEW
     date_purchased: string;
     quantity: number;
-    assigned_to?: string | null;
-    assigned_to_name?: string | null;
+    assigned_to?: number | null;   // ✅ FK now (personnel.id)
+    personnel?: Personnel | null;  // ✅ relation for easier display
 
     // ✅ Changed: transfer relation instead of transfer_status
     transfer?: Transfer | null;
@@ -134,7 +135,7 @@ export type AssetFormData = {
     supplier: string;
     unit_cost: number | string; // can be number or string
     depreciation_value: number | string; // ✅ add this
-    assigned_to?: string | null;
+    assigned_to?: number | string | null; // ✅ can still accept string from <select>, but backend expects number
     date_purchased: string;
     asset_type: string;
     category_id: number | '';
@@ -158,6 +159,7 @@ type KPIs = {
 
 export default function InventoryListIndex({
     assets = [],
+    personnels = [],   // ✅ add here
     assetModels = [],
     buildings = [],
     buildingRooms = [],
@@ -178,6 +180,7 @@ export default function InventoryListIndex({
     subAreas = [],
 }: {
     assets: Asset[];
+    personnels: Personnel[];   // ✅ add to type
     assetModels: AssetModel[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
@@ -212,17 +215,18 @@ export default function InventoryListIndex({
         description: '',
         memorandum_no: '',
         status: '',
+        assigned_to: '',
     });
 
     const { auth } = usePage().props as unknown as {
-        auth: { 
-            permissions: string[]; 
+        auth: {
+            permissions: string[];
             role: string;
             unit_or_department_id: number | null;
-            unit_or_department?: { 
-                id: number; 
-                name: string; 
-                code: string 
+            unit_or_department?: {
+                id: number;
+                name: string;
+                code: string;
             };
         };
     };
@@ -254,7 +258,6 @@ export default function InventoryListIndex({
             setSelectedUnitId(auth.unit_or_department_id);
         }
     }, [canViewOwn, canViewAll, auth.unit_or_department_id]);
-
 
     // For Modal (Edit)
     const [editModalVisible, setEditModalVisible] = useState(false);
@@ -379,12 +382,9 @@ export default function InventoryListIndex({
             item.status?.toLowerCase().includes(keyword);
 
         // ✅ then add your filter checks
-        const matchesCategory =
-            selectedCategoryId === '' || item.category_id === selectedCategoryId;
-        const matchesUnit =
-            selectedUnitId === '' || item.unit_or_department?.id === selectedUnitId;
-        const matchesStatus =
-            selectedStatus === '' || item.status === selectedStatus;
+        const matchesCategory = selectedCategoryId === '' || item.category_id === selectedCategoryId;
+        const matchesUnit = selectedUnitId === '' || item.unit_or_department?.id === selectedUnitId;
+        const matchesStatus = selectedStatus === '' || item.status === selectedStatus;
 
         // ✅ final return
         return matchesSearch && matchesCategory && matchesUnit && matchesStatus;
@@ -465,14 +465,13 @@ export default function InventoryListIndex({
                 )}
                 {/* 🔹 Unit restriction notice */}
                 {canViewOwn && !canViewAll && (
-                    <div className="mt-2 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 text-sm">
+                    <div className="mt-2 rounded-md border border-yellow-300 bg-yellow-100 px-3 py-2 text-sm text-yellow-800">
                         You are viewing <strong>only the assets assigned to your unit/department</strong>
                         {auth.unit_or_department && (
-                        <> :
-                            <span className="ml-1 text-sm font-bold text-blue-800">
-                                {auth.unit_or_department.name}
-                            </span>
-                        </>
+                            <>
+                                {' '}
+                                :<span className="ml-1 text-sm font-bold text-blue-800">{auth.unit_or_department.name}</span>
+                            </>
                         )}
                     </div>
                 )}
@@ -492,27 +491,26 @@ export default function InventoryListIndex({
                         <div className="flex flex-wrap gap-2 pt-1">
                             {selectedStatus && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
-                                Status: {selectedStatus === 'active' ? 'Active' : 'Archived'}
-                                <button onClick={() => setSelectedStatus('')} className="ml-1 hover:text-red-600">
-                                    <X className="h-4 w-4" />
-                                </button>
+                                    Status: {selectedStatus === 'active' ? 'Active' : 'Archived'}
+                                    <button onClick={() => setSelectedStatus('')} className="ml-1 hover:text-red-600">
+                                        <X className="h-4 w-4" />
+                                    </button>
                                 </Badge>
                             )}
 
                             {selectedCategoryId && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
-                                Category: {categories.find(c => c.id === selectedCategoryId)?.name ?? selectedCategoryId}
-                                <button onClick={() => setSelectedCategoryId('')} className="ml-1 hover:text-red-600">
-                                    <X className="h-4 w-4" />
-                                </button>
+                                    Category: {categories.find((c) => c.id === selectedCategoryId)?.name ?? selectedCategoryId}
+                                    <button onClick={() => setSelectedCategoryId('')} className="ml-1 hover:text-red-600">
+                                        <X className="h-4 w-4" />
+                                    </button>
                                 </Badge>
                             )}
 
                             {/* 🔹 If user can view all, keep normal filter chip */}
                             {canViewAll && selectedUnitId && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
-                                    Unit/Dept:{" "}
-                                    {unitOrDepartments.find(u => u.id === selectedUnitId)?.name ?? selectedUnitId}
+                                    Unit/Dept: {unitOrDepartments.find((u) => u.id === selectedUnitId)?.name ?? selectedUnitId}
                                     <button onClick={() => setSelectedUnitId('')} className="ml-1 hover:text-red-600">
                                         <X className="h-4 w-4" />
                                     </button>
@@ -521,20 +519,19 @@ export default function InventoryListIndex({
 
                             {(selectedStatus || selectedCategoryId || (selectedUnitId && canViewAll)) && (
                                 <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                    setSelectedStatus('');
-                                    setSelectedCategoryId('');
-                                    if (canViewAll) setSelectedUnitId('');
-                                }}
-                                className="cursor-pointer"
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => {
+                                        setSelectedStatus('');
+                                        setSelectedCategoryId('');
+                                        if (canViewAll) setSelectedUnitId('');
+                                    }}
+                                    className="cursor-pointer"
                                 >
-                                Clear filters
+                                    Clear filters
                                 </Button>
                             )}
                         </div>
-
                     </div>
 
                     <div className="flex gap-2">
@@ -558,14 +555,14 @@ export default function InventoryListIndex({
                         />
                         {canCreate && ( // only show if user has create permission
                             <Button
-                            onClick={() => {
-                                reset();
-                                clearErrors();
-                                setChooseAddVisible(true);
-                            }}
-                            className="cursor-pointer"
+                                onClick={() => {
+                                    reset();
+                                    clearErrors();
+                                    setChooseAddVisible(true);
+                                }}
+                                className="cursor-pointer"
                             >
-                            <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
+                                <PlusCircle className="mr-1 h-4 w-4" /> Add Asset
                             </Button>
                         )}
                     </div>
@@ -614,8 +611,8 @@ export default function InventoryListIndex({
                                     <TableCell>
                                         {item.room_building && item.building_room ? (
                                             <>
-                                            {item.room_building.name} ({item.building_room.room})
-                                            {/* {item.sub_area?.name ? ` – ${item.sub_area.name}` : ''} */}
+                                                {item.room_building.name} ({item.building_room.room})
+                                                {/* {item.sub_area?.name ? ` – ${item.sub_area.name}` : ''} */}
                                             </>
                                         ) : (
                                             '—'
@@ -739,6 +736,7 @@ export default function InventoryListIndex({
                     assetModels={assetModels}
                     uniqueBrands={[...new Set(assetModels.map((m) => m.brand))]}
                     subAreas={subAreas}
+                    personnels={personnels}   // ✅ pass here
                 />
             )}
 
@@ -832,7 +830,8 @@ export default function InventoryListIndex({
                     categories={categories}
                     assetModels={assetModels}
                     subAreas={subAreas}
-                />
+                    personnels={personnels}   // ✅ add this
+                    />
             )}
 
             {/* Webcam modal
@@ -928,23 +927,23 @@ export default function InventoryListIndex({
                                 <select
                                     className="w-full rounded-lg border p-2"
                                     value={data.sub_area_id ?? ''}
-                                    onChange={(e) =>
-                                        setData('sub_area_id', e.target.value === '' ? null : Number(e.target.value))
-                                    }
+                                    onChange={(e) => setData('sub_area_id', e.target.value === '' ? null : Number(e.target.value))}
                                     disabled={!data.building_room_id}
                                 >
                                     <option value="">Select Sub Area</option>
                                     {subAreas
-                                    .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id)) // ✅ typed
-                                    .map((s: SubArea) => ( // ✅ typed
-                                        <option key={s.id} value={s.id}>
-                                        {s.name}
-                                        </option>
-                                    ))}
+                                        .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id)) // ✅ typed
+                                        .map(
+                                            (
+                                                s: SubArea, // ✅ typed
+                                            ) => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.name}
+                                                </option>
+                                            ),
+                                        )}
                                 </select>
-                                {errors.sub_area_id && (
-                                    <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
-                                )}
+                                {errors.sub_area_id && <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>}
                             </div>
 
                             {/* <div className="col-span-1">
@@ -979,13 +978,19 @@ export default function InventoryListIndex({
 
                             <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Assigned To</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter person assigned"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.assigned_to ?? ''} // ✅ converts null/undefined → ""
-                                    onChange={(e) => setData('assigned_to', e.target.value)}
-                                />
+                                <select
+  className="w-full rounded-lg border p-2"
+  value={data.assigned_to ?? ''}
+  onChange={(e) => setData('assigned_to', e.target.value ? Number(e.target.value) : null)}
+>
+  <option value="">— Select Personnel —</option>
+  {personnels.map((p) => (
+    <option key={p.id} value={p.id}>
+      {p.full_name}{p.position ? ` – ${p.position}` : ''}
+    </option>
+  ))}
+</select>
+
                             </div>
 
                             {/* Divider */}
@@ -998,16 +1003,10 @@ export default function InventoryListIndex({
                                 {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                             </div>
                             <div className="col-span-1 pt-0.5">
-  <label className="mb-1 block font-medium">Maintenance Due Date</label>
-  <PickerInput
-    type="date"
-    value={data.maintenance_due_date}
-    onChange={(v) => setData('maintenance_due_date', v)}
-  />
-  {errors.maintenance_due_date && (
-    <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>
-  )}
-</div>
+                                <label className="mb-1 block font-medium">Maintenance Due Date</label>
+                                <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
+                                {errors.maintenance_due_date && <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>}
+                            </div>
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Type</label>

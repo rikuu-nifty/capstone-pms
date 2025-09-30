@@ -61,7 +61,7 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'depreciation_value' => 'nullable|numeric|min:0',
 
             // ✅ New
-            'assigned_to' => 'nullable|string|max:255',
+           'assigned_to' => 'nullable|exists:personnels,id',
         ];
     }
 

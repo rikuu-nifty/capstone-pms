@@ -30,7 +30,7 @@ return new class extends Migration
             $table->foreign('unit_or_department_id')
                   ->references('id')
                   ->on('unit_or_departments')
-                  ->onDelete('set null'); // The onDelete('set null') ensures that if a unit is deleted, the value becomes null instead of breaking the reference.
+                  ->onDelete('set null'); 
 
             $table->unsignedBigInteger('building_id')->nullable();  // Done FK BUILDING Table
             $table->foreign('building_id')
@@ -43,6 +43,13 @@ return new class extends Migration
                   ->references('id')
                   ->on('building_rooms')
                   ->onDelete('set null');
+
+            // ✅ NEW: Sub Area
+            $table->unsignedBigInteger('sub_area_id')->nullable();
+            $table->foreign('sub_area_id')
+                  ->references('id')
+                  ->on('sub_areas')
+                  ->nullOnDelete();
 
             $table->foreignId('category_id')
                   ->nullable()
@@ -62,21 +69,15 @@ return new class extends Migration
             $table->integer('quantity');
 
             // ✅ New field: Assigned To 
-            // $table->foreignId('transfer_id')->nullable()->constrained('transfers')->nullOnDelete();
             $table->unsignedBigInteger('transfer_id')->nullable();
 
-            // $table->unsignedInteger('transfer_id')->nullable();
-            // $table->foreign('transfer_id')
-            // ->references('id')->on('transfers')
-            // ->nullOnDelete();
-            // $table->enum('transfer_status', ['not_transferred', 'transferred', 'pending'])->default('pending');
-
-            // ✅ New field: Assigned To 
-            $table->string('assigned_to')->nullable(); // Person's name (not linked to users)
+            $table->unsignedBigInteger('assigned_to')->nullable();
+            $table->foreign('assigned_to')
+                ->references('id')
+                ->on('personnels')
+                ->nullOnDelete();
 
             $table->timestamps();
-            // $table->string('brand')->nullable(); ASSETMODEL Table
-            // $table->string('unit_or_department')->nullable(); // Delete muna to dapat kasi tawagin yun fk na yun para siya yun lumabas UNIT_OR_DEPARTMENT Table
             
             $table->softDeletes();
             $table->unsignedBigInteger('deleted_by_id')->nullable(); // who deleted
@@ -93,14 +94,17 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('inventory_lists', function (Blueprint $table) {
-            $table->dropForeign(['asset_model_id']);           // Drop FK for asset model
-            $table->dropForeign(['unit_or_department_id']);    // Drop FK for unit/department
-            $table->dropForeign(['building_id']);              // Drop FK for building
-            $table->dropForeign(['building_room_id']);         // Drop FK for building room
-            $table->dropForeign(['deleted_by_id']);            // ✅ Drop FK for deleted_by
+            $table->dropForeign(['asset_model_id']);           
+            $table->dropForeign(['unit_or_department_id']);    
+            $table->dropForeign(['building_id']);              
+            $table->dropForeign(['building_room_id']);         
+            $table->dropForeign(['sub_area_id']);              // ✅ NEW
+            $table->dropForeign(['assigned_to']);              // ✅ make sure to drop too
+            $table->dropForeign(['deleted_by_id']);            
             $table->dropIndex('inventory_lists_assetmodel_deleted_idx');
         });
 
-        Schema::dropIfExists('inventory_lists'); // Then drop the table
+        Schema::dropIfExists('inventory_lists'); 
     }
 };
+    

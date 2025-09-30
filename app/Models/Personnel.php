@@ -20,6 +20,8 @@ class Personnel extends Model
         'status'
     ];
 
+
+    // ✅ Accessor for full_name
     protected $appends = ['full_name'];
 
     public function unitOrDepartment()
