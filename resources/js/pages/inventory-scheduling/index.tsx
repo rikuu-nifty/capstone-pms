@@ -21,6 +21,8 @@ import BuildingItem from './BuildingItem';
 import UnitItem from './UnitItem';
 import WarningModal from './WarningModal';
 
+import Pagination, { PageInfo } from '@/components/Pagination';
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Inventory Scheduling',
@@ -230,6 +232,15 @@ export default function InventorySchedulingIndex({
     const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
     const [warningDetails, setWarningDetails] = useState<string[]>([]);
 
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 10;
+
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
+
+    
+
     useEffect(() => {
         if (!props.viewing) return;
         setSelectedSchedule(props.viewing);
@@ -375,6 +386,9 @@ export default function InventorySchedulingIndex({
         Overdue: 'Overdue',
         Cancelled: 'Cancelled',
     };
+    
+    const start = (page - 1) * PAGE_SIZE;
+    const page_items = filtered.slice(start, start + PAGE_SIZE);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -422,7 +436,9 @@ export default function InventorySchedulingIndex({
                         </TableHeader>
 
                         <TableBody>
-                            {filtered.map((item) => (
+                            {/* {filtered.map((item) => ( */}
+                             {page_items.length > 0 ? (
+                                page_items.map((item) => (
                                 <TableRow key={item.id} className="text-center">
                                     <TableCell>{item.id}</TableCell>
                                     <TableCell className="whitespace-nowrap">
@@ -479,11 +495,34 @@ export default function InventorySchedulingIndex({
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                    No schedules found.
+                                </TableCell>
+                            </TableRow>
+                        )}
                         </TableBody>
                     </Table>
                 </div>
+
+                <div className="flex items-center justify-between mt-3">
+                    <PageInfo
+                        page={page}
+                        total={filtered.length}
+                        pageSize={PAGE_SIZE}
+                        label="inventory schedules"
+                    />
+                    <Pagination
+                        page={page}
+                        total={filtered.length}
+                        pageSize={PAGE_SIZE}
+                        onPageChange={setPage}
+                    />
+                </div>
             </div>
+            
 
             {editModalVisible && selectedSchedule && (
                 <EditInventorySchedulingModal
