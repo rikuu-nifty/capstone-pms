@@ -16,6 +16,8 @@ import OffCampusAddModal from './OffCampusAddModal';
 import OffCampusEditModal from './OffCampusEditModal';
 import OffCampusViewModal from './OffCampusViewModal';
 
+import Pagination, { PageInfo } from '@/components/Pagination';
+
 // -------------------- TYPES --------------------
 
 export type OffCampusAsset = {
@@ -324,6 +326,22 @@ export default function OffCampusIndex({
                             )}
                         </TableBody>
                     </Table>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                    <PageInfo
+                        page={offCampuses.current_page}
+                        total={offCampuses.total}
+                        pageSize={offCampuses.per_page}
+                        label="Off-Campus records"
+                    />
+                    <Pagination
+                        page={offCampuses.current_page}
+                        total={offCampuses.total}
+                        pageSize={offCampuses.per_page}
+                        onPageChange={(newPage) => {
+                        router.get(route('off-campus.index'), { page: newPage }, { preserveScroll: true });
+                        }}
+                    />
                 </div>
 
                 {/* Add Modal */}
