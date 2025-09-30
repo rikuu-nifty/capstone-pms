@@ -8,7 +8,6 @@ import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
 import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
-
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { type TransferFilters } from '@/components/filters/TransferFilterModal';
 import TransferFilterDropdown from '@/components/filters/TransferFilterDropdown';
@@ -22,6 +21,7 @@ import TransferEditModal from './TransferEditModal';
 import TransferViewModal from './TransferViewModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
+import Pagination, { PageInfo } from '@/components/Pagination';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -358,6 +358,20 @@ export default function TransferIndex({
                             )}
                         </TableBody>
                     </Table>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                    <PageInfo
+                        page={page}
+                        total={sortedTransfers.length}
+                        pageSize={page_size}
+                        label="Transfer records"
+                    />
+                    <Pagination
+                        page={page}
+                        total={sortedTransfers.length}
+                        pageSize={page_size}
+                        onPageChange={setPage}
+                    />
                 </div>
             </div>
 

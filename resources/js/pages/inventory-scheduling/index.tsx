@@ -512,7 +512,7 @@ export default function InventorySchedulingIndex({
                         page={page}
                         total={filtered.length}
                         pageSize={PAGE_SIZE}
-                        label="inventory schedules"
+                        label="Inventory Schedule records"
                     />
                     <Pagination
                         page={page}
