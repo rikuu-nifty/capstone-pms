@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { useForm } from '@inertiajs/react';
-import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList, SubArea } from '@/types/custom-index';
+import { Building, BuildingRoom, UnitOrDepartment, User, InventoryList, SubArea, formatEnums } from '@/types/custom-index';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import { TransferFormData, Transfer } from '@/types/transfer';
@@ -295,25 +295,31 @@ export default function TransferEditModal({
             {/* Current Building */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Current Building</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.current_building_id}
-                    onChange={(e) => {
-                        setData('current_building_id', Number(e.target.value));
+                <Select
+                    className="w-full"
+                    isClearable
+                    value={
+                    data.current_building_id
+                        ? {
+                            value: data.current_building_id,
+                            label: buildings.find((b) => b.id === data.current_building_id)
+                            ? `${buildings.find((b) => b.id === data.current_building_id)?.name}`
+                            : '',
+                        }
+                        : null
+                    }
+                    onChange={(selected) => {
+                        setData('current_building_id', selected ? Number(selected.value) : 0);
                         setData('current_building_room', 0);
-
-                        // setData('selected_assets', []);
                         setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
-                >
-                    <option value="">Select Building</option>
-                    {buildings.map((building) => (
-                    <option key={building.id} value={building.id}>
-                        {building.name} ({building.code})
-                    </option>
-                    ))}
-                </select>
+                    options={buildings.map((b) => ({
+                        value: b.id,
+                        label: `${b.name}`,
+                    }))}
+                    placeholder="Select Building"
+                />
                 {errors.current_building_id && (
                     <p className="mt-1 text-xs text-red-500">{errors.current_building_id}</p>
                 )}
@@ -322,27 +328,29 @@ export default function TransferEditModal({
             {/* Current Room */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Current Room</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.current_building_room}
-                    onChange={(e) => {
-                        setData('current_building_room', Number(e.target.value))
-
-                        // setData('selected_assets', []);
+                <Select
+                    className="w-full"
+                    isClearable
+                    value={
+                    data.current_building_room
+                        ? {
+                            value: data.current_building_room,
+                            label: filteredCurrentRooms.find((r) => r.id === data.current_building_room)?.room ?? '',
+                        }
+                        : null
+                    }
+                    onChange={(selected) => {
+                        setData('current_building_room', selected ? Number(selected.value) : 0);
                         setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
-                >
-                    {!data.current_building_room && (
-                        <option value="">Select Room</option>
-                    )}
-
-                    {filteredCurrentRooms.map((room) => (
-                        <option key={room.id} value={room.id}>
-                            {room.room}
-                        </option>
-                    ))}
-                </select>
+                    options={filteredCurrentRooms.map((r) => ({
+                        value: r.id,
+                        label: r.room,
+                    }))}
+                    isDisabled={!data.current_building_id}
+                    placeholder="Select Room"
+                />
                 {errors.current_building_room && (
                     <p className="mt-1 text-xs text-red-500">{errors.current_building_room}</p>
                 )}
@@ -351,92 +359,106 @@ export default function TransferEditModal({
             {/* Current Unit/Department */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Current Unit/Dept/Lab</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.current_organization}
-                    onChange={(e) => {
-                        setData('current_organization', Number(e.target.value))
-                        
-                        // setData('selected_assets', []);
+                <Select
+                    className="w-full"
+                    isClearable
+                    value={
+                    data.current_organization
+                        ? {
+                            value: data.current_organization,
+                            label: unitOrDepartments.find((u) => u.id === data.current_organization)?.name ?? '',
+                        }
+                        : null
+                    }
+                    onChange={(selected) => {
+                        setData('current_organization', selected ? Number(selected.value) : 0);
                         setData('transfer_assets', []);
                         setShowAssetDropdown([true]);
                     }}
-                >
-                    {!data.current_organization && (
-                        <option value="">Select Unit/Dept</option>
-                    )}
-
-                    {unitOrDepartments.map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                        {unit.code} - {unit.name}
-                        </option>
-                    ))}
-                </select>
+                    options={unitOrDepartments.map((u) => ({
+                        value: u.id,
+                        label: `${u.name}`,
+                    }))}
+                    placeholder="Select Unit/Dept"
+                />
                 {errors.current_organization && <p className="mt-1 text-xs text-red-500">{errors.current_organization}</p>}
             </div>
 
             {/* Receiving Unit/Department */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Receiving Unit/Dept/Lab</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.receiving_organization}
-                    onChange={(e) => setData('receiving_organization', Number(e.target.value))}
-                >
-
-                    {!data.receiving_organization && (
-                        <option value="">Select Unit/Dept</option>
-                    )}
-
-                    {unitOrDepartments.map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                        {unit.code} - {unit.name}
-                        </option>
-                    ))}
-                </select>
+                <Select
+                    className="w-full"
+                    isClearable
+                    value={
+                    data.receiving_organization
+                        ? {
+                            value: data.receiving_organization,
+                            label: unitOrDepartments.find((u) => u.id === data.receiving_organization)?.name ?? ''
+                        }
+                        : null
+                    }
+                    onChange={(selected) => setData('receiving_organization', selected ? Number(selected.value) : 0)}
+                    options={unitOrDepartments.map((u) => ({
+                        value: u.id,
+                        label: `${u.name}`,
+                    }))}
+                    placeholder="Select Unit/Dept"
+                />
                 {errors.receiving_organization && <p className="mt-1 text-xs text-red-500">{errors.receiving_organization}</p>}
             </div>            
 
             {/* Receiving Building */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Receiving Building</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.receiving_building_id}
-                    onChange={(e) => {
-                        setData('receiving_building_id', Number(e.target.value));
+                <Select
+                    className="w-full"
+                    isClearable
+                    value={
+                    data.receiving_building_id
+                        ? {
+                            value: data.receiving_building_id,
+                            label: buildings.find((b) => b.id === data.receiving_building_id)
+                                ? buildings.find((b) => b.id === data.receiving_building_id)?.name
+                                : '',
+                        }
+                        : null
+                    }
+                    onChange={(selected) => {
+                        setData('receiving_building_id', selected ? Number(selected.value) : 0);
                         setData('receiving_building_room', 0);
                     }}
-                >
-                <option value="">Select Building</option>
-                {buildings.map((building) => (
-                    <option key={building.id} value={building.id}>
-                    {building.name} ({building.code})
-                    </option>
-                ))}
-                </select>
+                    options={buildings.map((b) => ({
+                        value: b.id,
+                        label: `${b.name}`,
+                    }))}
+                    placeholder="Select Building"
+                />
                 {errors.receiving_building_id && <p className="mt-1 text-xs text-red-500">{errors.receiving_building_id}</p>}
             </div>
 
             {/* Receiving Room */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Receiving Room</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.receiving_building_room}
-                    onChange={(e) => setData('receiving_building_room', Number(e.target.value))}
-                >
-
-                {!data.receiving_building_room && (
-                    <option value="">Select Room</option>
-                )}
-
-                {filteredReceivingRooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                    {room.room}
-                    </option>
-                ))}
-                </select>
+                <Select
+                    className="w-full"
+                    isClearable
+                    value={
+                    data.receiving_building_room
+                        ? {
+                            value: data.receiving_building_room,
+                            label: filteredReceivingRooms.find((r) => r.id === data.receiving_building_room)?.room ?? '',
+                        }
+                        : null
+                    }
+                    onChange={(selected) => setData('receiving_building_room', selected ? Number(selected.value) : 0)}
+                    options={filteredReceivingRooms.map((r) => ({
+                        value: r.id,
+                        label: r.room,
+                    }))}
+                    isDisabled={!data.receiving_building_id}
+                    placeholder="Select Room"
+                />
                 {errors.receiving_building_room && <p className="mt-1 text-xs text-red-500">{errors.receiving_building_room}</p>}
             </div>
 
@@ -510,22 +532,30 @@ export default function TransferEditModal({
             {/* Designated Employee */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Designated Employee</label>
-                <select
-                    className="w-full rounded-lg border p-2"
-                    value={data.designated_employee}
-                    onChange={(e) => setData('designated_employee', Number(e.target.value))}
-                >
-
-                {!data.designated_employee && (
-                    <option value="">Select Employee</option>
-                )}
-
-                {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                        {user.name}
-                    </option>
-                ))}
-                </select>
+                <Select
+                    className="w-full"
+                    value={
+                    data.designated_employee
+                        ? {
+                            value: data.designated_employee,
+                            label: (() => {
+                                const user = users.find((u) => u.id === data.designated_employee);
+                                return user ? `${user.name} (${formatEnums(user.role?.code ?? '—').toUpperCase()})` : '';
+                            })(),
+                        }
+                        : null
+                    }
+                    onChange={(selected) => {
+                        setData('designated_employee', selected ? Number(selected.value) : 0);
+                    }}
+                    options={users
+                    .filter((u) => u.role?.code !== 'superuser' && u.role?.code !== 'vp_admin')
+                    .map((u) => ({
+                        value: u.id,
+                        label: `${u.name} (${formatEnums(u.role?.code ?? '—').toUpperCase()})`,
+                    }))}
+                    placeholder="Select Employee..."
+                />
                 {errors.designated_employee && <p className="mt-1 text-xs text-red-500">{errors.designated_employee}</p>}
             </div>
 
