@@ -14,6 +14,8 @@ import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { Asset } from '../inventory-list';
+import { Clock, CalendarClock, Ban, Timer } from 'lucide-react';
+import { formatNumber } from '@/types/custom-index';
 
 import { formatDate, type Building, type SubArea } from '@/types/custom-index';
 import { validateScheduleForm } from '@/types/validateScheduleForm';
@@ -92,7 +94,8 @@ export type PagePropsWithViewing = {
     auth: {
         user: User;
     };
-    signatories: Record<string, Signatory>; // 👈 added
+    signatories: Record<string, Signatory>;
+    totals?: SchedulingTotals;
 };
 
 export type ScheduledAsset = {
@@ -171,6 +174,14 @@ export type InventorySchedulingFormData = {
     scheduled_assets: number[];
 };
 
+export type SchedulingTotals = {
+    on_time_completion_rate: number;
+    overdue_last_month: number;
+    pending_next_30_days: number;
+    cancellation_rate: number;
+    avg_delay_days: number;
+};
+
 export default function InventorySchedulingIndex({
     schedules = [],
     assets = [], // 👈 default empty array
@@ -188,7 +199,7 @@ export default function InventorySchedulingIndex({
     users: User[];
 }) {
     const { props } = usePage<PagePropsWithViewing>();
-    const { signatories } = props; // 👈 extract signatories
+    const { signatories, totals } = props; // extract signatories
     const currentUser = props.auth.user;
 
      // 👇 Add this line to debug
@@ -238,9 +249,7 @@ export default function InventorySchedulingIndex({
     useEffect(() => {
         setPage(1);
     }, [search]);
-
     
-
     useEffect(() => {
         if (!props.viewing) return;
         setSelectedSchedule(props.viewing);
@@ -395,28 +404,92 @@ export default function InventorySchedulingIndex({
             <Head title="Inventory Scheduling" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Inventory Scheduling</h1>
-                        <p className="text-sm text-muted-foreground">Manage and monitor scheduled inventory checks by room and department.</p>
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold">Inventory Scheduling</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Manage and monitor scheduled inventory checks by room and department.
+                    </p>
+                </div>
+
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
+                        {/* On-Time Completion */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                <Clock className="h-7 w-7 text-green-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">On-Time Completion (This Month)</div>
+                                <div className="text-3xl font-bold">{totals.on_time_completion_rate}%</div>
+                            </div>
+                        </div>
+
+                        {/* Overdue Last Month */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                                <CalendarClock className="h-7 w-7 text-red-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Overdue (Last Month)</div>
+                                <div className="text-3xl font-bold">{formatNumber(totals.overdue_last_month)}</div>
+                            </div>
+                        </div>
+
+                        {/* Pending Next 30 Days */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                                <Clock className="h-7 w-7 text-sky-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Pending (Next 30 Days)</div>
+                                <div className="text-3xl font-bold">{formatNumber(totals.pending_next_30_days)}</div>
+                            </div>
+                        </div>
+
+                        {/* Cancellation Rate */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                                <Ban className="h-7 w-7 text-orange-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Cancellation Rate</div>
+                                <div className="text-3xl font-bold">{totals.cancellation_rate}%</div>
+                            </div>
+                        </div>
+
+                        {/* Average Delay */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                                <Timer className="h-7 w-7 text-purple-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Avg Delay (Days)</div>
+                                <div className="text-3xl font-bold">{totals.avg_delay_days}</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2 w-96">
                         <Input
-                            type="text"
-                            placeholder="Search by building, department, or status..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="max-w-xs"
+                        type="text"
+                        placeholder="Search by building, department, or status..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="max-w-xs"
                         />
                     </div>
 
                     <div className="flex gap-2">
                         <Button variant="outline">
-                            <Grid className="mr-1 h-4 w-4" /> Category
+                        <Grid className="mr-1 h-4 w-4" /> Category
                         </Button>
                         <Button variant="outline">
-                            <Filter className="mr-1 h-4 w-4" /> Filter
+                        <Filter className="mr-1 h-4 w-4" /> Filter
                         </Button>
                         <Button className="cursor-pointer" onClick={() => setShowAddScheduleInventory(true)}>
-                            <PlusCircle className="mr-1 h-4 w-4" /> Schedule Inventory
+                        <PlusCircle className="mr-1 h-4 w-4" /> Schedule Inventory
                         </Button>
                     </div>
                 </div>
