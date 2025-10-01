@@ -651,7 +651,12 @@ export default function InventorySchedulingIndex({
                     buildingRooms={buildingRooms}
                     unitOrDepartments={unitOrDepartments}
                     users={users}
-                    statusOptions={['Completed', 'Pending', 'Overdue', 'Cancelled', 'Pending_Review']}
+                    // statusOptions={['Completed', 'Pending', 'Overdue', 'Cancelled', 'Pending_Review']}
+                    statusOptions={
+                        selectedSchedule.scheduling_status === 'Pending_Review'
+                        ? ['Pending_Review'] // only show this if it hasn’t been approved
+                        : ['Pending', 'Overdue', 'Completed', 'Cancelled'] // no Pending_Review allowed
+                    }
                     assets={assets}
                 />
             )}
@@ -1271,8 +1276,8 @@ export default function InventorySchedulingIndex({
                                         onChange={(e) => setData('scheduling_status', e.target.value)}
                                     >
                                         <option value="Pending_Review">Pending Review</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Overdue">Overdue</option>
+                                        <option value="Pending" disabled>Pending</option>
+                                        <option value="Overdue" disabled>Overdue</option>
                                         <option value="Completed" disabled>
                                             Completed
                                         </option>
