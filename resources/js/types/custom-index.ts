@@ -112,9 +112,13 @@ export function formatFullName(
 
 export const formatForInputDate = (dateStr?: string | null) => {
     if (!dateStr) return '';
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+    }
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 export function formatCurrency(value: number | null): string {
