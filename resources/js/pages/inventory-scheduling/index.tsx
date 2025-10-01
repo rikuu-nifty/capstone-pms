@@ -10,7 +10,7 @@ import { ViewScheduleModal } from '@/pages/inventory-scheduling/view-inventory-s
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { type VariantProps } from 'class-variance-authority';
-import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { Asset } from '../inventory-list';
@@ -24,6 +24,7 @@ import UnitItem from './UnitItem';
 import WarningModal from './WarningModal';
 
 import Pagination, { PageInfo } from '@/components/Pagination';
+import InventorySchedulingFilterDropdown from '@/components/filters/InventorySchedulingFilterDropdown';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -243,6 +244,10 @@ export default function InventorySchedulingIndex({
     const [warningMessage, setWarningMessage] = useState<React.ReactNode>('');
     const [warningDetails, setWarningDetails] = useState<string[]>([]);
 
+    const [selected_status, setSelectedStatus] = useState('');
+    const [selected_inventory_month, setSelectedInventoryMonth] = useState('');
+    const [selected_actual_date, setSelectedActualDate] = useState('');
+
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 10;
 
@@ -255,6 +260,18 @@ export default function InventorySchedulingIndex({
         setSelectedSchedule(props.viewing);
         setViewModalVisible(true);
     }, [props.viewing]);
+
+    const applyFilters = (f: { status: string; inventory_month: string; actual_date: string }) => {
+        setSelectedStatus(f.status);
+        setSelectedInventoryMonth(f.inventory_month);
+        setSelectedActualDate(f.actual_date);
+    };
+
+    const clearFilters = () => {
+        setSelectedStatus('');
+        setSelectedInventoryMonth('');
+        setSelectedActualDate('');
+    };
 
     const closeView = () => {
         setViewModalVisible(false);
@@ -384,9 +401,33 @@ export default function InventorySchedulingIndex({
         });
     };
 
-    const filtered = schedules.filter((item) =>
-        `${item.building?.name ?? ''} ${item.unit_or_department?.name ?? ''}`.toLowerCase().includes(search.toLowerCase()),
-    );
+    // const filtered = schedules.filter((item) =>
+    //     `${item.building?.name ?? ''} ${item.unit_or_department?.name ?? ''}`.toLowerCase().includes(search.toLowerCase()),
+    // );
+
+    const filtered = schedules.filter((item) => {
+        const haystack = `
+            ${item.id}
+            ${item.checked_by ?? ''}
+            ${item.verified_by ?? ''}
+            ${item.scheduling_status ?? ''}
+        `.toLowerCase();
+
+        const matchesSearch = !search || haystack.includes(search.toLowerCase());
+        const matchesStatus = !selected_status || item.scheduling_status === selected_status;
+
+        // compare YYYY-MM with inventory_schedule
+        const matchesMonth =
+            !selected_inventory_month ||
+            item.inventory_schedule?.startsWith(selected_inventory_month);
+
+        // compare YYYY-MM-DD with actual_date_of_inventory
+        const matchesActualDate =
+            !selected_actual_date ||
+            item.actual_date_of_inventory === selected_actual_date;
+
+        return matchesSearch && matchesStatus && matchesMonth && matchesActualDate;
+    });
 
     const schedulingStatusMap: Record<string, VariantProps<typeof badgeVariants>['variant']> = {
         Pending_Review: 'Pending_Review',
@@ -482,14 +523,16 @@ export default function InventorySchedulingIndex({
                     </div>
 
                     <div className="flex gap-2">
-                        <Button variant="outline">
-                        <Grid className="mr-1 h-4 w-4" /> Category
-                        </Button>
-                        <Button variant="outline">
-                        <Filter className="mr-1 h-4 w-4" /> Filter
-                        </Button>
-                        <Button className="cursor-pointer" onClick={() => setShowAddScheduleInventory(true)}>
-                        <PlusCircle className="mr-1 h-4 w-4" /> Schedule Inventory
+                        <InventorySchedulingFilterDropdown
+                            onApply={applyFilters}
+                            onClear={clearFilters}
+                            selected_status={selected_status}
+                            selected_inventory_month={selected_inventory_month}
+                            selected_actual_date={selected_actual_date}
+                        />
+
+                        <Button onClick={() => setShowAddScheduleInventory(true)} className="cursor-pointer">
+                            <PlusCircle className="mr-1 h-4 w-4" /> Schedule Inventory
                         </Button>
                     </div>
                 </div>
