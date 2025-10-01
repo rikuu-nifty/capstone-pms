@@ -6,7 +6,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
 import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+// import { Eye, Pencil, PlusCircle, Trash2, Inbox, Calendar, Clock, CheckCircle2, Timer } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, Inbox, Calendar, CheckCircle2, Timer } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { type TransferFilters } from '@/components/filters/TransferFilterModal';
@@ -16,6 +17,7 @@ import TransferSortDropdown, { type SortKey, type SortDir } from '@/components/f
 import { Transfer, InventoryList, statusVariantMap, formatDate, formatStatusLabel, formatEnums } from '@/types/custom-index';
 
 import { TransferPageProps } from '@/types/page-props';
+import { TransferTotals } from '@/types/transfer';
 import TransferAddModal from './TransferAddModal';
 import TransferEditModal from './TransferEditModal';
 import TransferViewModal from './TransferViewModal';
@@ -44,9 +46,9 @@ export default function TransferIndex({
     users = [],
     currentUser,
     subAreas,
-    
+    totals,
 
-}: TransferPageProps) {
+}: TransferPageProps & { totals?: TransferTotals }) {
 
     // const { props } = usePage<TransferPageProps>();
 
@@ -203,73 +205,131 @@ export default function TransferIndex({
             <Head title="Transfers" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Property Transfer</h1>
-                        <p className="text-sm text-muted-foreground">
-                            List of scheduled and completed asset transfers across AUF departments.
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="text"
-                                placeholder="Search by status, room, or unit/dept..."
-                                value={rawSearch}
-                                onChange={(e) => setRawSearch(e.target.value)}
-                                className="max-w-xs"
-                            />
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold">Property Transfer</h1>
+                    <p className="text-sm text-muted-foreground">
+                        List of scheduled and completed asset transfers across AUF departments.
+                    </p>
+                </div>
+
+                {/* KPI Cards */}
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                        {/* Pending Review */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                            <Inbox className="h-7 w-7 text-orange-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Pending Review</div>
+                            <div className="text-3xl font-bold">{totals.pending_review}</div>
+                        </div>
                         </div>
 
-                    <div className="text-xs text-muted-foreground">
-                        Showing {sortedTransfers.length ? start + 1 : 0}–{Math.min(start + page_size, filteredTransfers.length)} of {filteredTransfers.length} filtered transfers
+                        {/* Upcoming */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                            <Calendar className="h-7 w-7 text-sky-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Upcoming (30 Days)</div>
+                            <div className="text-3xl font-bold">{totals.upcoming}</div>
+                        </div>
+                        </div>
+
+                        {/* Overdue */}
+                        {/* <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                            <Clock className="h-7 w-7 text-red-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Overdue (Last + Current)</div>
+                            <div className="text-3xl font-bold">{totals.overdue}</div>
+                        </div>
+                        </div> */}
+
+                        {/* Completion Rate */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                            <CheckCircle2 className="h-7 w-7 text-green-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Completion Rate</div>
+                            <div className="text-3xl font-bold">{totals.completion_rate}%</div>
+                        </div>
+                        </div>
+
+                        {/* Avg Delay */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                            <Timer className="h-7 w-7 text-purple-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Avg Delay (Days)</div>
+                            <div className="text-3xl font-bold">{totals.avg_delay_days}</div>
+                        </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Search + Filters + Buttons Row */}
+                <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2 w-96">
+                        <Input
+                        type="text"
+                        placeholder="Search by status, room, or unit/dept..."
+                        value={rawSearch}
+                        onChange={(e) => setRawSearch(e.target.value)}
+                        className="max-w-xs"
+                        />
                     </div>
 
-                    {/* Active filter chips */}
-                    <div className="flex flex-wrap gap-2 pt-1">
-                        {selected_status && <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>}
-                        {selected_building && <Badge variant="darkOutline">Current: {selected_building}</Badge>}
-                        {selected_receiving_building && <Badge variant="darkOutline">Receiving: {selected_receiving_building}</Badge>}
-                        {selected_org && <Badge variant="darkOutline">Unit/Dept: {selected_org}</Badge>}
-                        {(selected_status || selected_building || selected_receiving_building || selected_org) && (
-                            <Button 
-                                size="sm" 
-                                variant="destructive" 
-                                onClick={clearFilters}
-                                className="cursor-pointer"
-                            >
-                                Clear filters
-                            </Button>
-                        )}
-                    </div>
-                </div>
-                    
                     <div className="flex gap-2">
-                        {/* <Filter className="mr-1 h-4 w-4" /> Filter */}
-
                         <TransferSortDropdown
-                            sortKey={sortKey}
-                            sortDir={sortDir}
-                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onChange={(key, dir) => {
+                            setSortKey(key);
+                            setSortDir(dir);
+                        }}
                         />
 
                         <TransferFilterDropdown
-                            onApply={applyFilters}
-                            onClear={clearFilters}
-                            selected_status={selected_status}
-                            selected_building={selected_building}
-                            selected_receiving_building={selected_receiving_building}
-                            selected_org={selected_org}
-                            buildings={buildings}
-                            unitOrDepartments={unitOrDepartments}
+                        onApply={applyFilters}
+                        onClear={clearFilters}
+                        selected_status={selected_status}
+                        selected_building={selected_building}
+                        selected_receiving_building={selected_receiving_building}
+                        selected_org={selected_org}
+                        buildings={buildings}
+                        unitOrDepartments={unitOrDepartments}
                         />
+
                         <Button
-                            onClick={() => {
-                                setShowAddTransfer(true);
-                            }}
-                            className="cursor-pointer"
+                        onClick={() => setShowAddTransfer(true)}
+                        className="cursor-pointer"
                         >
-                            <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Transfer
+                        <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Transfer
                         </Button>
                     </div>
+                </div>
+
+                {/* Active Filters (chips) */}
+                <div className="flex flex-wrap gap-2 pt-1">
+                    {selected_status && <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>}
+                    {selected_building && <Badge variant="darkOutline">Current: {selected_building}</Badge>}
+                    {selected_receiving_building && <Badge variant="darkOutline">Receiving: {selected_receiving_building}</Badge>}
+                    {selected_org && <Badge variant="darkOutline">Unit/Dept: {selected_org}</Badge>}
+                    {(selected_status || selected_building || selected_receiving_building || selected_org) && (
+                        <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={clearFilters}
+                        className="cursor-pointer"
+                        >
+                        Clear filters
+                        </Button>
+                    )}
                 </div>
 
                 <div className="rounded-lg-lg overflow-x-auto border">

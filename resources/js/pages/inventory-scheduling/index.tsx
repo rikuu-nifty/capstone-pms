@@ -430,7 +430,7 @@ export default function InventorySchedulingIndex({
                                 <CalendarClock className="h-7 w-7 text-red-600" />
                             </div>
                             <div>
-                                <div className="text-sm text-muted-foreground">Overdue (Last Month)</div>
+                                <div className="text-sm text-muted-foreground">Last Month's Overdue</div>
                                 <div className="text-3xl font-bold">{formatNumber(totals.overdue_last_month)}</div>
                             </div>
                         </div>
