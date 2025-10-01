@@ -49,6 +49,8 @@ class OffCampusController extends Controller
             'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no','unit_or_department_id')->orderBy('asset_name')->get(),
             'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
             'users'              => User::select('id','name')->orderBy('name')->get(),
+
+            'totals'            => OffCampus::dashboardTotals(),
         ]);
     }
 
@@ -139,6 +141,7 @@ class OffCampusController extends Controller
 
             // 👇 deep-link props
             'viewing'           => $viewing,
+            'totals' => OffCampus::dashboardTotals(),
         ]);
     }
 
