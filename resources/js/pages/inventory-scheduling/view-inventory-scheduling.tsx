@@ -281,14 +281,17 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-h-[90vh] w-[min(1000px,95vw)] max-w-none overflow-y-auto p-0 sm:max-w-[1100px]">
+            {/* <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]"> */}
+            <DialogContent
+                className="w-full max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
+            >
                 <DialogHeader>
                     <DialogTitle>
                         <VisuallyHidden>Schedule Record #{recordNo}</VisuallyHidden>
                     </DialogTitle>
                 </DialogHeader>
-                <div className="print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
-                    {/* Header */}
+                <div className="print-force-light bg-white p-4 sm:p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
+                {/* Header */}
                     <div className="relative flex items-center justify-between">
                         <div className="flex items-center">
                             <img src="https://www.auf.edu.ph/home/images/mascot/GEN.png" alt="Logo" className="h-24 opacity-90" />
@@ -311,24 +314,36 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     </div>
 
                     {/* Scope + Scheduling Info */}
-                    <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
+                    <div className="mt-6 grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
                         {/* Scope Info */}
-                        <section className="md:w-[400px]">
-                            <h3 className="mb-2 text-base font-semibold">Scope Information</h3>
+                        <section className="md:w-[400px] w-[320px]">
+                            <h3 className="mb-2 text-sm md:text-base font-semibold">Scope Information</h3>
                             <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                                <table className="w-full table-fixed text-sm">
+                                <table className="w-full table-auto text-xs md:text-sm">
                                     <tbody>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Buildings</td>
-                                            <td className="w-2/3 px-3 py-2 text-right font-medium">{schedule.buildings?.length ?? 0}</td>
+                                            <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Buildings
+                                            </td>
+                                            <td className="px-3 py-2 font-medium text-right">
+                                                {schedule.buildings?.length ?? 0}
+                                            </td>
                                         </tr>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Rooms</td>
-                                            <td className="w-2/3 px-3 py-2 text-right font-medium">{schedule.rooms?.length ?? 0}</td>
+                                            <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Rooms
+                                            </td>
+                                            <td className="px-3 py-2 font-medium text-right">
+                                                {schedule.rooms?.length ?? 0}
+                                            </td>
                                         </tr>
                                         <tr>
-                                            <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Sub-Areas</td>
-                                            <td className="w-2/3 px-3 py-2 text-right font-medium">{schedule.sub_areas?.length ?? 0}</td>
+                                            <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Sub-Areas
+                                            </td>
+                                            <td className="px-3 py-2 font-medium text-right">
+                                                {schedule.sub_areas?.length ?? 0}
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -336,24 +351,36 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         </section>
 
                         {/* Scheduling Info */}
-                        <section className="md:ml-auto md:w-[400px] md:text-right print:justify-self-end print:text-right">
-                            <h3 className="mb-2 text-base font-semibold">Scheduling Information</h3>
+                        <section className="w-[320px] md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
+                            <h3 className="mb-2 text-sm md:text-base font-semibold">Scheduling Information</h3>
                             <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                                <table className="w-full table-fixed text-sm">
-                                    <tbody>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Inventory Month</td>
-                                            <td className="px-3 py-2 font-medium">{formatMonth(schedule.inventory_schedule)}</td>
-                                        </tr>
-                                        <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Actual Inventory Date</td>
-                                            <td className="px-3 py-2 font-medium">{formatDateLong(schedule.actual_date_of_inventory)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Total Assets</td>
-                                            <td className="px-3 py-2 font-medium">{schedule.assets?.length ?? 0}</td>
-                                        </tr>
-                                    </tbody>
+                                <table className="w-full table-auto text-xs md:text-sm">
+                                <tbody>
+                                    <tr className="border-b border-gray-200 dark:border-gray-800">
+                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            Inventory Month
+                                        </td>
+                                        <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
+                                            {formatMonth(schedule.inventory_schedule)}
+                                        </td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200 dark:border-gray-800">
+                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            Actual Inventory Date
+                                        </td>
+                                        <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
+                                            {formatDateLong(schedule.actual_date_of_inventory)}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                            Total Assets
+                                        </td>
+                                        <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
+                                            {schedule.assets?.length ?? 0}
+                                        </td>
+                                    </tr>
+                                </tbody>
                                 </table>
                             </div>
                         </section>
@@ -375,8 +402,8 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             </Button>
                         </div>
 
-                        <table className="w-full border-collapse text-sm">
-                            <thead className="bg-gray-100 text-gray-700">
+                        <table className="w-full text-sm border-collapse">
+                            <thead className="min-w-[600px] bg-gray-100 text-gray-700">
                                 <tr>
                                     <th className="w-10 border px-2 py-1 text-center">#</th>
                                     <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
