@@ -108,6 +108,7 @@ class TransferController extends Controller
             'subAreas' => $subAreas,
 
             'signatories' => $signatories, // ✅ pass to frontend
+            'totals'   => Transfer::kpiStats(),
         ]);
     }
 
