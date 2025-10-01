@@ -29,7 +29,7 @@ class TurnoverDisposal extends Model
 
     protected $casts = 
     [
-        'document_date' => 'date',
+        'document_date' => 'date:Y-m-d',
     ];
 
     protected $appends = ['noted_by_name', 'noted_by_title'];
