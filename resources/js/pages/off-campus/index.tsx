@@ -7,7 +7,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { Paginator } from '@/types/paginatorOffCampus';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { type VariantProps } from 'class-variance-authority';
-import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2, ClipboardList, Repeat, AlertTriangle, Wrench } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, Repeat, AlertTriangle, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
@@ -17,6 +17,7 @@ import OffCampusEditModal from './OffCampusEditModal';
 import OffCampusViewModal from './OffCampusViewModal';
 
 import Pagination, { PageInfo } from '@/components/Pagination';
+import OffCampusFilterDropdown from '@/components/filters/OffCampusFilterDropdown';
 
 // -------------------- TYPES --------------------
 
@@ -150,9 +151,13 @@ export default function OffCampusIndex({
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [showViewOffCampus, setShowViewOffCampus] = useState(false);
 
-    // 🔻 delete (archive) modal state
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [offCampusToDelete, setOffCampusToDelete] = useState<Pick<OffCampus, 'id'> | null>(null);
+
+    const [selected_status, setSelectedStatus] = useState('');
+    const [selected_college_unit, setSelectedCollegeUnit] = useState('');
+    const [selected_date_issued, setSelectedDateIssued] = useState('');
+    const [selected_return_date, setSelectedReturnDate] = useState('');
 
     type PagePropsWithViewing = Props & {
         viewing?: OffCampus | null;
@@ -190,16 +195,49 @@ export default function OffCampusIndex({
         }
     };
 
+    // const filtered = useMemo(() => {
+    //     const q = search.toLowerCase().trim();
+    //     if (!q) return rows;
+
+    //     return rows.filter((row) => {
+    //         const assetStrings = (row.assets ?? [])
+    //             .map((a) =>
+    //                 [a.asset?.asset_name, a.asset?.description, a.asset?.serial_no, a.asset?.asset_model?.brand, a.asset?.asset_model?.model]
+    //                     .filter(Boolean)
+    //                     .join(' '),
+    //             )
+    //             .join(' ');
+
+    //         const fields = [
+    //             row.requester_name,
+    //             row.college_or_unit?.name,
+    //             row.college_or_unit?.code,
+    //             row.asset_model?.brand,
+    //             row.asset_model?.model,
+    //             row.remarks,
+    //             row.purpose,
+    //             assetStrings,
+    //         ]
+    //             .filter(Boolean)
+    //             .join(' ')
+    //             .toLowerCase();
+
+    //         return fields.includes(q);
+    //     });
+    // }, [search, rows]);
+
     const filtered = useMemo(() => {
         const q = search.toLowerCase().trim();
-        if (!q) return rows;
 
         return rows.filter((row) => {
+            // free text search
+            let matchesSearch = true;
+            if (q) {
             const assetStrings = (row.assets ?? [])
                 .map((a) =>
-                    [a.asset?.asset_name, a.asset?.description, a.asset?.serial_no, a.asset?.asset_model?.brand, a.asset?.asset_model?.model]
-                        .filter(Boolean)
-                        .join(' '),
+                [a.asset?.asset_name, a.asset?.description, a.asset?.serial_no, a.asset?.asset_model?.brand, a.asset?.asset_model?.model]
+                    .filter(Boolean)
+                    .join(' '),
                 )
                 .join(' ');
 
@@ -217,9 +255,18 @@ export default function OffCampusIndex({
                 .join(' ')
                 .toLowerCase();
 
-            return fields.includes(q);
+            matchesSearch = fields.includes(q);
+            }
+
+            // filters
+            const matchesStatus = !selected_status || row.status === selected_status;
+            const matchesCollege = !selected_college_unit || row.college_or_unit?.code === selected_college_unit;
+            const matchesIssued = !selected_date_issued || row.date_issued === selected_date_issued;
+            const matchesReturn = !selected_return_date || row.return_date === selected_return_date;
+
+            return matchesSearch && matchesStatus && matchesCollege && matchesIssued && matchesReturn;
         });
-    }, [search, rows]);
+        }, [search, rows, selected_status, selected_college_unit, selected_date_issued, selected_return_date]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -304,15 +351,33 @@ export default function OffCampusIndex({
                     </div>
 
                     <div className="flex gap-2">
-                    <Button variant="outline">
-                        <Grid className="mr-1 h-4 w-4" /> Category
-                    </Button>
-                    <Button variant="outline">
-                        <Filter className="mr-1 h-4 w-4" /> Filter
-                    </Button>
-                    <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Off Campus
-                    </Button>
+                        <OffCampusFilterDropdown
+                            onApply={(f) => {
+                                setSelectedStatus(f.status);
+                                setSelectedCollegeUnit(f.college_unit);
+                                setSelectedDateIssued(f.date_issued);
+                                setSelectedReturnDate(f.return_date);
+                            }}
+                            onClear={() => {
+                                setSelectedStatus('');
+                                setSelectedCollegeUnit('');
+                                setSelectedDateIssued('');
+                                setSelectedReturnDate('');
+                            }}
+                            selected_status={selected_status}
+                            selected_college_unit={selected_college_unit}
+                            selected_date_issued={selected_date_issued}
+                            selected_return_date={selected_return_date}
+                            unitOrDepartments={unitOrDepartments.map((u) => ({
+                                id: u.id,
+                                name: u.name,
+                                code: u.code,
+                            }))}
+                        />
+
+                        <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Off Campus
+                        </Button>
                     </div>
                 </div>
 
