@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
 import { Head, router, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState, useMemo } from 'react';
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Pencil, PlusCircle, Trash2, Inbox, RefreshCw, BarChart3, XCircle } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
@@ -47,6 +47,7 @@ export default function TurnoverDisposalsIndex({
     assets= [],
     assignedBy,
     unitOrDepartments = [],
+    totals,
 }: TurnoverDisposalPageProps ) {
 
     const { props } = usePage<PageProps>();
@@ -187,71 +188,108 @@ export default function TurnoverDisposalsIndex({
             <Head title = "Turnover / Disposals" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Turnover/Disposals</h1>
-                        <p className="text-sm text-muted-foreground">
-                            List of turnover/disposal records.
-                        </p>
-                        <div className="flex items-center gap-2 w-96">
-                            <Input
-                                type="text"
-                                placeholder="Search by status, type, or office..."
-                                value={rawSearch}
-                                onChange={(e) => setRawSearch(e.target.value)}
-                                className="max-w-xs"
-                            />
+                {/* Header */}
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold">Turnover/Disposals</h1>
+                    <p className="text-sm text-muted-foreground">
+                    List of turnover/disposal records.
+                    </p>
+                </div>
+
+                {/* KPI Cards */}
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                    {/* Pending Review (This Month) */}
+                    <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                        <Inbox className="h-7 w-7 text-orange-600" />
                         </div>
-
-                        <div className="text-xs text-muted-foreground">
-                            Showing {sortedTurnoverDisposals.length ? start + 1 : 0}–
-                            {Math.min(start + page_size, filteredTurnoverDisposals.length)} of {filteredTurnoverDisposals.length} filtered records
-                        </div>
-
-                        {/* Active filter chips */}
-                        <div className="flex flex-wrap gap-2 pt-1">
-                            {selected_status && <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>}
-                            {selected_type && <Badge variant="darkOutline">Type: {formatEnums(selected_type)}</Badge>}
-                            {selected_issuing_office && <Badge variant="darkOutline">Issuing: {selected_issuing_office}</Badge>}
-
-                            {(selected_status || selected_type || selected_issuing_office) && (
-                                <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={clearFilters}
-                                    className="cursor-pointer"
-                                >
-                                    Clear filters
-                                </Button>
-                            )}
+                        <div>
+                        <div className="text-sm text-muted-foreground">Pending Review (This Month)</div>
+                        <div className="text-3xl font-bold">{totals.pending_review_this_month}</div>
                         </div>
                     </div>
-                    
+
+                    {/* Turnover vs Disposal (This Month) */}
+                    <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                        <RefreshCw className="h-7 w-7 text-blue-600" />
+                        </div>
+                        <div>
+                        <div className="text-sm text-muted-foreground">Turnover vs Disposal (This Month)</div>
+                        <div className="text-lg font-semibold">
+                            <span className="text-blue-600">{totals.turnover_percentage_month}% Turnover</span>
+                            <span className="text-muted-foreground"> / </span>
+                            <span className="text-purple-600">{totals.disposal_percentage_month}% Disposal</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    {/* Turnover vs Disposal (Overall) */}
+                    <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                        <BarChart3 className="h-7 w-7 text-indigo-600" />
+                        </div>
+                        <div>
+                        <div className="text-sm text-muted-foreground">Turnover vs Disposal (Overall)</div>
+                        <div className="text-lg font-semibold">
+                            <span className="text-blue-600">{totals.turnover_percentage_all}% Turnover</span>
+                            <span className="text-muted-foreground"> / </span>
+                            <span className="text-purple-600">{totals.disposal_percentage_all}% Disposal</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    {/* Cancellation Rate */}
+                    <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                        <XCircle className="h-7 w-7 text-red-600" />
+                        </div>
+                        <div>
+                        <div className="text-sm text-muted-foreground">Cancellation Rate</div>
+                        <div className="text-3xl font-bold">{totals.cancellation_rate}%</div>
+                        </div>
+                    </div>
+                    </div>
+                )}
+
+                {/* Search + Filters + Add Button Row */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 w-96">
+                    <Input
+                        type="text"
+                        placeholder="Search by status, type, or office..."
+                        value={rawSearch}
+                        onChange={(e) => setRawSearch(e.target.value)}
+                        className="max-w-xs"
+                    />
+                    </div>
+
                     <div className="flex gap-2">
-                        <SortDropdown<TurnoverSortKey>
+                    <SortDropdown<TurnoverSortKey>
                         sortKey={sortKey}
                         sortDir={sortDir}
                         options={turnoverSortOptions}
                         onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
                     />
 
-                        <TurnoverDisposalFilterDropdown
-                            onApply={applyFilters}
-                            onClear={clearFilters}
-                            selected_status={selected_status}
-                            selected_type={selected_type}
-                            selected_issuing_office={selected_issuing_office}
-                            unitOrDepartments={unitOrDepartments}
-                        />
+                    <TurnoverDisposalFilterDropdown
+                        onApply={applyFilters}
+                        onClear={clearFilters}
+                        selected_status={selected_status}
+                        selected_type={selected_type}
+                        selected_issuing_office={selected_issuing_office}
+                        unitOrDepartments={unitOrDepartments}
+                    />
 
-                        <Button
-                            onClick={() => {
-                                setShowAddTurnoverDisposals(true);
-                            }}
-                            className="cursor-pointer"
-                        >
-                            <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Turnover/Disposal
-                        </Button>
+                    <Button
+                        onClick={() => {
+                        setShowAddTurnoverDisposals(true);
+                        }}
+                        className="cursor-pointer"
+                    >
+                        <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Turnover/Disposal
+                    </Button>
                     </div>
                 </div>
 
