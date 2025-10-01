@@ -51,6 +51,8 @@ class OffCampusController extends Controller
             'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
             'users'              => User::select('id','name')->orderBy('name')->get(),
             'signatories'        => OffCampusSignatory::all()->keyBy('role_key'),
+
+            'totals'            => OffCampus::dashboardTotals(),
         ]);
     }
 
@@ -142,6 +144,7 @@ class OffCampusController extends Controller
             // 👇 deep-link props
             'viewing'           => $viewing,
             'signatories'       => OffCampusSignatory::all()->keyBy('role_key'),
+            'totals' => OffCampus::dashboardTotals(),
         ]);
     }
 

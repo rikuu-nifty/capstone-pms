@@ -7,7 +7,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { Paginator } from '@/types/paginatorOffCampus';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { type VariantProps } from 'class-variance-authority';
-import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Eye, Filter, Grid, Pencil, PlusCircle, Trash2, ClipboardList, Repeat, AlertTriangle, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
@@ -82,6 +82,19 @@ type Props = {
     assets: Asset[];
     assetModels: AssetModel[];
     users: User[];
+
+    totals: OffCampusTotals;
+};
+
+export type OffCampusTotals = {
+    pending_review_this_month: number;
+    pending_return_percentage: number;
+    returned_percentage: number;
+    overdue_rate: number;
+    cancellation_rate: number;
+    missing_count: number;
+    official_use_percentage: number;
+    repair_percentage: number;
 };
 
 // -------------------- HELPERS --------------------
@@ -134,6 +147,7 @@ export default function OffCampusIndex({
     assets,
     assetModels,
     users,
+    totals,
 }: Props) {
     const rows = offCampuses.data;
     const [search, setSearch] = useState('');
@@ -220,31 +234,93 @@ export default function OffCampusIndex({
             <Head title="Off Campus" />
 
             <div className="flex flex-col gap-4 p-4">
-                {/* Header + Search */}
+                {/* Header */}
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold">Off-Campus</h1>
+                    <p className="text-sm text-muted-foreground">
+                    Forms authorizing items to be brought out of AUF premises.
+                    </p>
+                </div>
+
+                {/* KPI Cards */}
+                {totals && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {/* Pending Review (This Month) */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                            <ClipboardList className="h-7 w-7 text-orange-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Pending Review (This Month)</div>
+                            <div className="text-3xl font-bold">{totals.pending_review_this_month}</div>
+                        </div>
+                        </div>
+
+                        {/* Pending vs Returned */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                            <Repeat className="h-7 w-7 text-blue-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Pending vs Returned</div>
+                            <div className="text-lg font-semibold">
+                            <span className="text-blue-600">{totals.pending_return_percentage}% Pending</span>
+                            <span className="text-muted-foreground"> / </span>
+                            <span className="text-green-600">{totals.returned_percentage}% Returned</span>
+                            </div>
+                        </div>
+                        </div>
+
+                        {/* Missing */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                            <AlertTriangle className="h-7 w-7 text-red-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Missing</div>
+                            <div className="text-3xl font-bold text-red-600">{totals.missing_count}</div>
+                        </div>
+                        </div>
+
+                        {/* Official Use vs Repair */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                            <Wrench className="h-7 w-7 text-indigo-600" />
+                        </div>
+                        <div>
+                            <div className="text-sm text-muted-foreground">Official Use vs Repair</div>
+                            <div className="text-lg font-semibold">
+                            <span className="text-blue-600">{totals.official_use_percentage}% Official</span>
+                            <span className="text-muted-foreground"> / </span>
+                            <span className="text-orange-600">{totals.repair_percentage}% Repair</span>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Search + Buttons Row */}
                 <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-2xl font-semibold">Off-Campus</h1>
-                        <p className="text-sm text-muted-foreground">Forms authorizing items to be brought out of AUF premises.</p>
-                        <Input
-                            type="text"
-                            placeholder="Search requester, unit, item, serial, brand/model…"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="max-w-md"
-                        />
+                    <div className="flex items-center gap-2 w-full sm:w-96">
+                    <Input
+                        type="text"
+                        placeholder="Search requester, unit, item, serial, brand/model…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="max-w-xs"
+                    />
                     </div>
 
                     <div className="flex gap-2">
-                        <Button variant="outline">
-                            <Grid className="mr-1 h-4 w-4" /> Category
-                        </Button>
-                        <Button variant="outline">
-                            <Filter className="mr-1 h-4 w-4" /> Filter
-                        </Button>
-                        <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Off Campus
-                        </Button>
+                    <Button variant="outline">
+                        <Grid className="mr-1 h-4 w-4" /> Category
+                    </Button>
+                    <Button variant="outline">
+                        <Filter className="mr-1 h-4 w-4" /> Filter
+                    </Button>
+                    <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Off Campus
+                    </Button>
                     </div>
                 </div>
 
