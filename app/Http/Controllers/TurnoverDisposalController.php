@@ -74,6 +74,8 @@ class TurnoverDisposalController extends Controller
         'pmoHead'                => $pmoHead,
         'personnels'             => $personnels,
         'signatories'            => $signatories, // ✅ include this
+
+        'totals'            => TurnoverDisposal::dashboardTotals(),
     ];
 }
 

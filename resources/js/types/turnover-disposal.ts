@@ -55,3 +55,13 @@ export function labelLineStatus(
     } as const;
     return map[recordType][status];
 }
+
+export type TurnoverDisposalTotals = {
+    pending_review_this_month: number;
+    turnover_percentage_month: number;
+    disposal_percentage_month: number;
+    turnover_percentage_all: number;
+    disposal_percentage_all: number;
+    cancellation_rate: number;
+};
+
