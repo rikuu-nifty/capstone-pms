@@ -26,6 +26,10 @@ class Transfer extends Model
         'received_by',
         'status',
         'remarks',
+        // ✅ ensure official signatory fields can be mass assigned if needed
+        'approved_by_name',
+        'approved_by_role',
+        'approved_by_user_id',
     ];
 
     protected $casts = [
@@ -124,6 +128,13 @@ class Transfer extends Model
     
     public function getApprovedByNameAttribute(): ?string
     {
+        // ✅ Prefer official signatory record first
+        $signatory = \App\Models\TransferSignatory::where('role_key', 'approved_by')->first();
+        if ($signatory) {
+            return $signatory->name;
+        }
+
+        // fallback to formApproval system
         $fa = $this->relationLoaded('formApproval')
             ? $this->getRelation('formApproval')
             : $this->formApproval()->with([
@@ -153,6 +164,13 @@ class Transfer extends Model
 
     public function getApprovedByRoleAttribute(): ?string
     {
+        // ✅ Prefer official signatory record first
+        $signatory = \App\Models\TransferSignatory::where('role_key', 'approved_by')->first();
+        if ($signatory) {
+            return $signatory->title;
+        }
+
+        // fallback to formApproval system
         $fa = $this->relationLoaded('formApproval')
             ? $this->getRelation('formApproval')
             : $this->formApproval()->with([

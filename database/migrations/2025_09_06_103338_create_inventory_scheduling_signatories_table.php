@@ -9,15 +9,27 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void {
+    public function up(): void
+    {
         Schema::create('inventory_scheduling_signatories', function (Blueprint $table) {
             $table->id();
-            $table->string('role_key')->unique(); // e.g. 'prepared_by', 'approved_by', 'received_by', 'noted_by'
-            $table->string('name');               // Full name of the signatory
-            $table->string('title');              // Position/role title
+
+            // To differentiate modules (inventory_scheduling, transfer, turnover_disposal, off_campus, etc.)
+            $table->string('module_type')->default('inventory_scheduling');
+
+            // Role key identifiers (internal keys)
+            $table->string('role_key'); // e.g. 'prepared_by', 'approved_by', 'received_by', 'noted_by'
+
+            // Person assigned
+            $table->string('name');   // Full name of the signatory
+            $table->string('title');  // Position/role title
+
             $table->timestamps();
+
+            // Ensure role_key is unique only within the same module
+            $table->unique(['module_type', 'role_key']);
         });
-   }
+    }
 
     /**
      * Reverse the migrations.

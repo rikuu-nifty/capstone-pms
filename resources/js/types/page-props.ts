@@ -27,6 +27,7 @@ export type TransferPageProps = {
     };
 
     subAreas: SubArea[];
+    signatories: Record<string, { name: string; title: string }>; // ✅ add this
 }
 
 export type TransferViewPageProps = {

@@ -178,6 +178,13 @@ export default function ApprovalsIndex() {
             <Head title="Form Approval" />
 
             <div className="p-4">
+                  {/* Header */}
+                <div className="mb-4">
+                    <h1 className="text-xl font-semibold">Form Approval</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Displays a complete list of forms awaiting review within the university to facilitate tracking & auditing.
+                    </p>
+                </div>
                 <div className="mb-4 flex gap-2 rounded-md bg-muted p-2">
                     {tabs.map((t) => (
                         <Button
@@ -191,13 +198,7 @@ export default function ApprovalsIndex() {
                     ))}
                 </div>
 
-                {/* Header */}
-                <div className="mb-4">
-                    <h1 className="text-xl font-semibold">Form Approval</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Displays a complete list of forms awaiting review within the university to facilitate tracking & auditing.
-                    </p>
-                </div>
+              
 
                 {/* Search */}
                 <div className="mb-3 w-80">

@@ -30,6 +30,9 @@
     use App\Http\Controllers\AssetAssignmentController;
     use App\Http\Controllers\TurnoverDisposalReportController;
     use App\Http\Controllers\EquipmentCodeController;
+    use App\Http\Controllers\InventorySchedulingSignatoryController;
+    use App\Http\Controllers\TransferSignatoryController;
+    use App\Http\Controllers\SignatoryController;
 
 Route::get('/', function () {
         if (Auth::check()) {
@@ -142,6 +145,18 @@ Route::get('/', function () {
         Route::get('/turnover-disposal', [TurnoverDisposalReportController::class, 'index']) ->name('reports.turnover-disposal');
         Route::get('/turnover-disposal/export/pdf', [TurnoverDisposalReportController::class, 'exportPdf'])->name('reports.turnover-disposal.export.pdf');
         Route::get('/turnover-disposal/export/excel', [TurnoverDisposalReportController::class, 'exportExcel'])->name('reports.turnover-disposal.export.excel');
+
+    });
+
+         // ✅ Unified Signatories Management
+        Route::prefix('signatories')->group(function () {
+            Route::get('/', [SignatoryController::class, 'index'])->name('signatories.index');
+            Route::post('/', [SignatoryController::class, 'store'])->name('signatories.store');
+            Route::put('/{signatory}', [SignatoryController::class, 'update'])->name('signatories.update');
+            Route::delete('/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
+
+
+
     });
 
     Route::get('calendar', function () {

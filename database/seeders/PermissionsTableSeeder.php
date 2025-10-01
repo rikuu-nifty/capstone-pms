@@ -10,7 +10,6 @@ class PermissionsTableSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            
             // USERS MANAGEMENT PAGE
             ['code' => 'view-users-page', 'name' => 'View Users Page'],
             ['code' => 'approve-users', 'name' => 'Approve Users'],
@@ -25,13 +24,19 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'delete-role', 'name' => 'Delete Roles'],
             ['code' => 'update-permissions', 'name' => 'Update Permissions'],
 
+            // SIGNATORIES (✅ NEW)
+            ['code' => 'view-signatories', 'name' => 'View Signatories'],
+            ['code' => 'create-signatories', 'name' => 'Create Signatories'],
+            ['code' => 'update-signatories', 'name' => 'Update Signatories'],
+            ['code' => 'delete-signatories', 'name' => 'Delete Signatories'],
+
             // INVENTORY SCHEDULING
             ['code' => 'view-inventory-scheduling', 'name' => 'View Inventory Scheduling'],
             ['code' => 'create-inventory-scheduling', 'name' => 'Create Inventory Scheduling'],
             ['code' => 'update-inventory-scheduling', 'name' => 'Update Inventory Scheduling'],
             ['code' => 'delete-inventory-scheduling', 'name' => 'Delete Inventory Scheduling'],
 
-            //INVENTORY LIST
+            // INVENTORY LIST
             ['code' => 'view-inventory-list', 'name' => 'View Inventory List'],
             ['code' => 'view-own-unit-inventory-list', 'name' => 'View Own Unit Inventory List'],
             ['code' => 'create-inventory-list', 'name' => 'Create Inventory List'],
@@ -64,13 +69,13 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'update-buildings', 'name' => 'Update Buildings'],
             ['code' => 'delete-buildings', 'name' => 'Delete Buildings'],
 
-            //BUILDING ROOMS
+            // BUILDING ROOMS
             ['code' => 'view-building-rooms', 'name' => 'View Building Rooms'],
             ['code' => 'create-building-rooms', 'name' => 'Create Building Rooms'],
             ['code' => 'update-building-rooms', 'name' => 'Update Building Rooms'],
             ['code' => 'delete-building-rooms', 'name' => 'Delete Building Rooms'],
 
-            //CATEGORIES
+            // CATEGORIES
             ['code' => 'view-categories', 'name' => 'View Categories'],
             ['code' => 'create-categories', 'name' => 'Create Categories'],
             ['code' => 'update-categories', 'name' => 'Update Categories'],
@@ -82,13 +87,13 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'update-equipment-codes', 'name' => 'Update Equipment Codes'],
             ['code' => 'delete-equipment-codes', 'name' => 'Delete Equipment Codes'],
 
-            //ASSET MODELS
+            // ASSET MODELS
             ['code' => 'view-asset-models', 'name' => 'View Asset Models'],
             ['code' => 'create-asset-models', 'name' => 'Create Asset Models'],
             ['code' => 'update-asset-models', 'name' => 'Update Asset Models'],
             ['code' => 'delete-asset-models', 'name' => 'Delete Asset Models'],
 
-            //UNIT OR DEPARTMENTS
+            // UNIT OR DEPARTMENTS
             ['code' => 'view-unit-or-departments', 'name' => 'View Unit or Departments'],
             ['code' => 'create-unit-or-departments', 'name' => 'Create Unit or Departments'],
             ['code' => 'update-unit-or-departments', 'name' => 'Update Unit or Departments'],
@@ -111,7 +116,7 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'update-assignments', 'name' => 'Update Assignments'],
             ['code' => 'delete-assignments', 'name' => 'Delete Assignments'],
 
-            //PERSONNELS
+            // PERSONNELS
             ['code' => 'view-personnels', 'name' => 'View Personnels'],
             ['code' => 'create-personnels', 'name' => 'Create Personnels'],
             ['code' => 'update-personnels', 'name' => 'Update Personnels'],

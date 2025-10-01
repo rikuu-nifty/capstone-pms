@@ -14,13 +14,14 @@ use App\Models\InventoryList;
 use App\Models\UnitOrDepartment;
 use App\Models\User;
 use App\Models\SubArea;
+use App\Models\TransferSignatory; // ✅ import transfer signatories
 
 class TransferController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(?int $id = null)
+     public function index(?int $id = null)
     {
         $currentUser = Auth::user();
 
@@ -47,9 +48,11 @@ class TransferController extends Controller
         $users = User::all();
         $assets = InventoryList::with(['assetModel.category'])
             ->where('status', 'active')
-            ->get()
-        ;
+            ->get();
         $subAreas = SubArea::all();
+
+        // ✅ Fetch official transfer signatories (keyed by role_key)
+        $signatories = TransferSignatory::all()->keyBy('role_key');
 
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {
@@ -83,8 +86,8 @@ class TransferController extends Controller
                         'asset_transfer_status'  => $ta->asset_transfer_status,
                         'remarks'                => $ta->remarks,
 
-                        'fromSubArea'           => $ta->fromSubArea ? $ta->fromSubArea->only(['id', 'name']) : null,
-                        'toSubArea'             => $ta->toSubArea ? $ta->toSubArea->only(['id', 'name']) : null,
+                        'fromSubArea'            => $ta->fromSubArea ? $ta->fromSubArea->only(['id', 'name']) : null,
+                        'toSubArea'              => $ta->toSubArea ? $ta->toSubArea->only(['id', 'name']) : null,
                     ];
                 })->values();
 
@@ -103,6 +106,8 @@ class TransferController extends Controller
             'currentUser' => $currentUser,
             'assets' => $assets,
             'subAreas' => $subAreas,
+
+            'signatories' => $signatories, // ✅ pass to frontend
         ]);
     }
 
@@ -181,128 +186,146 @@ class TransferController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(int $id)
-    {
-        $currentUser = Auth::user();
+  public function show(int $id)
+{
+    $currentUser = Auth::user();
 
-        $transfers = Transfer::with([
-            'currentBuildingRoom',
-            'currentBuildingRoom.building',
-            'currentOrganization',
-            'receivingBuildingRoom',
-            'receivingBuildingRoom.building',
-            'receivingOrganization',
-            'designatedEmployee',
-            'assignedBy',
-            'transferAssets.asset.assetModel.category',
-            'transferAssets.asset.assetModel.equipmentCode',
+    $transfers = Transfer::with([
+        'currentBuildingRoom',
+        'currentBuildingRoom.building',
+        'currentOrganization',
+        'receivingBuildingRoom',
+        'receivingBuildingRoom.building',
+        'receivingOrganization',
+        'designatedEmployee',
+        'assignedBy',
+        'transferAssets.asset.assetModel.category',
+        'transferAssets.asset.assetModel.equipmentCode',
+        
+        'formApproval',
+        'formApproval.steps' => 
+            fn($q) => 
+                $q->where('code','approved_by')
+                    ->where('status','approved')
+                    ->orderByDesc('acted_at'),
+        'formApproval.steps.actor:id,name,role_id',
+        'formApproval.steps.actor.role:id,name',
+
+        'transferAssets.fromSubArea',
+        'transferAssets.toSubArea',
+    ])->latest()->get();
+
+    $buildings         = Building::all();
+    $buildingRooms     = BuildingRoom::with('building')->get();
+    $unitOrDepartments = UnitOrDepartment::all();
+    $users             = User::all();
+    $assets            = InventoryList::with(['assetModel.category'])
+                            ->where('status', 'active')
+                            ->get();
+    $subAreas          = SubArea::all();
+
+    $viewingModel   = Transfer::findForView($id);
+    $viewing_assets = $viewingModel->viewingAssets();
+
+    $viewing = (function ($t) {
+        $array = $t->toArray();
+        $array['currentBuildingRoom']   = $array['current_building_room'];
+        $array['currentOrganization']   = $array['current_organization'];
+        $array['receivingBuildingRoom'] = $array['receiving_building_room'];
+        $array['receivingOrganization'] = $array['receiving_organization'];
+        $array['designatedEmployee']    = $array['designated_employee'];
+        $array['assignedBy']            = $array['assigned_by'];
+        $array['status']                = ucfirst($t->status);
+        $array['scheduled_date']        = $t->scheduled_date
+            ? $t->scheduled_date->toDateString()
+            : null;
+        $array['actual_transfer_date']  = $t->actual_transfer_date
+            ? $t->actual_transfer_date->toDateString()
+            : null;
+        
+        $array['transferAssets'] = $t->transferAssets->map(function ($ta) {
+            return [
+                'id'                   => $ta->id,
+                'transfer_id'          => $ta->transfer_id,
+                'asset_id'             => $ta->asset_id,
+                'asset'                => $ta->asset,
+
+                'moved_at'             => $ta->moved_at ? $ta->moved_at->toDateString() : null,
+                'from_sub_area_id'     => $ta->from_sub_area_id,
+                'to_sub_area_id'       => $ta->to_sub_area_id,
+                'asset_transfer_status'=> $ta->asset_transfer_status,
+                'remarks'              => $ta->remarks,
+
+                'fromSubArea'          => $ta->fromSubArea ? $ta->fromSubArea->only(['id', 'name']) : null,
+                'toSubArea'            => $ta->toSubArea ? $ta->toSubArea->only(['id', 'name']) : null,
+            ];
+        })->values();
+
+        $array['asset_count']  = $t->transferAssets->count();
+        $array['is_approved']  = $t->formApproval?->status === 'approved';
+
+        // ✅ flatten approvals
+        $array['approvals'] = $t->formApproval && $t->formApproval->steps
+            ? $t->formApproval->steps->map(fn($s) => [
+                'id'       => $s->id,
+                'code'     => $s->code,
+                'status'   => $s->status,
+                'acted_at' => $s->acted_at,
+                'actor_id' => $s->actor_id,
+                'actor'    => $s->actor?->only(['id','name']),
+            ])->values()->toArray()
+            : [];
+        
+        return $array;
+    })($viewingModel);
+
+    // ✅ Fetch official transfer signatories (keyed by role_key)
+    $signatories = \App\Models\TransferSignatory::all()->keyBy('role_key');
+
+    return Inertia::render('transfer/index', [
+        'transfers'        => $transfers->map(function ($transfer) {
+            $array = $transfer->toArray();
             
-            'formApproval',
-            'formApproval.steps' => 
-                fn($q) => 
-                    $q->where('code','approved_by')
-                        ->where('status','approved')
-                        ->orderByDesc('acted_at'),
-            'formApproval.steps.actor:id,name,role_id',
-            'formApproval.steps.actor.role:id,name',
-
-            'transferAssets.fromSubArea',
-            'transferAssets.toSubArea',
-        ])->latest()->get();
-
-        $buildings = Building::all();
-        $buildingRooms = BuildingRoom::with('building')->get();
-        $unitOrDepartments = UnitOrDepartment::all();
-        $users = User::all();
-        $assets = InventoryList::with(['assetModel.category'])->where('status', 'active')->get();
-        $subAreas          = SubArea::all();
-
-        $viewingModel = Transfer::findForView($id);
-        $viewing_assets = $viewingModel->viewingAssets();
-
-        $viewing = (function ($t) {
-            $array = $t->toArray();
             $array['currentBuildingRoom']   = $array['current_building_room'];
             $array['currentOrganization']   = $array['current_organization'];
             $array['receivingBuildingRoom'] = $array['receiving_building_room'];
             $array['receivingOrganization'] = $array['receiving_organization'];
             $array['designatedEmployee']    = $array['designated_employee'];
             $array['assignedBy']            = $array['assigned_by'];
-            $array['status']                = ucfirst($t->status);
-            $array['scheduled_date']        = $t->scheduled_date
-                ? $t->scheduled_date->toDateString()
-                : null;
-            $array['actual_transfer_date']  = $t->actual_transfer_date
-                ? $t->actual_transfer_date->toDateString()
-                : null;
-            
-
-            $array['transferAssets'] = $t->transferAssets->map(function ($ta) {
+            $array['status']                = ucfirst($transfer->status);
+            $array['transferAssets']        = $transfer->transferAssets->map(function ($ta) {
                 return [
-                    'id'          => $ta->id,
-                    'transfer_id' => $ta->transfer_id,
-                    'asset_id'    => $ta->asset_id,
-                    'asset'       => $ta->asset,
+                    'id'                   => $ta->id,
+                    'transfer_id'          => $ta->transfer_id,
+                    'asset_id'             => $ta->asset_id,
+                    'asset'                => $ta->asset,
 
-                    'moved_at'       => $ta->moved_at ? $ta->moved_at->toDateString() : null,
-                    'from_sub_area_id'       => $ta->from_sub_area_id,
-                    'to_sub_area_id'         => $ta->to_sub_area_id,
-                    'asset_transfer_status'  => $ta->asset_transfer_status,
-                    'remarks'                => $ta->remarks,
-
-                    'fromSubArea'           => $ta->fromSubArea ? $ta->fromSubArea->only(['id', 'name']) : null,
-                    'toSubArea'             => $ta->toSubArea ? $ta->toSubArea->only(['id', 'name']) : null,
+                    'moved_at'             => $ta->moved_at ? $ta->moved_at->toDateString() : null,
+                    'from_sub_area_id'     => $ta->from_sub_area_id,
+                    'to_sub_area_id'       => $ta->to_sub_area_id,
+                    'asset_transfer_status'=> $ta->asset_transfer_status,
+                    'remarks'              => $ta->remarks,
                 ];
             })->values();
-
-            $array['asset_count'] = $t->transferAssets->count();
-
-            $array['is_approved'] = $t->formApproval?->status === 'approved';
-
+            
+            $array['asset_count'] = $transfer->transferAssets->count();
             return $array;
-        })($viewingModel);
+        }),
+        'buildings'         => $buildings,
+        'buildingRooms'     => $buildingRooms,
+        'unitOrDepartments' => $unitOrDepartments,
+        'users'             => $users,
+        'currentUser'       => $currentUser,
+        'assets'            => $assets,
+        'subAreas'          => $subAreas,
 
-        return Inertia::render('transfer/index', [
-            'transfers' => $transfers->map(function ($transfer) {
-                $array = $transfer->toArray();
-                
-                $array['currentBuildingRoom']   = $array['current_building_room'];
-                $array['currentOrganization']   = $array['current_organization'];
-                $array['receivingBuildingRoom'] = $array['receiving_building_room'];
-                $array['receivingOrganization'] = $array['receiving_organization'];
-                $array['designatedEmployee']    = $array['designated_employee'];
-                $array['assignedBy']            = $array['assigned_by'];
-                $array['status']                = ucfirst($transfer->status);
-                $array['transferAssets']        = $transfer->transferAssets->map(function ($ta) {
-                    return [
-                        'id'          => $ta->id,
-                        'transfer_id' => $ta->transfer_id,
-                        'asset_id'    => $ta->asset_id,
-                        'asset'       => $ta->asset,
+        'viewing'        => $viewing,
+        'viewing_assets' => $viewing_assets,
 
-                        'moved_at'               => $ta->moved_at ? $ta->moved_at->toDateString() : null,
-                        'from_sub_area_id'       => $ta->from_sub_area_id,
-                        'to_sub_area_id'         => $ta->to_sub_area_id,
-                        'asset_transfer_status'  => $ta->asset_transfer_status,
-                        'remarks'                => $ta->remarks,
-                    ];
-                })->values();
-                
-                $array['asset_count'] = $transfer->transferAssets->count();
-                return $array;
-            }),
-            'buildings'         => $buildings,
-            'buildingRooms'     => $buildingRooms,
-            'unitOrDepartments' => $unitOrDepartments,
-            'users'             => $users,
-            'currentUser'       => $currentUser,
-            'assets'            => $assets,
-            'subAreas'          => $subAreas,
+        'signatories'    => $signatories, // ✅ now always passed to frontend
+    ]);
+}
 
-            'viewing'        => $viewing,
-            'viewing_assets' => $viewing_assets,
-        ]);
-    }
 
 
     /**

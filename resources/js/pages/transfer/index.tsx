@@ -44,6 +44,7 @@ export default function TransferIndex({
     users = [],
     currentUser,
     subAreas,
+    
 
 }: TransferPageProps) {
 
@@ -390,14 +391,15 @@ export default function TransferIndex({
                 />
             )}
 
-            {selectedTransfer && (
-                <TransferViewModal
-                    open={showViewTransfer}
-                    onClose={closeViewTransfer}
-                    transfer={selectedTransfer}
-                    assets={selectedAssets}
-                />
-            )}
+           {selectedTransfer && (
+  <TransferViewModal
+    open={showViewTransfer}
+    onClose={closeViewTransfer}
+    transfer={selectedTransfer}
+    assets={selectedAssets}
+    signatories={props.signatories} // ✅ fix
+  />
+)}
 
             <DeleteConfirmationModal
                 show={showDeleteModal}

@@ -104,6 +104,7 @@ const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals' },
+    { title: 'Signatories', href: '/signatories', icon: FileUser, permission: 'view-signatories' }, // ✅ NEW
     // { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
 ];
 
