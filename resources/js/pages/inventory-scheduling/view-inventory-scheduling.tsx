@@ -283,7 +283,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             {/* <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]"> */}
             <DialogContent
-                className="w-full max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
+                className="w-[350px] max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
             >
                 <DialogHeader>
                     <DialogTitle>
@@ -292,7 +292,8 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                 </DialogHeader>
                 <div className="print-force-light bg-white p-4 sm:p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
                 {/* Header */}
-                    <div className="relative flex sm:flex-row sm:items-center sm:justify-between w-full max-w-[320px] sm:max-w-none mx-auto">
+                    {/* <div className="relative flex sm:flex-row sm:items-center sm:justify-between w-full max-w-[320px] sm:max-w-none mx-auto"> */}
+                    <div className="mx-auto w-[320px] sm:w-full sm:max-w-none relative flex items-center justify-between">
                         <div className="flex items-center">
                         <img
                             src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
@@ -301,7 +302,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         />
                         </div>
                         <div className="absolute left-1/2 -translate-x-1/2 text-center">
-                        <h2 className="text-base md:text-2xl font-bold tracking-wide uppercase print:text-lg">
+                        <h2 className="text-sm md:text-2xl font-bold tracking-wide uppercase print:text-lg">
                             Property Management Office
                         </h2>
                         <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
@@ -378,7 +379,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                     </tr>
                                     <tr className="border-b border-gray-200 dark:border-gray-800">
                                         <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                            Actual Inventory Date
+                                            Actual Date of Inventory
                                         </td>
                                         <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
                                             {formatDateLong(schedule.actual_date_of_inventory)}
@@ -399,7 +400,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     </div>
 
                     {/* Pivot Table */}
-                    <div className="mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                    <div className="w-[320px] md:w-full mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                         <div className="flex items-center justify-between bg-blue-200 px-4 py-2 text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
                             <span>Inventory Sheet Scheduling</span>
                             <Button
@@ -414,83 +415,114 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             </Button>
                         </div>
 
-                        <table className="w-full text-xs md:text-sm border-collapse">
-                            <thead className="md:min-w-[600px] bg-gray-100 text-gray-700">
-                                <tr>
-                                    <th className="w-10 border px-2 py-1 text-center">#</th>
-                                    <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
-                                    <th className="border px-2 py-1 text-center">Buildings</th>
-                                    <th className="border px-2 py-1 text-center">Rooms</th>
-                                    <th className="border px-2 py-1 text-center">Sub-Areas</th>
-                                    <th className="border px-2 py-1 text-center">Status</th>
-                                    <th className="border px-2 py-1 text-center">Asset Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pageItems.length > 0 ? (
-                                    pageItems.map((row, idx) => {
-                                        const s = spans[idx];
-                                        return (
-                                            <tr key={start + idx}>
-                                                <td className="border px-2 py-1 text-center">{start + idx + 1}</td>
+                        <div className="overflow-x-auto">
+                            <table className="md:w-full text-xs md:text-sm border-collapse">
+                                <thead className="md:min-w-[600px] bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th className="border px-2 py-1 w-10 text-center">#</th>
+                                        <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
+                                        <th className="border px-2 py-1 text-center">Buildings</th>
+                                        <th className="border px-2 py-1 text-center">Rooms</th>
+                                        <th className="border px-2 py-1 text-center">Sub-Areas</th>
+                                        <th className="border px-2 py-1 text-center">Status</th>
+                                        <th className="border px-2 py-1 text-center">Asset Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {pageItems.length > 0 ? (
+                                        pageItems.map((row, idx) => {
+                                            const s = spans[idx];
+                                            return (
+                                                <tr key={start + idx}>
+                                                    <td className="border px-2 py-1 text-center">
+                                                        {start + idx + 1}
+                                                    </td>
 
-                                                {s.unitSpan > 0 && (
-                                                    <td rowSpan={s.unitSpan} className="border px-2 py-1 text-center align-middle">
-                                                        {row.unit ?? '—'}
-                                                    </td>
-                                                )}
-                                                {s.buildingSpan > 0 && (
-                                                    <td rowSpan={s.buildingSpan} className="border px-2 py-1 text-center align-middle">
-                                                        {row.building ?? '—'}
-                                                    </td>
-                                                )}
-                                                {s.roomSpan > 0 && (
-                                                    <td rowSpan={s.roomSpan} className="border px-2 py-1 text-center align-middle">
-                                                        {row.room ?? '—'}
-                                                    </td>
-                                                )}
-                                                {s.subAreaSpan > 0 && (
-                                                    <td rowSpan={s.subAreaSpan} className="border px-2 py-1 text-center align-middle">
-                                                        {row.sub_area ?? '—'}
-                                                    </td>
-                                                )}
+                                                    {s.unitSpan > 0 && (
+                                                        <td
+                                                            rowSpan={s.unitSpan}
+                                                            className="border px-2 py-1 text-center align-middle"
+                                                        >
+                                                            {row.unit ?? '—'}
+                                                        </td>
+                                                    )}
+                                                    {s.buildingSpan > 0 && (
+                                                        <td
+                                                            rowSpan={s.buildingSpan}
+                                                            className="border px-2 py-1 text-center align-middle"
+                                                        >
+                                                            {row.building ?? '—'}
+                                                        </td>
+                                                    )}
+                                                    {s.roomSpan > 0 && (
+                                                        <td
+                                                            rowSpan={s.roomSpan}
+                                                            className="border px-2 py-1 text-center align-middle"
+                                                        >
+                                                            {row.room ?? '—'}
+                                                        </td>
+                                                    )}
+                                                    {s.subAreaSpan > 0 && (
+                                                        <td
+                                                            rowSpan={s.subAreaSpan}
+                                                            className="border px-2 py-1 text-center align-middle"
+                                                        >
+                                                            {row.sub_area ?? '—'}
+                                                        </td>
+                                                    )}
 
-                                                <td className="border px-2 py-1 text-center">
-                                                    <StatusPill status={row.status} />
-                                                </td>
+                                                    <td className="border px-2 py-1 text-center">
+                                                        <StatusPill status={row.status} />
+                                                    </td>
 
-                                                <td
-                                                    className="cursor-pointer border px-2 py-1 text-center align-middle text-blue-600 underline"
-                                                    onClick={() => {
-                                                        setRowAssets({
+                                                    <td
+                                                        className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
+                                                        onClick={() => {
+                                                            setRowAssets({
                                                             scheduleId: schedule.id,
-                                                            rowId: row.sub_area_id ? row.sub_area_id : row.building_room_id!,
+                                                            rowId: row.sub_area_id
+                                                                ? row.sub_area_id
+                                                                : row.building_room_id!,
                                                             type: row.sub_area_id ? 'sub_area' : 'building_room',
                                                             title: `${row.unit ?? ''} / ${row.building ?? ''} / ${
                                                                 row.room ?? ''
                                                             } / ${row.sub_area ?? ''}`,
                                                             unitId: row.unit_id,
-                                                        });
-                                                    }}
-                                                >
-                                                    {row.assetCount ?? '—'}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                ) : (
+                                                            });
+                                                        }}
+                                                    >
+                                                        {row.assetCount ?? '—'}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
                                     <tr>
-                                        <td colSpan={9} className="border px-2 py-4 text-center text-muted-foreground">
+                                        <td
+                                            colSpan={9}
+                                            className="border px-2 py-4 text-center text-muted-foreground"
+                                        >
                                             No scope records found.
                                         </td>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    )}
+                                </tbody>
+                            </table>
 
-                        <div className="flex items-center justify-between p-3">
-                            <PageInfo page={page} total={total} pageSize={PAGE_SIZE} label="rows" />
-                            <Pagination page={page} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
+                            <div className="flex items-center justify-between p-3">
+                                <PageInfo
+                                    page={page}
+                                    total={total}
+                                    pageSize={PAGE_SIZE}
+                                    label="rows"
+                                />
+                                <Pagination
+                                    page={page}
+                                    total={total}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={setPage}
+                                />
+                            </div>
                         </div>
                     </div>
 
