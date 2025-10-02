@@ -5,7 +5,6 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
 import { formatEnums } from '@/types/custom-index';
 import { router } from '@inertiajs/react';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { Asset } from '../inventory-list';
