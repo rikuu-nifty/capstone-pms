@@ -17,62 +17,66 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Personnel;
 
+use App\Models\TurnoverDisposalSignatory;
+
 class TurnoverDisposalController extends Controller
 {
     private function indexProps(): array
-    {
-        $assignedBy = Auth::user();
+{
+    $assignedBy = Auth::user();
 
-        $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
+    $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
 
-        $pmoHead = User::where('role_id', $pmoHeadRoleId)
-            ->where('status', 'approved') // optional filter if you only want active users
-            ->first();
+    $pmoHead = User::where('role_id', $pmoHeadRoleId)
+        ->where('status', 'approved')
+        ->first();
 
-        $unitOrDepartments = UnitOrDepartment::all();
+    $unitOrDepartments = UnitOrDepartment::all();
+    $personnels = Personnel::activeForAssignments();
 
-        $personnels = Personnel::activeForAssignments(); // only active personnels
+    $turnoverDisposals = TurnoverDisposal::with([
+        'turnoverDisposalAssets.assets.assetModel.category',
+        'issuingOffice',
+        'receivingOffice',
+        'turnoverDisposalAssets.assets.building',
+        'turnoverDisposalAssets.assets.buildingRoom',
+        'turnoverDisposalAssets.assets.subArea',
+        'turnoverDisposalAssets.assets.assetModel.equipmentCode',
+    ])
+    ->withCount('turnoverDisposalAssets as asset_count')
+    ->latest()
+    ->get();
 
-        $turnoverDisposals = TurnoverDisposal::with([
-            'turnoverDisposalAssets.assets.assetModel.category',
-            'issuingOffice',
-            'receivingOffice',
-            'turnoverDisposalAssets.assets.building',
-            'turnoverDisposalAssets.assets.buildingRoom',
-            'turnoverDisposalAssets.assets.subArea',
+    $turnoverDisposalAssets = TurnoverDisposalAsset::with([
+        'assets.assetModel.category',
+    ])
+    ->whereHas('turnoverDisposal', function ($q) {
+        $q->where('status', '!=', 'disposed');
+    })
+    ->get();
 
-            'turnoverDisposalAssets.assets.assetModel.equipmentCode',
-        ])
-        ->withCount('turnoverDisposalAssets as asset_count')
-        ->latest()
-        ->get();
+    $assets = InventoryList::with([
+        'assetModel.category',
+        'building:id,name',
+        'buildingRoom:id,room,building_id',
+        'subArea:id,name,building_room_id',
+    ])->get();
 
-        $turnoverDisposalAssets = TurnoverDisposalAsset::with([
-            'assets.assetModel.category',
-        ])
-        ->whereHas('turnoverDisposal', function ($q) {
-            $q->where('status', '!=', 'disposed');
-        })
-        ->get();
+    // ✅ NEW: load global signatories
+    $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
 
-        $assets = InventoryList::with([
-            'assetModel.category',
-            'building:id,name',
-            'buildingRoom:id,room,building_id',
-            'subArea:id,name,building_room_id',
-        ])->get();
-
-        return [
-            'turnoverDisposals'      => $turnoverDisposals,
-            'turnoverDisposalAssets' => $turnoverDisposalAssets,
-            'assets'                 => $assets,
-            'unitOrDepartments'      => $unitOrDepartments,
-            'assignedBy'             => $assignedBy,
-            'pmoHead'                => $pmoHead,
-
-            'personnels'             => $personnels,
-        ];
+    return [
+        'turnoverDisposals'      => $turnoverDisposals,
+        'turnoverDisposalAssets' => $turnoverDisposalAssets,
+        'assets'                 => $assets,
+        'unitOrDepartments'      => $unitOrDepartments,
+        'assignedBy'             => $assignedBy,
+        'pmoHead'                => $pmoHead,
+        'personnels'             => $personnels,
+        'signatories'            => $signatories, // ✅ include this
+    ];
 }
+
     /**
      * Display a listing of the resource.
      */
@@ -148,10 +152,10 @@ class TurnoverDisposalController extends Controller
             'turnoverDisposalAssets.assets.building',
             'turnoverDisposalAssets.assets.buildingRoom',
             'turnoverDisposalAssets.assets.subArea',
-            'formApproval.steps' => fn($q) =>
+           'formApproval.steps' => fn($q) =>
                 $q->whereIn('code', ['external_noted_by','noted_by'])
-                ->whereIn('status', ['pending', 'approved'])
-                ->orderByDesc('step_order'),
+                ->whereIn('status', ['pending', 'approved', 'rejected'])
+                ->orderByDesc('acted_at'),
             'formApproval.steps.actor:id,name',
 
             'turnoverDisposalAssets.assets.assetModel.equipmentCode',

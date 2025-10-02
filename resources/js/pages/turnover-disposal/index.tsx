@@ -39,6 +39,7 @@ type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
 type PageProps = TurnoverDisposalPageProps & {
     viewing?: TurnoverDisposals;
     pmoHead?: { id: number; name: string } | null;
+    signatories: Record<string, { name: string; title: string }>; // ✅ add this
 };
 
 export default function TurnoverDisposalsIndex({
@@ -401,6 +402,7 @@ export default function TurnoverDisposalsIndex({
                     onClose={closeViewTurnoverDisposal}
                     turnoverDisposal={selectedTurnoverDisposals}
                     assets={selectedTurnoverDisposalAssets}
+                    signatories={props.signatories}
                     pmoHead={props.pmoHead}
                 />
             )}

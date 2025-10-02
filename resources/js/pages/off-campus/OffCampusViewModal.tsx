@@ -141,26 +141,35 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
             {/* ---------- Signatures (reordered per paper form) ---------- */}
             <div className="mt-6 grid grid-cols-2 gap-6 text-sm">
                 <div className="text-center">
-                    <p className="mb-8 font-semibold">Requester (Name of Personnel)</p>
+                    <p className="mb-8 font-semibold">Requester:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
                     <p className="font-bold text-gray-700">{offCampus.requester_name}</p>
+                    <p className="text-xs text-gray-500 italic">Name of Personnel</p>
                 </div>
-                <div className="text-center">
-                    <p className="mb-8 font-semibold">Issued By (Head, PMO)</p>
+            
+            
+                  <div className="text-center">
+                    <p className="mb-8 font-semibold">Issued by:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
                     <p className="font-bold text-gray-700">{offCampus.issued_by?.name ?? '—'}</p>
+                    <p className="text-xs text-gray-500 italic">Head, PMO</p>
                 </div>
-                <div className="text-center">
-                    <p className="mb-8 font-semibold">Checked By (Chief, Security Service)</p>
+                   <div className="text-center">
+                    <p className="mb-8 font-semibold">Checked by:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
                     <p className="font-bold text-gray-700">{offCampus.checked_by ?? '—'}</p>
+                    <p className="text-xs text-gray-500 italic">Chief, Security Service</p>
                 </div>
                 <div className="text-center">
-                    <p className="mb-8 font-semibold">Approved By (Dean/Head Concerned)</p>
+                    <p className="mb-8 font-semibold">Approved by:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
                     <p className="font-bold text-gray-700 capitalize">{offCampus.approved_by ?? '—'}</p>
+                    <p className="text-xs text-gray-500 italic">Dean/Head Concerned</p>
+                    
                 </div>
             </div>
+
+            
 
             {/* ---------- Actions ---------- */}
             <div className="mt-6 text-center print:hidden">

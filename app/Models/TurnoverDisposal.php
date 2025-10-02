@@ -32,7 +32,14 @@ class TurnoverDisposal extends Model
         'document_date' => 'date',
     ];
 
-    // protected $appends = ['noted_by_name'];
+    protected $appends = ['noted_by_name', 'noted_by_title'];
+
+    
+
+    public function signatories()
+    {
+        return $this->hasMany(TurnoverDisposalSignatory::class);
+    }
 
     public function turnoverDisposalAssets() 
     {
@@ -376,35 +383,59 @@ class TurnoverDisposal extends Model
         return 'Turnover/Disposal -  #' . $this->id;
     }
 
-    public function getNotedByNameAttribute(): ?string
-    {
-        $fa = $this->relationLoaded('formApproval') ? $this->getRelation('formApproval')
-            : $this->formApproval()->with([
-                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
-                    ->where('status','approved')
-                    ->orderByDesc('acted_at'),
-                'steps.actor:id,name',
-            ])->first();
+public function getNotedByNameAttribute(): ?string
+{
+    $fa = $this->relationLoaded('formApproval')
+        ? $this->getRelation('formApproval')
+        : $this->formApproval()->with([
+            'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+                                   ->whereIn('status',['approved','rejected']) // ✅ include rejected
+                                   ->orderByDesc('acted_at'),
+            'steps.actor:id,name',
+        ])->first();
 
-        $step = $fa?->steps->first();
-            return $step ? ($step->is_external ? ($step->external_name ?: null) : ($step->actor->name ?? null))
-                : null;
+    if (!$fa) return null;
+
+    // Prefer external_noted_by if present
+    $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
+    if ($externalStep) {
+        return $externalStep->external_name ?: null;
     }
 
-    public function getNotedByTitleAttribute(): ?string
-    {
-        $fa = $this->relationLoaded('formApproval') ? $this->getRelation('formApproval')
-            : $this->formApproval()->with([
-                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
-                    ->where('status','approved')
-                    ->orderByDesc('acted_at'),
-                'steps.actor:id,name',
-            ])->first();
-
-        $step = $fa?->steps->first();
-
-        return $step ? ($step->is_external ? ($step->external_title ?: null) : null) : null;
+    $internalStep = $fa->steps->firstWhere('code', 'noted_by');
+    if ($internalStep) {
+        return $internalStep->actor->name ?? null;
     }
+
+    return null;
+}
+
+public function getNotedByTitleAttribute(): ?string
+{
+    $fa = $this->relationLoaded('formApproval')
+        ? $this->getRelation('formApproval')
+        : $this->formApproval()->with([
+            'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+                                   ->whereIn('status',['approved','rejected']) // ✅ include rejected
+                                   ->orderByDesc('acted_at'),
+            'steps.actor:id,name',
+        ])->first();
+
+    if (!$fa) return null;
+
+    $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
+    if ($externalStep) {
+        return $externalStep->external_title ?: null;
+    }
+
+    $internalStep = $fa->steps->firstWhere('code', 'noted_by');
+    if ($internalStep) {
+        return 'Dean / Head';
+    }
+
+    return null;
+}
+
 
     /*
         REPORTS

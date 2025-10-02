@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InventorySchedulingSignatory;
 use App\Models\TransferSignatory; // ✅ new import
+use App\Models\TurnoverDisposalSignatory; // ✅ new import
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,6 +20,8 @@ class SignatoryController extends Controller
         // ✅ Decide which table to query
         if ($moduleType === 'property_transfer') {
             $signatories = TransferSignatory::all()->keyBy('role_key');
+        } elseif ($moduleType === 'turnover_disposal') {
+            $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key'); // ✅ added
         } else {
             $signatories = InventorySchedulingSignatory::forModule($moduleType)->get()->keyBy('role_key');
         }
@@ -44,6 +47,8 @@ class SignatoryController extends Controller
         // ✅ Insert into correct table
         if ($data['module_type'] === 'property_transfer') {
             TransferSignatory::create($data);
+        } elseif ($data['module_type'] === 'turnover_disposal') {
+            TurnoverDisposalSignatory::create($data); // ✅ added
         } else {
             InventorySchedulingSignatory::create($data);
         }
@@ -67,6 +72,9 @@ class SignatoryController extends Controller
         if ($data['module_type'] === 'property_transfer') {
             $signatory = TransferSignatory::findOrFail($id);
             $signatory->update($data);
+        } elseif ($data['module_type'] === 'turnover_disposal') {
+            $signatory = TurnoverDisposalSignatory::findOrFail($id); // ✅ added
+            $signatory->update($data);
         } else {
             $signatory = InventorySchedulingSignatory::findOrFail($id);
             $signatory->update($data);
@@ -85,6 +93,8 @@ class SignatoryController extends Controller
         // ✅ Delete from correct table
         if ($moduleType === 'property_transfer') {
             $signatory = TransferSignatory::findOrFail($id);
+        } elseif ($moduleType === 'turnover_disposal') {
+            $signatory = TurnoverDisposalSignatory::findOrFail($id); // ✅ added
         } else {
             $signatory = InventorySchedulingSignatory::findOrFail($id);
         }
