@@ -42,7 +42,19 @@ const StatusPill = ({ status }: { status?: string | null }) => {
                   ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                   : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300';
 
-    return <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{status ? formatEnums(s) : '—'}</span>;
+    return (
+        <span
+        className={`
+            inline-flex justify-center
+            rounded-full text-[10px] sm:text-xs font-medium
+            px-2 py-0.5 sm:px-2.5
+            max-w-fit self-end sm:self-auto
+            ${cls}
+        `}
+        >
+        {status ? formatEnums(s) : '—'}
+        </span>
+    );
 };
 
 type Signatory = {
@@ -294,35 +306,36 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                 {/* Header */}
                     {/* <div className="relative flex sm:flex-row sm:items-center sm:justify-between w-full max-w-[320px] sm:max-w-none mx-auto"> */}
                     <div className="mx-auto w-[320px] sm:w-full sm:max-w-none relative flex items-center justify-between">
-                        <div className="flex items-center">
-                        <img
-                            src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
-                            alt="Logo"
-                            className="h-16 md:h-24 opacity-90"
-                        />
+                        <div className="flex items-center flex-shrink-0">
+                            <img
+                                src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
+                                alt="Logo"
+                                className="h-16 md:h-24 opacity-90"
+                            />
                         </div>
-                        <div className="absolute left-1/2 -translate-x-1/2 text-center">
-                        <h2 className="text-sm md:text-2xl font-bold tracking-wide uppercase print:text-lg">
-                            Property Management Office
-                        </h2>
-                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
-                            pmo@auf.edu.ph
-                        </p>
-                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
-                            +63 973 234 3456
-                        </p>
+                        <div className="absolute left-1/2 -translate-x-1/2 text-center w-[150px] md:w-full">
+                            <h2 className="text-xs sm:text-sm md:text-2xl font-bold tracking-wide uppercase print:text-lg">
+                                Property Management Office
+                            </h2>
+                            <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                                pmo@auf.edu.ph
+                            </p>
+                            <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                                +63 973 234 3456
+                            </p>
                         </div>
-                        <div className="text-right text-xs md:text-sm leading-snug">
-                        <p>
-                            <span className="text-gray-600 dark:text-gray-400">
-                            Schedule Record #:
-                            </span>{' '}
-                            <span className="font-semibold">{recordNo}</span>
-                        </p>
-                        <p className="mt-1 flex items-center justify-end gap-2">
-                            <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                            <StatusPill status={schedule.scheduling_status} />
-                        </p>
+                        <div className="text-right text-[9px] w-[70px] md:w-full md:text-sm leading-snug">
+                            <p>
+                                <span className="text-gray-600 dark:text-gray-400">
+                                Schedule Record #:
+                                </span>{' '}
+                                <span className="font-semibold">{recordNo}</span>
+                            </p>
+                            {/* <p className="mt-1 flex items-center justify-end gap-2"> */}
+                            <p className="mt-1 flex flex-col sm:flex-row sm:items-center justify-end sm:justify-end gap-1 sm:gap-2">
+                                <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                                <StatusPill status={schedule.scheduling_status} />
+                            </p>
                         </div>
                     </div>
 
