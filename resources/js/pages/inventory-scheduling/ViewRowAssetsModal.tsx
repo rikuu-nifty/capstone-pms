@@ -92,7 +92,7 @@ function ViewRowAssetModal({
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
             <DialogContent 
                 // className="w-[min(900px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]"
-                className="w-[350px] max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(900px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
+                className="w-[350px] max-w-[95vw] h-[85vh] sm:h-auto sm:w-[min(900px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
             >
                 <div 
                     className="w-[320px] sm:w-full print-force-light bg-white p-4 sm:p-6 text-gray-900 dark:bg-neutral-950 dark:text-gray-100"
