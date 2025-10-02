@@ -292,24 +292,36 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                 </DialogHeader>
                 <div className="print-force-light bg-white p-4 sm:p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
                 {/* Header */}
-                    <div className="relative flex items-center justify-between">
+                    <div className="relative flex sm:flex-row sm:items-center sm:justify-between w-full max-w-[320px] sm:max-w-none mx-auto">
                         <div className="flex items-center">
-                            <img src="https://www.auf.edu.ph/home/images/mascot/GEN.png" alt="Logo" className="h-24 opacity-90" />
+                        <img
+                            src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
+                            alt="Logo"
+                            className="h-16 md:h-24 opacity-90"
+                        />
                         </div>
                         <div className="absolute left-1/2 -translate-x-1/2 text-center">
-                            <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">Property Management Office</h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">pmo@auf.edu.ph</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">+63 973 234 3456</p>
+                        <h2 className="text-base md:text-2xl font-bold tracking-wide uppercase print:text-lg">
+                            Property Management Office
+                        </h2>
+                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                            pmo@auf.edu.ph
+                        </p>
+                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                            +63 973 234 3456
+                        </p>
                         </div>
-                        <div className="text-right text-sm leading-snug">
-                            <p>
-                                <span className="text-gray-600 dark:text-gray-400">Schedule Record #:</span>{' '}
-                                <span className="font-semibold">{recordNo}</span>
-                            </p>
-                            <p className="mt-1 flex items-center justify-end gap-2">
-                                <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                                <StatusPill status={schedule.scheduling_status} />
-                            </p>
+                        <div className="text-right text-xs md:text-sm leading-snug">
+                        <p>
+                            <span className="text-gray-600 dark:text-gray-400">
+                            Schedule Record #:
+                            </span>{' '}
+                            <span className="font-semibold">{recordNo}</span>
+                        </p>
+                        <p className="mt-1 flex items-center justify-end gap-2">
+                            <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                            <StatusPill status={schedule.scheduling_status} />
+                        </p>
                         </div>
                     </div>
 
@@ -402,8 +414,8 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             </Button>
                         </div>
 
-                        <table className="w-full text-sm border-collapse">
-                            <thead className="min-w-[600px] bg-gray-100 text-gray-700">
+                        <table className="w-full text-xs md:text-sm border-collapse">
+                            <thead className="md:min-w-[600px] bg-gray-100 text-gray-700">
                                 <tr>
                                     <th className="w-10 border px-2 py-1 text-center">#</th>
                                     <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
