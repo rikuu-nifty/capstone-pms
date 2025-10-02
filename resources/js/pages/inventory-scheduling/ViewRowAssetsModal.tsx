@@ -94,9 +94,11 @@ function ViewRowAssetModal({
                 // className="w-[min(900px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]"
                 className="w-[350px] max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(900px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
             >
-                <div className="print-force-light bg-white p-4 sm:p-6 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
+                <div 
+                    className="w-[320px] sm:w-full print-force-light bg-white p-4 sm:p-6 text-gray-900 dark:bg-neutral-950 dark:text-gray-100"
+                >
                     <DialogHeader>
-                        <DialogTitle className="w-[320px] text-sm sm:text-xl font-bold tracking-wide text-center text-left">
+                        <DialogTitle className="w-[300px] sm:w-full text-sm sm:text-xl font-bold tracking-wide text-center text-left">
                         {title}
                         </DialogTitle>
                         <DialogDescription className="sr-only">
@@ -105,9 +107,17 @@ function ViewRowAssetModal({
                     </DialogHeader>
 
                     {/* Bulk buttons */}
-                    <div className="w-[320px] sm:w-full flex flex-col sm:flex-row flex-wrap justify-center gap-2 sm:gap-3 mt-4 mb-4">
+                    <div 
+                        // className="w-[320px] sm:w-full flex flex-col sm:flex-row flex-wrap justify-center gap-2 sm:gap-3 mt-4 mb-4"
+                        className="
+                            w-[320px] sm:w-full
+                            flex flex-col sm:flex-row sm:flex-wrap
+                            justify-center
+                            gap-2 sm:gap-3 mt-4 mb-4
+                        "
+                    >
                         <Button
-                            className="cursor-pointer w-[160px] sm:w-auto"
+                            className="cursor-pointer w-full sm:w-[160px] sm:w-auto"
                             size="sm"
                             variant="primary"
                             onClick={() => bulkUpdateStatus('scheduled')}
@@ -116,7 +126,7 @@ function ViewRowAssetModal({
                         </Button>
 
                         <Button
-                            className="cursor-pointer w-[160px] sm:w-auto"
+                            className="cursor-pointer w-full sm:w-[160px] sm:w-auto"
                             size="sm"
                             onClick={() => bulkUpdateStatus('inventoried')}
                         >
@@ -124,7 +134,7 @@ function ViewRowAssetModal({
                         </Button>
 
                         <Button
-                            className="cursor-pointer w-[180px] sm:w-auto"
+                            className="cursor-pointer w-full sm:w-[180px] sm:w-auto"
                             size="sm"
                             variant="destructive"
                             onClick={() => bulkUpdateStatus('not_inventoried')}
@@ -134,59 +144,61 @@ function ViewRowAssetModal({
                     </div>
 
                     {/* Table wrapper */}
-                    <div className="w-[320px] md:w-full mt-4 overflow-x-auto rounded-md border border-gray-200 dark:border-gray-800">
-                        {assets.length > 0 ? (
-                        <>
-                            <table className="w-[320px] sm:min-w-[600px] w-full text-[11px] sm:text-sm border-collapse">
-                                <thead className="bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-gray-300">
-                                    <tr>
-                                        <th className="border px-2 sm:px-3 py-2 text-center">#</th>
-                                        <th className="border px-2 sm:px-3 py-2 text-center">Asset Name</th>
-                                        <th className="border px-2 sm:px-3 py-2 text-center">Serial No</th>
-                                        <th className="border px-2 sm:px-3 py-2 text-center">Category</th>
-                                        <th className="border px-2 sm:px-3 py-2 text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {assets.map((a, idx) => (
-                                    <tr
-                                        key={a.id}
-                                        className="odd:bg-white even:bg-gray-50 dark:odd:bg-neutral-950 dark:even:bg-neutral-900"
-                                    >
-                                        <td className="border px-2 sm:px-3 py-2 text-center">
-                                            {(page - 1) * pageSize + idx + 1}
-                                        </td>
-                                        <td className="border px-2 sm:px-3 py-2 text-center whitespace-normal break-words">
-                                            {ucwords(a.asset_name ?? '—')}
-                                        </td>
-                                        <td className="border px-2 sm:px-3 py-2 text-center break-all">
-                                            {a.serial_no ?? '—'}
-                                        </td>
-                                        <td className="border px-2 sm:px-3 py-2 text-center whitespace-normal break-words">
-                                            {ucwords(a.asset_model?.category?.name ?? '—')}
-                                        </td>
-                                        <td className="border px-2 sm:px-3 py-2 text-center">
-                                            <select
-                                                value={a.inventory_status}
-                                                onChange={(e) => updateStatus(a.id, e.target.value)}
-                                                className="rounded border px-1 sm:px-2 py-1 text-xs cursor-pointer w-full sm:w-auto"
-                                            >
-                                                <option value="not_inventoried">Not Inventoried</option>
-                                                <option value="scheduled">Scheduled</option>
-                                                <option value="inventoried">Inventoried</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            
-                        </>
-                            ) : (
-                                <p className="p-4 text-[11px] sm:text-sm text-center text-muted-foreground">
-                                    No assets for this scope.
-                                </p>
-                            )}
+                    <div className="w-[320px] sm:w-full mt-4 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                        <div className="overflow-x-auto">
+                            {assets.length > 0 ? (
+                            <>
+                                <table className="min-w-[600px] sm:w-full border-collapse">
+                                    <thead className="bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-gray-300 text-sm">
+                                        <tr>
+                                            <th className="border px-2 sm:px-3 py-2 text-center">#</th>
+                                            <th className="border px-2 sm:px-3 py-2 text-center">Asset Name</th>
+                                            <th className="border px-2 sm:px-3 py-2 text-center">Serial No</th>
+                                            <th className="border px-2 sm:px-3 py-2 text-center">Category</th>
+                                            <th className="border px-2 sm:px-3 py-2 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-xs sm:text-sm">
+                                        {assets.map((a, idx) => (
+                                        <tr
+                                            key={a.id}
+                                            className="odd:bg-white even:bg-gray-50 dark:odd:bg-neutral-950 dark:even:bg-neutral-900"
+                                        >
+                                            <td className="border px-2 sm:px-3 py-2 text-center">
+                                                {(page - 1) * pageSize + idx + 1}
+                                            </td>
+                                            <td className="border px-2 sm:px-3 py-2 text-center whitespace-normal break-words">
+                                                {ucwords(a.asset_name ?? '—')}
+                                            </td>
+                                            <td className="border px-2 sm:px-3 py-2 text-center break-all">
+                                                {a.serial_no ?? '—'}
+                                            </td>
+                                            <td className="border px-2 sm:px-3 py-2 text-center whitespace-normal break-words">
+                                                {ucwords(a.asset_model?.category?.name ?? '—')}
+                                            </td>
+                                            <td className="border px-2 sm:px-3 py-2 text-center">
+                                                <select
+                                                    value={a.inventory_status}
+                                                    onChange={(e) => updateStatus(a.id, e.target.value)}
+                                                    className="rounded border px-1 sm:px-2 py-1 text-xs cursor-pointer w-full sm:w-auto"
+                                                >
+                                                    <option value="not_inventoried">Not Inventoried</option>
+                                                    <option value="scheduled">Scheduled</option>
+                                                    <option value="inventoried">Inventoried</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                
+                            </>
+                                ) : (
+                                    <p className="p-4 text-[11px] sm:text-sm text-center text-muted-foreground">
+                                        No assets for this scope.
+                                    </p>
+                                )}
+                        </div>
                     </div>
                     {/* Pagination */}
                             <div className="w-[320px] sm:w-full flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 p-3 text-xs sm:text-sm">

@@ -605,7 +605,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                             <Button 
                                 variant="primary" 
                                 // className="mr-2 cursor-pointer"
-                                className="w-full sm:w-auto cursor-pointer text-xs sm:text-sm px-3 py-2"
+                                className="w-full sm:w-auto cursor-pointer text-xs font-bold sm:text-sm px-3 py-2"
                             >
                                 ← Back to Schedules
                             </Button>
