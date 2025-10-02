@@ -407,10 +407,17 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                 onClick={refreshSchedule}
                                 disabled={refreshing}
                                 variant="primary"
-                                className="flex cursor-pointer items-center gap-2"
-                                size="sm"
+                                // className="flex items-center gap-2 cursor-pointer"
+                                // size="sm"
+                                className="
+                                    flex items-center gap-1 cursor-pointer 
+                                    text-xs px-2 py-1
+                                    sm:gap-2 sm:text-sm sm:px-3 sm:py-2
+                                "
                             >
-                                <RotateCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                                <RotateCcw
+                                    className={`h-3 w-3 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`}
+                                />
                                 {refreshing ? 'Refreshing…' : 'Refresh'}
                             </Button>
                         </div>
@@ -527,52 +534,76 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     </div>
 
                     {/* Signatories */}
-                    <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5 mt-5 text-xs sm:text-sm">
                         <div className="text-center">
-                            <p className="mb-8 font-semibold">Prepared By:</p>
-                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                            <p className="font-bold text-gray-700 uppercase">{schedule.prepared_by?.name ?? '—'}</p>
-                            <p className="text-xs text-gray-500 italic">{schedule.prepared_by?.role_name ?? 'Property Clerk'}</p>
+                            <p className="font-semibold mb-6 sm:mb-8">Prepared By:</p>
+                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {schedule.prepared_by?.name ?? '—'}
+                            </p>
+                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                {schedule.prepared_by?.role_name ?? 'Property Clerk'}
+                            </p>
                         </div>
                         <div className="text-center">
-                            <p className="mb-8 font-semibold">Approved By:</p>
-                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-semibold mb-6 sm:mb-8">Approved By:</p>
+                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
                             <p className="font-bold text-gray-700 uppercase">
                                 {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'approved_by' && s.status === 'approved')
                                     ? signatories['approved_by']?.name
                                     : '—'}
                             </p>
-                            <p className="text-xs text-gray-500 italic">{signatories['approved_by']?.title ?? 'VP for Administration'}</p>
+                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                {signatories['approved_by']?.title ?? 'VP for Administration'}
+                            </p>
                         </div>
                         <div className="text-center">
-                            <p className="mb-8 font-semibold">Received By:</p>
-                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                            <p className="font-bold text-gray-700 uppercase">{signatories['received_by']?.name ?? '—'}</p>
-                            <p className="text-xs text-gray-500 italic">{signatories['received_by']?.title ?? 'Internal Auditor'}</p>
+                            <p className="font-semibold mb-6 sm:mb-8">Received By:</p>
+                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {signatories['received_by']?.name ?? '—'}
+                            </p>
+                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                {signatories['received_by']?.title ?? 'Internal Auditor'}
+                            </p>
                         </div>
                         <div className="text-center">
-                            <p className="mb-8 font-semibold">Noted By:</p>
-                            <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+                            <p className="font-semibold mb-6 sm:mb-8">Noted By:</p>
+                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
                             <p className="font-bold text-gray-700 uppercase">
                                 {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'noted_by' && s.status === 'approved')
                                     ? signatories['noted_by']?.name
                                     : '—'}
                             </p>
-                            <p className="text-xs text-gray-500 italic">{signatories['noted_by']?.title ?? 'Head, Property Management'}</p>
+                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                {signatories['noted_by']?.title ?? 'Head, Property Management'}
+                            </p>
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-6 text-center print:hidden">
+                    {/* <div className="text-center print:hidden mt-6"> */}
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-6 print:hidden">
                         <DialogClose asChild>
-                            <Button variant="primary" className="mr-2 cursor-pointer">
+                            <Button 
+                                variant="primary" 
+                                // className="mr-2 cursor-pointer"
+                                className="w-full sm:w-auto cursor-pointer text-xs sm:text-sm px-3 py-2"
+                            >
                                 ← Back to Schedules
                             </Button>
                         </DialogClose>
                         {String(schedule.scheduling_status ?? '').toLowerCase() !== 'pending_review' && (
                             <Button
                                 onClick={() => window.print()}
-                                className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                                // className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                                className="
+                                    w-full sm:w-auto cursor-pointer
+                                    inline-block bg-blue-600 text-white 
+                                    rounded shadow font-semibold
+                                    text-xs sm:text-sm px-3 py-2
+                                    hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50
+                                "
                             >
                                 🖨️ Print Form
                             </Button>
