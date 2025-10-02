@@ -1,6 +1,7 @@
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
 import { formatEnums } from '@/types/custom-index';
 import { router } from '@inertiajs/react';
@@ -301,6 +302,9 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     <DialogTitle>
                         <VisuallyHidden>Schedule Record #{recordNo}</VisuallyHidden>
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Detailed view of schedule record #{recordNo}
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="print-force-light bg-white p-4 sm:p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
                 {/* Header */}
