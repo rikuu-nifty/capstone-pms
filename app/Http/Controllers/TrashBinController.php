@@ -86,7 +86,9 @@ class TrashBinController extends Controller
                 ])
             )->paginate($perPage)->withQueryString(),
 
-            'off_campuses'          => $applyFilters(OffCampus::onlyTrashed())->paginate($perPage)->withQueryString(),
+            'off_campuses' => $applyFilters(OffCampus::onlyTrashed()
+                ->with(['collegeOrUnit:id,name'])
+            )->paginate($perPage)->withQueryString(),
 
             // Assets group
             'asset_models'          => $applyFilters(AssetModel::onlyTrashed())->paginate($perPage)->withQueryString(),

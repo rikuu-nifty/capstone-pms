@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import Pagination, { PageInfo } from '@/components/Pagination';
-import { formatDateTime, formatEnums } from '@/types/custom-index';
+import { formatDateTime, formatEnums, ucwords } from '@/types/custom-index';
 
 interface TrashRecord {
     id: number;
@@ -118,7 +118,7 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         
         return (
             <>
-            Inventory Scheduling for <strong>{(monthName).toUpperCase()}, {year}</strong>
+            Inventory Scheduling for <strong>{monthName}, {year}</strong>
             </>
         );
     }
@@ -126,11 +126,11 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
     if (tab === 'transfers') {
         const transfer = row as TransferRecord;
 
-        const fromUnit = (transfer.current_organization?.name ?? '').toUpperCase();
+        const fromUnit = transfer.current_organization?.name ?? '';
         const fromBuilding = transfer.current_building_room?.building?.code ?? '';
         // const fromRoom = transfer.current_building_room?.name ?? '';
 
-        const toUnit = (transfer.receiving_organization?.name ?? '').toUpperCase();
+        const toUnit = transfer.receiving_organization?.name ?? '';
         const toBuilding = transfer.receiving_building_room?.building?.code ?? '';
         // const toRoom = transfer.receiving_building_room?.name ?? '';
 
@@ -161,16 +161,36 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
             issuing_office?: { name: string };
         };
 
-        const typeLabel = td.type ? (td.type).toUpperCase() : 'Turnover/Disposal';
-        const personnelName = (td.personnel?.full_name)?.toUpperCase() ?? 'Unknown Personnel';
-        const issuingOffice = (td.issuing_office?.name)?.toUpperCase() ?? 'Unknown Office';
+        // const typeLabel = td.type ? (td.type).toUpperCase() : 'Turnover/Disposal';
+        const typeLabel = td.type ?? 'Turnover/Disposal';
+        const personnelName = td.personnel?.full_name ?? 'Unknown Personnel';
+        const issuingOffice = td.issuing_office?.name ?? 'Unknown Office';
 
         return (
             <>
-                <strong>{typeLabel}</strong> request by <strong>{personnelName}</strong> from <strong>{issuingOffice}</strong>
+                <strong>{ucwords(typeLabel)}</strong> request by <strong>{personnelName}</strong> from <strong>{issuingOffice}</strong>
             </>
         );
     }
+
+    if (tab === 'off_campuses') {
+        const oc = row as TrashRecord & {
+            requester_name?: string;
+            remarks?: string;
+            college_or_unit?: { name: string };
+        };
+
+        const requester = (oc.requester_name) ?? 'Unknown Requester';
+        const college = oc.college_or_unit?.name ?? 'Unknown Unit';
+        const reason = oc.remarks ?? 'unspecified reason';
+
+        return (
+            <>
+                Off Campus request by <strong>{ucwords(requester)}</strong> from <strong>{college}</strong> for <strong>{formatEnums(reason)}</strong>
+            </>
+        );
+    }
+
 
     // Fallback for other modules: pick first available field
     return (
