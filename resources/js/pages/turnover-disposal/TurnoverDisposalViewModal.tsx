@@ -132,9 +132,9 @@ export default function TurnoverDisposalViewModal({
                                         {turnoverDisposal.issuing_office?.code ? (
                                             <>
                                                 <div>{turnoverDisposal.issuing_office.name}</div>
-                                                <div className="text-gray-600">
+                                                {/* <div className="text-gray-600">
                                                     ({formatEnums(turnoverDisposal.issuing_office.code).toUpperCase()})
-                                                </div>
+                                                </div> */}
                                             </>
                                         ) : (
                                             '—'
@@ -162,13 +162,19 @@ export default function TurnoverDisposalViewModal({
                                         {turnoverDisposal.receiving_office?.code ? (
                                             <>
                                                 <div>{turnoverDisposal.receiving_office.name}</div>
-                                                <div className="text-gray-600">
+                                                {/* <div className="text-gray-600">
                                                     ({formatEnums(turnoverDisposal.receiving_office.code).toUpperCase()})
-                                                </div>
+                                                </div> */}
                                             </>
                                         ) : (
                                             '—'
                                         )}
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Quantity</td>
+                                    <td className="px-3 py-2 font-semibold text-right">
+                                        {assets.length}
                                     </td>
                                 </tr>
                             </tbody>
@@ -231,7 +237,7 @@ export default function TurnoverDisposalViewModal({
             <div className="mt-1 mb-1 flex items-start justify-between">
                 {turnoverDisposal.description && <h4 className="text-sm font-semibold text-gray-800">Description:</h4>}
                 <p className="text-sm font-medium text-gray-800">
-                    <strong>Total Assets:</strong> {assets.length}
+                    {/* <strong>Total Assets:</strong> {assets.length} */}
                 </p>
             </div>
 
@@ -309,6 +315,10 @@ export default function TurnoverDisposalViewModal({
                         </>
                     )}
                 </div>
+            </div>
+
+            <div className="mt-5 text-left text-xs text-gray-500 print:fixed print:right-0 print:bottom-2 print:left-0">
+                AUF-FORM-AS/PMO-33 November 22, 2011 Rev. 0
             </div>
 
             {/* Actions */}
