@@ -24,6 +24,10 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'delete-role', 'name' => 'Delete Roles'],
             ['code' => 'update-permissions', 'name' => 'Update Permissions'],
 
+            // RESTORATION
+            ['code' => 'view-trash-bin', 'name' => 'View Trash Bin'],
+            ['code' => 'restore-trash-bin', 'name' => 'Restore Trash Bin'],
+
             // SIGNATORIES (✅ NEW)
             ['code' => 'view-signatories', 'name' => 'View Signatories'],
             ['code' => 'create-signatories', 'name' => 'Create Signatories'],

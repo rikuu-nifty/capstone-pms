@@ -18,6 +18,9 @@ use Database\Seeders\AssetModelsTableSeeder;
 use Database\Seeders\InventoryListsTableSeeder;
 use Database\Seeders\PersonnelsTableSeeder;
 use Database\Seeders\EquipmentCodesTableSeeder;
+use Database\Seeders\InventorySchedulingSignatoriesSeeder;
+use Database\Seeders\TransferSignatoriesSeeder;
+use Database\Seeders\TurnoverDisposalSignatoriesSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -47,6 +50,9 @@ class DatabaseSeeder extends Seeder
             InventorySchedulingSignatoriesSeeder::class,
             PersonnelsTableSeeder::class,
             EquipmentCodesTableSeeder::class,
+            InventorySchedulingSignatoriesSeeder::class,
+            TransferSignatoriesSeeder::class,
+            TurnoverDisposalSignatoriesSeeder::class,
         ]);
     }
 }
