@@ -14,11 +14,20 @@ Schedule::command('maintenance:check-due')->daily();
 // ✅ Checks for overdue Transfers
 Schedule::command('transfers:mark-overdue')->daily();
 
-// Schedule::command('transfers:mark-overdue')->everyMinute();1
+// Schedule::command('transfers:mark-overdue')->everyMinute();
 
 // ✅ Checks for overdue Off-Campus
 Schedule::command('offcampus:mark-overdue')->daily();  // for deployment 
 
+ // ✅ Checks for overdue Inventory Scheduling
+ Schedule::command('offcampus:mark-overdue')->daily(); 
+
+
+ 
+//  Schedule::command('inventory:mark-overdue')->everyMinute();
 // Schedule::command('offcampus:mark-overdue')->everyMinute(); // for local testing //php artisan schedule:work 
                                                                                     //  php artisan schedule:run (for one shot testing)
+
+
+
 
