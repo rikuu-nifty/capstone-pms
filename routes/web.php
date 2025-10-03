@@ -509,8 +509,10 @@ Route::get('/', function () {
     //PROFILE
 
     // RESTORATION
-    Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index');
-    Route::post('/trash-bin/restore/{type}/{id}', [TrashBinController::class, 'restore'])->name('trash-bin.restore');
+    Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index')
+        ->middleware('can:view-trash-bin');
+    Route::post('/trash-bin/restore/{type}/{id}', [TrashBinController::class, 'restore'])->name('trash-bin.restore')
+        ->middleware('can:restore-trash-bin');
 });
 
 require __DIR__.'/settings.php';
