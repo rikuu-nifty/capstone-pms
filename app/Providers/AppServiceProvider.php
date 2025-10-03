@@ -57,6 +57,16 @@ use App\Observers\EquipmentCodeObserver;
 use App\Models\Personnel;
 use App\Observers\PersonnelObserver;
 
+// Signatories
+use App\Models\InventorySchedulingSignatory;
+use App\Observers\InventorySchedulingSignatoryObserver;
+use App\Models\TransferSignatory;
+use App\Observers\TransferSignatoryObserver;
+use App\Models\TurnoverDisposalSignatory;
+use App\Observers\TurnoverDisposalSignatoryObserver;
+use App\Models\OffCampusSignatory;
+use App\Observers\OffCampusSignatoryObserver;
+
 
 
 
@@ -91,6 +101,12 @@ class AppServiceProvider extends ServiceProvider
         AssetAssignmentItem::observe(AssetAssignmentItemObserver::class);
         EquipmentCode::observe(EquipmentCodeObserver::class);
         Personnel::observe(PersonnelObserver::class);
+
+
+        InventorySchedulingSignatory::observe(InventorySchedulingSignatoryObserver::class);
+        TransferSignatory::observe(TransferSignatoryObserver::class);
+        TurnoverDisposalSignatory::observe(TurnoverDisposalSignatoryObserver::class);
+        OffCampusSignatory::observe(OffCampusSignatoryObserver::class);
         
         // ✅ Existing nav metrics
         Inertia::share('nav_metrics', function () {

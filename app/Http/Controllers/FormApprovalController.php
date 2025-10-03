@@ -6,6 +6,7 @@ use App\Models\FormApproval;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\OffCampusSignatory;
 
 // 🔹 Import the event
 use App\Events\FormApproved;
@@ -86,22 +87,41 @@ class FormApprovalController extends Controller
 
 
     public function approve(FormApproval $approval, Request $request)
+{
+    $this->authorize('review', $approval);
+
+    // Approve the current step
+    $approval->approveCurrentStep($request->string('notes')->toString() ?: null);
+
+    // ✅ If this is the PMO Head approving "Issued By", update the signatories table
+    if ($approval->approvable_type === \App\Models\OffCampus::class 
+        && $approval->currentStep?->code === 'issued_by' 
+        && $approval->currentStep->status === \App\Enums\ApprovalStatus::APPROVED) 
     {
-        $this->authorize('review', $approval);
+        $actor = $request->user();
 
-        $approval->approveCurrentStep($request->string('notes')->toString() ?: null);
-
-        if ($approval->isFullyApproved()) {
-            $approval->updateParentFormStatus();
-        }
-
-        // 🔹 Dispatch event for audit trail (guard against null)
-        if ($approval->currentStep) {
-            FormApproved::dispatch($approval->currentStep, 'approved');
-        }
-
-        return back()->with('success', 'Step approved.');
+        \App\Models\OffCampusSignatory::updateOrCreate(
+            ['role_key' => 'issued_by'],
+            [
+                'name'  => $actor->name,
+                'title' => $actor->role->title ?? 'Head, PMO',
+            ]
+        );
     }
+
+    // If the form is fully approved, update parent status
+    if ($approval->isFullyApproved()) {
+        $approval->updateParentFormStatus();
+    }
+
+    // Dispatch audit trail event
+    if ($approval->currentStep) {
+        \App\Events\FormApproved::dispatch($approval->currentStep, 'approved');
+    }
+
+    return back()->with('success', 'Step approved.');
+}
+
 
     public function reject(FormApproval $approval, Request $request)
     {
@@ -145,13 +165,20 @@ class FormApprovalController extends Controller
         return back()->with('success', 'External approval recorded.');
     }
 
-    public function reset(FormApproval $approval, Request $request)
-    {
-        $this->authorize('review', $approval);
+  public function reset(FormApproval $approval, Request $request)
+{
+    $this->authorize('review', $approval);
 
-        // If it’s already pending, do nothing (idempotent)
-        $approval->resetToPending();
+    // Reset back to Pending
+    $approval->resetToPending();
 
-        return back()->with('success', 'Moved back to Pending Review.');
+    // ✅ Clear Dean/Head approval values ONLY for Off-Campus
+    if ($approval->approvable_type === \App\Models\OffCampus::class) {
+        $approval->approvable->update([
+            'approved_by' => null, // reset dean/concerned field
+        ]);
     }
+
+    return back()->with('success', 'Moved back to Pending Review.');
+}
 }

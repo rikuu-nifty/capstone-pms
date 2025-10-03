@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import AddSignatoryModal from './AddSignatoryModal';
 import EditSignatoryModal from './EditSignatoryModal';
@@ -35,6 +35,7 @@ export default function SignatoriesIndex() {
         approved_by: 'Approved by',
         received_by: 'Received by',
         noted_by: 'Noted by',
+        issued_by: 'Issued by'
     };
 
     const { signatories, moduleType } = usePage<PageProps>().props;
@@ -60,10 +61,10 @@ export default function SignatoriesIndex() {
                             Unified management of approval signatories across all property management processes
                         </p>
                     </div>
-                    <Button onClick={() => setShowAddModal(true)}>
+                    {/* <Button onClick={() => setShowAddModal(true)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Signatory
-                    </Button>
+                    </Button> */}
                 </div>
 
                 {/* Tab Bar */}

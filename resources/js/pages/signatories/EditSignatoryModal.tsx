@@ -51,14 +51,14 @@ export default function EditSignatoryModal({ open, onClose, signatory, moduleTyp
           </DialogHeader>
 
           <div className="space-y-4 mt-4">
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium mb-1">Role Key</label>
               <Input
                 value={data.role_key}
                 onChange={(e) => setData('role_key', e.target.value)}
               />
               {errors.role_key && <p className="text-red-500 text-xs mt-1">{errors.role_key}</p>}
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium mb-1">Name</label>

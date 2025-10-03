@@ -50,7 +50,7 @@ type Props = {
 
 const UNITS = ['pcs', 'set', 'unit', 'pair', 'dozen', 'box', 'pack', 'roll', 'bundle', 'ream', 'kg', 'g', 'lb', 'ton', 'L', 'ml', 'gal'];
 
-export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [], assets = [], assetModels = [], users = [], units }: Props) {
+export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [], assets = [], assetModels = [], units }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         requester_name: '',
         college_or_unit_id: '' as number | '',
@@ -385,7 +385,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                             {errors.approved_by && <p className="mt-1 text-xs text-red-500">{errors.approved_by}</p>}
                         </div>
 
-                        <div className="col-span-1">
+                        {/* <div className="col-span-1">
                             <label className="mb-1 block font-medium">Issued By (PMO Staff)</label>
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -400,7 +400,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                 ))}
                             </select>
                             {errors.issued_by_id && <p className="mt-1 text-xs text-red-500">{errors.issued_by_id}</p>}
-                        </div>
+                        </div> */}
 
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Checked By (Chief, Security)</label>

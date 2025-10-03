@@ -48,6 +48,13 @@ export type OffCampus = {
     issued_by_id?: number | null;
     checked_by?: string | null;
 
+    // ✅ Add these virtual (appended) attributes
+  issued_by_name?: string | null;
+  issued_by_title?: string | null;
+  approved_by_name?: string | null;
+  approved_by_title?: string | null;
+  issued_by_signed?: boolean;   // 👈 add this line
+  
     assets?: OffCampusAsset[];
     asset_model?: { id: number; brand: string; model: string } | null;
     college_or_unit?: { id: number; name: string; code: string } | null;
@@ -140,6 +147,7 @@ export default function OffCampusIndex({
 
     type PagePropsWithViewing = Props & {
         viewing?: OffCampus | null;
+        signatories: Record<string, { name: string; title: string }>;
     };
 
     const { props } = usePage<PagePropsWithViewing>();
@@ -365,7 +373,7 @@ export default function OffCampusIndex({
                 )} */}
 
                 {showViewOffCampus && selectedOffCampus && (
-                    <OffCampusViewModal open={showViewOffCampus} onClose={onCloseView} offCampus={selectedOffCampus} />
+                    <OffCampusViewModal open={showViewOffCampus} onClose={onCloseView} offCampus={selectedOffCampus}  signatories={props.signatories} />
                 )}
 
                 {/* Delete (Archive) Modal */}

@@ -281,7 +281,8 @@ export default function TurnoverDisposalViewModal({
                     {turnoverDisposal.noted_by_name ? (
                         <>
                             <p className="font-bold text-gray-800">{turnoverDisposal.noted_by_name.toUpperCase()}</p>
-                            <p className="text-xs text-gray-500 italic">{ucwords(turnoverDisposal.noted_by_title ?? 'Dean / Head')}</p>
+                            <p className="text-xs text-gray-400 italic">Dean / Head</p>
+                            {/* <p className="text-xs text-gray-500 italic">{ucwords(turnoverDisposal.noted_by_title ?? 'Dean / Head')}</p> */}
                         </>
                     ) : (
                         <>
@@ -299,12 +300,12 @@ export default function TurnoverDisposalViewModal({
                     {signatories['approved_by'] && turnoverDisposal.status !== 'pending_review' ? (
                         <>
                             <p className="font-bold text-gray-700 uppercase">{signatories['approved_by'].name ?? '—'}</p>
-                            <p className="text-xs text-gray-500 italic">{signatories['approved_by'].title ?? 'Head, Property Management'}</p>
+                            <p className="text-xs text-gray-500 italic">{signatories['approved_by'].title ?? 'Head, PMO'}</p>
                         </>
                     ) : (
                         <>
                             <p className="font-bold text-gray-400 uppercase">—</p>
-                            <p className="text-xs text-gray-400 italic">Head, Property Management</p>
+                            <p className="text-xs text-gray-500 italic">Head, PMO</p>
                         </>
                     )}
                 </div>

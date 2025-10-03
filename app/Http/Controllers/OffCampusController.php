@@ -9,6 +9,7 @@ use App\Models\AssetModel;
 use App\Models\UnitOrDepartment;
 use App\Models\User;
 use App\Models\InventoryList;
+use App\Models\OffCampusSignatory;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 
@@ -49,6 +50,7 @@ class OffCampusController extends Controller
             'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no','unit_or_department_id')->orderBy('asset_name')->get(),
             'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
             'users'              => User::select('id','name')->orderBy('name')->get(),
+            'signatories'        => OffCampusSignatory::all()->keyBy('role_key'),
         ]);
     }
 
@@ -139,6 +141,7 @@ class OffCampusController extends Controller
 
             // 👇 deep-link props
             'viewing'           => $viewing,
+            'signatories'       => OffCampusSignatory::all()->keyBy('role_key'),
         ]);
     }
 

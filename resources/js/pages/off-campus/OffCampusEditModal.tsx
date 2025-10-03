@@ -74,7 +74,7 @@ type Props = {
 
 const DEFAULT_UNITS = ['pcs', 'set', 'unit', 'pair', 'dozen', 'box', 'pack', 'roll', 'bundle', 'ream', 'kg', 'g', 'lb', 'ton', 'L', 'ml', 'gal'];
 
-export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartments, assets, assetModels, users, unitsList = DEFAULT_UNITS }: Props) {
+export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartments, assets, assetModels, unitsList = DEFAULT_UNITS }: Props) {
     // Build react-select options once
     // const assetOptions: AssetOption[] = useMemo(() => {
     //     return assets.map((a) => {
@@ -455,7 +455,7 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                             {errors.approved_by && <p className="mt-1 text-xs text-red-500">{errors.approved_by}</p>}
                         </div>
 
-                        <div>
+                        {/* <div>
                             <Label>Issued By (PMO Staff)</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -470,7 +470,7 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                                 ))}
                             </select>
                             {errors.issued_by_id && <p className="mt-1 text-xs text-red-500">{errors.issued_by_id}</p>}
-                        </div>
+                        </div> */}
 
                         <div>
                             <Label>Checked By (Chief, Security)</Label>

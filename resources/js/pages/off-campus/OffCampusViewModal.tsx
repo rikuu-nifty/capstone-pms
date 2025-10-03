@@ -6,9 +6,10 @@ interface OffCampusViewModalProps {
     open: boolean;
     onClose: () => void;
     offCampus: OffCampus;
+    signatories: Record<string, { name: string; title: string }>; // ✅ add this
 }
 
-export default function OffCampusViewModal({ open, onClose, offCampus }: OffCampusViewModalProps) {
+export default function OffCampusViewModal({ open, onClose, offCampus, signatories }: OffCampusViewModalProps) {
     const recordNo = String(offCampus.id).padStart(2, '0');
 
     const formatDateLong = (d?: string | null) => {
@@ -140,36 +141,58 @@ export default function OffCampusViewModal({ open, onClose, offCampus }: OffCamp
 
             {/* ---------- Signatures (reordered per paper form) ---------- */}
             <div className="mt-6 grid grid-cols-2 gap-6 text-sm">
+                {/* Row 1 */}
                 <div className="text-center">
                     <p className="mb-8 font-semibold">Requester:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                    <p className="font-bold text-gray-700">{offCampus.requester_name}</p>
+                    <p className="font-bold text-gray-700">{offCampus.requester_name ?? '—'}</p>
                     <p className="text-xs text-gray-500 italic">Name of Personnel</p>
                 </div>
-            
-            
-                  <div className="text-center">
-                    <p className="mb-8 font-semibold">Issued by:</p>
+
+                {/* Approved By (Dean/Head, only after appeal approval) */}
+                <div className="text-center">
+                    <p className="mb-8 font-semibold">Approved By:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                    <p className="font-bold text-gray-700">{offCampus.issued_by?.name ?? '—'}</p>
-                    <p className="text-xs text-gray-500 italic">Head, PMO</p>
+
+                    {offCampus.approved_by_name ? (
+                        <>
+                            <p className="font-bold text-gray-700 capitalize">{offCampus.approved_by_name}</p>
+                            <p className="text-xs text-gray-400 italic">Dean/Head Concerned</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="font-bold text-gray-400 uppercase">—</p>
+                            <p className="text-xs text-gray-400 italic">Dean/Head Concerned</p>
+                        </>
+                    )}
                 </div>
-                   <div className="text-center">
+
+                {/* Issued By (PMO Head, shows immediately after PMO approves) */}
+                <div className="text-center">
+                    <p className="mb-8 font-semibold">Issued By:</p>
+                    <div className="mx-auto mb-1 w-48 border-t border-black"></div>
+
+                    {offCampus.issued_by_signed && signatories['issued_by'] ? (
+                        <>
+                            <p className="font-bold text-gray-700 uppercase">{signatories['issued_by'].name}</p>
+                            <p className="text-xs text-gray-500 italic">{signatories['issued_by'].title ?? 'Head, PMO'}</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="font-bold text-gray-400 uppercase">—</p>
+                            <p className="text-xs text-gray-400 italic">Head, PMO</p>
+                        </>
+                    )}
+                </div>
+
+                {/* Checked By */}
+                <div className="text-center">
                     <p className="mb-8 font-semibold">Checked by:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
                     <p className="font-bold text-gray-700">{offCampus.checked_by ?? '—'}</p>
                     <p className="text-xs text-gray-500 italic">Chief, Security Service</p>
                 </div>
-                <div className="text-center">
-                    <p className="mb-8 font-semibold">Approved by:</p>
-                    <div className="mx-auto mb-1 w-48 border-t border-black"></div>
-                    <p className="font-bold text-gray-700 capitalize">{offCampus.approved_by ?? '—'}</p>
-                    <p className="text-xs text-gray-500 italic">Dean/Head Concerned</p>
-                    
-                </div>
             </div>
-
-            
 
             {/* ---------- Actions ---------- */}
             <div className="mt-6 text-center print:hidden">

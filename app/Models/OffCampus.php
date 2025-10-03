@@ -12,7 +12,7 @@ class OffCampus extends Model
 {
     use SoftDeletes;
     use HasFormApproval;
-
+   protected $appends = ['approved_by_name', 'approved_by_title', 'issued_by_signed'];
     protected $fillable = [
 
         'requester_name',
@@ -43,6 +43,29 @@ class OffCampus extends Model
         'external_approved_by' => 'approved_by',
         // you can add more later, e.g. 'issued_by' => 'issued_by_name'
     ];
+// ✅ helper flag: did PMO approve?
+public function getIssuedBySignedAttribute(): bool
+{
+    $fa = $this->relationLoaded('formApproval')
+        ? $this->getRelation('formApproval')
+        : $this->formApproval()->with([
+            'steps' => fn($q) => $q->where('code', 'issued_by')
+                                   ->where('status', 'approved')
+                                   ->orderByDesc('acted_at'),
+            'steps.actor:id,name',
+        ])->first();
+
+    return (bool) $fa?->steps->first();
+}
+    public function getApprovedByNameAttribute(): ?string
+{
+    return $this->getAppealedByNameAttribute();
+}
+
+public function getApprovedByTitleAttribute(): ?string
+{
+    return $this->getAppealedByTitleAttribute();
+}
 
     public function applyApprovalStepSideEffects(FormApprovalSteps $step, FormApproval $approval): void
     {
@@ -99,6 +122,35 @@ class OffCampus extends Model
     // {
     //     return $this->hasMany(OffCampusAsset::class);
     // }
+public function getAppealedByNameAttribute(): ?string
+{
+    $fa = $this->relationLoaded('formApproval')
+        ? $this->getRelation('formApproval')
+        : $this->formApproval()->with([
+            'steps' => fn($q) => $q->where('code', 'external_approved_by')
+                                  ->where('status', 'approved')
+                                  ->orderByDesc('acted_at'),
+            'steps.actor:id,name',
+        ])->first();
+
+    $step = $fa?->steps->first();
+    return $step ? ($step->is_external ? ($step->external_name ?: null) : ($step->actor->name ?? null)) : null;
+}
+
+public function getAppealedByTitleAttribute(): ?string
+{
+    $fa = $this->relationLoaded('formApproval')
+        ? $this->getRelation('formApproval')
+        : $this->formApproval()->with([
+            'steps' => fn($q) => $q->where('code', 'external_approved_by')
+                                  ->where('status', 'approved')
+                                  ->orderByDesc('acted_at'),
+            'steps.actor:id,name',
+        ])->first();
+
+    $step = $fa?->steps->first();
+    return $step ? ($step->is_external ? ($step->external_title ?: null) : 'Dean / Head') : null;
+}
 
 
  public function assets()
