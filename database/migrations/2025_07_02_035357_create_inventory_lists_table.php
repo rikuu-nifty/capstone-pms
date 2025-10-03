@@ -45,11 +45,11 @@ return new class extends Migration
                   ->onDelete('set null');
 
             // ✅ NEW: Sub Area
-            $table->unsignedBigInteger('sub_area_id')->nullable();
-            $table->foreign('sub_area_id')
-                  ->references('id')
-                  ->on('sub_areas')
-                  ->nullOnDelete();
+            // $table->unsignedBigInteger('sub_area_id')->nullable();
+            // $table->foreign('sub_area_id')
+            //       ->references('id')
+            //       ->on('sub_areas')
+            //       ->nullOnDelete();
 
             $table->foreignId('category_id')
                   ->nullable()
@@ -98,7 +98,7 @@ return new class extends Migration
             $table->dropForeign(['unit_or_department_id']);    
             $table->dropForeign(['building_id']);              
             $table->dropForeign(['building_room_id']);         
-            $table->dropForeign(['sub_area_id']);              // ✅ NEW
+            // $table->dropForeign(['sub_area_id']);              // ✅ NEW
             $table->dropForeign(['assigned_to']);              // ✅ make sure to drop too
             $table->dropForeign(['deleted_by_id']);            
             $table->dropIndex('inventory_lists_assetmodel_deleted_idx');
