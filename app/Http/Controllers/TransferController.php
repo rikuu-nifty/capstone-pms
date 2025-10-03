@@ -405,6 +405,13 @@ class TransferController extends Controller
         return redirect()->route('transfers.index')->with('success', 'Transfer record deleted successfully.');
     }
 
+    public function restore(int $id)
+    {
+        $transfer = Transfer::withTrashed()->findOrFail($id);
+        $transfer->restore();
+        return back()->with('success', 'Transfer restored successfully.');
+    }
+
     private function syncAssetLocations(Transfer $transfer, ?string $oldStatus): void
     {
         // Asset-level immediate update ---

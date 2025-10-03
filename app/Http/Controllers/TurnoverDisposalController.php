@@ -175,9 +175,6 @@ class TurnoverDisposalController extends Controller
         ));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(TurnoverDisposal $turnoverDisposal)
     {
         DB::transaction(function () use ($turnoverDisposal) {
@@ -186,6 +183,13 @@ class TurnoverDisposalController extends Controller
         });
 
         return redirect()->route('turnover-disposal.index')->with('success', "Record deleted successfully");
+    }
+
+    public function restore(int $id)
+    {
+        $record = TurnoverDisposal::withTrashed()->findOrFail($id);
+        $record->restore();
+        return back()->with('success', 'Turnover/Disposal record restored successfully.');
     }
 
     private function fetchPmoHead(): ?array
