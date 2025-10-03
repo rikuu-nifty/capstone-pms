@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import Pagination, { PageInfo } from '@/components/Pagination';
-import { formatDateTime } from '@/types/custom-index';
+import { formatDateTime, formatEnums } from '@/types/custom-index';
 
 interface TrashRecord {
     id: number;
@@ -60,6 +60,29 @@ type TrashBinProps = {
     };
 };
 
+interface Building {
+    name: string;
+    code: string;
+}
+
+interface BuildingRoom {
+    name: string;
+    building?: Building;
+}
+
+interface UnitOrDepartment {
+    name: string;
+}
+
+interface TransferRecord extends TrashRecord {
+    current_organization?: UnitOrDepartment;
+    current_building_room?: BuildingRoom;
+    receiving_organization?: UnitOrDepartment;
+    receiving_building_room?: BuildingRoom;
+    scheduled_date?: string;
+}
+
+
 const groups = {
     forms: [
         { key: 'inventory_lists', label: 'Inventory Lists' },
@@ -95,18 +118,50 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
     return `Inventory Scheduling for ${monthName} ${year}`;
   }
 
-  // Fallback for other modules: pick first available field
-  return (
-    row.asset_name ||
-    row.inventory_schedule ||
-    row.remarks ||
-    row.description ||
-    row.requester_name ||
-    row.name ||
-    row.code ||
-    row.title ||
-    '—'
-  );
+    if (tab === 'transfers') {
+        const transfer = row as TransferRecord;
+
+        const fromUnit = (transfer.current_organization?.name ?? '').toUpperCase();
+        const fromBuilding = transfer.current_building_room?.building?.code ?? '';
+        // const fromRoom = transfer.current_building_room?.name ?? '';
+
+        const toUnit = (transfer.receiving_organization?.name ?? '').toUpperCase();
+        const toBuilding = transfer.receiving_building_room?.building?.code ?? '';
+        // const toRoom = transfer.receiving_building_room?.name ?? '';
+
+        let scheduled = 'unscheduled';
+        if (transfer.scheduled_date) {
+            const dt = new Date(transfer.scheduled_date);
+            if (!isNaN(dt.getTime())) {
+                scheduled = dt.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                });
+            }
+        }
+
+        return (
+            <>
+                Transfer from <strong>{fromUnit}</strong> ({formatEnums(fromBuilding)}) to{" "}
+                <strong>{toUnit}</strong> ({formatEnums(toBuilding)}) scheduled for <strong>{scheduled}</strong>
+            </>
+        );
+    }
+
+
+    // Fallback for other modules: pick first available field
+    return (
+        row.asset_name ||
+        row.inventory_schedule ||
+        row.remarks ||
+        row.description ||
+        row.requester_name ||
+        row.name ||
+        row.code ||
+        row.title ||
+        '—'
+    );
 };
 
 export default function TrashBinIndex(props: TrashBinProps) {

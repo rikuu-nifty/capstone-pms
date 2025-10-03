@@ -62,7 +62,21 @@ class TrashBinController extends Controller
         return Inertia::render('trash-bin/index', [
             'inventory_lists'       => $applyFilters(InventoryList::onlyTrashed())->paginate($perPage)->withQueryString(),
             'inventory_schedulings' => $applyFilters(InventoryScheduling::onlyTrashed())->paginate($perPage)->withQueryString(),
-            'transfers'             => $applyFilters(Transfer::onlyTrashed())->paginate($perPage)->withQueryString(),
+            'transfers' => $applyFilters(
+                Transfer::onlyTrashed()
+                    ->with([
+                        'currentOrganization:id,name',
+                        'receivingOrganization:id,name',
+                        'currentBuildingRoom' => function ($q) {
+                            $q->select('id', 'building_id', 'room as name')
+                                ->with('building:id,name,code');
+                        },
+                        'receivingBuildingRoom' => function ($q) {
+                            $q->select('id', 'building_id', 'room as name')
+                                ->with('building:id,name,code');
+                        },
+                    ])
+            )->paginate($perPage)->withQueryString(),
             'turnover_disposals'    => $applyFilters(TurnoverDisposal::onlyTrashed())->paginate($perPage)->withQueryString(),
             'off_campuses'          => $applyFilters(OffCampus::onlyTrashed())->paginate($perPage)->withQueryString(),
 
