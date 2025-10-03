@@ -111,12 +111,17 @@ const groups = {
 } as const;
 
 const formatRecordName = (row: TrashRecord, tab: string) => {
-  if (tab === 'inventory_schedulings' && row.inventory_schedule) {
-    const [year, month] = row.inventory_schedule.split('-');
-    const date = new Date(Number(year), Number(month) - 1);
-    const monthName = date.toLocaleString('en-US', { month: 'long' });
-    return `Inventory Scheduling for ${monthName} ${year}`;
-  }
+    if (tab === 'inventory_schedulings' && row.inventory_schedule) {
+        const [year, month] = row.inventory_schedule.split('-');
+        const date = new Date(Number(year), Number(month) - 1);
+        const monthName = date.toLocaleString('en-US', { month: 'long' });
+        
+        return (
+            <>
+            Inventory Scheduling for <strong>{(monthName).toUpperCase()}, {year}</strong>
+            </>
+        );
+    }
 
     if (tab === 'transfers') {
         const transfer = row as TransferRecord;
@@ -279,20 +284,20 @@ export default function TrashBinIndex(props: TrashBinProps) {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/40">
-                                <TableHead className="text-center">Record ID</TableHead>
-                                <TableHead className="text-center">Record Name</TableHead>
-                                <TableHead className="text-center">Date Deleted</TableHead>
-                                <TableHead className="text-center">Actions</TableHead>
+                                <TableHead className="text-center w-[80px]">Record ID</TableHead>
+                                <TableHead className="text-center w-[400px]">Record Name</TableHead>
+                                <TableHead className="text-center w-[180px]">Date Deleted</TableHead>
+                                <TableHead className="text-center w-[120px] bg-gray-100">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">
                             {activeData?.data?.length ? (
                                 activeData.data.map((row: TrashRecord) => (
                                 <TableRow key={row.id}>
-                                    <TableCell>{row.id}</TableCell>
-                                    <TableCell>{formatRecordName(row, activeTab)}</TableCell>
-                                    <TableCell>{formatDateTime(row.deleted_at)}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="max-w-[80px]">{row.id}</TableCell>
+                                    <TableCell className="max-w-[400px] whitespace-normal break-words">{formatRecordName(row, activeTab)}</TableCell>
+                                    <TableCell className="max-w-[180px]">{formatDateTime(row.deleted_at)}</TableCell>
+                                    <TableCell className="max-w-[120px]">
                                         <div className="flex justify-center gap-2">
                                             <Button 
                                                 onClick={() => handleRestore(activeTab, row.id)}
