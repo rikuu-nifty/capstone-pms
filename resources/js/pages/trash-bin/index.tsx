@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import Pagination, { PageInfo } from '@/components/Pagination';
+import { formatDateTime } from '@/types/custom-index';
 
 interface TrashRecord {
     id: number;
@@ -75,7 +76,7 @@ export default function TrashBinIndex({
 
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
-                <div className="flex justify-between items-center">
+                <div className="mb-2 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold">Trash Bin</h1>
                         <p className="text-sm text-muted-foreground">
@@ -85,12 +86,12 @@ export default function TrashBinIndex({
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 border-b">
+                <div className="mb-4 flex gap-2 rounded-md bg-muted p-2">
                     {tabs.map((t) => (
                         <Button
                             key={t.key}
                             variant={activeTab === t.key ? 'default' : 'outline'}
-                            className="rounded-none"
+                            className="cursor-pointer"
                             onClick={() => setActiveTab(t.key)}
                         >
                             {t.label}
@@ -102,34 +103,37 @@ export default function TrashBinIndex({
                 <div className="rounded-lg border overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>ID</TableHead>
-                                <TableHead>Name/Title</TableHead>
-                                <TableHead>Deleted At</TableHead>
-                                <TableHead>Actions</TableHead>
+                            <TableRow className="bg-muted">
+                                <TableHead className="text-center">Record ID</TableHead>
+                                <TableHead className="text-center">Record Name</TableHead>
+                                <TableHead className="text-center">Deleted At</TableHead>
+                                <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
+                        <TableBody className="text-center">
                             {activeData?.data?.length ? (
                                 activeData.data.map((row: TrashRecord) => (
                                     <TableRow key={row.id}>
                                         <TableCell>{row.id}</TableCell>
                                         <TableCell>
                                             {row.asset_name ||
-                                            row.inventory_schedule ||
-                                            row.remarks ||
-                                            row.description ||
-                                            row.requester_name ||
+                                                row.inventory_schedule ||
+                                                row.remarks ||
+                                                row.description ||
+                                                row.requester_name ||
                                             '—'}
                                         </TableCell>
-                                        <TableCell>{row.deleted_at}</TableCell>
+                                        <TableCell>{formatDateTime(row.deleted_at)}</TableCell>
                                         <TableCell>
-                                            <Button
-                                                size="sm"
-                                                onClick={() => handleRestore(activeTab.replace(/s$/, ''), row.id)}
-                                            >
-                                                Restore
-                                            </Button>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button
+                                                    // size="sm"
+                                                    // variant="outline"
+                                                    onClick={() => handleRestore(activeTab.replace(/s$/, ''), row.id)}
+                                                >
+                                                    Restore
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
