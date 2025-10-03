@@ -10,10 +10,20 @@ use App\Models\InventoryScheduling;
 use App\Models\Transfer;
 use App\Models\TurnoverDisposal;
 use App\Models\OffCampus;
+
 use App\Models\AssetModel;
 use App\Models\Category;
 use App\Models\AssetAssignment;
 use App\Models\EquipmentCode;
+
+use App\Models\Building;
+use App\Models\Personnel;
+use App\Models\UnitOrDepartment;
+
+use App\Models\User;
+use App\Models\Role;
+// use App\Models\FormApproval;
+//NO SIGNATORIES YET
 
 class TrashBinController extends Controller
 {
@@ -62,6 +72,16 @@ class TrashBinController extends Controller
             'assignments'           => $applyFilters(AssetAssignment::onlyTrashed())->paginate($perPage)->withQueryString(),
             'equipment_codes'       => $applyFilters(EquipmentCode::onlyTrashed())->paginate($perPage)->withQueryString(),
 
+            // Institutional Setup
+            'buildings'          => $applyFilters(Building::onlyTrashed())->paginate($perPage)->withQueryString(),
+            'personnels'         => $applyFilters(Personnel::onlyTrashed())->paginate($perPage)->withQueryString(),
+            'unit_or_departments' => $applyFilters(UnitOrDepartment::onlyTrashed())->paginate($perPage)->withQueryString(),
+
+            // User Management
+            'users'              => $applyFilters(User::onlyTrashed())->paginate($perPage)->withQueryString(),
+            'roles'              => $applyFilters(Role::onlyTrashed())->paginate($perPage)->withQueryString(),
+            // 'form_approvals'     => $applyFilters(FormApproval::onlyTrashed())->paginate($perPage)->withQueryString(),
+
             'filters' => [
                 'date_filter' => $filter,
                 'start'       => $request->start,
@@ -92,6 +112,14 @@ class TrashBinController extends Controller
             'category'           => Category::class,
             'assignment'         => AssetAssignment::class,
             'equipment-code'     => EquipmentCode::class,
+
+            'building'          => Building::class,
+            'personnel'         => Personnel::class,
+            'unit-or-department' => UnitOrDepartment::class,
+
+            'user'              => User::class,
+            'role'              => Role::class,
+            // 'form-approval'     => FormApproval::class,
 
             default => abort(404),
         };
