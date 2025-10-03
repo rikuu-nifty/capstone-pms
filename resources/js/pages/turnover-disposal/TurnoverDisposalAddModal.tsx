@@ -127,9 +127,12 @@ export default function TurnoverDisposalAddModal({
             setData('status', e.target.value as (typeof statusOptions)[number])
           }
         >
-          <option value="">Select Status</option>
           {statusOptions.map((status) => (
-            <option key={status} value={status}>
+            <option
+              key={status}
+              value={status}
+              disabled={status !== 'pending_review'}
+            >
               {formatEnums(status)}
             </option>
           ))}
