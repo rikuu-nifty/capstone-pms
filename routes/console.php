@@ -14,6 +14,8 @@ Schedule::command('maintenance:check-due')->daily();
 // ✅ Checks for overdue Transfers
 Schedule::command('transfers:mark-overdue')->daily();
 
+// Schedule::command('transfers:mark-overdue')->everyMinute();
+
 // ✅ Checks for overdue Off-Campus
 Schedule::command('offcampus:mark-overdue')->daily();  // for deployment 
 
