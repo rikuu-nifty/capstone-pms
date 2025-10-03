@@ -33,6 +33,7 @@
     use App\Http\Controllers\InventorySchedulingSignatoryController;
     use App\Http\Controllers\TransferSignatoryController;
     use App\Http\Controllers\SignatoryController;
+    use App\Http\Controllers\TrashBinController;
 
 Route::get('/', function () {
         if (Auth::check()) {
@@ -506,6 +507,10 @@ Route::get('/', function () {
         ->middleware('can:delete-equipment-codes');
 
     //PROFILE
+
+    // RESTORATION
+    Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index');
+    Route::post('/trash-bin/restore/{type}/{id}', [TrashBinController::class, 'restore'])->name('trash-bin.restore');
 });
 
 require __DIR__.'/settings.php';
