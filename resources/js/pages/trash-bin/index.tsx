@@ -154,6 +154,23 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'turnover_disposals') {
+        const td = row as TrashRecord & {
+            type?: string;
+            personnel?: { full_name: string };
+            issuing_office?: { name: string };
+        };
+
+        const typeLabel = td.type ? (td.type).toUpperCase() : 'Turnover/Disposal';
+        const personnelName = (td.personnel?.full_name)?.toUpperCase() ?? 'Unknown Personnel';
+        const issuingOffice = (td.issuing_office?.name)?.toUpperCase() ?? 'Unknown Office';
+
+        return (
+            <>
+                <strong>{typeLabel}</strong> request by <strong>{personnelName}</strong> from <strong>{issuingOffice}</strong>
+            </>
+        );
+    }
 
     // Fallback for other modules: pick first available field
     return (
@@ -287,7 +304,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 <TableHead className="text-center w-[80px]">Record ID</TableHead>
                                 <TableHead className="text-center w-[400px]">Record Name</TableHead>
                                 <TableHead className="text-center w-[180px]">Date Deleted</TableHead>
-                                <TableHead className="text-center w-[120px] bg-gray-100">Actions</TableHead>
+                                <TableHead className="text-center w-[120px]">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">

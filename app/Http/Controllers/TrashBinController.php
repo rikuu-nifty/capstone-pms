@@ -62,6 +62,7 @@ class TrashBinController extends Controller
         return Inertia::render('trash-bin/index', [
             'inventory_lists'       => $applyFilters(InventoryList::onlyTrashed())->paginate($perPage)->withQueryString(),
             'inventory_schedulings' => $applyFilters(InventoryScheduling::onlyTrashed())->paginate($perPage)->withQueryString(),
+
             'transfers' => $applyFilters(
                 Transfer::onlyTrashed()
                     ->with([
@@ -77,7 +78,14 @@ class TrashBinController extends Controller
                         },
                     ])
             )->paginate($perPage)->withQueryString(),
-            'turnover_disposals'    => $applyFilters(TurnoverDisposal::onlyTrashed())->paginate($perPage)->withQueryString(),
+
+            'turnover_disposals' => $applyFilters(TurnoverDisposal::onlyTrashed()
+                ->with([
+                    'personnel:id,first_name,middle_name,last_name',
+                    'issuingOffice:id,name'
+                ])
+            )->paginate($perPage)->withQueryString(),
+
             'off_campuses'          => $applyFilters(OffCampus::onlyTrashed())->paginate($perPage)->withQueryString(),
 
             // Assets group
