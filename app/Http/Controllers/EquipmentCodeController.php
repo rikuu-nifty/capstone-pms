@@ -25,7 +25,6 @@ class EquipmentCodeController extends Controller
         return Inertia::render('equipment-codes/index', $this->indexProps());
     }
 
-
     public function store(Request $request)
     {
         $validated = $request->validate([

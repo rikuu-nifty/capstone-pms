@@ -60,7 +60,6 @@ type TrashBinProps = {
     };
 };
 
-// ---- GROUPS ----
 const groups = {
     forms: [
         { key: 'inventory_lists', label: 'Inventory Lists' },
@@ -87,6 +86,28 @@ const groups = {
         { key: 'signatories', label: 'Signatories' },
     ],
 } as const;
+
+const formatRecordName = (row: TrashRecord, tab: string) => {
+  if (tab === 'inventory_schedulings' && row.inventory_schedule) {
+    const [year, month] = row.inventory_schedule.split('-');
+    const date = new Date(Number(year), Number(month) - 1);
+    const monthName = date.toLocaleString('en-US', { month: 'long' });
+    return `Inventory Scheduling for ${monthName} ${year}`;
+  }
+
+  // Fallback for other modules: pick first available field
+  return (
+    row.asset_name ||
+    row.inventory_schedule ||
+    row.remarks ||
+    row.description ||
+    row.requester_name ||
+    row.name ||
+    row.code ||
+    row.title ||
+    '—'
+  );
+};
 
 export default function TrashBinIndex(props: TrashBinProps) {
     const [activeGroup, setActiveGroup] = useState<keyof typeof groups>('forms');
@@ -119,8 +140,29 @@ export default function TrashBinIndex(props: TrashBinProps) {
     };
     const activeData = dataMap[activeTab];
 
+    const restoreMap: Record<string, string> = {
+        inventory_lists: 'inventory-list',
+        inventory_schedulings: 'inventory-schedule',
+        transfers: 'transfer',
+        turnover_disposals: 'turnover-disposal',
+        off_campuses: 'off-campus',
+        asset_models: 'asset-model',
+        categories: 'category',
+        assignments: 'assignment',
+        equipment_codes: 'equipment-code',
+        buildings: 'building',
+        personnels: 'personnel',
+        unit_or_departments: 'unit-or-department',
+        users: 'user',
+        roles: 'role',
+        form_approvals: 'form-approval',
+        signatories: 'signatory',
+    };
+
     const handleRestore = (type: string, id: number) => {
-        router.post(`/trash-bin/restore/${type}/${id}`, {}, { preserveScroll: true });
+        const mappedType = restoreMap[type];
+        if (!mappedType) return;
+        router.post(`/trash-bin/restore/${mappedType}/${id}`, {}, { preserveScroll: true });
     };
 
     const formatLabel = (key: string) => {
@@ -181,46 +223,39 @@ export default function TrashBinIndex(props: TrashBinProps) {
                 <div className="rounded-lg border overflow-x-auto">
                     <Table>
                         <TableHeader>
-                        <TableRow className="bg-muted/40">
-                            <TableHead className="text-center">Record ID</TableHead>
-                            <TableHead className="text-center">Record Name</TableHead>
-                            <TableHead className="text-center">Deleted At</TableHead>
-                            <TableHead className="text-center">Actions</TableHead>
-                        </TableRow>
+                            <TableRow className="bg-muted/40">
+                                <TableHead className="text-center">Record ID</TableHead>
+                                <TableHead className="text-center">Record Name</TableHead>
+                                <TableHead className="text-center">Date Deleted</TableHead>
+                                <TableHead className="text-center">Actions</TableHead>
+                            </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">
-                        {activeData?.data?.length ? (
-                            activeData.data.map((row: TrashRecord) => (
-                            <TableRow key={row.id}>
-                                <TableCell>{row.id}</TableCell>
-                                <TableCell>
-                                {row.asset_name ||
-                                    row.inventory_schedule ||
-                                    row.remarks ||
-                                    row.description ||
-                                    row.requester_name ||
-                                    row.name ||
-                                    row.code ||
-                                    row.title ||
-                                    '—'}
-                                </TableCell>
-                                <TableCell>{formatDateTime(row.deleted_at)}</TableCell>
-                                <TableCell>
-                                <div className="flex justify-center gap-2">
-                                    <Button onClick={() => handleRestore(activeTab.replace(/s$/, ''), row.id)}>
-                                    Restore
-                                    </Button>
-                                </div>
-                                </TableCell>
-                            </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground">
-                                No records found.
-                            </TableCell>
-                            </TableRow>
-                        )}
+                            {activeData?.data?.length ? (
+                                activeData.data.map((row: TrashRecord) => (
+                                <TableRow key={row.id}>
+                                    <TableCell>{row.id}</TableCell>
+                                    <TableCell>{formatRecordName(row, activeTab)}</TableCell>
+                                    <TableCell>{formatDateTime(row.deleted_at)}</TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-center gap-2">
+                                            <Button 
+                                                onClick={() => handleRestore(activeTab, row.id)}
+                                                className="cursor-pointer"
+                                            >
+                                                Restore
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                        No records found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </div>
@@ -238,8 +273,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                             page={activeData.current_page}
                             total={activeData.total}
                             pageSize={activeData.per_page}
-                            onPageChange={(p) =>
-                                router.get('/trash-bin', { ...props.filters, page: p }, { preserveState: true })
+                            onPageChange={(p) => router.get('/trash-bin', { ...props.filters, page: p }, { preserveState: true })
                         }
                         />
                     </div>

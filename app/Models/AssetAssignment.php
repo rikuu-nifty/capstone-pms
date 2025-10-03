@@ -23,6 +23,7 @@ class AssetAssignment extends Model
         'date_assigned' => 'date',
         'created_at'    => 'datetime',
         'updated_at'    => 'datetime',
+        'deleted_at'    => 'datetime',
     ];
 
     public function personnel()

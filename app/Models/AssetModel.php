@@ -18,6 +18,10 @@ class AssetModel extends Model
         'status',
     ];
 
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id')->whereNull('categories.deleted_at');
