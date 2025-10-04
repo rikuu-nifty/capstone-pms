@@ -322,6 +322,17 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'roles') {
+        const role = row as TrashRecord & { name?: string };
+
+        const roleName = role.name ?? 'Unknown';
+        return (
+            <>
+                <strong>{roleName}</strong> role
+            </>
+        );
+    }
+
     // Fallback for other modules: pick first available field
     return (
         row.asset_name ||
