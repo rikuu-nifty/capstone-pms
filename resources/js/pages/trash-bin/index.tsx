@@ -303,6 +303,25 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'users') {
+        const user = row as TrashRecord & {
+            name?: string; // username
+            role?: { name?: string };
+            unit_or_department?: { name?: string };
+        };
+
+        const username = user.name ?? 'Unknown User';
+        const role = user.role?.name ?? 'Unassigned';
+        const unit = user.unit_or_department?.name;
+
+        return (
+            <>
+                <strong>{username}</strong> [{role}]
+                {unit && <> of <strong>{unit}</strong></>}
+            </>
+        );
+    }
+
     // Fallback for other modules: pick first available field
     return (
         row.asset_name ||

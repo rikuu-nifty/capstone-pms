@@ -107,7 +107,7 @@ class TrashBinController extends Controller
                     $q->select('id', 'name', 'code')->withTrashed();
                 }])
             )->paginate($perPage)->withQueryString(),
-            
+
             'personnels' => $applyFilters(Personnel::onlyTrashed()
                 ->with(['unitOrDepartment:id,name'])
             )->paginate($perPage)->withQueryString(),
@@ -115,7 +115,13 @@ class TrashBinController extends Controller
             'unit_or_departments' => $applyFilters(UnitOrDepartment::onlyTrashed())->paginate($perPage)->withQueryString(),
 
             // User Management
-            'users'              => $applyFilters(User::onlyTrashed())->paginate($perPage)->withQueryString(),
+            'users' => $applyFilters(User::onlyTrashed()
+                ->with([
+                    'role:id,name',
+                    'unitOrDepartment:id,name',
+                ])
+            )->paginate($perPage)->withQueryString(),
+
             'roles'              => $applyFilters(Role::onlyTrashed())->paginate($perPage)->withQueryString(),
 
             'filters' => [
