@@ -91,10 +91,10 @@ const groups = {
         { key: 'off_campuses', label: 'Off-Campuses' },
     ],
     assets: [
-        { key: 'asset_models', label: 'Models' },
         { key: 'categories', label: 'Categories' },
-        { key: 'assignments', label: 'Assignments' },
         { key: 'equipment_codes', label: 'Equipment Codes' },
+        { key: 'asset_models', label: 'Models' },
+        { key: 'assignments', label: 'Assignments' },
     ],
     institutional: [
         { key: 'buildings', label: 'Buildings' },

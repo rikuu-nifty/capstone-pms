@@ -89,10 +89,10 @@ const inventoryNavItems = [
 ];
 
 const assetsNavItems = [
-    { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
     { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
-    { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
     { title: 'Equipment Codes', href: '/equipment-codes', icon: FileDigit, permission: 'view-equipment-codes' },
+    { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
+    { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
 ];
 
 const institutionalSetUpNavItems = [
