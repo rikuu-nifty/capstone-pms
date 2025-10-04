@@ -522,8 +522,8 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 <div>
                                     <div className="text-sm text-muted-foreground">Turnover/Disposals</div>
                                     <div className="text-base font-semibold">
-                                        Turnovers: <span className="font-bold">{totals.forms.turnovers}</span> | 
-                                        Disposals: <span className="font-bold">{totals.forms.disposals}</span>
+                                        <span className='text-blue-600'>Turnovers:</span> <span className="font-bold text-blue-600">{totals.forms.turnovers}</span> | 
+                                        <span className='text-red-600'> Disposals:</span> <span className="font-bold text-red-600">{totals.forms.disposals}</span>
                                     </div>
                                 </div>
                             </div>
@@ -536,8 +536,8 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 <div>
                                     <div className="text-sm text-muted-foreground">Off-Campus Requests</div>
                                     <div className="text-base font-semibold">
-                                    Official: <span className="font-bold">{totals.forms.off_campus_official}</span> | 
-                                    Repair: <span className="font-bold">{totals.forms.off_campus_repair}</span>
+                                        <span className='text-blue-600'>Official Use: </span><span className="font-bold text-blue-600">{totals.forms.off_campus_official}</span> | 
+                                        <span className='text-red-600'> Repair: </span><span className="font-bold text-red-600">{totals.forms.off_campus_repair}</span>
                                     </div>
                                 </div>
                             </div>
