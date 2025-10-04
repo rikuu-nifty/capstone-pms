@@ -244,6 +244,19 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'unit_or_departments') {
+        const unit = row as TrashRecord & { name?: string; code?: string };
+
+        const name = unit.name ?? 'Unknown Unit';
+        const code = unit.code ? `[${formatEnums(unit.code).toUpperCase()}]` : '';
+
+        return (
+            <>
+                {name} <strong>{code}</strong>
+            </>
+        );
+    }
+
 
     // Fallback for other modules: pick first available field
     return (
