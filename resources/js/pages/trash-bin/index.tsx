@@ -6,7 +6,10 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { formatDateTime, formatEnums, ucwords } from '@/types/custom-index';
 import { Inbox, Calendar, Truck, Archive, Globe, Database, Building, Users } from 'lucide-react';
-
+import SortDropdown from '@/components/filters/SortDropdown';
+import { Input } from '@/components/ui/input';
+import type { SortDir } from '@/components/filters/SortDropdown';
+import TrashFilterDropdown from '@/components/filters/TrashFilterDropdown';
 
 interface TrashRecord {
     id: number;
@@ -59,6 +62,24 @@ type TrashBinProps = {
         start?: string;
         end?: string;
         per_page: number;
+
+        search?: string;
+        sort?: string;
+        dir?: SortDir;
+
+        category_id?: string | number;
+        month?: string | number;
+        purpose?: string | number;
+        type?: string | number;
+        name?: string | number;
+        building_id?: string | number;
+        unit_id?: string | number;
+        current_org_id?: string | number;
+        receiving_org_id?: string | number;
+        current_building_id?: string | number;
+        receiving_building_id?: string | number;
+        scheduled_date?: string | number;
+        issuing_office_id?: string | number;
     };
 
     totals: {
@@ -89,6 +110,14 @@ type TrashBinProps = {
         };
     };
 
+    filterSources: {
+        categories: { id: number; name: string }[];
+        equipment_categories: { id: number; name: string }[];
+        asset_model_categories: { id: number; name: string }[];
+        buildings: { id: number; name: string }[];
+        units: { id: number; name: string }[];
+        rooms: { id: number; name: string }[];
+    };
 };
 
 interface Building {
@@ -380,6 +409,8 @@ export default function TrashBinIndex(props: TrashBinProps) {
     const [activeGroup, setActiveGroup] = useState<keyof typeof groups>('forms');
     const [activeTab, setActiveTab] = useState<string>(groups.forms[0].key);
 
+    const [localFilters, setLocalFilters] = useState(props.filters);
+
     const { totals } = props;
 
     const dataMap: Record<string, PaginatedData<TrashRecord>> = {
@@ -439,6 +470,10 @@ export default function TrashBinIndex(props: TrashBinProps) {
         const capitalized = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         return `${capitalized} records`;
     };
+
+    const [search, setSearch] = useState(props.filters.search ?? '');
+    const [sortKey, setSortKey] = useState(props.filters.sort ?? 'id');
+    const [sortDir, setSortDir] = useState<SortDir>(props.filters.dir ?? 'desc');
 
     return (
         <AppLayout>
@@ -620,6 +655,436 @@ export default function TrashBinIndex(props: TrashBinProps) {
                     </div>
                 )}
 
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Search records..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-[280px]"
+                        />
+                        <Button
+                            onClick={() =>
+                                router.get(
+                                "/trash-bin",
+                                {
+                                    ...props.filters,
+                                    ...localFilters,
+                                    search,
+                                    sort: sortKey,
+                                    dir: sortDir,
+                                    tab: activeTab,
+                                },
+                                { preserveState: true }
+                                )
+                            }
+                            className="cursor-pointer"
+                        >
+                            Search
+                        </Button>
+
+                        {activeTab === "asset_models" && (
+                            <TrashFilterDropdown
+                                title="Category"
+                                fields={[
+                                    {
+                                        label: "Category",
+                                        type: "select",
+                                        options: props.filterSources.asset_model_categories.map((c) => ({
+                                        label: c.name,
+                                        value: c.id,
+                                        })),
+                                        value: localFilters.category_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, category_id: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, category_id: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "inventory_schedulings" && (
+                            <TrashFilterDropdown
+                                title="Month"
+                                fields={[
+                                    {
+                                        label: "Month",
+                                        type: "select",
+                                        options: [
+                                        { label: "January", value: "01" },
+                                        { label: "February", value: "02" },
+                                        { label: "March", value: "03" },
+                                        { label: "April", value: "04" },
+                                        { label: "May", value: "05" },
+                                        { label: "June", value: "06" },
+                                        { label: "July", value: "07" },
+                                        { label: "August", value: "08" },
+                                        { label: "September", value: "09" },
+                                        { label: "October", value: "10" },
+                                        { label: "November", value: "11" },
+                                        { label: "December", value: "12" },
+                                        ],
+                                        value: localFilters.month ?? "",
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, month: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, month: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "transfers" && (
+                            <TrashFilterDropdown
+                                title="Filters"
+                                fields={[
+                                    {
+                                        label: "Current Organization",
+                                        type: "select",
+                                        options: props.filterSources.units.map((u) => ({
+                                        label: u.name,
+                                        value: u.id,
+                                        })),
+                                        value: localFilters.current_org_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, current_org_id: val })),
+                                    },
+                                    {
+                                        label: "Receiving Organization",
+                                        type: "select",
+                                        options: props.filterSources.units.map((u) => ({
+                                        label: u.name,
+                                        value: u.id,
+                                        })),
+                                        value: localFilters.receiving_org_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, receiving_org_id: val })),
+                                    },
+                                    {
+                                        label: "Current Building",
+                                        type: "select",
+                                        options: props.filterSources.buildings.map((b) => ({
+                                        label: b.name,
+                                        value: b.id,
+                                        })),
+                                        value: localFilters.current_building_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, current_building_id: val })),
+                                    },
+                                    {
+                                        label: "Receiving Building",
+                                        type: "select",
+                                        options: props.filterSources.buildings.map((b) => ({
+                                        label: b.name,
+                                        value: b.id,
+                                        })),
+                                        value: localFilters.receiving_building_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, receiving_building_id: val })),
+                                    },
+                                    {
+                                        label: "Scheduled Date",
+                                        type: "date",
+                                        value: localFilters.scheduled_date ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, scheduled_date: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = {
+                                        ...localFilters,
+                                        current_org_id: "",
+                                        receiving_org_id: "",
+                                        current_building_id: "",
+                                        receiving_building_id: "",
+                                        scheduled_date: "",
+                                    };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "off_campuses" && (
+                            <TrashFilterDropdown
+                                title="Purpose"
+                                fields={[
+                                    {
+                                        label: "Purpose",
+                                        type: "select",
+                                        options: [
+                                        { label: "Official Use", value: "official_use" },
+                                        { label: "Repair", value: "repair" },
+                                        ],
+                                        value: localFilters.purpose ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, purpose: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, purpose: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "turnover_disposals" && (
+                            <TrashFilterDropdown
+                                title="Filters"
+                                fields={[
+                                    {
+                                        label: "Type",
+                                        type: "select",
+                                        options: [
+                                        { label: "Turnover", value: "turnover" },
+                                        { label: "Disposal", value: "disposal" },
+                                        ],
+                                        value: localFilters.type ?? "",
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, type: val })),
+                                    },
+                                    {
+                                        label: "Issuing Office",
+                                        type: "select",
+                                        options: props.filterSources.units.map((u) => ({
+                                        label: u.name,
+                                        value: u.id,
+                                        })),
+                                        value: localFilters.issuing_office_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, issuing_office_id: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, type: "", issuing_office_id: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "categories" && (
+                            <TrashFilterDropdown
+                                title="Category"
+                                fields={[
+                                    {
+                                        label: "Category",
+                                        type: "select",
+                                        options: props.filterSources.categories.map((c) => ({
+                                        label: c.name,
+                                        value: c.name,
+                                        })),
+                                        value: localFilters.name ?? "",
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, name: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, name: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "equipment_codes" && (
+                            <TrashFilterDropdown
+                                title="Category"
+                                fields={[
+                                    {
+                                        label: "Category",
+                                        type: "select",
+                                        options: props.filterSources.equipment_categories.map((c) => ({
+                                        label: c.name,
+                                        value: c.id,
+                                        })),
+                                        value: localFilters.category_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, category_id: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, category_id: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "building_rooms" && (
+                            <TrashFilterDropdown
+                                title="Building"
+                                fields={[
+                                    {
+                                        label: "Building",
+                                        type: "select",
+                                        options: props.filterSources.buildings.map((b) => ({
+                                        label: b.name,
+                                        value: b.id,
+                                        })),
+                                        value: localFilters.building_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, building_id: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, building_id: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {activeTab === "personnels" && (
+                            <TrashFilterDropdown
+                                title="Unit/Department"
+                                fields={[
+                                    {
+                                        label: "Unit/Department",
+                                        type: "select",
+                                        options: props.filterSources.units.map((u) => ({
+                                        label: u.name,
+                                        value: u.id,
+                                        })),
+                                        value: localFilters.unit_id ?? "",
+                                        onChange: (val) =>
+                                        setLocalFilters((p) => ({ ...p, unit_id: val })),
+                                    },
+                                ]}
+                                onApply={() =>
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...localFilters },
+                                        { preserveState: true }
+                                    )
+                                }
+                                onClear={() => {
+                                    const cleared = { ...localFilters, unit_id: "" };
+                                    setLocalFilters(cleared);
+                                    router.get(
+                                        "/trash-bin",
+                                        { ...props.filters, ...cleared },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            />
+                        )}
+                    </div>
+
+                    <SortDropdown
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        options={[
+                            { value: "id", label: "ID" },
+                            { value: "deleted_at", label: "Deleted Date" },
+                            { value: "name", label: "Record Name" },
+                            { value: "code", label: "Code" },
+                        ]}
+                        onChange={(key, dir) => {
+                            setSortKey(key);
+                            setSortDir(dir);
+                            router.get(
+                                "/trash-bin",
+                                { ...props.filters, ...localFilters, search, sort: key, dir, tab: activeTab },
+                                { preserveState: true }
+                            );
+                        }}
+                    />
+                </div>
+                
                 <div className="flex gap-1 border-b">
                     {groups[activeGroup].map((m) => (
                         <button
