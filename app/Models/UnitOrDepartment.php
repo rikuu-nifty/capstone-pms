@@ -16,6 +16,10 @@ class UnitOrDepartment extends Model
         'unit_head',
     ];
 
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
+
     public function inventoryLists()
     {
         return $this->hasMany(InventoryList::class, 'unit_or_department_id');
