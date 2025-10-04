@@ -93,7 +93,10 @@ class TrashBinController extends Controller
             // Assets group
             'asset_models'          => $applyFilters(AssetModel::onlyTrashed())->paginate($perPage)->withQueryString(),
             'categories'            => $applyFilters(Category::onlyTrashed())->paginate($perPage)->withQueryString(),
-            'assignments'           => $applyFilters(AssetAssignment::onlyTrashed())->paginate($perPage)->withQueryString(),
+            'assignments' => $applyFilters(AssetAssignment::onlyTrashed()
+                ->with(['personnel:id,first_name,middle_name,last_name'])
+            )->paginate($perPage)->withQueryString(),
+            
             'equipment_codes'       => $applyFilters(EquipmentCode::onlyTrashed())->paginate($perPage)->withQueryString(),
 
             // Institutional Setup
