@@ -102,13 +102,16 @@ class TrashBinController extends Controller
             // Institutional Setup
             'buildings'          => $applyFilters(Building::onlyTrashed())->paginate($perPage)->withQueryString(),
 
-            'building_rooms' => $applyFilters(
-                BuildingRoom::onlyTrashed()
-                    ->with(['building' => function ($q) {
-                        $q->select('id', 'name', 'code')->withTrashed();
-                    }])
+            'building_rooms' => $applyFilters(BuildingRoom::onlyTrashed()
+                ->with(['building' => function ($q) {
+                    $q->select('id', 'name', 'code')->withTrashed();
+                }])
             )->paginate($perPage)->withQueryString(),
-            'personnels'         => $applyFilters(Personnel::onlyTrashed())->paginate($perPage)->withQueryString(),
+            
+            'personnels' => $applyFilters(Personnel::onlyTrashed()
+                ->with(['unitOrDepartment:id,name'])
+            )->paginate($perPage)->withQueryString(),
+
             'unit_or_departments' => $applyFilters(UnitOrDepartment::onlyTrashed())->paginate($perPage)->withQueryString(),
 
             // User Management

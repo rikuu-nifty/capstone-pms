@@ -285,6 +285,24 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'personnels') {
+        const p = row as TrashRecord & {
+            full_name?: string;
+            position?: string;
+            unit_or_department?: { name?: string };
+        };
+
+        const fullName = p.full_name ?? 'Unknown Personnel';
+        const position = p.position ?? 'Unknown Position';
+        const unit = p.unit_or_department?.name ?? 'Unknown Unit';
+
+        return (
+            <>
+                <strong>{fullName}</strong> — {position} of <strong>{unit}</strong>
+            </>
+        );
+    }
+
     // Fallback for other modules: pick first available field
     return (
         row.asset_name ||
