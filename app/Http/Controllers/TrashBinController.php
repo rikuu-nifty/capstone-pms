@@ -101,6 +101,13 @@ class TrashBinController extends Controller
 
             // Institutional Setup
             'buildings'          => $applyFilters(Building::onlyTrashed())->paginate($perPage)->withQueryString(),
+
+            'building_rooms' => $applyFilters(
+                BuildingRoom::onlyTrashed()
+                    ->with(['building' => function ($q) {
+                        $q->select('id', 'name', 'code')->withTrashed();
+                    }])
+            )->paginate($perPage)->withQueryString(),
             'personnels'         => $applyFilters(Personnel::onlyTrashed())->paginate($perPage)->withQueryString(),
             'unit_or_departments' => $applyFilters(UnitOrDepartment::onlyTrashed())->paginate($perPage)->withQueryString(),
 
@@ -139,12 +146,13 @@ class TrashBinController extends Controller
             'assignment'         => AssetAssignment::class,
             'equipment-code'     => EquipmentCode::class,
 
-            'building'          => Building::class,
-            'personnel'         => Personnel::class,
+            'building'           => Building::class,
+            'building-room'      => BuildingRoom::class,
+            'personnel'          => Personnel::class,
             'unit-or-department' => UnitOrDepartment::class,
 
-            'user'              => User::class,
-            'role'              => Role::class,
+            'user'               => User::class,
+            'role'               => Role::class,
 
             default => abort(404),
         };

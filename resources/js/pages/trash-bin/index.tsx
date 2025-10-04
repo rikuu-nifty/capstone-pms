@@ -43,6 +43,7 @@ type TrashBinProps = {
 
     // Institutional Setup
     buildings: PaginatedData<TrashRecord>;
+    building_rooms: PaginatedData<TrashRecord>;
     personnels: PaginatedData<TrashRecord>;
     unit_or_departments: PaginatedData<TrashRecord>;
 
@@ -99,7 +100,7 @@ const groups = {
     institutional: [
         { key: 'unit_or_departments', label: 'Units & Departments' },
         { key: 'buildings', label: 'Buildings' },
-        { key: 'Rooms', label: 'Rooms' },
+        { key: 'building_rooms', label: 'Rooms' },
         { key: 'personnels', label: 'Personnels' },
         
     ],
@@ -257,6 +258,32 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'buildings') {
+        const building = row as TrashRecord & { name?: string; code?: string };
+
+        const name = building.name ?? 'Unknown Building';
+        const code = building.code ? `[${formatEnums(building.code).toUpperCase()}]` : '';
+
+        return (
+            <>
+                {name} <strong>{code}</strong>
+            </>
+        );
+    }
+
+    if (tab === 'building_rooms') {
+        const room = row as TrashRecord & { room?: string; building?: { name?: string; code?: string } };
+
+        const roomName = room.room ?? 'Unknown Room';
+        const buildingName = room.building?.name ?? 'Unknown Building';
+        const buildingCode = room.building?.code ? `[${formatEnums(room.building.code).toUpperCase()}]` : '';
+
+        return (
+            <>
+                <strong>{roomName}</strong> in {buildingName} <strong>{buildingCode}</strong>
+            </>
+        );
+    }
 
     // Fallback for other modules: pick first available field
     return (
@@ -292,6 +319,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
 
         // Institutional Setup
         buildings: props.buildings,
+        building_rooms: props.building_rooms,
         personnels: props.personnels,
         unit_or_departments: props.unit_or_departments,
 
@@ -314,6 +342,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         assignments: 'assignment',
         equipment_codes: 'equipment-code',
         buildings: 'building',
+        building_rooms: 'building-room',
         personnels: 'personnel',
         unit_or_departments: 'unit-or-department',
         users: 'user',
