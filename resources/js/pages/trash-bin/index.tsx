@@ -372,7 +372,6 @@ export default function TrashBinIndex(props: TrashBinProps) {
         // User Management
         users: props.users,
         roles: props.roles,
-        form_approvals: props.form_approvals,
         signatories: props.signatories,
     };
     const activeData = dataMap[activeTab];
@@ -393,7 +392,6 @@ export default function TrashBinIndex(props: TrashBinProps) {
         unit_or_departments: 'unit-or-department',
         users: 'user',
         roles: 'role',
-        form_approvals: 'form-approval',
         signatories: 'signatory',
     };
 
