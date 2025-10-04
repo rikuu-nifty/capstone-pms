@@ -50,7 +50,6 @@ type TrashBinProps = {
     // User Management
     users: PaginatedData<TrashRecord>;
     roles: PaginatedData<TrashRecord>;
-    form_approvals: PaginatedData<TrashRecord>;
     signatories: PaginatedData<TrashRecord>;
 
     filters: {
@@ -107,7 +106,6 @@ const groups = {
     usermgmt: [
         { key: 'users', label: 'Users' },
         { key: 'roles', label: 'Roles' },
-        { key: 'form_approvals', label: 'Form Approval' },
         { key: 'signatories', label: 'Signatories' },
     ],
 } as const;
