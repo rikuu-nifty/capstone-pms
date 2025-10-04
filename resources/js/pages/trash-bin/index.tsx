@@ -97,9 +97,11 @@ const groups = {
         { key: 'assignments', label: 'Assignments' },
     ],
     institutional: [
-        { key: 'buildings', label: 'Buildings' },
-        { key: 'personnels', label: 'Personnels' },
         { key: 'unit_or_departments', label: 'Units & Departments' },
+        { key: 'buildings', label: 'Buildings' },
+        { key: 'Rooms', label: 'Rooms' },
+        { key: 'personnels', label: 'Personnels' },
+        
     ],
     usermgmt: [
         { key: 'users', label: 'Users' },
