@@ -82,7 +82,6 @@ interface TransferRecord extends TrashRecord {
     scheduled_date?: string;
 }
 
-
 const groups = {
     forms: [
         { key: 'inventory_lists', label: 'Inventory Lists' },
@@ -191,6 +190,18 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'asset_models') {
+        const am = row as TrashRecord & { model?: string; brand?: string };
+
+        const model = am.model ?? 'Unknown Model';
+        const brand = am.brand ?? '';
+
+        return (
+            <>
+                <strong>{model}</strong> {brand && <span>({brand})</span>}
+            </>
+        );
+    }
 
     // Fallback for other modules: pick first available field
     return (
