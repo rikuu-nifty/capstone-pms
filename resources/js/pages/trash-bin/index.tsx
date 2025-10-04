@@ -203,6 +203,46 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'categories') {
+        const cat = row as TrashRecord & { name?: string };
+
+        const categoryName = cat.name ?? 'Unknown Category';
+
+        return (
+            <>
+                {categoryName}
+            </>
+        );
+    }
+
+    if (tab === 'assignments') {
+        const aa = row as TrashRecord & {
+            personnel?: { full_name?: string };
+            date_assigned?: string;
+        };
+
+        const assignedTo = aa.personnel?.full_name ?? 'Unknown Personnel';
+
+        let dateAssigned = 'Unknown Date';
+        if (aa.date_assigned) {
+            const dt = new Date(aa.date_assigned);
+            if (!isNaN(dt.getTime())) {
+                dateAssigned = dt.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                });
+            }
+        }
+
+        return (
+            <>
+                Assignment record assigned to <strong>{assignedTo}</strong> on <strong>{dateAssigned}</strong>
+            </>
+        );
+    }
+
+
     // Fallback for other modules: pick first available field
     return (
         row.asset_name ||
