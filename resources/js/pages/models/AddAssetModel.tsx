@@ -70,6 +70,7 @@ export default function AddAssetModelModal({
                 <label className="mb-1 block font-medium">Category</label>
                 <Select
                     className="w-full"
+                    isClearable
                     options={categories.map((c) => ({
                         value: c.id,
                         label: c.name,
@@ -94,6 +95,7 @@ export default function AddAssetModelModal({
                 <label className="mb-1 block font-medium">Equipment Code</label>
                 <Select
                     className="w-full"
+                    isClearable
                     options={filteredEquipmentCodes.map((ec) => ({
                         value: ec.id,
                         label: `${ec.code} ${ec.description ? `- ${ec.description}` : ''}`,
