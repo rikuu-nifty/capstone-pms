@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { formatDateTime, formatEnums, ucwords } from '@/types/custom-index';
+import { Inbox, Calendar, Truck, Archive, Globe, Database, Building, Users } from 'lucide-react';
+
 
 interface TrashRecord {
     id: number;
@@ -58,6 +60,35 @@ type TrashBinProps = {
         end?: string;
         per_page: number;
     };
+
+    totals: {
+        forms: {
+            inventory_lists: number;
+            inventory_schedulings: number;
+            transfers: number;
+            turnovers: number;
+            disposals: number;
+            off_campus_official: number;
+            off_campus_repair: number;
+        };
+        assets: {
+            categories: number;
+            equipment_codes: number;
+            asset_models: number;
+            assignments: number;
+        };
+        institutional: {
+            unit_or_departments: number;
+            buildings: number;
+            building_rooms: number;
+            personnels: number;
+        };
+        usermgmt: {
+            users: number;
+            roles: number;
+        };
+    };
+
 };
 
 interface Building {
@@ -349,6 +380,8 @@ export default function TrashBinIndex(props: TrashBinProps) {
     const [activeGroup, setActiveGroup] = useState<keyof typeof groups>('forms');
     const [activeTab, setActiveTab] = useState<string>(groups.forms[0].key);
 
+    const { totals } = props;
+
     const dataMap: Record<string, PaginatedData<TrashRecord>> = {
         // Forms
         inventory_lists: props.inventory_lists,
@@ -418,7 +451,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                     <p className="text-sm text-muted-foreground">Archived records across all modules.</p>
                 </div>
 
-                {/* Group Tabs */}
+                {/* GROUP TABS */}
                 <div className="mb-2 flex gap-2 rounded-md bg-muted p-2">
                     {Object.keys(groups).map((g) => (
                         <Button
@@ -437,6 +470,155 @@ export default function TrashBinIndex(props: TrashBinProps) {
                         </Button>
                     ))}
                 </div>
+
+                {/* KPIs Section */}
+                {totals && (
+                    <div
+                        className={`grid gap-3 
+                            grid-cols-1 sm:grid-cols-2 
+                            ${activeGroup === 'forms' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}
+                        `}
+                    >
+                        {activeGroup === 'forms' && (
+                        <>
+                            {/* Inventory Lists */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                                    <Inbox className="h-7 w-7 text-sky-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Assets (Inventory Lists)</div>
+                                    <div className="text-3xl font-bold">{totals.forms.inventory_lists}</div>
+                                </div>
+                            </div>
+
+                            {/* Inventory Scheduling */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                                    <Calendar className="h-7 w-7 text-blue-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Inventory Scheduling</div>
+                                    <div className="text-3xl font-bold">{totals.forms.inventory_schedulings}</div>
+                                </div>
+                            </div>
+
+                            {/* Transfers */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                                    <Truck className="h-7 w-7 text-orange-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Property Transfers</div>
+                                    <div className="text-3xl font-bold">{totals.forms.transfers}</div>
+                                </div>
+                            </div>
+
+                            {/* Turnovers / Disposals */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                    <Archive className="h-7 w-7 text-green-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Turnover/Disposals</div>
+                                    <div className="text-base font-semibold">
+                                        Turnovers: <span className="font-bold">{totals.forms.turnovers}</span> | 
+                                        Disposals: <span className="font-bold">{totals.forms.disposals}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Off Campus */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                                    <Globe className="h-7 w-7 text-purple-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Off-Campus Requests</div>
+                                    <div className="text-base font-semibold">
+                                    Official: <span className="font-bold">{totals.forms.off_campus_official}</span> | 
+                                    Repair: <span className="font-bold">{totals.forms.off_campus_repair}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                        )}
+
+                        {activeGroup === 'assets' && (
+                        <>
+                            {Object.entries(totals.assets).map(([key, value], index) => {
+                                const iconConfig = [
+                                    { Icon: Database, bg: 'bg-amber-100', color: 'text-amber-600' }, // Categories
+                                    { Icon: Archive, bg: 'bg-teal-100', color: 'text-teal-600' },   // Equipment Codes
+                                    { Icon: Inbox, bg: 'bg-indigo-100', color: 'text-indigo-600' }, // Models
+                                    { Icon: Truck, bg: 'bg-rose-100', color: 'text-rose-600' },     // Assignments
+                                ][index];
+                                const { Icon, bg, color } = iconConfig || {};
+                                return (
+                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
+                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
+                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                                        </div>
+                                        <div>
+                                            <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div>
+                                            <div className="text-3xl font-bold">{value as number}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </>
+                        )}
+
+                        {activeGroup === 'institutional' && (
+                        <>
+                            {Object.entries(totals.institutional).map(([key, value], index) => {
+                                const iconConfig = [
+                                    { Icon: Building, bg: 'bg-cyan-100', color: 'text-cyan-600' },     // Units
+                                    { Icon: Archive, bg: 'bg-lime-100', color: 'text-lime-600' },      // Buildings
+                                    { Icon: Database, bg: 'bg-violet-100', color: 'text-violet-600' }, // Rooms
+                                    { Icon: Users, bg: 'bg-pink-100', color: 'text-pink-600' },        // Personnels
+                                ][index];
+                                const { Icon, bg, color } = iconConfig || {};
+                                return (
+                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
+                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
+                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                                        </div>
+                                        <div>
+                                            <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div>
+                                            <div className="text-3xl font-bold">{value as number}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </>
+                        )}
+
+                        {activeGroup === 'usermgmt' && (
+                        <>
+                            {Object.entries(totals.usermgmt).map(([key, value], index) => {
+                                const iconConfig = [
+                                    { Icon: Users, bg: 'bg-blue-100', color: 'text-blue-600' },       // Users
+                                    { Icon: Archive, bg: 'bg-emerald-100', color: 'text-emerald-600' }, // Roles
+                                    { Icon: Globe, bg: 'bg-purple-100', color: 'text-purple-600' },   // Signatories
+                                ][index];
+                                const { Icon, bg, color } = iconConfig || {};
+                                return (
+                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
+                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
+                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                                        </div>
+                                        <div>
+                                            <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div>
+                                            <div className="text-3xl font-bold">{value as number}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </>
+                        )}
+                    </div>
+                )}
 
                 <div className="flex gap-1 border-b">
                     {groups[activeGroup].map((m) => (

@@ -59,6 +59,35 @@ class TrashBinController extends Controller
                 );
         };
 
+        $totals = [
+            'forms' => [
+                'inventory_lists'       => InventoryList::onlyTrashed()->count(),
+                'inventory_schedulings' => InventoryScheduling::onlyTrashed()->count(),
+                'transfers'             => Transfer::onlyTrashed()->count(),
+                'turnovers'             => TurnoverDisposal::onlyTrashed()->where('type', 'turnover')->count(),
+                'disposals'             => TurnoverDisposal::onlyTrashed()->where('type', 'disposal')->count(),
+                'off_campus_official'   => OffCampus::onlyTrashed()->where('purpose', 'official_use')->count(),
+                'off_campus_repair'     => OffCampus::onlyTrashed()->where('purpose', 'repair')->count(),
+            ],
+            'assets' => [
+                'categories'      => Category::onlyTrashed()->count(),
+                'equipment_codes' => EquipmentCode::onlyTrashed()->count(),
+                'asset_models'    => AssetModel::onlyTrashed()->count(),
+                'assignments'     => AssetAssignment::onlyTrashed()->count(),
+            ],
+            'institutional' => [
+                'unit_or_departments' => UnitOrDepartment::onlyTrashed()->count(),
+                'buildings'           => Building::onlyTrashed()->count(),
+                'building_rooms'      => BuildingRoom::onlyTrashed()->count(),
+                'personnels'          => Personnel::onlyTrashed()->count(),
+            ],
+            'usermgmt' => [
+                'users' => User::onlyTrashed()->count(),
+                'roles' => Role::onlyTrashed()->count(),
+                // add signatories if needed later
+            ],
+        ];
+
         return Inertia::render('trash-bin/index', [
             'inventory_lists'       => $applyFilters(InventoryList::onlyTrashed())->paginate($perPage)->withQueryString(),
             'inventory_schedulings' => $applyFilters(InventoryScheduling::onlyTrashed())->paginate($perPage)->withQueryString(),
@@ -130,6 +159,8 @@ class TrashBinController extends Controller
                 'end'         => $request->end,
                 'per_page'    => $perPage,
             ],
+
+            'totals' => $totals,
         ]);
     }
 
