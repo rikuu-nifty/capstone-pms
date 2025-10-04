@@ -17,12 +17,12 @@ use App\Models\AssetAssignment;
 use App\Models\EquipmentCode;
 
 use App\Models\Building;
+use App\Models\BuildingRoom;
 use App\Models\Personnel;
 use App\Models\UnitOrDepartment;
 
 use App\Models\User;
 use App\Models\Role;
-// use App\Models\FormApproval;
 //NO SIGNATORIES YET
 
 class TrashBinController extends Controller
@@ -107,7 +107,6 @@ class TrashBinController extends Controller
             // User Management
             'users'              => $applyFilters(User::onlyTrashed())->paginate($perPage)->withQueryString(),
             'roles'              => $applyFilters(Role::onlyTrashed())->paginate($perPage)->withQueryString(),
-            // 'form_approvals'     => $applyFilters(FormApproval::onlyTrashed())->paginate($perPage)->withQueryString(),
 
             'filters' => [
                 'date_filter' => $filter,
@@ -146,7 +145,6 @@ class TrashBinController extends Controller
 
             'user'              => User::class,
             'role'              => Role::class,
-            // 'form-approval'     => FormApproval::class,
 
             default => abort(404),
         };
