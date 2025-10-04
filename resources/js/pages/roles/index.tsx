@@ -241,10 +241,17 @@ export default function RoleManagement() {
                                             </Button>
                                             <Button
                                                 variant="destructive"
-                                                className="cursor-pointer"
+                                                className={`cursor-pointer ${
+                                                    ['superuser', 'vp_admin', 'pmo_head'].includes(r.code)
+                                                        ? 'bg-gray-500 text-white cursor-not-allowed'
+                                                        : ''
+                                                }`}
+                                                disabled={['superuser', 'vp_admin', 'pmo_head'].includes(r.code)}
                                                 onClick={() => {
-                                                    setDeletingRole(r);
-                                                    setShowDelete(true);
+                                                    if (!['superuser', 'vp_admin', 'pmo_head'].includes(r.code)) {
+                                                        setDeletingRole(r);
+                                                        setShowDelete(true);
+                                                    }
                                                 }}
                                             >
                                                 Delete
