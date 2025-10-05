@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 use App\Models\InventoryList;
 use App\Models\InventoryScheduling;
@@ -24,7 +25,12 @@ use App\Models\UnitOrDepartment;
 
 use App\Models\User;
 use App\Models\Role;
-//NO SIGNATORIES YET
+
+use App\Models\InventorySchedulingSignatory;
+use App\Models\TransferSignatory;
+use App\Models\TurnoverDisposalSignatory;
+use App\Models\OffCampusSignatory;
+
 
 class TrashBinController extends Controller
 {
@@ -304,7 +310,11 @@ class TrashBinController extends Controller
             'usermgmt' => [
                 'users' => User::onlyTrashed()->count(),
                 'roles' => Role::onlyTrashed()->count(),
-                // add signatories if needed later
+
+                'inventory_signatories' => InventorySchedulingSignatory::onlyTrashed()->count(),
+                'transfer_signatories' => TransferSignatory::onlyTrashed()->count(),
+                'turnover_disposal_signatories' => TurnoverDisposalSignatory::onlyTrashed()->count(),
+                'off_campus_signatories' => OffCampusSignatory::onlyTrashed()->count(),
             ],
         ];
 
@@ -316,6 +326,41 @@ class TrashBinController extends Controller
             'units' => UnitOrDepartment::select('id', 'name')->orderBy('name')->get(),
             'rooms' => BuildingRoom::select('id', 'room as name')->orderBy('room')->get(),
         ];
+
+        $allSignatories = collect()
+            ->merge(
+                InventorySchedulingSignatory::onlyTrashed()
+                    ->get()
+                    ->map(fn($s) => $s->setAttribute('module_type', 'Inventory Scheduling'))
+            )
+            ->merge(
+                TransferSignatory::onlyTrashed()
+                    ->get()
+                    ->map(fn($s) => $s->setAttribute('module_type', 'Property Transfer'))
+            )
+            ->merge(
+                TurnoverDisposalSignatory::onlyTrashed()
+                    ->get()
+                    ->map(fn($s) => $s->setAttribute('module_type', 'Turnover/Disposal'))
+            )
+            ->merge(
+                OffCampusSignatory::onlyTrashed()
+                    ->get()
+                    ->map(fn($s) => $s->setAttribute('module_type', 'Off-Campus'))
+            )
+            ->sortByDesc('deleted_at')
+            ->values();
+
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $paged = $allSignatories->forPage($page, $perPage)->values();
+
+        $signatories = new LengthAwarePaginator(
+            $paged,
+            $allSignatories->count(),
+            $perPage,
+            $page,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
 
         return Inertia::render('trash-bin/index', [
             // Forms group
@@ -420,11 +465,32 @@ class TrashBinController extends Controller
 
             'totals' => $totals,
             'filterSources' => $filterSources,
+
+            'signatories' => $signatories,
         ]);
     }
 
     public function restore(string $type, int $id)
     {
+        if ($type === 'signatory') {
+            $signatory = collect([
+                InventorySchedulingSignatory::class,
+                TransferSignatory::class,
+                TurnoverDisposalSignatory::class,
+                OffCampusSignatory::class,
+            ])
+                ->map(fn($model) => $model::withTrashed()->find($id))
+                ->filter()
+                ->first();
+
+            if ($signatory) {
+                $signatory->restore();
+                return back()->with('success', 'Signatory restored successfully.');
+            }
+
+            return back()->with('error', 'Signatory not found.');
+        }
+
         $model = $this->resolveModel($type)::withTrashed()->findOrFail($id);
         $model->restore();
 

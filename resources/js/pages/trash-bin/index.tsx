@@ -57,6 +57,7 @@ type TrashBinProps = {
     // User Management
     users: PaginatedData<TrashRecord>;
     roles: PaginatedData<TrashRecord>;
+    
     signatories: PaginatedData<TrashRecord>;
 
     filters: {
@@ -109,6 +110,11 @@ type TrashBinProps = {
         usermgmt: {
             users: number;
             roles: number;
+
+            inventory_signatories: number;
+            transfer_signatories: number;
+            turnover_disposal_signatories: number;
+            off_campus_signatories: number;
         };
     };
 
@@ -406,6 +412,19 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'signatories') {
+        const s = row as TrashRecord & { name?: string; title?: string; role_key?: string; module_type?: string };
+        const name = s.name ?? 'Unknown';
+        const title = s.title ?? '—';
+        const roleKey = s.role_key ? `${formatEnums(s.role_key)}` : '';
+        const module = s.module_type ? ` ${s.module_type}` : '';
+        return (
+            <>
+                <strong>{module.toUpperCase()}</strong> : {roleKey} <strong>{name}</strong> ({title})
+            </>
+        );
+    }
+
     // Fallback for other modules: pick first available field
     return (
         row.asset_name ||
@@ -496,6 +515,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         // User Management
         users: props.users,
         roles: props.roles,
+        
         signatories: props.signatories,
     };
     const activeData = dataMap[activeTab];
@@ -516,6 +536,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         unit_or_departments: 'unit-or-department',
         users: 'user',
         roles: 'role',
+        
         signatories: 'signatory',
     };
 
@@ -662,10 +683,10 @@ export default function TrashBinIndex(props: TrashBinProps) {
                         <>
                             {Object.entries(totals.assets).map(([key, value], index) => {
                                 const iconConfig = [
-                                    { Icon: Database, bg: 'bg-amber-100', color: 'text-amber-600' }, // Categories
-                                    { Icon: Archive, bg: 'bg-teal-100', color: 'text-teal-600' },   // Equipment Codes
-                                    { Icon: Inbox, bg: 'bg-indigo-100', color: 'text-indigo-600' }, // Models
-                                    { Icon: Truck, bg: 'bg-rose-100', color: 'text-rose-600' },     // Assignments
+                                    { Icon: Database, bg: 'bg-amber-100', color: 'text-amber-600' },
+                                    { Icon: Archive, bg: 'bg-teal-100', color: 'text-teal-600' },
+                                    { Icon: Inbox, bg: 'bg-indigo-100', color: 'text-indigo-600' },
+                                    { Icon: Truck, bg: 'bg-rose-100', color: 'text-rose-600' },
                                 ][index];
                                 const { Icon, bg, color } = iconConfig || {};
                                 return (
@@ -687,10 +708,10 @@ export default function TrashBinIndex(props: TrashBinProps) {
                         <>
                             {Object.entries(totals.institutional).map(([key, value], index) => {
                                 const iconConfig = [
-                                    { Icon: Building, bg: 'bg-cyan-100', color: 'text-cyan-600' },     // Units
-                                    { Icon: Archive, bg: 'bg-lime-100', color: 'text-lime-600' },      // Buildings
-                                    { Icon: Database, bg: 'bg-violet-100', color: 'text-violet-600' }, // Rooms
-                                    { Icon: Users, bg: 'bg-pink-100', color: 'text-pink-600' },        // Personnels
+                                    { Icon: Building, bg: 'bg-cyan-100', color: 'text-cyan-600' }, 
+                                    { Icon: Archive, bg: 'bg-lime-100', color: 'text-lime-600' },
+                                    { Icon: Database, bg: 'bg-violet-100', color: 'text-violet-600' },
+                                    { Icon: Users, bg: 'bg-pink-100', color: 'text-pink-600' },
                                 ][index];
                                 const { Icon, bg, color } = iconConfig || {};
                                 return (
@@ -710,11 +731,24 @@ export default function TrashBinIndex(props: TrashBinProps) {
 
                         {activeGroup === 'usermgmt' && (
                         <>
-                            {Object.entries(totals.usermgmt).map(([key, value], index) => {
+                        {Object.entries(totals.usermgmt)
+                            .filter(([key]) => {
+                                if (activeTab === 'signatories' && (key === 'users' || key === 'roles')) return false;
+
+                                if ((activeTab === 'users' || activeTab === 'roles') &&
+                                    ['inventory_signatories', 'transfer_signatories', 'turnover_disposal_signatories', 'off_campus_signatories'].includes(key)
+                                ) return false;
+
+                                return true;
+                            })
+                            .map(([key, value], index) => {
                                 const iconConfig = [
-                                    { Icon: Users, bg: 'bg-blue-100', color: 'text-blue-600' },       // Users
-                                    { Icon: Archive, bg: 'bg-emerald-100', color: 'text-emerald-600' }, // Roles
-                                    { Icon: Globe, bg: 'bg-purple-100', color: 'text-purple-600' },   // Signatories
+                                    { Icon: Users, bg: 'bg-blue-100', color: 'text-blue-600' },       
+                                    { Icon: Archive, bg: 'bg-emerald-100', color: 'text-emerald-600' }, 
+                                    { Icon: Globe, bg: 'bg-orange-100', color: 'text-orange-600' },     
+                                    { Icon: Globe, bg: 'bg-purple-100', color: 'text-purple-600' },
+                                    { Icon: Globe, bg: 'bg-pink-100', color: 'text-pink-600' },         
+                                    { Icon: Globe, bg: 'bg-indigo-100', color: 'text-indigo-600' },
                                 ][index];
                                 const { Icon, bg, color } = iconConfig || {};
                                 return (
@@ -723,7 +757,19 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                             {Icon && <Icon className={`h-7 w-7 ${color}`} />}
                                         </div>
                                         <div>
-                                            <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div>
+                                            <div className="text-sm text-muted-foreground">
+                                                {(() => {
+                                                    let label = key.replace(/_/g, ' '); // replace all underscores
+
+                                                    if (key === 'inventory_signatories') label = 'Inventory Scheduling Signatories';
+                                                    if (key === 'transfer_signatories') label = 'Property Transfer Signatories';
+                                                    if (key === 'turnover_disposal_signatories') label = 'Turnover/Disposal Signatories';
+                                                    if (key === 'off_campus_signatories') label = 'Off-Campus Signatories';
+
+                                                    return ucwords(label);
+                                                })()}
+                                            </div>
+                                            
                                             <div className="text-3xl font-bold">{value as number}</div>
                                         </div>
                                     </div>
