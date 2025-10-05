@@ -65,7 +65,7 @@ export default function TrashFilterDropdown({
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="cursor-pointer">
+                <Button className="cursor-pointer">
                     <Filter className="mr-1 h-4 w-4" /> {title}
                     {hasActive && <Badge className="ml-2" variant="destructive">Active</Badge>}
                 </Button>

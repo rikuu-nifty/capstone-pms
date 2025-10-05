@@ -721,7 +721,8 @@ export default function TrashBinIndex(props: TrashBinProps) {
                     </div>
                 )}
 
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between w-full">
+                    {/* LEFT: Search Bar */}
                     <div className="flex items-center gap-2">
                         <Input
                             placeholder="Search record names..."
@@ -729,7 +730,9 @@ export default function TrashBinIndex(props: TrashBinProps) {
                             onChange={(e) => setRawSearch(e.target.value)}
                             className="w-[280px]"
                         />
+                    </div>
 
+                    <div className="flex items-center gap-2">
                         {/* Asset Models */}
                         {activeTab === "asset_models" && (
                             <TrashFilterDropdown
@@ -1052,27 +1055,27 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 }}
                             />
                         )}
-                    </div>
 
-                    <SortDropdown
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        options={[
-                            { value: "id", label: "ID" },
-                            { value: "deleted_at", label: "Deleted Date" },
-                            { value: "name", label: "Record Name" },
-                            { value: "code", label: "Code" },
-                        ]}
-                        onChange={(key, dir) => {
-                            setSortKey(key);
-                            setSortDir(dir);
-                            router.get(
-                                "/trash-bin",
-                                { ...props.filters, ...localFilters, search, sort: key, dir, tab: activeTab },
-                                { preserveState: true }
-                            );
-                        }}
-                    />
+                        <SortDropdown
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            options={[
+                                { value: "id", label: "ID" },
+                                { value: "deleted_at", label: "Deleted Date" },
+                                { value: "name", label: "Record Name" },
+                                { value: "code", label: "Code" },
+                            ]}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                                router.get(
+                                    "/trash-bin",
+                                    { ...props.filters, ...localFilters, search, sort: key, dir, tab: activeTab },
+                                    { preserveState: true }
+                                );
+                            }}
+                        />
+                    </div>
                 </div>
                 
                 <div className="flex gap-1 border-b">
