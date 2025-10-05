@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 use App\Models\InventoryList;
 use App\Models\InventoryScheduling;
@@ -59,6 +60,9 @@ class TrashBinController extends Controller
                 ->when($search, function ($q) use ($module, $search) {
                     $q->where(function ($query) use ($module, $search) {
                         $like = '%' . $search . '%';
+                        $enumNeedle = Str::slug($search, '_');
+                        $enumLike   = '%' . $enumNeedle . '%';
+
                         match ($module) {
                             'inventory_lists' => $query
                                 ->where('asset_name', 'like', $like)
@@ -89,39 +93,45 @@ class TrashBinController extends Controller
                                     $query->orWhere('inventory_schedule', 'like', '%-' . $monthMap[$lowerSearch]);
                                 }
                             }),
-                        'transfers' => $query->where(function ($sub) use ($like) {
-                            $sub->where('id', 'like', $like)
-                                ->orWhereHas('currentOrganization', fn($q) =>
-                                    $q->where('name', 'like', $like)
-                                )
-                                ->orWhereHas('receivingOrganization', fn($q) =>
-                                    $q->where('name', 'like', $like)
-                                )
-                                // Related buildings and rooms
-                                ->orWhereHas('currentBuildingRoom.building', fn($q) =>
-                                    $q->where('name', 'like', $like)
-                                        ->orWhere('code', 'like', $like)
-                                )
-                                ->orWhereHas('receivingBuildingRoom.building', fn($q) =>
-                                    $q->where('name', 'like', $like)
-                                        ->orWhere('code', 'like', $like)
-                                )
-                                ->orWhereHas('currentBuildingRoom', fn($q) =>
-                                    $q->where('room', 'like', $like)
-                                )
-                                ->orWhereHas('receivingBuildingRoom', fn($q) =>
-                                    $q->where('room', 'like', $like)
-                                );
-                            }),
-                        'turnover_disposals' => $query
+                            'transfers' => $query->where(function ($sub) use ($like) {
+                                $sub->where('id', 'like', $like)
+                                    ->orWhereHas('currentOrganization', fn($q) =>
+                                        $q->where('name', 'like', $like)
+                                    )
+                                    ->orWhereHas('receivingOrganization', fn($q) =>
+                                        $q->where('name', 'like', $like)
+                                    )
+                                    // Related buildings and rooms
+                                    ->orWhereHas('currentBuildingRoom.building', fn($q) =>
+                                        $q->where('name', 'like', $like)
+                                            ->orWhere('code', 'like', $like)
+                                    )
+                                    ->orWhereHas('receivingBuildingRoom.building', fn($q) =>
+                                        $q->where('name', 'like', $like)
+                                            ->orWhere('code', 'like', $like)
+                                    )
+                                    ->orWhereHas('currentBuildingRoom', fn($q) =>
+                                        $q->where('room', 'like', $like)
+                                    )
+                                    ->orWhereHas('receivingBuildingRoom', fn($q) =>
+                                        $q->where('room', 'like', $like)
+                                    );
+                                }),
+                            'turnover_disposals' => $query
                                 ->where('type', 'like', $like)
                                 ->orWhereHas('personnel', fn($p) =>
                                     $p->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", [$like])
                                 )
                                 ->orWhereHas('issuingOffice', fn($o) => $o->where('name', 'like', $like)),
-                            'off_campuses' => $query
-                                ->where('requester_name', 'like', $like)
-                                ->orWhere('remarks', 'like', $like),
+                            'off_campuses' => $query->where(function ($sub) use ($like, $enumLike) {
+                                $sub
+                                    ->where('requester_name', 'like', $like) // if user enters "official_use"
+                                    ->orWhere('remarks', 'like', $like) // if user typed "official use"
+                                    ->orWhere('remarks', 'like', $enumLike)
+                                    ->orWhereHas('collegeOrUnit', fn($q) =>
+                                        $q->where('name', 'like', $like)
+                                    );
+                            }),
 
                             'categories' => $query->where('name', 'like', $like),
                             'asset_models' => $query
@@ -276,8 +286,8 @@ class TrashBinController extends Controller
                 'transfers'             => Transfer::onlyTrashed()->count(),
                 'turnovers'             => TurnoverDisposal::onlyTrashed()->where('type', 'turnover')->count(),
                 'disposals'             => TurnoverDisposal::onlyTrashed()->where('type', 'disposal')->count(),
-                'off_campus_official'   => OffCampus::onlyTrashed()->where('purpose', 'official_use')->count(),
-                'off_campus_repair'     => OffCampus::onlyTrashed()->where('purpose', 'repair')->count(),
+                'off_campus_official' => OffCampus::onlyTrashed()->where('remarks', 'official_use')->count(),
+                'off_campus_repair'   => OffCampus::onlyTrashed()->where('remarks', 'repair')->count(),
             ],
             'assets' => [
                 'categories'      => Category::onlyTrashed()->count(),
