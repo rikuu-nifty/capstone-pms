@@ -173,6 +173,19 @@ const groups = {
 } as const;
 
 const formatRecordName = (row: TrashRecord, tab: string) => {
+    if (tab === 'inventory_lists') {
+        const asset = row as TrashRecord & { asset_name?: string; serial_no?: string };
+
+        const name = asset.asset_name ?? 'Unknown Asset';
+        const serial = asset.serial_no ? `[${asset.serial_no}]` : '';
+
+        return (
+            <>
+                <strong>{name}</strong> {serial}
+            </>
+        );
+    }
+
     if (tab === 'inventory_schedulings' && row.inventory_schedule) {
         const [year, month] = row.inventory_schedule.split('-');
         const date = new Date(Number(year), Number(month) - 1);
