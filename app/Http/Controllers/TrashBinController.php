@@ -346,10 +346,18 @@ class TrashBinController extends Controller
 
             if ($search) {
                 $like = '%' . $search . '%';
-                $query->where(function ($q) use ($like) {
+                $lowerSearch = strtolower($search);
+
+                $query->where(function ($q) use ($like, $lowerSearch, $module) {
                     $q->where('name', 'like', $like)
                         ->orWhere('title', 'like', $like)
                         ->orWhere('role_key', 'like', $like);
+
+                    // Allow searching by module type name as well
+                    if (Str::contains(strtolower($module), $lowerSearch)) {
+                        // Dummy condition to include matches by module name
+                        $q->orWhereRaw('1 = 1');
+                    }
                 });
             }
 
