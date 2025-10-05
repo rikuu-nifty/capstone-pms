@@ -724,7 +724,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                         <Input
-                            placeholder="Search records..."
+                            placeholder="Search record names..."
                             value={rawSearch}
                             onChange={(e) => setRawSearch(e.target.value)}
                             className="w-[280px]"
