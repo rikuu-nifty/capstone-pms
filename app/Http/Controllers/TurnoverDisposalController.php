@@ -178,7 +178,7 @@ class TurnoverDisposalController extends Controller
     public function destroy(TurnoverDisposal $turnoverDisposal)
     {
         DB::transaction(function () use ($turnoverDisposal) {
-            $turnoverDisposal->softDeleteRelatedAssets();
+            // $turnoverDisposal->softDeleteRelatedAssets(); REMOVED TO RESTORE LINK BACK WHEN RESTORED IN TRASH BIN
             $turnoverDisposal->delete();
         });
 

@@ -513,6 +513,10 @@ class TrashBinController extends Controller
         $model = $this->resolveModel($type)::withTrashed()->findOrFail($id);
         $model->restore();
 
+        // if ($type === 'turnover-disposal') {
+        //     $model->turnoverDisposalAssets()->withTrashed()->restore();
+        // }
+
         return back()->with('success', ucfirst($type) . ' restored successfully.');
     }
 
