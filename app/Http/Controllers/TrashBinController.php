@@ -89,10 +89,31 @@ class TrashBinController extends Controller
                                     $query->orWhere('inventory_schedule', 'like', '%-' . $monthMap[$lowerSearch]);
                                 }
                             }),
-                            'transfers' => $query
-                                ->where('current_organization', 'like', $like)
-                                ->orWhere('current_building_room', 'like', $like),
-                            'turnover_disposals' => $query
+                        'transfers' => $query->where(function ($sub) use ($like) {
+                            $sub->where('id', 'like', $like)
+                                ->orWhereHas('currentOrganization', fn($q) =>
+                                    $q->where('name', 'like', $like)
+                                )
+                                ->orWhereHas('receivingOrganization', fn($q) =>
+                                    $q->where('name', 'like', $like)
+                                )
+                                // Related buildings and rooms
+                                ->orWhereHas('currentBuildingRoom.building', fn($q) =>
+                                    $q->where('name', 'like', $like)
+                                        ->orWhere('code', 'like', $like)
+                                )
+                                ->orWhereHas('receivingBuildingRoom.building', fn($q) =>
+                                    $q->where('name', 'like', $like)
+                                        ->orWhere('code', 'like', $like)
+                                )
+                                ->orWhereHas('currentBuildingRoom', fn($q) =>
+                                    $q->where('room', 'like', $like)
+                                )
+                                ->orWhereHas('receivingBuildingRoom', fn($q) =>
+                                    $q->where('room', 'like', $like)
+                                );
+                            }),
+                        'turnover_disposals' => $query
                                 ->where('type', 'like', $like)
                                 ->orWhereHas('personnel', fn($p) =>
                                     $p->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", [$like])
