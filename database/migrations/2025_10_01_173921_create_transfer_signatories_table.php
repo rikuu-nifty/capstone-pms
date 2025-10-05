@@ -16,7 +16,9 @@ return new class extends Migration
             $table->string('role_key'); // e.g. 'approved_by'
             $table->string('name');     // Full name of the signatory
             $table->string('title');    // Position/role title (e.g. 'Head, Property Management')
+
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique('role_key'); // Ensure one row per role_key
         });
