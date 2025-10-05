@@ -6,7 +6,8 @@ import { Filter } from 'lucide-react';
 import Select from 'react-select';
 
 type FieldConfig = {
-    label: string;
+    key: string; // internal key (e.g. "unit_id")
+    label: string; // visible label (e.g. "Unit/Department")
     type?: 'select' | 'date';
     options?: { label: string; value: string | number }[];
     value: string | number | '';
@@ -16,7 +17,7 @@ type FieldConfig = {
 type TrashFilterDropdownProps = {
     title?: string;
     fields: FieldConfig[];
-    onApply: () => void;
+    onApply: (updated: Record<string, string | number | ''>) => void;
     onClear: () => void;
 };
 
@@ -29,12 +30,8 @@ export default function TrashFilterDropdown({
     const [open, setOpen] = useState(false);
     const hasActive = fields.some((f) => f.value !== '');
 
-    // Keep local temp values until Apply is clicked
-    const [tempValues, setTempValues] = useState(
-        fields.map((f) => f.value)
-    );
+    const [tempValues, setTempValues] = useState(fields.map((f) => f.value));
 
-    // Reset local values when the dropdown opens or props change
     useEffect(() => {
         if (open) {
             setTempValues(fields.map((f) => f.value));
@@ -48,9 +45,14 @@ export default function TrashFilterDropdown({
     };
 
     const handleApply = () => {
-        // Apply temp values back to parent fields
-        fields.forEach((f, i) => f.onChange(tempValues[i]));
-        onApply();
+        const updatedFilters: Record<string, string | number | ''> = {};
+
+        fields.forEach((f, i) => {
+            f.onChange(tempValues[i]);
+            updatedFilters[f.key] = tempValues[i];
+        });
+
+        onApply(updatedFilters);
         setOpen(false);
     };
 
@@ -117,17 +119,10 @@ export default function TrashFilterDropdown({
                     </div>
 
                     <div className="flex justify-end gap-2 border-t bg-background p-3 sticky bottom-0">
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={handleClear}
-                        >
+                        <Button variant="destructive" size="sm" onClick={handleClear}>
                             Clear
                         </Button>
-                        <Button
-                            size="sm"
-                            onClick={handleApply}
-                        >
+                        <Button size="sm" onClick={handleApply}>
                             Apply
                         </Button>
                     </div>
