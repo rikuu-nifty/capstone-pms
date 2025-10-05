@@ -83,6 +83,9 @@ type TrashBinProps = {
         receiving_building_id?: string | number;
         scheduled_date?: string | number;
         issuing_office_id?: string | number;
+
+        signatory_type?: string | number;
+
     };
 
     totals: {
@@ -1111,6 +1114,38 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                     const cleared = { ...localFilters, unit_id: "" };
                                     setLocalFilters(cleared);
                                     router.get("/trash-bin", { ...props.filters, ...cleared }, { preserveState: true });
+                                }}
+                            />
+                        )}
+
+                        {/* Signatories */}
+                        {activeTab === "signatories" && (
+                            <TrashFilterDropdown
+                                title="Module Type"
+                                fields={[
+                                    {
+                                        key: "signatory_type",
+                                        label: "Module Type",
+                                        type: "select",
+                                        options: [
+                                            { label: "Inventory Scheduling", value: "Inventory Scheduling" },
+                                            { label: "Property Transfer", value: "Property Transfer" },
+                                            { label: "Turnover/Disposal", value: "Turnover/Disposal" },
+                                            { label: "Off-Campus", value: "Off-Campus" },
+                                        ],
+                                        value: localFilters.signatory_type ?? "",
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, signatory_type: val })),
+                                    },
+                                ]}
+                                onApply={(updated) => {
+                                    const merged = { ...localFilters, ...updated };
+                                    setLocalFilters(merged);
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                }}
+                                onClear={() => {
+                                    const cleared = { ...localFilters, signatory_type: "" };
+                                    setLocalFilters(cleared);
+                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}

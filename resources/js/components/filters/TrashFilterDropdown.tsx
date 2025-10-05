@@ -65,7 +65,10 @@ export default function TrashFilterDropdown({
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <Button className="cursor-pointer">
+                <Button
+                    variant="outline"
+                    className="cursor-pointer"
+                >
                     <Filter className="mr-1 h-4 w-4" /> {title}
                     {hasActive && <Badge className="ml-2" variant="destructive">Active</Badge>}
                 </Button>
@@ -119,10 +122,18 @@ export default function TrashFilterDropdown({
                     </div>
 
                     <div className="flex justify-end gap-2 border-t bg-background p-3 sticky bottom-0">
-                        <Button variant="destructive" size="sm" onClick={handleClear}>
+                        <Button
+                            className='cursor-pointer' 
+                            variant="destructive"
+                            size="sm" onClick={handleClear}
+                        >
                             Clear
                         </Button>
-                        <Button size="sm" onClick={handleApply}>
+                        <Button
+                            className='cursor-pointer' 
+                            size="sm" 
+                            onClick={handleApply}
+                        >
                             Apply
                         </Button>
                     </div>

@@ -327,29 +327,38 @@ class TrashBinController extends Controller
             'rooms' => BuildingRoom::select('id', 'room as name')->orderBy('room')->get(),
         ];
 
-        $allSignatories = collect()
-            ->merge(
-                InventorySchedulingSignatory::onlyTrashed()
-                    ->get()
-                    ->map(fn($s) => $s->setAttribute('module_type', 'Inventory Scheduling'))
-            )
-            ->merge(
-                TransferSignatory::onlyTrashed()
-                    ->get()
-                    ->map(fn($s) => $s->setAttribute('module_type', 'Property Transfer'))
-            )
-            ->merge(
-                TurnoverDisposalSignatory::onlyTrashed()
-                    ->get()
-                    ->map(fn($s) => $s->setAttribute('module_type', 'Turnover/Disposal'))
-            )
-            ->merge(
-                OffCampusSignatory::onlyTrashed()
-                    ->get()
-                    ->map(fn($s) => $s->setAttribute('module_type', 'Off-Campus'))
-            )
-            ->sortByDesc('deleted_at')
-            ->values();
+        $selectedType = $request->input('signatory_type');
+        $search = $request->input('search');
+
+        $allSignatories = collect();
+
+        $signatorySets = [
+            'Inventory Scheduling' => InventorySchedulingSignatory::onlyTrashed(),
+            'Property Transfer' => TransferSignatory::onlyTrashed(),
+            'Turnover/Disposal' => TurnoverDisposalSignatory::onlyTrashed(),
+            'Off-Campus' => OffCampusSignatory::onlyTrashed(),
+        ];
+
+        foreach ($signatorySets as $module => $query) {
+            if ($selectedType && $selectedType !== $module) {
+                continue; // skip other module types
+            }
+
+            if ($search) {
+                $like = '%' . $search . '%';
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'like', $like)
+                        ->orWhere('title', 'like', $like)
+                        ->orWhere('role_key', 'like', $like);
+                });
+            }
+
+            $records = $query->get()->map(fn($s) => $s->setAttribute('module_type', $module));
+            $allSignatories = $allSignatories->merge($records);
+        }
+
+        $allSignatories = $allSignatories->sortByDesc('deleted_at')->values();
+
 
         $page = LengthAwarePaginator::resolveCurrentPage();
         $paged = $allSignatories->forPage($page, $perPage)->values();
@@ -461,6 +470,8 @@ class TrashBinController extends Controller
                 'receiving_building_id' => $request->input('receiving_building_id'),
                 'scheduled_date'      => $request->input('scheduled_date'),
                 'issuing_office_id'   => $request->input('issuing_office_id'),
+
+                'signatory_type' => $request->input('signatory_type'),
             ],
 
             'totals' => $totals,
