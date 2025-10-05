@@ -67,11 +67,11 @@ export default function TrashFilterDropdown({
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="cursor-pointer">
                     <Filter className="mr-1 h-4 w-4" /> {title}
-                    {hasActive && <Badge className="ml-2" variant="secondary">Active</Badge>}
+                    {hasActive && <Badge className="ml-2" variant="destructive">Active</Badge>}
                 </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent className="p-0 w-[400px] h-[440px] max-h-[85vh] overflow-hidden z-[100]">
+            <DropdownMenuContent className="p-0 w-[400px] h-[440px] max-h-[95vh] overflow-hidden z-[100]">
                 <div className="flex flex-col h-full">
                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
                         {fields.map((field, i) => (

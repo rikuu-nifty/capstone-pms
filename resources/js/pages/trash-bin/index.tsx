@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import SortDropdown from '@/components/filters/SortDropdown';
 import { Input } from '@/components/ui/input';
 import type { SortDir } from '@/components/filters/SortDropdown';
 import TrashFilterDropdown from '@/components/filters/TrashFilterDropdown';
+
+import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 interface TrashRecord {
     id: number;
@@ -433,6 +435,29 @@ export default function TrashBinIndex(props: TrashBinProps) {
         });
     };
 
+    const cleanFilters = (
+        filters: Record<string, string | number | boolean | null | undefined>
+    ): Record<string, string | number | boolean> => {
+        const cleaned: Record<string, string | number | boolean> = {};
+
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value === '' || value === null || value === undefined) return;
+
+            // Skip default values to keep the URL clean
+            if (key === 'sort' && value === 'id') return;
+            if (key === 'dir' && value === 'desc') return;
+            if (key === 'date_filter' && value === 'all') return;
+            if (key === 'per_page' && Number(value) === 20) return;
+
+            cleaned[key] = value;
+        });
+
+        // Always keep tab so reload maintains active module
+        if (filters.tab) cleaned.tab = String(filters.tab);
+
+        return cleaned;
+    };
+
     const { totals } = props;
 
     const dataMap: Record<string, PaginatedData<TrashRecord>> = {
@@ -493,7 +518,25 @@ export default function TrashBinIndex(props: TrashBinProps) {
         return `${capitalized} records`;
     };
 
-    const [search, setSearch] = useState(props.filters.search ?? '');
+    const [rawSearch, setRawSearch] = useState(props.filters.search ?? '');
+    const search = useDebouncedValue(rawSearch, 300);
+
+    useEffect(() => {
+        router.get(
+            '/trash-bin',
+            cleanFilters({
+                ...props.filters,
+                ...localFilters,
+                search,
+                sort: sortKey,
+                dir: sortDir,
+                tab: activeTab,
+            }),
+            { preserveState: true }
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search]);
+
     const [sortKey, setSortKey] = useState(props.filters.sort ?? 'id');
     const [sortDir, setSortDir] = useState<SortDir>(props.filters.dir ?? 'desc');
 
@@ -682,29 +725,10 @@ export default function TrashBinIndex(props: TrashBinProps) {
                     <div className="flex items-center gap-2">
                         <Input
                             placeholder="Search records..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
                             className="w-[280px]"
                         />
-                        <Button
-                            onClick={() =>
-                                router.get(
-                                "/trash-bin",
-                                {
-                                    ...props.filters,
-                                    ...localFilters,
-                                    search,
-                                    sort: sortKey,
-                                    dir: sortDir,
-                                    tab: activeTab,
-                                },
-                                { preserveState: true }
-                                )
-                            }
-                            className="cursor-pointer"
-                        >
-                            Search
-                        </Button>
 
                         {/* Asset Models */}
                         {activeTab === "asset_models" && (
@@ -726,7 +750,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, category_id: "" };
@@ -766,7 +790,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, month: "" };
@@ -824,7 +848,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = {
@@ -861,7 +885,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, purpose: "" };
@@ -899,7 +923,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, type: "", issuing_office_id: "" };
@@ -929,7 +953,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, name: "" };
@@ -959,7 +983,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, category_id: "" };
@@ -989,7 +1013,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, building_id: "" };
@@ -1019,7 +1043,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", { ...props.filters, ...merged, tab: activeTab }, { preserveState: true });
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = { ...localFilters, unit_id: "" };
