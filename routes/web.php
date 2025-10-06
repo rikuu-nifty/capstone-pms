@@ -168,20 +168,20 @@ Route::get('/', function () {
     Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
         ->name('asset-summary.show');
     
-   // 🔔 NOTIFICATIONS
-Route::prefix('notifications')->name('notifications.')->group(function () {
-    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    // NOTIFICATIONS
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
 
-    Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('markAllRead');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('markAllRead');
 
-    Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read');
-    Route::post('/{notification}/unread', [NotificationController::class, 'markUnread'])->name('unread');
+        Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+        Route::post('/{notification}/unread', [NotificationController::class, 'markUnread'])->name('unread');
 
-    Route::post('/{notification}/dismiss', [NotificationController::class, 'dismiss'])->name('dismiss');
-    Route::post('/{notification}/archive', [NotificationController::class, 'archive'])->name('archive');
+        Route::post('/{notification}/dismiss', [NotificationController::class, 'dismiss'])->name('dismiss');
+        Route::post('/{notification}/archive', [NotificationController::class, 'archive'])->name('archive');
 
-    Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
-}); // ✅ IMPORTANT: closes the notifications group
+        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+    });
 
     // Mark all as read
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])

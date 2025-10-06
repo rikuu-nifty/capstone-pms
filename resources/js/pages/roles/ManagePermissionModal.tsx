@@ -28,6 +28,10 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "view-own-unit-inventory-list",
         "view-own-unit-buildings",
     ],
+    "Trash Bin": [
+        "view-trash-bin",
+        "restore-trash-bin",
+    ],
     "Users Management": [
         "view-users-page",
         "approve-users",
@@ -55,11 +59,7 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "approve-form-approvals",
         "delete-form-approvals",
     ],
-    "Form Approvals": [
-        "view-form-approvals",
-        "approve-form-approvals",
-        "delete-form-approvals",
-    ],
+    
     "Personnels": [
         "view-personnels",
         "create-personnels",
