@@ -1,6 +1,7 @@
 import ViewModal from '@/components/modals/ViewModal';
 import { Button } from '@/components/ui/button';
 import type { OffCampus } from './index';
+import { formatEnums, ucwords } from '@/types/custom-index';
 
 interface OffCampusViewModalProps {
     open: boolean;
@@ -55,9 +56,15 @@ export default function OffCampusViewModal({ open, onClose, offCampus, signatori
                     <img src="https://www.auf.edu.ph/home/images/mascot/GEN.png" alt="Logo" className="h-20 opacity-90" />
                 </div>
                 <div className="absolute left-1/2 -translate-x-1/2 text-center">
-                    <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">Property Management Office</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">pmo@auf.edu.ph</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">+63 973 234 3456</p>
+                    <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">
+                        Angeles University Foundation
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs italic">
+                        Angeles City
+                    </p>
+                    <p className="text-base text-gray-800 dark:text-gray-400 print:text-sm">
+                        Office of the Administrative Services
+                    </p>
                 </div>
                 <div className="text-right text-sm leading-snug">
                     <p>
@@ -77,12 +84,16 @@ export default function OffCampusViewModal({ open, onClose, offCampus, signatori
                 </div>
             </div>
 
+            <h2 className="mt-4 text-center text-base sm:text-lg md:text-xl font-bold tracking-wide text-gray-900 dark:text-gray-100 underline">
+                Off Campus Form
+            </h2>
+
             {/* ---------- Authorization Line (new) ---------- */}
-            <div className="mt-4 text-sm">
+            <div className="mt-6 text-sm">
                 <p>
-                    This is to authorize Mr./Mrs. <span className="font-semibold">{offCampus.requester_name}</span>, College/Unit{' '}
-                    <span className="font-semibold">
-                        {offCampus.college_or_unit ? `${offCampus.college_or_unit.name} (${offCampus.college_or_unit.code})` : 'College/Unit _______'}
+                    This is to authorize Mr./Mrs. <span className="font-semibold underline">{ucwords(offCampus.requester_name)}</span>, College/Unit{' '}
+                    <span className="font-semibold underline">
+                        {offCampus.college_or_unit ? `${offCampus.college_or_unit.name} (${formatEnums(offCampus.college_or_unit.code)})` : 'College/Unit _______'}
                     </span>
                     , to bring in / take out from the Angeles University Foundation premises the following properties/equipment described as follows:
                 </p>
@@ -126,7 +137,7 @@ export default function OffCampusViewModal({ open, onClose, offCampus, signatori
 
             {/* ---------- Return Responsibility Note ---------- */}
             <p className="mt-4 text-xs text-gray-600 italic">
-                Above item shall be returned to the University on or before {formatDateLong(offCampus.return_date)}. The requester will be responsible
+                Above item shall be returned to the University on or before <strong>{formatDateLong(offCampus.return_date)}</strong>. The requester will be responsible
                 for any damages incurred while the items are in his/her possession.
             </p>
 
