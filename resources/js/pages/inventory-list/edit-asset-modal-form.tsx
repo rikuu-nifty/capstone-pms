@@ -10,8 +10,6 @@ import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';// ✅ new import
 
-
-
 type Props = {
     asset: Asset;
     onClose: () => void;
@@ -106,8 +104,197 @@ export const EditAssetModalForm = ({
                     <DialogHeader>
                         <DialogTitle>Update Asset - Asset Record #{asset.id}</DialogTitle>
                     </DialogHeader>
-
                     <div className="grid grid-cols-2 gap-4 py-4">
+
+                        <div>
+                            <Label>Asset Name</Label>
+                            <Input placeholder="Enter Assets" value={form.asset_name} onChange={(e) => handleChange('asset_name', e.target.value)} />
+                        </div>
+
+                        <div>
+                            <Label>Serial Number</Label>
+                            <Input
+                                placeholder="Enter Serial No."
+                                value={form.serial_no}
+                                onChange={(e) => handleChange('serial_no', e.target.value)}
+                            />
+                        </div>
+
+                        <div>
+                            <Label>Asset Category</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.category_id ?? ''} // FK on the row
+                                onChange={(e) => handleChange('category_id', Number(e.target.value))}
+                            >
+                                <option value="">Select Asset Category</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Asset Model</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.asset_model_id}
+                                onChange={(e) => handleChange('asset_model_id', Number(e.target.value))}
+                                disabled={!form.brand}
+                            >
+                                <option value="">Select Asset Model</option>
+                                {filteredModels.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                        {m.model}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Brand</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.brand}
+                                onChange={(e) => {
+                                    handleChange('brand', e.target.value);
+                                    handleChange('asset_model_id', '');
+                                }}
+                            >
+                                <option value="">Select Brand</option>
+                                {uniqueBrands.map((b) => (
+                                    <option key={b} value={b}>
+                                        {b}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label>Asset Type</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.asset_type}
+                                onChange={(e) => handleChange('asset_type', e.target.value as 'fixed' | 'not_fixed' | '')}
+                            >
+                                <option value="">Select Asset Type</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="not_fixed">Not Fixed</option>
+                            </select>
+                        </div>
+
+                        {/* Asset Image */}
+                        <div className="col-span-2">
+                            <Label className="mb-4 block text-left text-base font-semibold">Asset Image (Before & After)</Label>
+
+                            <div className="flex justify-center gap-6">
+                                {/* Before (current DB image) */}
+                                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                                    <p className="mb-3 text-sm font-medium text-gray-600">Current Image</p>
+                                    {asset.image_path ? (
+                                        <img
+                                            src={`/storage/${asset.image_path}`}
+                                            alt={asset.asset_name}
+                                            className="max-h-64 w-auto rounded-md border object-contain"
+                                        />
+                                    ) : (
+                                        <span className="text-sm text-gray-400">No image available</span>
+                                    )}
+                                </div>
+
+                                {/* After (upload new or camera) */}
+                                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                                    <p className="mb-3 text-sm font-medium text-gray-600">Update Image</p>
+
+                                    {showWebcam ? (
+                                        <WebcamCapture
+                                            onCapture={(file) => {
+                                                handleChange('image', file);
+                                                setShowWebcam(false);
+                                            }}
+                                            onCancel={() => setShowWebcam(false)}
+                                        />
+                                    ) : (
+                                        <>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        if (e.target.files?.[0]) {
+                                                            handleChange('image', e.target.files[0]);
+                                                        }
+                                                    }}
+                                                    className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
+                                                        file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
+                                                        file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                                />
+                                                <Button type="button" onClick={() => setShowWebcam(true)}>
+                                                    Use Camera
+                                                </Button>
+                                            </div>
+
+                                            {form.image && (
+                                                <div className="mt-4 flex flex-col items-center gap-3">
+                                                    <img
+                                                        src={URL.createObjectURL(form.image)}
+                                                        alt="Preview"
+                                                        className="max-h-64 w-auto rounded-md border object-contain"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleChange('image', null);
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                            }}
+                                                            className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleChange('image', null);
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                                setShowWebcam(true);
+                                                            }}
+                                                            className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                                                        >
+                                                            Retake
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="col-span-2 border-t"></div>
+
+                        {/* Unit/Department */}
+                        <div>
+                            <Label>Unit/Department</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.unit_or_department_id}
+                                onChange={(e) => handleChange('unit_or_department_id', Number(e.target.value))}
+                            >
+                                <option value="">Select Unit/Department</option>
+                                {unitOrDepartments.map((u) => (
+                                    <option key={u.id} value={u.id}>
+                                        {u.code} - {u.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        
                         {/* Building */}
                         <div>
                             <Label>Building</Label>
@@ -124,23 +311,6 @@ export const EditAssetModalForm = ({
                                 {buildings.map((b) => (
                                     <option key={b.id} value={b.id}>
                                         {b.name} ({b.code})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Unit/Department */}
-                        <div>
-                            <Label>Unit/Department</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.unit_or_department_id}
-                                onChange={(e) => handleChange('unit_or_department_id', Number(e.target.value))}
-                            >
-                                <option value="">Select Unit/Department</option>
-                                {unitOrDepartments.map((u) => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.code} - {u.name}
                                     </option>
                                 ))}
                             </select>
@@ -186,314 +356,380 @@ export const EditAssetModalForm = ({
                             </select>
                         </div>
 
+                        <div>
+                            <Label>Status</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.status}
+                                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
+                            >
+                                <option value="active">Active</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
 
-        <div>
-            <Label>Status</Label>
-            <select
-                className="w-full rounded-lg border p-2"
-                value={form.status}
-                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
-            >
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-            </select>
-        </div>
+                        {/* Assigned To */}
+                        <div className="col-span-2">
+                            <Label>Assigned To</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.assigned_to ?? ''}
+                                onChange={(e) => handleChange('assigned_to', e.target.value ? Number(e.target.value) : null)}
+                            >
+                                <option value="">Select Personnel</option>
+                                {personnels.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.full_name}{p.position ? ` – ${p.position}` : ''}
+                                </option>
+                                ))}
+                            </select>
+                        </div>
 
-       {/* Assigned To */}
-<div className="col-span-2">
-  <Label>Assigned To</Label>
-  <select
-    className="w-full rounded-lg border p-2"
-    value={form.assigned_to ?? ''}
-    onChange={(e) => handleChange('assigned_to', e.target.value ? Number(e.target.value) : null)}
-  >
-    <option value="">— Select Personnel —</option>
-    {personnels.map((p) => (
-      <option key={p.id} value={p.id}>
-        {p.full_name}{p.position ? ` – ${p.position}` : ''}
-      </option>
-    ))}
-  </select>
-</div>
+                        {/* Divider */}
+                        <div className="col-span-2 border-t"></div>
 
-        {/* Divider */}
-        <div className="col-span-2 border-t"></div>
+                        {/* Memorandum Number */}
+                        <div>
+                            <Label>Memorandum Number</Label>
+                            <Input
+                                type="number"
+                                className="w-full rounded-lg border p-2"
+                                value={form.memorandum_no}
+                                onChange={(e) => handleChange('memorandum_no', Number(e.target.value))}
+                            />
+                        </div>
 
-        {/* Date Purchased */}
-        <div>
-            <Label>Date Purchased</Label>
-            <PickerInput type="date" value={form.date_purchased} onChange={(v) => handleChange('date_purchased', v)} />
-        </div>
+                        {/* Supplier */}
+                        <div>
+                            <Label>Supplier</Label>
+                            <Input 
+                                placeholder="Enter Suppliers" 
+                                value={form.supplier} 
+                                onChange={(e) => 
+                                    handleChange('supplier', e.target.value)
+                                }
+                            />
+                        </div>
 
-        {/* Maintenance Due Date */}
-        <div>
-            <Label>Maintenance Due Date</Label>
-            <PickerInput type="date" value={form.maintenance_due_date} onChange={(v) => handleChange('maintenance_due_date', v)} />
-        </div>
+                        {/* Unit Cost */}
+                        <div>
+                            <Label>Unit Cost</Label>
+                            <Input
+                                type="number"
+                                placeholder="Enter Unit Cost"
+                                value={form.unit_cost}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    handleChange('unit_cost', value);
 
-        {/* Asset Type */}
-        <div>
-            <Label>Asset Type</Label>
-            <select
-                className="w-full rounded-lg border p-2"
-                value={form.asset_type}
-                onChange={(e) => handleChange('asset_type', e.target.value as 'fixed' | 'not_fixed' | '')}
-            >
-                <option value="">Select Asset Type</option>
-                <option value="fixed">Fixed</option>
-                <option value="not_fixed">Not Fixed</option>
-            </select>
-            {/* {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>} */}
-        </div>
+                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
+                                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
+                                    handleChange('depreciation_value', depreciation);
+                                }}
+                            />
+                        </div>
 
-        {/* Asset Category */}
-        <div>
-            <Label>Asset Category</Label>
-            <select
-                className="w-full rounded-lg border p-2"
-                value={form.category_id ?? ''} // FK on the row
-                onChange={(e) => handleChange('category_id', Number(e.target.value))}
-            >
-                <option value="">Select Asset Category</option>
-                {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                    </option>
-                ))}
-            </select>
-            {/* {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>} */}
-        </div>
+                        {/* Depreciation Value */}
+                        <div>
+                            <Label>Depreciation Value (per year)</Label>
+                            <Input
+                                type="text"
+                                value={form.depreciation_value ? `₱ ${Number(form.depreciation_value).toFixed(2)}` : ''}
+                                readOnly // ✅ same as Total Cost, user can’t edit
+                                className="bg-white text-black"
+                            />
+                        </div>
 
-        {/* Asset Name */}
-        <div>
-            <Label>Asset Name</Label>
-            <Input placeholder="Enter Assets" value={form.asset_name} onChange={(e) => handleChange('asset_name', e.target.value)} />
-        </div>
+                        {/* Date Purchased */}
+                        <div>
+                            <Label>Date Purchased</Label>
+                            <PickerInput type="date" value={form.date_purchased} onChange={(v) => handleChange('date_purchased', v)} />
+                        </div>
 
-        {/* Supplier */}
-        <div>
-            <Label>Supplier</Label>
-            <Input placeholder="Enter Suppliers" value={form.supplier} onChange={(e) => handleChange('supplier', e.target.value)} />
-        </div>
+                        {/* Maintenance Due Date */}
+                        <div>
+                            <Label>Maintenance Due Date</Label>
+                            <PickerInput type="date" value={form.maintenance_due_date} onChange={(v) => handleChange('maintenance_due_date', v)} />
+                        </div>
 
-        {/* Serial Number */}
-        <div>
-            <Label>Serial Number</Label>
-            <Input
-                placeholder="Enter Serial No."
-                value={form.serial_no}
-                onChange={(e) => handleChange('serial_no', e.target.value)}
-            />
-        </div>
+                        {/* Asset Type */}
+                        {/* <div>
+                            <Label>Asset Type</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.asset_type}
+                                onChange={(e) => handleChange('asset_type', e.target.value as 'fixed' | 'not_fixed' | '')}
+                            >
+                                <option value="">Select Asset Type</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="not_fixed">Not Fixed</option>
+                            </select> */}
+                            {/* {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>} */}
+                        {/* </div> */}
 
-        {/* Unit Cost */}
-        <div>
-            <Label>Unit Cost</Label>
-            <Input
-                type="number"
-                placeholder="Enter Unit Cost"
-                value={form.unit_cost}
-                onChange={(e) => {
-                    const value = e.target.value;
-                    handleChange('unit_cost', value);
+                        {/* Asset Category */}
+                        {/* <div>
+                            <Label>Asset Category</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.category_id ?? ''} // FK on the row
+                                onChange={(e) => handleChange('category_id', Number(e.target.value))}
+                            >
+                                <option value="">Select Asset Category</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select> */}
+                            {/* {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>} */}
+                        {/* </div> */}
 
-                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
-                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
-                    handleChange('depreciation_value', depreciation);
-                }}
-            />
-        </div>
+                        {/* Asset Name */}
+                        {/* <div>
+                            <Label>Asset Name</Label>
+                            <Input placeholder="Enter Assets" value={form.asset_name} onChange={(e) => handleChange('asset_name', e.target.value)} />
+                        </div> */}
 
-        {/* Depreciation Value */}
-        <div>
-            <Label>Depreciation Value (per year)</Label>
-            <Input
-                type="text"
-                value={form.depreciation_value ? `₱ ${Number(form.depreciation_value).toFixed(2)}` : ''}
-                readOnly // ✅ same as Total Cost, user can’t edit
-                className="bg-white text-black"
-            />
-        </div>
+                        {/* Supplier */}
+                        {/* <div>
+                            <Label>Supplier</Label>
+                            <Input placeholder="Enter Suppliers" value={form.supplier} onChange={(e) => handleChange('supplier', e.target.value)} />
+                        </div> */}
 
-        {/* Brand */}
-        <div>
-            <Label>Brand</Label>
-            <select
-                className="w-full rounded-lg border p-2"
-                value={form.brand}
-                onChange={(e) => {
-                    handleChange('brand', e.target.value);
-                    handleChange('asset_model_id', '');
-                }}
-            >
-                <option value="">Select Brand</option>
-                {uniqueBrands.map((b) => (
-                    <option key={b} value={b}>
-                        {b}
-                    </option>
-                ))}
-            </select>
-        </div>
+                        {/* Serial Number */}
+                        {/* <div>
+                            <Label>Serial Number</Label>
+                            <Input
+                                placeholder="Enter Serial No."
+                                value={form.serial_no}
+                                onChange={(e) => handleChange('serial_no', e.target.value)}
+                            />
+                        </div> */}
 
-        {/* Asset Model */}
-        <div>
-            <Label>Asset Model</Label>
-            <select
-                className="w-full rounded-lg border p-2"
-                value={form.asset_model_id}
-                onChange={(e) => handleChange('asset_model_id', Number(e.target.value))}
-                disabled={!form.brand}
-            >
-                <option value="">Select Asset Model</option>
-                {filteredModels.map((m) => (
-                    <option key={m.id} value={m.id}>
-                        {m.model}
-                    </option>
-                ))}
-            </select>
-        </div>
+                        {/* Unit Cost */}
+                        {/* <div>
+                            <Label>Unit Cost</Label>
+                            <Input
+                                type="number"
+                                placeholder="Enter Unit Cost"
+                                value={form.unit_cost}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    handleChange('unit_cost', value);
 
-        {/* Memorandum Number */}
-        <div>
-            <Label>Memorandum Number</Label>
-            <Input
-                type="number"
-                className="w-full rounded-lg border p-2"
-                value={form.memorandum_no}
-                onChange={(e) => handleChange('memorandum_no', Number(e.target.value))}
-            />
-        </div>
+                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
+                                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
+                                    handleChange('depreciation_value', depreciation);
+                                }}
+                            />
+                        </div> */}
 
-        <div>
-            <Label>Transfer Status</Label>
-            <div className="mt-1 rounded-lg border border-gray-300 bg-white p-2 text-sm text-black">
-                {asset.transfer ? asset.transfer.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-'}
-            </div>
-        </div>
+                        {/* Depreciation Value */}
+                        {/* <div>
+                            <Label>Depreciation Value (per year)</Label>
+                            <Input
+                                type="text"
+                                value={form.depreciation_value ? `₱ ${Number(form.depreciation_value).toFixed(2)}` : ''}
+                                readOnly // ✅ same as Total Cost, user can’t edit
+                                className="bg-white text-black"
+                            />
+                        </div> */}
 
-        {/* Total Cost */}
-        <div>
-            <Label>Total Cost</Label>
-            <Input
-                type="text"
-                value={form.quantity && form.unit_cost ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toFixed(2)}` : ''}
-                readOnly // ✅ looks like Unit Cost, but can’t be edited
-                className="bg-white text-black"
-            />
-        </div>
+                        {/* Brand */}
+                        {/* <div>
+                            <Label>Brand</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.brand}
+                                onChange={(e) => {
+                                    handleChange('brand', e.target.value);
+                                    handleChange('asset_model_id', '');
+                                }}
+                            >
+                                <option value="">Select Brand</option>
+                                {uniqueBrands.map((b) => (
+                                    <option key={b} value={b}>
+                                        {b}
+                                    </option>
+                                ))}
+                            </select>
+                        </div> */}
 
-        {/* Asset Image */}
-        <div className="col-span-2">
-            <Label className="mb-4 block text-left text-base font-semibold">Asset Image (Before & After)</Label>
+                        {/* Asset Model */}
+                        {/* <div>
+                            <Label>Asset Model</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.asset_model_id}
+                                onChange={(e) => handleChange('asset_model_id', Number(e.target.value))}
+                                disabled={!form.brand}
+                            >
+                                <option value="">Select Asset Model</option>
+                                {filteredModels.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                        {m.model}
+                                    </option>
+                                ))}
+                            </select>
+                        </div> */}
 
-            <div className="flex justify-center gap-6">
-                {/* Before (current DB image) */}
-                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
-                    <p className="mb-3 text-sm font-medium text-gray-600">Current Image</p>
-                    {asset.image_path ? (
-                        <img
-                            src={`/storage/${asset.image_path}`}
-                            alt={asset.asset_name}
-                            className="max-h-64 w-auto rounded-md border object-contain"
-                        />
-                    ) : (
-                        <span className="text-sm text-gray-400">No image available</span>
-                    )}
-                </div>
+                        {/* Memorandum Number */}
+                        {/* <div>
+                            <Label>Memorandum Number</Label>
+                            <Input
+                                type="number"
+                                className="w-full rounded-lg border p-2"
+                                value={form.memorandum_no}
+                                onChange={(e) => handleChange('memorandum_no', Number(e.target.value))}
+                            />
+                        </div> */}
 
-                {/* After (upload new or camera) */}
-                <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
-                    <p className="mb-3 text-sm font-medium text-gray-600">Update Image</p>
-
-                    {showWebcam ? (
-                        <WebcamCapture
-                            onCapture={(file) => {
-                                handleChange('image', file);
-                                setShowWebcam(false);
-                            }}
-                            onCancel={() => setShowWebcam(false)}
-                        />
-                    ) : (
-                        <>
-                            <div className="flex gap-2">
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        if (e.target.files?.[0]) {
-                                            handleChange('image', e.target.files[0]);
-                                        }
-                                    }}
-                                    className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
-                                        file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
-                                        file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
-                                />
-                                <Button type="button" onClick={() => setShowWebcam(true)}>
-                                    Use Camera
-                                </Button>
+                        {/* <div>
+                            <Label>Transfer Status</Label>
+                            <div className="mt-1 rounded-lg border border-gray-300 bg-white p-2 text-sm text-black">
+                                {asset.transfer ? asset.transfer.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-'}
                             </div>
+                        </div> */}
 
-                            {form.image && (
-                                <div className="mt-4 flex flex-col items-center gap-3">
-                                    <img
-                                        src={URL.createObjectURL(form.image)}
-                                        alt="Preview"
-                                        className="max-h-64 w-auto rounded-md border object-contain"
-                                    />
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                handleChange('image', null);
-                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                        {/* Total Cost */}
+                        {/* <div className='col-span-2'>
+                            <Label>Total Cost</Label>
+                            <Input
+                                type="text"
+                                value={form.quantity && form.unit_cost ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toFixed(2)}` : ''}
+                                readOnly // looks like Unit Cost, but can’t be edited
+                                className="bg-white text-black"
+                            />
+                        </div> */}
+
+                        <div className="col-span-2">
+                            <Label>Total Cost</Label>
+                            <Input
+                                type="text"
+                                value={
+                                form.quantity && form.unit_cost
+                                    ? `₱ ${(Number(form.quantity) * Number(form.unit_cost))
+                                        .toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                    : ''
+                                }
+                                readOnly
+                                className="bg-white text-black cursor-default"
+                            />
+                        </div>
+
+                        {/* Asset Image */}
+                        {/* <div className="col-span-2">
+                            <Label className="mb-4 block text-left text-base font-semibold">Asset Image (Before & After)</Label>
+
+                            <div className="flex justify-center gap-6"> */}
+                                {/* Before (current DB image) */}
+                                {/* <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                                    <p className="mb-3 text-sm font-medium text-gray-600">Current Image</p>
+                                    {asset.image_path ? (
+                                        <img
+                                            src={`/storage/${asset.image_path}`}
+                                            alt={asset.asset_name}
+                                            className="max-h-64 w-auto rounded-md border object-contain"
+                                        />
+                                    ) : (
+                                        <span className="text-sm text-gray-400">No image available</span>
+                                    )}
+                                </div> */}
+
+                                {/* After (upload new or camera) */}
+                                {/* <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
+                                    <p className="mb-3 text-sm font-medium text-gray-600">Update Image</p>
+
+                                    {showWebcam ? (
+                                        <WebcamCapture
+                                            onCapture={(file) => {
+                                                handleChange('image', file);
+                                                setShowWebcam(false);
                                             }}
-                                            className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
-                                        >
-                                            Remove
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                handleChange('image', null);
-                                                if (fileInputRef.current) fileInputRef.current.value = '';
-                                                setShowWebcam(true);
-                                            }}
-                                            className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
-                                        >
-                                            Retake
-                                        </button>
-                                    </div>
+                                            onCancel={() => setShowWebcam(false)}
+                                        />
+                                    ) : (
+                                        <>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        if (e.target.files?.[0]) {
+                                                            handleChange('image', e.target.files[0]);
+                                                        }
+                                                    }}
+                                                    className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
+                                                        file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
+                                                        file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                                />
+                                                <Button type="button" onClick={() => setShowWebcam(true)}>
+                                                    Use Camera
+                                                </Button>
+                                            </div>
+
+                                            {form.image && (
+                                                <div className="mt-4 flex flex-col items-center gap-3">
+                                                    <img
+                                                        src={URL.createObjectURL(form.image)}
+                                                        alt="Preview"
+                                                        className="max-h-64 w-auto rounded-md border object-contain"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleChange('image', null);
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                            }}
+                                                            className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleChange('image', null);
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                                setShowWebcam(true);
+                                                            }}
+                                                            className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                                                        >
+                                                            Retake
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
-                            )}
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
+                            </div>
+                        </div> */}
 
-        {/* Description */}
-        <div className="col-span-2">
-            <Label>Description</Label>
-            <Textarea
-                placeholder="Enter Description"
-                value={form.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-            />
-        </div>
-        <div className="col-span-2 border-t"></div>
-    </div>
+                        {/* Description */}
+                        <div className="col-span-2">
+                            <Label>Description</Label>
+                            <Textarea
+                                placeholder="Enter Description"
+                                value={form.description}
+                                onChange={(e) => handleChange('description', e.target.value)}
+                            />
+                        </div>
+                        <div className="col-span-2 border-t"></div>
+                    </div>
 
-    <DialogFooter>
-        <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-        </DialogClose>
-        <Button type="button" onClick={handleSubmit}>
-            Save Changes
-        </Button>
-    </DialogFooter>
-</DialogContent>
-</form>
-</Dialog>
-);
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button type="button" onClick={handleSubmit}>
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </form>
+    </Dialog>
+    );
 };

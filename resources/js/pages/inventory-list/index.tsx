@@ -868,158 +868,29 @@ export default function InventoryListIndex({
                     <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
                         {/*overflow-y-auto */}
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
-                            {/* Top Section */}
 
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Building</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.building_id}
-                                    onChange={(e) => setData('building_id', Number(e.target.value))}
-                                >
-                                    <option value="">Select Building</option>
-                                    {buildings.map((building) => (
-                                        <option key={building.id} value={building.id}>
-                                            {building.name} ({building.code})
-                                        </option>
-                                    ))}
-                                </select>
-
-                                {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
-                            </div>
-
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Unit/Department</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.unit_or_department_id}
-                                    onChange={(e) => setData('unit_or_department_id', Number(e.target.value))}
-                                >
-                                    <option value="">Select Unit/Department</option>
-                                    {unitOrDepartments.map((unit) => (
-                                        <option key={unit.id} value={unit.id}>
-                                            {unit.name} ({unit.code} )
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
-                            </div>
-
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Room</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.building_room_id}
-                                    onChange={(e) => setData('building_room_id', Number(e.target.value))}
-                                    disabled={!data.building_id}
-                                >
-                                    <option value="">Select Room</option>
-                                    {filteredRooms.map((room) => (
-                                        <option key={room.id} value={room.id}>
-                                            {room.room}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Sub Area</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.sub_area_id ?? ''}
-                                    onChange={(e) => setData('sub_area_id', e.target.value === '' ? null : Number(e.target.value))}
-                                    disabled={!data.building_room_id}
-                                >
-                                    <option value="">Select Sub Area</option>
-                                    {subAreas
-                                        .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id)) // ✅ typed
-                                        .map(
-                                            (
-                                                s: SubArea, // ✅ typed
-                                            ) => (
-                                                <option key={s.id} value={s.id}>
-                                                    {s.name}
-                                                </option>
-                                            ),
-                                        )}
-                                </select>
-                                {errors.sub_area_id && <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>}
-                            </div>
-
-                            {/* <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Status</label>
-                                <select
-                                    className={`w-full rounded-lg border p-2 ${errors.status ? 'border-red-500' : 'border-gray-300'}`}
-                                    value={data.status}
-                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived')}
-                                >
-                                    <option value="">Select Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="archived">Archived</option>
-                                </select>
-
-                                {errors.status && <p className="mt-1 text-sm text-red-500">{errors.status}</p>}
-                            </div> */}
-
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Status</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.status}
-                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived')}
-                                >
-                                    <option value="">Select Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="archived">Archived</option>
-                                </select>
-
-                                {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
-                            </div>
-
-                            <div className="col-span-2">
-                                <label className="mb-1 block font-medium">Assigned To</label>
-                                <select
-  className="w-full rounded-lg border p-2"
-  value={data.assigned_to ?? ''}
-  onChange={(e) => setData('assigned_to', e.target.value ? Number(e.target.value) : null)}
->
-  <option value="">— Select Personnel —</option>
-  {personnels.map((p) => (
-    <option key={p.id} value={p.id}>
-      {p.full_name}{p.position ? ` – ${p.position}` : ''}
-    </option>
-  ))}
-</select>
-
-                            </div>
-
-                            {/* Divider */}
-                            <div className="col-span-2 border-t"></div>
-
-                            {/* Middle Section */}
                             <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Date Purchased</label>
-                                <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
-                                {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
-                            </div>
-                            <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Maintenance Due Date</label>
-                                <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
-                                {errors.maintenance_due_date && <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>}
+                                <label className="mb-1 block font-medium">Asset Name</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Asset Name"
+                                    value={data.asset_name}
+                                    onChange={(e) => setData('asset_name', e.target.value)}
+                                />
+                                {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Asset Type</label>
-                                <select
+                                <label className="mb-1 block font-medium">Serial Number</label>
+                                <input
+                                    type="text"
                                     className="w-full rounded-lg border p-2"
-                                    value={data.asset_type}
-                                    onChange={(e) => setData('asset_type', e.target.value)}
-                                >
-                                    <option value="">Select Asset Type</option>
-                                    <option value="fixed">Fixed</option>
-                                    <option value="not_fixed">Not Fixed</option>
-                                </select>
-                                {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
+                                    placeholder="Enter Serial No."
+                                    value={data.serial_no}
+                                    onChange={(e) => setData('serial_no', e.target.value)}
+                                />
+                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
@@ -1042,82 +913,21 @@ export default function InventoryListIndex({
                             </div>
 
                             <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Asset Name</label>
-                                <input
-                                    type="text"
+                                <label className="mb-1 block font-medium">Asset Model</label>
+                                <select
                                     className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Assets"
-                                    value={data.asset_name}
-                                    onChange={(e) => setData('asset_name', e.target.value)}
-                                />
-                                {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
-
-                                {/* <InputError message={errors.asset_name}/>  */}
-                            </div>
-
-                            <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Supplier</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Suppliers"
-                                    value={data.supplier}
-                                    onChange={(e) => setData('supplier', e.target.value)}
-                                />
-                                {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
-                            </div>
-                            <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Serial Number</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Serial No."
-                                    value={data.serial_no}
-                                    onChange={(e) => setData('serial_no', e.target.value)}
-                                />
-                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
-                            </div>
-
-                            {/* <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Quantity</label>
-                                <input
-                                    type="number"
-                                    className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Quantity"
-                                    value={data.quantity}
-                                    onChange={(e) => setData('quantity', e.target.value)}
-                                />
-                                {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
-                            </div> */}
-
-                            {/* Unit Cost */}
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Unit Cost</label>
-                                <input
-                                    type="number"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.unit_cost}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setData('unit_cost', value);
-
-                                        // ✅ Auto-calc depreciation (5-year straight-line)
-                                        const depreciation = calculateDepreciation(Number(value));
-                                        setData('depreciation_value', depreciation);
-                                    }}
-                                />
-                                {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
-                            </div>
-
-                            {/* Depreciation Value */}
-                            <div className="col-span-1">
-                                <label className="mb-1 block font-medium">Depreciation Value (per year)</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2 text-black"
-                                    value={data.depreciation_value ? `₱ ${data.depreciation_value}` : ''}
-                                    readOnly
-                                />
+                                    value={data.asset_model_id}
+                                    onChange={(e) => setData('asset_model_id', Number(e.target.value))}
+                                    disabled={!data.brand}
+                                >
+                                    <option value="">Select Asset Model</option>
+                                    {filteredModels.map((model) => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.model}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
@@ -1141,58 +951,17 @@ export default function InventoryListIndex({
                             </div>
 
                             <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Asset Model</label>
+                                <label className="mb-1 block font-medium">Asset Type</label>
                                 <select
                                     className="w-full rounded-lg border p-2"
-                                    value={data.asset_model_id}
-                                    onChange={(e) => setData('asset_model_id', Number(e.target.value))}
-                                    disabled={!data.brand}
+                                    value={data.asset_type}
+                                    onChange={(e) => setData('asset_type', e.target.value)}
                                 >
-                                    <option value="">Select Asset Model</option>
-                                    {filteredModels.map((model) => (
-                                        <option key={model.id} value={model.id}>
-                                            {model.model}
-                                        </option>
-                                    ))}
+                                    <option value="">Select Asset Type</option>
+                                    <option value="fixed">Fixed</option>
+                                    <option value="not_fixed">Not Fixed</option>
                                 </select>
-                                {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
-                            </div>
-
-                            <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Memorandum Number</label>
-                                <input
-                                    type="number"
-                                    className="w-full rounded-lg border p-2"
-                                    placeholder="Enter Memorandum No."
-                                    value={data.memorandum_no}
-                                    onChange={(e) => setData('memorandum_no', Number(e.target.value))}
-                                />
-                                {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
-                            </div>
-
-                            {/* <div className="col-span-1 pt-0.5">
-                                <label className="mb-1 block font-medium">Transfer Status</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.transfer_status}
-                                    onChange={(e) => setData('transfer_status', e.target.value)}
-                                >
-                                    <option value="">Select Status</option>
-                                    <option value="transferred"> Transferred </option>
-                                    <option value="not_transferred"> Not Transferred </option>
-                                </select>
-                                {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
-                            </div> */}
-
-                            <div className="col-span-2">
-                                <label className="mb-1 block font-medium">Total Cost</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.unit_cost ? `₱ ${(Number(data.unit_cost) * Number(data.quantity || 1)).toFixed(2)}` : ''}
-                                    readOnly
-                                    disabled
-                                />
+                                {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                             </div>
 
                             <div className="col-span-2">
@@ -1273,6 +1042,460 @@ export default function InventoryListIndex({
                                     </>
                                 )}
                             </div>
+
+                            {/* Divider */}
+                            <div className="col-span-2 border-t"></div>
+                            
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Unit/Department</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.unit_or_department_id}
+                                    onChange={(e) => setData('unit_or_department_id', Number(e.target.value))}
+                                >
+                                    <option value="">Select Unit/Department</option>
+                                    {unitOrDepartments.map((unit) => (
+                                        <option key={unit.id} value={unit.id}>
+                                            {unit.name} ({unit.code} )
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
+                            </div>
+                            
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Building</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.building_id}
+                                    onChange={(e) => setData('building_id', Number(e.target.value))}
+                                >
+                                    <option value="">Select Building</option>
+                                    {buildings.map((building) => (
+                                        <option key={building.id} value={building.id}>
+                                            {building.name} ({building.code})
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
+                            </div>
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Room</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.building_room_id}
+                                    onChange={(e) => setData('building_room_id', Number(e.target.value))}
+                                    disabled={!data.building_id}
+                                >
+                                    <option value="">Select Room</option>
+                                    {filteredRooms.map((room) => (
+                                        <option key={room.id} value={room.id}>
+                                            {room.room}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Sub Area</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.sub_area_id ?? ''}
+                                    onChange={(e) => setData('sub_area_id', e.target.value === '' ? null : Number(e.target.value))}
+                                    disabled={!data.building_room_id}
+                                >
+                                    <option value="">Select Sub Area</option>
+                                    {subAreas
+                                        .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id)) // ✅ typed
+                                        .map(
+                                            (
+                                                s: SubArea,
+                                            ) => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.name}
+                                                </option>
+                                            ),
+                                        )}
+                                </select>
+                                {errors.sub_area_id && <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>}
+                            </div>
+
+                            {/* <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Status</label>
+                                <select
+                                    className={`w-full rounded-lg border p-2 ${errors.status ? 'border-red-500' : 'border-gray-300'}`}
+                                    value={data.status}
+                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived')}
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+
+                                {errors.status && <p className="mt-1 text-sm text-red-500">{errors.status}</p>}
+                            </div> */}
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Assigned To</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.assigned_to ?? ''}
+                                    onChange={(e) => setData('assigned_to', e.target.value ? Number(e.target.value) : null)}
+                                    >
+                                    <option value="">Select Personnel</option>
+                                    {personnels.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                        {p.full_name}{p.position ? ` – ${p.position}` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Status</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.status}
+                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived')}
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+
+                                {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+                            </div>
+
+                            {/* Divider */}
+                            <div className="col-span-2 border-t"></div>
+
+                            {/* Middle Section */}
+                            
+
+                            <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Memorandum Number</label>
+                                <input
+                                    type="number"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Memorandum No."
+                                    value={data.memorandum_no}
+                                    onChange={(e) => setData('memorandum_no', Number(e.target.value))}
+                                />
+                                {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
+                            </div>
+
+                            <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Supplier</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Suppliers"
+                                    value={data.supplier}
+                                    onChange={(e) => setData('supplier', e.target.value)}
+                                />
+                                {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
+                            </div>
+
+                            {/* Unit Cost */}
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Unit Cost</label>
+                                <input
+                                    type="number"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.unit_cost}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setData('unit_cost', value);
+
+                                        // Auto-calc depreciation (5-year straight-line)
+                                        const depreciation = calculateDepreciation(Number(value));
+                                        setData('depreciation_value', depreciation);
+                                    }}
+                                />
+                                {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
+                            </div>
+
+                            {/* Depreciation Value */}
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Depreciation Value (per year)</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2 text-black"
+                                    value={data.depreciation_value ? `₱ ${data.depreciation_value}` : ''}
+                                    readOnly
+                                />
+                            </div>
+
+                           <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Date Purchased</label>
+                                <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
+                                {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
+                            </div>
+                            
+                             <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Maintenance Due Date</label>
+                                <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
+                                {errors.maintenance_due_date && <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>}
+                            </div>
+                            
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Asset Type</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.asset_type}
+                                    onChange={(e) => setData('asset_type', e.target.value)}
+                                >
+                                    <option value="">Select Asset Type</option>
+                                    <option value="fixed">Fixed</option>
+                                    <option value="not_fixed">Not Fixed</option>
+                                </select>
+                                {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Asset Category</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.category_id ?? ''} // <-- FK
+                                    onChange={(e) => setData('category_id', e.target.value === '' ? '' : Number(e.target.value))}
+                                >
+                                    <option value="">Select Asset Category</option>
+                                    {categories.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {' '}
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Asset Name</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Assets"
+                                    value={data.asset_name}
+                                    onChange={(e) => setData('asset_name', e.target.value)}
+                                />
+                                {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Supplier</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Suppliers"
+                                    value={data.supplier}
+                                    onChange={(e) => setData('supplier', e.target.value)}
+                                />
+                                {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Serial Number</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Serial No."
+                                    value={data.serial_no}
+                                    onChange={(e) => setData('serial_no', e.target.value)}
+                                />
+                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Quantity</label>
+                                <input
+                                    type="number"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Quantity"
+                                    value={data.quantity}
+                                    onChange={(e) => setData('quantity', e.target.value)}
+                                />
+                                {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Unit Cost</label>
+                                <input
+                                    type="number"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.unit_cost}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setData('unit_cost', value);
+
+                                        // Auto-calc depreciation (5-year straight-line)
+                                        const depreciation = calculateDepreciation(Number(value));
+                                        setData('depreciation_value', depreciation);
+                                    }}
+                                />
+                                {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
+                            </div>
+
+                            <div className="col-span-1">
+                                <label className="mb-1 block font-medium">Depreciation Value (per year)</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2 text-black"
+                                    value={data.depreciation_value ? `₱ ${data.depreciation_value}` : ''}
+                                    readOnly
+                                />
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Brand</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.brand}
+                                    onChange={(e) => {
+                                        setData('brand', e.target.value);
+                                        setData('asset_model_id', ''); // Reset model when brand changes
+                                    }}
+                                >
+                                    <option value="">Select Brand</option>
+                                    {uniqueBrands.map((brand, index) => (
+                                        <option key={index} value={brand}>
+                                            {brand}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Asset Model</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.asset_model_id}
+                                    onChange={(e) => setData('asset_model_id', Number(e.target.value))}
+                                    disabled={!data.brand}
+                                >
+                                    <option value="">Select Asset Model</option>
+                                    {filteredModels.map((model) => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.model}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Memorandum Number</label>
+                                <input
+                                    type="number"
+                                    className="w-full rounded-lg border p-2"
+                                    placeholder="Enter Memorandum No."
+                                    value={data.memorandum_no}
+                                    onChange={(e) => setData('memorandum_no', Number(e.target.value))}
+                                />
+                                {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
+                            </div> */}
+
+                            {/* <div className="col-span-1 pt-0.5">
+                                <label className="mb-1 block font-medium">Transfer Status</label>
+                                <select
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.transfer_status}
+                                    onChange={(e) => setData('transfer_status', e.target.value)}
+                                >
+                                    <option value="">Select Status</option>
+                                    <option value="transferred"> Transferred </option>
+                                    <option value="not_transferred"> Not Transferred </option>
+                                </select>
+                                {errors.transfer_status && <p className="mt-1 text-xs text-red-500">{errors.transfer_status}</p>}
+                            </div> */}
+
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Total Cost</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.unit_cost ? `₱ ${(Number(data.unit_cost) * Number(data.quantity || 1)).toFixed(2)}` : ''}
+                                    readOnly
+                                    disabled
+                                />
+                            </div>
+
+                            {/* <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Asset Image</label>
+
+                                {showWebcam ? (
+                                    <WebcamCapture
+                                        onCapture={(file) => {
+                                            setData('image', file); // save new captured photo
+                                            setShowWebcam(false); // close webcam after capture
+                                        }}
+                                        onCancel={() => setShowWebcam(false)}
+                                    />
+                                ) : (
+                                    <>
+                                        <div className="flex gap-2">
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                capture="environment"
+                                                onChange={(e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        setData('image', e.target.files[0]);
+                                                    }
+                                                }}
+                                                className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                            />
+
+                                            <Button type="button" onClick={() => setShowWebcam(true)}>
+                                                Use Camera
+                                            </Button>
+                                        </div>
+
+                                        {data.image && (
+                                            <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
+                                                <img
+                                                    src={URL.createObjectURL(data.image as File)}
+                                                    alt="Preview"
+                                                    className="h-20 w-20 rounded-md border object-cover"
+                                                />
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">
+                                                        {(data.image as File).name}
+                                                    </span>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setData('image', null);
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                            }}
+                                                            className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                                                        >
+                                                            Remove
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setData('image', null); // clear current photo
+                                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                                                setShowWebcam(true); // reopen webcam
+                                                            }}
+                                                            className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-600"
+                                                        >
+                                                            Retake
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div> */}
 
                             <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Description</label>

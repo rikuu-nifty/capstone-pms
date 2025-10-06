@@ -112,147 +112,19 @@ export function AddBulkAssetModalForm({
                 {/* Scrollable Form Section */}
                 <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
                     <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
-                        {/* Building */}
+                        
                         <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Building</label>
-                            <select
+                            <label className="mb-1 block font-medium">Asset Name</label>
+                            <input
+                                type="text"
                                 className="w-full rounded-lg border p-2"
-                                value={data.building_id}
-                                onChange={(e) => setData('building_id', e.target.value)}
-                            >
-                                <option value="">Select Building</option>
-                                {buildings.map((b) => (
-                                    <option key={b.id} value={b.id.toString()}>
-                                        {b.name} ({b.code})
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
+                                placeholder="Enter Asset"
+                                value={data.asset_name}
+                                onChange={(e) => setData('asset_name', e.target.value)}
+                            />
+                            {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
                         </div>
 
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Unit/Department</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.unit_or_department_id}
-                                onChange={(e) => setData('unit_or_department_id', e.target.value)}
-                            >
-                                <option value="">Select Unit/Department</option>
-                                {unitOrDepartments.map((u) => (
-                                    <option key={u.id} value={u.id.toString()}>
-                                        {u.name} ({u.code})
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
-                        </div>
-
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Room</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.building_room_id}
-                                onChange={(e) => setData('building_room_id', e.target.value)}
-                                disabled={!data.building_id}
-                            >
-                                <option value="">Select Room</option>
-                                {filteredRooms.map((room) => (
-                                    <option key={room.id} value={room.id.toString()}>
-                                        {room.room}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Sub Area */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Sub Area</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.sub_area_id ?? ''}
-                                onChange={(e) =>
-                                    setData('sub_area_id', e.target.value === '' ? '' : e.target.value)
-                                }
-                                disabled={!data.building_room_id}
-                            >
-                                <option value="">Select Sub Area</option>
-                                {subAreas
-                                .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id))
-                                .map((s: SubArea) => (
-                                    <option key={s.id} value={s.id.toString()}>
-                                    {s.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.sub_area_id && (
-                                <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
-                            )}
-                        </div>
-
-                        {/* ✅ Status (required) */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Status</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.status}
-                                onChange={(e) => setData('status', e.target.value)}
-                            >
-                                <option value="">Select Status</option>
-                                <option value="active">Active</option>
-                                <option value="archived">Archived</option>
-                            </select>
-                            {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
-                        </div>
-
-                        {/* ✅ Assigned To */}
-<div className="col-span-2">
-  <label className="mb-1 block font-medium">Assigned To</label>
-  <select
-    className="w-full rounded-lg border p-2"
-    value={data.assigned_to ?? ''}
-    onChange={(e) => setData('assigned_to', e.target.value ? Number(e.target.value) : null)}
-  >
-    <option value="">— Select Personnel —</option>
-    {personnels.map((p) => (
-      <option key={p.id} value={p.id}>
-        {p.full_name}{p.position ? ` – ${p.position}` : ''}
-      </option>
-    ))}
-  </select>
-  {errors.assigned_to && <p className="mt-1 text-xs text-red-500">{errors.assigned_to}</p>}
-</div>
-
-                        {/* Divider */}
-                        <div className="col-span-2 border-t"></div>
-
-                        {/* Date + Type */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Date Purchased</label>
-                            <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
-                            {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
-                        </div>
-                        {/* ✅ Maintenance Due Date */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Maintenance Due Date</label>
-                            <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
-                        </div>
-
-                        {/* ✅ Asset Type (required) */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Asset Type</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.asset_type}
-                                onChange={(e) => setData('asset_type', e.target.value)}
-                            >
-                                <option value="">Select Asset Type</option>
-                                <option value="fixed">Fixed</option>
-                                <option value="not_fixed">Not Fixed</option>
-                            </select>
-                            {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
-                        </div>
-
-                        {/* ✅ Category (required) */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Asset Category</label>
                             <select
@@ -271,145 +143,21 @@ export function AddBulkAssetModalForm({
                         </div>
 
                         <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Asset Name</label>
-                            <input
-                                type="text"
+                            <label className="mb-1 block font-medium">Asset Model</label>
+                            <select
                                 className="w-full rounded-lg border p-2"
-                                placeholder="Enter Asset"
-                                value={data.asset_name}
-                                onChange={(e) => setData('asset_name', e.target.value)}
-                            />
-                            {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
-                        </div>
-
-                        {/* Supplier + Quantity */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Supplier</label>
-                            <input
-                                type="text"
-                                className="w-full rounded-lg border p-2"
-                                value={data.supplier}
-                                onChange={(e) => setData('supplier', e.target.value)}
-                            />
-                            {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
-                        </div>
-
-                        {/* Quantity */}
-                        <div className="col-span-2">
-                            <label className="mb-1 block font-medium">Quantity</label>
-                            <input
-                                type="number"
-                                min="1"
-                                className="w-full rounded-lg border p-2"
-                                value={data.quantity}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setData('quantity', val);
-
-                                    if (enableMultipleSerials) {
-                                        const newQty = Number(val) || 0;
-                                        let newSerials = [...data.serial_numbers];
-
-                                        // Ensure at least `qty` fields exist
-                                        if (newQty > newSerials.length) {
-                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
-                                        }
-
-                                        setData('serial_numbers', newSerials);
-                                    }
-                                }}
-                            />
-                            {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
-                        </div>
-
-                        {/* Enable Multiple Serials */}
-                        <div className="col-span-2 flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={enableMultipleSerials}
-                                onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setEnableMultipleSerials(checked);
-
-                                    if (checked) {
-                                        const newQty = Number(data.quantity) || 0;
-                                        let newSerials = [...data.serial_numbers];
-
-                                        if (newQty > newSerials.length) {
-                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
-                                        }
-
-                                        setData('serial_numbers', newSerials);
-                                    } else {
-                                        setData('serial_numbers', []);
-                                    }
-                                }}
-                            />
-                            <span>Enable multiple serial numbers</span>
-                        </div>
-
-                        {/* ✅ Serial Number (required if not using bulk serials) */}
-                        {!enableMultipleSerials && (
-                            <div className="col-span-2">
-                                <label className="mb-1 block font-medium">Serial Number</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.serial_numbers[0] || ''}
-                                    onChange={(e) => setData('serial_numbers', [e.target.value])}
-                                />
-                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
-                            </div>
-                        )}
-
-                        {/* Serial Numbers Section (bulk) */}
-                        {enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
-                            <div className="col-span-2 space-y-2">
-                                {data.serial_numbers.map((sn, i) => (
-                                    <input
-                                        key={i}
-                                        type="text"
-                                        placeholder={`Serial No. ${i + 1}`}
-                                        className="w-full rounded-lg border p-2"
-                                        value={sn}
-                                        onChange={(e) => {
-                                            const copy = [...data.serial_numbers];
-                                            copy[i] = e.target.value;
-                                            setData('serial_numbers', copy);
-                                        }}
-                                    />
+                                value={data.asset_model_id}
+                                onChange={(e) => setData('asset_model_id', e.target.value)}
+                                disabled={!data.brand}
+                            >
+                                <option value="">Select Asset Model</option>
+                                {filteredModels.map((model) => (
+                                    <option key={model.id} value={model.id.toString()}>
+                                        {model.model}
+                                    </option>
                                 ))}
-                                {errors.serial_numbers && <p className="mt-1 text-xs text-red-500">{errors.serial_numbers}</p>}
-                            </div>
-                        )}
-
-                        {/* Unit Cost */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Unit Cost</label>
-                            <input
-                                type="number"
-                                className="w-full rounded-lg border p-2"
-                                value={data.unit_cost}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setData('unit_cost', value);
-
-                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
-                                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
-                                    setData('depreciation_value', depreciation);
-                                }}
-                            />
-                            {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
-                        </div>
-                        {/* Depreciation Value */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Depreciation Value (per year)</label>
-                            <input
-                                type="text"
-                                className="w-full rounded-lg border bg-white p-2 text-black"
-                                value={data.depreciation_value ? `₱ ${Number(data.depreciation_value).toFixed(2)}` : ''}
-                                readOnly // ✅ looks like Unit Cost, but can’t be edited
-                            />
+                            </select>
+                            {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                         </div>
 
                         <div className="col-span-1">
@@ -432,51 +180,20 @@ export function AddBulkAssetModalForm({
                             {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
                         </div>
 
-                        {/* Model + Memo */}
                         <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Asset Model</label>
+                            <label className="mb-1 block font-medium">Asset Type</label>
                             <select
                                 className="w-full rounded-lg border p-2"
-                                value={data.asset_model_id}
-                                onChange={(e) => setData('asset_model_id', e.target.value)}
-                                disabled={!data.brand}
+                                value={data.asset_type}
+                                onChange={(e) => setData('asset_type', e.target.value)}
                             >
-                                <option value="">Select Asset Model</option>
-                                {filteredModels.map((model) => (
-                                    <option key={model.id} value={model.id.toString()}>
-                                        {model.model}
-                                    </option>
-                                ))}
+                                <option value="">Select Asset Type</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="not_fixed">Not Fixed</option>
                             </select>
-                            {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
+                            {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                         </div>
 
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Memorandum Number</label>
-                            <input
-                                type="number"
-                                className="w-full rounded-lg border p-2"
-                                value={data.memorandum_no}
-                                onChange={(e) => setData('memorandum_no', e.target.value)}
-                            />
-                            {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
-                        </div>
-
-                        {/* ❌ Removed Transfer Status select */}
-
-                        {/* Total Cost */}
-                        <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Total Cost</label>
-                            <input
-                                type="text"
-                                className="w-full rounded-lg border p-2"
-                                value={data.quantity && data.unit_cost ? `₱ ${(Number(data.quantity) * Number(data.unit_cost)).toFixed(2)}` : ''}
-                                readOnly
-                                disabled
-                            />
-                        </div>
-
-                        {/* ✅ Asset Image with Webcam */}
                         <div className="col-span-2">
                             <label className="mb-1 block font-medium">Asset Image</label>
 
@@ -553,6 +270,605 @@ export function AddBulkAssetModalForm({
                                 </>
                             )}
                         </div>
+
+                        {/* Divider */}
+                        <div className="col-span-2 border-t"></div>
+
+                        {/* Quantity */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Quantity</label>
+                            <input
+                                type="number"
+                                min="1"
+                                className="w-full rounded-lg border p-2"
+                                value={data.quantity}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setData('quantity', val);
+
+                                    if (enableMultipleSerials) {
+                                        const newQty = Number(val) || 0;
+                                        let newSerials = [...data.serial_numbers];
+
+                                        // Ensure at least `qty` fields exist
+                                        if (newQty > newSerials.length) {
+                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
+                                        }
+
+                                        setData('serial_numbers', newSerials);
+                                    }
+                                }}
+                            />
+                            {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
+                        </div>
+
+                        {/* Enable Multiple Serials */}
+                        {/* <div className="col-span-2 flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={enableMultipleSerials}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setEnableMultipleSerials(checked);
+
+                                    if (checked) {
+                                        const newQty = Number(data.quantity) || 0;
+                                        let newSerials = [...data.serial_numbers];
+
+                                        if (newQty > newSerials.length) {
+                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
+                                        }
+
+                                        setData('serial_numbers', newSerials);
+                                    } else {
+                                        setData('serial_numbers', []);
+                                    }
+                                }}
+                            />
+                            <span>Enable multiple serial numbers</span>
+                        </div> */}
+
+                        {/* Enable Multiple Serials */}
+                    <div className="col-span-2">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={enableMultipleSerials}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    const newQty = Number(data.quantity);
+
+                                    if (checked && (!newQty || newQty <= 0)) {
+                                        // Set the frontend validation message inside errors
+                                        errors.quantity = 'Please enter a quantity greater than 0 before enabling multiple serial numbers.';
+                                        setEnableMultipleSerials(false);
+                                        setData('serial_numbers', []);
+                                        return;
+                                    }
+
+                                    // Clear error once valid
+                                    if (errors.quantity) delete errors.quantity;
+
+                                    setEnableMultipleSerials(checked);
+
+                                    if (checked) {
+                                        let newSerials = [...data.serial_numbers];
+                                        if (newQty > newSerials.length) {
+                                            newSerials = [
+                                                ...newSerials,
+                                                ...Array(newQty - newSerials.length).fill(''),
+                                            ];
+                                        }
+                                        setData('serial_numbers', newSerials);
+                                    } else {
+                                        setData('serial_numbers', []);
+                                    }
+                                }}
+                            />
+                            <span>Enable multiple serial numbers</span>
+                        </div>
+
+                        {/* Show the same red text if validation triggered */}
+                        {/* {errors.quantity && (
+                            <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>
+                        )} */}
+                    </div>
+
+
+                        {/* Serial Number (required if not using bulk serials) */}
+                        {!enableMultipleSerials && (
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Serial Number</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.serial_numbers[0] || ''}
+                                    onChange={(e) => setData('serial_numbers', [e.target.value])}
+                                />
+                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
+                            </div>
+                        )}
+
+                        {/* Serial Numbers Section (bulk) */}
+                        {enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
+                            <div className="col-span-2 space-y-2">
+                                {data.serial_numbers.map((sn, i) => (
+                                    <input
+                                        key={i}
+                                        type="text"
+                                        placeholder={`Serial No. ${i + 1}`}
+                                        className="w-full rounded-lg border p-2"
+                                        value={sn}
+                                        onChange={(e) => {
+                                            const copy = [...data.serial_numbers];
+                                            copy[i] = e.target.value;
+                                            setData('serial_numbers', copy);
+                                        }}
+                                    />
+                                ))}
+                                {errors.serial_numbers && <p className="mt-1 text-xs text-red-500">{errors.serial_numbers}</p>}
+                            </div>
+                        )}
+
+                        {/* Divider */}
+                        <div className="col-span-2 border-t"></div>
+
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Unit/Department</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.unit_or_department_id}
+                                onChange={(e) => setData('unit_or_department_id', e.target.value)}
+                            >
+                                <option value="">Select Unit/Department</option>
+                                {unitOrDepartments.map((u) => (
+                                    <option key={u.id} value={u.id.toString()}>
+                                        {u.name} ({u.code})
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
+                        </div>
+                        
+                        {/* Building */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Building</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.building_id}
+                                onChange={(e) => setData('building_id', e.target.value)}
+                            >
+                                <option value="">Select Building</option>
+                                {buildings.map((b) => (
+                                    <option key={b.id} value={b.id.toString()}>
+                                        {b.name} ({b.code})
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
+                        </div>
+
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Room</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.building_room_id}
+                                onChange={(e) => setData('building_room_id', e.target.value)}
+                                disabled={!data.building_id}
+                            >
+                                <option value="">Select Room</option>
+                                {filteredRooms.map((room) => (
+                                    <option key={room.id} value={room.id.toString()}>
+                                        {room.room}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Sub Area */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Sub Area</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.sub_area_id ?? ''}
+                                onChange={(e) =>
+                                    setData('sub_area_id', e.target.value === '' ? '' : e.target.value)
+                                }
+                                disabled={!data.building_room_id}
+                            >
+                                <option value="">Select Sub Area</option>
+                                {subAreas
+                                .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id))
+                                .map((s: SubArea) => (
+                                    <option key={s.id} value={s.id.toString()}>
+                                    {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.sub_area_id && (
+                                <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
+                            )}
+                        </div>
+
+                        {/* Assigned To */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Assigned To</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.assigned_to ?? ''}
+                                onChange={(e) => setData('assigned_to', e.target.value ? Number(e.target.value) : null)}
+                            >
+                                <option value="">Select Personnel</option>
+                                {personnels.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.full_name}{p.position ? ` – ${p.position}` : ''}
+                                </option>
+                                ))}
+                            </select>
+                            {errors.assigned_to && <p className="mt-1 text-xs text-red-500">{errors.assigned_to}</p>}
+                        </div>
+                        
+                        {/*  Status (required) */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Status</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.status}
+                                onChange={(e) => setData('status', e.target.value)}
+                            >
+                                <option value="">Select Status</option>
+                                <option value="active">Active</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                            {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="col-span-2 border-t"></div>
+
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Memorandum Number</label>
+                            <input
+                                type="number"
+                                className="w-full rounded-lg border p-2"
+                                value={data.memorandum_no}
+                                onChange={(e) => setData('memorandum_no', e.target.value)}
+                            />
+                            {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
+                        </div>
+
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Supplier</label>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border p-2"
+                                value={data.supplier}
+                                onChange={(e) => setData('supplier', e.target.value)}
+                            />
+                            {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
+                        </div>
+
+                        {/* Date + Type */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Date Purchased</label>
+                            <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
+                            {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
+                        </div>
+                        {/* ✅ Maintenance Due Date */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Maintenance Due Date</label>
+                            <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
+                        </div>
+
+                        {/* Asset Type (required) */}
+                        {/* <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Asset Type</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.asset_type}
+                                onChange={(e) => setData('asset_type', e.target.value)}
+                            >
+                                <option value="">Select Asset Type</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="not_fixed">Not Fixed</option>
+                            </select>
+                            {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
+                        </div> */}
+
+                        {/* Category (required) */}
+                        {/* <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Asset Category</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.category_id}
+                                onChange={(e) => setData('category_id', e.target.value)}
+                            >
+                                <option value="">Select Category</option>
+                                {categories.map((c) => (
+                                    <option key={c.id} value={c.id.toString()}>
+                                        {c.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
+                        </div> */}
+
+                        {/* <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Asset Name</label>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border p-2"
+                                placeholder="Enter Asset"
+                                value={data.asset_name}
+                                onChange={(e) => setData('asset_name', e.target.value)}
+                            />
+                            {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
+                        </div> */}
+
+                        {/* Supplier + Quantity */}
+                        {/* <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Supplier</label>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border p-2"
+                                value={data.supplier}
+                                onChange={(e) => setData('supplier', e.target.value)}
+                            />
+                            {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
+                        </div> */}
+
+                        {/* Quantity */}
+                        {/* <div className="col-span-2">
+                            <label className="mb-1 block font-medium">Quantity</label>
+                            <input
+                                type="number"
+                                min="1"
+                                className="w-full rounded-lg border p-2"
+                                value={data.quantity}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setData('quantity', val);
+
+                                    if (enableMultipleSerials) {
+                                        const newQty = Number(val) || 0;
+                                        let newSerials = [...data.serial_numbers];
+
+                                        // Ensure at least `qty` fields exist
+                                        if (newQty > newSerials.length) {
+                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
+                                        }
+
+                                        setData('serial_numbers', newSerials);
+                                    }
+                                }}
+                            />
+                            {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
+                        </div>
+
+                        <div className="col-span-2 flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={enableMultipleSerials}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setEnableMultipleSerials(checked);
+
+                                    if (checked) {
+                                        const newQty = Number(data.quantity) || 0;
+                                        let newSerials = [...data.serial_numbers];
+
+                                        if (newQty > newSerials.length) {
+                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
+                                        }
+
+                                        setData('serial_numbers', newSerials);
+                                    } else {
+                                        setData('serial_numbers', []);
+                                    }
+                                }}
+                            />
+                            <span>Enable multiple serial numbers</span>
+                        </div>
+
+                        {!enableMultipleSerials && (
+                            <div className="col-span-2">
+                                <label className="mb-1 block font-medium">Serial Number</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border p-2"
+                                    value={data.serial_numbers[0] || ''}
+                                    onChange={(e) => setData('serial_numbers', [e.target.value])}
+                                />
+                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
+                            </div>
+                        )}
+
+                        {enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
+                            <div className="col-span-2 space-y-2">
+                                {data.serial_numbers.map((sn, i) => (
+                                    <input
+                                        key={i}
+                                        type="text"
+                                        placeholder={`Serial No. ${i + 1}`}
+                                        className="w-full rounded-lg border p-2"
+                                        value={sn}
+                                        onChange={(e) => {
+                                            const copy = [...data.serial_numbers];
+                                            copy[i] = e.target.value;
+                                            setData('serial_numbers', copy);
+                                        }}
+                                    />
+                                ))}
+                                {errors.serial_numbers && <p className="mt-1 text-xs text-red-500">{errors.serial_numbers}</p>}
+                            </div>
+                        )} */}
+
+                        {/* Unit Cost */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Unit Cost</label>
+                            <input
+                                type="number"
+                                className="w-full rounded-lg border p-2"
+                                value={data.unit_cost}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setData('unit_cost', value);
+
+                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
+                                    const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
+                                    setData('depreciation_value', depreciation);
+                                }}
+                            />
+                            {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
+                        </div>
+
+                        {/* Depreciation Value */}
+                        <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Depreciation Value (per year)</label>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border bg-white p-2 text-black"
+                                value={data.depreciation_value ? `₱ ${Number(data.depreciation_value).toFixed(2)}` : ''}
+                                readOnly // ✅ looks like Unit Cost, but can’t be edited
+                            />
+                        </div>
+
+                        {/* <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Brand</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.brand}
+                                onChange={(e) => {
+                                    setData('brand', e.target.value);
+                                    setData('asset_model_id', '');
+                                }}
+                            >
+                                <option value="">Select Brand</option>
+                                {uniqueBrands.map((brand, index) => (
+                                    <option key={index} value={brand}>
+                                        {brand}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
+                        </div> */}
+
+                        {/* Model + Memo */}
+                        {/* <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Asset Model</label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={data.asset_model_id}
+                                onChange={(e) => setData('asset_model_id', e.target.value)}
+                                disabled={!data.brand}
+                            >
+                                <option value="">Select Asset Model</option>
+                                {filteredModels.map((model) => (
+                                    <option key={model.id} value={model.id.toString()}>
+                                        {model.model}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
+                        </div> */}
+
+                        {/* <div className="col-span-1">
+                            <label className="mb-1 block font-medium">Memorandum Number</label>
+                            <input
+                                type="number"
+                                className="w-full rounded-lg border p-2"
+                                value={data.memorandum_no}
+                                onChange={(e) => setData('memorandum_no', e.target.value)}
+                            />
+                            {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
+                        </div> */}
+
+                        {/* Removed Transfer Status select */}
+
+                        {/* Total Cost */}
+                        <div className="col-span-2">
+                            <label className="mb-1 block font-medium">Total Cost</label>
+                            <input
+                                type="text"
+                                className="w-full rounded-lg border p-2"
+                                value={data.quantity && data.unit_cost ? `₱ ${(Number(data.quantity) * Number(data.unit_cost)).toFixed(2)}` : ''}
+                                readOnly
+                                disabled
+                            />
+                        </div>
+
+                        {/* Asset Image with Webcam */}
+                        {/* <div className="col-span-2">
+                            <label className="mb-1 block font-medium">Asset Image</label>
+
+                            {showWebcam ? (
+                                <WebcamCapture
+                                    onCapture={(file) => {
+                                        setData('image', file);
+                                        setShowWebcam(false);
+                                    }}
+                                    onCancel={() => setShowWebcam(false)}
+                                />
+                            ) : (
+                                <>
+                                    <div className="flex gap-2">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                if (e.target.files?.[0]) {
+                                                    setData('image', e.target.files[0]);
+                                                }
+                                            }}
+                                            className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                        />
+
+                                        <Button type="button" onClick={() => setShowWebcam(true)}>
+                                            Use Camera
+                                        </Button>
+                                    </div>
+
+                                    {data.image && (
+                                        <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
+                                            <img
+                                                src={URL.createObjectURL(data.image as File)}
+                                                alt="Preview"
+                                                className="h-20 w-20 rounded-md border object-cover"
+                                            />
+                                            <div className="flex flex-col gap-1">
+                                                <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">
+                                                    {(data.image as File).name}
+                                                </span>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setData('image', null);
+                                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                                        }}
+                                                        className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setData('image', null);
+                                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                                            setShowWebcam(true);
+                                                        }}
+                                                        className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                                                    >
+                                                        Retake
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div> */}
 
                         {/* Description */}
                         <div className="col-span-2">
