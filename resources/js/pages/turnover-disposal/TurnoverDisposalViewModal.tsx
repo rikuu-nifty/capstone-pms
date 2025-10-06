@@ -27,13 +27,6 @@ export default function TurnoverDisposalViewModal({
     // pmoHead,
 }: TurnoverDisposalViewModalProps) {
     const recordNo = String(turnoverDisposal.id).padStart(2, '0');
-    // type TdaStatus = 'pending' | 'completed' | 'cancelled';
-
-    // type TdaPivot = {
-    //     asset_id: number;
-    //     asset_status?: TdaStatus;
-    //     date_finalized?: string | null;
-    // }
 
     const formatDateLong = (d?: string | null) => {
         if (!d) return '—';
@@ -99,9 +92,15 @@ export default function TurnoverDisposalViewModal({
                     <img src="https://www.auf.edu.ph/home/images/mascot/GEN.png" alt="Logo" className="h-25 opacity-90" />
                 </div>
                 <div className="absolute left-1/2 -translate-x-1/2 text-center">
-                    <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">Property Management Office</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">pmo@auf.edu.ph</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs">+63 973 234 3456</p>
+                    <h2 className="text-2xl font-bold tracking-wide uppercase print:text-lg">
+                        Angeles University Foundation
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 print:text-xs italic">
+                        Angeles City
+                    </p>
+                    <p className="text-base text-gray-800 dark:text-gray-400 print:text-sm">
+                        Office of the Administrative Services
+                    </p>
                 </div>
                 <div className="text-right text-sm leading-snug">
                     <p>
@@ -118,8 +117,12 @@ export default function TurnoverDisposalViewModal({
                 </div>
             </div>
 
+            <h2 className="text-center text-base sm:text-lg md:text-xl font-bold tracking-wide text-gray-900 dark:text-gray-100 underline">
+                Turnover / Disposal Form
+            </h2>
+
             {/* Offices */}
-            <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
                 {/* Issuing Office (LEFT) */}
                 <section className="md:w-[400px]">
                     <h3 className="mb-2 text-base font-semibold">ISSUING OFFICE</h3>
