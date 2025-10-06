@@ -268,6 +268,18 @@ export const EditAssetModalForm = ({
                                 <option value="not_fixed">Not Fixed</option>
                             </select>
                         </div>
+                        
+                        <div>
+                            <Label>Status</Label>
+                            <select
+                                className="w-full rounded-lg border p-2"
+                                value={form.status}
+                                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
+                            >
+                                <option value="active">Active</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
 
                         {/* Asset Image */}
                         <div className="col-span-2">
@@ -471,18 +483,6 @@ export const EditAssetModalForm = ({
                             />
                         </div>
                         
-                        <div>
-                            <Label>Status</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.status}
-                                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
-                            >
-                                <option value="active">Active</option>
-                                <option value="archived">Archived</option>
-                            </select>
-                        </div>
-
                         {/* Divider */}
                         <div className="col-span-2 border-t"></div>
 

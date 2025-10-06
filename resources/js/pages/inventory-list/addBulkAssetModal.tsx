@@ -286,7 +286,6 @@ export function AddBulkAssetModalForm({
                                 value={data.status}
                                 onChange={(e) => setData('status', e.target.value)}
                             >
-                                <option value="">Select Status</option>
                                 <option value="active">Active</option>
                                 <option value="archived">Archived</option>
                             </select>
