@@ -59,7 +59,6 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "approve-form-approvals",
         "delete-form-approvals",
     ],
-    
     "Personnels": [
         "view-personnels",
         "create-personnels",
@@ -138,6 +137,12 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "create-unit-or-departments",
         "update-unit-or-departments",
         "delete-unit-or-departments",
+    ],
+    "Notifications": [
+        "view-notifications",
+        "update-notifications",
+        "archive-notifications",
+        "delete-notifications",
     ],
 };
 

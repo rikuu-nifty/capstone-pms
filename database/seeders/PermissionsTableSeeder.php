@@ -28,7 +28,13 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'view-trash-bin', 'name' => 'View Trash Bin'],
             ['code' => 'restore-trash-bin', 'name' => 'Restore Trash Bin'],
 
-            // SIGNATORIES (✅ NEW)
+            // NOTIFICATIONS
+            ['code' => 'view-notifications', 'name' => 'View Notifications'],
+            ['code' => 'update-notifications', 'name' => 'Update Notifications'],
+            ['code' => 'archive-notifications', 'name' => 'Archive Notifications'],
+            ['code' => 'delete-notifications', 'name' => 'Delete Notifications'],
+
+            // SIGNATORIES
             ['code' => 'view-signatories', 'name' => 'View Signatories'],
             ['code' => 'create-signatories', 'name' => 'Create Signatories'],
             ['code' => 'update-signatories', 'name' => 'Update Signatories'],
