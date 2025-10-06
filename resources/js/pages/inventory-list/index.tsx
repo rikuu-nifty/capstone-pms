@@ -1163,7 +1163,7 @@ const filteredBrands = useMemo(() => {
                                     }))}
                                     value={
                                         unitOrDepartments.find(u => u.id === data.unit_or_department_id)
-                                        ? { value: data.unit_or_department_id, label: `${unitOrDepartments.find(u => u.id === data.unit_or_department_id)!.name} (${unitOrDepartments.find(u => u.id === data.unit_or_department_id)!.code})` }
+                                        ? { value: data.unit_or_department_id, label: `${unitOrDepartments.find(u => u.id === data.unit_or_department_id)!.name}` }
                                         : null
                                     }
                                     onChange={(option) => setData('unit_or_department_id', option ? option.value : '')}
@@ -1178,7 +1178,7 @@ const filteredBrands = useMemo(() => {
                                     isClearable
                                     options={buildings.map(b => ({ value: b.id, label: `${b.name}` }))}
                                     value={buildings.find(b => b.id === data.building_id)
-                                        ? { value: data.building_id, label: `${buildings.find(b => b.id === data.building_id)!.name} (${buildings.find(b => b.id === data.building_id)!.code})` }
+                                        ? { value: data.building_id, label: `${buildings.find(b => b.id === data.building_id)!.name}` }
                                         : null}
                                     onChange={(option) => {
                                         setData('building_id', option ? option.value : '');

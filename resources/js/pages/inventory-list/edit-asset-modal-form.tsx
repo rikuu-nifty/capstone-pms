@@ -7,8 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category } from '@/pages/inventory-list/index';
 import type { UnitOrDepartment, SubArea,} from '@/types/custom-index';
 import { router } from '@inertiajs/react';
-import { useRef, useState } from 'react';
-import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';// ✅ new import
+import { useRef, useState, useMemo, useEffect } from 'react';
+import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';
+
+import Select from 'react-select';
 
 type Props = {
     asset: Asset;
@@ -32,7 +34,6 @@ export const EditAssetModalForm = ({
     buildingRooms, 
     categories, 
     assetModels, 
-    uniqueBrands,
     personnels,   // ✅ add this
 }: Props) => {
     const [form, setForm] = useState<AssetFormData>({
@@ -71,9 +72,80 @@ export const EditAssetModalForm = ({
     };
 
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
-    const filteredModels = assetModels.filter((model) => model.brand === form.brand);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [showWebcam, setShowWebcam] = useState(false); // ✅ webcam toggle
+
+    // Filter models based on selected category
+    const filteredModels = assetModels.filter(
+        (m) => m.category_id === Number(form.category_id)
+    );
+
+    // ✅ Memoize filteredBrands so it doesn’t trigger unnecessary re-renders
+    const filteredBrands = useMemo(() => {
+        // No category selected → no brands
+        if (!form.category_id) return [];
+
+        // If a model is selected, show only brands tied to that model within the category
+        if (form.asset_model_id) {
+            const selectedModel = assetModels.find((m) => m.id === Number(form.asset_model_id));
+
+            if (selectedModel) {
+                return Array.from(
+                    new Map(
+                        assetModels
+                            .filter(
+                                (m) =>
+                                    m.category_id === selectedModel.category_id &&
+                                    m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
+                                    m.brand &&
+                                    m.brand.trim() !== ''
+                            )
+                            .map((m) => [
+                                m.brand.trim().toLowerCase(),
+                                m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
+                            ])
+                    ).values()
+                );
+            }
+        }
+
+        // Otherwise, return all brands under the category
+        return Array.from(
+            new Map(
+                assetModels
+                    .filter(
+                        (m) =>
+                            m.category_id === Number(form.category_id) &&
+                            m.brand &&
+                            m.brand.trim() !== ''
+                    )
+                    .map((m) => [
+                        m.brand.trim().toLowerCase(),
+                        m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
+                    ])
+            ).values()
+        );
+    }, [form.category_id, form.asset_model_id, assetModels]);
+
+    // ✅ Check if there is only one unique brand
+    const isSingleBrand = filteredBrands.length === 1;
+
+    // ✅ Auto-select brand if only one exists
+    useEffect(() => {
+        if (form.category_id && filteredBrands.length === 0 && form.brand) {
+            handleChange('brand', '');
+            return;
+        }
+
+        if (
+            isSingleBrand &&
+            form.category_id &&
+            !form.brand &&
+            filteredBrands.length > 0
+        ) {
+            handleChange('brand', filteredBrands[0]);
+        }
+    }, [form.category_id, form.asset_model_id, form.brand, filteredBrands, isSingleBrand]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -122,54 +194,66 @@ export const EditAssetModalForm = ({
 
                         <div>
                             <Label>Asset Category</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.category_id ?? ''} // FK on the row
-                                onChange={(e) => handleChange('category_id', Number(e.target.value))}
-                            >
-                                <option value="">Select Asset Category</option>
-                                {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select
+                                classNamePrefix="react-select"
+                                placeholder="Select Category"
+                                isClearable
+                                options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                                value={
+                                categories.find((c) => c.id === form.category_id)
+                                    ? { value: form.category_id, label: categories.find((c) => c.id === form.category_id)!.name }
+                                    : null
+                                }
+                                onChange={(option) => {
+                                handleChange('category_id', option ? option.value : '');
+                                handleChange('asset_model_id', '');
+                                handleChange('brand', '');
+                                }}
+                            />
                         </div>
 
                         <div>
                             <Label>Asset Model</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.asset_model_id}
-                                onChange={(e) => handleChange('asset_model_id', Number(e.target.value))}
-                                disabled={!form.brand}
-                            >
-                                <option value="">Select Asset Model</option>
-                                {filteredModels.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.model}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select
+                                placeholder="Select Asset Model"
+                                isClearable
+                                isDisabled={!form.category_id}
+                                options={filteredModels.map((m) => ({ value: m.id, label: m.model || '(No Model)' }))}
+                                value={
+                                filteredModels.find((m) => m.id === form.asset_model_id)
+                                    ? {
+                                        value: form.asset_model_id,
+                                        label: filteredModels.find((m) => m.id === form.asset_model_id)!.model,
+                                    }
+                                    : null
+                                }
+                                onChange={(option) => {
+                                handleChange('asset_model_id', option ? option.value : '');
+                                const model = assetModels.find((m) => m.id === option?.value);
+                                if (model?.brand) {
+                                    const formattedBrand = model.brand.charAt(0).toUpperCase() + model.brand.slice(1).toLowerCase();
+                                    handleChange('brand', formattedBrand);
+                                }
+                                }}
+                            />
                         </div>
 
                         <div>
                             <Label>Brand</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.brand}
-                                onChange={(e) => {
-                                    handleChange('brand', e.target.value);
-                                    handleChange('asset_model_id', '');
-                                }}
-                            >
-                                <option value="">Select Brand</option>
-                                {uniqueBrands.map((b) => (
-                                    <option key={b} value={b}>
-                                        {b}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select
+                                placeholder={
+                                !form.category_id
+                                    ? 'Select a category first'
+                                    : filteredBrands.length === 0
+                                    ? 'No brands available'
+                                    : 'Select Brand'
+                                }
+                                isClearable={!isSingleBrand}
+                                isDisabled={!form.category_id || isSingleBrand}
+                                options={filteredBrands.map((b) => ({ value: b, label: b }))}
+                                value={form.brand ? { value: form.brand, label: form.brand } : null}
+                                onChange={(option) => handleChange('brand', option ? option.value : '')}
+                            />
                         </div>
 
                         <div>
@@ -281,81 +365,112 @@ export const EditAssetModalForm = ({
                         {/* Unit/Department */}
                         <div>
                             <Label>Unit/Department</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.unit_or_department_id}
-                                onChange={(e) => handleChange('unit_or_department_id', Number(e.target.value))}
-                            >
-                                <option value="">Select Unit/Department</option>
-                                {unitOrDepartments.map((u) => (
-                                    <option key={u.id} value={u.id}>
-                                        {u.code} - {u.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select
+                                placeholder="Select Unit/Department"
+                                isClearable
+                                options={unitOrDepartments.map((u) => ({
+                                value: u.id,
+                                label: `${u.name}`,
+                                }))}
+                                value={
+                                unitOrDepartments.find((u) => u.id === form.unit_or_department_id)
+                                    ? {
+                                        value: form.unit_or_department_id,
+                                        label: `${unitOrDepartments.find((u) => u.id === form.unit_or_department_id)!.name}`,
+                                    }
+                                    : null
+                                }
+                                onChange={(option) => handleChange('unit_or_department_id', option ? option.value : '')}
+                            />
                         </div>
                         
                         {/* Building */}
                         <div>
                             <Label>Building</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.building_id}
-                                onChange={(e) => {
-                                    handleChange('building_id', Number(e.target.value));
-
-                                    handleChange('sub_area_id', null)
+                            <Select
+                                placeholder="Select Building"
+                                isClearable
+                                options={buildings.map((b) => ({
+                                    value: b.id,
+                                    label: `${b.name}`,
+                                }))}
+                                value={
+                                buildings.find((b) => b.id === form.building_id)
+                                    ? {
+                                        value: form.building_id,
+                                        label: `${buildings.find((b) => b.id === form.building_id)!.name}`,
+                                    }
+                                    : null
+                                }
+                                onChange={(option) => {
+                                    handleChange('building_id', option ? option.value : '');
+                                    handleChange('building_room_id', '');
+                                    handleChange('sub_area_id', '');
                                 }}
-                            >
-                                <option value="">Select Building</option>
-                                {buildings.map((b) => (
-                                    <option key={b.id} value={b.id}>
-                                        {b.name} ({b.code})
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
                         {/* Room */}
                         <div>
                             <Label>Room</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.building_room_id}
-                                onChange={(e) => handleChange('building_room_id', Number(e.target.value))}
-                                disabled={!form.building_id}
-                            >
-                                <option value="">Select Room</option>
-                                {filteredRooms.map((room) => (
-                                    <option key={room.id} value={room.id}>
-                                        {room.room}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select
+                                placeholder="Select Room"
+                                isClearable
+                                isDisabled={!form.building_id}
+                                options={filteredRooms.map((r) => ({ value: r.id, label: r.room.toString() }))}
+                                value={
+                                filteredRooms.find((r) => r.id === form.building_room_id)
+                                    ? { value: form.building_room_id, label: filteredRooms.find((r) => r.id === form.building_room_id)!.room.toString() }
+                                    : null
+                                }
+                                onChange={(option) => {
+                                handleChange('building_room_id', option ? option.value : '');
+                                handleChange('sub_area_id', '');
+                                }}
+                            />
                         </div>
 
                         {/* Sub Area */}
                         <div>
                             <Label>Sub Area</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.sub_area_id ?? ''}
-                                onChange={(e) => 
-                                    handleChange('sub_area_id', e.target.value === '' ? null : Number(e.target.value))
+                            <Select
+                                placeholder="Select Sub Area"
+                                isClearable
+                                isDisabled={!form.building_room_id}
+                                options={subAreas
+                                .filter((s) => s.building_room_id === Number(form.building_room_id))
+                                .map((s) => ({ value: s.id, label: s.name }))}
+                                value={
+                                subAreas.find((s) => s.id === form.sub_area_id)
+                                    ? { value: form.sub_area_id, label: subAreas.find((s) => s.id === form.sub_area_id)!.name }
+                                    : null
                                 }
-                                disabled={!form.building_room_id}
-                            >
-                                <option value="">Select Sub Area</option>
-                                {subAreas
-                                .filter((s: SubArea) => s.building_room_id === Number(form.building_room_id)) // ✅ filter by chosen room
-                                .map((s: SubArea) => (
-                                    <option key={s.id} value={s.id}>
-                                    {s.name}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(option) => handleChange('sub_area_id', option ? option.value : null)}
+                            />
                         </div>
 
+                        {/* Assigned To */}
+                        <div className="col-span-1">
+                            <Label>Assigned To</Label>
+                            <Select
+                                placeholder="Select Personnel"
+                                isClearable
+                                options={personnels.map((p) => ({
+                                value: p.id,
+                                label: `${p.full_name}${p.position ? ` – ${p.position}` : ''}`,
+                                }))}
+                                value={
+                                personnels.find((p) => p.id === form.assigned_to)
+                                    ? {
+                                        value: form.assigned_to,
+                                        label: `${personnels.find((p) => p.id === form.assigned_to)!.full_name}${personnels.find((p) => p.id === form.assigned_to)!.position ? ` – ${personnels.find((p) => p.id === form.assigned_to)!.position}` : ''}`,
+                                    }
+                                    : null
+                                }
+                                onChange={(option) => handleChange('assigned_to', option ? option.value : null)}
+                            />
+                        </div>
+                        
                         <div>
                             <Label>Status</Label>
                             <select
@@ -365,23 +480,6 @@ export const EditAssetModalForm = ({
                             >
                                 <option value="active">Active</option>
                                 <option value="archived">Archived</option>
-                            </select>
-                        </div>
-
-                        {/* Assigned To */}
-                        <div className="col-span-2">
-                            <Label>Assigned To</Label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={form.assigned_to ?? ''}
-                                onChange={(e) => handleChange('assigned_to', e.target.value ? Number(e.target.value) : null)}
-                            >
-                                <option value="">Select Personnel</option>
-                                {personnels.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                    {p.full_name}{p.position ? ` – ${p.position}` : ''}
-                                </option>
-                                ))}
                             </select>
                         </div>
 
