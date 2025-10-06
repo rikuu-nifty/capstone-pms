@@ -302,77 +302,53 @@ export function AddBulkAssetModalForm({
                             {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
                         </div>
 
-                        {/* Enable Multiple Serials */}
-                        {/* <div className="col-span-2 flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={enableMultipleSerials}
-                                onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setEnableMultipleSerials(checked);
-
-                                    if (checked) {
-                                        const newQty = Number(data.quantity) || 0;
-                                        let newSerials = [...data.serial_numbers];
-
-                                        if (newQty > newSerials.length) {
-                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
-                                        }
-
-                                        setData('serial_numbers', newSerials);
-                                    } else {
-                                        setData('serial_numbers', []);
-                                    }
-                                }}
-                            />
-                            <span>Enable multiple serial numbers</span>
-                        </div> */}
+                        
 
                         {/* Enable Multiple Serials */}
-                    <div className="col-span-2">
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={enableMultipleSerials}
-                                onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    const newQty = Number(data.quantity);
+                        <div className="col-span-2">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={enableMultipleSerials}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        const newQty = Number(data.quantity);
 
-                                    if (checked && (!newQty || newQty <= 0)) {
-                                        // Set the frontend validation message inside errors
-                                        errors.quantity = 'Please enter a quantity greater than 0 before enabling multiple serial numbers.';
-                                        setEnableMultipleSerials(false);
-                                        setData('serial_numbers', []);
-                                        return;
-                                    }
-
-                                    // Clear error once valid
-                                    if (errors.quantity) delete errors.quantity;
-
-                                    setEnableMultipleSerials(checked);
-
-                                    if (checked) {
-                                        let newSerials = [...data.serial_numbers];
-                                        if (newQty > newSerials.length) {
-                                            newSerials = [
-                                                ...newSerials,
-                                                ...Array(newQty - newSerials.length).fill(''),
-                                            ];
+                                        if (checked && (!newQty || newQty <= 0)) {
+                                            // Set the frontend validation message inside errors
+                                            errors.quantity = 'Please enter a quantity greater than 0 before enabling multiple serial numbers.';
+                                            setEnableMultipleSerials(false);
+                                            setData('serial_numbers', []);
+                                            return;
                                         }
-                                        setData('serial_numbers', newSerials);
-                                    } else {
-                                        setData('serial_numbers', []);
-                                    }
-                                }}
-                            />
-                            <span>Enable multiple serial numbers</span>
+
+                                        // Clear error once valid
+                                        if (errors.quantity) delete errors.quantity;
+
+                                        setEnableMultipleSerials(checked);
+
+                                        if (checked) {
+                                            let newSerials = [...data.serial_numbers];
+                                            if (newQty > newSerials.length) {
+                                                newSerials = [
+                                                    ...newSerials,
+                                                    ...Array(newQty - newSerials.length).fill(''),
+                                                ];
+                                            }
+                                            setData('serial_numbers', newSerials);
+                                        } else {
+                                            setData('serial_numbers', []);
+                                        }
+                                    }}
+                                />
+                                <span>Enable multiple serial numbers</span>
+                            </div>
+
+                            {/* Show the same red text if validation triggered */}
+                            {/* {errors.quantity && (
+                                <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>
+                            )} */}
                         </div>
-
-                        {/* Show the same red text if validation triggered */}
-                        {/* {errors.quantity && (
-                            <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>
-                        )} */}
-                    </div>
 
 
                         {/* Serial Number (required if not using bulk serials) */}
@@ -560,149 +536,6 @@ export function AddBulkAssetModalForm({
                             <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
                         </div>
 
-                        {/* Asset Type (required) */}
-                        {/* <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Asset Type</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.asset_type}
-                                onChange={(e) => setData('asset_type', e.target.value)}
-                            >
-                                <option value="">Select Asset Type</option>
-                                <option value="fixed">Fixed</option>
-                                <option value="not_fixed">Not Fixed</option>
-                            </select>
-                            {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
-                        </div> */}
-
-                        {/* Category (required) */}
-                        {/* <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Asset Category</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.category_id}
-                                onChange={(e) => setData('category_id', e.target.value)}
-                            >
-                                <option value="">Select Category</option>
-                                {categories.map((c) => (
-                                    <option key={c.id} value={c.id.toString()}>
-                                        {c.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
-                        </div> */}
-
-                        {/* <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Asset Name</label>
-                            <input
-                                type="text"
-                                className="w-full rounded-lg border p-2"
-                                placeholder="Enter Asset"
-                                value={data.asset_name}
-                                onChange={(e) => setData('asset_name', e.target.value)}
-                            />
-                            {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
-                        </div> */}
-
-                        {/* Supplier + Quantity */}
-                        {/* <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Supplier</label>
-                            <input
-                                type="text"
-                                className="w-full rounded-lg border p-2"
-                                value={data.supplier}
-                                onChange={(e) => setData('supplier', e.target.value)}
-                            />
-                            {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
-                        </div> */}
-
-                        {/* Quantity */}
-                        {/* <div className="col-span-2">
-                            <label className="mb-1 block font-medium">Quantity</label>
-                            <input
-                                type="number"
-                                min="1"
-                                className="w-full rounded-lg border p-2"
-                                value={data.quantity}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setData('quantity', val);
-
-                                    if (enableMultipleSerials) {
-                                        const newQty = Number(val) || 0;
-                                        let newSerials = [...data.serial_numbers];
-
-                                        // Ensure at least `qty` fields exist
-                                        if (newQty > newSerials.length) {
-                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
-                                        }
-
-                                        setData('serial_numbers', newSerials);
-                                    }
-                                }}
-                            />
-                            {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>}
-                        </div>
-
-                        <div className="col-span-2 flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={enableMultipleSerials}
-                                onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setEnableMultipleSerials(checked);
-
-                                    if (checked) {
-                                        const newQty = Number(data.quantity) || 0;
-                                        let newSerials = [...data.serial_numbers];
-
-                                        if (newQty > newSerials.length) {
-                                            newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
-                                        }
-
-                                        setData('serial_numbers', newSerials);
-                                    } else {
-                                        setData('serial_numbers', []);
-                                    }
-                                }}
-                            />
-                            <span>Enable multiple serial numbers</span>
-                        </div>
-
-                        {!enableMultipleSerials && (
-                            <div className="col-span-2">
-                                <label className="mb-1 block font-medium">Serial Number</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.serial_numbers[0] || ''}
-                                    onChange={(e) => setData('serial_numbers', [e.target.value])}
-                                />
-                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
-                            </div>
-                        )}
-
-                        {enableMultipleSerials && (Number(data.quantity) || 0) > 0 && (
-                            <div className="col-span-2 space-y-2">
-                                {data.serial_numbers.map((sn, i) => (
-                                    <input
-                                        key={i}
-                                        type="text"
-                                        placeholder={`Serial No. ${i + 1}`}
-                                        className="w-full rounded-lg border p-2"
-                                        value={sn}
-                                        onChange={(e) => {
-                                            const copy = [...data.serial_numbers];
-                                            copy[i] = e.target.value;
-                                            setData('serial_numbers', copy);
-                                        }}
-                                    />
-                                ))}
-                                {errors.serial_numbers && <p className="mt-1 text-xs text-red-500">{errors.serial_numbers}</p>}
-                            </div>
-                        )} */}
-
                         {/* Unit Cost */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Unit Cost</label>
@@ -733,58 +566,6 @@ export function AddBulkAssetModalForm({
                             />
                         </div>
 
-                        {/* <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Brand</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.brand}
-                                onChange={(e) => {
-                                    setData('brand', e.target.value);
-                                    setData('asset_model_id', '');
-                                }}
-                            >
-                                <option value="">Select Brand</option>
-                                {uniqueBrands.map((brand, index) => (
-                                    <option key={index} value={brand}>
-                                        {brand}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
-                        </div> */}
-
-                        {/* Model + Memo */}
-                        {/* <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Asset Model</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.asset_model_id}
-                                onChange={(e) => setData('asset_model_id', e.target.value)}
-                                disabled={!data.brand}
-                            >
-                                <option value="">Select Asset Model</option>
-                                {filteredModels.map((model) => (
-                                    <option key={model.id} value={model.id.toString()}>
-                                        {model.model}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
-                        </div> */}
-
-                        {/* <div className="col-span-1">
-                            <label className="mb-1 block font-medium">Memorandum Number</label>
-                            <input
-                                type="number"
-                                className="w-full rounded-lg border p-2"
-                                value={data.memorandum_no}
-                                onChange={(e) => setData('memorandum_no', e.target.value)}
-                            />
-                            {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
-                        </div> */}
-
-                        {/* Removed Transfer Status select */}
-
                         {/* Total Cost */}
                         <div className="col-span-2">
                             <label className="mb-1 block font-medium">Total Cost</label>
@@ -796,79 +577,6 @@ export function AddBulkAssetModalForm({
                                 disabled
                             />
                         </div>
-
-                        {/* Asset Image with Webcam */}
-                        {/* <div className="col-span-2">
-                            <label className="mb-1 block font-medium">Asset Image</label>
-
-                            {showWebcam ? (
-                                <WebcamCapture
-                                    onCapture={(file) => {
-                                        setData('image', file);
-                                        setShowWebcam(false);
-                                    }}
-                                    onCancel={() => setShowWebcam(false)}
-                                />
-                            ) : (
-                                <>
-                                    <div className="flex gap-2">
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                if (e.target.files?.[0]) {
-                                                    setData('image', e.target.files[0]);
-                                                }
-                                            }}
-                                            className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
-                                        />
-
-                                        <Button type="button" onClick={() => setShowWebcam(true)}>
-                                            Use Camera
-                                        </Button>
-                                    </div>
-
-                                    {data.image && (
-                                        <div className="mt-3 flex items-center gap-3 rounded-lg border bg-gray-50 p-2 shadow-sm">
-                                            <img
-                                                src={URL.createObjectURL(data.image as File)}
-                                                alt="Preview"
-                                                className="h-20 w-20 rounded-md border object-cover"
-                                            />
-                                            <div className="flex flex-col gap-1">
-                                                <span className="max-w-[140px] truncate text-sm font-medium text-gray-700">
-                                                    {(data.image as File).name}
-                                                </span>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setData('image', null);
-                                                            if (fileInputRef.current) fileInputRef.current.value = '';
-                                                        }}
-                                                        className="rounded bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setData('image', null);
-                                                            if (fileInputRef.current) fileInputRef.current.value = '';
-                                                            setShowWebcam(true);
-                                                        }}
-                                                        className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
-                                                    >
-                                                        Retake
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div> */}
 
                         {/* Description */}
                         <div className="col-span-2">
