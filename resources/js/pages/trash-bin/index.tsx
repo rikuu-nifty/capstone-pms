@@ -10,8 +10,16 @@ import SortDropdown from '@/components/filters/SortDropdown';
 import { Input } from '@/components/ui/input';
 import type { SortDir } from '@/components/filters/SortDropdown';
 import TrashFilterDropdown from '@/components/filters/TrashFilterDropdown';
+import type { BreadcrumbItem } from '@/types';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Trash Bin',
+        href: '/trash-bin',
+    },
+];
 
 interface TrashRecord {
     id: number;
@@ -578,9 +586,9 @@ export default function TrashBinIndex(props: TrashBinProps) {
     const [sortDir, setSortDir] = useState<SortDir>(props.filters.dir ?? 'desc');
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Trash Bin" />
-
+        
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
                 <div>
