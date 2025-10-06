@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { DeleteAssetModal } from '@/components/delete-modal-form';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { PickerInput } from '@/components/picker-input';
@@ -23,6 +24,8 @@ import { SubArea, ucwords, UnitOrDepartment } from '@/types/custom-index';
 import { WebcamCapture } from './WebcamCapture';
 // ✅ instead use the shared type
 import type { Personnel } from '@/types/personnel';
+
+import Select from 'react-select';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -243,9 +246,95 @@ export default function InventoryListIndex({
     // Filter for Rooms
     const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
 
-    // Filter for Brand
-    const uniqueBrands = Array.from(new Set(assetModels.map((model) => model.brand)));
-    const filteredModels = assetModels.filter((model) => model.brand === data.brand);
+    // // Filter for Brand
+    // const uniqueBrands = Array.from(new Set(assetModels.map((model) => model.brand)));
+    // const filteredModels = assetModels.filter((model) => model.brand === data.brand);
+
+    // Filter models based on selected category
+    const filteredModels = assetModels.filter(
+        (m) => m.category_id === Number(data.category_id)
+    );
+
+    // Gather all brands for that category (case-insensitive + unique)
+    // const categoryBrands = Array.from(
+    //     new Map(
+    //         assetModels
+    //         .filter((m) => m.category_id === Number(data.category_id) && m.brand)
+    //         .map((m) => [
+    //             m.brand.trim().toLowerCase(), // normalize case
+    //             m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(), // store formatted version
+    //         ])
+    //     ).values()
+    // );
+
+    // ✅ Memoize filteredBrands so it doesn't trigger unnecessary re-renders
+const filteredBrands = useMemo(() => {
+    // No category selected → no brands
+    if (!data.category_id) return [];
+
+    // If a model is selected, show only brands tied to that model within the category
+    if (data.asset_model_id) {
+        const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
+
+        if (selectedModel) {
+            return Array.from(
+                new Map(
+                    assetModels
+                        .filter(
+                            (m) =>
+                                m.category_id === selectedModel.category_id &&
+                                m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
+                                m.brand &&
+                                m.brand.trim() !== ''
+                        )
+                        .map((m) => [
+                            m.brand.trim().toLowerCase(),
+                            m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
+                        ])
+                ).values()
+            );
+        }
+    }
+
+    // Otherwise, return all brands under the category
+    return Array.from(
+        new Map(
+            assetModels
+                .filter(
+                    (m) =>
+                        m.category_id === Number(data.category_id) &&
+                        m.brand &&
+                        m.brand.trim() !== ''
+                )
+                .map((m) => [
+                    m.brand.trim().toLowerCase(),
+                    m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
+                ])
+        ).values()
+    );
+}, [data.category_id, data.asset_model_id, assetModels]);
+
+    // Check if there is only one unique brand for this category
+    const isSingleBrand = filteredBrands.length === 1;
+
+    // Auto-select brand if only one exists, and reset if category has no brands
+    useEffect(() => {
+        // If there are no valid brands, clear the brand
+        if (data.category_id && filteredBrands.length === 0 && data.brand) {
+            setData('brand', '');
+            return;
+        }
+
+        // If exactly one brand exists, auto-fill it
+        if (
+            isSingleBrand &&
+            data.category_id &&
+            !data.brand &&
+            filteredBrands.length > 0
+        ) {
+            setData('brand', filteredBrands[0]);
+        }
+    }, [data.category_id, data.asset_model_id, data.brand, filteredBrands, isSingleBrand, setData]);
 
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
     const [selectedUnitId, setSelectedUnitId] = useState<number | ''>('');
@@ -895,58 +984,75 @@ export default function InventoryListIndex({
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Category</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.category_id ?? ''} // <-- FK
-                                    onChange={(e) => setData('category_id', e.target.value === '' ? '' : Number(e.target.value))}
-                                >
-                                    <option value="">Select Asset Category</option>
-                                    {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {' '}
-                                            {/* <-- send id */}
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    className="text-sm"
+                                    classNamePrefix="react-select"
+                                    placeholder="Select Asset Category"
+                                    isClearable
+                                    options={categories.map(c => ({ value: c.id, label: c.name }))}
+                                    value={
+                                        categories.find(c => c.id === data.category_id)
+                                        ? { value: data.category_id, label: categories.find(c => c.id === data.category_id)!.name }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                        setData('category_id', option ? option.value : '');
+                                        setData('asset_model_id', '');
+                                        setData('brand', '');
+                                    }}
+                                />
                                 {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Model</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.asset_model_id}
-                                    onChange={(e) => setData('asset_model_id', Number(e.target.value))}
-                                    disabled={!data.brand}
-                                >
-                                    <option value="">Select Asset Model</option>
-                                    {filteredModels.map((model) => (
-                                        <option key={model.id} value={model.id}>
-                                            {model.model}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    placeholder="Select Asset Model"
+                                    isClearable
+                                    isDisabled={!data.category_id}
+                                    options={filteredModels.map((m) => ({
+                                        value: m.id,
+                                        label: m.model || '(No Model Name)',
+                                    }))}
+                                    value={
+                                        filteredModels.find((m) => m.id === data.asset_model_id)
+                                        ? {
+                                            value: data.asset_model_id,
+                                            label: filteredModels.find((m) => m.id === data.asset_model_id)!.model,
+                                            }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                        setData('asset_model_id', option ? option.value : '');
+                                        
+                                        // When a model is selected, auto-fill its brand (if any)
+                                        const model = assetModels.find((m) => m.id === option?.value);
+                                        if (model?.brand) {
+                                            const formattedBrand =
+                                                model.brand.charAt(0).toUpperCase() + model.brand.slice(1).toLowerCase();
+                                            setData('brand', formattedBrand);
+                                        }
+                                    }}
+                                />
                                 {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                             </div>
 
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Brand</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.brand}
-                                    onChange={(e) => {
-                                        setData('brand', e.target.value);
-                                        setData('asset_model_id', ''); // Reset model when brand changes
-                                    }}
-                                >
-                                    <option value="">Select Brand</option>
-                                    {uniqueBrands.map((brand, index) => (
-                                        <option key={index} value={brand}>
-                                            {brand}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    placeholder={
+                                        !data.category_id
+                                            ? "Select a category first"
+                                            : filteredBrands.length === 0
+                                            ? "No brands available"
+                                            : "Select Brand"
+                                    }
+                                    isClearable={!isSingleBrand}
+                                    isDisabled={!data.category_id || isSingleBrand}
+                                    options={filteredBrands.map((b) => ({ value: b, label: b }))}
+                                    value={data.brand ? { value: data.brand, label: data.brand } : null}
+                                    onChange={(option) => setData('brand', option ? option.value : '')}
+                                />
                                 {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
                             </div>
 
@@ -1048,94 +1154,91 @@ export default function InventoryListIndex({
                             
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Unit/Department</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.unit_or_department_id}
-                                    onChange={(e) => setData('unit_or_department_id', Number(e.target.value))}
-                                >
-                                    <option value="">Select Unit/Department</option>
-                                    {unitOrDepartments.map((unit) => (
-                                        <option key={unit.id} value={unit.id}>
-                                            {unit.name} ({unit.code} )
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    placeholder="Select Unit/Department"
+                                    isClearable
+                                    options={unitOrDepartments.map(u => ({
+                                        value: u.id,
+                                        label: `${u.name}`,
+                                    }))}
+                                    value={
+                                        unitOrDepartments.find(u => u.id === data.unit_or_department_id)
+                                        ? { value: data.unit_or_department_id, label: `${unitOrDepartments.find(u => u.id === data.unit_or_department_id)!.name} (${unitOrDepartments.find(u => u.id === data.unit_or_department_id)!.code})` }
+                                        : null
+                                    }
+                                    onChange={(option) => setData('unit_or_department_id', option ? option.value : '')}
+                                />
                                 {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
                             </div>
                             
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Building</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.building_id}
-                                    onChange={(e) => setData('building_id', Number(e.target.value))}
-                                >
-                                    <option value="">Select Building</option>
-                                    {buildings.map((building) => (
-                                        <option key={building.id} value={building.id}>
-                                            {building.name} ({building.code})
-                                        </option>
-                                    ))}
-                                </select>
-
+                                <Select
+                                    placeholder="Select Building"
+                                    isClearable
+                                    options={buildings.map(b => ({ value: b.id, label: `${b.name}` }))}
+                                    value={buildings.find(b => b.id === data.building_id)
+                                        ? { value: data.building_id, label: `${buildings.find(b => b.id === data.building_id)!.name} (${buildings.find(b => b.id === data.building_id)!.code})` }
+                                        : null}
+                                    onChange={(option) => {
+                                        setData('building_id', option ? option.value : '');
+                                        setData('building_room_id', '');
+                                        setData('sub_area_id', '');
+                                    }}
+                                />
                                 {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
                             </div>
 
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Room</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.building_room_id}
-                                    onChange={(e) => setData('building_room_id', Number(e.target.value))}
-                                    disabled={!data.building_id}
-                                >
-                                    <option value="">Select Room</option>
-                                    {filteredRooms.map((room) => (
-                                        <option key={room.id} value={room.id}>
-                                            {room.room}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    placeholder="Select Room"
+                                    isClearable
+                                    isDisabled={!data.building_id}
+                                    options={filteredRooms.map(r => ({ value: r.id, label: r.room.toString() }))}
+                                    value={filteredRooms.find(r => r.id === data.building_room_id)
+                                        ? { value: data.building_room_id, label: filteredRooms.find(r => r.id === data.building_room_id)!.room.toString() }
+                                        : null}
+                                    onChange={(option) => {
+                                        setData('building_room_id', option ? option.value : '');
+                                        setData('sub_area_id', '');
+                                    }}
+                                />
                             </div>
 
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Sub Area</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.sub_area_id ?? ''}
-                                    onChange={(e) => setData('sub_area_id', e.target.value === '' ? null : Number(e.target.value))}
-                                    disabled={!data.building_room_id}
-                                >
-                                    <option value="">Select Sub Area</option>
-                                    {subAreas
-                                        .filter((s: SubArea) => s.building_room_id === Number(data.building_room_id)) // ✅ typed
-                                        .map(
-                                            (
-                                                s: SubArea,
-                                            ) => (
-                                                <option key={s.id} value={s.id}>
-                                                    {s.name}
-                                                </option>
-                                            ),
-                                        )}
-                                </select>
+                                <Select
+                                    placeholder="Select Sub Area"
+                                    isClearable
+                                    isDisabled={!data.building_room_id}
+                                    options={subAreas
+                                        .filter(s => s.building_room_id === Number(data.building_room_id))
+                                        .map(s => ({ value: s.id, label: s.name }))}
+                                    value={subAreas.find(s => s.id === data.sub_area_id)
+                                        ? { value: data.sub_area_id, label: subAreas.find(s => s.id === data.sub_area_id)!.name }
+                                        : null}
+                                    onChange={(option) => setData('sub_area_id', option ? option.value : null)}
+                                />
                                 {errors.sub_area_id && <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>}
                             </div>
 
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Assigned To</label>
-                                <select
-                                    className="w-full rounded-lg border p-2"
-                                    value={data.assigned_to ?? ''}
-                                    onChange={(e) => setData('assigned_to', e.target.value ? Number(e.target.value) : null)}
-                                    >
-                                    <option value="">Select Personnel</option>
-                                    {personnels.map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                        {p.full_name}{p.position ? ` – ${p.position}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select
+                                    placeholder="Select Personnel"
+                                    isClearable
+                                    options={personnels.map(p => ({
+                                        value: p.id,
+                                        label: `${p.full_name}${p.position ? ` – ${p.position}` : ''}`,
+                                    }))}
+                                    value={
+                                        personnels.find(p => p.id === data.assigned_to)
+                                        ? { value: data.assigned_to, label: `${personnels.find(p => p.id === data.assigned_to)!.full_name}${personnels.find(p => p.id === data.assigned_to)!.position ? ` – ${personnels.find(p => p.id === data.assigned_to)!.position}` : ''}` }
+                                        : null
+                                    }
+                                    onChange={(option) => setData('assigned_to', option ? option.value : null)}
+                                />
                             </div>
                             
                             <div className="col-span-1">
