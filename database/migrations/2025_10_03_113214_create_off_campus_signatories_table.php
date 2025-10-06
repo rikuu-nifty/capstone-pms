@@ -16,7 +16,9 @@ return new class extends Migration
             $table->string('role_key'); // e.g. 'issued_by'
             $table->string('name');     // Full name of the signatory
             $table->string('title');    // e.g. Head, PMO
+
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique('role_key')->nulable(); // Ensure one row per role_key
         });

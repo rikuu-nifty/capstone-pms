@@ -17,6 +17,10 @@ class BuildingRoom extends Model
         'description',
     ];
 
+    protected $casts = [
+        'deleted_at'    => 'datetime',
+    ];
+
     public function inventoryLists()
     {
         return $this->hasMany(InventoryList::class, 'building_room_id');

@@ -41,6 +41,19 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "update-roles",
         "delete-role",
         "update-permissions",
+        "view-trash-bin",
+        "restore-trash-bin",
+    ],
+    "Signatories": [
+        "view-signatories",
+        "create-signatories",
+        "update-signatories",
+        "delete-signatories",
+    ],
+    "Form Approvals": [
+        "view-form-approvals",
+        "approve-form-approvals",
+        "delete-form-approvals",
     ],
     "Form Approvals": [
         "view-form-approvals",

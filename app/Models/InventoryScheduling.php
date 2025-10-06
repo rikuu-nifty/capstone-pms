@@ -14,6 +14,10 @@ class InventoryScheduling extends Model
 {
     use HasFormApproval, SoftDeletes;
 
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'prepared_by_id',
         'building_id',

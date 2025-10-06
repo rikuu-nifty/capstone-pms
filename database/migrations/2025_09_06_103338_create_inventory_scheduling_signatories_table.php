@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('title');  // Position/role title
 
             $table->timestamps();
+            $table->softDeletes();
 
             // Ensure role_key is unique only within the same module
             $table->unique(['module_type', 'role_key']);

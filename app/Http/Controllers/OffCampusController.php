@@ -248,35 +248,32 @@ class OffCampusController extends Controller
     }
 
 
-    /**
-     * Remove the specified resource from storage.
-     */
-public function destroy(Request $request, OffCampus $offCampus)
-{
-    // Track who archived it (requires nullable off_campuses.deleted_by column)
-    $offCampus->forceFill(['deleted_by_id' => $request->user()->id ?? null])->save();
+    public function destroy(Request $request, OffCampus $offCampus)
+    {
+        // Track who archived it (requires nullable off_campuses.deleted_by column)
+        $offCampus->forceFill(['deleted_by_id' => $request->user()->id ?? null])->save();
 
-    // Archive parent (children are archived in model events)
-    $offCampus->delete();
+        // Archive parent (children are archived in model events)
+        $offCampus->delete();
 
-    return back()->with('success', 'Off-campus request archived.');
-}
+        return back()->with('success', 'Off-campus request archived.');
+    }
 
-public function restore(int $id)
-{
-    $offCampus = OffCampus::withTrashed()->findOrFail($id);
-    $offCampus->restore(); // children restored via model events
-    return back()->with('success', 'Off-campus request restored.');
-}
+    public function restore(int $id)
+    {
+        $offCampus = OffCampus::withTrashed()->findOrFail($id);
+        $offCampus->restore();
+        return back()->with('success', 'Off-campus request restored.');
+    }
 
-public function forceDelete(int $id)
-{
-    $offCampus = OffCampus::withTrashed()->findOrFail($id);
+    public function forceDelete(int $id)
+    {
+        $offCampus = OffCampus::withTrashed()->findOrFail($id);
 
-    // If you truly want to purge the record and its children:
-    $offCampus->assets()->withTrashed()->forceDelete();
-    $offCampus->forceDelete();
+        // If you truly want to purge the record and its children:
+        $offCampus->assets()->withTrashed()->forceDelete();
+        $offCampus->forceDelete();
 
-    return back()->with('success', 'Off-campus request permanently removed.');
-}
+        return back()->with('success', 'Off-campus request permanently removed.');
+    }
 }

@@ -20,6 +20,9 @@ class Personnel extends Model
         'status'
     ];
 
+    protected $casts = [
+        'deleted_at'    => 'datetime',
+    ];
 
     // ✅ Accessor for full_name
     protected $appends = ['full_name'];

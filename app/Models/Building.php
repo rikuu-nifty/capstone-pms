@@ -17,10 +17,14 @@ class Building extends Model
         'description',
     ];
 
+    protected $casts = [
+        'deleted_at'    => 'datetime',
+    ];
+
     public function inventoryLists()
-{
-    return $this->hasMany(InventoryList::class, 'building_id');
-}
+    {
+        return $this->hasMany(InventoryList::class, 'building_id');
+    }
 
     public function buildingRooms()
     {

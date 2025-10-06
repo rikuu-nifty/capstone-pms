@@ -321,13 +321,17 @@ class InventorySchedulingController extends Controller
         return back()->with('success', 'Schedule updated.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(InventoryScheduling $inventoryScheduling)
     {
         $inventoryScheduling->delete();
         return redirect()->back()->with('success', 'The Inventory Schedule Has Been Deleted Successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $schedule = InventoryScheduling::withTrashed()->findOrFail($id);
+        $schedule->restore();
+        return back()->with('success', 'Schedule restored successfully.');
     }
 
     public function rowAssets(Request $request, InventoryScheduling $schedule, int $rowId)

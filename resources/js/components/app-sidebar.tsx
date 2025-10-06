@@ -34,6 +34,7 @@ import {
     FileUser,
     FileDigit,
     Bell, // ✅ added for notifications icon
+    Trash2,
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -75,6 +76,13 @@ const auditLogItem = {
     permission: 'view-audit-logs', 
 };
 
+const trashBinItem = {  
+    title: 'Trash Bin', 
+    href: '/trash-bin', 
+    icon: Trash2, 
+    permission: 'view-trash-bin',
+};
+
 const inventoryNavItems = [
     {
         title: 'Inventory List',
@@ -89,10 +97,10 @@ const inventoryNavItems = [
 ];
 
 const assetsNavItems = [
-    { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
     { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
-    { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
     { title: 'Equipment Codes', href: '/equipment-codes', icon: FileDigit, permission: 'view-equipment-codes' },
+    { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
+    { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
 ];
 
 const institutionalSetUpNavItems = [
@@ -106,6 +114,7 @@ const userNavItems = [
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals' },
     { title: 'Signatories', href: '/signatories', icon: FileUser, permission: 'view-signatories' },
+    // { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
 ];
 
 const configNavItems = [
@@ -266,6 +275,17 @@ export function AppSidebar() {
                                             return <Icon className="h-4 w-4" />;
                                         })()}
                                         <span>{reportsNavItem.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+
+                        {canView(trashBinItem, permissions) && (
+                            <SidebarMenuItem key={trashBinItem.href}>
+                                <SidebarMenuButton asChild className="px-3 py-2">
+                                    <Link href={trashBinItem.href} className="flex items-center space-x-2">
+                                        <trashBinItem.icon className="h-4 w-4" />
+                                        <span>{trashBinItem.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

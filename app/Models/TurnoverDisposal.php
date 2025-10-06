@@ -29,12 +29,11 @@ class TurnoverDisposal extends Model
 
     protected $casts = 
     [
-        'document_date' => 'date:Y-m-d',
+        'document_date' => 'date:Y-m-d:Y-m-d',
+        'deleted_at'    => 'datetime',
     ];
 
     protected $appends = ['noted_by_name', 'noted_by_title'];
-
-    
 
     public function signatories()
     {

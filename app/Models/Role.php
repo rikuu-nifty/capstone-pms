@@ -20,6 +20,10 @@ class Role extends Model
         'description',
     ];
 
+    protected $casts = [
+        'deleted_at'    => 'datetime',
+    ];
+
     protected static function booted(): void
     {
         static::deleting(function (Role $role) {
