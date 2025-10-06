@@ -58,7 +58,8 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
 
     const filtered = useMemo(() => {
         return (equipment_codes.data ?? []).filter((c) => {
-            const haystack = `${c.id} ${c.code} ${c.description} ${c.category_name ?? ''}`.toLowerCase();
+            // const haystack = `${c.id} ${c.code} ${c.description} ${c.category_name ?? ''}`.toLowerCase();
+            const haystack = `${c.id} ${c.code} ${c.description}`.toLowerCase();
             const matchesSearch = !search || haystack.includes(search);
             const matchesCategory = !selectedCategoryId || c.category_id === selectedCategoryId;
             return matchesSearch && matchesCategory;
@@ -152,7 +153,7 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                     <div className="flex items-center gap-2 w-96">
                         <Input
                             type="text"
-                            placeholder="Search by id, code number, or description..."
+                            placeholder="Search by code number or description..."
                             value={rawSearch}
                             onChange={(e) => setRawSearch(e.target.value)}
                             className="max-w-xs"
