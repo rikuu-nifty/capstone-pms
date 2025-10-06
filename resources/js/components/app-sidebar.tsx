@@ -33,6 +33,7 @@ import {
     ShieldCheck,
     FileUser,
     FileDigit,
+    Bell, // ✅ added for notifications icon
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -59,19 +60,20 @@ const reportsNavItem = {
     permission: 'view-reports',
 };
 
+// ✅ NEW — Notifications Nav Item
+const notificationsNavItem = {
+    title: 'Notifications',
+    href: '/notifications',
+    icon: Bell,
+    // permission: 'view-notifications', // optional, you can remove this line if unrestricted
+};
+
 const auditLogItem = {  
     title: 'Audit Trail', 
     href: '/audit-log', 
     icon: FileText, 
     permission: 'view-audit-logs', 
 };
-
-// const InventorySheetReportsNavItem = {
-//     title: 'Inventory Sheet Reports',
-//     href: '/reports/inventory-sheet',
-//     icon: ClipboardList,
-//     permission: 'view-reports',
-// };
 
 const inventoryNavItems = [
     {
@@ -84,7 +86,6 @@ const inventoryNavItems = [
     { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
     { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
-    
 ];
 
 const assetsNavItems = [
@@ -104,8 +105,7 @@ const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals' },
-    { title: 'Signatories', href: '/signatories', icon: FileUser, permission: 'view-signatories' }, // ✅ NEW
-    // { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
+    { title: 'Signatories', href: '/signatories', icon: FileUser, permission: 'view-signatories' },
 ];
 
 const configNavItems = [
@@ -115,11 +115,9 @@ const configNavItems = [
 // ------------------ HELPERS ------------------
 function canView(item: NavItem, permissions: string[]): boolean {
     if (!item.permission) return true;
-
     if (Array.isArray(item.permission)) {
         return item.permission.some((p) => permissions.includes(p));
     }
-
     return permissions.includes(item.permission);
 }
 
@@ -247,13 +245,25 @@ export function AppSidebar() {
                     <SidebarMenu>
                         {renderCollapsible('User Management', User, userNavItems)}
 
+                        {/* ✅ NEW: Notifications link (above Reports) */}
+                        {canView(notificationsNavItem, permissions) && (
+                            <SidebarMenuItem key={notificationsNavItem.href}>
+                                <SidebarMenuButton asChild className="px-3 py-2">
+                                    <Link href={notificationsNavItem.href} className="flex items-center space-x-2">
+                                        <notificationsNavItem.icon className="h-4 w-4" />
+                                        <span>{notificationsNavItem.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+
                         {canView(reportsNavItem, permissions) && (
                             <SidebarMenuItem key={reportsNavItem.href}>
                                 <SidebarMenuButton asChild className="px-3 py-2">
                                     <Link href={reportsNavItem.href} className="flex items-center space-x-2">
                                         {(() => {
-                                            const Icon = reportsNavItem.icon
-                                            return <Icon className="h-4 w-4" />
+                                            const Icon = reportsNavItem.icon;
+                                            return <Icon className="h-4 w-4" />;
                                         })()}
                                         <span>{reportsNavItem.title}</span>
                                     </Link>
@@ -266,15 +276,14 @@ export function AppSidebar() {
                                 <SidebarMenuButton asChild className="px-3 py-2">
                                     <Link href={auditLogItem.href} className="flex items-center space-x-2">
                                         {(() => {
-                                            const Icon = auditLogItem.icon
-                                            return <Icon className="h-4 w-4" />
+                                            const Icon = auditLogItem.icon;
+                                            return <Icon className="h-4 w-4" />;
                                         })()}
                                         <span>{auditLogItem.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         )}
-
                     </SidebarMenu>
                 </div>
 

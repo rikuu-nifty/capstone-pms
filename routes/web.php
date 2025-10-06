@@ -33,6 +33,7 @@
     use App\Http\Controllers\InventorySchedulingSignatoryController;
     use App\Http\Controllers\TransferSignatoryController;
     use App\Http\Controllers\SignatoryController;
+    
 
 Route::get('/', function () {
         if (Auth::check()) {
@@ -166,15 +167,40 @@ Route::get('/', function () {
     Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
         ->name('asset-summary.show');
     
-    //NOTIFICATIONS
+   // 🔔 NOTIFICATIONS
+Route::prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('markAllRead');
+
+    Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+    Route::post('/{notification}/unread', [NotificationController::class, 'markUnread'])->name('unread');
+
+    Route::post('/{notification}/dismiss', [NotificationController::class, 'dismiss'])->name('dismiss');
+    Route::post('/{notification}/archive', [NotificationController::class, 'archive'])->name('archive');
+
+    Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+}); // ✅ IMPORTANT: closes the notifications group
+
+    // Mark all as read
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
-    ->name('notifications.markAllRead');
+        ->name('notifications.markAllRead');
 
-    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markRead'])
-    ->name('notifications.markRead');
+    // Mark single as read
+    Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markRead'])
+        ->name('notifications.markRead');
 
-    Route::post('/notifications/{id}/dismiss', [NotificationController::class, 'dismiss'])
-    ->name('notifications.dismiss');
+    // Dismiss (like remove from dropdown, but keep in DB as archived)
+    Route::post('/notifications/{notification}/dismiss', [NotificationController::class, 'dismiss'])
+        ->name('notifications.dismiss');
+
+    // Archive (for the dedicated page)
+    Route::post('/notifications/{notification}/archive', [NotificationController::class, 'archive'])
+        ->name('notifications.archive');
+
+    // Delete permanently
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
+        ->name('notifications.destroy');
 
     //USER MANAGEMENT PAGE
     Route::get('/users', [UserApprovalController::class, 'index'])

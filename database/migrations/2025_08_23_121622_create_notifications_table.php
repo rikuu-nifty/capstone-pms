@@ -6,24 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
+            // Laravel defaults
             $table->uuid('id')->primary();
-            $table->string('type');
-            $table->morphs('notifiable');
-            $table->text('data');
+            $table->string('type'); // Notification class
+            $table->morphs('notifiable'); // notifiable_type + notifiable_id
+            $table->text('data'); // JSON payload
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
+
+            // ✅ Your custom field
+            $table->enum('status', ['unread', 'read', 'archived'])->default('unread');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('notifications');
