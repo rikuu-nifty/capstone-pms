@@ -33,8 +33,9 @@ import {
     ShieldCheck,
     FileUser,
     FileDigit,
-    Bell, // ✅ added for notifications icon
+    Bell,
     Trash2,
+    Monitor, // ✅ optional icon for "System Monitoring"
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -61,12 +62,10 @@ const reportsNavItem = {
     permission: 'view-reports',
 };
 
-// ✅ NEW — Notifications Nav Item
 const notificationsNavItem = {
     title: 'Notifications',
     href: '/notifications',
     icon: Bell,
-    // permission: 'view-notifications', // optional, you can remove this line if unrestricted
 };
 
 const auditLogItem = {  
@@ -82,6 +81,14 @@ const trashBinItem = {
     icon: Trash2, 
     permission: 'view-trash-bin',
 };
+
+// ✅ NEW — grouped “System Monitoring” items
+const systemMonitoringNavItems = [
+    notificationsNavItem,
+    reportsNavItem,
+    trashBinItem,
+    auditLogItem,
+];
 
 const inventoryNavItems = [
     {
@@ -114,7 +121,6 @@ const userNavItems = [
     { title: 'Roles', href: '/role-management', icon: ShieldCheck, permission: 'view-roles-page' },
     { title: 'Form Approval', href: '/approvals', icon: FileCheck2, permission: 'view-form-approvals' },
     { title: 'Signatories', href: '/signatories', icon: FileUser, permission: 'view-signatories' },
-    // { title: 'Profile', href: '/profile', icon: User, permission: 'view-profile' },
 ];
 
 const configNavItems = [
@@ -138,7 +144,6 @@ export function AppSidebar() {
     const { url } = usePage();
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-    // Auto-open groups that contain the active route
     useEffect(() => {
         if (inventoryNavItems.some((item) => url.startsWith(item.href))) {
             setOpenGroups((prev) => ({ ...prev, Inventory: true }));
@@ -151,6 +156,9 @@ export function AppSidebar() {
         }
         if (userNavItems.some((item) => url.startsWith(item.href))) {
             setOpenGroups((prev) => ({ ...prev, 'User Management': true }));
+        }
+        if (systemMonitoringNavItems.some((item) => url.startsWith(item.href))) {
+            setOpenGroups((prev) => ({ ...prev, 'System Monitoring': true }));
         }
     }, [url]);
 
@@ -219,7 +227,6 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            {/* Make this flex-1 and scrollable */}
             <SidebarContent className="flex-1 overflow-y-auto">
                 {/* MAIN PLATFORM */}
                 <SidebarGroupLabel>Main Platform</SidebarGroupLabel>
@@ -253,57 +260,8 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Administration</SidebarGroupLabel>
                     <SidebarMenu>
                         {renderCollapsible('User Management', User, userNavItems)}
-
-                        {/* ✅ NEW: Notifications link (above Reports) */}
-                        {canView(notificationsNavItem, permissions) && (
-                            <SidebarMenuItem key={notificationsNavItem.href}>
-                                <SidebarMenuButton asChild className="px-3 py-2">
-                                    <Link href={notificationsNavItem.href} className="flex items-center space-x-2">
-                                        <notificationsNavItem.icon className="h-4 w-4" />
-                                        <span>{notificationsNavItem.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-
-                        {canView(reportsNavItem, permissions) && (
-                            <SidebarMenuItem key={reportsNavItem.href}>
-                                <SidebarMenuButton asChild className="px-3 py-2">
-                                    <Link href={reportsNavItem.href} className="flex items-center space-x-2">
-                                        {(() => {
-                                            const Icon = reportsNavItem.icon;
-                                            return <Icon className="h-4 w-4" />;
-                                        })()}
-                                        <span>{reportsNavItem.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-
-                        {canView(trashBinItem, permissions) && (
-                            <SidebarMenuItem key={trashBinItem.href}>
-                                <SidebarMenuButton asChild className="px-3 py-2">
-                                    <Link href={trashBinItem.href} className="flex items-center space-x-2">
-                                        <trashBinItem.icon className="h-4 w-4" />
-                                        <span>{trashBinItem.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-
-                        {canView(auditLogItem, permissions) && (
-                            <SidebarMenuItem key={auditLogItem.href}>
-                                <SidebarMenuButton asChild className="px-3 py-2">
-                                    <Link href={auditLogItem.href} className="flex items-center space-x-2">
-                                        {(() => {
-                                            const Icon = auditLogItem.icon;
-                                            return <Icon className="h-4 w-4" />;
-                                        })()}
-                                        <span>{auditLogItem.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
+                        {/* ✅ NEW COLLAPSIBLE GROUP: System Monitoring */}
+                        {renderCollapsible('System Monitoring', Monitor, systemMonitoringNavItems)}
                     </SidebarMenu>
                 </div>
 
