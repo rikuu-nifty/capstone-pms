@@ -307,7 +307,6 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                 </DialogHeader>
                 <div className="print-force-light bg-white p-4 sm:p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
                 {/* Header */}
-                    {/* <div className="relative flex sm:flex-row sm:items-center sm:justify-between w-full max-w-[320px] sm:max-w-none mx-auto"> */}
                     <div className="mx-auto w-[320px] sm:w-full sm:max-w-none relative flex items-center justify-between">
                         <div className="flex items-center flex-shrink-0">
                             <img
@@ -318,29 +317,36 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         </div>
                         <div className="absolute left-1/2 -translate-x-1/2 text-center w-[150px] md:w-full">
                             <h2 className="text-xs sm:text-sm md:text-2xl font-bold tracking-wide uppercase print:text-lg">
-                                Property Management Office
+                                Angeles University Foundation
                             </h2>
                             <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
-                                pmo@auf.edu.ph
+                                Property Management Office
                             </p>
-                            <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
-                                +63 973 234 3456
+                            <p className="text-[10px] sm:text-sm text-gray-800 dark:text-gray-400 print:text-xs font-bold">
+                                {(() => {
+                                    const currentYear = new Date().getFullYear();
+                                    const prevYear = currentYear - 1;
+                                    return `MONITORING/SCHEDULE OF INVENTORY AY ${prevYear}-${currentYear}`;
+                                })()}
                             </p>
                         </div>
                         <div className="text-right text-[9px] w-[70px] md:w-full md:text-sm leading-snug">
                             <p>
                                 <span className="text-gray-600 dark:text-gray-400">
-                                Schedule Record #:
+                                    Schedule Record #:
                                 </span>{' '}
                                 <span className="font-semibold">{recordNo}</span>
                             </p>
-                            {/* <p className="mt-1 flex items-center justify-end gap-2"> */}
                             <p className="mt-1 flex flex-col sm:flex-row sm:items-center justify-end sm:justify-end gap-1 sm:gap-2">
                                 <span className="text-gray-600 dark:text-gray-400">Status:</span>
                                 <StatusPill status={schedule.scheduling_status} />
                             </p>
                         </div>
                     </div>
+
+                    <h2 className="mt-4 mb-4 text-center text-base sm:text-lg md:text-xl font-bold tracking-wide text-gray-900 dark:text-gray-100 underline">
+                        Inventory Scheduling
+                    </h2>
 
                     {/* Scope + Scheduling Info */}
                     <div className="mt-6 grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
@@ -423,7 +429,6 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                 onClick={refreshSchedule}
                                 disabled={refreshing}
                                 variant="primary"
-                                // className="flex items-center gap-2 cursor-pointer"
                                 // size="sm"
                                 className="
                                     flex items-center gap-1 cursor-pointer 
@@ -598,12 +603,10 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     </div>
 
                     {/* Actions */}
-                    {/* <div className="text-center print:hidden mt-6"> */}
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-6 print:hidden">
                         <DialogClose asChild>
                             <Button 
                                 variant="primary" 
-                                // className="mr-2 cursor-pointer"
                                 className="w-full sm:w-auto cursor-pointer text-xs font-bold sm:text-sm px-3 py-2"
                             >
                                 ← Back to Schedules
@@ -612,7 +615,6 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         {String(schedule.scheduling_status ?? '').toLowerCase() !== 'pending_review' && (
                             <Button
                                 onClick={() => window.print()}
-                                // className="cursor-pointer inline-block bg-blue-600 text-white px-4 py-2 rounded shadow text-sm font-semibold hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
                                 className="
                                     w-full sm:w-auto cursor-pointer
                                     inline-block bg-blue-600 text-white 
@@ -630,7 +632,6 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
             {rowAssets && (
                 <ViewRowAssetModal
                     open={true}
-                    // onClose={() => setRowAssets(null)}
                     onClose={() => {
                         setRowAssets(null);
                         refreshSchedule();
