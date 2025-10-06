@@ -170,38 +170,37 @@ Route::get('/', function () {
     
     // NOTIFICATIONS
     Route::prefix('notifications')->name('notifications.')->group(function () {
-        Route::get('/', [NotificationController::class, 'index'])->name('index');
-
-        Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('markAllRead');
-
-        Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read');
-        Route::post('/{notification}/unread', [NotificationController::class, 'markUnread'])->name('unread');
-
-        Route::post('/{notification}/dismiss', [NotificationController::class, 'dismiss'])->name('dismiss');
-        Route::post('/{notification}/archive', [NotificationController::class, 'archive'])->name('archive');
-
-        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::get('/', [NotificationController::class, 'index'])->name('index')
+            ->middleware('can:view-notifications');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllRead'])->name('markAllRead')
+            ->middleware('can:update-notifications');
+        Route::post('/{notification}/read', [NotificationController::class, 'markRead'])->name('read')
+            ->middleware('can:update-notifications');
+        Route::post('/{notification}/unread', [NotificationController::class, 'markUnread'])->name('unread')
+            ->middleware('can:update-notifications');
+        Route::post('/{notification}/dismiss', [NotificationController::class, 'dismiss'])->name('dismiss')
+            ->middleware('can:update-notifications');
+        Route::post('/{notification}/archive', [NotificationController::class, 'archive'])->name('archive')
+            ->middleware('can:archive-notifications');
+        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy')
+            ->middleware('can:delete-notifications');
     });
 
-    // Mark all as read
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
-        ->name('notifications.markAllRead');
-
-    // Mark single as read
-    Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markRead'])
-        ->name('notifications.markRead');
-
-    // Dismiss (like remove from dropdown, but keep in DB as archived)
-    Route::post('/notifications/{notification}/dismiss', [NotificationController::class, 'dismiss'])
-        ->name('notifications.dismiss');
-
-    // Archive (for the dedicated page)
-    Route::post('/notifications/{notification}/archive', [NotificationController::class, 'archive'])
-        ->name('notifications.archive');
-
-    // Delete permanently
-    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
-        ->name('notifications.destroy');
+    // // Mark all as read
+    // Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+    //     ->name('notifications.markAllRead');
+    // // Mark single as read
+    // Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markRead'])
+    //     ->name('notifications.markRead');
+    // // Dismiss (like remove from dropdown, but keep in DB as archived)
+    // Route::post('/notifications/{notification}/dismiss', [NotificationController::class, 'dismiss'])
+    //     ->name('notifications.dismiss');
+    // // Archive (for the dedicated page)
+    // Route::post('/notifications/{notification}/archive', [NotificationController::class, 'archive'])
+    //     ->name('notifications.archive');
+    // // Delete permanently
+    // Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
+    //     ->name('notifications.destroy');
 
     //USER MANAGEMENT PAGE
     Route::get('/users', [UserApprovalController::class, 'index'])
