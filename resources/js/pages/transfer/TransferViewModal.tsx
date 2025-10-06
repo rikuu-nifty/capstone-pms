@@ -307,7 +307,7 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
             <div className="hidden h-10 print:block" />
 
             {/* Footer Form Reference */}
-            <div className="mt-5 text-left text-xs text-gray-500 italic print:fixed print:right-0 print:bottom-2 print:left-0">
+            <div className="mt-5 text-left text-xs text-gray-500 print:fixed print:right-0 print:bottom-2 print:left-0">
                 AUF-FORM-AS/PMO-33 November 22, 2011 Rev. 0
             </div>
 

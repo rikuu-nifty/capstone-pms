@@ -11,6 +11,8 @@ import {
     Personnel,
 } from './custom-index';
 
+import { TurnoverDisposalTotals } from "./turnover-disposal";
+
 export type TransferPageProps = {
     transfers: Transfer[];
     assets: InventoryList[];
@@ -71,6 +73,9 @@ export type TurnoverDisposalPageProps = {
     personnels: Personnel[];
 
     asset_count: number;
+    pmoHead?: { id: number; name: string } | null;
+
+    totals: TurnoverDisposalTotals;
 }
 
 export type TurnoverFilterProps = {

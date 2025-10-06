@@ -29,7 +29,7 @@ class TurnoverDisposal extends Model
 
     protected $casts = 
     [
-        'document_date' => 'date',
+        'document_date' => 'date:Y-m-d',
     ];
 
     protected $appends = ['noted_by_name', 'noted_by_title'];
@@ -569,5 +569,44 @@ public function getNotedByTitleAttribute(): ?string
             ->first();
 
         return $u?->only(['id', 'name']);            // avoid hidden/serialization surprises
+    }
+
+    public static function dashboardTotals(): array
+    {
+        $now = now();
+
+        $total = static::count();
+        $totalThisMonth = static::whereMonth('document_date', $now->month)
+            ->whereYear('document_date', $now->year)
+            ->count();
+
+        $pendingReviewThisMonth = static::where('status', 'pending_review')
+            ->whereMonth('document_date', $now->month)
+            ->whereYear('document_date', $now->year)
+            ->count();
+
+        $turnoverThisMonth = static::where('type', 'turnover')
+            ->whereMonth('document_date', $now->month)
+            ->whereYear('document_date', $now->year)
+            ->count();
+
+        $disposalThisMonth = static::where('type', 'disposal')
+            ->whereMonth('document_date', $now->month)
+            ->whereYear('document_date', $now->year)
+            ->count();
+
+        $turnoverAll = static::where('type', 'turnover')->count();
+        $disposalAll = static::where('type', 'disposal')->count();
+
+        $cancelled = static::where('status', 'cancelled')->count();
+
+        return [
+            'pending_review_this_month' => $pendingReviewThisMonth,
+            'turnover_percentage_month' => $totalThisMonth > 0 ? round(($turnoverThisMonth / $totalThisMonth) * 100, 1) : 0,
+            'disposal_percentage_month' => $totalThisMonth > 0 ? round(($disposalThisMonth / $totalThisMonth) * 100, 1) : 0,
+            'turnover_percentage_all' => $total > 0 ? round(($turnoverAll / $total) * 100, 1) : 0,
+            'disposal_percentage_all' => $total > 0 ? round(($disposalAll / $total) * 100, 1) : 0,
+            'cancellation_rate' => $total > 0 ? round(($cancelled / $total) * 100, 1) : 0,
+        ];
     }
 }

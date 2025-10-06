@@ -14,8 +14,19 @@ interface Props {
 }
 
 const PERMISSION_GROUPS: Record<string, string[]> = {
+    "Reports": [
+        "view-reports"
+    ],
     "Audit Logs": [
         "view-audit-logs"
+    ],
+    "Profile": [
+        "view-profile", 
+        "manage-profile"
+    ],
+    "Viewer Permissions": [
+        "view-own-unit-inventory-list",
+        "view-own-unit-buildings",
     ],
     "Users Management": [
         "view-users-page",
@@ -24,20 +35,17 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "send-email-change-request",
         "delete-users",
     ],
-    "Reports": [
-        "view-reports"
-    ],
-    "Form Approvals": [
-        "view-form-approvals",
-        "approve-form-approvals",
-        "delete-form-approvals",
-    ],
     "Roles & Permissions": [
         "view-roles-page",
         "create-roles",
         "update-roles",
         "delete-role",
         "update-permissions",
+    ],
+    "Form Approvals": [
+        "view-form-approvals",
+        "approve-form-approvals",
+        "delete-form-approvals",
     ],
     "Personnels": [
         "view-personnels",
@@ -51,10 +59,6 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "update-assignments",
         "delete-assignments",
     ],
-    "Profile": [
-        "view-profile", 
-        "manage-profile"
-    ],
     "Inventory Scheduling": [
         "view-inventory-scheduling",
         "create-inventory-scheduling",
@@ -63,7 +67,6 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     ],
     "Inventory List": [
         "view-inventory-list", 
-        "view-own-unit-inventory-list", 
         "create-inventory-list",
         "update-inventory-list",
         "delete-inventory-list",
@@ -89,7 +92,6 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     ],
     "Buildings": [
         "view-buildings",
-        "view-own-unit-buildings",
         "create-buildings",
         "update-buildings",
         "delete-buildings",
@@ -112,14 +114,18 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "update-asset-models",
         "delete-asset-models",
     ],
+    "Equipment Codes": [
+        "view-equipment-codes",
+        "create-equipment-codes",
+        "update-equipment-codes",
+        "delete-equipment-codes",
+    ],
     "Unit or Departments": [
         "view-unit-or-departments",
         "create-unit-or-departments",
         "update-unit-or-departments",
         "delete-unit-or-departments",
     ],
-    
-    
 };
 
 export default function ManagePermissionsModal({

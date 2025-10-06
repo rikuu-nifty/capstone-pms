@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use Carbon\Carbon;
+
 class InventoryScheduling extends Model
 {
     use HasFormApproval, SoftDeletes;
@@ -267,5 +269,64 @@ class InventoryScheduling extends Model
         }
     }
 
-    
+    public static function kpiStats(): array
+    {
+        $now = Carbon::now();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $endOfMonth = $now->copy()->endOfMonth();
+        $lastMonthStart = $now->copy()->subMonthNoOverflow()->startOfMonth();
+        $lastMonthEnd = $now->copy()->subMonthNoOverflow()->endOfMonth();
+        $quarterStart = $now->copy()->firstOfQuarter();
+        $quarterEnd = $now->copy()->lastOfQuarter();
+
+        // 1. On-Time Completion Rate (This Month)
+        $completedThisMonth = static::where('scheduling_status', 'completed')
+            ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
+            ->count();
+
+        $onTimeThisMonth = static::where('scheduling_status', 'completed')
+            ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
+            ->whereColumn('actual_date_of_inventory', '<=', 'inventory_schedule')
+            ->count();
+
+        $onTimeCompletionRate = $completedThisMonth > 0
+            ? round(($onTimeThisMonth / $completedThisMonth) * 100, 1)
+            : 0;
+
+        // 2. Overdue From Last Month
+        $overdueLastMonth = static::whereBetween('inventory_schedule', [$lastMonthStart, $lastMonthEnd])
+            ->whereIn('scheduling_status', ['pending', 'pending_review', 'overdue'])
+            ->count();
+
+        // 3. Pending in Next 30 Days
+        $pendingNext30Days = static::whereIn('scheduling_status', ['pending', 'pending_review'])
+            ->whereBetween('inventory_schedule', [$now, $now->copy()->addDays(30)])
+            ->count();
+
+        // 4. Cancellation Rate (This Quarter)
+        $totalQuarter = static::whereBetween('inventory_schedule', [$quarterStart, $quarterEnd])->count();
+        $cancelledQuarter = static::where('scheduling_status', 'cancelled')
+            ->whereBetween('inventory_schedule', [$quarterStart, $quarterEnd])
+            ->count();
+
+        $cancellationRate = $totalQuarter > 0
+            ? round(($cancelledQuarter / $totalQuarter) * 100, 1)
+            : 0;
+
+        // 5. Average Delay (This Month)
+        $delays = static::where('scheduling_status', 'completed')
+            ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
+            ->selectRaw('DATEDIFF(actual_date_of_inventory, inventory_schedule) as delay')
+            ->pluck('delay');
+
+        $avgDelay = $delays->count() > 0 ? round($delays->avg(), 1) : 0;
+
+        return [
+            'on_time_completion_rate' => $onTimeCompletionRate,
+            'overdue_last_month'      => $overdueLastMonth,
+            'pending_next_30_days'    => $pendingNext30Days,
+            'cancellation_rate'       => $cancellationRate,
+            'avg_delay_days'          => $avgDelay,
+        ];
+    }
 }

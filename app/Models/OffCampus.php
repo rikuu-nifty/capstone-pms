@@ -193,4 +193,56 @@ public function getAppealedByTitleAttribute(): ?string
         return static::query()->withViewRelations()->findOrFail($id);
     }
 
+    public static function dashboardTotals(): array
+    {
+        $now = now();
+
+        $total = static::count();
+        $totalThisMonth = static::whereMonth('date_issued', $now->month)
+            ->whereYear('date_issued', $now->year)
+            ->count();
+
+        $pendingReviewThisMonth = static::where('status', 'pending_review')
+            ->whereMonth('date_issued', $now->month)
+            ->whereYear('date_issued', $now->year)
+            ->count();
+
+        $pendingReturnThisMonth = static::where('status', 'pending_return')
+            ->whereMonth('date_issued', $now->month)
+            ->whereYear('date_issued', $now->year)
+            ->count();
+
+        $returnedThisMonth = static::where('status', 'returned')
+            ->whereMonth('date_issued', $now->month)
+            ->whereYear('date_issued', $now->year)
+            ->count();
+
+        $overdue = static::where('status', 'overdue')->count();
+        $cancelled = static::where('status', 'cancelled')->count();
+        $missing = static::where('status', 'missing')->count();
+
+        $officialUseThisMonth = static::where('remarks', 'official_use')
+            ->whereMonth('date_issued', $now->month)
+            ->whereYear('date_issued', $now->year)
+            ->count();
+
+        $repairThisMonth = static::where('remarks', 'repair')
+            ->whereMonth('date_issued', $now->month)
+            ->whereYear('date_issued', $now->year)
+            ->count();
+
+        return [
+            'pending_review_this_month' => $pendingReviewThisMonth,
+
+            'pending_return_percentage' => $totalThisMonth > 0 ? round(($pendingReturnThisMonth / $totalThisMonth) * 100, 1) : 0,
+            'returned_percentage'       => $totalThisMonth > 0 ? round(($returnedThisMonth / $totalThisMonth) * 100, 1) : 0,
+
+            'overdue_rate'              => $total > 0 ? round(($overdue / $total) * 100, 1) : 0,
+            'cancellation_rate'         => $total > 0 ? round(($cancelled / $total) * 100, 1) : 0,
+            'missing_count'             => $missing,
+
+            'official_use_percentage'   => $totalThisMonth > 0 ? round(($officialUseThisMonth / $totalThisMonth) * 100, 1) : 0,
+            'repair_percentage'         => $totalThisMonth > 0 ? round(($repairThisMonth / $totalThisMonth) * 100, 1) : 0,
+        ];
+    }
 }

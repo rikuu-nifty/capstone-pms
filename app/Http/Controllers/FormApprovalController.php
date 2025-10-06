@@ -43,7 +43,8 @@ class FormApprovalController extends Controller
         ->when($tab === 'approved', fn ($q) => $q->where('status', 'approved'))
         ->when($tab === 'rejected', fn ($q) => $q->where('status', 'rejected'))
         ->quickSearch($search)
-        ->latest('requested_at')
+        ->orderByDesc('requested_at')
+        ->orderByDesc('id')
         ->paginate(10)
         ->withQueryString()
         ->through(function (FormApproval $a) use ($actorMap, $roleCode) {

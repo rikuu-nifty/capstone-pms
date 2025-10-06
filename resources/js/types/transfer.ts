@@ -50,6 +50,14 @@ export type TransferFormData = {
     transfer_assets: TransferAssetPivot[]; // richer array for pivot saving
 }
 
+export type TransferTotals = {
+    pending_review: number;
+    upcoming: number;
+    overdue: number;
+    completion_rate: number;
+    avg_delay_days: number;
+};
+
 export const statusVariantMap: Record<string,'default'|'primary'|'secondary'|'success'|'destructive'|'outline'> = {
     pending_review: 'outline',
     upcoming: 'secondary',

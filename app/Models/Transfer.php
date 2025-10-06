@@ -6,6 +6,7 @@ use App\Models\Concerns\HasFormApproval;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class Transfer extends Model
 {
@@ -186,5 +187,55 @@ class Transfer extends Model
         return $step && !$step->is_external
             ? ($step->actor->role->name ?? null)
             : null;
+    }
+
+    public static function kpiStats(): array
+    {
+        $now = Carbon::now();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $endOfMonth   = $now->copy()->endOfMonth();
+        $lastMonthStart = $now->copy()->subMonthNoOverflow()->startOfMonth();
+        $quarterStart = $now->copy()->firstOfQuarter();
+        $quarterEnd   = $now->copy()->lastOfQuarter();
+
+        // 1. Pending Review (This Month)
+        $pendingReview = static::where('status', 'pending_review')
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->count();
+
+        // 2. Upcoming (Next 30 Days)
+        $upcoming = static::where('status', 'upcoming')
+            ->whereBetween('scheduled_date', [$now, $now->copy()->addDays(30)])
+            ->count();
+
+        // 4. Overdue (Last + Current Month)
+        $overdue = static::whereIn('status', ['pending_review', 'upcoming', 'in_progress', 'overdue'])
+            ->where('scheduled_date', '<', $now)
+            ->where('scheduled_date', '>=', $lastMonthStart)
+            ->count();
+
+        // 5. Completion Rate (This Quarter)
+        $totalQuarter = static::whereBetween('scheduled_date', [$quarterStart, $quarterEnd])->count();
+        $completedQuarter = static::where('status', 'completed')
+            ->whereBetween('scheduled_date', [$quarterStart, $quarterEnd])
+            ->count();
+        $completionRate = $totalQuarter > 0
+            ? round(($completedQuarter / $totalQuarter) * 100, 1)
+            : 0;
+
+        // 7. Average Delay (This Month)
+        $delays = static::where('status', 'completed')
+            ->whereBetween('actual_transfer_date', [$startOfMonth, $endOfMonth])
+            ->selectRaw('DATEDIFF(actual_transfer_date, scheduled_date) as delay')
+            ->pluck('delay');
+        $avgDelay = $delays->count() > 0 ? round($delays->avg(), 1) : 0;
+
+        return [
+            'pending_review'   => $pendingReview,
+            'upcoming'         => $upcoming,
+            'overdue'          => $overdue,
+            'completion_rate'  => $completionRate,
+            'avg_delay_days'   => $avgDelay,
+        ];
     }
 }
