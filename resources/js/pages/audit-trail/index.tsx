@@ -6,6 +6,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronsLeft, ChevronsRight, Download, Search } from 'lucide-react';
 import { useState } from 'react';
 import FiltersPopover, { AuditLogFilters } from './FiltersPopover';
+import { type BreadcrumbItem } from '@/types';
 import LogCard from './LogCard';
 
 // Pagination components
@@ -43,6 +44,9 @@ type PageProps = {
     userActions: PaginatedLogs;
     securityLogs: PaginatedLogs;
 };
+
+
+ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Audit Trail', href: '/audit-trail' }];
 
 export default function AuditTrailIndex() {
     const { title, userActions, securityLogs } = usePage<PageProps>().props;
@@ -151,7 +155,7 @@ export default function AuditTrailIndex() {
     };
 
     return (
-        <AppLayout>
+       <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={title} />
             <div className="space-y-6 p-6">
                 {/* Header */}
