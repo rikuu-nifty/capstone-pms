@@ -14,6 +14,7 @@ import { useState } from 'react';
 import ApproveConfirmationModal from '@/components/modals/ApproveConfirmationModal';
 import RejectConfirmationModal from '@/components/modals/RejectConfirmationModal';
 import ResetConfirmationModal from '@/components/modals/ResetFormApprovalModal';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 const viewPath = (formType: string, id?: number | null) => {
     if (!id) return '#';
@@ -84,6 +85,8 @@ export default function ApprovalsIndex() {
     const [showApprove, setShowApprove] = useState(false);
     const [showReject, setShowReject] = useState(false);
     const [showReset, setShowReset] = useState(false);
+    const [showDelete, setShowDelete] = useState(false);
+    const [toDelete, setToDelete] = useState<number | null>(null);
 
     const [selectedApprovalId, setSelectedApprovalId] = useState<number | null>(null);
     const [selectedActor, setSelectedActor] = useState<string | null>(null);
@@ -260,10 +263,22 @@ export default function ApprovalsIndex() {
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-2">
                                                 {/* View */}
-                                                <Button variant="primary" asChild className="cursor-pointer">
+                                                <Button variant="outline" asChild className="cursor-pointer">
                                                     <Link href={viewPath(a.form_type, a.approvable?.id)} preserveScroll>
                                                         View
                                                     </Link>
+                                                </Button>
+
+                                                <Button
+                                                    variant="destructive"
+                                                    className="cursor-pointer"
+                                                    title="Delete this record"
+                                                    onClick={() => {
+                                                        setToDelete(a.id);
+                                                        setShowDelete(true);
+                                                    }}
+                                                >
+                                                    Delete
                                                 </Button>
 
                                                 {a.status === 'pending_review' ? (
@@ -305,13 +320,9 @@ export default function ApprovalsIndex() {
                                                     )
                                                 ) : (
                                                     <Button
-                                                        variant="destructive"
+                                                        variant="primary"
                                                         title="Move back to Pending Review"
                                                         className="cursor-pointer"
-                                                        // onClick={() => {
-                                                        //     if (!confirm('Move this back to Pending Review?')) return;
-                                                        //     router.post(route('approvals.reset', a.id), {}, { preserveScroll: true });
-                                                        // }}
                                                         onClick={() => {
                                                             setSelectedApprovalId(a.id);
                                                             setShowReset(true);
@@ -426,6 +437,29 @@ export default function ApprovalsIndex() {
                         },
                     );
                 }}
+            />
+
+            <DeleteConfirmationModal
+                show={showDelete}
+                onCancel={() => setShowDelete(false)}
+                onConfirm={() => {
+                    if (!toDelete) return;
+                    router.delete(route('approvals.destroy', toDelete), {
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            setShowDelete(false);
+                            setToDelete(null);
+                        },
+                    });
+                }}
+                title="Delete Form Approval"
+                message={
+                    <>
+                        Are you sure you want to delete this form approval record?
+                        <br />
+                        This will move it to the Trash Bin and can be restored later.
+                    </>
+                }
             />
         </AppLayout>
     );

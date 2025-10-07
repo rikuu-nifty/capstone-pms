@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\InventoryList;
 use App\Models\InventoryScheduling;
@@ -25,6 +26,7 @@ use App\Models\UnitOrDepartment;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\FormApproval;
 
 use App\Models\InventorySchedulingSignatory;
 use App\Models\TransferSignatory;
@@ -202,8 +204,15 @@ class TrashBinController extends Controller
                                 $query->where('name', 'like', $like)
                                     ->orWhere('code', 'like', $like);
                             }),
+                            'form_approvals' => $query->where(function ($sub) use ($like, $enumLike) {
+                                $sub->where('form_title', 'like', $like)
+                                    ->orWhere('status', 'like', $enumLike)
+                                    ->orWhereHas('requestedBy', fn($r) =>
+                                        $r->where('name', 'like', $like)
+                                    );
+                            }),
 
-                            default => $query->where('id', 'like', $like),
+                        default => $query->where('id', 'like', $like),
                         };
                     });
                 })
@@ -259,6 +268,30 @@ class TrashBinController extends Controller
                 ->when($module === 'transfers' && $request->filled('scheduled_date'), fn($q) =>
                     $q->whereDate('scheduled_date', $request->input('scheduled_date'))
                 )
+                ->when($module === 'form_approvals' && $request->filled('approvable_type'), function ($q) use ($request) {
+                    $q->where('approvable_type', $request->input('approvable_type'));
+                })
+                // Inventory Scheduling — filter by scheduling_status
+                ->when($module === 'inventory_schedulings' && $request->filled('status'), function ($q) use ($request) {
+                    $q->where('scheduling_status', $request->input('status'));
+                })
+                // Transfers — filter by transfer status
+                ->when($module === 'transfers' && $request->filled('status'), function ($q) use ($request) {
+                    $q->where('status', $request->input('status'));
+                })
+                // Turnover/Disposal — filter by status
+                ->when($module === 'turnover_disposals' && $request->filled('status'), function ($q) use ($request) {
+                    $q->where('status', $request->input('status'));
+                })
+                // Off-Campuses — filter by status
+                ->when($module === 'off_campuses' && $request->filled('status'), function ($q) use ($request) {
+                    $q->where('status', $request->input('status'));
+                })
+                // Form Approvals — filter by varchar status
+                ->when($module === 'form_approvals' && $request->filled('status'), function ($q) use ($request) {
+                    $q->where('status', 'like', $request->input('status'));
+                })
+
 
                 ->when($sortKey, function ($q) use ($sortKey, $sortDir, $module) {
                     // define allowed sort columns per module
@@ -311,6 +344,15 @@ class TrashBinController extends Controller
             'usermgmt' => [
                 'users' => User::onlyTrashed()->count(),
                 'roles' => Role::onlyTrashed()->count(),
+
+                'form_approvals_inventory_sched' => FormApproval::onlyTrashed()
+                    ->where('approvable_type', 'App\\Models\\InventoryScheduling')->count(),
+                'form_approvals_transfer' => FormApproval::onlyTrashed()
+                    ->where('approvable_type', 'App\\Models\\Transfer')->count(),
+                'form_approvals_turnover' => FormApproval::onlyTrashed()
+                    ->where('approvable_type', 'App\\Models\\TurnoverDisposal')->count(),
+                'form_approvals_offcampus' => FormApproval::onlyTrashed()
+                    ->where('approvable_type', 'App\\Models\\OffCampus')->count(),
 
                 'inventory_signatories' => InventorySchedulingSignatory::onlyTrashed()->count(),
                 'transfer_signatories' => TransferSignatory::onlyTrashed()->count(),
@@ -456,6 +498,19 @@ class TrashBinController extends Controller
             )->paginate($perPage)->withQueryString(),
             'roles' => $applyFilters(Role::onlyTrashed(), 'roles')
                 ->paginate($perPage)->withQueryString(),
+            'form_approvals' => $applyFilters(FormApproval::onlyTrashed()
+                ->with(['requestedBy:id,name'])
+                ->select('*', DB::raw("
+                    CASE approvable_type
+                        WHEN 'App\\\\Models\\\\InventoryScheduling' THEN 'Inventory Scheduling'
+                        WHEN 'App\\\\Models\\\\Transfer' THEN 'Property Transfer'
+                        WHEN 'App\\\\Models\\\\TurnoverDisposal' THEN 'Turnover/Disposal'
+                        WHEN 'App\\\\Models\\\\OffCampus' THEN 'Off-Campus'
+                        ELSE approvable_type
+                    END as approvable_type_label
+                ")),
+                'form_approvals'
+            )->paginate($perPage)->withQueryString(),
 
             'filters' => [
                 'date_filter' => $filter,
@@ -479,6 +534,9 @@ class TrashBinController extends Controller
                 'receiving_building_id' => $request->input('receiving_building_id'),
                 'scheduled_date'      => $request->input('scheduled_date'),
                 'issuing_office_id'   => $request->input('issuing_office_id'),
+
+                'approvable_type' => $request->input('approvable_type'),
+                'status'              => $request->input('status'),
 
                 'signatory_type' => $request->input('signatory_type'),
             ],

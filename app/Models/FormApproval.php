@@ -9,9 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\FormApprovalSteps;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FormApproval extends Model
 {
+    use SoftDeletes;
+    
     protected $fillable = [
         'requested_by_id',
         'reviewed_by_id',
@@ -26,6 +29,7 @@ class FormApproval extends Model
     protected $casts = [
         'requested_at' => 'datetime',
         'reviewed_at'  => 'datetime',
+        'deleted_at'   => 'datetime',
     ];
 
     public function getCurrentStepAttribute()

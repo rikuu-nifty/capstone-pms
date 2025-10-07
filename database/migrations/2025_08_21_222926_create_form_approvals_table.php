@@ -28,6 +28,7 @@ return new class extends Migration
             $table->timestamp('reviewed_at')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['status', 'requested_at']);
             $table->index(['form_type', 'status']);

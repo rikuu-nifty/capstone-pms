@@ -70,7 +70,7 @@ type TrashBinProps = {
     // User Management
     users: PaginatedData<TrashRecord>;
     roles: PaginatedData<TrashRecord>;
-    
+    form_approvals: PaginatedData<TrashRecord>;
     signatories: PaginatedData<TrashRecord>;
 
     filters: {
@@ -96,6 +96,9 @@ type TrashBinProps = {
         receiving_building_id?: string | number;
         scheduled_date?: string | number;
         issuing_office_id?: string | number;
+
+        approvable_type?: string | number;
+        status?: string | number;
 
         signatory_type?: string | number;
 
@@ -126,6 +129,11 @@ type TrashBinProps = {
         usermgmt: {
             users: number;
             roles: number;
+
+            form_approvals_inventory_sched: number;
+            form_approvals_transfer: number;
+            form_approvals_turnover: number;
+            form_approvals_offcampus: number;
 
             inventory_signatories: number;
             transfer_signatories: number;
@@ -170,7 +178,7 @@ const groups = {
     forms: [
         { key: 'inventory_lists', label: 'Inventory Lists' },
         { key: 'inventory_schedulings', label: 'Inventory Schedulings' },
-        { key: 'transfers', label: 'Transfers' },
+        { key: 'transfers', label: 'Property Transfers' },
         { key: 'turnover_disposals', label: 'Turnover/Disposals' },
         { key: 'off_campuses', label: 'Off-Campuses' },
     ],
@@ -190,6 +198,7 @@ const groups = {
     usermgmt: [
         { key: 'users', label: 'Users' },
         { key: 'roles', label: 'Roles' },
+        { key: 'form_approvals', label: 'Form Approvals' },
         { key: 'signatories', label: 'Signatories' },
     ],
 } as const;
@@ -428,6 +437,24 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
+    if (tab === 'form_approvals') {
+        const fa = row as TrashRecord & {
+            form_title?: string;
+            status?: string;
+            requested_by?: { name?: string };
+        };
+
+        const title = fa.form_title ?? 'Untitled Form';
+        const status = fa.status ? `${formatEnums(fa.status)}` : 'Unknown Status';
+        const requester = fa.requested_by?.name ?? 'Unknown Requester';
+
+        return (
+            <>
+                <strong>{title}</strong> [{status}] requested by <strong>{requester}</strong>
+            </>
+        );
+    }
+
     if (tab === 'signatories') {
         const s = row as TrashRecord & { name?: string; title?: string; role_key?: string; module_type?: string };
         const name = s.name ?? 'Unknown';
@@ -480,6 +507,11 @@ export default function TrashBinIndex(props: TrashBinProps) {
             receiving_building_id: '',
             scheduled_date: '',
             issuing_office_id: '',
+
+            approvable_type: '',
+            status: '',
+
+            signatory_type: '',
         });
     };
 
@@ -531,7 +563,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         // User Management
         users: props.users,
         roles: props.roles,
-        
+        form_approvals: props.form_approvals,
         signatories: props.signatories,
     };
     const activeData = dataMap[activeTab];
@@ -552,7 +584,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         unit_or_departments: 'unit-or-department',
         users: 'user',
         roles: 'role',
-        
+        form_approvals: 'form-approval',
         signatories: 'signatory',
     };
 
@@ -758,52 +790,102 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                         )}
 
                         {activeGroup === 'usermgmt' && (
-                        <>
-                        {Object.entries(totals.usermgmt)
-                            .filter(([key]) => {
-                                if (activeTab === 'signatories' && (key === 'users' || key === 'roles')) return false;
-
-                                if ((activeTab === 'users' || activeTab === 'roles') &&
-                                    ['inventory_signatories', 'transfer_signatories', 'turnover_disposal_signatories', 'off_campus_signatories'].includes(key)
-                                ) return false;
-
-                                return true;
-                            })
-                            .map(([key, value], index) => {
-                                const iconConfig = [
-                                    { Icon: Users, bg: 'bg-blue-100', color: 'text-blue-600' },       
-                                    { Icon: Archive, bg: 'bg-emerald-100', color: 'text-emerald-600' }, 
-                                    { Icon: Globe, bg: 'bg-orange-100', color: 'text-orange-600' },     
-                                    { Icon: Globe, bg: 'bg-purple-100', color: 'text-purple-600' },
-                                    { Icon: Globe, bg: 'bg-pink-100', color: 'text-pink-600' },         
-                                    { Icon: Globe, bg: 'bg-indigo-100', color: 'text-indigo-600' },
-                                ][index];
-                                const { Icon, bg, color } = iconConfig || {};
-                                return (
-                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
-                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
-                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
-                                        </div>
-                                        <div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {(() => {
-                                                    let label = key.replace(/_/g, ' '); // replace all underscores
-
-                                                    if (key === 'inventory_signatories') label = 'Inventory Scheduling Signatories';
-                                                    if (key === 'transfer_signatories') label = 'Property Transfer Signatories';
-                                                    if (key === 'turnover_disposal_signatories') label = 'Turnover/Disposal Signatories';
-                                                    if (key === 'off_campus_signatories') label = 'Off-Campus Signatories';
-
-                                                    return ucwords(label);
-                                                })()}
+                            <>
+                                {/* FORM APPROVALS KPIs — only show when activeTab === 'form_approvals' */}
+                                {activeTab === 'form_approvals' && (
+                                    <>
+                                        {/* Inventory Scheduling Approvals */}
+                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                                                <Calendar className="h-7 w-7 text-blue-600" />
                                             </div>
-                                            
-                                            <div className="text-3xl font-bold">{value as number}</div>
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">Inventory Scheduling Approvals</div>
+                                                <div className="text-3xl font-bold">{totals.usermgmt.form_approvals_inventory_sched}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                        </>
+
+                                        {/* Property Transfer Approvals */}
+                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                                                <Truck className="h-7 w-7 text-orange-600" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">Property Transfer Approvals</div>
+                                                <div className="text-3xl font-bold">{totals.usermgmt.form_approvals_transfer}</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Turnover/Disposal Approvals */}
+                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                                <Archive className="h-7 w-7 text-green-600" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">Turnover/Disposal Approvals</div>
+                                                <div className="text-3xl font-bold">{totals.usermgmt.form_approvals_turnover}</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Off-Campus Approvals */}
+                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                                                <Globe className="h-7 w-7 text-purple-600" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">Off-Campus Approvals</div>
+                                                <div className="text-3xl font-bold">{totals.usermgmt.form_approvals_offcampus}</div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Default User Management KPIs (Users, Roles, Signatories) */}
+                                {activeTab !== 'form_approvals' && (
+                                    <>
+                                        {Object.entries(totals.usermgmt)
+                                            .filter(([key]) => {
+                                                if (key.startsWith('form_approvals')) return false; // hide form approval KPIs
+                                                if (activeTab === 'signatories' && (key === 'users' || key === 'roles')) return false;
+                                                if ((activeTab === 'users' || activeTab === 'roles') &&
+                                                    ['inventory_signatories', 'transfer_signatories', 'turnover_disposal_signatories', 'off_campus_signatories'].includes(key)
+                                                ) return false;
+                                                return true;
+                                            })
+                                            .map(([key, value], index) => {
+                                                const iconConfig = [
+                                                    { Icon: Users, bg: 'bg-blue-100', color: 'text-blue-600' },
+                                                    { Icon: Archive, bg: 'bg-emerald-100', color: 'text-emerald-600' },
+                                                    { Icon: Globe, bg: 'bg-orange-100', color: 'text-orange-600' },
+                                                    { Icon: Globe, bg: 'bg-purple-100', color: 'text-purple-600' },
+                                                    { Icon: Globe, bg: 'bg-pink-100', color: 'text-pink-600' },
+                                                    { Icon: Globe, bg: 'bg-indigo-100', color: 'text-indigo-600' },
+                                                ][index];
+                                                const { Icon, bg, color } = iconConfig || {};
+                                                return (
+                                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
+                                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
+                                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-sm text-muted-foreground">
+                                                                {(() => {
+                                                                    let label = key.replace(/_/g, ' ');
+                                                                    if (key === 'inventory_signatories') label = 'Inventory Scheduling Signatories';
+                                                                    if (key === 'transfer_signatories') label = 'Property Transfer Signatories';
+                                                                    if (key === 'turnover_disposal_signatories') label = 'Turnover/Disposal Signatories';
+                                                                    if (key === 'off_campus_signatories') label = 'Off-Campus Signatories';
+                                                                    return ucwords(label);
+                                                                })()}
+                                                            </div>
+                                                            <div className="text-3xl font-bold">{value as number}</div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                    </>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
@@ -853,7 +935,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                         {/* Inventory Schedulings */}
                         {activeTab === "inventory_schedulings" && (
                             <TrashFilterDropdown
-                                title="Month"
+                                title="Filters"
                                 fields={[
                                     {
                                         key: "month",
@@ -876,6 +958,21 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                         value: localFilters.month ?? "",
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, month: val })),
                                     },
+                                    // ✅ NEW STATUS FILTER
+                                    {
+                                        key: "status",
+                                        label: "Status",
+                                        type: "select",
+                                        options: [
+                                            { label: "Pending Review", value: "Pending_Review" },
+                                            { label: "Pending", value: "Pending" },
+                                            { label: "Completed", value: "Completed" },
+                                            { label: "Overdue", value: "Overdue" },
+                                            { label: "Cancelled", value: "Cancelled" },
+                                        ],
+                                        value: localFilters.status ?? "",
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, status: val })),
+                                    },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
@@ -883,7 +980,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                     router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
-                                    const cleared = { ...localFilters, month: "" };
+                                    const cleared = { ...localFilters, month: "", status: "" };
                                     setLocalFilters(cleared);
                                     router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
@@ -1139,6 +1236,52 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                     const cleared = { ...localFilters, unit_id: "" };
                                     setLocalFilters(cleared);
                                     router.get("/trash-bin", { ...props.filters, ...cleared }, { preserveState: true });
+                                }}
+                            />
+                        )}
+
+                        {/* Form Approvals */}
+                        {activeTab === "form_approvals" && (
+                            <TrashFilterDropdown
+                                title="Filters"
+                                fields={[
+                                    {
+                                        key: "approvable_type",
+                                        label: "Form Type",
+                                        type: "select",
+                                        options: [
+                                            { label: "Inventory Scheduling", value: "App\\Models\\InventoryScheduling" },
+                                            { label: "Property Transfer", value: "App\\Models\\Transfer" },
+                                            { label: "Turnover/Disposal", value: "App\\Models\\TurnoverDisposal" },
+                                            { label: "Off-Campus", value: "App\\Models\\OffCampus" },
+                                        ],
+                                        value: localFilters.approvable_type ?? "",
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, approvable_type: val })),
+                                    },
+                                    // ✅ NEW STATUS FILTER
+                                    {
+                                        key: "status",
+                                        label: "Status",
+                                        type: "select",
+                                        options: [
+                                            { label: "Pending Review", value: "pending_review" },
+                                            { label: "Approved", value: "approved" },
+                                            { label: "Rejected", value: "rejected" },
+                                            { label: "Cancelled", value: "cancelled" },
+                                        ],
+                                        value: localFilters.status ?? "",
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, status: val })),
+                                    },
+                                ]}
+                                onApply={(updated) => {
+                                    const merged = { ...localFilters, ...updated };
+                                    setLocalFilters(merged);
+                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                }}
+                                onClear={() => {
+                                    const cleared = { ...localFilters, approvable_type: "", status: "" };
+                                    setLocalFilters(cleared);
+                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}

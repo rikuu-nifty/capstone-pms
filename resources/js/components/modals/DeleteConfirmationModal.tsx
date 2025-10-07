@@ -33,7 +33,6 @@ const DeleteConfirmationModal = ({
                     <DialogDescription className="text-center text-base leading-snug text-muted-foreground">
                         {message}
                         <br />
-                        This process cannot be undone.
                     </DialogDescription>
                 </DialogHeader>
 

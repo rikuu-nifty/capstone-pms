@@ -166,20 +166,27 @@ class FormApprovalController extends Controller
         return back()->with('success', 'External approval recorded.');
     }
 
-  public function reset(FormApproval $approval, Request $request)
-{
-    $this->authorize('review', $approval);
+    public function reset(FormApproval $approval, Request $request)
+    {
+        $this->authorize('review', $approval);
 
-    // Reset back to Pending
-    $approval->resetToPending();
+        // Reset back to Pending
+        $approval->resetToPending();
 
-    // ✅ Clear Dean/Head approval values ONLY for Off-Campus
-    if ($approval->approvable_type === \App\Models\OffCampus::class) {
-        $approval->approvable->update([
-            'approved_by' => null, // reset dean/concerned field
-        ]);
+        // Clear Dean/Head approval values ONLY for Off-Campus
+        if ($approval->approvable_type === \App\Models\OffCampus::class) {
+            $approval->approvable->update([
+                'approved_by' => null, // reset dean/concerned field
+            ]);
+        }
+
+        return back()->with('success', 'Moved back to Pending Review.');
     }
 
-    return back()->with('success', 'Moved back to Pending Review.');
-}
+    public function destroy(FormApproval $approval)
+    {
+        $approval->delete();
+
+        return back()->with('success', 'Form approval deleted successfully.');
+    }
 }

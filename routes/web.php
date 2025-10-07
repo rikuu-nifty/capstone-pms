@@ -480,6 +480,9 @@ Route::get('/', function () {
     Route::post('/approvals/{approval}/external-approve', [FormApprovalController::class, 'externalApprove'])
         ->name('approvals.external_approve')
         ->middleware('can:approve-form-approvals');
+    Route::delete('/approvals/{approval}', [FormApprovalController::class, 'destroy'])->name('approvals.destroy')
+        ->middleware('can:delete-form-approvals');
+
 
     // PERSONNELS
     Route::get('/personnels', [PersonnelController::class, 'index'])->name('personnels.index')

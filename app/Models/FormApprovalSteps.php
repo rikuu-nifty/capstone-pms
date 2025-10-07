@@ -28,8 +28,6 @@ class FormApprovalSteps extends Model
         'acted_at' => 'datetime',
     ];
 
-    
-
     public function approval(): BelongsTo
     {
         return $this->belongsTo(FormApproval::class, 'form_approval_id');
