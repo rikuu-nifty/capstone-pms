@@ -257,7 +257,7 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                         {/* College / Unit */}
                         <div>
                             <Label>Unit/Dept/Lab</Label>
-                            <select
+                            {/* <select
                                 className="w-full rounded-lg border p-2"
                                 value={data.college_or_unit_id}
                                 onChange={(e) => {
@@ -272,7 +272,32 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                                         {u.name} ({u.code})
                                     </option>
                                 ))}
-                            </select>
+                            </select> */}
+                            <Select
+                                className="text-sm"
+                                options={unitOrDepartments.map((u) => ({
+                                    value: u.id,
+                                    label: `${u.name} (${u.code})`,
+                                }))}
+                                placeholder="Select Unit/Department"
+                                value={
+                                    data.college_or_unit_id
+                                    ? {
+                                        value: data.college_or_unit_id,
+                                        label:
+                                            unitOrDepartments.find((u) => u.id === Number(data.college_or_unit_id))?.name ??
+                                            '',
+                                        }
+                                    : null
+                                }
+                                onChange={(selected) => {
+                                    const val = selected ? Number(selected.value) : '';
+                                    setData('college_or_unit_id', val);
+                                    setData('selected_assets', []);
+                                }}
+                                isClearable
+                            />
+
                             {errors.college_or_unit_id && <p className="mt-1 text-xs text-red-500">{errors.college_or_unit_id}</p>}
                         </div>
 

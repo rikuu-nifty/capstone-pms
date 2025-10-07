@@ -213,7 +213,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
 
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Unit/Dept/Lab</label>
-                            <select
+                            {/* <select
                                 className="w-full rounded-lg border p-2"
                                 value={data.college_or_unit_id}
                                 onChange={(e) => {
@@ -234,7 +234,39 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                         {u.name} ({u.code})
                                     </option>
                                 ))}
-                            </select>
+                            </select> */}
+                            <Select
+                                className="text-sm"
+                                options={unitOrDepartments.map((u) => ({
+                                    value: u.id,
+                                    label: `${u.name}`,
+                                }))}
+                                placeholder="Select Unit/Department"
+                                value={
+                                    data.college_or_unit_id
+                                    ? {
+                                        value: data.college_or_unit_id,
+                                        label:
+                                            unitOrDepartments.find((u) => u.id === Number(data.college_or_unit_id))?.name ?? '',
+                                        }
+                                    : null
+                                }
+                                onChange={(selected) => {
+                                    const val = selected ? Number(selected.value) : '';
+                                    setData('college_or_unit_id', val);
+
+                                    // Clear invalid assets when department changes
+                                    const validAssets = assets.filter((a) => a.unit_or_department_id === val);
+                                    setData(
+                                    'selected_assets',
+                                    data.selected_assets.filter((sa) =>
+                                        validAssets.some((va) => va.id === sa.asset_id)
+                                    )
+                                    );
+                                }}
+                                isClearable
+                            />
+
                             {errors.college_or_unit_id && <p className="mt-1 text-xs text-red-500">{errors.college_or_unit_id}</p>}
                         </div>
 
