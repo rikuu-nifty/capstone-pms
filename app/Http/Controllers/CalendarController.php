@@ -15,13 +15,13 @@ class CalendarController extends Controller
 {
     public function index()
     {
-        // Inventory Schedulings
+        // Inventory Scheduling
         $inventoryEvents = InventoryScheduling::with(['building', 'unitOrDepartment'])
             ->get()
             ->map(fn($i) => [
                 'id' => 'inventory_' . $i->id,
                 'title' => sprintf(
-                    'Inventory Scheduling #%d: %s %s',
+                    'Inventory Scheduling #%d: <b>%s</b> <b>%s</b>',
                     $i->id,
                     optional($i->building)->name ?? '',
                     optional($i->unitOrDepartment)->name ?? ''
@@ -44,7 +44,7 @@ class CalendarController extends Controller
             ->map(fn($t) => [
                 'id' => 'transfer_' . $t->id,
                 'title' => sprintf(
-                    'Property Transfer #%d: %s → %s',
+                    'Property Transfer #%d: <b>%s</b> → <b>%s</b>',
                     $t->id,
                     optional($t->currentOrganization)->name ?? '—',
                     optional($t->receivingOrganization)->name ?? '—'
@@ -64,7 +64,7 @@ class CalendarController extends Controller
                 [
                     'id' => 'offcampus_' . $o->id . '_issue',
                     'title' => sprintf(
-                        'Pending Return for Off-Campus #%d: %s of %s',
+                        'Pending Return for Off-Campus #%d: <b>%s</b> of <b>%s</b>',
                         $o->id,
                         $o->requester_name ?? '—',
                         optional($o->collegeOrUnit)->name ?? '—'
@@ -78,7 +78,7 @@ class CalendarController extends Controller
                 [
                     'id' => 'offcampus_' . $o->id . '_return',
                     'title' => sprintf(
-                        'Return Due for Off-Campus #%d: %s of %s',
+                        'Return Due for Off-Campus #%d: <b>%s</b> of <b>%s</b>',
                         $o->id,
                         $o->requester_name ?? '—',
                         optional($o->collegeOrUnit)->name ?? '—'
@@ -97,7 +97,7 @@ class CalendarController extends Controller
             ->map(fn($d) => [
                 'id' => 'turnover_' . $d->id,
                 'title' => sprintf(
-                    '%s #%d: %s to %s',
+                    '%s #%d: <b>%s</b> → <b>%s</b>',
                     ucfirst($d->type),
                     $d->id,
                     optional($d->issuingOffice)->name ?? '—',
@@ -116,7 +116,7 @@ class CalendarController extends Controller
             ->map(fn($a) => [
                 'id' => 'approval_' . $a->id,
                 'title' => sprintf(
-                    'Pending Review: %s #%d',
+                    'Pending Review for <b>%s</b> #%d',
                     ucwords(str_replace('_', ' ', $a->form_type)),
                     $a->id
                 ),
@@ -128,7 +128,7 @@ class CalendarController extends Controller
                 'url' => route('approvals.index'),
             ]);
 
-        // Combine All
+        // Combine
         $events = collect()
             ->merge($inventoryEvents)
             ->merge($transferEvents)
