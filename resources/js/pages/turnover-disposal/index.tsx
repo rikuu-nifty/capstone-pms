@@ -13,7 +13,7 @@ import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
 import TurnoverDisposalFilterDropdown, { type TurnoverDisposalFilters } from '@/components/filters/TurnoverDisposalFilterDropdown';
 
 import { TurnoverDisposalPageProps } from '@/types/page-props';
-import { formatDate, formatStatusLabel, statusVariantMap, formatEnums, TurnoverDisposals } from '@/types/custom-index';
+import { formatStatusLabel, statusVariantMap, formatEnums, TurnoverDisposals } from '@/types/custom-index';
 import TurnoverDisposalAddModal from './TurnoverDisposalAddModal';
 import TurnoverDisposalEditModal from './TurnoverDisposalEditModal';
 import TurnoverDisposalViewModal, { InventoryListWithSnake } from './TurnoverDisposalViewModal';
@@ -41,6 +41,25 @@ type PageProps = TurnoverDisposalPageProps & {
     pmoHead?: { id: number; name: string } | null;
     signatories: Record<string, { name: string; title: string }>; // ✅ add this
 };
+
+const formatDateLong = (d?: string | null) => {
+    if (!d) return '—';
+
+    // ✅ Handle ranges like "2025-10-08:2025-10-08" or "2025-10-08 00:00:00"
+    const datePart = d.split(':')[0].trim(); // only take the first part before ':'
+    const safeDate = datePart.includes('T') ? datePart : `${datePart}T00:00:00`;
+
+    const dt = new Date(safeDate);
+
+    if (isNaN(dt.getTime())) return '—';
+
+    return dt.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+};
+
 
 export default function TurnoverDisposalsIndex({
     turnoverDisposals = [],
@@ -322,7 +341,7 @@ export default function TurnoverDisposalsIndex({
                                         </TableCell>
                                         {/* <TableCell>{ turnoverDisposals.description ?? '—'}</TableCell> */}
                                         <TableCell>{ turnoverDisposals.asset_count }</TableCell>
-                                        <TableCell>{ formatDate(turnoverDisposals.document_date) }</TableCell>
+                                        <TableCell>{ formatDateLong(turnoverDisposals.document_date) }</TableCell>
                                         <TableCell>
                                             <Badge 
                                                 variant={statusVariantMap[turnoverDisposals.status.toLowerCase()] ?? 'secondary'}

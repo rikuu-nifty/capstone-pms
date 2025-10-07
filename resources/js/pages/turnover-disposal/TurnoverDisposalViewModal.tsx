@@ -2,8 +2,9 @@
 import ViewModal from '@/components/modals/ViewModal';
 import { Button } from '@/components/ui/button';
 import { DialogTitle } from '@/components/ui/dialog';
-import { AssetModel, formatEnums, InventoryList, TurnoverDisposals, ucwords } from '@/types/custom-index';
+import { AssetModel, formatEnums, InventoryList, TurnoverDisposals } from '@/types/custom-index';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Square, CheckSquare } from "lucide-react";
 
 interface TurnoverDisposalViewModalProps {
     open: boolean;
@@ -30,9 +31,22 @@ export default function TurnoverDisposalViewModal({
 
     const formatDateLong = (d?: string | null) => {
         if (!d) return '—';
-        const dt = new Date(d);
-        return isNaN(dt.getTime()) ? d : dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Handle cases like "2025-10-08:2025-10-08" or "2025-10-08 00:00:00"
+        const datePart = d.split(/[:\s]/)[0]; // get only the first date part
+        const safeDate = datePart.includes('T') ? datePart : `${datePart}T00:00:00`;
+
+        const dt = new Date(safeDate);
+
+        if (isNaN(dt.getTime())) return '—';
+
+        return dt.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
     };
+
 
     const StatusPill = ({ status }: { status?: string | null }) => {
         const s = (status ?? '').toLowerCase().replace(/_/g, ' ');
@@ -122,9 +136,9 @@ export default function TurnoverDisposalViewModal({
             </h2>
 
             {/* Offices */}
-            <div className="mt-4 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
+            {/* <div className="mt-4 grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-12 print:grid-cols-2"> */}
                 {/* Issuing Office (LEFT) */}
-                <section className="md:w-[400px]">
+                {/* <section className="md:w-[400px]">
                     <h3 className="mb-2 text-base font-semibold">ISSUING OFFICE</h3>
                     <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                         <table className="w-full text-sm">
@@ -135,9 +149,6 @@ export default function TurnoverDisposalViewModal({
                                         {turnoverDisposal.issuing_office?.code ? (
                                             <>
                                                 <div>{turnoverDisposal.issuing_office.name}</div>
-                                                {/* <div className="text-gray-600">
-                                                    ({formatEnums(turnoverDisposal.issuing_office.code).toUpperCase()})
-                                                </div> */}
                                             </>
                                         ) : (
                                             '—'
@@ -151,23 +162,20 @@ export default function TurnoverDisposalViewModal({
                             </tbody>
                         </table>
                     </div>
-                </section>
+                </section> */}
 
                 {/* Receiving Office (RIGHT) */}
-                <section className="md:ml-auto md:w-[400px] md:text-right print:justify-self-end print:text-right">
+                {/* <section className="md:ml-auto md:w-[400px] md:text-right print:justify-self-end print:text-right">
                     <h3 className="mb-2 text-base font-semibold">RECEIVING OFFICE</h3>
                     <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                         <table className="w-full text-sm">
                             <tbody>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Unit/Dept/Lab</td>
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900 text-left">Unit/Dept/Lab</td>
                                     <td className="px-3 py-2 font-medium break-words whitespace-normal">
                                         {turnoverDisposal.receiving_office?.code ? (
                                             <>
                                                 <div>{turnoverDisposal.receiving_office.name}</div>
-                                                {/* <div className="text-gray-600">
-                                                    ({formatEnums(turnoverDisposal.receiving_office.code).toUpperCase()})
-                                                </div> */}
                                             </>
                                         ) : (
                                             '—'
@@ -175,7 +183,7 @@ export default function TurnoverDisposalViewModal({
                                     </td>
                                 </tr>
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Quantity</td>
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900 text-left">Quantity</td>
                                     <td className="px-3 py-2 font-semibold text-right">
                                         {assets.length}
                                     </td>
@@ -184,18 +192,66 @@ export default function TurnoverDisposalViewModal({
                         </table>
                     </div>
                 </section>
+            </div> */}
+            
+            {/* Dates */}
+            <div className="mt-6 mb-2 flex justify-end w-full text-sm font-medium">
+                <p className="text-right">
+                    <span className="font-semibold">Date:&nbsp;</span>
+                    <span className="underline underline-offset-4 decoration-black">
+                        {formatDateLong(turnoverDisposal.document_date)}
+                    </span>
+                </p>
+            </div>
+
+
+            {/* Authorization Paragraph */}
+            <div className="mt-4 mb-2 text-sm leading-relaxed text-gray-800 w-full">
+                <p className="w-full text-justify">
+                    This is to authorize Mr./Mrs.&nbsp;
+                    <span className="border-b border-black inline-block min-w-[150px] text-center font-semibold align-bottom">
+                        {turnoverDisposal.personnel?.full_name?.toUpperCase() || "_________________"}
+                    </span>
+                    &nbsp;of College/Unit&nbsp;
+                    <span className="border-b border-black inline-block min-w-[200px] text-center font-semibold align-bottom">
+                        {turnoverDisposal.issuing_office?.name?.toUpperCase() || "_________________"}
+                    </span>
+                    &nbsp;to&nbsp;
+                    {/* Turnover Checkbox */}
+                    <span className="inline-flex items-center gap-1 align-middle">
+                        {formatEnums(turnoverDisposal.type).toLowerCase() === "turnover" ? (
+                            <CheckSquare className="h-4 w-4 text-black" />
+                        ) : (
+                            <Square className="h-4 w-4 text-black" />
+                        )}
+                        <span className='font-bold'>turnover</span>
+                    </span>
+                    &nbsp;/&nbsp;
+                    {/* Disposal Checkbox */}
+                    <span className="inline-flex items-center gap-1 align-middle">
+                        {formatEnums(turnoverDisposal.type).toLowerCase() === "disposal" ? (
+                            <CheckSquare className="h-4 w-4 text-black" />
+                        ) : (
+                            <Square className="h-4 w-4 text-black" />
+                        )}
+                        <span className='font-bold'>dispose</span>
+                    </span>
+                    &nbsp;the following properties/equipment as follows.
+                </p>
             </div>
 
             {/* Assets */}
-            <div className="mt-4 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+            <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                 <table className="w-full text-center text-sm">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                            <th className="px-3 py-2 text-center font-medium">Code No.</th>
-                            <th className="px-3 py-2 text-center font-medium">Asset Name</th>
-                            <th className="px-3 py-2 text-center font-medium">Equipment Description</th>
-                            <th className="px-3 py-2 text-center font-medium">Category</th>
-                            <th className="px-3 py-2 text-center font-medium">Serial No.</th>
+                            {/* <th className="px-3 py-2 text-center font-medium">Code No.</th> */}
+                            <th className="px-3 py-2 text-center font-medium">Quantity</th>
+                            <th className="px-3 py-2 text-center font-medium">Items/Description</th>
+                            <th className="px-3 py-2 text-center font-medium">Issuing Office</th>
+                            {/* <th className="px-3 py-2 text-center font-medium">Equipment Description</th> */}
+                            <th className="px-3 py-2 text-center font-medium">Receiving Office</th>
+                            {/* <th className="px-3 py-2 text-center font-medium">Serial No.</th> */}
                             {/* <th className="px-3 py-2 text-center font-medium">Asset Status</th> */}
                             {/* <th className="px-3 py-2 text-center font-medium">Date Finalized</th> */}
                         </tr>
@@ -208,11 +264,30 @@ export default function TurnoverDisposalViewModal({
 
                             return (
                                 <tr key={asset.id} className="border-t">
-                                    <td className="px-3 py-2">{asset.asset_model?.equipment_code?.code ?? '—'}</td>
-                                    <td className="px-3 py-2">{asset.asset_name ?? '—'}</td>
-                                    <td className="px-3 py-2">{ucwords(asset.asset_model?.equipment_code?.description ?? '—')}</td>
-                                    <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td>
-                                    <td className="px-3 py-2">{asset.serial_no ?? '—'}</td>
+                                    {/* <td className="px-3 py-2">{asset.asset_model?.equipment_code?.code ?? '—'}</td> */}
+                                    <td className="px-3 py-2 text-center font-semibold">1</td>
+                                    <td className="px-3 py-2">{asset.asset_name ?? '—'} - { asset.description }</td>
+                                    <td className="px-3 py-2">
+                                        {turnoverDisposal.issuing_office?.code ? (
+                                            <>
+                                                <div>{turnoverDisposal.issuing_office.name}</div>
+                                            </>
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        {turnoverDisposal.receiving_office?.code ? (
+                                            <>
+                                                <div>{turnoverDisposal.receiving_office.name}</div>
+                                            </>
+                                        ) : (
+                                            '—'
+                                        )}
+                                        </td>
+                                    {/* <td className="px-3 py-2">{ucwords(asset.asset_model?.equipment_code?.description ?? '—')}</td> */}
+                                    {/* <td className="px-3 py-2">{asset.asset_model?.category?.name ?? '—'}</td> */}
+                                    {/* <td className="px-3 py-2">{asset.serial_no ?? '—'}</td> */}
 
                                     {/* <td className="px-3 py-2">
                                     <AssetStatusPill status={perStatus}/>
@@ -226,13 +301,7 @@ export default function TurnoverDisposalViewModal({
                 </table>
             </div>
 
-            {/* Dates */}
-            {/* <div className="print-footer mt-2 flex justify-between text-sm font-medium print:w-[170mm]">
-                <p><span className="font-semibold">Date of Transfer:</span> {formatDateLong(turnoverDisposal.scheduled_date)}</p>
-                {turnoverDisposal.document_date && (
-                <p className="text-right"><span className="font-semibold">Actual Date:</span> {formatDateLong(transfer.actual_transfer_date)}</p>
-                )}
-            </div> */}
+            
 
             <div className="h-2" />
 
@@ -330,7 +399,7 @@ export default function TurnoverDisposalViewModal({
                     onClick={onClose}
                     className="mr-2 inline-block cursor-pointer rounded bg-black px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black/70"
                 >
-                    ← Back to Transfers
+                    ← Back to Turnover/Disposals
                 </a>
                 {turnoverDisposal.status !== 'pending_review' && (
                     <Button
