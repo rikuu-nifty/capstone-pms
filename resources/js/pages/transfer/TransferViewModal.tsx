@@ -198,14 +198,14 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
 
             {/* Assets */}
             <div className="mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                <div className="bg-blue-200 px-4 py-2 text-left text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
+                {/* <div className="bg-blue-200 px-4 py-2 text-left text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
                     Assets Associated with this Transfer
-                </div>
+                </div> */}
                 <table className="w-full text-center text-sm">
                     <thead className="bg-gray-100 text-gray-700">
                         <tr>
                             <th className="px-3 py-2 text-center font-medium">Code No.</th>
-                            <th className="px-3 py-2 text-center font-medium">Asset Name</th>
+                            {/* <th className="px-3 py-2 text-center font-medium">Asset Name</th> */}
                             <th className="px-3 py-2 text-center font-medium">Description</th>
                             {/* <th className="px-3 py-2 text-center font-medium">Serial No.</th> */}
                             <th className="px-3 py-2 text-center font-medium">New Building</th>
@@ -223,7 +223,7 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                             return (
                                 <tr key={asset.id} className="border-t">
                                     <td className="px-3 py-2">{asset.asset_model?.equipment_code?.code ?? '—'}</td>
-                                    <td className="px-3 py-2">{formatLabel(asset.asset_name ?? '—')}</td>
+                                    {/* <td className="px-3 py-2">{formatLabel(asset.asset_name ?? '—')}</td> */}
                                     <td className="px-3 py-2">{asset.description ?? '—'}</td>
                                     {/* <td className="px-3 py-2">{(asset.serial_no ?? '—').toUpperCase()}</td> */}
                                     <td className="px-3 py-2">
