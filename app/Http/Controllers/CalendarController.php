@@ -15,24 +15,40 @@ class CalendarController extends Controller
 {
     public function index()
     {
-        $inventoryEvents = InventoryScheduling::select('id', 'inventory_schedule', 'actual_date_of_inventory', 'scheduling_status')
+        // Inventory Schedulings
+        $inventoryEvents = InventoryScheduling::with(['building', 'unitOrDepartment'])
             ->get()
             ->map(fn($i) => [
                 'id' => 'inventory_' . $i->id,
-                'title' => 'Inventory #' . $i->id,
-                'start' => $i->actual_date_of_inventory ?? Carbon::createFromFormat('Y-m', $i->inventory_schedule)->startOfMonth(),
-                'end' => $i->actual_date_of_inventory ?? Carbon::createFromFormat('Y-m', $i->inventory_schedule)->endOfMonth(),
+                'title' => sprintf(
+                    'Inventory Scheduling #%d: %s %s',
+                    $i->id,
+                    optional($i->building)->name ?? '',
+                    optional($i->unitOrDepartment)->name ?? ''
+                ),
+                'start' => $i->actual_date_of_inventory
+                    ? $i->actual_date_of_inventory
+                    : Carbon::createFromFormat('Y-m', $i->inventory_schedule)->startOfMonth(),
+                'end' => $i->actual_date_of_inventory
+                    ? $i->actual_date_of_inventory
+                    : Carbon::createFromFormat('Y-m', $i->inventory_schedule)->endOfMonth(),
                 'type' => 'Inventory Scheduling',
                 'status' => $i->scheduling_status,
                 'color' => '#2563eb',
                 'url' => route('inventory-scheduling.view', $i->id),
             ]);
 
-        $transferEvents = Transfer::select('id', 'scheduled_date', 'actual_transfer_date', 'status')
+        // Property Transfers
+        $transferEvents = Transfer::with(['currentOrganization', 'receivingOrganization'])
             ->get()
             ->map(fn($t) => [
                 'id' => 'transfer_' . $t->id,
-                'title' => 'Transfer #' . $t->id,
+                'title' => sprintf(
+                    'Property Transfer #%d: %s → %s',
+                    $t->id,
+                    optional($t->currentOrganization)->name ?? '—',
+                    optional($t->receivingOrganization)->name ?? '—'
+                ),
                 'start' => $t->scheduled_date,
                 'end' => $t->actual_transfer_date ?? $t->scheduled_date,
                 'type' => 'Property Transfer',
@@ -41,21 +57,32 @@ class CalendarController extends Controller
                 'url' => route('transfers.view', $t->id),
             ]);
 
-        $offCampusEvents = OffCampus::select('id', 'date_issued', 'return_date', 'status')
+        // Off-Campus
+        $offCampusEvents = OffCampus::with(['collegeOrUnit'])
             ->get()
             ->flatMap(fn($o) => [
                 [
                     'id' => 'offcampus_' . $o->id . '_issue',
-                    'title' => 'Issued: Off-Campus #' . $o->id,
+                    'title' => sprintf(
+                        'Pending Return for Off-Campus #%d: %s of %s',
+                        $o->id,
+                        $o->requester_name ?? '—',
+                        optional($o->collegeOrUnit)->name ?? '—'
+                    ),
                     'start' => $o->date_issued,
-                    'type' => 'Off-Campus',
+                    'type' => 'Off-Campus Issued',
                     'status' => $o->status,
                     'color' => '#f59e0b',
                     'url' => route('off-campus.view', $o->id),
                 ],
                 [
                     'id' => 'offcampus_' . $o->id . '_return',
-                    'title' => 'Return: Off-Campus #' . $o->id,
+                    'title' => sprintf(
+                        'Return Due for Off-Campus #%d: %s of %s',
+                        $o->id,
+                        $o->requester_name ?? '—',
+                        optional($o->collegeOrUnit)->name ?? '—'
+                    ),
                     'start' => $o->return_date,
                     'type' => 'Off-Campus Return',
                     'status' => $o->status,
@@ -64,11 +91,18 @@ class CalendarController extends Controller
                 ],
             ]);
 
-        $turnoverEvents = TurnoverDisposal::select('id', 'document_date', 'status', 'type')
+        // Turnover / Disposal
+        $turnoverEvents = TurnoverDisposal::with(['issuingOffice', 'receivingOffice'])
             ->get()
             ->map(fn($d) => [
                 'id' => 'turnover_' . $d->id,
-                'title' => ucfirst($d->type) . ' #' . $d->id,
+                'title' => sprintf(
+                    '%s #%d: %s to %s',
+                    ucfirst($d->type),
+                    $d->id,
+                    optional($d->issuingOffice)->name ?? '—',
+                    optional($d->receivingOffice)->name ?? '—'
+                ),
                 'start' => $d->document_date,
                 'type' => 'Turnover/Disposal',
                 'status' => $d->status,
@@ -76,11 +110,16 @@ class CalendarController extends Controller
                 'url' => route('turnover-disposal.view', $d->id),
             ]);
 
+        // Form Approvals
         $approvalEvents = FormApproval::select('id', 'form_title', 'form_type', 'requested_at', 'reviewed_at', 'status')
             ->get()
             ->map(fn($a) => [
                 'id' => 'approval_' . $a->id,
-                'title' => $a->form_title,
+                'title' => sprintf(
+                    'Pending Review: %s #%d',
+                    ucwords(str_replace('_', ' ', $a->form_type)),
+                    $a->id
+                ),
                 'start' => $a->requested_at,
                 'end' => $a->reviewed_at,
                 'type' => 'Form Approval',
@@ -89,6 +128,7 @@ class CalendarController extends Controller
                 'url' => route('approvals.index'),
             ]);
 
+        // Combine All
         $events = collect()
             ->merge($inventoryEvents)
             ->merge($transferEvents)
