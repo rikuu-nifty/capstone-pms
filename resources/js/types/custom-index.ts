@@ -121,6 +121,31 @@ export const formatForInputDate = (dateStr?: string | null) => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+export function formatForPrefillDate(raw: string | null | undefined): string {
+  if (!raw) return '';
+
+  // Case 1: Already valid for <input type="date">
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  // Case 2: MM/DD/YYYY → YYYY-MM-DD
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
+    const [month, day, year] = raw.split('/');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  // Case 3: ISO (e.g., 2025-10-08T00:00:00Z)
+  if (raw.includes('T')) {
+    return raw.split('T')[0];
+  }
+
+  // Fallback: parseable by Date()
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '';
+  return d.toISOString().split('T')[0];
+}
+
 export function formatCurrency(value: number | null): string {
     if (value === null || value === undefined) return '—';
 

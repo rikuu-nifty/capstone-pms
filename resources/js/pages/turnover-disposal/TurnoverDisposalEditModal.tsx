@@ -4,7 +4,7 @@ import { useForm } from '@inertiajs/react';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import EditModal from '@/components/modals/EditModal';
-import { UnitOrDepartment, InventoryList, formatEnums, formatForInputDate, Personnel } from '@/types/custom-index';
+import { UnitOrDepartment, InventoryList, formatEnums, formatForPrefillDate, Personnel } from '@/types/custom-index';
 import { TurnoverDisposalFormData, TurnoverDisposals } from '@/types/turnover-disposal';
 import type { TurnoverDisposalAssetInput, TdaStatus } from '@/types/turnover-disposal-assets';
 import AssetTdaItem from './AssetTdaItem';
@@ -54,6 +54,8 @@ export default function TurnoverDisposalEditModal({
 
   useEffect(() => {
     if (!show) return;
+
+     console.log('📅 turnoverDisposal.document_date =', turnoverDisposal.document_date);
     setData((prev) => ({
       ...prev,
       issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
@@ -61,7 +63,8 @@ export default function TurnoverDisposalEditModal({
       receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
       description: turnoverDisposal.description ?? '',
       personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
-      document_date: formatForInputDate(turnoverDisposal.document_date) ?? '',
+      // document_date: formatForInputDate(turnoverDisposal.document_date) ?? '',
+      document_date: formatForPrefillDate(turnoverDisposal.document_date) ?? '',
       status: turnoverDisposal.status,
       remarks: turnoverDisposal.remarks ?? '',
       turnover_disposal_assets: (turnoverDisposal.turnover_disposal_assets ?? []).map<TurnoverDisposalAssetInput>((li) => ({

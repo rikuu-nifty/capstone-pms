@@ -29,7 +29,7 @@ class TurnoverDisposal extends Model
 
     protected $casts = 
     [
-        'document_date' => 'date:Y-m-d:Y-m-d',
+        'document_date' => 'date:Y-m-d',
         'deleted_at'    => 'datetime',
     ];
 
