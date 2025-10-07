@@ -206,7 +206,7 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                         <tr>
                             <th className="px-3 py-2 text-center font-medium">Code No.</th>
                             {/* <th className="px-3 py-2 text-center font-medium">Asset Name</th> */}
-                            <th className="px-3 py-2 text-center font-medium">Description</th>
+                            <th className="px-3 py-2 text-center font-medium">Items/Description</th>
                             {/* <th className="px-3 py-2 text-center font-medium">Serial No.</th> */}
                             <th className="px-3 py-2 text-center font-medium">New Building</th>
                             <th className="px-3 py-2 text-center font-medium">New Room</th>
@@ -224,7 +224,7 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                                 <tr key={asset.id} className="border-t">
                                     <td className="px-3 py-2">{asset.asset_model?.equipment_code?.code ?? '—'}</td>
                                     {/* <td className="px-3 py-2">{formatLabel(asset.asset_name ?? '—')}</td> */}
-                                    <td className="px-3 py-2">{asset.description ?? '—'}</td>
+                                    <td className="px-3 py-2">{formatLabel(asset.asset_name ?? '—')} - {asset.description ?? '—'}</td>
                                     {/* <td className="px-3 py-2">{(asset.serial_no ?? '—').toUpperCase()}</td> */}
                                     <td className="px-3 py-2">
                                         {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')}
