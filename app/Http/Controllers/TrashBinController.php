@@ -549,60 +549,57 @@ class TrashBinController extends Controller
         ]);
     }
 
- public function restore(string $type, int $id, Request $request)
-{
-    if ($type === 'signatory') {
-        $moduleType = $request->input('module_type');
+    public function restore(string $type, int $id, Request $request)
+    {
+        if ($type === 'signatory') {
+            $moduleType = $request->input('module_type');
 
-        $modelClass = match ($moduleType) {
-            'Inventory Scheduling' => \App\Models\InventorySchedulingSignatory::class,
-            'Property Transfer'    => \App\Models\TransferSignatory::class,
-            'Turnover/Disposal'    => \App\Models\TurnoverDisposalSignatory::class,
-            'Off-Campus'           => \App\Models\OffCampusSignatory::class,
-            default                => null,
-        };
+            $modelClass = match ($moduleType) {
+                'Inventory Scheduling' => \App\Models\InventorySchedulingSignatory::class,
+                'Property Transfer'    => \App\Models\TransferSignatory::class,
+                'Turnover/Disposal'    => \App\Models\TurnoverDisposalSignatory::class,
+                'Off-Campus'           => \App\Models\OffCampusSignatory::class,
+                default                => null,
+            };
 
-        if ($modelClass) {
-            $signatory = $modelClass::withTrashed()->find($id);
+            if ($modelClass) {
+                $signatory = $modelClass::withTrashed()->find($id);
 
-            if ($signatory) {
-                // ✅ Only restore; observer will handle the audit log
-                $signatory->restore();
+                if ($signatory) {
+                    // ✅ Only restore; observer will handle the audit log
+                    $signatory->restore();
 
-                return back()->with('success', "{$moduleType} signatory restored successfully.");
+                    return back()->with('success', "{$moduleType} signatory restored successfully.");
+                }
+
+                return back()->with('error', "{$moduleType} signatory not found or already active.");
             }
 
-            return back()->with('error', "{$moduleType} signatory not found or already active.");
+            // ✅ Fallback multi-check logic
+            $signatory = collect([
+                \App\Models\InventorySchedulingSignatory::class,
+                \App\Models\TransferSignatory::class,
+                \App\Models\TurnoverDisposalSignatory::class,
+                \App\Models\OffCampusSignatory::class,
+            ])
+                ->map(fn($model) => $model::withTrashed()->find($id))
+                ->filter()
+                ->first();
+
+            if ($signatory) {
+                $signatory->restore(); // observer logs automatically
+                return back()->with('success', 'Signatory restored successfully.');
+            }
+
+            return back()->with('error', 'Signatory not found.');
         }
 
-        // ✅ Fallback multi-check logic
-        $signatory = collect([
-            \App\Models\InventorySchedulingSignatory::class,
-            \App\Models\TransferSignatory::class,
-            \App\Models\TurnoverDisposalSignatory::class,
-            \App\Models\OffCampusSignatory::class,
-        ])
-            ->map(fn($model) => $model::withTrashed()->find($id))
-            ->filter()
-            ->first();
+        // ✅ Default restore logic for all other modules
+        $model = $this->resolveModel($type)::withTrashed()->findOrFail($id);
+        $model->restore(); // observer logs automatically
 
-        if ($signatory) {
-            $signatory->restore(); // observer logs automatically
-            return back()->with('success', 'Signatory restored successfully.');
-        }
-
-        return back()->with('error', 'Signatory not found.');
+        return back()->with('success', ucfirst($type) . ' restored successfully.');
     }
-
-    // ✅ Default restore logic for all other modules
-    $model = $this->resolveModel($type)::withTrashed()->findOrFail($id);
-    $model->restore(); // observer logs automatically
-
-    return back()->with('success', ucfirst($type) . ' restored successfully.');
-}
-
-
-
 
    private function resolveModel(string $type): string
     {
