@@ -16,6 +16,11 @@ class PropertyTransferObserver
 
     public function updated(Transfer $transfer)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $transfer->getChanges()) && $transfer->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $transfer,
@@ -27,5 +32,16 @@ class PropertyTransferObserver
     public function deleted(Transfer $transfer)
     {
         $this->logAction('delete', $transfer, $transfer->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(Transfer $transfer)
+    {
+        $this->logAction(
+            'restore',
+            $transfer,
+            [],
+            $transfer->toArray()
+        );
     }
 }

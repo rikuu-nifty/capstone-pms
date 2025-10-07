@@ -16,6 +16,11 @@ class TurnoverDisposalObserver
 
     public function updated(TurnoverDisposal $disposal)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $disposal->getChanges()) && $disposal->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $disposal,
@@ -27,5 +32,16 @@ class TurnoverDisposalObserver
     public function deleted(TurnoverDisposal $disposal)
     {
         $this->logAction('delete', $disposal, $disposal->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(TurnoverDisposal $disposal)
+    {
+        $this->logAction(
+            'restore',
+            $disposal,
+            [],
+            $disposal->toArray()
+        );
     }
 }

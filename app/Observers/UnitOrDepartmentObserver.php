@@ -16,6 +16,11 @@ class UnitOrDepartmentObserver
 
     public function updated(UnitOrDepartment $unit)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $unit->getChanges()) && $unit->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $unit,
@@ -27,5 +32,16 @@ class UnitOrDepartmentObserver
     public function deleted(UnitOrDepartment $unit)
     {
         $this->logAction('delete', $unit, $unit->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(UnitOrDepartment $unit)
+    {
+        $this->logAction(
+            'restore',
+            $unit,
+            [],
+            $unit->toArray()
+        );
     }
 }

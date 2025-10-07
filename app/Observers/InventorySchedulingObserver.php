@@ -16,6 +16,11 @@ class InventorySchedulingObserver
 
     public function updated(InventoryScheduling $schedule)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $schedule->getChanges()) && $schedule->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $schedule,
@@ -27,5 +32,16 @@ class InventorySchedulingObserver
     public function deleted(InventoryScheduling $schedule)
     {
         $this->logAction('delete', $schedule, $schedule->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(InventoryScheduling $schedule)
+    {
+        $this->logAction(
+            'restore',
+            $schedule,
+            [],
+            $schedule->toArray()
+        );
     }
 }

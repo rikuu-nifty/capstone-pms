@@ -16,6 +16,11 @@ class EquipmentCodeObserver
 
     public function updated(EquipmentCode $code)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $code->getChanges()) && $code->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $code,
@@ -27,5 +32,16 @@ class EquipmentCodeObserver
     public function deleted(EquipmentCode $code)
     {
         $this->logAction('delete', $code, $code->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(EquipmentCode $code)
+    {
+        $this->logAction(
+            'restore',
+            $code,
+            [],
+            $code->toArray()
+        );
     }
 }

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import type { SortDir } from '@/components/filters/SortDropdown';
 import TrashFilterDropdown from '@/components/filters/TrashFilterDropdown';
 import type { BreadcrumbItem } from '@/types';
+import { type RequestPayload } from '@inertiajs/core';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
@@ -32,9 +33,13 @@ interface TrashRecord {
     name?: string;
     code?: string;
     title?: string;
+
+    // ✅ Added for Signatories and module identification
+    module_type?: string;
+    role_key?: string;
+
     [key: string]: unknown;
 }
-
 interface PaginatedData<T> {
     data: T[];
     current_page: number;
@@ -551,11 +556,21 @@ export default function TrashBinIndex(props: TrashBinProps) {
         signatories: 'signatory',
     };
 
-    const handleRestore = (type: string, id: number) => {
-        const mappedType = restoreMap[type];
-        if (!mappedType) return;
-        router.post(`/trash-bin/restore/${mappedType}/${id}`, {}, { preserveScroll: true });
-    };
+const handleRestore = (type: string, id: number, row?: TrashRecord) => {
+  const mappedType = restoreMap[type as keyof typeof restoreMap];
+  if (!mappedType) return;
+
+  // ✅ Explicitly type payload as RequestPayload
+  const payload: RequestPayload =
+    mappedType === "signatory" && row?.module_type
+      ? { module_type: row.module_type }
+      : {};
+
+  router.post(`/trash-bin/restore/${mappedType}/${id}`, payload, {
+    preserveScroll: true,
+  });
+};
+
 
     const formatLabel = (key: string) => {
         const words = key.replace(/_/g, ' ').split(' ');
@@ -1221,7 +1236,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                     <TableCell className="max-w-[120px]">
                                         <div className="flex justify-center gap-2">
                                             <Button 
-                                                onClick={() => handleRestore(activeTab, row.id)}
+                                                onClick={() => handleRestore(activeTab, row.id, row)}
                                                 className="cursor-pointer"
                                             >
                                                 Restore

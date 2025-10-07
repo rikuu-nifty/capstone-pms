@@ -16,6 +16,11 @@ class OffCampusObserver
 
     public function updated(OffCampus $offCampus)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $offCampus->getChanges()) && $offCampus->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $offCampus,
@@ -27,5 +32,16 @@ class OffCampusObserver
     public function deleted(OffCampus $offCampus)
     {
         $this->logAction('delete', $offCampus, $offCampus->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(OffCampus $offCampus)
+    {
+        $this->logAction(
+            'restore',
+            $offCampus,
+            [],
+            $offCampus->toArray()
+        );
     }
 }

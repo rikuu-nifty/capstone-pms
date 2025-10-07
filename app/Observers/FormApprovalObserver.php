@@ -16,6 +16,11 @@ class FormApprovalObserver
 
     public function updated(FormApproval $form)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $form->getChanges()) && $form->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $form,
@@ -27,5 +32,16 @@ class FormApprovalObserver
     public function deleted(FormApproval $form)
     {
         $this->logAction('delete', $form, $form->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(FormApproval $form)
+    {
+        $this->logAction(
+            'restore',
+            $form,
+            [],
+            $form->toArray()
+        );
     }
 }

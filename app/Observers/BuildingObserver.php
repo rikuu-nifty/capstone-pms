@@ -16,6 +16,11 @@ class BuildingObserver
 
     public function updated(Building $building)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $building->getChanges()) && $building->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $building,
@@ -27,5 +32,16 @@ class BuildingObserver
     public function deleted(Building $building)
     {
         $this->logAction('delete', $building, $building->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(Building $building)
+    {
+        $this->logAction(
+            'restore',
+            $building,
+            [],
+            $building->toArray()
+        );
     }
 }

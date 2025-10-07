@@ -31,6 +31,7 @@ use App\Models\TransferSignatory;
 use App\Models\TurnoverDisposalSignatory;
 use App\Models\OffCampusSignatory;
 
+use App\Models\AuditTrail;
 
 class TrashBinController extends Controller
 {
@@ -489,60 +490,84 @@ class TrashBinController extends Controller
         ]);
     }
 
-    public function restore(string $type, int $id)
-    {
-        if ($type === 'signatory') {
-            $signatory = collect([
-                InventorySchedulingSignatory::class,
-                TransferSignatory::class,
-                TurnoverDisposalSignatory::class,
-                OffCampusSignatory::class,
-            ])
-                ->map(fn($model) => $model::withTrashed()->find($id))
-                ->filter()
-                ->first();
+ public function restore(string $type, int $id, Request $request)
+{
+    if ($type === 'signatory') {
+        $moduleType = $request->input('module_type');
+
+        $modelClass = match ($moduleType) {
+            'Inventory Scheduling' => \App\Models\InventorySchedulingSignatory::class,
+            'Property Transfer'    => \App\Models\TransferSignatory::class,
+            'Turnover/Disposal'    => \App\Models\TurnoverDisposalSignatory::class,
+            'Off-Campus'           => \App\Models\OffCampusSignatory::class,
+            default                => null,
+        };
+
+        if ($modelClass) {
+            $signatory = $modelClass::withTrashed()->find($id);
 
             if ($signatory) {
+                // ✅ Only restore; observer will handle the audit log
                 $signatory->restore();
-                return back()->with('success', 'Signatory restored successfully.');
+
+                return back()->with('success', "{$moduleType} signatory restored successfully.");
             }
 
-            return back()->with('error', 'Signatory not found.');
+            return back()->with('error', "{$moduleType} signatory not found or already active.");
         }
 
-        $model = $this->resolveModel($type)::withTrashed()->findOrFail($id);
-        $model->restore();
+        // ✅ Fallback multi-check logic
+        $signatory = collect([
+            \App\Models\InventorySchedulingSignatory::class,
+            \App\Models\TransferSignatory::class,
+            \App\Models\TurnoverDisposalSignatory::class,
+            \App\Models\OffCampusSignatory::class,
+        ])
+            ->map(fn($model) => $model::withTrashed()->find($id))
+            ->filter()
+            ->first();
 
-        // if ($type === 'turnover-disposal') {
-        //     $model->turnoverDisposalAssets()->withTrashed()->restore();
-        // }
+        if ($signatory) {
+            $signatory->restore(); // observer logs automatically
+            return back()->with('success', 'Signatory restored successfully.');
+        }
 
-        return back()->with('success', ucfirst($type) . ' restored successfully.');
+        return back()->with('error', 'Signatory not found.');
     }
 
-    private function resolveModel(string $type): string
+    // ✅ Default restore logic for all other modules
+    $model = $this->resolveModel($type)::withTrashed()->findOrFail($id);
+    $model->restore(); // observer logs automatically
+
+    return back()->with('success', ucfirst($type) . ' restored successfully.');
+}
+
+
+
+
+   private function resolveModel(string $type): string
     {
         return match ($type) {
-            'inventory-list'     => InventoryList::class,
-            'inventory-schedule' => InventoryScheduling::class,
-            'transfer'           => Transfer::class,
-            'turnover-disposal'  => TurnoverDisposal::class,
-            'off-campus'         => OffCampus::class,
+            'inventory-list', 'inventory-lists'     => InventoryList::class,
+            'inventory-schedule', 'inventory-schedules' => InventoryScheduling::class,
+            'transfer', 'transfers'                 => Transfer::class,
+            'turnover-disposal', 'turnover-disposals'  => TurnoverDisposal::class,
+            'off-campus', 'off-campuses'            => OffCampus::class,
 
-            'asset-model'        => AssetModel::class,
-            'category'           => Category::class,
-            'assignment'         => AssetAssignment::class,
-            'equipment-code'     => EquipmentCode::class,
+            'asset-model', 'asset-models'           => AssetModel::class,
+            'category', 'categories'                => Category::class,
+            'assignment', 'assignments'             => AssetAssignment::class,
+            'equipment-code', 'equipment-codes'     => EquipmentCode::class,
 
-            'building'           => Building::class,
-            'building-room'      => BuildingRoom::class,
-            'personnel'          => Personnel::class,
-            'unit-or-department' => UnitOrDepartment::class,
+            'building', 'buildings'                 => Building::class,
+            'building-room', 'building-rooms'       => BuildingRoom::class,
+            'personnel', 'personnels'               => Personnel::class,
+            'unit-or-department', 'unit-or-departments' => UnitOrDepartment::class,
 
-            'user'               => User::class,
-            'role'               => Role::class,
+            'user', 'users'                         => User::class,
+            'role', 'roles'                         => Role::class,
 
-            default => abort(404),
+            default => abort(404, "Unknown type: $type"),
         };
     }
 }

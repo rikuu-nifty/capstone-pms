@@ -16,6 +16,11 @@ class BuildingRoomObserver
 
     public function updated(BuildingRoom $room)
     {
+        // ✅ Skip updates triggered by restore (deleted_at → null)
+        if (array_key_exists('deleted_at', $room->getChanges()) && $room->deleted_at === null) {
+            return;
+        }
+
         $this->logAction(
             'update',
             $room,
@@ -27,5 +32,16 @@ class BuildingRoomObserver
     public function deleted(BuildingRoom $room)
     {
         $this->logAction('delete', $room, $room->getOriginal(), []);
+    }
+
+    // ✅ Handle restore events explicitly
+    public function restored(BuildingRoom $room)
+    {
+        $this->logAction(
+            'restore',
+            $room,
+            [],
+            $room->toArray()
+        );
     }
 }
