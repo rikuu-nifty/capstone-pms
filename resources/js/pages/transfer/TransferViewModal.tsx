@@ -153,15 +153,15 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                                     <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Unit/Dept/Lab</td>
                                     <td className="px-3 py-2 text-right font-medium">{formatEnums(transfer.currentOrganization?.code ?? '—')}</td>
                                 </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                {/* <tr className="border-b border-gray-200 dark:border-gray-800">
                                     <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Building (Room)</td>
                                     <td className="px-3 py-2 text-right font-medium">
                                         {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')} (
                                         {transfer.currentBuildingRoom?.room ?? '—'})
                                     </td>
-                                </tr>
+                                </tr> */}
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Scheduled Date</td>
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Date</td>
                                     <td className="px-3 py-2 text-right font-medium">{formatDateLong(transfer.scheduled_date)}</td>
                                 </tr>
                             </tbody>
@@ -179,15 +179,15 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                                     <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Unit/Dept/Lab</td>
                                     <td className="px-3 py-2 font-medium">{formatEnums(transfer.receivingOrganization?.code ?? '—')}</td>
                                 </tr>
-                                <tr className="border-b border-gray-200 dark:border-gray-800">
+                                {/* <tr className="border-b border-gray-200 dark:border-gray-800">
                                     <td className="w-1/3 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Building (Room)</td>
                                     <td className="px-3 py-2 font-medium">
                                         {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')} (
                                         {transfer.receivingBuildingRoom?.room ?? '—'})
                                     </td>
-                                </tr>
+                                </tr> */}
                                 <tr className="border-b border-gray-200 dark:border-gray-800">
-                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Date Completed</td>
+                                    <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">Date</td>
                                     <td className="px-3 py-2 font-medium">{formatDateLong(transfer.actual_transfer_date)}</td>
                                 </tr>
                             </tbody>
@@ -206,28 +206,36 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                         <tr>
                             <th className="px-3 py-2 text-center font-medium">Code No.</th>
                             <th className="px-3 py-2 text-center font-medium">Asset Name</th>
-                            <th className="px-3 py-2 text-center font-medium">Serial No.</th>
-                            <th className="px-3 py-2 text-center font-medium">From Sub-Area</th>
-                            <th className="px-3 py-2 text-center font-medium">To Sub-Area</th>
-                            <th className="px-3 py-2 text-center font-medium">Status</th>
-                            <th className="px-3 py-2 text-center font-medium">Date Transferred</th>
+                            <th className="px-3 py-2 text-center font-medium">Description</th>
+                            {/* <th className="px-3 py-2 text-center font-medium">Serial No.</th> */}
+                            <th className="px-3 py-2 text-center font-medium">New Building</th>
+                            <th className="px-3 py-2 text-center font-medium">New Room</th>
+                            {/* <th className="px-3 py-2 text-center font-medium">From Sub-Area</th> */}
+                            {/* <th className="px-3 py-2 text-center font-medium">To Sub-Area</th> */}
+                            {/* <th className="px-3 py-2 text-center font-medium">Status</th> */}
+                            {/* <th className="px-3 py-2 text-center font-medium">Date Transferred</th> */}
                         </tr>
                     </thead>
                     <tbody>
                         {assets.map((asset) => {
-                            const pivot = pivotByAssetId[Number(asset.id)] ?? {};
+                            // const pivot = pivotByAssetId[Number(asset.id)] ?? {};
 
                             return (
                                 <tr key={asset.id} className="border-t">
                                     <td className="px-3 py-2">{asset.asset_model?.equipment_code?.code ?? '—'}</td>
                                     <td className="px-3 py-2">{formatLabel(asset.asset_name ?? '—')}</td>
-                                    <td className="px-3 py-2">{(asset.serial_no ?? '—').toUpperCase()}</td>
-                                    <td className="px-3 py-2">{pivot.from_sub_area ?? '—'}</td>
-                                    <td className="px-3 py-2">{pivot.to_sub_area ?? '—'}</td>
+                                    <td className="px-3 py-2">{asset.description ?? '—'}</td>
+                                    {/* <td className="px-3 py-2">{(asset.serial_no ?? '—').toUpperCase()}</td> */}
                                     <td className="px-3 py-2">
-                                        <AssetStatusPill status={pivot.asset_transfer_status} />
+                                        {formatEnums(transfer.receivingBuildingRoom?.building?.code ?? '—')}
                                     </td>
-                                    <td className="px-3 py-2">{pivot.moved_at ? formatDateLong(pivot.moved_at) : '—'}</td>
+                                    <td className="px-3 py-2">{transfer.currentBuildingRoom?.room ?? '—'}</td>
+                                    {/* <td className="px-3 py-2">{pivot.from_sub_area ?? '—'}</td> */}
+                                    {/* <td className="px-3 py-2">{pivot.to_sub_area ?? '—'}</td> */}
+                                    {/* <td className="px-3 py-2">
+                                        <AssetStatusPill status={pivot.asset_transfer_status} />
+                                    </td> */}
+                                    {/* <td className="px-3 py-2">{pivot.moved_at ? formatDateLong(pivot.moved_at) : '—'}</td> */}
                                 </tr>
                             );
                         })}

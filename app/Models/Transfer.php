@@ -110,6 +110,7 @@ class Transfer extends Model
                 return [
                     'id'          => optional($a)->id,
                     'asset_name'  => optional($a)->asset_name,
+                    'description' => optional($a)->description,
                     'serial_no'   => optional($a)->serial_no,
                     'asset_model' => [
                         'brand'    => optional($am)->brand,
