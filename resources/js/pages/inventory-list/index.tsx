@@ -123,6 +123,8 @@ export type Asset = {
     current_off_campus_status?: string | null;
 
     equipment_code?: EquipmentCode | null;
+
+    assigned_to_name?: string | null;
 };
 
 export type AssetFormData = {
