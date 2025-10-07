@@ -5,7 +5,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
 import { formatEnums } from '@/types/custom-index';
 import { router } from '@inertiajs/react';
-import { RotateCcw } from 'lucide-react';
+// import { RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { Asset } from '../inventory-list';
 import ViewRowAssetModal from './ViewRowAssetsModal';
@@ -116,7 +116,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
     };
 
     const computeRowStatus = (assets: { inventory_status: string }[], actualDate?: string | null, scheduledMonth?: string | null) => {
-        if (!assets.length) return 'scheduled';
+        if (!assets.length) return 'pending';
 
         const allInventoried = assets.every((a) => a.inventory_status === 'inventoried');
         if (allInventoried) return 'completed';
@@ -128,7 +128,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                 const scheduleEnd = new Date(y, m, 0);
                 if (new Date() > scheduleEnd) return 'overdue';
             }
-            return 'scheduled';
+            return 'pending';
         }
 
         const allNotInventoried = assets.every((a) => a.inventory_status === 'not_inventoried');
@@ -349,9 +349,9 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     </h2>
 
                     {/* Scope + Scheduling Info */}
-                    <div className="mt-6 grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-12 print:grid-cols-2">
+                    {/* <div className="mt-6 grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-12 print:grid-cols-2"> */}
                         {/* Scope Info */}
-                        <section className="md:w-[400px] w-[320px]">
+                        {/* <section className="md:w-[400px] w-[320px]">
                             <h3 className="mb-2 text-sm md:text-base font-semibold">Scope Information</h3>
                             <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                                 <table className="w-full table-auto text-xs md:text-sm">
@@ -383,10 +383,10 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                     </tbody>
                                 </table>
                             </div>
-                        </section>
+                        </section> */}
 
                         {/* Scheduling Info */}
-                        <section className="w-[320px] md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
+                        {/* <section className="w-[320px] md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
                             <h3 className="mb-2 text-sm md:text-base font-semibold">Scheduling Information</h3>
                             <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
                                 <table className="w-full table-auto text-xs md:text-sm">
@@ -418,12 +418,12 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                 </tbody>
                                 </table>
                             </div>
-                        </section>
-                    </div>
+                        </section> */}
+                    {/* </div> */}
 
                     {/* Pivot Table */}
                     <div className="w-[320px] md:w-full mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                        <div className="flex items-center justify-between bg-blue-200 px-4 py-2 text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
+                        {/* <div className="flex items-center justify-between bg-blue-200 px-4 py-2 text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
                             <span>Inventory Sheet Scheduling</span>
                             <Button
                                 onClick={refreshSchedule}
@@ -441,19 +441,21 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                 />
                                 {refreshing ? 'Refreshing…' : 'Refresh'}
                             </Button>
-                        </div>
+                        </div> */}
 
                         <div className="overflow-x-auto">
                             <table className="md:w-full text-xs md:text-sm border-collapse">
                                 <thead className="md:min-w-[600px] bg-gray-100 text-gray-700">
                                     <tr>
-                                        <th className="border px-2 py-1 w-10 text-center">#</th>
+                                        {/* <th className="border px-2 py-1 w-10 text-center">#</th> */}
                                         <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
                                         <th className="border px-2 py-1 text-center">Buildings</th>
-                                        <th className="border px-2 py-1 text-center">Rooms</th>
-                                        <th className="border px-2 py-1 text-center">Sub-Areas</th>
+                                        <th className="border px-2 py-1 text-center">Inventory Schedule</th>
+                                        <th className="border px-2 py-1 text-center">Actual Date of Inventory</th>
+                                        {/* <th className="border px-2 py-1 text-center">Rooms</th> */}
+                                        {/* <th className="border px-2 py-1 text-center">Sub-Areas</th> */}
                                         <th className="border px-2 py-1 text-center">Status</th>
-                                        <th className="border px-2 py-1 text-center">Asset Count</th>
+                                        {/* <th className="border px-2 py-1 text-center">Asset Count</th> */}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -462,9 +464,9 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                             const s = spans[idx];
                                             return (
                                                 <tr key={start + idx}>
-                                                    <td className="border px-2 py-1 text-center">
+                                                    {/* <td className="border px-2 py-1 text-center">
                                                         {start + idx + 1}
-                                                    </td>
+                                                    </td> */}
 
                                                     {s.unitSpan > 0 && (
                                                         <td
@@ -482,28 +484,59 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                             {row.building ?? '—'}
                                                         </td>
                                                     )}
-                                                    {s.roomSpan > 0 && (
+                                                    <td
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {formatMonth(schedule.inventory_schedule)}
+                                                    </td>
+                                                    <td
+                                                        className="border px-2 py-1 text-center align-middle"
+                                                    >
+                                                        {formatDateLong(schedule.actual_date_of_inventory)}
+                                                    </td>
+                                                    
+                                                    {/* {s.roomSpan > 0 && (
                                                         <td
                                                             rowSpan={s.roomSpan}
                                                             className="border px-2 py-1 text-center align-middle"
                                                         >
                                                             {row.room ?? '—'}
                                                         </td>
-                                                    )}
-                                                    {s.subAreaSpan > 0 && (
+                                                    )} */}
+                                                    {/* {s.subAreaSpan > 0 && (
                                                         <td
                                                             rowSpan={s.subAreaSpan}
                                                             className="border px-2 py-1 text-center align-middle"
                                                         >
                                                             {row.sub_area ?? '—'}
                                                         </td>
-                                                    )}
+                                                    )} */}
 
-                                                    <td className="border px-2 py-1 text-center">
-                                                        <StatusPill status={row.status} />
-                                                    </td>
+                                                    {/* <td className="border px-2 py-1 text-center"> */}
+                                                        {/* <StatusPill status={row.status} /> */}
+                                                        {/* {formatEnums(row.status)} */}
+                                                    {/* </td> */}
 
                                                     <td
+                                                        className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
+                                                        onClick={() => {
+                                                            setRowAssets({
+                                                                scheduleId: schedule.id,
+                                                                rowId: row.sub_area_id
+                                                                    ? row.sub_area_id
+                                                                    : row.building_room_id!,
+                                                                type: row.sub_area_id ? 'sub_area' : 'building_room',
+                                                                title: `${row.unit ?? ''} / ${row.building ?? ''} / ${
+                                                                    row.room ?? ''
+                                                                } / ${row.sub_area ?? ''}`,
+                                                                unitId: row.unit_id,
+                                                            });
+                                                        }}
+                                                    >
+                                                        {formatEnums(row.status)}
+                                                    </td>
+
+                                                    {/* <td
                                                         className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
                                                         onClick={() => {
                                                             setRowAssets({
@@ -520,7 +553,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                         }}
                                                     >
                                                         {row.assetCount ?? '—'}
-                                                    </td>
+                                                    </td> */}
                                                 </tr>
                                             );
                                         })
