@@ -59,18 +59,18 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
     };
 
     // Per-asset transfer status pill (pending/completed/cancelled)
-    const AssetStatusPill = ({ status }: { status?: string | null }) => {
-        const s = (status ?? 'pending').toLowerCase();
-        const label = s.charAt(0).toUpperCase() + s.slice(1);
-        const cls =
-            s === 'transferred'
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                : s === 'cancelled'
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                  : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300'; // pending
+    // const AssetStatusPill = ({ status }: { status?: string | null }) => {
+    //     const s = (status ?? 'pending').toLowerCase();
+    //     const label = s.charAt(0).toUpperCase() + s.slice(1);
+    //     const cls =
+    //         s === 'transferred'
+    //             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+    //             : s === 'cancelled'
+    //               ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+    //               : 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300'; // pending
 
-        return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
-    };
+    //     return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
+    // };
 
     // Map asset_id -> pivot (so we can show per-asset status/moved_at)
     const pivotByAssetId = useMemo(() => {
