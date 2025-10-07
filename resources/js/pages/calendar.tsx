@@ -1,49 +1,72 @@
+import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-    import { type BreadcrumbItem } from '@/types';
-    import { Head } from '@inertiajs/react';
-    
+import { useEffect, useRef } from 'react';
+import type { BreadcrumbItem } from '@/types';
+import { Calendar as FullCalendar } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import listPlugin from '@fullcalendar/list';
+// import '@fullcalendar/core/index.css';
+import '@fullcalendar/daygrid';
+import '@fullcalendar/timegrid';
+import '@fullcalendar/list';
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Calendar',
-            href: '/calendar',
-        },
-    ];
+interface CalendarProps {
+    events: {
+        id: string;
+        title: string;
+        start: string;
+        end?: string;
+        color: string;
+        url?: string;
+        type: string;
+        status: string;
+    }[];
+}
 
-export default function CalendarPage() {
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Calendar', href: '/calendar' },
+];
+
+export default function CalendarPage({ events }: CalendarProps) {
+    const calendarRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!calendarRef.current) return;
+
+        const calendar = new FullCalendar(calendarRef.current, {
+            plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek',
+            },
+            initialView: 'dayGridMonth',
+            navLinks: true,
+            events,
+            eventClick: (info) => {
+                info.jsEvent.preventDefault();
+                if (info.event.url) {
+                    window.open(info.event.url, '_blank');
+                }
+            },
+            height: 'auto',
+            eventDisplay: 'block',
+            eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
+            dayMaxEventRows: true,
+        });
+
+        calendar.render();
+        return () => calendar.destroy();
+    }, [events]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Calendar" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
-                <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-                    Calendar
-                </h1>
-
-                <div className="relative flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border p-4">
-                    <h2 className="text-lg font-semibold text-neutral-800 dark:text-neutral-100 mb-4">
-                        July 1, 2025
-                    </h2>
-
-                    {/* Static Calendar Grid */}
-                    <div className="grid grid-cols-7 gap-2 text-center text-sm text-neutral-600 dark:text-neutral-300">
-                        {/* Days of the week headers */}
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                            <div key={day} className="font-medium">
-                                {day}
-                            </div>
-                        ))}
-
-                        {/* 5 weeks x 7 days = 35 cells */}
-                        {Array.from({ length: 35 }).map((_, i) => (
-                            <div
-                                key={i}
-                                className="aspect-square rounded-lg border border-dashed border-neutral-300 dark:border-neutral-600 bg-neutral-100/40 dark:bg-neutral-800/30 flex items-center justify-center"
-                            >
-                                {i + 1 <= 31 ? i + 1 : ''}
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <div className="flex flex-col p-6 space-y-4">
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Calendar Overview</h1>
+                <div ref={calendarRef} className="bg-white dark:bg-neutral-900 rounded-xl shadow p-4 border border-gray-200 dark:border-neutral-700" />
             </div>
         </AppLayout>
     );

@@ -36,7 +36,7 @@
         use App\Http\Controllers\TrashBinController;
 
 
-Route::get('/', function () {
+    Route::get('/', function () {
         if (Auth::check()) {
             return redirect()->route('dashboard'); // change to your actual dashboard route
         }
@@ -72,67 +72,59 @@ Route::get('/', function () {
     Route::get('/audit-log', [AuditTrailController::class, 'index'])
     ->name('audit-trail.index');
     
-    
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
 
-     // (✅) Asset Inventory List Report
-    Route::get('/assets-inventory-list', [ReportController::class, 'inventoryList'])
-        ->name('reports.inventory-list');
+        // Asset Inventory List Report
+        Route::get('/assets-inventory-list', [ReportController::class, 'inventoryList'])
+            ->name('reports.inventory-list');
 
         // Export to PDF
         Route::get('/assets-inventory-list/export/pdf', [ReportController::class, 'exportPdf'])
             ->name('reports.inventory-list.export.pdf');
 
-    // Export to Excel
-    Route::get('/assets-inventory-list/export/excel', [ReportController::class, 'exportExcel'])
-        ->name('reports.inventory-list.export.excel');  
+        // Export to Excel
+        Route::get('/assets-inventory-list/export/excel', [ReportController::class, 'exportExcel'])
+            ->name('reports.inventory-list.export.excel');  
 
-    //////////
-    // ✅ Inventory Scheduling Report
-    Route::get('/inventory-scheduling', [InventorySchedulingReportController::class, 'index'])
-        ->name('reports.inventory-scheduling');
+        // Inventory Scheduling Report
+        Route::get('/inventory-scheduling', [InventorySchedulingReportController::class, 'index'])
+            ->name('reports.inventory-scheduling');
 
-     // Export to PDF
-    Route::get('/reports/inventory-scheduling/export/pdf', [InventorySchedulingReportController::class, 'exportPdf'])
-        ->name('reports.inventory-scheduling.export.pdf');
+        // Export to PDF
+        Route::get('/reports/inventory-scheduling/export/pdf', [InventorySchedulingReportController::class, 'exportPdf'])
+            ->name('reports.inventory-scheduling.export.pdf');
 
-    // Export to Excel
-    Route::get('/reports/inventory-scheduling/export/excel', [InventorySchedulingReportController::class, 'exportExcel'])
-    ->name('reports.inventory-scheduling.export.excel');
+        // Export to Excel
+        Route::get('/reports/inventory-scheduling/export/excel', [InventorySchedulingReportController::class, 'exportExcel'])
+        ->name('reports.inventory-scheduling.export.excel');
 
+        // Property Transfer Report
+        Route::get('/transfer', [PropertyTransferReportController::class, 'index'])
+            ->name('reports.transfer');
 
-    // ✅ Property Transfer Report
-    Route::get('/transfer', [PropertyTransferReportController::class, 'index'])
-        ->name('reports.transfer');
+        // Export to PDF
+        Route::get('/transfer/export/pdf', [PropertyTransferReportController::class, 'exportPdf'])
+            ->name('reports.transfer.export.pdf');
 
-    // Export to PDF
-    Route::get('/transfer/export/pdf', [PropertyTransferReportController::class, 'exportPdf'])
-        ->name('reports.transfer.export.pdf');
+        // Export to Excel
+        Route::get('/transfer/export/excel', [PropertyTransferReportController::class, 'exportExcel'])
+            ->name('reports.transfer.export.excel');
 
-    // Export to Excel
-    Route::get('/transfer/export/excel', [PropertyTransferReportController::class, 'exportExcel'])
-        ->name('reports.transfer.export.excel');
+        // Off-Campus Report
+        Route::get('/off-campus', [OffCampusReportController::class, 'index'])
+            ->name('reports.off-campus');
 
+        // Export to PDF
+        Route::get('/off-campus/export/pdf', [OffCampusReportController::class, 'exportPdf'])
+            ->name('reports.off-campus.export.pdf');
 
- // ✅ Off-Campus Report
-    Route::get('/off-campus', [OffCampusReportController::class, 'index'])
-        ->name('reports.off-campus');
-
-    // Export to PDF
-    Route::get('/off-campus/export/pdf', [OffCampusReportController::class, 'exportPdf'])
-        ->name('reports.off-campus.export.pdf');
-
-    // Export to Excel 
-    Route::get('/off-campus/export/excel', [OffCampusReportController::class, 'exportExcel'])
-        ->name('reports.off-campus.export.excel');
-
-        
-
-
+        // Export to Excel 
+        Route::get('/off-campus/export/excel', [OffCampusReportController::class, 'exportExcel'])
+            ->name('reports.off-campus.export.excel');
 
         Route::get('/inventory-sheet', [InventorySheetReportController::class, 'index'])
             ->name('reports.inventory-sheet');
@@ -147,23 +139,22 @@ Route::get('/', function () {
         Route::get('/turnover-disposal', [TurnoverDisposalReportController::class, 'index']) ->name('reports.turnover-disposal');
         Route::get('/turnover-disposal/export/pdf', [TurnoverDisposalReportController::class, 'exportPdf'])->name('reports.turnover-disposal.export.pdf');
         Route::get('/turnover-disposal/export/excel', [TurnoverDisposalReportController::class, 'exportExcel'])->name('reports.turnover-disposal.export.excel');
-
     });
 
-         // ✅ Unified Signatories Management
-        Route::prefix('signatories')->group(function () {
-            Route::get('/', [SignatoryController::class, 'index'])->name('signatories.index');
-            Route::post('/', [SignatoryController::class, 'store'])->name('signatories.store');
-            Route::put('/{signatory}', [SignatoryController::class, 'update'])->name('signatories.update');
-            Route::delete('/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
-
-
-
+    // Unified Signatories Management
+    Route::prefix('signatories')->group(function () {
+        Route::get('/', [SignatoryController::class, 'index'])->name('signatories.index');
+        Route::post('/', [SignatoryController::class, 'store'])->name('signatories.store');
+        Route::put('/{signatory}', [SignatoryController::class, 'update'])->name('signatories.update');
+        Route::delete('/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
     });
 
-    Route::get('calendar', function () {
-        return Inertia::render('calendar');
-    })->name('calendar');
+    // Route::get('calendar', function () {
+    //     return Inertia::render('calendar');
+    // })->name('calendar');
+    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])
+        ->name('calendar');
+
 
     Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
         ->name('asset-summary.show');
