@@ -9,25 +9,20 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // ✅ Schedule your maintenance checker
-Schedule::command('maintenance:check-due')->daily();
+Schedule::command('maintenance:check-due')->everyMinute();
 
 // ✅ Checks for overdue Transfers
-Schedule::command('transfers:mark-overdue')->daily();
+Schedule::command('transfers:mark-overdue')->everyMinute();
 
 // Schedule::command('transfers:mark-overdue')->everyMinute();
 
 // ✅ Checks for overdue Off-Campus
-Schedule::command('offcampus:mark-overdue')->daily();  // for deployment 
+Schedule::command('offcampus:mark-overdue')->everyMinute();  // for deployment 
 
- // ✅ Checks for overdue Inventory Scheduling
- Schedule::command('offcampus:mark-overdue')->daily(); 
+// ✅ Checks for overdue Inventory Scheduling
+Schedule::command('inventory:mark-overdue')->everyMinute();  // for deployment
 
-
- 
 //  Schedule::command('inventory:mark-overdue')->everyMinute();
-// Schedule::command('offcampus:mark-overdue')->everyMinute(); // for local testing //php artisan schedule:work 
-                                                                                    //  php artisan schedule:run (for one shot testing)
-
-
-
-
+//  Schedule::command('offcampus:mark-overdue')->everyMinute(); // for local testing 
+//  php artisan schedule:work 
+//  php artisan schedule:run (for one shot testing)

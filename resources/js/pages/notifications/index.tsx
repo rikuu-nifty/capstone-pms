@@ -8,7 +8,9 @@ interface Notification {
     data: {
         asset_name?: string;
         maintenance_due_date?: string;
+        due_date?: string; // ✅ added this for overdue notifications
         message?: string;
+        module?: string;   // ✅ optional, used for module identification
     };
     status: 'unread' | 'read' | 'archived';
     read_at: string | null;
@@ -100,16 +102,21 @@ export default function NotificationsIndex({ notifications, filter, counts }: No
                                         {n.data.asset_name ?? 'System Notification'}
                                     </p>
                                     <p className="text-xs text-gray-500">{n.data.message}</p>
-                                    {n.data.maintenance_due_date && (
-                                        <p className="text-xs text-gray-400">
-                                            Due:{' '}
-                                            {new Date(n.data.maintenance_due_date).toLocaleDateString('en-US', {
-                                                year: 'numeric',
-                                                month: 'long',
-                                                day: 'numeric',
-                                            })}
-                                        </p>
-                                    )}
+                               {(() => {
+                            const dueDate = n.data.maintenance_due_date || n.data.due_date;
+                            if (!dueDate) return null;
+
+                            return (
+                                <p className="text-xs text-gray-400">
+                                Due:{' '}
+                                {new Date(dueDate).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                })}
+                                </p>
+                            );
+                            })()}
                                 </div>
 
                                 {/* Date + Actions */}

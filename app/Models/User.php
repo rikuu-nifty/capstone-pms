@@ -266,4 +266,19 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return Gate::allows('delete-users', $this);
     }
+
+
+    public function notifications()
+    {
+        return $this->morphMany(\Illuminate\Notifications\DatabaseNotification::class, 'notifiable')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get only unread notifications.
+     */
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
 }
