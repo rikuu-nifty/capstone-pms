@@ -12,13 +12,15 @@
 //     );
 // }
 
+
+
 export default function AppLogoIcon(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   return (
     <img
       {...props}
-      src="https://pbs.twimg.com/profile_images/1597042929629265921/K2Mj7_hh_400x400.jpg" 
+      src="/storage/assets/logocapstone23.png" // ✅ public path
       alt="App Logo"
-      className="h-8 w-8" // adjust size
+      className={`h-8 w-8 ${props.className ?? ''}`}
     />
   );
 }
