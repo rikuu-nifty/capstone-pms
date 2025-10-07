@@ -483,7 +483,6 @@ Route::get('/', function () {
     Route::delete('/approvals/{approval}', [FormApprovalController::class, 'destroy'])->name('approvals.destroy')
         ->middleware('can:delete-form-approvals');
 
-
     // PERSONNELS
     Route::get('/personnels', [PersonnelController::class, 'index'])->name('personnels.index')
         ->middleware('can:view-personnels');
@@ -541,6 +540,8 @@ Route::get('/', function () {
         ->middleware('can:view-trash-bin');
     Route::post('/trash-bin/restore/{type}/{id}', [TrashBinController::class, 'restore'])->name('trash-bin.restore')
         ->middleware('can:restore-trash-bin');
+    Route::delete('/trash-bin/permanent-delete/{type}/{id}', [TrashBinController::class, 'permanentDelete'])->name('trash.permanentDelete')
+        ->middleware('can:permanent-delete-trash-bin');
 });
 
 require __DIR__.'/settings.php';

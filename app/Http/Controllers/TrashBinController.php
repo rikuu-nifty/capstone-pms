@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\InventoryList;
 use App\Models\InventoryScheduling;
@@ -627,5 +628,42 @@ class TrashBinController extends Controller
 
             default => abort(404, "Unknown type: $type"),
         };
+    }
+
+    public function permanentDelete(Request $request, string $type, int $id)
+    {
+        $user = Auth::user();
+
+        // Allow only superuser or pmo_head
+        if (!in_array(optional($user->role)->code, ['superuser', 'pmo_head'])) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if ($type === 'signatory') {
+            $signatory = collect([
+                InventorySchedulingSignatory::class,
+                TransferSignatory::class,
+                TurnoverDisposalSignatory::class,
+                OffCampusSignatory::class,
+            ])
+                ->map(fn($model) => $model::withTrashed()->find($id))
+                ->filter()
+                ->first();
+
+            if ($signatory) {
+                $signatory->forceDelete();
+                return back()->with('success', 'Signatory permanently deleted.');
+            }
+
+            return back()->with('error', 'Signatory not found.');
+        }
+
+        $modelClass = $this->resolveModel($type);
+        $record = $modelClass::withTrashed()->findOrFail($id);
+
+        // Permanent delete
+        $record->forceDelete();
+
+        return back()->with('success', ucfirst($type) . ' permanently deleted.');
     }
 }

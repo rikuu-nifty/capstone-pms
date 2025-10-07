@@ -1,5 +1,6 @@
+import { PageProps } from '@inertiajs/core';
 import { useState, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
@@ -14,6 +15,7 @@ import type { BreadcrumbItem } from '@/types';
 import { type RequestPayload } from '@inertiajs/core';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -21,6 +23,19 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/trash-bin',
     },
 ];
+
+interface SharedAuth {
+    user?: {
+        id: number;
+        name: string;
+        email: string;
+        role?: {
+            id: number;
+            name: string;
+            code: string;
+        };
+    };
+}
 
 interface TrashRecord {
     id: number;
@@ -149,6 +164,19 @@ type TrashBinProps = {
         buildings: { id: number; name: string }[];
         units: { id: number; name: string }[];
         rooms: { id: number; name: string }[];
+    };
+
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            email: string;
+            role?: {
+                id: number;
+                name: string;
+                code: string;
+            };
+        };
     };
 };
 
@@ -483,6 +511,9 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
 };
 
 export default function TrashBinIndex(props: TrashBinProps) {
+    const { auth } = usePage<PageProps & { auth: SharedAuth }>().props;
+    const currentRole: string = auth?.user?.role?.code ?? '';
+    
     const [activeGroup, setActiveGroup] = useState<keyof typeof groups>('forms');
     const [activeTab, setActiveTab] = useState<string>(groups.forms[0].key);
 
@@ -631,6 +662,9 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
 
     const [sortKey, setSortKey] = useState(props.filters.sort ?? 'id');
     const [sortDir, setSortDir] = useState<SortDir>(props.filters.dir ?? 'desc');
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -1386,6 +1420,20 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                             >
                                                 Restore
                                             </Button>
+
+                                            <Button
+                                                className={`cursor-pointer ${["superuser", "pmo_head"].includes(currentRole) ? '' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}
+                                                variant="destructive"
+                                                disabled={!["superuser", "pmo_head"].includes(currentRole)}
+                                                onClick={() => {
+                                                    if (!["superuser", "pmo_head"].includes(currentRole)) return;
+                                                    setSelectedDeleteId(row.id);
+                                                    setShowDeleteModal(true);
+                                                }}
+                                            >
+                                                Delete
+                                            </Button>
+
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -1420,6 +1468,20 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                     </div>
                 )}
             </div>
+
+            <DeleteConfirmationModal
+                show={showDeleteModal}
+                onCancel={() => setShowDeleteModal(false)}
+                onConfirm={() => {
+                    if (!selectedDeleteId) return;
+                    router.delete(`/trash-bin/permanent-delete/${restoreMap[activeTab]}/${selectedDeleteId}`, {
+                    preserveScroll: true,
+                    onSuccess: () => setShowDeleteModal(false),
+                    });
+                }}
+                title="Confirm Permanent Deletion"
+                message="This will permanently remove the record from the system. This action cannot be undone."
+            />
         </AppLayout>
     );
 }

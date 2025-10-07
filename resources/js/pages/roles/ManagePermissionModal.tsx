@@ -31,6 +31,7 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     "Trash Bin": [
         "view-trash-bin",
         "restore-trash-bin",
+        "permanent-delete-trash-bin",
     ],
     "Users Management": [
         "view-users-page",

@@ -82,7 +82,7 @@ const trashBinItem = {
     permission: 'view-trash-bin',
 };
 
-// ✅ NEW — grouped “System Monitoring” items
+// NEW — grouped “System Monitoring” items
 const systemMonitoringNavItems = [
     notificationsNavItem,
     reportsNavItem,
