@@ -721,7 +721,8 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                             {Icon && <Icon className={`h-7 w-7 ${color}`} />}
                                         </div>
                                         <div>
-                                            <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div>
+                                            {/* <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div> */}
+                                            <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
                                             <div className="text-3xl font-bold">{value as number}</div>
                                         </div>
                                     </div>
@@ -746,7 +747,8 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                             {Icon && <Icon className={`h-7 w-7 ${color}`} />}
                                         </div>
                                         <div>
-                                            <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div>
+                                            {/* <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div> */}
+                                            <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
                                             <div className="text-3xl font-bold">{value as number}</div>
                                         </div>
                                     </div>

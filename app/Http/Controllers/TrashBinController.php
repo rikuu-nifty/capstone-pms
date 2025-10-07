@@ -38,7 +38,7 @@ class TrashBinController extends Controller
     public function index(Request $request)
     {
         $filter = $request->input('date_filter', 'all');
-        $perPage = (int) $request->input('per_page', 20);
+        $perPage = (int) $request->input('per_page', 10);
 
         $search = $request->input('search');
         $sortKey = $request->input('sort', 'id');
