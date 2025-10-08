@@ -56,6 +56,7 @@ class CalendarController extends Controller
                 'status' => $t->status,
                 'color' => '#16a34a',
                 'url' => route('transfers.view', $t->id),
+                'allDay' => true,
             ]);
 
         // Off-Campus
@@ -76,7 +77,7 @@ class CalendarController extends Controller
                 'status' => $o->status,
                 'color' => '#f59e0b',
                 'url' => route('off-campus.view', $o->id),
-                    'allDay' => true,
+                'allDay' => true,
             ],
             [
                 'id' => 'offcampus_' . $o->id . '_return',
@@ -91,6 +92,7 @@ class CalendarController extends Controller
                 'status' => $o->status,
                 'color' => '#eab308',
                 'url' => route('off-campus.view', $o->id),
+                'allDay' => true,
             ],
         ]);
 
@@ -111,6 +113,7 @@ class CalendarController extends Controller
                 'status' => $d->status,
                 'color' => '#8c56beff',
                 'url' => route('turnover-disposal.view', $d->id),
+                'allDay' => true,
             ]);
 
         // Form Approvals
@@ -129,6 +132,7 @@ class CalendarController extends Controller
                 'status' => $a->status,
                 'color' => '#f03434ff',
                 'url' => route('approvals.index'),
+                'allDay' => true,
             ]);
 
         // Combine

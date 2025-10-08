@@ -157,13 +157,14 @@ export default function CalendarPage({ events }: CalendarProps) {
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,listWeek',
+                // right: 'dayGridMonth,timeGridWeek,listWeek',
+                right: 'dayGridMonth,listWeek',
             },
             buttonText: {
                 today: 'Today',
                 month: 'Month',
                 week: 'Week',
-                list: 'List',
+                list: 'Week List',
             },
             initialView: currentView, // ✅ Preserve view
             initialDate: currentDate, // ✅ Preserve date
@@ -175,8 +176,9 @@ export default function CalendarPage({ events }: CalendarProps) {
             dayMaxEventRows: 5,
             moreLinkText: 'more',
 
-            slotMinTime: '-01:00:00',
-            slotMaxTime: '26:01:00',
+            // slotMinTime: '-01:00:00',
+            slotMinTime: '08:00:00',
+            slotMaxTime: '17:01:00',
             scrollTime: '06:00:00',
             scrollTimeReset: false,
             expandRows: true,
@@ -212,8 +214,8 @@ export default function CalendarPage({ events }: CalendarProps) {
                 const listLabels = document.querySelectorAll('.fc-list-event-time');
                 listLabels.forEach((label) => {
                     if (label.textContent?.trim().toLowerCase() === 'all-day') {
-                        label.textContent = 'ALL DAY';
-                        (label as HTMLElement).style.fontWeight = '600';
+                        label.textContent = 'All Day';
+                        // (label as HTMLElement).style.fontWeight = '600';
                     }
                 });
             },
