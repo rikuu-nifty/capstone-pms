@@ -37,3 +37,13 @@
     border-radius: 6px !important;
     padding: 2px 6px !important;
 }
+
+/* ===== Increase Event Height in Week View ===== */
+.fc-timegrid-event {
+    min-height: 7em !important;
+    /* default is around 1.5em */
+    line-height: 1.35 !important;
+    padding: 0px 6px !important;
+    /* more padding inside the event */
+    border-radius: 6px !important;
+}

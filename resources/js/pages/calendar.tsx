@@ -104,7 +104,7 @@ export default function CalendarPage({ events }: CalendarProps) {
             moreLinkText: 'more',
 
             slotMinTime: '-01:00:00',     // start at midnight
-            slotMaxTime: '25:01:00',     // include midnight at the bottom
+            slotMaxTime: '26:01:00',     // include midnight at the bottom
             scrollTime: '06:00:00',      // default scroll position (6 AM)
             scrollTimeReset: false,
             expandRows: true,
