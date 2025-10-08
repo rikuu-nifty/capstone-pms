@@ -1,0 +1,39 @@
+/* ===== Custom Spacing for Calendar Events ===== */
+
+/* Increase spacing between stacked events */
+.fc-daygrid-event {
+    margin-bottom: 4px !important;
+    /* adds vertical space between events */
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+}
+
+/* Give more breathing room inside cells */
+.fc-daygrid-day-frame {
+    padding: 4px 2px !important;
+}
+
+/* Slight shadow for better visual separation */
+.fc-daygrid-event-dot {
+    margin-right: 4px !important;
+}
+
+/* Optional: make multi-event overflow link ("+3 more") look consistent */
+.fc-daygrid-more-link {
+    margin-top: 2px !important;
+    display: inline-block;
+    font-size: 0.8rem;
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+/* ===== Font Size for Event Labels ===== */
+.fc-daygrid-event {
+    font-size: 0.8rem !important;
+    /* adjust value as desired */
+    line-height: 1.1rem !important;
+    margin-bottom: 4px !important;
+    /* keep spacing */
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+}

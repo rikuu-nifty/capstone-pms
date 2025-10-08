@@ -21,6 +21,7 @@ import {
     X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import '../../css/calendar-overrides.css';
 
 interface CalendarProps {
     events: {
@@ -74,6 +75,24 @@ export default function CalendarPage({ events }: CalendarProps) {
             initialView: 'dayGridMonth',
             navLinks: true,
             events: filtered,
+
+            datesSet: () => {
+                const allDayLabel = document.querySelector('.fc-timegrid-axis-cushion');
+                if (allDayLabel && allDayLabel.textContent?.trim().toLowerCase() === 'all-day') {
+                    allDayLabel.textContent = 'ALL DAY';
+                    (allDayLabel as HTMLElement).style.fontWeight = '600';
+                }
+
+                const listLabels = document.querySelectorAll('.fc-list-event-time');
+                listLabels.forEach((label) => {
+                    if (label.textContent?.trim().toLowerCase() === 'all-day') {
+                        label.textContent = 'ALL DAY';
+                        // (label as HTMLElement).style.fontWeight = '600'; // make bold
+                    }
+                });
+            },
+
+
             eventClick: (info: EventClickArg) => {
                 info.jsEvent.preventDefault();
                 if (info.event.url) window.open(info.event.url, '_blank');
@@ -81,14 +100,32 @@ export default function CalendarPage({ events }: CalendarProps) {
             height: 'auto',
             eventDisplay: 'block',
             eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
-            dayMaxEventRows: 3,
+            dayMaxEventRows: 5,
             moreLinkText: 'more',
+
+            slotMinTime: '-01:00:00',     // start at midnight
+            slotMaxTime: '25:01:00',     // include midnight at the bottom
+            scrollTime: '06:00:00',      // default scroll position (6 AM)
+            scrollTimeReset: false,
+            expandRows: true,
+            slotLabelInterval: '1:00',   // 1-hour spacing between rows
+            slotLabelFormat: {           // proper time labels
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short',
+                hour12: true,
+            },
             views: {
-                dayGridMonth: { displayEventTime: false },
+                dayGridMonth: { displayEventTime: false }, // hide time in month
+                timeGridWeek: { displayEventTime: false }, // hide time in week
+                timeGridDay: { displayEventTime: false },   // hide time in day view
             },
             eventDidMount: (info) => {
                 const titleEl = info.el.querySelector('.fc-event-title');
                 if (titleEl) titleEl.innerHTML = info.event.title;
+            },
+            eventContent: function(arg) {
+                return { html: arg.event.title };
             },
         });
 
@@ -100,91 +137,121 @@ export default function CalendarPage({ events }: CalendarProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Calendar" />
 
-            <div className="flex flex-col lg:flex-row gap-6 p-6">
-                {/* Main Calendar Section */}
-                <div className="flex-1">
-                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                        Calendar Overview
-                    </h1>
+            <div className="p-6 space-y-4">
+                {/* Shared Header */}
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                    Calendar Overview
+                </h1>
 
-                    <div
-                        ref={calendarRef}
-                        className="bg-white dark:bg-neutral-900 rounded-xl shadow p-4 border border-gray-200 dark:border-neutral-700"
-                    />
-                </div>
-
-                {/* Sidebar Panel */}
-                <div
-                    className={`fixed lg:static top-0 right-0 h-full lg:h-auto lg:w-72 w-64 z-50 bg-white dark:bg-neutral-900 border-l border-gray-200 dark:border-neutral-800 shadow-lg transition-transform duration-300 ${
-                        sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-                    }`}
-                >
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-neutral-800">
-                        <h2 className="font-semibold text-gray-900 dark:text-gray-100 text-lg flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            Filters
-                        </h2>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSidebarOpen(false)}
-                            className="lg:hidden"
-                        >
-                            <X className="h-5 w-5" />
-                        </Button>
+                {/* Main container with equal-height calendar + sidebar */}
+                <div className="flex flex-col lg:flex-row gap-6 min-h-[80vh] max-h-[80vh]">
+                    {/* Calendar Area */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <div
+                            ref={calendarRef}
+                            className="flex-1 overflow-y-auto bg-white dark:bg-neutral-900 rounded-xl shadow p-4 border border-gray-200 dark:border-neutral-700"
+                            style={{
+                                maxHeight: 'calc(100vh - 10rem)', // adjust based on header height
+                            }}
+                        />
                     </div>
 
-                    {/* Module Filters */}
-                    <div className="flex flex-col gap-3 p-4 overflow-y-auto max-h-[calc(100vh-150px)]">
-                        {MODULES.map(({ label, icon: Icon }) => {
-                            const active = activeModules.includes(label);
-                            return (
-                                <Button
+                    {/* Sidebar */}
+                    <div
+                        className={`fixed lg:relative top-0 right-0 h-full lg:h-auto lg:w-80 w-64 z-50 bg-white dark:bg-neutral-900 border-l border-gray-200 dark:border-neutral-800 shadow-lg transition-transform duration-300 ${
+                            sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+                        } flex flex-col self-stretch`}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-neutral-800">
+                            <h2 className="font-semibold text-gray-900 dark:text-gray-100 text-lg flex items-center gap-2">
+                                <Filter className="h-4 w-4" />
+                                Filters
+                            </h2>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSidebarOpen(false)}
+                                className="lg:hidden"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+
+                        {/* Filter List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                            {MODULES.map(({ label, icon: Icon }) => {
+                                const active = activeModules.includes(label);
+
+                                const colorMap: Record<string, string> = {
+                                    'Inventory Scheduling': '#3d5ea5ff',
+                                    'Property Transfer': '#16a34a',
+                                    'Off-Campus Issued': '#f59e0b',
+                                    'Off-Campus Return': '#eab308',
+                                    'Turnover/Disposal': '#9333ea',
+                                    'Form Approval': '#dc2626',
+                                };
+
+                                const bgColor = colorMap[label];
+                                const textColor = active ? 'text-white' : 'text-gray-800 dark:text-gray-200';
+                                const hoverColor = active ? '' : 'hover:opacity-90';
+
+                                return (
+                                <button
                                     key={label}
-                                    variant={active ? 'default' : 'outline'}
                                     onClick={() =>
                                         setActiveModules(prev =>
                                             prev.includes(label)
-                                                ? prev.filter(m => m !== label)
-                                                : [...prev, label]
+                                            ? prev.filter(m => m !== label)
+                                            : [...prev, label]
                                         )
                                     }
-                                    className={`flex items-center justify-start gap-2 w-full cursor-pointer transition-all ${
-                                        active
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-                                            : 'bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-800'
-                                    }`}
+                                    className={`
+                                        flex items-center gap-2 w-full rounded-md px-3 py-2 font-medium transition-all duration-200
+                                        border border-transparent cursor-pointer ${textColor} ${hoverColor}
+                                        ${active
+                                            ? ''
+                                            : 'border-gray-600 dark:border-neutral-700 bg-transparent'}
+                                    `}
+                                    style={{
+                                        backgroundColor: active ? bgColor : 'transparent',
+                                    }}
                                 >
-                                    <Icon className="h-4 w-4 shrink-0" />
-                                    {label}
-                                </Button>
-                            );
-                        })}
-                    </div>
+                                    <Icon
+                                        className="h-4 w-4 shrink-0"
+                                        style={{ color: active ? 'white' : bgColor }}
+                                    />
+                                    <span>{label}</span>
+                                </button>
+                                );
+                            })}
+                        </div>
 
-                    {/* Legend */}
-                    <div className="border-t border-gray-200 dark:border-neutral-800 p-4">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Legend</h3>
-                        <div className="space-y-2 text-sm">
-                            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 rounded"></span> Inventory Scheduling</span>
-                            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-green-600 rounded"></span> Property Transfer</span>
-                            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-yellow-500 rounded"></span> Off-Campus</span>
-                            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-purple-600 rounded"></span> Turnover / Disposal</span>
-                            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-red-600 rounded"></span> Form Approval</span>
+                        {/* Legend */}
+                        <div className="border-t border-gray-200 dark:border-neutral-800 p-4">
+                            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Legend
+                            </h3>
+                            <div className="space-y-2 text-sm">
+                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 rounded"></span> Inventory Scheduling</span>
+                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-green-600 rounded"></span> Property Transfer</span>
+                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-yellow-500 rounded"></span> Off-Campus</span>
+                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-purple-600 rounded"></span> Turnover / Disposal</span>
+                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-red-600 rounded"></span> Form Approval</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Floating Toggle for Mobile */}
-                <Button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    variant="outline"
-                    size="icon"
-                    className="fixed bottom-6 right-6 lg:hidden z-50 bg-white dark:bg-neutral-800 shadow-lg border"
-                >
-                    <Filter className="h-5 w-5 text-blue-600" />
-                </Button>
+                    {/* Floating Toggle (mobile only) */}
+                    <Button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        variant="outline"
+                        size="icon"
+                        className="fixed bottom-6 right-6 lg:hidden z-50 bg-white dark:bg-neutral-800 shadow-lg border"
+                    >
+                        <Filter className="h-5 w-5 text-blue-600" />
+                    </Button>
+                </div>
             </div>
         </AppLayout>
     );
