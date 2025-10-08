@@ -505,7 +505,7 @@ export default function InventorySchedulingIndex({
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Avg Delay (Days)</div>
-                                <div className="text-3xl font-bold">{totals.avg_delay_days}</div>
+                                <div className="text-3xl font-bold">{totals.avg_delay_days} days</div>
                             </div>
                         </div>
                     </div>
