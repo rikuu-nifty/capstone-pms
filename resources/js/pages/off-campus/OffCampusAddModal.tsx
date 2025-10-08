@@ -292,10 +292,11 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                 onChange={(e) => setData('status', e.target.value as typeof data.status)}
                             >
                                 <option value="pending_review">Pending Review</option>
-                                <option value="pending_return">Pending Return</option>
-                                <option value="returned">Returned</option>
-                                <option value="overdue">Overdue</option>
-                                <option value="cancelled">Cancelled</option>
+                                <option value="pending_return" disabled>Pending Return</option>
+                                <option value="returned" disabled>Returned</option>
+                                <option value="overdue" disabled>Overdue</option>
+                                <option value="cancelled" disabled>Cancelled</option>
+                                <option value="missing" disabled>Missing</option>
                             </select>
                             {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                         </div>

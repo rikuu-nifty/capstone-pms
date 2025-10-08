@@ -53,6 +53,8 @@ type OffCampusRow = {
     // when eager loaded as child lines (recommended long-term)
     assets?: OffCampusAssetRow[];
     college_or_unit?: { id: number; name: string; code: string } | null;
+
+    issued_by_signed?: boolean;
 };
 
 type AssetOption = {
@@ -315,7 +317,7 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                         </div>
 
                         {/* Status */}
-                        <div>
+                        {/* <div>
                             <Label>Status</Label>
                             <select
                                 className="w-full rounded-lg border p-2"
@@ -327,8 +329,74 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                                 <option value="returned">Returned</option>
                                 <option value="overdue">Overdue</option>
                                 <option value="cancelled">Cancelled</option>
+                                <option value="missing">Missing</option>
                             </select>
                             {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+                        </div> */}
+
+                        {/* STATUS FIELD */}
+                        <div>
+                            <Label>Status</Label>
+                            <select
+                                className={`w-full rounded-lg border p-2 ${
+                                !offCampus.issued_by_signed
+                                    ? 'bg-gray-50 text-gray-500 cursor-not-allowed'
+                                    : ''
+                                }`}
+                                value={data.status}
+                                onChange={(e) =>
+                                    setData('status', e.target.value as OffCampusRow['status'])
+                                }
+                                disabled={!offCampus.issued_by_signed && data.status === 'pending_review'}
+                            >
+                                {/* If not approved → only Pending Review enabled */}
+                                <option
+                                    value="pending_review"
+                                    disabled={offCampus.issued_by_signed}
+                                >
+                                    Pending Review
+                                </option>
+                                <option
+                                    value="pending_return"
+                                    disabled={!offCampus.issued_by_signed}
+                                >
+                                        Pending Return
+                                </option>
+                                <option
+                                    value="returned"
+                                    disabled={!offCampus.issued_by_signed}
+                                >
+                                    Returned
+                                </option>
+                                <option
+                                    value="overdue"
+                                    disabled={!offCampus.issued_by_signed}
+                                >
+                                    Overdue
+                                </option>
+                                <option
+                                    value="cancelled"
+                                    disabled={!offCampus.issued_by_signed}
+                                >
+                                    Cancelled
+                                </option>
+                                <option
+                                    value="missing"
+                                    disabled={!offCampus.issued_by_signed}
+                                >
+                                    Missing
+                                </option>
+                            </select>
+
+                            {!offCampus.issued_by_signed && (
+                                <p className="mt-1 text-xs text-amber-600">
+                                    Status disabled until approved in Form Approval.
+                                </p>
+                            )}
+
+                            {errors.status && (
+                                <p className="mt-1 text-xs text-red-500">{errors.status}</p>
+                            )}
                         </div>
 
                         {/* Purpose */}

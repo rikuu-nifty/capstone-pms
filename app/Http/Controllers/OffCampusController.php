@@ -76,7 +76,7 @@ class OffCampusController extends Controller
             'college_or_unit_id'  => ['nullable','exists:unit_or_departments,id'],
             'purpose'             => ['required','string'],
             'date_issued'         => ['required','date'],
-            'status'             => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled'])],
+            'status'             => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled', 'missing'])],
             'return_date'         => ['nullable','date','after_or_equal:date_issued'],
             'quantity'            => ['required','integer','min:1'],
             'units'               => ['required','string','max:50'],
@@ -197,7 +197,7 @@ class OffCampusController extends Controller
             'college_or_unit_id'  => ['nullable','exists:unit_or_departments,id'],
             'purpose'             => ['required','string'],
             'date_issued'         => ['required','date'],
-            'status'              => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled'])],
+            'status'              => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled', 'missing'])],
             'return_date'         => ['nullable','date','after_or_equal:date_issued'],
             'quantity'            => ['required','integer','min:1'],
 
@@ -241,6 +241,16 @@ class OffCampusController extends Controller
                     'units'          => $data['units'] ?? 'pcs',
                     'comments'       => $data['comments'] ?? null,
                 ]);
+            }
+
+            // if status is "missing", archive all related assets in inventory_lists
+            if ($data['status'] === 'missing') {
+                $assetIds = collect($data['selected_assets'])->pluck('asset_id')->toArray();
+
+                if (!empty($assetIds)) {
+                    InventoryList::whereIn('id', $assetIds)
+                        ->update(['status' => 'archived']);
+                }
             }
         });
 
