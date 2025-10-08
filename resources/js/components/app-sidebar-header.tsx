@@ -179,7 +179,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                             {/* Text */}
                                             <div className="flex-1">
                                                 <Link
-                                                    href={route('notifications.markRead', n.id)} // 👈 backend marks it read
+                                                    href={route('notifications.read', n.id)} // 👈 backend marks it read
                                                     method="post"
                                                     as="button"
                                                     className="w-full text-left"
