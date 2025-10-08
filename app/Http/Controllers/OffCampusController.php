@@ -248,15 +248,26 @@ class OffCampusController extends Controller
                 $assetIds = collect($data['selected_assets'])->pluck('asset_id')->toArray();
 
                 if (!empty($assetIds)) {
-                    InventoryList::whereIn('id', $assetIds)
-                        ->update(['status' => 'archived']);
+                    // Fetch existing descriptions so we can append
+                    $assets = InventoryList::whereIn('id', $assetIds)->get();
+
+                    foreach ($assets as $asset) {
+                        // build appended message
+                        $note = "\n\n[Marked Missing under Off-Campus #{$offCampus->id} on " . now()->format('M d, Y') . "]";
+                        // safely append to current description
+                        $newDescription = trim(($asset->description ?? '') . $note);
+
+                        $asset->update([
+                            'status'      => 'archived',
+                            'description' => $newDescription,
+                        ]);
+                    }
                 }
             }
         });
 
         return redirect()->route('off-campus.index')->with('success', 'Off-campus record updated successfully.');
     }
-
 
     public function destroy(Request $request, OffCampus $offCampus)
     {
