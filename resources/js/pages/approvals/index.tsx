@@ -222,9 +222,11 @@ export default function ApprovalsIndex() {
                                 <TableHead className="text-center">Requested By</TableHead>
                                 <TableHead className="text-center">Approval Status</TableHead>
                                 {/* <TableHead className="text-center">Requires Attention From</TableHead> */}
-                                <TableHead className="text-center">
-                                    {props.tab === 'rejected' ? 'Reason' : 'Requires Attention From'}
-                                </TableHead>
+                                {props.tab !== 'approved' && (
+                                    <TableHead className="text-center">
+                                        {props.tab === 'rejected' ? 'Reason' : 'Requires Attention From'}
+                                    </TableHead>
+                                )}
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -265,22 +267,23 @@ export default function ApprovalsIndex() {
                                                 '—'
                                             )}
                                         </TableCell> */}
-                                        <TableCell className="text-center">
-                                            {props.tab === 'rejected' ? (
+                                        {props.tab !== 'approved' && (
+                                            <TableCell className="text-center">
+                                                {props.tab === 'rejected' ? (
                                                 a.review_notes ? (
                                                     <div className="leading-tight text-red-600">{ucwords(a.review_notes)}</div>
                                                 ) : (
                                                     '—'
                                                 )
-                                            ) : a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
+                                                ) : a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
                                                 <div className="leading-tight">
                                                     <span className="font-medium">{a.current_step_actor}</span>
                                                 </div>
-                                            ) : (
+                                                ) : (
                                                 '—'
-                                            )}
-                                        </TableCell>
-
+                                                )}
+                                            </TableCell>
+                                        )}
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-2">
                                                 {/* View */}
@@ -370,7 +373,10 @@ export default function ApprovalsIndex() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-sm text-muted-foreground">
+                                    <TableCell
+                                        colSpan={props.tab === 'approved' ? 6 : 7}
+                                        className="text-sm text-muted-foreground"
+                                    >
                                         No items found.
                                     </TableCell>
                                 </TableRow>
