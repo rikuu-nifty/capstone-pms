@@ -234,9 +234,22 @@ export default function CalendarPage({ events }: CalendarProps) {
 
             <div className="p-6 space-y-4">
                 {/* Shared Header */}
-                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    Calendar Overview
-                </h1>
+<div className="flex items-center justify-between">
+    <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+        Calendar Overview
+    </h1>
+
+    {/* Floating Toggle — mobile only */}
+    <Button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        variant="outline"
+        size="icon"
+        className="lg:hidden bg-white dark:bg-neutral-800 shadow-sm border"
+    >
+        <Filter className="h-5 w-5 text-blue-600" />
+    </Button>
+</div>
+
 
                 {/* Main container with equal-height calendar + sidebar */}
                 <div className="flex flex-col lg:flex-row gap-6 min-h-[80vh] max-h-[80vh]">
@@ -336,16 +349,6 @@ export default function CalendarPage({ events }: CalendarProps) {
                             </div>
                         </div>
                     </div>
-
-                    {/* Floating Toggle (mobile only) */}
-                    <Button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        variant="outline"
-                        size="icon"
-                        className="fixed bottom-6 right-6 lg:hidden z-50 bg-white dark:bg-neutral-800 shadow-lg border"
-                    >
-                        <Filter className="h-5 w-5 text-blue-600" />
-                    </Button>
                 </div>
             </div>
         </AppLayout>
