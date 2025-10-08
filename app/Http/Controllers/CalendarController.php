@@ -26,13 +26,13 @@ class CalendarController extends Controller
                     optional($i->unitOrDepartment)->name ?? '',
                     optional($i->building)->name ?? '',
                 ),
-                'start' => $i->actual_date_of_inventory
-                    ? $i->actual_date_of_inventory
-                    : Carbon::createFromFormat('Y-m', $i->inventory_schedule)->startOfMonth(),
-                'end' => $i->actual_date_of_inventory
-                    ? $i->actual_date_of_inventory
-                    : Carbon::createFromFormat('Y-m', $i->inventory_schedule)->endOfMonth(),
-                'type' => 'Inventory Scheduling',
+            'start' => $i->actual_date_of_inventory
+                ? $i->actual_date_of_inventory
+                : Carbon::createFromFormat('Y-m', $i->inventory_schedule)->startOfMonth(),
+            'end' => $i->actual_date_of_inventory
+                ? $i->actual_date_of_inventory
+                : Carbon::createFromFormat('Y-m', $i->inventory_schedule)->endOfMonth()->addDay(),
+            'type' => 'Inventory Scheduling',
                 'status' => $i->scheduling_status,
                 'color' => '#3d5ea5ff',
                 'url' => route('inventory-scheduling.view', $i->id),
