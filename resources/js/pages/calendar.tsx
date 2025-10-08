@@ -54,12 +54,105 @@ export default function CalendarPage({ events }: CalendarProps) {
     const [activeModules, setActiveModules] = useState<string[]>(MODULES.map(m => m.label));
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
+    // useEffect(() => {
+    //     if (!calendarRef.current) return;
+
+    //     const filtered = events.filter(e => activeModules.includes(e.type));
+
+    //     const calendar = new FullCalendar(calendarRef.current, {
+    //         plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
+    //         headerToolbar: {
+    //             left: 'prev,next today',
+    //             center: 'title',
+    //             right: 'dayGridMonth,timeGridWeek,listWeek',
+    //         },
+    //         buttonText: {
+    //             today: 'Today',
+    //             month: 'Month',
+    //             week: 'Week',
+    //             list: 'List',
+    //         },
+    //         initialView: 'dayGridMonth',
+    //         navLinks: true,
+    //         events: filtered,
+
+    //         datesSet: () => {
+    //             const allDayLabel = document.querySelector('.fc-timegrid-axis-cushion');
+    //             if (allDayLabel && allDayLabel.textContent?.trim().toLowerCase() === 'all-day') {
+    //                 allDayLabel.textContent = 'ALL DAY';
+    //                 (allDayLabel as HTMLElement).style.fontWeight = '600';
+    //             }
+
+    //             const listLabels = document.querySelectorAll('.fc-list-event-time');
+    //             listLabels.forEach((label) => {
+    //                 if (label.textContent?.trim().toLowerCase() === 'all-day') {
+    //                     label.textContent = 'ALL DAY';
+    //                     // (label as HTMLElement).style.fontWeight = '600'; // make bold
+    //                 }
+    //             });
+    //         },
+
+
+    //         eventClick: (info: EventClickArg) => {
+    //             info.jsEvent.preventDefault();
+    //             if (info.event.url) window.open(info.event.url, '_blank');
+    //         },
+    //         height: 'auto',
+    //         eventDisplay: 'block',
+    //         eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
+    //         dayMaxEventRows: 5,
+    //         moreLinkText: 'more',
+
+    //         slotMinTime: '-01:00:00',     // start at midnight
+    //         slotMaxTime: '26:01:00',     // include midnight at the bottom
+    //         scrollTime: '06:00:00',      // default scroll position (6 AM)
+    //         scrollTimeReset: false,
+    //         expandRows: true,
+    //         slotLabelInterval: '1:00',   // 1-hour spacing between rows
+    //         slotLabelFormat: {           // proper time labels
+    //             hour: 'numeric',
+    //             minute: '2-digit',
+    //             meridiem: 'short',
+    //             hour12: true,
+    //         },
+    //         views: {
+    //             dayGridMonth: { displayEventTime: false }, // hide time in month
+    //             timeGridWeek: { displayEventTime: false }, // hide time in week
+    //             timeGridDay: { displayEventTime: false },   // hide time in day view
+    //         },
+    //         eventDidMount: (info) => {
+    //             const titleEl = info.el.querySelector('.fc-event-title');
+    //             if (titleEl) titleEl.innerHTML = info.event.title;
+    //         },
+    //         eventContent: function(arg) {
+    //             return { html: arg.event.title };
+    //         },
+    //     });
+
+    //     calendar.render();
+    //     return () => calendar.destroy();
+    // }, [events, activeModules]);
+
     useEffect(() => {
         if (!calendarRef.current) return;
 
+        // Extend HTMLDivElement to hold a reference to the calendar
+        type CalendarElement = HTMLDivElement & { _calendarInstance?: FullCalendar };
+        const calendarEl = calendarRef.current as CalendarElement;
+
+        // Remember current view and date if an instance already exists
+        const existingCalendar = calendarEl._calendarInstance;
+        const currentView = existingCalendar?.view?.type || 'dayGridMonth';
+        const currentDate = existingCalendar?.getDate?.() || new Date();
+
+        // Destroy old instance before creating a new one
+        if (existingCalendar) {
+            existingCalendar.destroy();
+        }
+
         const filtered = events.filter(e => activeModules.includes(e.type));
 
-        const calendar = new FullCalendar(calendarRef.current, {
+        const calendar = new FullCalendar(calendarEl, {
             plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
             headerToolbar: {
                 left: 'prev,next today',
@@ -72,10 +165,43 @@ export default function CalendarPage({ events }: CalendarProps) {
                 week: 'Week',
                 list: 'List',
             },
-            initialView: 'dayGridMonth',
+            initialView: currentView, // ✅ Preserve view
+            initialDate: currentDate, // ✅ Preserve date
             navLinks: true,
             events: filtered,
+            height: 'auto',
+            eventDisplay: 'block',
+            eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
+            dayMaxEventRows: 5,
+            moreLinkText: 'more',
 
+            slotMinTime: '-01:00:00',
+            slotMaxTime: '26:01:00',
+            scrollTime: '06:00:00',
+            scrollTimeReset: false,
+            expandRows: true,
+            slotLabelInterval: '1:00',
+            slotLabelFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short',
+                hour12: true,
+            },
+            views: {
+                dayGridMonth: { displayEventTime: false },
+                timeGridWeek: { displayEventTime: false },
+                timeGridDay: { displayEventTime: false },
+            },
+
+            eventDidMount: (info) => {
+                const titleEl = info.el.querySelector('.fc-event-title');
+                if (titleEl) titleEl.innerHTML = info.event.title;
+            },
+            eventContent: (arg) => ({ html: arg.event.title }),
+            eventClick: (info: EventClickArg) => {
+                info.jsEvent.preventDefault();
+                if (info.event.url) window.open(info.event.url, '_blank');
+            },
             datesSet: () => {
                 const allDayLabel = document.querySelector('.fc-timegrid-axis-cushion');
                 if (allDayLabel && allDayLabel.textContent?.trim().toLowerCase() === 'all-day') {
@@ -87,51 +213,20 @@ export default function CalendarPage({ events }: CalendarProps) {
                 listLabels.forEach((label) => {
                     if (label.textContent?.trim().toLowerCase() === 'all-day') {
                         label.textContent = 'ALL DAY';
-                        // (label as HTMLElement).style.fontWeight = '600'; // make bold
+                        (label as HTMLElement).style.fontWeight = '600';
                     }
                 });
             },
-
-
-            eventClick: (info: EventClickArg) => {
-                info.jsEvent.preventDefault();
-                if (info.event.url) window.open(info.event.url, '_blank');
-            },
-            height: 'auto',
-            eventDisplay: 'block',
-            eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
-            dayMaxEventRows: 5,
-            moreLinkText: 'more',
-
-            slotMinTime: '-01:00:00',     // start at midnight
-            slotMaxTime: '26:01:00',     // include midnight at the bottom
-            scrollTime: '06:00:00',      // default scroll position (6 AM)
-            scrollTimeReset: false,
-            expandRows: true,
-            slotLabelInterval: '1:00',   // 1-hour spacing between rows
-            slotLabelFormat: {           // proper time labels
-                hour: 'numeric',
-                minute: '2-digit',
-                meridiem: 'short',
-                hour12: true,
-            },
-            views: {
-                dayGridMonth: { displayEventTime: false }, // hide time in month
-                timeGridWeek: { displayEventTime: false }, // hide time in week
-                timeGridDay: { displayEventTime: false },   // hide time in day view
-            },
-            eventDidMount: (info) => {
-                const titleEl = info.el.querySelector('.fc-event-title');
-                if (titleEl) titleEl.innerHTML = info.event.title;
-            },
-            eventContent: function(arg) {
-                return { html: arg.event.title };
-            },
         });
 
+        // Save the new instance reference for reuse
+        calendarEl._calendarInstance = calendar;
+
         calendar.render();
+
         return () => calendar.destroy();
     }, [events, activeModules]);
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
