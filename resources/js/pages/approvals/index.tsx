@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import type { SharedData } from '@/types';
-import { FileSignature } from 'lucide-react';
+// import { FileSignature } from 'lucide-react';
 import { useState } from 'react';
 
 import ApproveConfirmationModal from '@/components/modals/ApproveConfirmationModal';
 import RejectConfirmationModal from '@/components/modals/RejectConfirmationModal';
 import ResetConfirmationModal from '@/components/modals/ResetFormApprovalModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import { ucwords } from '@/types/custom-index';
 
 const viewPath = (formType: string, id?: number | null) => {
     if (!id) return '#';
@@ -46,6 +47,8 @@ type ApprovalItem = {
     can_approve?: boolean;
     can_reject?: boolean;
     can_reset?: boolean;
+
+    review_notes?: string | null;
 };
 
 type PageProps = {
@@ -218,7 +221,10 @@ export default function ApprovalsIndex() {
                                 <TableHead className="text-center">Date Updated</TableHead>
                                 <TableHead className="text-center">Requested By</TableHead>
                                 <TableHead className="text-center">Approval Status</TableHead>
-                                <TableHead className="text-center">Requires Attention From</TableHead>
+                                {/* <TableHead className="text-center">Requires Attention From</TableHead> */}
+                                <TableHead className="text-center">
+                                    {props.tab === 'rejected' ? 'Reason' : 'Requires Attention From'}
+                                </TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -249,9 +255,24 @@ export default function ApprovalsIndex() {
                                         <TableCell>
                                             <StatusPill s={a.status} />
                                         </TableCell>
-                                        <TableCell className="text-center">
+                                        {/* <TableCell className="text-center"> */}
                                             {/* {Number(a.can_approve) ? 'true' : 'false'} */}
-                                            {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
+                                            {/* {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
+                                                <div className="leading-tight">
+                                                    <span className="font-medium">{a.current_step_actor}</span>
+                                                </div>
+                                            ) : (
+                                                '—'
+                                            )}
+                                        </TableCell> */}
+                                        <TableCell className="text-center">
+                                            {props.tab === 'rejected' ? (
+                                                a.review_notes ? (
+                                                    <div className="leading-tight text-red-600">{ucwords(a.review_notes)}</div>
+                                                ) : (
+                                                    '—'
+                                                )
+                                            ) : a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
                                                 <div className="leading-tight">
                                                     <span className="font-medium">{a.current_step_actor}</span>
                                                 </div>
@@ -283,20 +304,32 @@ export default function ApprovalsIndex() {
 
                                                 {a.status === 'pending_review' ? (
                                                     a.current_step_is_external ? (
+                                                        <>
                                                         <Button
-                                                            variant="ghost"
-                                                            size="icon"
+                                                            // variant="blue"
+                                                            // size="icon"
                                                             title={a.current_step_label ?? 'Record External Approval'}
                                                             className="cursor-pointer"
                                                             onClick={() => openExternalModal(a)}
                                                         >
-                                                            <FileSignature className="h-4 w-4" />
+                                                            {/* <FileSignature className="h-4 w-4" /> */}
+                                                            Approve
                                                         </Button>
+                                                        <Button
+                                                            variant="destructive"
+                                                            className="cursor-pointer"
+                                                            title={`Reject as ${a.current_step_actor}`}
+                                                            disabled={!a.can_approve}
+                                                            onClick={() => openReject(a)}
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                        </>
                                                     ) : (
                                                         <>
                                                             {/* Approve */}
                                                             <Button
-                                                                variant="blue"
+                                                                // variant="blue"
                                                                 className="cursor-pointer"
                                                                 title={`Approve as ${a.current_step_actor}`}
                                                                 disabled={!a.can_approve}
@@ -432,7 +465,7 @@ export default function ApprovalsIndex() {
                         {},
                         {
                             preserveScroll: true,
-                            preserveState: false, // 👈 force Inertia to reload fresh props
+                            preserveState: false, // force Inertia to reload fresh props
                             onSuccess: () => setShowReset(false),
                         },
                     );

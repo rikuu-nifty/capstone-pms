@@ -220,6 +220,12 @@ class FormApproval extends Model
             'acted_at'      => now(),
         ]);
 
+        $this->fill([
+            'review_notes' => $notes,
+            'reviewed_by_id' => Auth::id(),
+            'reviewed_at' => now(),
+        ])->save();
+
         $this->recomputeOverallStatus();
     }
 
