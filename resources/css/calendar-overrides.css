@@ -40,10 +40,71 @@
 
 /* ===== Increase Event Height in Week View ===== */
 .fc-timegrid-event {
-    min-height: 7em !important;
+    min-height: 2.3em !important;
     /* default is around 1.5em */
     line-height: 1.35 !important;
     padding: 0px 6px !important;
     /* more padding inside the event */
     border-radius: 6px !important;
+}
+
+/* ==== Fix Text Overflow in All-Day Events (Week/Month View) ==== */
+.fc-event-title,
+.fc-event-title-container,
+.fc-event-main {
+    white-space: normal !important;
+    /* allow text to wrap */
+    overflow: hidden !important;
+    /* hide anything beyond the box */
+    text-overflow: ellipsis !important;
+    /* show "..." when clipped */
+    word-break: break-word !important;
+    /* break long words if needed */
+}
+
+/* Keep consistent padding inside all-day event bars */
+.fc-daygrid-event,
+.fc-timegrid-event {
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    line-height: 1.3 !important;
+}
+
+/* Optional: adjust multi-day all-day event height */
+.fc-daygrid-event-harness {
+    min-height: 1.8em !important;
+}
+
+/* Base: keep single-line with ellipsis */
+.fc .fc-daygrid-event .fc-event-main,
+.fc .fc-timegrid-event .fc-event-main {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Let the event rise above neighbors on hover */
+.fc .fc-daygrid-event,
+.fc .fc-timegrid-event {
+    position: relative;
+    /* needed for z-index */
+}
+
+.fc .fc-daygrid-event:hover,
+.fc .fc-timegrid-event:hover {
+    z-index: 50;
+}
+
+/* Expand text on hover */
+.fc .fc-daygrid-event:hover .fc-event-main,
+.fc .fc-timegrid-event:hover .fc-event-main {
+    white-space: normal !important;
+    overflow: visible !important;
+    word-break: break-word !important;
+}
+
+/* Prevent parent containers from clipping the hover */
+.fc .fc-daygrid-day-events,
+.fc .fc-daygrid-event-harness {
+    overflow: visible !important;
 }
