@@ -260,6 +260,16 @@ export default function TransferEditModal({
             }
         }
 
+        // Prevent saving "Completed" without an actual date
+        if (desiredStatus === 'completed' && !data.actual_transfer_date) {
+            setWarningData({
+                desiredStatus: 'completed',
+                conflictingAssets: [],
+            });
+            setShowWarning(true);
+            return;
+        }
+
         // Proceed normally
         put(`/transfers/${transfer.id}`, {
             onSuccess: () => {

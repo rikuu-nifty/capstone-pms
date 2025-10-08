@@ -33,12 +33,23 @@ export default function TransferStatusWarningModal({
                     <DialogTitle className="text-2xl font-semibold">
                         Transfer Status Conflict
                     </DialogTitle>
-                    <DialogDescription className="text-center text-base leading-snug text-muted-foreground">
+                    {/* <DialogDescription className="text-center text-base leading-snug text-muted-foreground"> */}
                         {/* {actualStatus
                             ? <>You are trying to set this transfer record to <b>"{formatEnums(desiredStatus)}"</b>.</>
                             : <>You are trying to set this transfer record to <b>"{formatEnums(actualStatus)}"</b>.</>
                         } */}
-                        You are trying to set this transfer record to <b>"{formatEnums(desiredStatus)}"</b>.
+                        {/* You are trying to set this transfer record to <b>"{formatEnums(desiredStatus)}"</b>. */}
+                    {/* </DialogDescription> */}
+                    <DialogDescription className="text-center text-base leading-snug text-muted-foreground">
+                            {desiredStatus === 'completed' && conflictingAssets.length === 0 ? (
+                                <>
+                                    You are trying to set this transfer record to <b>"Completed"</b> without filling up the <b>Date Completed</b>.
+                                </>
+                            ) : (
+                                <>
+                                    You are trying to set this transfer record to <b>"{formatEnums(desiredStatus)}"</b>.
+                                </>
+                            )}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -147,11 +158,11 @@ export default function TransferStatusWarningModal({
                                 Cancel
                             </Button>
                         </DialogClose>
-                        {desiredStatus !== 'overdue' && (
+                        {!(desiredStatus === 'completed' && conflictingAssets.length === 0) && (
                             <Button
-                                variant="destructive"
-                                className="px-6 cursor-pointer"
                                 onClick={onConfirm}
+                                variant="default"
+                                className="cursor-pointer"
                             >
                                 Proceed Anyway
                             </Button>
