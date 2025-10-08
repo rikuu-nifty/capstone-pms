@@ -32,6 +32,7 @@ const EditModal: React.FC<EditModalProps> = ({
         <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
                 // className="w-full max-w-[700px] p-6 sm:max-w-[800px] max-h-[90vh] overflow-y-auto"
+                aria-describedby={undefined}
                 className={`w-full max-w-[700px] sm:max-w-[800px] p-6 ${contentClassName ?? ''}`}
             >
                 <DialogHeader>
