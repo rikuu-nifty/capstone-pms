@@ -302,14 +302,14 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                     )}
                 </div>
 
-                {/* {transfer.received_by && (
+                {transfer.received_by && (
                     <div className="text-center">
                         <p className="mb-8 font-semibold">Received By:</p>
                         <div className="mx-auto mb-1 w-48 border-t border-black"></div>
                         <p className="font-bold text-gray-800">{transfer.received_by}</p>
-                        <p className="text-xs text-gray-500 italic">[Role Here]</p>
+                        {/* <p className="text-xs text-gray-500 italic">[Role Here]</p> */}
                     </div>
-                )} */}
+                )}
 
                 {/* {transfer.designatedEmployee?.name && (
                     <div className="text-center">
@@ -339,8 +339,15 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                 </a>
 
                 {transfer.status.toLowerCase() !== 'pending_review' && (
+                    // <Button
+                    //     onClick={() => window.print()}
+                    //     className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                    // >
+                    //     🖨️ Print Form
+                    // </Button>
+
                     <Button
-                        onClick={() => window.print()}
+                        onClick={() => window.open(route('transfers.print', transfer.id), '_blank')}
                         className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
                     >
                         🖨️ Print Form

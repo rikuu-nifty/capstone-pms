@@ -308,6 +308,9 @@
     Route::delete('/transfers/{transfer}', [TransferController::class, 'destroy'])
         ->name('transfers.destroy')
         ->middleware('can:delete-transfers');
+    Route::get('/transfers/{id}/print', [TransferController::class, 'exportPdf'])
+    ->name('transfers.print');
+
 
     // TURNOVER / DISPOSAL
     Route::get('/turnover-disposal', [TurnoverDisposalController::class, 'index'])

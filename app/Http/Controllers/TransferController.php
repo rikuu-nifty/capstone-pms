@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Models\Transfer;
 use App\Models\Building;
@@ -14,7 +15,7 @@ use App\Models\InventoryList;
 use App\Models\UnitOrDepartment;
 use App\Models\User;
 use App\Models\SubArea;
-use App\Models\TransferSignatory; // ✅ import transfer signatories
+use App\Models\TransferSignatory;
 
 class TransferController extends Controller
 {
@@ -580,5 +581,28 @@ class TransferController extends Controller
                 ]);
             }
         }
+    }
+
+    public function exportPdf(int $id)
+    {
+        $transfer = Transfer::with([
+            'assignedBy.role',
+            'currentOrganization',
+            'receivingOrganization',
+            'receivingBuildingRoom.building',
+            'transferAssets.asset.assetModel.equipmentCode',
+        ])->findOrFail($id);
+
+        $assets = $transfer->transferAssets->map(fn($t) => $t->asset)->filter();
+
+        $signatories = TransferSignatory::all()->keyBy('role_key');
+
+        $pdf = Pdf::loadView('forms.property_transfer_form_pdf', [
+            'transfer' => $transfer,
+            'assets' => $assets,
+            'signatories' => $signatories,
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
     }
 }
