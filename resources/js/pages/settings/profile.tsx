@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { UserDetail } from '@/types/user-detail';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,14 +23,26 @@ const breadcrumbs: BreadcrumbItem[] = [
 type ProfileForm = {
     name: string;
     email: string;
+
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
+    gender?: 'female' | 'male' | 'other' | '';
+    contact_no?: string;
 };
 
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
-    const { auth } = usePage<SharedData>().props;
+    // const { auth } = usePage<SharedData>().props;
+    const { auth, userDetail } = usePage<SharedData & { userDetail?: UserDetail | null }>().props;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
         name: auth.user.name,
         email: auth.user.email,
+        first_name: userDetail?.first_name || '',
+        middle_name: userDetail?.middle_name || '',
+        last_name: userDetail?.last_name || '',
+        gender: userDetail?.gender || '',
+        contact_no: userDetail?.contact_no || '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -50,7 +63,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="name">Username</Label>
 
                             <Input
                                 id="name"
@@ -59,7 +72,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 onChange={(e) => setData('name', e.target.value)}
                                 required
                                 autoComplete="name"
-                                placeholder="Full name"
+                                placeholder="Username"
                             />
 
                             <InputError className="mt-2" message={errors.name} />
@@ -104,8 +117,73 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                             </div>
                         )}
 
+                        <div className="grid gap-2">
+                            <Label htmlFor="first_name">First Name</Label>
+                            <Input
+                                id="first_name"
+                                value={data.first_name}
+                                onChange={(e) => setData('first_name', e.target.value)}
+                                required
+                            />
+                            <InputError message={errors.first_name} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="middle_name">Middle Name</Label>
+                            <Input
+                                id="middle_name"
+                                value={data.middle_name || ''}
+                                onChange={(e) => setData('middle_name', e.target.value)}
+                            />
+                            <InputError message={errors.middle_name} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="last_name">Last Name</Label>
+                            <Input
+                                id="last_name"
+                                value={data.last_name}
+                                onChange={(e) => setData('last_name', e.target.value)}
+                                required
+                            />
+                            <InputError message={errors.last_name} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="gender">Gender</Label>
+                            <select
+                                id="gender"
+                                value={data.gender || ''}
+                                onChange={(e) => setData('gender', e.target.value as 'female' | 'male' | 'other' | '')}
+                                className="border rounded-md p-2 text-sm cursor-pointer"
+                            >
+                                <option value="">Select Gender</option>
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <InputError message={errors.gender} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="contact_no">Contact Number</Label>
+                            <Input
+                                id="contact_no"
+                                type="text"
+                                placeholder="+63 912 345 6789"
+                                value={data.contact_no || ''}
+                                onChange={(e) => setData('contact_no', e.target.value)}
+                            />
+                            <InputError message={errors.contact_no} />
+                        </div>
+
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save</Button>
+                            <Button
+                                disabled={processing}
+                                className='cursor-pointer'
+                            >
+                                Save
+                            </Button>
 
                             <Transition
                                 show={recentlySuccessful}
@@ -119,7 +197,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                         </div>
                     </form>
                 </div>
-
                 <DeleteUser />
             </SettingsLayout>
         </AppLayout>
