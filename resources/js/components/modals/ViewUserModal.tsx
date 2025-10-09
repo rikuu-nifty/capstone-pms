@@ -4,12 +4,10 @@ import ViewModal from "@/components/modals/ViewModal";
 import { Button } from "@/components/ui/button";
 import RoleAssignmentModal from "@/components/modals/RoleAssignmentModal";
 import { formatDateLong, UserPageProps, formatFullName } from "@/types/custom-index";
-import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
 
 export default function ViewUserModal({ open, onClose, user, roles, unitOrDepartments }: UserPageProps) {
     const [showReassign, setShowReassign] = useState(false);
-    const [showDelete, setShowDelete] = useState(false);
 
     if (!user) return null;
 
@@ -127,13 +125,6 @@ export default function ViewUserModal({ open, onClose, user, roles, unitOrDepart
                     >
                         Reassign Role/Unit
                     </Button>
-                    <Button
-                        variant="destructive"
-                        className="cursor-pointer"
-                        onClick={() => setShowDelete(true)}
-                    >
-                        Delete User
-                    </Button>
                 </div>
             </ViewModal>
 
@@ -147,31 +138,6 @@ export default function ViewUserModal({ open, onClose, user, roles, unitOrDepart
                 unitOrDepartments={unitOrDepartments}
                 currentRoleId={user.role?.id ?? null}
                 currentUnitOrDeptId={user.unit_or_department_id ?? null}
-            />
-
-            <DeleteConfirmationModal
-                show={showDelete}
-                onCancel={() => setShowDelete(false)}
-                onConfirm={() => {
-                    router.delete(route("user-approvals.destroy", user.id), {
-                        preserveScroll: true,
-                        onSuccess: () => setShowDelete(false),
-                    });
-                }}
-                title="Delete User"
-                message={
-                    <>
-                        Are you sure you want to delete the user{" "}
-                        <strong>
-                            {user.detail 
-                                ? `${user.detail.first_name} ${user.detail.last_name}` 
-                                : user.name
-                            }
-                        </strong>
-                        ?
-                    </>
-                }
-
             />
         </>
     );
