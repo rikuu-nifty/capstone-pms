@@ -16,7 +16,7 @@ interface EditModalProps {
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
     processing?: boolean;
     children: React.ReactNode;
-    contentClassName?: string;
+    contentClassName?: string; // optional
 }
 
 const EditModal: React.FC<EditModalProps> = ({
@@ -30,19 +30,19 @@ const EditModal: React.FC<EditModalProps> = ({
 }) => {
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent 
-                // className="w-full max-w-[700px] p-6 sm:max-w-[800px] max-h-[90vh] overflow-y-auto"
+            <DialogContent
                 aria-describedby={undefined}
-                className={`w-full max-w-[700px] sm:max-w-[800px] p-6 ${contentClassName ?? ''}`}
+                className={`w-full max-w-[700px] sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-6 ${contentClassName ?? ''}`}
             >
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
 
+                {/* ✅ Scrollable form area */}
                 <form onSubmit={onSubmit} className="grid grid-cols-2 gap-4 py-4 text-sm">
                     {children}
 
-                    <DialogFooter className="col-span-2">
+                    <DialogFooter className="col-span-2 sticky bottom-0 bg-white dark:bg-neutral-900 pt-4 border-t">
                         <DialogClose asChild>
                             <Button
                                 variant="destructive"
