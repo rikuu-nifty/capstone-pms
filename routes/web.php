@@ -327,6 +327,8 @@
     Route::delete('/turnover-disposal/{turnoverDisposal}', [TurnoverDisposalController::class, 'destroy'])
         ->name('turnover-disposal.destroy')
         ->middleware('can:delete-turnover-disposal');
+    Route::get('/turnover-disposal/{id}/print', [TurnoverDisposalController::class, 'exportPdf'])
+        ->name('turnover-disposal.print');
 
     /// OFF-CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {

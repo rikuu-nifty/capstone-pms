@@ -606,7 +606,7 @@ class TransferController extends Controller
 
         $timestamp = now()->format('Y-m-d');
 
-        return $pdf->download("Transfer-Form-{$transfer->id}-{$timestamp}.pdf");
-        // return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
+        // return $pdf->download("Transfer-Form-{$transfer->id}-{$timestamp}.pdf");
+        return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
     }
 }

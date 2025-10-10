@@ -403,7 +403,7 @@ export default function TurnoverDisposalViewModal({
                 </a>
                 {turnoverDisposal.status !== 'pending_review' && (
                     <Button
-                        onClick={() => window.print()}
+                        onClick={() => window.open(route('turnover-disposal.print', turnoverDisposal.id), '_blank')}
                         className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
                     >
                         🖨️ Print Form

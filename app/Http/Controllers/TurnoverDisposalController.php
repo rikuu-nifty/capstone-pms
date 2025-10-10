@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Models\InventoryList;
 use App\Models\TurnoverDisposal;
@@ -202,5 +203,31 @@ class TurnoverDisposalController extends Controller
             ->first();
 
         return $u?->only(['id', 'name']);            // avoid hidden/serialization surprises
+    }
+
+    public function exportPdf(int $id)
+    {
+        $turnoverDisposal = TurnoverDisposal::with([
+            'issuingOffice',
+            'receivingOffice',
+            'personnel',
+            'turnoverDisposalAssets.assets',
+        ])->findOrFail($id);
+
+        $assets = $turnoverDisposal->turnoverDisposalAssets->map(fn($t) => $t->assets)->filter();
+
+        $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
+
+        $pdf = Pdf::loadView('forms.turnover_disposal_form_pdf', [
+            'turnoverDisposal' => $turnoverDisposal,
+            'assets' => $assets,
+            'signatories' => $signatories,
+        ])->setPaper('A4', 'portrait')
+            ->setOption('isPhpEnabled', true);
+
+        $timestamp = now()->format('Y-m-d');
+
+        // return $pdf->download("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
+        return $pdf->stream("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
     }
 }
