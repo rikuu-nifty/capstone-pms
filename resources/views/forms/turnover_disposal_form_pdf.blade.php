@@ -130,18 +130,59 @@
         page-break-inside: avoid;
     }
 
+    .signature-block table {
+        border-collapse: collapse;
+        border: none !important;
+    }
+
+    .signature-block td {
+        border: none !important;
+        vertical-align: top;
+        padding: 10px 15px;
+    }
+
     .signature-line {
-        width: 170px;
         border-top: 1px solid #000;
-        margin: 40px auto 4px;
+        width: 65%;
+        margin-top: 25px;
+        /* margin-bottom: 5px; */
+        margin-left: 0;
+        text-align: left;
     }
 
-    .signature-block p {
-        margin: 2px 0;
+    .sig-name {
+        width: 65%;
+        text-align: left;
     }
 
-    .signature-block p[style*="font-weight:bold"] {
-        margin-bottom: 3px;
+    .sig-date {
+        width: 30%;
+        text-align: left;
+        padding-left: 8mm;
+    }
+
+    .sig-date .date-box {
+        position: relative;
+        left: -40px;
+        /* nudges left */
+        /* optional, adjust vertically */
+    }
+
+    .name-box .signature-line {
+        width: 80%;
+        margin: 25px 0 -8px 0;
+    }
+
+    .date-box .signature-line {
+        width: 100%;
+        /* margin: 25px 0 6px 0; */
+        margin-top: 25px;
+    }
+
+    .date-text {
+        margin-top: -2px;
+        text-align: center;
+        font-size: 11px;
     }
 </style>
 @endpush
@@ -191,7 +232,8 @@ $chunks = $assets->chunk($perPage);
 
 {{-- PAGINATED ASSET TABLE --}}
 @foreach($chunks as $chunkIndex => $chunk)
-<table class="assets-table" style="{{ $chunkIndex > 0 ? 'page-break-before: always;' : '' }}">
+<!-- <table class="assets-table" style="{{ $chunkIndex > 0 ? 'page-break-before: always;' : '' }}"> -->
+<table class="assets-table" @if($chunkIndex> 0) style="page-break-before: always;" @endif>
     <thead>
         <tr class="spacer-row">
             <td colspan="4" style="height:20px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
@@ -246,36 +288,129 @@ $chunks = $assets->chunk($perPage);
 
 {{-- SIGNATORIES --}}
 <div class="signature-block">
-    <div style="display:inline-block; width:30%; vertical-align:top;">
-        <p>Personnel In Charge:</p>
-        <div class="signature-line"></div>
-        <p style="font-weight:bold;">{{ strtoupper($turnoverDisposal->personnel->full_name ?? '—') }}</p>
-        <p style="font-size:11px;">{{ $turnoverDisposal->personnel->position ?? 'PMO Staff' }}</p>
-    </div>
+    <table style="width:100%; border:none; border-collapse:collapse; font-size:12px;">
+        {{-- First Row: Personnel In Charge + Head/Unit --}}
+        <tr>
+            <td style="width:50%; vertical-align:top; padding:10px;">
+                <table style="width:100%; border:none;">
+                    <tr>
+                        <td colspan="2" style="padding-bottom:6px;">
+                            <p style="font-size:12px;">Personnel In Charge:</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="sig-name">
+                            <div class="name-box">
+                                <div class="signature-line"></div>
+                                <p style="font-weight:bold;">{{ strtoupper($turnoverDisposal->personnel->full_name ?? '—') }}</p>
+                                <p style="font-size:11px; margin-top:-8px">{{ $turnoverDisposal->personnel->position ?? 'PMO Staff' }}</p>
+                            </div>
+                        </td>
+                        <td class="sig-date">
+                            <div class="date-box">
+                                <div class="signature-line"></div>
+                                <p class="date-text">Date</p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
 
-    <div style="display:inline-block; width:30%; vertical-align:top;">
-        <p>Noted By:</p>
-        <div class="signature-line"></div>
-        @if($turnoverDisposal->noted_by_name)
-        <p style="font-weight:bold;">{{ strtoupper($turnoverDisposal->noted_by_name) }}</p>
-        <p style="font-size:11px;">{{ $turnoverDisposal->noted_by_title ?? 'Dean / Head' }}</p>
-        @else
-        <p style="color:#888;">—</p>
-        <p style="font-size:11px;">Dean / Head</p>
-        @endif
-    </div>
+            <td style="width:50%; vertical-align:top; padding:10px;">
+                <table style="width:100%; border:none;">
+                    <tr>
+                        <td colspan="2" style="padding-bottom:6px;">
+                            <p style="font-size:12px;">Head / Unit:</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="sig-name">
+                            <div class="name-box">
+                                <div class="signature-line"></div>
+                                @php $headUnit = $signatories['head_unit'] ?? null; @endphp
+                                @if($headUnit)
+                                <p style="font-weight:bold;">{{ strtoupper($headUnit->name ?? '—') }}</p>
+                                <p style="font-size:11px; margin-top:-8px">{{ $headUnit->title ?? 'Head / Unit' }}</p>
+                                @else
+                                <p style="color:#888;">—</p>
+                                <p style="font-size:11px; margin-top:-8px">Head / Unit</p>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="sig-date">
+                            <div class="date-box">
+                                <div class="signature-line"></div>
+                                <p class="date-text">Date</p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
 
-    <div style="display:inline-block; width:30%; vertical-align:top;">
-        <p>Approved By:</p>
-        <div class="signature-line"></div>
-        @php $approved = $signatories['approved_by'] ?? null; @endphp
-        @if($approved)
-        <p style="font-weight:bold;">{{ strtoupper($approved->name ?? '—') }}</p>
-        <p style="font-size:11px;">{{ $approved->title ?? 'Head, PMO' }}</p>
-        @else
-        <p style="color:#888;">—</p>
-        <p style="font-size:11px;">Head, PMO</p>
-        @endif
-    </div>
+        {{-- Second Row: Noted By + Approved By --}}
+        <tr>
+            <td style="width:50%; vertical-align:top; padding:10px;">
+                <table style="width:100%; border:none;">
+                    <tr>
+                        <td colspan="2" style="padding-bottom:6px;">
+                            <p style="font-size:12px;">Noted By:</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="sig-name">
+                            <div class="name-box">
+                                <div class="signature-line"></div>
+                                @if($turnoverDisposal->noted_by_name)
+                                <p style="font-weight:bold;">{{ strtoupper($turnoverDisposal->noted_by_name) }}</p>
+                                <p style="font-size:11px; margin-top:-8px">{{ $turnoverDisposal->noted_by_title ?? 'Dean / Head' }}</p>
+                                @else
+                                <p style="color:#888;">—</p>
+                                <p style="font-size:11px; margin-top:-8px">Dean / Head</p>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="sig-date">
+                            <div class="date-box">
+                                <div class="signature-line"></div>
+                                <p class="date-text">Date</p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+            <td style="width:50%; vertical-align:top; padding:10px;">
+                <table style="width:100%; border:none;">
+                    <tr>
+                        <td colspan="2" style="padding-bottom:6px;">
+                            <p style="font-size:12px;">Approved By:</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="sig-name">
+                            <div class="name-box">
+                                <div class="signature-line"></div>
+                                @php $approved = $signatories['approved_by'] ?? null; @endphp
+                                @if($approved)
+                                <p style="font-weight:bold;">{{ strtoupper($approved->name ?? '—') }}</p>
+                                <p style="font-size:11px; margin-top:-8px">Head, PMO</p>
+                                @else
+                                <p style="color:#888;">—</p>
+                                <p style="font-size:11px;">Head, PMO</p>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="sig-date">
+                            <div class="date-box">
+                                <div class="signature-line"></div>
+                                <p class="date-text">Date</p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </div>
 @endsection
