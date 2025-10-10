@@ -330,7 +330,7 @@
     Route::get('/turnover-disposal/{id}/print', [TurnoverDisposalController::class, 'exportPdf'])
         ->name('turnover-disposal.print');
 
-    /// OFF-CAMPUS
+    /// OFF CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {
         Route::get('/', [OffCampusController::class, 'index'])
             ->name('index')
@@ -364,6 +364,8 @@
             ->name('forceDelete')
             ->middleware('can:delete-off-campus');
     });
+    Route::get('/off-campus/{id}/print', [OffCampusController::class, 'exportPdf'])
+        ->name('off-campus.print');
 
     // BUILDINGS
     Route::get('/buildings', [BuildingController::class, 'index'])

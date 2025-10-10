@@ -14,6 +14,8 @@ use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class OffCampusController extends Controller
 {
@@ -296,5 +298,30 @@ class OffCampusController extends Controller
         $offCampus->forceDelete();
 
         return back()->with('success', 'Off-campus request permanently removed.');
+    }
+
+    public function exportPdf(int $id)
+    {
+        $offCampus = OffCampus::with([
+            'assets.asset:id,asset_model_id,asset_name,description,serial_no',
+            'assets.asset.assetModel:id,brand,model',
+            'collegeOrUnit:id,name,code',
+            'issuedBy:id,name',
+        ])->findOrFail($id);
+
+        $assets = $offCampus->assets->map(fn($a) => $a->asset)->filter();
+        $signatories = OffCampusSignatory::all()->keyBy('role_key');
+
+        $pdf = Pdf::loadView('forms.off_campus_form_pdf', [
+            'offCampus' => $offCampus,
+            'assets' => $assets,
+            'signatories' => $signatories,
+        ])->setPaper('A4', 'portrait')
+            ->setOption('isPhpEnabled', true);
+
+        $timestamp = now()->format('Y-m-d');
+
+        return $pdf->stream("Off-Campus-Form-{$offCampus->id}-{$timestamp}.pdf");
+        // return $pdf->download("Off-Campus-Form-{$offCampus->id}-{$timestamp}.pdf");
     }
 }
