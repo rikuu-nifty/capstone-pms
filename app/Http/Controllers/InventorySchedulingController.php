@@ -8,15 +8,16 @@ use App\Models\UnitOrDepartment;
 use App\Models\Building;
 use App\Models\BuildingRoom;
 use App\Models\User;
-use App\Models\InventorySchedulingSignatory; // 👈 add this
-use App\Models\InventoryList; // 👈 your assets model
+use App\Models\InventorySchedulingSignatory;
+use App\Models\InventoryList;
+use App\Models\AuditTrail;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
-// Audit Trail
 use App\Traits\LogsAuditTrail;
 
 class InventorySchedulingController extends Controller
@@ -413,9 +414,6 @@ class InventorySchedulingController extends Controller
         return response()->json(['success' => true]);
     }
 
-
-
-
     public function bulkUpdateAssetStatus(Request $request, InventoryScheduling $schedule, int $rowId)
     {
         $data = $request->validate([
@@ -455,12 +453,83 @@ class InventorySchedulingController extends Controller
         );
 
         // override subject_type
-        \App\Models\AuditTrail::latest()->first()->update([
+        AuditTrail::latest()->first()->update([
             'subject_type' => 'InventoryAssetStatus',
         ]);
 
         return response()->json(['success' => true]);
     }
 
+    public function exportPdf(int $id)
+    {
+        $schedule = InventoryScheduling::with([
+            'preparedBy',
+            'units',
+            'buildings.buildingRooms.subAreas',
+            'assets.asset',
+        ])->findOrFail($id);
 
+        $rows = [];
+
+        foreach ($schedule->units as $unit) {
+            $unitName = $unit->name ?? '—';
+            $rows[$unitName] = [];
+
+            foreach ($schedule->buildings as $building) {
+                $buildingName = $building->name ?? '—';
+                $rows[$unitName][$buildingName] = [];
+
+                $rooms = $building->buildingRooms ?? collect();
+
+                foreach ($rooms as $room) {
+                    $roomName = $room->room ?? '—';
+                    $subAreas = $room->subAreas ?? collect();
+
+                    $roomAssets = $schedule->assets->where('asset.building_room_id', $room->id);
+
+                    // If no subareas, just push one room row
+                    if ($subAreas->isEmpty()) {
+                        $rows[$unitName][$buildingName][] = [
+                            'room' => $roomName,
+                            'sub_area' => '—',
+                            'asset_count' => $roomAssets->count(),
+                            'status' => $schedule->scheduling_status,
+                        ];
+                    } else {
+                        // Subarea rows
+                        foreach ($subAreas as $sa) {
+                            $saAssets = $schedule->assets->where('asset.sub_area_id', $sa->id);
+                            $rows[$unitName][$buildingName][] = [
+                                'room' => $roomName,
+                                'sub_area' => $sa->name ?? '—',
+                                'asset_count' => $saAssets->count(),
+                                'status' => $schedule->scheduling_status,
+                            ];
+                        }
+
+                        // Handle leftover assets (room-level)
+                        $leftover = $roomAssets->filter(fn($a) => empty($a->asset->sub_area_id));
+                        if ($leftover->count() > 0) {
+                            $rows[$unitName][$buildingName][] = [
+                                'room' => $roomName,
+                                'sub_area' => '—',
+                                'asset_count' => $leftover->count(),
+                                'status' => $schedule->scheduling_status,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
+
+        $pdf = Pdf::loadView('forms.inventory_scheduling_form_pdf', [
+            'schedule' => $schedule,
+            'rows' => $rows,
+            'signatories' => $signatories,
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->stream("Inventory-Schedule-Form-{$schedule->id}.pdf");
+    }
 }

@@ -149,12 +149,8 @@
         Route::delete('/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
     });
 
-    // Route::get('calendar', function () {
-    //     return Inertia::render('calendar');
-    // })->name('calendar');
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])
         ->name('calendar');
-
 
     Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
         ->name('asset-summary.show');
@@ -233,7 +229,7 @@
         ->name('role-management.permissions.update')
         ->middleware('can:update-permissions');
         
-    // INVENTORY-SCHEDULING
+    // INVENTORY SCHEDULING
     Route::get('/inventory-scheduling', [InventorySchedulingController::class, 'index'])
         ->name('inventory-scheduling.index')
         ->middleware('can:view-inventory-scheduling');
@@ -261,6 +257,9 @@
         ->name('schedules.bulkUpdateAssetStatus');
     Route::put('/schedules/{schedule}/assets/{asset}', [InventorySchedulingController::class, 'updateAssetStatus'])
         ->name('schedules.updateAssetStatus');
+    Route::get('/inventory-scheduling/{id}/export-pdf', [InventorySchedulingController::class, 'exportPdf'])
+        ->name('inventory-scheduling.export-pdf');
+
 
     // INVENTORY LIST
     Route::get('/inventory-list', [InventoryListController::class, 'index'])

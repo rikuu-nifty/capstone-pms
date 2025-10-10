@@ -450,9 +450,10 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                         {/* <th className="border px-2 py-1 w-10 text-center">#</th> */}
                                         <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
                                         <th className="border px-2 py-1 text-center">Buildings</th>
+                                        <th className="border px-2 py-1 text-center">Rooms</th>
                                         <th className="border px-2 py-1 text-center">Inventory Schedule</th>
                                         <th className="border px-2 py-1 text-center">Actual Date of Inventory</th>
-                                        {/* <th className="border px-2 py-1 text-center">Rooms</th> */}
+                                        
                                         {/* <th className="border px-2 py-1 text-center">Sub-Areas</th> */}
                                         <th className="border px-2 py-1 text-center">Status</th>
                                         {/* <th className="border px-2 py-1 text-center">Asset Count</th> */}
@@ -484,6 +485,14 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                             {row.building ?? '—'}
                                                         </td>
                                                     )}
+                                                    {s.roomSpan > 0 && (
+                                                        <td
+                                                            rowSpan={s.roomSpan}
+                                                            className="border px-2 py-1 text-center align-middle"
+                                                        >
+                                                            {row.room ?? '—'}
+                                                        </td>
+                                                    )}
                                                     <td
                                                         className="border px-2 py-1 text-center align-middle"
                                                     >
@@ -495,14 +504,6 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                         {formatDateLong(schedule.actual_date_of_inventory)}
                                                     </td>
                                                     
-                                                    {/* {s.roomSpan > 0 && (
-                                                        <td
-                                                            rowSpan={s.roomSpan}
-                                                            className="border px-2 py-1 text-center align-middle"
-                                                        >
-                                                            {row.room ?? '—'}
-                                                        </td>
-                                                    )} */}
                                                     {/* {s.subAreaSpan > 0 && (
                                                         <td
                                                             rowSpan={s.subAreaSpan}
@@ -647,7 +648,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                         </DialogClose>
                         {String(schedule.scheduling_status ?? '').toLowerCase() !== 'pending_review' && (
                             <Button
-                                onClick={() => window.print()}
+                                onClick={() => window.open(`/inventory-scheduling/${schedule.id}/export-pdf`, '_blank')}
                                 className="
                                     w-full sm:w-auto cursor-pointer
                                     inline-block bg-blue-600 text-white 
