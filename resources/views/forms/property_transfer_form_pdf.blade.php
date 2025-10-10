@@ -282,7 +282,7 @@ use Carbon\Carbon;
         <p>Prepared By:</p>
         <div class="signature-line"></div>
         <p style="font-weight:bold;">{{ strtoupper($transfer->assignedBy->name) }}</p>
-        <p style="font-size:11px; color:#555;">
+        <p style="font-size:11px;">
             {{ $transfer->assignedBy->role->name ?? '—' }}
         </p>
     </div>
@@ -295,10 +295,10 @@ use Carbon\Carbon;
         @php $approvedSig = $signatories['approved_by'] ?? null; @endphp
         @if($approvedSig)
         <p style="font-weight:bold;">{{ strtoupper($approvedSig->name ?? '—') }}</p>
-        <p style="font-size:11px; color:#555;">{{ $approvedSig->title ?? 'Head, Property Management' }}</p>
+        <p style="font-size:11px;">{{ $approvedSig->title ?? 'Head, Property Management' }}</p>
         @else
         <p style="color:#888;">—</p>
-        <p style="font-size:11px; color:#555;">Head, Property Management</p>
+        <p style="font-size:11px;">Head, Property Management</p>
         @endif
     </div>
 
@@ -310,7 +310,7 @@ use Carbon\Carbon;
         <p style="font-weight:bold;">{{ strtoupper($transfer->received_by) }}</p>
         {{-- optional role/title if available --}}
         @if(!empty($transfer->received_by_title))
-        <p style="font-size:11px; color:#555;">{{ $transfer->received_by_title }}</p>
+        <p style="font-size:11px;">{{ $transfer->received_by_title }}</p>
         @endif
     </div>
     @endif

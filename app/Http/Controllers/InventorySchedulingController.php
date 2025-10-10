@@ -141,7 +141,7 @@ class InventorySchedulingController extends Controller
             // Attach pivots + fetch assets
             $schedule->syncScopeAndAssets($data);
 
-            // ✅ Make sure sub-areas pivot is updated
+            // Make sure sub-areas pivot is updated
             $schedule->subAreas()->sync($data['sub_area_ids'] ?? []);
 
             return $schedule;
@@ -175,7 +175,7 @@ class InventorySchedulingController extends Controller
         ])->latest()->get();
 
         $buildings         = Building::all();
-        $buildingRooms     = BuildingRoom::with(['building', 'subAreas'])->get(); // ✅ updated
+        $buildingRooms     = BuildingRoom::with(['building', 'subAreas'])->get(); // updated
         $unitOrDepartments = UnitOrDepartment::all();
         $users             = User::all();
 
@@ -465,11 +465,15 @@ class InventorySchedulingController extends Controller
         $schedule = InventoryScheduling::with([
             'preparedBy',
             'units',
+            'rooms', // include this so we can get selected rooms
             'buildings.buildingRooms.subAreas',
             'assets.asset',
         ])->findOrFail($id);
 
         $rows = [];
+
+        // Get only the rooms that were selected for this schedule record
+        $selectedRoomIds = $schedule->rooms->pluck('id')->toArray();
 
         foreach ($schedule->units as $unit) {
             $unitName = $unit->name ?? '—';
@@ -479,45 +483,23 @@ class InventorySchedulingController extends Controller
                 $buildingName = $building->name ?? '—';
                 $rows[$unitName][$buildingName] = [];
 
-                $rooms = $building->buildingRooms ?? collect();
+                // Filter buildingRooms to include only selected ones
+                $rooms = $building->buildingRooms
+                    ->whereIn('id', $selectedRoomIds)
+                    ->values();
 
                 foreach ($rooms as $room) {
                     $roomName = $room->room ?? '—';
-                    $subAreas = $room->subAreas ?? collect();
 
+                    // Get all assets tied to this room
                     $roomAssets = $schedule->assets->where('asset.building_room_id', $room->id);
 
-                    // If no subareas, just push one room row
-                    if ($subAreas->isEmpty()) {
-                        $rows[$unitName][$buildingName][] = [
-                            'room' => $roomName,
-                            'sub_area' => '—',
-                            'asset_count' => $roomAssets->count(),
-                            'status' => $schedule->scheduling_status,
-                        ];
-                    } else {
-                        // Subarea rows
-                        foreach ($subAreas as $sa) {
-                            $saAssets = $schedule->assets->where('asset.sub_area_id', $sa->id);
-                            $rows[$unitName][$buildingName][] = [
-                                'room' => $roomName,
-                                'sub_area' => $sa->name ?? '—',
-                                'asset_count' => $saAssets->count(),
-                                'status' => $schedule->scheduling_status,
-                            ];
-                        }
-
-                        // Handle leftover assets (room-level)
-                        $leftover = $roomAssets->filter(fn($a) => empty($a->asset->sub_area_id));
-                        if ($leftover->count() > 0) {
-                            $rows[$unitName][$buildingName][] = [
-                                'room' => $roomName,
-                                'sub_area' => '—',
-                                'asset_count' => $leftover->count(),
-                                'status' => $schedule->scheduling_status,
-                            ];
-                        }
-                    }
+                    // Push only the room (no subareas)
+                    $rows[$unitName][$buildingName][] = [
+                        'room' => $roomName,
+                        'asset_count' => $roomAssets->count(),
+                        'status' => $schedule->scheduling_status,
+                    ];
                 }
             }
         }
