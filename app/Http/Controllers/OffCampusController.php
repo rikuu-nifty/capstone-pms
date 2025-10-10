@@ -41,7 +41,7 @@ class OffCampusController extends Controller
                 'collegeOrUnit:id,name,code',
                 'issuedBy:id,name',
             ])
-            ->latest('id') // ✅ still ordered latest first
+            ->latest('id') //  still ordered latest first
             ->paginate(20)
             ->withQueryString();
 
@@ -228,13 +228,13 @@ class OffCampusController extends Controller
         $data['status'] = $data['status'] ?? 'pending_review';
 
         DB::transaction(function () use ($offCampus, $data) {
-            // ✅ update parent first
+            //  update parent first
             $offCampus->update(collect($data)->except('selected_assets')->toArray());
 
-            // ✅ clear old children
+            //  clear old children
             $offCampus->assets()->delete();
 
-            // ✅ re-insert new children
+            //  re-insert new children
             foreach ($data['selected_assets'] as $row) {
                 $offCampus->assets()->create([
                     'asset_id'       => $row['asset_id'],
@@ -254,14 +254,37 @@ class OffCampusController extends Controller
                     $assets = InventoryList::whereIn('id', $assetIds)->get();
 
                     foreach ($assets as $asset) {
-                        // build appended message
                         $note = "\n\n[Marked Missing under Off-Campus #{$offCampus->id} on " . now()->format('M d, Y') . "]";
-                        // safely append to current description
                         $newDescription = trim(($asset->description ?? '') . $note);
 
                         $asset->update([
                             'status'      => 'archived',
                             'description' => $newDescription,
+                        ]);
+                    }
+                }
+            } else {
+                //  If record is no longer "missing", restore any previously archived assets
+                $assetIds = collect($data['selected_assets'])->pluck('asset_id')->toArray();
+
+                if (!empty($assetIds)) {
+                    $assets = InventoryList::whereIn('id', $assetIds)
+                        ->where('status', 'archived')
+                        ->get();
+
+                    foreach ($assets as $asset) {
+                        $description = $asset->description ?? '';
+
+                        // 🧹 Remove any previous "[Marked Missing ...]" note
+                        $cleanedDescription = preg_replace(
+                            '/\n*\[Marked Missing under Off-Campus #[0-9]+ on [A-Za-z]{3} [0-9]{1,2}, [0-9]{4}\]/',
+                            '',
+                            $description
+                        );
+
+                        $asset->update([
+                            'status'      => 'active',
+                            'description' => trim($cleanedDescription),
                         ]);
                     }
                 }
