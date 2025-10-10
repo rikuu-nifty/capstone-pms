@@ -112,7 +112,7 @@
 <table>
     <thead>
         <tr>
-            <th style="width:30%;">UNIT / DEPT / LABORATORIES</th>
+            <th style="width:25%;">UNIT / DEPT / LABORATORIES</th>
             <th style="width:10%;">Inventory<br>Schedule</th>
             <th style="width:12%;">Actual Date<br>of Inventory</th>
             <th style="width:10%;">Checked By<br>(PMO)</th>
