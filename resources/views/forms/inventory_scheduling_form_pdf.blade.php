@@ -99,6 +99,16 @@
         border-top: 1px solid #000;
         margin: 40px auto 4px;
     }
+
+    /* Tighten spacing between signatory name and role/title */
+    .signature-block p {
+        margin: 2px 0;
+        /* line-height: 1.1; */
+    }
+
+    .signature-block p[style*="font-weight:bold"] {
+        margin-bottom: 3px;
+    }
 </style>
 @endpush
 
@@ -197,21 +207,21 @@
 {{-- === SIGNATORIES === --}}
 <table class="signature-block">
     <tr>
-        <td>
-            Prepared By:
+        <td style="font-size:12px;">
+            <p>Prepared By:</p>
             <div class="signature-line"></div>
             <p style="font-weight:bold;">{{ strtoupper($schedule->preparedBy->name ?? '—') }}</p>
             <p style="font-size:11px;">{{ $schedule->preparedBy->role_name ?? 'Property Clerk' }}</p>
         </td>
-        <td>
-            Approved By:
+        <td style="font-size:12px;">
+            <p>Approved By:</p>
             <div class="signature-line"></div>
             @php $approved = $signatories['approved_by'] ?? null; @endphp
             <p style="font-weight:bold;">{{ strtoupper($approved->name ?? '—') }}</p>
             <p style="font-size:11px;">{{ $approved->title ?? 'Head, Property Management' }}</p>
         </td>
-        <td>
-            Received By:
+        <td style="font-size:12px;">
+            <p>Received By:</p>
             <div class="signature-line"></div>
             @php $received = $signatories['received_by'] ?? null; @endphp
             <p style="font-weight:bold;">{{ strtoupper($received->name ?? '—') }}</p>
