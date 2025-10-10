@@ -242,6 +242,7 @@ $chunks = collect([$assets]);
 </p>
 
 {{-- ASSETS TABLE --}}
+@foreach($chunks as $chunk)
 <table class="assets-table">
     <thead>
         <tr class="spacer-row">
@@ -255,7 +256,32 @@ $chunks = collect([$assets]);
         </tr>
     </thead>
     <tbody>
-        @foreach($assets as $a)
+        @php $rowCount = count($chunk); @endphp
+
+        @if($rowCount > 0)
+        {{-- ✅ First row with rowspan for offices --}}
+        <tr>
+            <td>1</td>
+            <td style="text-align:center;">
+                {{ $chunk->first()->asset_name ?? '—' }}
+                @if($chunk->first()->assetModel)
+                <br><small>Brand: {{ $chunk->first()->assetModel->brand ?? '—' }}, Model: {{ $chunk->first()->assetModel->model ?? '—' }}</small>
+                @endif
+                @if($chunk->first()->serial_no)
+                <br><small>Serial: {{ $chunk->first()->serial_no }}</small>
+                @endif
+            </td>
+            {{-- Merge issuing & receiving office cells across all rows --}}
+            <td rowspan="{{ $rowCount }}" style="vertical-align: middle;">
+                {{ $turnoverDisposal->issuingOffice->name ?? '—' }}
+            </td>
+            <td rowspan="{{ $rowCount }}" style="vertical-align: middle;">
+                {{ $turnoverDisposal->receivingOffice->name ?? '—' }}
+            </td>
+        </tr>
+
+        {{-- ✅ Remaining rows --}}
+        @foreach($chunk->slice(1) as $a)
         <tr>
             <td>1</td>
             <td style="text-align:center;">
@@ -267,13 +293,16 @@ $chunks = collect([$assets]);
                 <br><small>Serial: {{ $a->serial_no }}</small>
                 @endif
             </td>
-            <td>{{ $turnoverDisposal->issuingOffice->name ?? '—' }}</td>
-            <td>{{ $turnoverDisposal->receivingOffice->name ?? '—' }}</td>
         </tr>
         @endforeach
+        @else
+        <tr>
+            <td colspan="4" style="text-align:center;">No assets listed.</td>
+        </tr>
+        @endif
     </tbody>
 </table>
-
+@endforeach
 
 @if($turnoverDisposal->description)
 <p class="remarks"><strong>Description:</strong> {{ $turnoverDisposal->description }}</p>
