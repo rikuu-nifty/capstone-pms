@@ -6,12 +6,30 @@
 <style>
     body {
         font-size: 11px !important;
+        color: #111;
     }
 
     table {
         border-collapse: collapse;
         width: 100%;
         font-size: 11px !important;
+        table-layout: fixed;
+        word-wrap: break-word;
+    }
+
+    th,
+    td {
+        border: 1px solid #000;
+        padding: 4px 6px;
+        text-align: center;
+        vertical-align: middle;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    th {
+        background: #f3f3f3;
+        font-weight: 600;
     }
 
     .header {
@@ -26,39 +44,42 @@
         text-decoration: underline;
     }
 
-    th,
-    td {
-        border: 1px solid #000;
-        padding: 4px 6px;
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    th {
-        background: #f3f3f3;
-        font-weight: 600;
-    }
-
-    /* --- Group Styles --- */
+    /* === GROUPED ROWS === */
     .group-unit td {
         font-weight: bold;
-        text-align: left;
         background: #f9f9f9;
+        text-align: left !important;
+        padding-left: 25px;
+        vertical-align: middle;
+        white-space: normal;
+        word-wrap: break-word;
     }
 
     .group-building td {
-        font-style: italic;
-        text-align: left;
+        text-align: left !important;
         background: #fafafa;
-        padding-left: 25px;
+        padding-left: 70px;
+        vertical-align: middle;
+        white-space: normal;
+        word-wrap: break-word;
+        font-weight: 600;
     }
 
     .room-row td {
-        text-align: left;
-        padding-left: 40px;
+        text-align: center;
+        vertical-align: middle;
+        white-space: normal;
+        word-wrap: break-word;
     }
 
-    /* --- Signatories --- */
+    /* Slight offset so grouped text looks centered vertically under column */
+    .group-unit td:first-child,
+    .group-building td:first-child {
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+
+    /* === SIGNATORIES === */
     .signature-block {
         margin-top: 50px;
         width: 100%;
@@ -88,7 +109,6 @@
     <h3>Inventory Scheduling Form</h3>
 </div>
 
-{{-- Main Table --}}
 <table>
     <thead>
         <tr>
@@ -105,34 +125,31 @@
 
     <tbody>
         @foreach($rows as $unit => $buildings)
-        {{-- 🧱 UNIT HEADER --}}
+        {{-- UNIT HEADER --}}
         <tr class="group-unit">
             <td colspan="8">{{ strtoupper($unit) }}</td>
         </tr>
 
         @foreach($buildings as $building => $roomRows)
-        {{-- 🏢 BUILDING HEADER --}}
+        {{-- BUILDING HEADER --}}
         <tr class="group-building">
             <td colspan="8">{{ strtoupper($building) }}</td>
         </tr>
 
         @foreach($roomRows as $room)
-        {{-- 🏠 ROOM ROWS --}}
+        {{-- ROOM ROW --}}
         <tr class="room-row">
-            <td>
+            <td style="text-align:left; padding-left:40px;">
                 {{ $room['room'] }}
-                @if(!empty($room['sub_area']) && $room['sub_area'] !== '—')
-                — {{ $room['sub_area'] }}
-                @endif
-                @if($room['asset_count'])
+                @if(!empty($room['asset_count']) && $room['asset_count'] > 0)
                 ({{ $room['asset_count'] }})
                 @endif
             </td>
             <td>{{ Carbon::parse($schedule->inventory_schedule . '-01')->format('F') }}</td>
             <td>
                 {{ $schedule->actual_date_of_inventory
-                                ? Carbon::parse($schedule->actual_date_of_inventory)->format('F d, Y')
-                                : '—' }}
+                ? Carbon::parse($schedule->actual_date_of_inventory)->format('F d, Y')
+                : '—' }}
             </td>
             <td></td>
             <td></td>
@@ -146,28 +163,28 @@
     </tbody>
 </table>
 
-{{-- 🖊️ SIGNATORIES --}}
+{{-- === SIGNATORIES === --}}
 <table class="signature-block">
     <tr>
         <td>
             Prepared By:
             <div class="signature-line"></div>
             <p style="font-weight:bold;">{{ strtoupper($schedule->preparedBy->name ?? '—') }}</p>
-            <p style="font-size:11px; color:#555;">{{ $schedule->preparedBy->role_name ?? 'Property Clerk' }}</p>
+            <p style="font-size:11px;">{{ $schedule->preparedBy->role_name ?? 'Property Clerk' }}</p>
         </td>
         <td>
             Approved By:
             <div class="signature-line"></div>
             @php $approved = $signatories['approved_by'] ?? null; @endphp
             <p style="font-weight:bold;">{{ strtoupper($approved->name ?? '—') }}</p>
-            <p style="font-size:11px; color:#555;">{{ $approved->title ?? 'Head, Property Management' }}</p>
+            <p style="font-size:11px;">{{ $approved->title ?? 'Head, Property Management' }}</p>
         </td>
         <td>
             Received By:
             <div class="signature-line"></div>
             @php $received = $signatories['received_by'] ?? null; @endphp
             <p style="font-weight:bold;">{{ strtoupper($received->name ?? '—') }}</p>
-            <p style="font-size:11px; color:#555;">{{ $received->title ?? 'Internal Auditor' }}</p>
+            <p style="font-size:11px;">{{ $received->title ?? 'Internal Auditor' }}</p>
         </td>
     </tr>
 </table>
