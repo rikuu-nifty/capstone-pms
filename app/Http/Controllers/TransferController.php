@@ -604,6 +604,9 @@ class TransferController extends Controller
         ])->setPaper('A4', 'portrait')
         ->setOption('isPhpEnabled', true);
 
-        return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
+        $timestamp = now()->format('Y-m-d');
+
+        return $pdf->download("Transfer-Form-{$transfer->id}-{$timestamp}.pdf");
+        // return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
     }
 }
