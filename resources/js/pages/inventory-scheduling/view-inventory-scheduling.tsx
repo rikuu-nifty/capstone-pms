@@ -5,8 +5,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { Scheduled } from '@/pages/inventory-scheduling/index';
 import { formatEnums } from '@/types/custom-index';
 import { router } from '@inertiajs/react';
-// import { RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Asset } from '../inventory-list';
 import ViewRowAssetModal from './ViewRowAssetsModal';
 
@@ -94,6 +93,22 @@ type RowSpanInfo = {
 };
 
 export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => {
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Detect Ctrl+P or Cmd+P
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
     const [rowAssets, setRowAssets] = useState<{
         scheduleId: number;
         rowId: number;

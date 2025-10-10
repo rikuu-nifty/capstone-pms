@@ -1,7 +1,7 @@
 import ViewModal from '@/components/modals/ViewModal';
 import { Button } from '@/components/ui/button';
 import { AssetModel, formatEnums, formatLabel, InventoryList, Transfer } from '@/types/custom-index';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 interface TransferViewModalProps {
     open: boolean;
@@ -31,6 +31,23 @@ export type InventoryListWithSnake = InventoryList & {
 };
 
 export default function TransferViewModal({ open, onClose, transfer, assets, signatories }: TransferViewModalProps) {
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [open]);
+
     const recordNo = String(transfer.id).padStart(2, '0');
 
     const formatDateLong = (d?: string | null) => {
@@ -339,13 +356,6 @@ export default function TransferViewModal({ open, onClose, transfer, assets, sig
                 </a>
 
                 {transfer.status.toLowerCase() !== 'pending_review' && (
-                    // <Button
-                    //     onClick={() => window.print()}
-                    //     className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
-                    // >
-                    //     🖨️ Print Form
-                    // </Button>
-
                     <Button
                         onClick={() => window.open(route('transfers.print', transfer.id), '_blank')}
                         className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
