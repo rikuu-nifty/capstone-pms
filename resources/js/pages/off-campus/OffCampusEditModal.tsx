@@ -239,7 +239,8 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <form onSubmit={handleSubmit}>
-                <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]">
+                {/* <DialogContent className="w-full max-w-[700px] p-6 sm:max-w-[800px]"> */}
+                <DialogContent className="w-full max-w-[700px] sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-6">
                     <DialogHeader>
                         <DialogTitle>Update Off Campus — Record #{offCampus.id}</DialogTitle>
                     </DialogHeader>
