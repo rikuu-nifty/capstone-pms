@@ -49,7 +49,7 @@
         margin-top: 4px;
     }
 
-    /* Checkbox styling (same as Turnover/Disposal Form) */
+    /* Checkbox styling */
     .checkbox {
         display: inline-block;
         width: 10px;
@@ -82,7 +82,6 @@
 
     table.assets tr {
         page-break-inside: avoid;
-        /* rows won't split across pages */
         page-break-after: auto;
     }
 
@@ -109,25 +108,11 @@
 
     .continuation-page {
         page-break-before: always;
-        /* force new page */
         page-break-inside: avoid;
-        /* keep all content together */
         margin-top: 40px;
     }
 
-    .signature-block {
-        margin-top: 45px;
-        page-break-inside: avoid;
-        text-align: center;
-    }
-
-    .signature-line {
-        width: 100%;
-        border-top: 1px solid #000;
-        margin: 30px auto 4px;
-    }
-
-    /* --- Signature section --- */
+    /* --- SIGNATURE BLOCK --- */
     .signature-block {
         margin-top: 45px;
         text-align: center;
@@ -145,18 +130,17 @@
         padding: 10px 15px;
     }
 
-    /* Base signature line */
+    /* unified .signature-line rule */
     .signature-line {
         border-top: 1px solid #000;
         width: 65%;
-        /* shorter but aligned from label start */
         margin-top: 25px;
-        margin-bottom: 3px;
+        margin-bottom: 5px;
         margin-left: 0;
         text-align: left;
     }
 
-    /* Nested tables for alignment consistency */
+    /* nested alignment consistency */
     .signature-block table table {
         border: none !important;
         width: 100%;
@@ -169,7 +153,7 @@
         vertical-align: bottom;
     }
 
-    /* Perfect vertical alignment for names and roles */
+    /* text alignment for names and roles */
     .signature-block p {
         margin: 2px 0;
         line-height: 1.1;
@@ -177,30 +161,13 @@
     }
 
     .signature-block p[style*="font-weight:bold"] {
-        margin-bottom: 2px;
-        text-align: left;
+        margin-top: 2px;
+        margin-bottom: 4px;
+        /* adds 2px gap between name and role */
     }
 
-    /* Date lines alignment fix */
-    td[style*="width:30%"] .signature-line {
-        width: 55%;
-        margin-top: 25px;
-        margin-left: 0;
-    }
-
-    /* Align "Date" text with signature line */
-    td[style*="width:30%"] p {
-        text-align: left;
-        margin-left: 5px;
-        /* slight indent to align visually */
-    }
-
-    /* Invisible placeholders for consistent height */
-    .signature-placeholder {
-        visibility: hidden;
-        font-size: 11px;
-        display: block;
-        height: 0;
+    .signature-block p[style*="font-size:11px"] {
+        margin-top: 0;
     }
 
     /* fine alignment for signatories */
@@ -216,8 +183,6 @@
         padding: 0 0 0 8mm;
     }
 
-    /* push Date line right (like the scan) */
-
     .name-box,
     .date-box {
         display: inline-block;
@@ -228,36 +193,36 @@
     }
 
     .date-box {
-        width: 55%;
+        width: 70%;
     }
 
-    /* shorter Date line box */
-    .name-box .signature-line,
+    /* individual signature line spacing */
+    .name-box .signature-line {
+        width: 100%;
+        margin: 25px 0 6px 0;
+        /* adds space between line and name */
+    }
+
     .date-box .signature-line {
         width: 100%;
-        margin: 25px 0 3px 0;
+        margin: 20px 0 6px 0;
+        /* adds space between date line and label */
     }
 
-    /* raise Date line & text slightly upward */
+    /* raise Date line & label slightly */
     .sig-date .date-box {
         position: relative;
-        top: -15px;
+        top: -16px;
         left: -45px;
-        /* raise the entire date line and label block */
-    }
-
-    .sig-date .signature-line {
-        margin: 20px 0 2px 0 !important;
-        /* tighten vertical space */
     }
 
     .sig-date .date-text {
-        margin-top: 0;
+        margin-top: 2px;
         text-align: center;
         font-size: 11px;
     }
 
-    /* label centered under line */
+    /* consistent invisible placeholder */
     .signature-placeholder {
         visibility: hidden;
         font-size: 11px;
@@ -266,6 +231,7 @@
     }
 </style>
 @endpush
+
 
 @section('content')
 @php
@@ -362,7 +328,7 @@ $chunks = collect([$assets]); // render one continuous table
                                 <div class="name-box">
                                     <div class="signature-line"></div>
                                     <p style="font-weight:bold;">{{ strtoupper($offCampus->requester_name ?? '—') }}</p>
-                                    <p style="font-size:11px;">Personnel</p>
+                                    <p style="font-size:11px;">Name of Personnel</p>
                                 </div>
                                 <span class="signature-placeholder">.</span>
                             </td>
@@ -389,7 +355,7 @@ $chunks = collect([$assets]); // render one continuous table
                                     <p style="font-size:11px;">Dean / Head Concerned</p>
                                     @else
                                     <p style="color:#888;">—</p>
-                                    <p style="font-size:11px;">Dean / Head Concerned</p>
+                                    <p style="font-size:11px;">Dean/Head Concerned</p>
                                     @endif
                                 </div>
                                 <span class="signature-placeholder">.</span>
