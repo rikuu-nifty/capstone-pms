@@ -396,14 +396,14 @@ class InventorySchedulingController extends Controller
             ->update(['inventory_status' => $data['inventory_status']]);
 
         // log action with explicit action + subject_type
-        $log = \App\Models\AuditTrail::create([
+        $log = AuditTrail::create([
             'auditable_type'        => get_class($schedule),
             'auditable_id'          => $schedule->id,
             'actor_id'              => auth()->id(),
             'actor_name'            => auth()->user()?->name,
             'unit_or_department_id' => auth()->user()?->unit_or_department_id,
-            'action'                => 'singleAsset_update',   // 👈 custom action
-            'subject_type'          => 'InventoryAssetStatus', // 👈 explicit subject
+            'action'                => 'singleAsset_update',
+            'subject_type'          => 'InventoryAssetStatus',
             'old_values'            => ['inventory_status' => $oldStatus],
             'new_values'            => ['inventory_status' => $data['inventory_status']],
             'ip_address'            => $request->ip(),
@@ -465,61 +465,80 @@ class InventorySchedulingController extends Controller
         $schedule = InventoryScheduling::with([
             'preparedBy',
             'units',
-            'rooms', // include for filtering selected rooms
-            'buildings.buildingRooms.subAreas',
-            'assets.asset',
+            'assets.asset.buildingRoom.building',
+            'assets.asset.subArea',
         ])->findOrFail($id);
 
         $rows = [];
-
-        // get only rooms chosen for this schedule
-        $selectedRoomIds = $schedule->rooms->pluck('id')->toArray();
-
-        // detect scope type (unit or building)
         $isUnitScope = $schedule->scope_type === 'unit';
 
+        // Identify rooms and buildings actually linked through scheduled assets
+        $assets = $schedule->assets->filter(fn($a) => !empty($a->asset?->building_room_id));
+
+        $roomGroups = $assets
+            ->groupBy(fn($a) => $a->asset->building_room_id)
+            ->map(function ($group) {
+                $room = $group->first()->asset->buildingRoom;
+                $building = $room?->building;
+                $statuses = collect($group)
+                    ->pluck('inventory_status')
+                    ->map(fn($s) => strtolower($s))
+                    ->unique();
+
+                // Map statuses
+                $mappedStatus = $statuses->map(fn($s) => match ($s) {
+                    'inventoried' => 'Completed',
+                    'scheduled', 'not_inventoried' => 'Pending',
+                    default => '—',
+                });
+
+                $status = $mappedStatus->count() > 1 ? 'Partially Completed' : $mappedStatus->first();
+
+                return [
+                    'room_id' => $room?->id,
+                    'room_name' => $room?->room ?? '—',
+                    'building_id' => $building?->id,
+                    'building_name' => $building?->name ?? '—',
+                    'asset_count' => $group->count(),
+                    'status' => $status ?? '—',
+                ];
+            });
+
+        // Group data for display
         if ($isUnitScope && $schedule->units->isNotEmpty()) {
-            // UNIT SCOPE: grouped by Unit > Building > Room
             foreach ($schedule->units as $unit) {
                 $unitName = $unit->name ?? '—';
                 $rows[$unitName] = [];
 
-                foreach ($schedule->buildings as $building) {
-                    $buildingName = $building->name ?? '—';
+                // Buildings actually referenced by assets
+                $buildings = $roomGroups->groupBy('building_id');
+
+                foreach ($buildings as $buildingId => $roomSet) {
+                    $buildingName = $roomSet->first()['building_name'] ?? '—';
                     $rows[$unitName][$buildingName] = [];
 
-                    $rooms = $building->buildingRooms
-                        ->whereIn('id', $selectedRoomIds)
-                        ->values();
-
-                    foreach ($rooms as $room) {
-                        $roomAssets = $schedule->assets->where('asset.building_room_id', $room->id);
-
+                    foreach ($roomSet as $roomData) {
                         $rows[$unitName][$buildingName][] = [
-                            'room' => $room->room ?? '—',
-                            'asset_count' => $roomAssets->count(),
-                            'status' => $schedule->scheduling_status,
+                            'room' => $roomData['room_name'],
+                            'asset_count' => $roomData['asset_count'],
+                            'status' => $roomData['status'],
                         ];
                     }
                 }
             }
         } else {
-            // BUILDING SCOPE: grouped by Building > Room (no Unit)
-            foreach ($schedule->buildings as $building) {
-                $buildingName = $building->name ?? '—';
+            // === BUILDING SCOPE ===
+            $buildings = $roomGroups->groupBy('building_id');
+
+            foreach ($buildings as $buildingId => $roomSet) {
+                $buildingName = $roomSet->first()['building_name'] ?? '—';
                 $rows[$buildingName] = [];
 
-                $rooms = $building->buildingRooms
-                    ->whereIn('id', $selectedRoomIds)
-                    ->values();
-
-                foreach ($rooms as $room) {
-                    $roomAssets = $schedule->assets->where('asset.building_room_id', $room->id);
-
+                foreach ($roomSet as $roomData) {
                     $rows[$buildingName][] = [
-                        'room' => $room->room ?? '—',
-                        'asset_count' => $roomAssets->count(),
-                        'status' => $schedule->scheduling_status,
+                        'room' => $roomData['room_name'],
+                        'asset_count' => $roomData['asset_count'],
+                        'status' => $roomData['status'],
                     ];
                 }
             }
@@ -531,8 +550,9 @@ class InventorySchedulingController extends Controller
             'schedule' => $schedule,
             'rows' => $rows,
             'signatories' => $signatories,
-        ])->setPaper('A4', 'portrait')
-        ->setOption('isPhpEnabled', true);
+        ])
+            ->setPaper('A4', 'portrait')
+            ->setOption('isPhpEnabled', true);
 
         return $pdf->stream("Inventory-Schedule-Form-{$schedule->id}.pdf");
     }
