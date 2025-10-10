@@ -601,7 +601,8 @@ class TransferController extends Controller
             'transfer' => $transfer,
             'assets' => $assets,
             'signatories' => $signatories,
-        ])->setPaper('A4', 'portrait');
+        ])->setPaper('A4', 'portrait')
+        ->setOption('isPhpEnabled', true);
 
         return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
     }
