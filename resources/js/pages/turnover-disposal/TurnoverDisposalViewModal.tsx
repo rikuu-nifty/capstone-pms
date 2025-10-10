@@ -1,4 +1,4 @@
-// import { useMemo } from 'react';
+import { useEffect } from 'react';
 import ViewModal from '@/components/modals/ViewModal';
 import { Button } from '@/components/ui/button';
 import { DialogTitle } from '@/components/ui/dialog';
@@ -27,6 +27,22 @@ export default function TurnoverDisposalViewModal({
     signatories, // ✅ add this
     // pmoHead,
 }: TurnoverDisposalViewModalProps) {
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!open) return;
+
+            // Ctrl+P (Windows/Linux) or Cmd+P (Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [open]);
+
     const recordNo = String(turnoverDisposal.id).padStart(2, '0');
 
     const formatDateLong = (d?: string | null) => {
@@ -46,7 +62,6 @@ export default function TurnoverDisposalViewModal({
             day: 'numeric',
         });
     };
-
 
     const StatusPill = ({ status }: { status?: string | null }) => {
         const s = (status ?? '').toLowerCase().replace(/_/g, ' ');

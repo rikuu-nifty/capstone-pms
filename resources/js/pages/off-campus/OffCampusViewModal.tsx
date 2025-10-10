@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import ViewModal from '@/components/modals/ViewModal';
 import { Button } from '@/components/ui/button';
 import type { OffCampus } from './index';
@@ -7,10 +8,25 @@ interface OffCampusViewModalProps {
     open: boolean;
     onClose: () => void;
     offCampus: OffCampus;
-    signatories: Record<string, { name: string; title: string }>; // ✅ add this
+    signatories: Record<string, { name: string; title: string }>;
 }
 
 export default function OffCampusViewModal({ open, onClose, offCampus, signatories }: OffCampusViewModalProps) {
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [open]);
+
     const recordNo = String(offCampus.id).padStart(2, '0');
 
     const formatDateLong = (d?: string | null) => {
