@@ -62,7 +62,6 @@
         header .header-text p.office {
             margin: 2px 0 0;
             font-size: 15px;
-            /* font-weight: 500; */
         }
 
         main {
@@ -78,9 +77,18 @@
             height: 30px;
             font-size: 10px;
             color: #444;
-            text-align: right;
             padding-top: 5px;
             font-family: 'Times New Roman', Times, serif;
+        }
+
+        footer .footer-left {
+            position: absolute;
+            left: 0;
+        }
+
+        footer .footer-right {
+            position: absolute;
+            right: 0;
         }
 
         /* ---------- BODY ---------- */
@@ -139,7 +147,6 @@
             border-top: 1px solid #000;
             margin: 40px auto 4px;
         }
-
     </style>
 
     @stack('styles')
@@ -160,8 +167,39 @@
     </main>
 
     <footer>
-        AUF-FORM-AS/PMO-33&nbsp;&nbsp;November 22, 2011&nbsp;&nbsp;Rev. 0
+        <div class="footer-left">
+            AUF-FORM-AS/PMO-33&nbsp;&nbsp;November 22, 2011&nbsp;&nbsp;Rev. 0
+        </div>
+        <div class="footer-right">
+            {{-- Page number placeholder --}}
+        </div>
     </footer>
+
+    {{-- === PAGE NUMBER SCRIPT === --}}
+    <script type="text/php">
+        if (isset($pdf)) {
+            $pdf->page_script('
+                $font = $fontMetrics->get_font("Times New Roman", "normal");
+                $size = 9;
+
+                // Static total page capture
+                static $totalPages;
+                if (!$totalPages) {
+                    $totalPages = $PAGE_COUNT;
+                }
+
+                // Left footer text stays fixed (already in HTML)
+                $text = sprintf("Page %d of %d", $PAGE_NUM, $totalPages);
+                $width = $fontMetrics->get_text_width($text, $font, $size);
+
+                // Right side position (match footer-right)
+                $x = $pdf->get_width() - $width - 40;
+                $y = $pdf->get_height() - 40;
+
+                $pdf->text($x, $y, $text, $font, $size, [0,0,0]);
+            ');
+        }
+    </script>
 
     @stack('pdf-scripts')
 </body>
