@@ -19,7 +19,7 @@
     .info-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 10px;
+        /* margin-bottom: 10px; */
     }
 
     .info-table td {
@@ -44,23 +44,22 @@
         font-size: 12px;
     }
 
-    /* === BODY === */
     .auth-paragraph {
         font-size: 12px;
         text-align: justify;
-        margin-top: 16px;
+        /* margin-top: -2px; */
         line-height: 1.6;
     }
 
-    /* checkboxes mimic the modal style */
-    /* === CHECKBOXES (works in DomPDF) === */
+    /* Checkbox styling */
     .checkbox {
         display: inline-block;
         width: 10px;
         height: 10px;
         border: 1px solid #000;
         vertical-align: middle;
-        margin-right: 4px;
+        margin-top: 5px;
+        /* margin-right: 4px; */
         position: relative;
     }
 
@@ -85,7 +84,7 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 12px;
-        margin-top: -10px;
+        margin-top: -12px;
     }
 
     table.assets-table th,
@@ -101,12 +100,30 @@
         background: #f3f3f3;
     }
 
+    /* optional safety against partial pagination mismatches */
+    /* table.assets-table td[rowspan],
+    table.assets-table th[rowspan] {
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+    } */
+
+    thead {
+        display: table-header-group;
+    }
+
+    tfoot {
+        display: table-row-group;
+    }
+
+    table.assets-table tr {
+        page-break-inside: avoid;
+    }
+
     .remarks {
         margin-top: 12px;
         font-size: 12px;
     }
 
-    /* === SIGNATORIES === */
     .signature-block {
         margin-top: 45px;
         text-align: center;
@@ -132,6 +149,13 @@
 @section('content')
 @php
 use Carbon\Carbon;
+
+/**
+* Split assets into chunks of ~20 rows per page to safely re-render merged cells
+* (Adjust $perPage if needed for your page length)
+*/
+$perPage = 20;
+$chunks = $assets->chunk($perPage);
 @endphp
 
 <div class="header">
@@ -157,23 +181,20 @@ use Carbon\Carbon;
     of College/Unit
     <strong><u>{{ strtoupper($turnoverDisposal->issuingOffice->name ?? '_________________') }}</u></strong>
     to
-
-    {{-- Turnover Checkbox --}}
     <span class="checkbox {{ $turnoverDisposal->type === 'turnover' ? 'checked' : '' }}"></span>
     <span class="checkbox-label">turnover</span>
     &nbsp;/&nbsp;
-    {{-- Disposal Checkbox --}}
     <span class="checkbox {{ $turnoverDisposal->type === 'disposal' ? 'checked' : '' }}"></span>
     <span class="checkbox-label">dispose</span>
-
     the following properties/equipment as follows.
 </p>
 
-{{-- ASSETS TABLE --}}
-<table class="assets-table">
+{{-- PAGINATED ASSET TABLE --}}
+@foreach($chunks as $chunkIndex => $chunk)
+<table class="assets-table" style="{{ $chunkIndex > 0 ? 'page-break-before: always;' : '' }}">
     <thead>
         <tr class="spacer-row">
-            <td colspan="4" style="height:5px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
+            <td colspan="4" style="height:20px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
         </tr>
         <tr>
             <th style="width:8%;">Qty</th>
@@ -183,20 +204,37 @@ use Carbon\Carbon;
         </tr>
     </thead>
     <tbody>
-        @forelse($assets as $a)
+        @php $rowCount = count($chunk); @endphp
+
+        @if($rowCount > 0)
+        {{-- First row of each page with rowspan cells --}}
+        <tr>
+            <td>1</td>
+            <td>{{ $chunk->first()->asset_name ?? '—' }}{{ $chunk->first()->description ? ' - ' . $chunk->first()->description : '' }}</td>
+            <td rowspan="{{ $rowCount }}" style="vertical-align: middle;">
+                {{ $turnoverDisposal->issuingOffice->name ?? '—' }}
+            </td>
+            <td rowspan="{{ $rowCount }}" style="vertical-align: middle;">
+                {{ $turnoverDisposal->receivingOffice->name ?? '—' }}
+            </td>
+        </tr>
+
+        {{-- Remaining rows in this page chunk --}}
+        @foreach($chunk->slice(1) as $a)
         <tr>
             <td>1</td>
             <td>{{ $a->asset_name ?? '—' }}{{ $a->description ? ' - ' . $a->description : '' }}</td>
-            <td>{{ $turnoverDisposal->issuingOffice->name ?? '—' }}</td>
-            <td>{{ $turnoverDisposal->receivingOffice->name ?? '—' }}</td>
         </tr>
-        @empty
+        @endforeach
+        @else
+        {{-- In case there are no assets at all --}}
         <tr>
             <td colspan="4" style="text-align:center;">No assets listed.</td>
         </tr>
-        @endforelse
+        @endif
     </tbody>
 </table>
+@endforeach
 
 @if($turnoverDisposal->description)
 <p class="remarks"><strong>Description:</strong> {{ $turnoverDisposal->description }}</p>
@@ -208,7 +246,6 @@ use Carbon\Carbon;
 
 {{-- SIGNATORIES --}}
 <div class="signature-block">
-    {{-- Personnel In Charge --}}
     <div style="display:inline-block; width:30%; vertical-align:top;">
         <p>Personnel In Charge:</p>
         <div class="signature-line"></div>
@@ -216,7 +253,6 @@ use Carbon\Carbon;
         <p style="font-size:11px;">{{ $turnoverDisposal->personnel->position ?? 'PMO Staff' }}</p>
     </div>
 
-    {{-- Noted By --}}
     <div style="display:inline-block; width:30%; vertical-align:top;">
         <p>Noted By:</p>
         <div class="signature-line"></div>
@@ -229,7 +265,6 @@ use Carbon\Carbon;
         @endif
     </div>
 
-    {{-- Approved By --}}
     <div style="display:inline-block; width:30%; vertical-align:top;">
         <p>Approved By:</p>
         <div class="signature-line"></div>
