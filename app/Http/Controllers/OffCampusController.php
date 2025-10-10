@@ -136,6 +136,12 @@ class OffCampusController extends Controller
 
         $viewing = OffCampus::findForView($id);
 
+        $pmoHead = User::whereHas('role', fn($q) => $q->where('code', 'pmo_head'))
+            ->where('status', 'approved')
+            ->first();
+
+        $signatories = OffCampusSignatory::all()->keyBy('role_key');
+
         return Inertia::render('off-campus/index', [
             'offCampuses'       => $offCampuses,
             'unitOrDepartments' => $unitOrDepartments,
@@ -143,9 +149,13 @@ class OffCampusController extends Controller
             'assetModels'       => $assetModels,
             'users'             => $users,
 
-            // 👇 deep-link props
             'viewing'           => $viewing,
-            'signatories'       => OffCampusSignatory::all()->keyBy('role_key'),
+            
+            'signatories'       => $signatories,
+            'pmoHead'           => $pmoHead ? [
+                'id'   => $pmoHead->id,
+                'name' => $pmoHead->name,
+            ] : null,
             'totals' => OffCampus::dashboardTotals(),
         ]);
     }

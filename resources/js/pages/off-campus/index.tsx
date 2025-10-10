@@ -169,6 +169,7 @@ export default function OffCampusIndex({
     type PagePropsWithViewing = Props & {
         viewing?: OffCampus | null;
         signatories: Record<string, { name: string; title: string }>;
+        pmoHead?: { id: number; name: string } | null;
     };
 
     const { props } = usePage<PagePropsWithViewing>();
@@ -532,7 +533,13 @@ export default function OffCampusIndex({
                 )} */}
 
                 {showViewOffCampus && selectedOffCampus && (
-                    <OffCampusViewModal open={showViewOffCampus} onClose={onCloseView} offCampus={selectedOffCampus}  signatories={props.signatories} />
+                    <OffCampusViewModal 
+                        open={showViewOffCampus} 
+                        onClose={onCloseView} 
+                        offCampus={selectedOffCampus}  
+                        signatories={props.signatories}
+                        pmoHead={props.pmoHead}
+                    />
                 )}
 
                 {/* Delete (Archive) Modal */}

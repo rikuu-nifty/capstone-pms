@@ -9,9 +9,10 @@ interface OffCampusViewModalProps {
     onClose: () => void;
     offCampus: OffCampus;
     signatories: Record<string, { name: string; title: string }>;
+    pmoHead?: { id: number; name: string } | null;
 }
 
-export default function OffCampusViewModal({ open, onClose, offCampus, signatories }: OffCampusViewModalProps) {
+export default function OffCampusViewModal({ open, onClose, offCampus, signatories, pmoHead }: OffCampusViewModalProps) {
 
     useEffect(() => {
         if (!open) return;
@@ -194,15 +195,19 @@ export default function OffCampusViewModal({ open, onClose, offCampus, signatori
                     )}
                 </div>
 
-                {/* Issued By (PMO Head, shows immediately after PMO approves) */}
+                {/* Issued By */}
                 <div className="text-center">
                     <p className="mb-8 font-semibold">Issued By:</p>
                     <div className="mx-auto mb-1 w-48 border-t border-black"></div>
 
-                    {offCampus.issued_by_signed && signatories['issued_by'] ? (
+                    {offCampus.issued_by_signed && (pmoHead?.name || signatories['issued_by']?.name) ? (
                         <>
-                            <p className="font-bold text-gray-700 uppercase">{signatories['issued_by'].name}</p>
-                            <p className="text-xs text-gray-500 italic">{signatories['issued_by'].title ?? 'Head, PMO'}</p>
+                            <p className="font-bold text-gray-700 uppercase">
+                                {pmoHead?.name ?? signatories['issued_by']?.name}
+                            </p>
+                            <p className="text-xs text-gray-500 italic">
+                                {signatories['issued_by']?.title ?? 'Head, PMO'}
+                            </p>
                         </>
                     ) : (
                         <>
