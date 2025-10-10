@@ -107,6 +107,14 @@
         margin-top: 10px;
     }
 
+    .continuation-page {
+        page-break-before: always;
+        /* force new page */
+        page-break-inside: avoid;
+        /* keep all content together */
+        margin-top: 40px;
+    }
+
     .signature-block {
         margin-top: 45px;
         page-break-inside: avoid;
@@ -119,33 +127,142 @@
         margin: 30px auto 4px;
     }
 
-    .continuation-page {
-        page-break-before: always;
-        /* force new page */
-        page-break-inside: avoid;
-        /* keep all content together */
-        margin-top: 40px;
-    }
-
+    /* --- Signature section --- */
     .signature-block {
         margin-top: 45px;
         text-align: center;
         page-break-inside: avoid;
     }
 
-    /* Keep signature text compact and aligned */
+    .signature-block table {
+        border-collapse: collapse;
+        border: none !important;
+    }
+
+    .signature-block td {
+        border: none !important;
+        vertical-align: top;
+        padding: 10px 15px;
+    }
+
+    /* Base signature line */
+    .signature-line {
+        border-top: 1px solid #000;
+        width: 65%;
+        /* shorter but aligned from label start */
+        margin-top: 25px;
+        margin-bottom: 3px;
+        margin-left: 0;
+        text-align: left;
+    }
+
+    /* Nested tables for alignment consistency */
+    .signature-block table table {
+        border: none !important;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .signature-block table table td {
+        border: none !important;
+        padding: 0;
+        vertical-align: bottom;
+    }
+
+    /* Perfect vertical alignment for names and roles */
     .signature-block p {
         margin: 2px 0;
+        line-height: 1.1;
+        text-align: left;
     }
 
     .signature-block p[style*="font-weight:bold"] {
-        margin-bottom: 3px;
+        margin-bottom: 2px;
+        text-align: left;
     }
 
-    .signature-line {
-        width: 170px;
-        border-top: 1px solid #000;
-        margin: 40px auto 4px;
+    /* Date lines alignment fix */
+    td[style*="width:30%"] .signature-line {
+        width: 55%;
+        margin-top: 25px;
+        margin-left: 0;
+    }
+
+    /* Align "Date" text with signature line */
+    td[style*="width:30%"] p {
+        text-align: left;
+        margin-left: 5px;
+        /* slight indent to align visually */
+    }
+
+    /* Invisible placeholders for consistent height */
+    .signature-placeholder {
+        visibility: hidden;
+        font-size: 11px;
+        display: block;
+        height: 0;
+    }
+
+    /* fine alignment for signatories */
+    .sig-name {
+        width: 65%;
+        text-align: left;
+        padding: 0;
+    }
+
+    .sig-date {
+        width: 30%;
+        text-align: left;
+        padding: 0 0 0 8mm;
+    }
+
+    /* push Date line right (like the scan) */
+
+    .name-box,
+    .date-box {
+        display: inline-block;
+    }
+
+    .name-box {
+        width: 70%;
+    }
+
+    .date-box {
+        width: 55%;
+    }
+
+    /* shorter Date line box */
+    .name-box .signature-line,
+    .date-box .signature-line {
+        width: 100%;
+        margin: 25px 0 3px 0;
+    }
+
+    /* raise Date line & text slightly upward */
+    .sig-date .date-box {
+        position: relative;
+        top: -15px;
+        left: -45px;
+        /* raise the entire date line and label block */
+    }
+
+    .sig-date .signature-line {
+        margin: 20px 0 2px 0 !important;
+        /* tighten vertical space */
+    }
+
+    .sig-date .date-text {
+        margin-top: 0;
+        text-align: center;
+        font-size: 11px;
+    }
+
+    /* label centered under line */
+    .signature-placeholder {
+        visibility: hidden;
+        font-size: 11px;
+        display: block;
+        height: 0;
     }
 </style>
 @endpush
@@ -241,14 +358,19 @@ $chunks = collect([$assets]); // render one continuous table
                     <p>Requester:</p>
                     <table style="width:100%; border:none;">
                         <tr>
-                            <td style="width:65%; text-align:center;">
-                                <div class="signature-line"></div>
-                                <p style="font-weight:bold;">{{ strtoupper($offCampus->requester_name ?? '—') }}</p>
-                                <p style="font-size:11px;">Personnel</p>
+                            <td class="sig-name">
+                                <div class="name-box">
+                                    <div class="signature-line"></div>
+                                    <p style="font-weight:bold;">{{ strtoupper($offCampus->requester_name ?? '—') }}</p>
+                                    <p style="font-size:11px;">Personnel</p>
+                                </div>
+                                <span class="signature-placeholder">.</span>
                             </td>
-                            <td style="width:30%; text-align:center;">
-                                <div class="signature-line"></div>
-                                <p style="font-size:11px;">Date</p>
+                            <td class="sig-date">
+                                <div class="date-box">
+                                    <div class="signature-line"></div>
+                                    <p class="date-text">Date</p>
+                                </div>
                             </td>
                         </tr>
                     </table>
@@ -259,19 +381,24 @@ $chunks = collect([$assets]); // render one continuous table
                     <p>Approved By:</p>
                     <table style="width:100%; border:none;">
                         <tr>
-                            <td style="width:65%; text-align:center;">
-                                <div class="signature-line"></div>
-                                @if($offCampus->approved_by_name)
-                                <p style="font-weight:bold;">{{ strtoupper($offCampus->approved_by_name) }}</p>
-                                <p style="font-size:11px;">Dean / Head Concerned</p>
-                                @else
-                                <p style="color:#888;">—</p>
-                                <p style="font-size:11px;">Dean / Head Concerned</p>
-                                @endif
+                            <td class="sig-name">
+                                <div class="name-box">
+                                    <div class="signature-line"></div>
+                                    @if($offCampus->approved_by_name)
+                                    <p style="font-weight:bold;">{{ strtoupper($offCampus->approved_by_name) }}</p>
+                                    <p style="font-size:11px;">Dean / Head Concerned</p>
+                                    @else
+                                    <p style="color:#888;">—</p>
+                                    <p style="font-size:11px;">Dean / Head Concerned</p>
+                                    @endif
+                                </div>
+                                <span class="signature-placeholder">.</span>
                             </td>
-                            <td style="width:30%; text-align:center;">
-                                <div class="signature-line"></div>
-                                <p style="font-size:11px;">Date</p>
+                            <td class="sig-date">
+                                <div class="date-box">
+                                    <div class="signature-line"></div>
+                                    <p class="date-text">Date</p>
+                                </div>
                             </td>
                         </tr>
                     </table>
@@ -284,20 +411,25 @@ $chunks = collect([$assets]); // render one continuous table
                     <p>Issued By:</p>
                     <table style="width:100%; border:none;">
                         <tr>
-                            <td style="width:65%; text-align:center;">
-                                <div class="signature-line"></div>
-                                @php $issued = $signatories['issued_by'] ?? null; @endphp
-                                @if($issued)
-                                <p style="font-weight:bold;">{{ strtoupper($issued->name ?? '—') }}</p>
-                                <p style="font-size:11px;">{{ $issued->title ?? 'Head, PMO' }}</p>
-                                @else
-                                <p style="color:#888;">—</p>
-                                <p style="font-size:11px;">Head, PMO</p>
-                                @endif
+                            <td class="sig-name">
+                                <div class="name-box">
+                                    <div class="signature-line"></div>
+                                    @php $issued = $signatories['issued_by'] ?? null; @endphp
+                                    @if($issued)
+                                    <p style="font-weight:bold;">{{ strtoupper($issued->name ?? '—') }}</p>
+                                    <p style="font-size:11px;">{{ $issued->title ?? 'Head, PMO' }}</p>
+                                    @else
+                                    <p style="color:#888;">—</p>
+                                    <p style="font-size:11px;">Head, PMO</p>
+                                    @endif
+                                </div>
+                                <span class="signature-placeholder">.</span>
                             </td>
-                            <td style="width:30%; text-align:center;">
-                                <div class="signature-line"></div>
-                                <p style="font-size:11px;">Date</p>
+                            <td class="sig-date">
+                                <div class="date-box">
+                                    <div class="signature-line"></div>
+                                    <p class="date-text">Date</p>
+                                </div>
                             </td>
                         </tr>
                     </table>
@@ -308,14 +440,19 @@ $chunks = collect([$assets]); // render one continuous table
                     <p>Checked By:</p>
                     <table style="width:100%; border:none;">
                         <tr>
-                            <td style="width:65%; text-align:center;">
-                                <div class="signature-line"></div>
-                                <p style="font-weight:bold;">{{ strtoupper($offCampus->checked_by ?? '—') }}</p>
-                                <p style="font-size:11px;">Chief, Security Service</p>
+                            <td class="sig-name">
+                                <div class="name-box">
+                                    <div class="signature-line"></div>
+                                    <p style="font-weight:bold;">{{ strtoupper($offCampus->checked_by ?? '—') }}</p>
+                                    <p style="font-size:11px;">Chief, Security Service</p>
+                                </div>
+                                <span class="signature-placeholder">.</span>
                             </td>
-                            <td style="width:30%; text-align:center;">
-                                <div class="signature-line"></div>
-                                <p style="font-size:11px;">Date</p>
+                            <td class="sig-date">
+                                <div class="date-box">
+                                    <div class="signature-line"></div>
+                                    <p class="date-text">Date</p>
+                                </div>
                             </td>
                         </tr>
                     </table>
