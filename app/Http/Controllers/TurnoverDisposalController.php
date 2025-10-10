@@ -227,7 +227,7 @@ class TurnoverDisposalController extends Controller
 
         $timestamp = now()->format('Y-m-d');
 
-        // return $pdf->download("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
-        return $pdf->stream("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
+        return $pdf->download("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
+        // return $pdf->stream("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
     }
 }
