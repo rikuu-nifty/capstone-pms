@@ -108,15 +108,15 @@
     }
 
     .signature-block {
-        margin-top: 40px;
-        text-align: center;
+        margin-top: 45px;
         page-break-inside: avoid;
+        text-align: center;
     }
 
     .signature-line {
-        width: 180px;
+        width: 100%;
         border-top: 1px solid #000;
-        margin: 40px auto 4px;
+        margin: 30px auto 4px;
     }
 
     .continuation-page {
@@ -234,44 +234,94 @@ $chunks = collect([$assets]); // render one continuous table
 
     {{-- SIGNATORIES --}}
     <div class="signature-block">
-        <div style="display:inline-block; width:30%; vertical-align:top;">
-            <p>Requester:</p>
-            <div class="signature-line"></div>
-            <p style="font-weight:bold;">{{ strtoupper($offCampus->requester_name ?? '—') }}</p>
-            <p style="font-size:11px;">Personnel</p>
-        </div>
+        <table style="width:100%; border:none; border-collapse:collapse; text-align:center; font-size:12px;">
+            <tr>
+                {{-- Requester --}}
+                <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
+                    <p>Requester:</p>
+                    <table style="width:100%; border:none;">
+                        <tr>
+                            <td style="width:65%; text-align:center;">
+                                <div class="signature-line"></div>
+                                <p style="font-weight:bold;">{{ strtoupper($offCampus->requester_name ?? '—') }}</p>
+                                <p style="font-size:11px;">Personnel</p>
+                            </td>
+                            <td style="width:30%; text-align:center;">
+                                <div class="signature-line"></div>
+                                <p style="font-size:11px;">Date</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
 
-        <div style="display:inline-block; width:30%; vertical-align:top;">
-            <p>Approved By:</p>
-            <div class="signature-line"></div>
-            @if($offCampus->approved_by_name)
-            <p style="font-weight:bold;">{{ strtoupper($offCampus->approved_by_name) }}</p>
-            <p style="font-size:11px;">Dean / Head Concerned</p>
-            @else
-            <p style="color:#888;">—</p>
-            <p style="font-size:11px;">Dean / Head Concerned</p>
-            @endif
-        </div>
+                {{-- Approved By --}}
+                <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
+                    <p>Approved By:</p>
+                    <table style="width:100%; border:none;">
+                        <tr>
+                            <td style="width:65%; text-align:center;">
+                                <div class="signature-line"></div>
+                                @if($offCampus->approved_by_name)
+                                <p style="font-weight:bold;">{{ strtoupper($offCampus->approved_by_name) }}</p>
+                                <p style="font-size:11px;">Dean / Head Concerned</p>
+                                @else
+                                <p style="color:#888;">—</p>
+                                <p style="font-size:11px;">Dean / Head Concerned</p>
+                                @endif
+                            </td>
+                            <td style="width:30%; text-align:center;">
+                                <div class="signature-line"></div>
+                                <p style="font-size:11px;">Date</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
 
-        <div style="display:inline-block; width:30%; vertical-align:top;">
-            <p>Issued By:</p>
-            <div class="signature-line"></div>
-            @php $issued = $signatories['issued_by'] ?? null; @endphp
-            @if($issued && $offCampus->issued_by_signed)
-            <p style="font-weight:bold;">{{ strtoupper($issued->name ?? '—') }}</p>
-            <p style="font-size:11px;">{{ $issued->title ?? 'Head, PMO' }}</p>
-            @else
-            <p style="color:#888;">—</p>
-            <p style="font-size:11px;">Head, PMO</p>
-            @endif
-        </div>
+            <tr>
+                {{-- Issued By --}}
+                <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
+                    <p>Issued By:</p>
+                    <table style="width:100%; border:none;">
+                        <tr>
+                            <td style="width:65%; text-align:center;">
+                                <div class="signature-line"></div>
+                                @php $issued = $signatories['issued_by'] ?? null; @endphp
+                                @if($issued)
+                                <p style="font-weight:bold;">{{ strtoupper($issued->name ?? '—') }}</p>
+                                <p style="font-size:11px;">{{ $issued->title ?? 'Head, PMO' }}</p>
+                                @else
+                                <p style="color:#888;">—</p>
+                                <p style="font-size:11px;">Head, PMO</p>
+                                @endif
+                            </td>
+                            <td style="width:30%; text-align:center;">
+                                <div class="signature-line"></div>
+                                <p style="font-size:11px;">Date</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
 
-        <div style="display:inline-block; width:30%; vertical-align:top;">
-            <p>Checked By:</p>
-            <div class="signature-line"></div>
-            <p style="font-weight:bold;">{{ strtoupper($offCampus->checked_by ?? '—') }}</p>
-            <p style="font-size:11px;">Chief, Security Service</p>
-        </div>
+                {{-- Checked By --}}
+                <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
+                    <p>Checked By:</p>
+                    <table style="width:100%; border:none;">
+                        <tr>
+                            <td style="width:65%; text-align:center;">
+                                <div class="signature-line"></div>
+                                <p style="font-weight:bold;">{{ strtoupper($offCampus->checked_by ?? '—') }}</p>
+                                <p style="font-size:11px;">Chief, Security Service</p>
+                            </td>
+                            <td style="width:30%; text-align:center;">
+                                <div class="signature-line"></div>
+                                <p style="font-size:11px;">Date</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </div>
 </div>
 @endsection
