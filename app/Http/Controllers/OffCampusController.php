@@ -333,7 +333,15 @@ class OffCampusController extends Controller
         ])->findOrFail($id);
 
         $assets = $offCampus->assets->map(fn($a) => $a->asset)->filter();
+        $pmoHead = User::whereHas('role', fn($q) => $q->where('code', 'pmo_head'))
+            ->where('status', 'approved')
+            ->first();
+
         $signatories = OffCampusSignatory::all()->keyBy('role_key');
+        $signatories['issued_by'] = (object) [
+            'name'  => $pmoHead?->name ?? '—',
+            'title' => 'Head, PMO',
+        ];
 
         $pdf = Pdf::loadView('forms.off_campus_form_pdf', [
             'offCampus' => $offCampus,
