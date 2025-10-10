@@ -551,9 +551,12 @@ class InventorySchedulingController extends Controller
             'rows' => $rows,
             'signatories' => $signatories,
         ])
-            ->setPaper('A4', 'portrait')
-            ->setOption('isPhpEnabled', true);
+        ->setPaper('A4', 'portrait')
+        ->setOption('isPhpEnabled', true);
 
-        return $pdf->stream("Inventory-Schedule-Form-{$schedule->id}.pdf");
+        $timestamp = now()->format('Y-m-d');
+
+        return $pdf->download("Inventory-Schedule-Form-{$schedule->id}-{$timestamp}.pdf");
+        // return $pdf->stream("Inventory-Schedule-Form-{$schedule->id}.pdf");
     }
 }
