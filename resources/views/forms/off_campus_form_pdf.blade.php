@@ -120,7 +120,7 @@ $chunks = $assets->chunk($perPage);
 </p>
 
 @foreach($chunks as $chunkIndex => $chunk)
-<table class="assets" style="{{ $chunkIndex > 0 ? 'page-break-before: always;' : '' }}">
+<table class="assets" @if($chunkIndex> 0) style="page-break-before: always;" @endif>
     <thead>
         <tr>
             <th style="width:10%;">Qty</th>
