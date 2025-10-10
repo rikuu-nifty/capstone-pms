@@ -87,6 +87,21 @@
         margin-top: -12px;
     }
 
+    table.assets-table {
+        page-break-inside: auto;
+    }
+
+    table.assets-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    table.assets-table td {
+        vertical-align: top;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
     table.assets-table th,
     table.assets-table td {
         border: 1px solid #000;
@@ -190,13 +205,9 @@
 @section('content')
 @php
 use Carbon\Carbon;
-
-/**
-* Split assets into chunks of ~20 rows per page to safely re-render merged cells
-* (Adjust $perPage if needed for your page length)
-*/
-$perPage = 20;
-$chunks = $assets->chunk($perPage);
+// $perPage = 20;
+// $chunks = $assets->chunk($perPage);
+$chunks = collect([$assets]);
 @endphp
 
 <div class="header">
@@ -230,13 +241,11 @@ $chunks = $assets->chunk($perPage);
     the following properties/equipment as follows.
 </p>
 
-{{-- PAGINATED ASSET TABLE --}}
-@foreach($chunks as $chunkIndex => $chunk)
-<!-- <table class="assets-table" style="{{ $chunkIndex > 0 ? 'page-break-before: always;' : '' }}"> -->
-<table class="assets-table" @if($chunkIndex> 0) style="page-break-before: always;" @endif>
+{{-- ASSETS TABLE --}}
+<table class="assets-table">
     <thead>
         <tr class="spacer-row">
-            <td colspan="4" style="height:20px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
+            <td colspan="4" style="height:10px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
         </tr>
         <tr>
             <th style="width:8%;">Qty</th>
@@ -246,37 +255,25 @@ $chunks = $assets->chunk($perPage);
         </tr>
     </thead>
     <tbody>
-        @php $rowCount = count($chunk); @endphp
-
-        @if($rowCount > 0)
-        {{-- First row of each page with rowspan cells --}}
+        @foreach($assets as $a)
         <tr>
             <td>1</td>
-            <td>{{ $chunk->first()->asset_name ?? '—' }}{{ $chunk->first()->description ? ' - ' . $chunk->first()->description : '' }}</td>
-            <td rowspan="{{ $rowCount }}" style="vertical-align: middle;">
-                {{ $turnoverDisposal->issuingOffice->name ?? '—' }}
+            <td style="text-align:center;">
+                {{ $a->asset_name ?? '—' }}
+                @if($a->assetModel)
+                <br><small>Brand: {{ $a->assetModel->brand ?? '—' }}, Model: {{ $a->assetModel->model ?? '—' }}</small>
+                @endif
+                @if($a->serial_no)
+                <br><small>Serial: {{ $a->serial_no }}</small>
+                @endif
             </td>
-            <td rowspan="{{ $rowCount }}" style="vertical-align: middle;">
-                {{ $turnoverDisposal->receivingOffice->name ?? '—' }}
-            </td>
-        </tr>
-
-        {{-- Remaining rows in this page chunk --}}
-        @foreach($chunk->slice(1) as $a)
-        <tr>
-            <td>1</td>
-            <td>{{ $a->asset_name ?? '—' }}{{ $a->description ? ' - ' . $a->description : '' }}</td>
+            <td>{{ $turnoverDisposal->issuingOffice->name ?? '—' }}</td>
+            <td>{{ $turnoverDisposal->receivingOffice->name ?? '—' }}</td>
         </tr>
         @endforeach
-        @else
-        {{-- In case there are no assets at all --}}
-        <tr>
-            <td colspan="4" style="text-align:center;">No assets listed.</td>
-        </tr>
-        @endif
     </tbody>
 </table>
-@endforeach
+
 
 @if($turnoverDisposal->description)
 <p class="remarks"><strong>Description:</strong> {{ $turnoverDisposal->description }}</p>
