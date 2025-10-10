@@ -362,7 +362,7 @@ class OffCampusController extends Controller
 
         $timestamp = now()->format('Y-m-d');
 
-        return $pdf->stream("Off-Campus-Form-{$offCampus->id}-{$timestamp}.pdf");
-        // return $pdf->download("Off-Campus-Form-{$offCampus->id}-{$timestamp}.pdf");
+        // return $pdf->stream("Off-Campus-Form-{$offCampus->id}-{$timestamp}.pdf");
+        return $pdf->download("Off-Campus-Form-{$offCampus->id}-{$timestamp}.pdf");
     }
 }
