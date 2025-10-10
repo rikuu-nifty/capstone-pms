@@ -465,38 +465,59 @@ class InventorySchedulingController extends Controller
         $schedule = InventoryScheduling::with([
             'preparedBy',
             'units',
-            'rooms', // include this so we can get selected rooms
+            'rooms', // include for filtering selected rooms
             'buildings.buildingRooms.subAreas',
             'assets.asset',
         ])->findOrFail($id);
 
         $rows = [];
 
-        // Get only the rooms that were selected for this schedule record
+        // get only rooms chosen for this schedule
         $selectedRoomIds = $schedule->rooms->pluck('id')->toArray();
 
-        foreach ($schedule->units as $unit) {
-            $unitName = $unit->name ?? '—';
-            $rows[$unitName] = [];
+        // detect scope type (unit or building)
+        $isUnitScope = $schedule->scope_type === 'unit';
 
+        if ($isUnitScope && $schedule->units->isNotEmpty()) {
+            // UNIT SCOPE: grouped by Unit > Building > Room
+            foreach ($schedule->units as $unit) {
+                $unitName = $unit->name ?? '—';
+                $rows[$unitName] = [];
+
+                foreach ($schedule->buildings as $building) {
+                    $buildingName = $building->name ?? '—';
+                    $rows[$unitName][$buildingName] = [];
+
+                    $rooms = $building->buildingRooms
+                        ->whereIn('id', $selectedRoomIds)
+                        ->values();
+
+                    foreach ($rooms as $room) {
+                        $roomAssets = $schedule->assets->where('asset.building_room_id', $room->id);
+
+                        $rows[$unitName][$buildingName][] = [
+                            'room' => $room->room ?? '—',
+                            'asset_count' => $roomAssets->count(),
+                            'status' => $schedule->scheduling_status,
+                        ];
+                    }
+                }
+            }
+        } else {
+            // BUILDING SCOPE: grouped by Building > Room (no Unit)
             foreach ($schedule->buildings as $building) {
                 $buildingName = $building->name ?? '—';
-                $rows[$unitName][$buildingName] = [];
+                $rows[$buildingName] = [];
 
-                // Filter buildingRooms to include only selected ones
                 $rooms = $building->buildingRooms
                     ->whereIn('id', $selectedRoomIds)
                     ->values();
 
                 foreach ($rooms as $room) {
-                    $roomName = $room->room ?? '—';
-
-                    // Get all assets tied to this room
                     $roomAssets = $schedule->assets->where('asset.building_room_id', $room->id);
 
-                    // Push only the room (no subareas)
-                    $rows[$unitName][$buildingName][] = [
-                        'room' => $roomName,
+                    $rows[$buildingName][] = [
+                        'room' => $room->room ?? '—',
                         'asset_count' => $roomAssets->count(),
                         'status' => $schedule->scheduling_status,
                     ];

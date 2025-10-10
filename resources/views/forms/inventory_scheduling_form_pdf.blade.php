@@ -35,7 +35,7 @@
     .header {
         text-align: center;
         margin-top: 20px;
-        margin-bottom: 20px;
+        margin-bottom: 40px;
     }
 
     .header h3 {
@@ -124,20 +124,19 @@
     </thead>
 
     <tbody>
+        @if($schedule->scope_type === 'unit' && count($rows))
+        {{-- UNIT SCOPE --}}
         @foreach($rows as $unit => $buildings)
-        {{-- UNIT HEADER --}}
         <tr class="group-unit">
             <td colspan="8">{{ strtoupper($unit) }}</td>
         </tr>
 
         @foreach($buildings as $building => $roomRows)
-        {{-- BUILDING HEADER --}}
         <tr class="group-building">
             <td colspan="8">{{ strtoupper($building) }}</td>
         </tr>
 
         @foreach($roomRows as $room)
-        {{-- ROOM ROW --}}
         <tr class="room-row">
             <td style="text-align:left; padding-left:40px;">
                 {{ $room['room'] }}
@@ -160,7 +159,39 @@
         @endforeach
         @endforeach
         @endforeach
+
+        @else
+        {{-- BUILDING SCOPE --}}
+        @foreach($rows as $building => $roomRows)
+        <tr class="group-unit">
+            <td colspan="8">{{ strtoupper($building) }}</td>
+        </tr>
+
+        @foreach($roomRows as $room)
+        <tr class="room-row">
+            <td style="text-align:left; padding-left:40px;">
+                {{ $room['room'] }}
+                @if(!empty($room['asset_count']) && $room['asset_count'] > 0)
+                ({{ $room['asset_count'] }})
+                @endif
+            </td>
+            <td>{{ Carbon::parse($schedule->inventory_schedule . '-01')->format('F') }}</td>
+            <td>
+                {{ $schedule->actual_date_of_inventory
+                ? Carbon::parse($schedule->actual_date_of_inventory)->format('F d, Y')
+                : '—' }}
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{ ucfirst($room['status']) }}</td>
+        </tr>
+        @endforeach
+        @endforeach
+        @endif
     </tbody>
+
 </table>
 
 {{-- === SIGNATORIES === --}}
