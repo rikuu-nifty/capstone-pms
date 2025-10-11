@@ -585,9 +585,18 @@ export const EditAssetModalForm = ({
 
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
+                            <Button 
+                                variant="outline"
+                                className='cursor-pointer'
+                            >
+                                Cancel
+                            </Button>
                         </DialogClose>
-                        <Button type="button" onClick={handleSubmit}>
+                        <Button 
+                            type="button"
+                            className='cursor-pointer'
+                            onClick={handleSubmit}
+                        >
                             Save Changes
                         </Button>
                     </DialogFooter>
