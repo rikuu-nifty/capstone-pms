@@ -114,10 +114,17 @@
 <body>
     <div class="email-wrapper">
         <div class="email-content">
-            <!-- HEADER -->
-            <div class="email-header">
-                <img src="{{ asset('images/auflogo2.jpg') }}" alt="AUF Logo">
-                <h1>Angeles University Foundation</h1>
+            <div class="email-header" style="text-align:left; padding:20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
+                    <tr>
+                        <td align="left" valign="middle" style="line-height:0; padding:0; margin:0;">
+                            <img
+                                src="{{ isset($message) ? $message->embed(public_path('images/email-logo.png')) : asset('images/email-logo.png') }}"
+                                alt="AUF Logo"
+                                style="display:block; width:200px; max-width:100%; height:auto; margin:0; padding:0; border:0; line-height:0;" />
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             <!-- BODY -->
