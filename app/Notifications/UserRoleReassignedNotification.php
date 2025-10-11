@@ -35,20 +35,32 @@ class UserRoleReassignedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
-            ->subject('Your account role has been updated')
-            ->greeting('Hi ' . $notifiable->name . ',')
-            ->line("Your system role has been changed.")
-            ->line("Previous Role: {$this->oldRoleName}")
-            ->line("New Role: {$this->newRoleName}")
-            ->action('Go to System', url('/'))
-            ->line('If you believe this change is incorrect, please contact the administrator.');
+        // $mail = (new MailMessage)
+        //     ->subject('Your account role has been updated')
+        //     ->greeting('Hi ' . $notifiable->name . ',')
+        //     ->line("Your system role has been changed.")
+        //     ->line("Previous Role: {$this->oldRoleName}")
+        //     ->line("New Role: {$this->newRoleName}")
+        //     ->action('Go to System', url('/'))
+        //     ->line('If you believe this change is incorrect, please contact the administrator.');
 
-        if ($this->notes) {
-            $mail->line('Notes: ' . $this->notes);
-        }
+        // if ($this->notes) {
+        //     $mail->line('Notes: ' . $this->notes);
+        // }
 
-        return $mail;
+        // return $mail;
+        
+        $url = url('/');
+
+        return (new MailMessage)
+            ->subject('Your Account Role Has Been Updated')
+            ->view('emails.user-role-reassigned', [
+                'name'        => $notifiable->name,
+                'oldRoleName' => $this->oldRoleName,
+                'newRoleName' => $this->newRoleName,
+                'notes'       => $this->notes,
+                'url'         => $url,
+            ]);
     }
 
     /**
