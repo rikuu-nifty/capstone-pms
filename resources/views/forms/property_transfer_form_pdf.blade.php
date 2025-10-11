@@ -41,7 +41,7 @@
         text-align: center;
         font-weight: 700;
         text-transform: uppercase;
-        margin-bottom: 12px;
+        margin-bottom: 20px;
         font-size: 13px;
         text-decoration: underline;
     }
@@ -260,11 +260,27 @@ use Carbon\Carbon;
     <tbody>
         @forelse($assets as $a)
         <tr>
-            <td>{{ $a->asset_model->equipment_code->code ?? '—' }}</td>
-            <td>{{ $a->asset_name }}{{ $a->description ? ' - ' . $a->description : '' }}</td>
+            <td>{{ $a->asset->asset_model->equipment_code->code ?? '—' }}</td>
+            <td>{{ $a->asset->asset_name }}{{ $a->asset->description ? ' - ' . $a->asset->description : '' }}</td>
             <td>{{ $transfer->receivingBuildingRoom->building->name ?? '—' }}</td>
             <td>{{ $transfer->receivingBuildingRoom->room ?? '—' }}</td>
-            <td>{{ $a->remarks ?? $transfer->remarks ?? '—' }}</td>
+            <td>
+                @php
+                $toSubAreaName = $a->toSubArea->name ?? null;
+                $combinedRemarks = trim($a->remarks ?? $transfer->remarks ?? '');
+                @endphp
+
+                @if($combinedRemarks)
+                {!! nl2br(e($combinedRemarks)) !!}
+                @endif
+
+                @if($toSubAreaName)
+                @if($combinedRemarks)<br>@endif
+                <span>To: {{ $toSubAreaName }}</span>
+                @elseif(!$combinedRemarks)
+                —
+                @endif
+            </td>
         </tr>
         @empty
         <tr>
