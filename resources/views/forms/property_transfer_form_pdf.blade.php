@@ -134,29 +134,6 @@
         font-size: 12px;
     }
 
-    .signature-block {
-        margin-top: 50px;
-        text-align: center;
-        page-break-inside: avoid;
-    }
-
-    .signature-line {
-        width: 170px;
-        border-top: 1px solid #000;
-        margin: 40px auto 4px;
-    }
-
-    /* Tighten spacing between signatory name and role/title */
-    .signature-block p {
-        margin: 2px 0;
-        /* reduce all <p> vertical margins */
-    }
-
-    .signature-block p[style*="font-weight:bold"] {
-        margin-bottom: 3px;
-        /* tiny gap between name and role */
-    }
-
     .assets-table td:nth-child(2),
     .assets-table td:nth-child(3),
     .assets-table td:nth-child(4) {
@@ -186,6 +163,48 @@
     .assets-table thead tr:nth-child(3) th:last-child {
         border-top: 0 !important;
         /* removes top border on row 3 */
+    }
+
+    /* === Remove unwanted outer signatory borders but keep inner ones === */
+    table.signatories-outer {
+        border: none !important;
+        border-collapse: collapse;
+    }
+
+    table.signatories-outer>tbody>tr>td {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    table.signatories-outer>tbody>tr:first-child>td {
+        border-top: none !important;
+    }
+
+    table.signatories-outer>tbody>tr:last-child>td {
+        border-bottom: none !important;
+    }
+
+    /* Add space between each inner signature table */
+    table.signatories-outer>tbody>tr>td>table {
+        margin-bottom: 14px;
+        /* adjust for visual balance */
+    }
+
+    /* Vertically center the signatory labels beside their tables */
+    table.signatories-outer>tbody>tr>td:first-child {
+        vertical-align: middle !important;
+    }
+
+    /* Make signatory names bold but roles normal */
+    table.signatories-outer td strong,
+    table.signatories-outer td span.name {
+        font-weight: bold;
+        font-size: 11px;
+    }
+
+    table.signatories-outer td span.role {
+        font-weight: normal;
+        font-style: italic;
     }
 </style>
 @endpush
@@ -291,17 +310,17 @@ use Carbon\Carbon;
 </table>
 
 {{-- SIGNATORIES (no outer border; clean AUF format) --}}
-<table style="width:100%; border-collapse:collapse; font-size:12px; margin-top:40px;">
+<table class="signatories-outer" style="width:100%; border-collapse:collapse; font-size:12px; margin-top:40px;">
     {{-- Prepared By --}}
     <tr>
         <td style="width:18%; vertical-align:top; padding:6px 8px; font-weight:bold;">Prepared by:</td>
         <td style="width:82%; padding:0;">
             <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
                 <colgroup>
-                    <col style="width:40%;">
-                    <col style="width:20%;">
-                    <col style="width:20%;">
-                    <col style="width:20%;">
+                    <col style="width:65%;">
+                    <col style="width:15%;">
+                    <col style="width:10%;">
+                    <col style="width:10%;">
                 </colgroup>
                 <thead>
                     <tr>
@@ -313,9 +332,9 @@ use Carbon\Carbon;
                 </thead>
                 <tbody>
                     <tr style="height:45px;">
-                        <td style="border:1px solid #000; padding:6px;">
-                            {{ strtoupper($transfer->assignedBy->name ?? '—') }}<br>
-                            <span style="font-size:11px;">{{ $transfer->assignedBy->role->name ?? '' }}</span>
+                        <td style="border:1px solid #000; padding:6px; text-align:center;">
+                            <span class="name">{{ strtoupper($transfer->assignedBy->name ?? '—') }}</span><br>
+                            <span class="role" style="font-size:11px;">{{ $transfer->assignedBy->role->name ?? '' }}</span>
                         </td>
                         <td style="border:1px solid #000;">&nbsp;</td>
                         <td style="border:1px solid #000;">&nbsp;</td>
@@ -332,10 +351,11 @@ use Carbon\Carbon;
         <td style="width:82%; padding:0;">
             <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
                 <colgroup>
-                    <col style="width:40%;">
-                    <col style="width:20%;">
-                    <col style="width:20%;">
-                    <col style="width:20%;">
+                    <col style="width:65%;">
+                    <col style="width:15%;">
+                    <col style="width:10%;">
+                    <col style="width:10%;">
+
                 </colgroup>
                 <thead>
                     <tr>
@@ -348,9 +368,9 @@ use Carbon\Carbon;
                 <tbody>
                     @php $approvedSig = $signatories['approved_by'] ?? null; @endphp
                     <tr style="height:45px;">
-                        <td style="border:1px solid #000; padding:6px;">
-                            {{ strtoupper($approvedSig->name ?? '—') }}<br>
-                            <span style="font-size:11px;">{{ $approvedSig->title ?? 'Head, Property Management' }}</span>
+                        <td style="border:1px solid #000; padding:6px; text-align:center;">
+                            <span class="name">{{ strtoupper($approvedSig->name ?? '—') }}</span><br>
+                            <span class="role" style="font-size:11px;">{{ $approvedSig->title ?? 'Head, Property Management' }}</span>
                         </td>
                         <td style="border:1px solid #000;">&nbsp;</td>
                         <td style="border:1px solid #000;">&nbsp;</td>
@@ -367,10 +387,11 @@ use Carbon\Carbon;
         <td style="width:82%; padding:0;">
             <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
                 <colgroup>
-                    <col style="width:40%;">
-                    <col style="width:20%;">
-                    <col style="width:20%;">
-                    <col style="width:20%;">
+                    <col style="width:65%;">
+                    <col style="width:15%;">
+                    <col style="width:10%;">
+                    <col style="width:10%;">
+
                 </colgroup>
                 <thead>
                     <tr>
@@ -382,8 +403,8 @@ use Carbon\Carbon;
                 </thead>
                 <tbody>
                     <tr style="height:45px;">
-                        <td style="border:1px solid #000; padding:6px;">
-                            {{ strtoupper($transfer->received_by ?? '—') }}<br>
+                        <td style="border:1px solid #000; padding:6px; text-align:center;">
+                            <span class="name">{{ strtoupper($transfer->received_by ?? '—') }}</span><br>
                             <span style="font-size:11px;">{{ $transfer->received_by_title ?? '' }}</span>
                         </td>
                         <td style="border:1px solid #000;">&nbsp;</td>
