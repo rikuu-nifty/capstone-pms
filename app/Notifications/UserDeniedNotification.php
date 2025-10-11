@@ -30,19 +30,29 @@ class UserDeniedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
-            ->subject('Your account request was denied')
-            ->greeting('Hi '.$notifiable->name.',')
-            ->line('We’re sorry—your account request was not approved.')
-            ->line('If you believe this is an error, please reach out to the administrator.')
-            ->action('Go to Home', url('/'))
-            ->line('Thank you.');
 
-        if ($this->notes) {
-            $mail->line('Notes: '.$this->notes);
-        }
+        $url = url('/');
 
-        return $mail;
+        // $mail = (new MailMessage)
+        //     ->subject('Your account request was denied')
+        //     ->greeting('Hi '.$notifiable->name.',')
+        //     ->line('We’re sorry—your account request was not approved.')
+        //     ->line('If you believe this is an error, please reach out to the administrator.')
+        //     ->action('Go to Home', url('/'))
+        //     ->line('Thank you.');
+
+        // if ($this->notes) {
+        //     $mail->line('Notes: '.$this->notes);
+        // }
+
+        // return $mail;
+        return (new MailMessage)
+        ->subject('Your Account Request Was Denied')
+        ->view('emails.user-denied', [
+            'name'  => $notifiable->name,
+            'notes' => $this->notes,
+            'url'   => $url,
+        ]);
     }
 
     /**
