@@ -310,233 +310,254 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             {/* <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] overflow-y-auto p-0 sm:max-w-[1100px]"> */}
             <DialogContent
-                className="w-[350px] max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
+                // className="w-[350px] max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
+                className="w-[350px] max-w-[95vw] h-[70vh] sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-hidden p-0"
             >
-                <DialogHeader>
-                    <DialogTitle>
-                        <VisuallyHidden>Schedule Record #{recordNo}</VisuallyHidden>
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">
-                        Detailed view of schedule record #{recordNo}
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="print-force-light bg-white p-4 sm:p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
-                {/* Header */}
-                    <div className="mx-auto w-[320px] sm:w-full sm:max-w-none relative flex items-center justify-between">
-                        <div className="flex items-center flex-shrink-0">
-                            <img
-                                src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
-                                alt="Logo"
-                                className="h-16 md:h-24 opacity-90"
-                            />
+                <div className="h-full overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>
+                            <VisuallyHidden>Schedule Record #{recordNo}</VisuallyHidden>
+                        </DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Detailed view of schedule record #{recordNo}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="print-force-light bg-white p-4 sm:p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
+                    {/* Header */}
+                        <div className="mx-auto w-[320px] sm:w-full sm:max-w-none relative flex items-center justify-between">
+                            <div className="flex items-center flex-shrink-0">
+                                <img
+                                    src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
+                                    alt="Logo"
+                                    className="h-16 md:h-24 opacity-90"
+                                />
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 text-center w-[150px] md:w-full">
+                                <h2 className="text-xs sm:text-sm md:text-2xl font-bold tracking-wide uppercase print:text-lg">
+                                    Angeles University Foundation
+                                </h2>
+                                <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
+                                    Property Management Office
+                                </p>
+                                <p className="text-[10px] sm:text-sm text-gray-800 dark:text-gray-400 print:text-xs font-bold">
+                                    {(() => {
+                                        const currentYear = new Date().getFullYear();
+                                        const prevYear = currentYear - 1;
+                                        return `MONITORING/SCHEDULE OF INVENTORY AY ${prevYear}-${currentYear}`;
+                                    })()}
+                                </p>
+                            </div>
+                            <div className="text-right text-[9px] w-[70px] md:w-full md:text-sm leading-snug">
+                                <p>
+                                    <span className="text-gray-600 dark:text-gray-400">
+                                        Schedule Record #:
+                                    </span>{' '}
+                                    <span className="font-semibold">{recordNo}</span>
+                                </p>
+                                <p className="mt-1 flex flex-col sm:flex-row sm:items-center justify-end sm:justify-end gap-1 sm:gap-2">
+                                    <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                                    <StatusPill status={schedule.scheduling_status} />
+                                </p>
+                            </div>
                         </div>
-                        <div className="absolute left-1/2 -translate-x-1/2 text-center w-[150px] md:w-full">
-                            <h2 className="text-xs sm:text-sm md:text-2xl font-bold tracking-wide uppercase print:text-lg">
-                                Angeles University Foundation
-                            </h2>
-                            <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400 print:text-xs">
-                                Property Management Office
-                            </p>
-                            <p className="text-[10px] sm:text-sm text-gray-800 dark:text-gray-400 print:text-xs font-bold">
-                                {(() => {
-                                    const currentYear = new Date().getFullYear();
-                                    const prevYear = currentYear - 1;
-                                    return `MONITORING/SCHEDULE OF INVENTORY AY ${prevYear}-${currentYear}`;
-                                })()}
-                            </p>
-                        </div>
-                        <div className="text-right text-[9px] w-[70px] md:w-full md:text-sm leading-snug">
-                            <p>
-                                <span className="text-gray-600 dark:text-gray-400">
-                                    Schedule Record #:
-                                </span>{' '}
-                                <span className="font-semibold">{recordNo}</span>
-                            </p>
-                            <p className="mt-1 flex flex-col sm:flex-row sm:items-center justify-end sm:justify-end gap-1 sm:gap-2">
-                                <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                                <StatusPill status={schedule.scheduling_status} />
-                            </p>
-                        </div>
-                    </div>
 
-                    <h2 className="mt-4 mb-4 text-center text-base sm:text-lg md:text-xl font-bold tracking-wide text-gray-900 dark:text-gray-100 underline">
-                        Inventory Scheduling
-                    </h2>
+                        <h2 className="mt-4 mb-4 text-center text-base sm:text-lg md:text-xl font-bold tracking-wide text-gray-900 dark:text-gray-100 underline">
+                            Inventory Scheduling
+                        </h2>
 
-                    {/* Scope + Scheduling Info */}
-                    {/* <div className="mt-6 grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-12 print:grid-cols-2"> */}
-                        {/* Scope Info */}
-                        {/* <section className="md:w-[400px] w-[320px]">
-                            <h3 className="mb-2 text-sm md:text-base font-semibold">Scope Information</h3>
-                            <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                                <table className="w-full table-auto text-xs md:text-sm">
+                        {/* Scope + Scheduling Info */}
+                        {/* <div className="mt-6 grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-12 print:grid-cols-2"> */}
+                            {/* Scope Info */}
+                            {/* <section className="md:w-[400px] w-[320px]">
+                                <h3 className="mb-2 text-sm md:text-base font-semibold">Scope Information</h3>
+                                <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                                    <table className="w-full table-auto text-xs md:text-sm">
+                                        <tbody>
+                                            <tr className="border-b border-gray-200 dark:border-gray-800">
+                                                <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                    Buildings
+                                                </td>
+                                                <td className="px-3 py-2 font-medium text-right">
+                                                    {schedule.buildings?.length ?? 0}
+                                                </td>
+                                            </tr>
+                                            <tr className="border-b border-gray-200 dark:border-gray-800">
+                                                <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                    Rooms
+                                                </td>
+                                                <td className="px-3 py-2 font-medium text-right">
+                                                    {schedule.rooms?.length ?? 0}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                    Sub-Areas
+                                                </td>
+                                                <td className="px-3 py-2 font-medium text-right">
+                                                    {schedule.sub_areas?.length ?? 0}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section> */}
+
+                            {/* Scheduling Info */}
+                            {/* <section className="w-[320px] md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
+                                <h3 className="mb-2 text-sm md:text-base font-semibold">Scheduling Information</h3>
+                                <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                                    <table className="w-full table-auto text-xs md:text-sm">
                                     <tbody>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Buildings
+                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Inventory Month
                                             </td>
-                                            <td className="px-3 py-2 font-medium text-right">
-                                                {schedule.buildings?.length ?? 0}
+                                            <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
+                                                {formatMonth(schedule.inventory_schedule)}
                                             </td>
                                         </tr>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Rooms
+                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Actual Date of Inventory
                                             </td>
-                                            <td className="px-3 py-2 font-medium text-right">
-                                                {schedule.rooms?.length ?? 0}
+                                            <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
+                                                {formatDateLong(schedule.actual_date_of_inventory)}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td className="w-1/2 bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                                Sub-Areas
+                                            <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
+                                                Total Assets
                                             </td>
-                                            <td className="px-3 py-2 font-medium text-right">
-                                                {schedule.sub_areas?.length ?? 0}
+                                            <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
+                                                {schedule.assets?.length ?? 0}
                                             </td>
                                         </tr>
                                     </tbody>
-                                </table>
-                            </div>
-                        </section> */}
+                                    </table>
+                                </div>
+                            </section> */}
+                        {/* </div> */}
 
-                        {/* Scheduling Info */}
-                        {/* <section className="w-[320px] md:w-[400px] md:ml-auto md:text-right print:justify-self-end print:text-right">
-                            <h3 className="mb-2 text-sm md:text-base font-semibold">Scheduling Information</h3>
-                            <div className="overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                                <table className="w-full table-auto text-xs md:text-sm">
-                                <tbody>
-                                    <tr className="border-b border-gray-200 dark:border-gray-800">
-                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                            Inventory Month
-                                        </td>
-                                        <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
-                                            {formatMonth(schedule.inventory_schedule)}
-                                        </td>
-                                    </tr>
-                                    <tr className="border-b border-gray-200 dark:border-gray-800">
-                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                            Actual Date of Inventory
-                                        </td>
-                                        <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
-                                            {formatDateLong(schedule.actual_date_of_inventory)}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="bg-gray-100 px-3 py-2 text-gray-700 dark:bg-neutral-900">
-                                            Total Assets
-                                        </td>
-                                        <td className="px-3 py-2 font-medium text-right truncate whitespace-normal break-words ">
-                                            {schedule.assets?.length ?? 0}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                </table>
-                            </div>
-                        </section> */}
-                    {/* </div> */}
+                        {/* Pivot Table */}
+                        <div className="w-[320px] md:w-full mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+                            {/* <div className="flex items-center justify-between bg-blue-200 px-4 py-2 text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
+                                <span>Inventory Sheet Scheduling</span>
+                                <Button
+                                    onClick={refreshSchedule}
+                                    disabled={refreshing}
+                                    variant="primary"
+                                    // size="sm"
+                                    className="
+                                        flex items-center gap-1 cursor-pointer 
+                                        text-xs px-2 py-1
+                                        sm:gap-2 sm:text-sm sm:px-3 sm:py-2
+                                    "
+                                >
+                                    <RotateCcw
+                                        className={`h-3 w-3 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`}
+                                    />
+                                    {refreshing ? 'Refreshing…' : 'Refresh'}
+                                </Button>
+                            </div> */}
 
-                    {/* Pivot Table */}
-                    <div className="w-[320px] md:w-full mt-8 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-                        {/* <div className="flex items-center justify-between bg-blue-200 px-4 py-2 text-sm font-semibold text-gray-800 dark:bg-neutral-900 dark:text-gray-200">
-                            <span>Inventory Sheet Scheduling</span>
-                            <Button
-                                onClick={refreshSchedule}
-                                disabled={refreshing}
-                                variant="primary"
-                                // size="sm"
-                                className="
-                                    flex items-center gap-1 cursor-pointer 
-                                    text-xs px-2 py-1
-                                    sm:gap-2 sm:text-sm sm:px-3 sm:py-2
-                                "
-                            >
-                                <RotateCcw
-                                    className={`h-3 w-3 sm:h-4 sm:w-4 ${refreshing ? 'animate-spin' : ''}`}
-                                />
-                                {refreshing ? 'Refreshing…' : 'Refresh'}
-                            </Button>
-                        </div> */}
+                            <div className="overflow-x-auto">
+                                <table className="md:w-full text-xs md:text-sm border-collapse">
+                                    <thead className="md:min-w-[600px] bg-gray-100 text-gray-700">
+                                        <tr>
+                                            {/* <th className="border px-2 py-1 w-10 text-center">#</th> */}
+                                            <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
+                                            <th className="border px-2 py-1 text-center">Buildings</th>
+                                            <th className="border px-2 py-1 text-center">Rooms</th>
+                                            <th className="border px-2 py-1 text-center">Inventory Schedule</th>
+                                            <th className="border px-2 py-1 text-center">Actual Date of Inventory</th>
+                                            
+                                            {/* <th className="border px-2 py-1 text-center">Sub-Areas</th> */}
+                                            <th className="border px-2 py-1 text-center">Status</th>
+                                            {/* <th className="border px-2 py-1 text-center">Asset Count</th> */}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pageItems.length > 0 ? (
+                                            pageItems.map((row, idx) => {
+                                                const s = spans[idx];
+                                                return (
+                                                    <tr key={start + idx}>
+                                                        {/* <td className="border px-2 py-1 text-center">
+                                                            {start + idx + 1}
+                                                        </td> */}
 
-                        <div className="overflow-x-auto">
-                            <table className="md:w-full text-xs md:text-sm border-collapse">
-                                <thead className="md:min-w-[600px] bg-gray-100 text-gray-700">
-                                    <tr>
-                                        {/* <th className="border px-2 py-1 w-10 text-center">#</th> */}
-                                        <th className="border px-2 py-1 text-center">Unit/Dept/Labs</th>
-                                        <th className="border px-2 py-1 text-center">Buildings</th>
-                                        <th className="border px-2 py-1 text-center">Rooms</th>
-                                        <th className="border px-2 py-1 text-center">Inventory Schedule</th>
-                                        <th className="border px-2 py-1 text-center">Actual Date of Inventory</th>
-                                        
-                                        {/* <th className="border px-2 py-1 text-center">Sub-Areas</th> */}
-                                        <th className="border px-2 py-1 text-center">Status</th>
-                                        {/* <th className="border px-2 py-1 text-center">Asset Count</th> */}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {pageItems.length > 0 ? (
-                                        pageItems.map((row, idx) => {
-                                            const s = spans[idx];
-                                            return (
-                                                <tr key={start + idx}>
-                                                    {/* <td className="border px-2 py-1 text-center">
-                                                        {start + idx + 1}
-                                                    </td> */}
-
-                                                    {s.unitSpan > 0 && (
+                                                        {s.unitSpan > 0 && (
+                                                            <td
+                                                                rowSpan={s.unitSpan}
+                                                                className="border px-2 py-1 text-center align-middle"
+                                                            >
+                                                                {row.unit ?? '—'}
+                                                            </td>
+                                                        )}
+                                                        {s.buildingSpan > 0 && (
+                                                            <td
+                                                                rowSpan={s.buildingSpan}
+                                                                className="border px-2 py-1 text-center align-middle"
+                                                            >
+                                                                {row.building ?? '—'}
+                                                            </td>
+                                                        )}
+                                                        {s.roomSpan > 0 && (
+                                                            <td
+                                                                rowSpan={s.roomSpan}
+                                                                className="border px-2 py-1 text-center align-middle"
+                                                            >
+                                                                {row.room ?? '—'}
+                                                            </td>
+                                                        )}
                                                         <td
-                                                            rowSpan={s.unitSpan}
                                                             className="border px-2 py-1 text-center align-middle"
                                                         >
-                                                            {row.unit ?? '—'}
+                                                            {formatMonth(schedule.inventory_schedule)}
                                                         </td>
-                                                    )}
-                                                    {s.buildingSpan > 0 && (
                                                         <td
-                                                            rowSpan={s.buildingSpan}
                                                             className="border px-2 py-1 text-center align-middle"
                                                         >
-                                                            {row.building ?? '—'}
+                                                            {formatDateLong(schedule.actual_date_of_inventory)}
                                                         </td>
-                                                    )}
-                                                    {s.roomSpan > 0 && (
-                                                        <td
-                                                            rowSpan={s.roomSpan}
-                                                            className="border px-2 py-1 text-center align-middle"
-                                                        >
-                                                            {row.room ?? '—'}
-                                                        </td>
-                                                    )}
-                                                    <td
-                                                        className="border px-2 py-1 text-center align-middle"
-                                                    >
-                                                        {formatMonth(schedule.inventory_schedule)}
-                                                    </td>
-                                                    <td
-                                                        className="border px-2 py-1 text-center align-middle"
-                                                    >
-                                                        {formatDateLong(schedule.actual_date_of_inventory)}
-                                                    </td>
-                                                    
-                                                    {/* {s.subAreaSpan > 0 && (
-                                                        <td
-                                                            rowSpan={s.subAreaSpan}
-                                                            className="border px-2 py-1 text-center align-middle"
-                                                        >
-                                                            {row.sub_area ?? '—'}
-                                                        </td>
-                                                    )} */}
+                                                        
+                                                        {/* {s.subAreaSpan > 0 && (
+                                                            <td
+                                                                rowSpan={s.subAreaSpan}
+                                                                className="border px-2 py-1 text-center align-middle"
+                                                            >
+                                                                {row.sub_area ?? '—'}
+                                                            </td>
+                                                        )} */}
 
-                                                    {/* <td className="border px-2 py-1 text-center"> */}
-                                                        {/* <StatusPill status={row.status} /> */}
-                                                        {/* {formatEnums(row.status)} */}
-                                                    {/* </td> */}
+                                                        {/* <td className="border px-2 py-1 text-center"> */}
+                                                            {/* <StatusPill status={row.status} /> */}
+                                                            {/* {formatEnums(row.status)} */}
+                                                        {/* </td> */}
 
-                                                    <td
-                                                        className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
-                                                        onClick={() => {
-                                                            setRowAssets({
+                                                        <td
+                                                            className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
+                                                            onClick={() => {
+                                                                setRowAssets({
+                                                                    scheduleId: schedule.id,
+                                                                    rowId: row.sub_area_id
+                                                                        ? row.sub_area_id
+                                                                        : row.building_room_id!,
+                                                                    type: row.sub_area_id ? 'sub_area' : 'building_room',
+                                                                    title: `${row.unit ?? ''} / ${row.building ?? ''} / ${
+                                                                        row.room ?? ''
+                                                                    } / ${row.sub_area ?? ''}`,
+                                                                    unitId: row.unit_id,
+                                                                });
+                                                            }}
+                                                        >
+                                                            {formatEnums(row.status)}
+                                                        </td>
+
+                                                        {/* <td
+                                                            className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
+                                                            onClick={() => {
+                                                                setRowAssets({
                                                                 scheduleId: schedule.id,
                                                                 rowId: row.sub_area_id
                                                                     ? row.sub_area_id
@@ -546,136 +567,120 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                                                     row.room ?? ''
                                                                 } / ${row.sub_area ?? ''}`,
                                                                 unitId: row.unit_id,
-                                                            });
-                                                        }}
-                                                    >
-                                                        {formatEnums(row.status)}
-                                                    </td>
+                                                                });
+                                                            }}
+                                                        >
+                                                            {row.assetCount ?? '—'}
+                                                        </td> */}
+                                                    </tr>
+                                                );
+                                            })
+                                        ) : (
+                                        <tr>
+                                            <td
+                                                colSpan={9}
+                                                className="border px-2 py-4 text-center text-muted-foreground"
+                                            >
+                                                No scope records found.
+                                            </td>
+                                        </tr>
+                                        )}
+                                    </tbody>
+                                </table>
 
-                                                    {/* <td
-                                                        className="border px-2 py-1 text-center align-middle text-blue-600 underline cursor-pointer"
-                                                        onClick={() => {
-                                                            setRowAssets({
-                                                            scheduleId: schedule.id,
-                                                            rowId: row.sub_area_id
-                                                                ? row.sub_area_id
-                                                                : row.building_room_id!,
-                                                            type: row.sub_area_id ? 'sub_area' : 'building_room',
-                                                            title: `${row.unit ?? ''} / ${row.building ?? ''} / ${
-                                                                row.room ?? ''
-                                                            } / ${row.sub_area ?? ''}`,
-                                                            unitId: row.unit_id,
-                                                            });
-                                                        }}
-                                                    >
-                                                        {row.assetCount ?? '—'}
-                                                    </td> */}
-                                                </tr>
-                                            );
-                                        })
-                                    ) : (
-                                    <tr>
-                                        <td
-                                            colSpan={9}
-                                            className="border px-2 py-4 text-center text-muted-foreground"
-                                        >
-                                            No scope records found.
-                                        </td>
-                                    </tr>
-                                    )}
-                                </tbody>
-                            </table>
-
-                            <div className="flex items-center justify-between p-3">
-                                <PageInfo
-                                    page={page}
-                                    total={total}
-                                    pageSize={PAGE_SIZE}
-                                    label="rows"
-                                />
-                                <Pagination
-                                    page={page}
-                                    total={total}
-                                    pageSize={PAGE_SIZE}
-                                    onPageChange={setPage}
-                                />
+                                <div className="flex items-center justify-between p-3">
+                                    <PageInfo
+                                        page={page}
+                                        total={total}
+                                        pageSize={PAGE_SIZE}
+                                        label="rows"
+                                    />
+                                    <Pagination
+                                        page={page}
+                                        total={total}
+                                        pageSize={PAGE_SIZE}
+                                        onPageChange={setPage}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Signatories */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5 mt-5 text-xs sm:text-sm">
-                        <div className="text-center">
-                            <p className="font-semibold mb-6 sm:mb-8">Prepared By:</p>
-                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
-                            <p className="font-bold text-gray-700 uppercase">
-                                {schedule.prepared_by?.name ?? '—'}
-                            </p>
-                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
-                                {schedule.prepared_by?.role_name ?? 'Property Clerk'}
-                            </p>
+                        {/* Signatories */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5 mt-5 text-xs sm:text-sm">
+                            <div className="text-center">
+                                <p className="font-semibold mb-6 sm:mb-8">Prepared By:</p>
+                                <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
+                                <p className="font-bold text-gray-700 uppercase">
+                                    {schedule.prepared_by?.name ?? '—'}
+                                </p>
+                                <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                    {schedule.prepared_by?.role_name ?? 'Property Clerk'}
+                                </p>
+                            </div>
+                            <div className="text-center">
+                                <p className="font-semibold mb-6 sm:mb-8">Approved By:</p>
+                                <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
+                                <p className="font-bold text-gray-700 uppercase">
+                                    {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'approved_by' && s.status === 'approved')
+                                        ? signatories['approved_by']?.name
+                                        : '—'}
+                                </p>
+                                <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                    {signatories['approved_by']?.title ?? 'VP for Administration'}
+                                </p>
+                            </div>
+                            <div className="text-center">
+                                <p className="font-semibold mb-6 sm:mb-8">Received By:</p>
+                                <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
+                                <p className="font-bold text-gray-700 uppercase">
+                                    {signatories['received_by']?.name ?? '—'}
+                                </p>
+                                <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                    {signatories['received_by']?.title ?? 'Internal Auditor'}
+                                </p>
+                            </div>
+                            <div className="text-center">
+                                <p className="font-semibold mb-6 sm:mb-8">Noted By:</p>
+                                <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
+                                <p className="font-bold text-gray-700 uppercase">
+                                    {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'noted_by' && s.status === 'approved')
+                                        ? signatories['noted_by']?.name
+                                        : '—'}
+                                </p>
+                                <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                    {signatories['noted_by']?.title ?? 'Head, Property Management'}
+                                </p>
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <p className="font-semibold mb-6 sm:mb-8">Approved By:</p>
-                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
-                            <p className="font-bold text-gray-700 uppercase">
-                                {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'approved_by' && s.status === 'approved')
-                                    ? signatories['approved_by']?.name
-                                    : '—'}
-                            </p>
-                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
-                                {signatories['approved_by']?.title ?? 'VP for Administration'}
-                            </p>
-                        </div>
-                        <div className="text-center">
-                            <p className="font-semibold mb-6 sm:mb-8">Received By:</p>
-                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
-                            <p className="font-bold text-gray-700 uppercase">
-                                {signatories['received_by']?.name ?? '—'}
-                            </p>
-                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
-                                {signatories['received_by']?.title ?? 'Internal Auditor'}
-                            </p>
-                        </div>
-                        <div className="text-center">
-                            <p className="font-semibold mb-6 sm:mb-8">Noted By:</p>
-                            <div className="border-t border-black w-32 sm:w-48 mx-auto mb-1"></div>
-                            <p className="font-bold text-gray-700 uppercase">
-                                {schedule.approvals?.flatMap((a) => a.steps).some((s) => s.code === 'noted_by' && s.status === 'approved')
-                                    ? signatories['noted_by']?.name
-                                    : '—'}
-                            </p>
-                            <p className="text-[11px] sm:text-xs text-gray-500 italic">
-                                {signatories['noted_by']?.title ?? 'Head, Property Management'}
-                            </p>
-                        </div>
-                    </div>
+                        <pre>{JSON.stringify(schedule.prepared_by, null, 2)}</pre>
 
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-6 print:hidden">
-                        <DialogClose asChild>
-                            <Button 
-                                variant="primary" 
-                                className="w-full sm:w-auto cursor-pointer text-xs font-bold sm:text-sm px-3 py-2"
-                            >
-                                ← Back to Schedules
-                            </Button>
-                        </DialogClose>
-                        {String(schedule.scheduling_status ?? '').toLowerCase() !== 'pending_review' && (
-                            <Button
-                                onClick={() => window.open(`/inventory-scheduling/${schedule.id}/export-pdf`, '_blank')}
-                                className="
-                                    w-full sm:w-auto cursor-pointer
-                                    inline-block bg-blue-600 text-white 
-                                    rounded shadow font-semibold
-                                    text-xs sm:text-sm px-3 py-2
-                                    hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50
-                                "
-                            >
-                                🖨️ Print Form
-                            </Button>
-                        )}
+                        {/* Actions */}
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-6 print:hidden">
+                            <DialogClose asChild>
+                                <Button 
+                                    variant="primary" 
+                                    className="w-full sm:w-auto cursor-pointer text-xs font-bold sm:text-sm px-3 py-2"
+                                >
+                                    ← Back to Schedules
+                                </Button>
+                            </DialogClose>
+                            {String(schedule.scheduling_status ?? '').toLowerCase() !== 'pending_review' && (
+                                <Button
+                                    onClick={() => window.open(`/inventory-scheduling/${schedule.id}/export-pdf`, '_blank')}
+                                    className="
+                                        w-full sm:w-auto cursor-pointer
+                                        inline-block bg-blue-600 text-white 
+                                        rounded shadow font-semibold
+                                        text-xs sm:text-sm px-3 py-2
+                                        hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50
+                                    "
+                                >
+                                    🖨️ Print Form
+                                </Button>
+                            )}
+                        </div>
                     </div>
+                    
                 </div>
             </DialogContent>
             {rowAssets && (
@@ -692,6 +697,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                     unitId={rowAssets.unitId}
                 />
             )}
+            
         </Dialog>
     );
 };
