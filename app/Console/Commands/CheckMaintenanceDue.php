@@ -27,7 +27,7 @@ class CheckMaintenanceDue extends Command
      */
     public function handle(): void
     {
-        // 1️⃣ Find assets with due date today or already past
+        // Find assets with due date today or already past
         $dueAssets = InventoryList::whereDate('maintenance_due_date', '<=', now())->get();
 
         if ($dueAssets->isEmpty()) {
@@ -35,34 +35,41 @@ class CheckMaintenanceDue extends Command
             return;
         }
 
-        // 2️⃣ Fetch users with PMO Staff + PMO Head roles
-        $users = User::whereHas('role', function ($q) {
-            $q->whereIn('code', ['pmo_staff', 'pmo_head', 'superuser']);
-        })->get();
+        // Fetch only users with approved accounts and correct roles
+        $users = User::without('role') // 👈 disables global eager loading
+            ->where('status', 'approved')
+            ->whereNotNull('role_id')
+            ->whereHas('role', function ($q) {
+                $q->whereIn('code', ['pmo_staff', 'pmo_head', 'superuser']);
+            })
+            ->with('role:id,code,name') // load fresh role data only for matched users
+            ->get();
 
-         if ($users->isEmpty()) {
-            $this->warn('⚠️ No PMO Staff PMO Head and Superuser users found.');
+        // CONSOLE ONLY OUTPUT - php artisan maintenance:check-due
+        // $this->info('🧾 Users fetched for notification:');
+        // foreach ($users as $u) {
+        //     $this->line("- {$u->name} [{$u->role?->code}]");
+        // }
+
+        if ($users->isEmpty()) {
+            $this->warn('⚠️ No PMO Staff, PMO Head, or Superuser users found.');
             return;
         }
 
-        // IF WANT MO KASAMA VP ADMIN UNCOMMENT MOTO
-        // 2️⃣ Fetch users with PMO Staff + PMO Head + VP Admin + Superuser roles
-        // $users = User::whereHas('role', function ($q) {
-        //     $q->whereIn('code', ['pmo_staff', 'pmo_head', 'vp_admin', 'superuser']);
-        //     })->get();
-
-        //     if ($users->isEmpty()) {
-        //         $this->warn('⚠️ No PMO Staff/PMO Head/VP Admin/Superuser users found.');
-        //         return;
-        //     }
-
-       
-
-        // 3️⃣ Send notifications
+        // Strict filtered notifications
         foreach ($users as $user) {
+            $user->loadMissing('role');
+            $roleCode = strtolower($user->role?->code ?? '');
+
+            if (!in_array($roleCode, ['pmo_staff', 'pmo_head', 'superuser'])) {
+                continue; // Skip anyone else
+            }
+
             foreach ($dueAssets as $asset) {
                 $user->notify(new MaintenanceDueNotification($asset));
             }
+
+            $this->info("📨 Notified {$user->name} ({$roleCode})");
         }
 
         $this->info("📢 Sent maintenance due notifications to {$users->count()} users.");
