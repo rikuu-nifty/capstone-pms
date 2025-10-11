@@ -591,10 +591,12 @@ class TransferController extends Controller
             'receivingOrganization',
             'receivingBuildingRoom.building',
             'transferAssets.asset.assetModel.equipmentCode',
+            'transferAssets.toSubArea',
         ])->findOrFail($id);
 
-        $assets = $transfer->transferAssets->map(fn($t) => $t->asset)->filter();
-
+        $assets = $transfer->transferAssets()
+            ->with(['asset.assetModel.equipmentCode', 'toSubArea'])
+            ->get();
         $signatories = TransferSignatory::all()->keyBy('role_key');
 
         $pdf = Pdf::loadView('forms.property_transfer_form_pdf', [
@@ -606,7 +608,7 @@ class TransferController extends Controller
 
         $timestamp = now()->format('Y-m-d');
 
-        return $pdf->download("Transfer-Form-{$transfer->id}-{$timestamp}.pdf");
-        // return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
+        // return $pdf->download("Transfer-Form-{$transfer->id}-{$timestamp}.pdf");
+        return $pdf->stream("Transfer-Form-{$transfer->id}.pdf");
     }
 }
