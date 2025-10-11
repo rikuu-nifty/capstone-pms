@@ -216,7 +216,7 @@
             <p>Prepared By:</p>
             <div class="signature-line"></div>
             <p style="font-weight:bold;">{{ strtoupper($schedule->preparedBy->name ?? '—') }}</p>
-            <p style="font-size:11px;">{{ $schedule->preparedBy->role_name ?? 'Property Clerk' }}</p>
+            <p style="font-size:11px;">{{ $schedule->preparedBy->role->name ?? 'Property Clerk' }}</p>
         </td>
 
         {{-- Approved By --}}
