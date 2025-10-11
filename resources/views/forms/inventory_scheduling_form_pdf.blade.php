@@ -1,5 +1,8 @@
 @extends('forms.layout')
 
+@section('hide-footer-text')
+@endsection
+
 @section('title', 'Inventory Scheduling Form')
 
 @push('styles')
