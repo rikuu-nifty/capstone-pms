@@ -106,21 +106,21 @@ export default function RoleAssignmentModal({
 
             {/* Unit/Department Select */}
             <div className="grid gap-1">
-                <Label htmlFor="unit">Unit / Department</Label>
+                <Label htmlFor="unit">Unit/Department (Optional)</Label>
                 <Select
                     options={unitOptions}
                     value={unitOptions.find((o) => o.value === unitOrDeptId) || null}
                     onChange={(opt: SingleValue<Option>) =>
                         setUnitOrDeptId(opt ? opt.value : "")
                     }
-                    placeholder="Select a unit/department..."
+                    placeholder="Select a unit/department"
                     isClearable
                 />
             </div>
 
             {/* Notes */}
             <div className="grid gap-1">
-                <Label htmlFor="notes">Notes (optional)</Label>
+                <Label htmlFor="notes">Notes (Optional)</Label>
                 <Input
                 id="notes"
                 placeholder="Add notes..."
