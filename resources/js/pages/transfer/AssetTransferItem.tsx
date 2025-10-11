@@ -78,14 +78,10 @@ export default function AssetTransferItem({
                     <PerAssetFields
                         value={ta}
                         asset={asset}
-                        // fromSubAreas={fromSubAreas}
-                        // toSubAreas={toSubAreas}
                         fromSubAreas={fromSubAreas.filter(
                             (sa) => sa.building_room_id === asset.building_room_id
                         )}
-                        toSubAreas={toSubAreas.filter(
-                            (sa) => sa.building_room_id === ta.to_sub_area_id
-                        )}
+                        toSubAreas={toSubAreas}
                         parentStatus={parentStatus}
                         onChange={onChange}
                         renderContainer={false}  // no inner border
