@@ -172,15 +172,20 @@
         /* top-align multi-line entries */
     }
 
-    /* Kill the divider under "Code No." and "Description" */
-    .assets-table thead tr:nth-child(2) th:nth-child(-n+2) {
+    /* Kill the divider under "Code No.", "Description", and "Remarks" */
+    .assets-table thead tr:nth-child(2) th:nth-child(1),
+    .assets-table thead tr:nth-child(2) th:nth-child(2),
+    .assets-table thead tr:nth-child(2) th:last-child {
         border-bottom: 0 !important;
-        /* row 2 bottom */
+        /* removes bottom border on row 2 */
     }
 
-    .assets-table thead tr:nth-child(3) th:nth-child(-n+2) {
+    /* Kill the divider for the empty cells below those same columns */
+    .assets-table thead tr:nth-child(3) th:nth-child(1),
+    .assets-table thead tr:nth-child(3) th:nth-child(2),
+    .assets-table thead tr:nth-child(3) th:last-child {
         border-top: 0 !important;
-        /* row 3 top (the empty cells) */
+        /* removes top border on row 3 */
     }
 </style>
 @endpush
@@ -236,18 +241,20 @@ use Carbon\Carbon;
 <table class="assets-table">
     <thead>
         <tr class="spacer-row">
-            <td colspan="4" style="height:10px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
+            <td colspan="5" style="height:10px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
         </tr>
         <tr>
             <th style="width:15%;">Code No.</th>
-            <th style="width:45%;">Description</th>
-            <th colspan="2" style="width:40%;">Property New Location</th>
+            <th style="width:35%;">Description</th>
+            <th colspan="2" style="width:30%;">Property New Location</th>
+            <th style="width:20%;">Remarks</th>
         </tr>
         <tr>
             <th></th>
             <th></th>
-            <th style="width:20%;">Building</th>
-            <th style="width:20%;">Room No.</th>
+            <th style="width:15%;">Building</th>
+            <th style="width:15%;">Room No.</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -257,22 +264,15 @@ use Carbon\Carbon;
             <td>{{ $a->asset_name }}{{ $a->description ? ' - ' . $a->description : '' }}</td>
             <td>{{ $transfer->receivingBuildingRoom->building->name ?? '—' }}</td>
             <td>{{ $transfer->receivingBuildingRoom->room ?? '—' }}</td>
+            <td>{{ $a->remarks ?? $transfer->remarks ?? '—' }}</td>
         </tr>
         @empty
         <tr>
-            <td colspan="4" style="text-align:center;">No associated assets.</td>
+            <td colspan="5" style="text-align:center;">No associated assets.</td>
         </tr>
         @endforelse
     </tbody>
 </table>
-
-<!-- <p style="font-size:12px;">
-    <strong>Total Assets:</strong> {{ count($assets) }}
-</p> -->
-
-@if($transfer->remarks)
-<p class="remarks"><strong>Remarks:</strong> {{ $transfer->remarks }}</p>
-@endif
 
 {{-- SIGNATORIES --}}
 <div class="signature-block">
