@@ -295,7 +295,7 @@ $chunks = collect([$assets]); // render one continuous table
     <tfoot>
         <tr>
             <td colspan="4" style="text-align:center; font-size:12px; padding-top:6px; border:none;">
-                Note: Valid only on the specified date.
+                Note: Valid only on the specified date
             </td>
         </tr>
     </tfoot>
