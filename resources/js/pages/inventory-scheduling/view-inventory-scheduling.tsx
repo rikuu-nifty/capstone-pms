@@ -614,7 +614,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                     {schedule.prepared_by?.name ?? '—'}
                                 </p>
                                 <p className="text-[11px] sm:text-xs text-gray-500 italic">
-                                    {schedule.prepared_by?.role_name ?? 'Property Clerk'}
+                                    {schedule.prepared_by?.role?.name ?? 'Property Clerk'}
                                 </p>
                             </div>
                             <div className="text-center">
@@ -652,7 +652,8 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                 </p>
                             </div>
                         </div>
-                        <pre>{JSON.stringify(schedule.prepared_by, null, 2)}</pre>
+                        
+                        {/* <pre>{JSON.stringify(schedule.prepared_by, null, 2)}</pre> */}
 
                         {/* Actions */}
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-6 print:hidden">

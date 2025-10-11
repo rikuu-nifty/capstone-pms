@@ -74,6 +74,12 @@ export type User = {
     name: string;
     email: string;
     role_name?: string;
+
+    role?: {
+        id: number;
+        name: string;
+        code: string;
+    } | null;
 };
 
 // export type Account = {
