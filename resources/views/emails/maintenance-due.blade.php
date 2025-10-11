@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Verify Your Email - {{ config('app.name') }}</title>
+    <title>Maintenance Due - {{ config('app.name') }}</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -32,8 +32,8 @@
         .email-header {
             background-color: #0056D2;
             text-align: left;
-            /* padding: 20px; */
-            padding: 20px 20px;
+            padding: 0;
+            /* handled in cell */
             min-height: 80px;
             /* consistent height */
         }
@@ -41,7 +41,8 @@
         .email-header table {
             border-collapse: collapse;
             width: 100%;
-            height: 100%;
+            height: 80px;
+            /* match min-height for vertical centering */
         }
 
         .email-header img {
@@ -68,7 +69,7 @@
             color: #0056D2;
             margin-bottom: 16px;
             text-align: center;
-            /* only this title centered */
+            /* only the title centered */
         }
 
         .email-body p {
@@ -77,30 +78,29 @@
             margin-bottom: 20px;
             color: #444;
             text-align: justify;
-            /* justified paragraphs */
+            /* justified text */
         }
 
         .email-body p:first-of-type {
             text-align: left;
-            /* greeting is left-aligned */
+            /* greeting left-aligned, not justified */
         }
 
-        /* OTP BOX and related text */
-        .center-text {
-            text-align: center !important;
-        }
-
-        .otp-box {
+        .button {
             display: inline-block;
-            background-color: #f0f6ff;
-            border: 2px dashed #0056D2;
-            border-radius: 8px;
-            padding: 14px 28px;
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            color: #0056D2;
-            margin-bottom: 20px;
+            background: #0056D2;
+            color: #fff !important;
+            text-decoration: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .button-container {
+            text-align: center;
+            /* centers button */
+            margin-top: 10px;
         }
 
         /* FOOTER */
@@ -129,7 +129,7 @@
     <div class="email-wrapper">
         <div class="email-content">
             <!-- HEADER -->
-            <div class="email-header" style="background-color:#0056D2; padding:0; min-height:80px;">
+            <div class="email-header">
                 <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
                     style="border-collapse:collapse; width:100%; height:80px;">
                     <tr style="height:80px;">
@@ -145,19 +145,14 @@
 
             <!-- BODY -->
             <div class="email-body">
-                <h2>Verify Your Email</h2>
-
+                <h2>Maintenance Due Reminder</h2>
                 <p>Hi <strong>{{ $name }}</strong>,</p>
+                <p>The asset <strong>{{ $asset_name }}</strong> is due for maintenance on <strong>{{ $due_date }}</strong>.</p>
+                <p>Please take action as soon as possible to ensure proper maintenance scheduling.</p>
 
-                <p class="center-text">Your verification code is:</p>
-
-                <div class="center-text">
-                    <div class="otp-box">{{ $otp }}</div>
+                <div class="button-container">
+                    <a href="{{ $url }}" class="button">View Asset</a>
                 </div>
-
-                <p>This code will expire in <strong>10 minutes</strong>.<br>
-                    If you didn’t request this, you can safely ignore this email.
-                </p>
             </div>
 
             <!-- FOOTER -->
@@ -176,7 +171,6 @@
                     </tr>
                 </table>
             </div>
-
         </div>
     </div>
 </body>

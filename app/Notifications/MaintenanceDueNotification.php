@@ -9,6 +9,9 @@ use Illuminate\Notifications\Notification;
 use App\Models\InventoryList;
 use Carbon\Carbon;
 
+use Illuminate\Mail\Mailable;
+use Illuminate\Support\Facades\Mail;
+
 class MaintenanceDueNotification extends Notification
 {
     use Queueable;
@@ -46,21 +49,29 @@ class MaintenanceDueNotification extends Notification
         ];
     }
 
-
     /**
      * Get the mail representation of the notification.
      */
    public function toMail(object $notifiable): MailMessage
-{
-    $formattedDate = Carbon::parse($this->asset->maintenance_due_date)->format('F j, Y');
+    {
+        $formattedDate = Carbon::parse($this->asset->maintenance_due_date)->format('F j, Y');
+        $url = route('inventory-list.view', $this->asset->id);
 
-    return (new MailMessage)
-        ->subject("Maintenance Due: {$this->asset->asset_name}")
-        ->greeting("Hello {$notifiable->name},")
-        ->line("The asset **{$this->asset->asset_name}** is due for maintenance on {$formattedDate}.")
-        ->action('View Asset', route('inventory-list.view', $this->asset->id))
-        ->line('Please take action as soon as possible.');
-}
+        // return (new MailMessage)
+        //     ->subject("Maintenance Due: {$this->asset->asset_name}")
+        //     ->greeting("Hello {$notifiable->name},")
+        //     ->line("The asset **{$this->asset->asset_name}** is due for maintenance on {$formattedDate}.")
+        //     ->action('View Asset', route('inventory-list.view', $this->asset->id))
+        //     ->line('Please take action as soon as possible.');
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject("Maintenance Due: {$this->asset->asset_name}")
+            ->view('emails.maintenance-due', [
+                'name'       => $notifiable->name,
+                'asset_name' => $this->asset->asset_name,
+                'due_date'   => $formattedDate,
+                'url'        => $url,
+            ]);
+    }
 
     /**
      * Get the array representation of the notification.
