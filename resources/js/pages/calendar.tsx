@@ -54,85 +54,6 @@ export default function CalendarPage({ events }: CalendarProps) {
     const [activeModules, setActiveModules] = useState<string[]>(MODULES.map(m => m.label));
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    // useEffect(() => {
-    //     if (!calendarRef.current) return;
-
-    //     const filtered = events.filter(e => activeModules.includes(e.type));
-
-    //     const calendar = new FullCalendar(calendarRef.current, {
-    //         plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
-    //         headerToolbar: {
-    //             left: 'prev,next today',
-    //             center: 'title',
-    //             right: 'dayGridMonth,timeGridWeek,listWeek',
-    //         },
-    //         buttonText: {
-    //             today: 'Today',
-    //             month: 'Month',
-    //             week: 'Week',
-    //             list: 'List',
-    //         },
-    //         initialView: 'dayGridMonth',
-    //         navLinks: true,
-    //         events: filtered,
-
-    //         datesSet: () => {
-    //             const allDayLabel = document.querySelector('.fc-timegrid-axis-cushion');
-    //             if (allDayLabel && allDayLabel.textContent?.trim().toLowerCase() === 'all-day') {
-    //                 allDayLabel.textContent = 'ALL DAY';
-    //                 (allDayLabel as HTMLElement).style.fontWeight = '600';
-    //             }
-
-    //             const listLabels = document.querySelectorAll('.fc-list-event-time');
-    //             listLabels.forEach((label) => {
-    //                 if (label.textContent?.trim().toLowerCase() === 'all-day') {
-    //                     label.textContent = 'ALL DAY';
-    //                     // (label as HTMLElement).style.fontWeight = '600'; // make bold
-    //                 }
-    //             });
-    //         },
-
-
-    //         eventClick: (info: EventClickArg) => {
-    //             info.jsEvent.preventDefault();
-    //             if (info.event.url) window.open(info.event.url, '_blank');
-    //         },
-    //         height: 'auto',
-    //         eventDisplay: 'block',
-    //         eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
-    //         dayMaxEventRows: 5,
-    //         moreLinkText: 'more',
-
-    //         slotMinTime: '-01:00:00',     // start at midnight
-    //         slotMaxTime: '26:01:00',     // include midnight at the bottom
-    //         scrollTime: '06:00:00',      // default scroll position (6 AM)
-    //         scrollTimeReset: false,
-    //         expandRows: true,
-    //         slotLabelInterval: '1:00',   // 1-hour spacing between rows
-    //         slotLabelFormat: {           // proper time labels
-    //             hour: 'numeric',
-    //             minute: '2-digit',
-    //             meridiem: 'short',
-    //             hour12: true,
-    //         },
-    //         views: {
-    //             dayGridMonth: { displayEventTime: false }, // hide time in month
-    //             timeGridWeek: { displayEventTime: false }, // hide time in week
-    //             timeGridDay: { displayEventTime: false },   // hide time in day view
-    //         },
-    //         eventDidMount: (info) => {
-    //             const titleEl = info.el.querySelector('.fc-event-title');
-    //             if (titleEl) titleEl.innerHTML = info.event.title;
-    //         },
-    //         eventContent: function(arg) {
-    //             return { html: arg.event.title };
-    //         },
-    //     });
-
-    //     calendar.render();
-    //     return () => calendar.destroy();
-    // }, [events, activeModules]);
-
     useEffect(() => {
         if (!calendarRef.current) return;
 
@@ -166,8 +87,8 @@ export default function CalendarPage({ events }: CalendarProps) {
                 week: 'Week',
                 list: 'Week List',
             },
-            initialView: currentView, // ✅ Preserve view
-            initialDate: currentDate, // ✅ Preserve date
+            initialView: currentView, // Preserve view
+            initialDate: currentDate, // Preserve date
             navLinks: true,
             events: filtered,
             height: 'auto',
@@ -236,22 +157,21 @@ export default function CalendarPage({ events }: CalendarProps) {
 
             <div className="p-6 space-y-4">
                 {/* Shared Header */}
-<div className="flex items-center justify-between">
-    <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-        Calendar Overview
-    </h1>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                        Calendar Overview
+                    </h1>
 
-    {/* Floating Toggle — mobile only */}
-    <Button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        variant="outline"
-        size="icon"
-        className="lg:hidden bg-white dark:bg-neutral-800 shadow-sm border"
-    >
-        <Filter className="h-5 w-5 text-blue-600" />
-    </Button>
-</div>
-
+                    {/* Floating Toggle — mobile only */}
+                    <Button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        variant="outline"
+                        size="icon"
+                        className="lg:hidden bg-white dark:bg-neutral-800 shadow-sm border"
+                    >
+                        <Filter className="h-5 w-5 text-blue-600" />
+                    </Button>
+                </div>
 
                 {/* Main container with equal-height calendar + sidebar */}
                 <div className="flex flex-col lg:flex-row gap-6 min-h-[80vh] max-h-[80vh]">
@@ -262,13 +182,14 @@ export default function CalendarPage({ events }: CalendarProps) {
                             className="flex-1 overflow-y-auto bg-white dark:bg-neutral-900 rounded-xl shadow p-4 border border-gray-200 dark:border-neutral-700"
                             style={{
                                 maxHeight: 'calc(100vh - 10rem)', // adjust based on header height
+                                scrollbarGutter: 'stable',
                             }}
                         />
                     </div>
 
                     {/* Sidebar */}
                     <div
-                        className={`fixed lg:relative top-0 right-0 h-full lg:h-auto lg:w-80 w-64 z-50 bg-white dark:bg-neutral-900 border-l border-gray-200 dark:border-neutral-800 shadow-lg transition-transform duration-300 ${
+                        className={`fixed lg:relative top-0 right-0 h-full lg:h-auto lg:w-75 w-64 z-50 bg-white dark:bg-neutral-900 border-l border-gray-200 dark:border-neutral-800 shadow-lg transition-transform duration-300 ${
                             sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
                         } flex flex-col self-stretch`}
                     >
