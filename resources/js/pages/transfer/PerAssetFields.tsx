@@ -119,6 +119,9 @@ export default function PerAssetFields({
                   </select>
                 </div>
 
+                {/* <pre>{JSON.stringify(fromSubAreas, null, 2)}</pre>
+                <pre>{JSON.stringify(toSubAreas, null, 2)}</pre> */}
+
                 {/* Asset Status */}
                 {/* <div className="col-span-5 sm:col-span-1">
                     <label className="mb-0.5 block font-medium">Asset Status</label>
