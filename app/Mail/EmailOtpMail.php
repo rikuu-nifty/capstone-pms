@@ -42,7 +42,8 @@ class EmailOtpMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.verify-otp',
+            // markdown: 'emails.verify-otp',
+            view: 'emails.verify-otp',
             with: [
                 'name' => $this->user->name ?? 'User',
                 'otp'  => $this->otp,
