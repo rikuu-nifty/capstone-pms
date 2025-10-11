@@ -204,14 +204,6 @@ export function AppSidebar() {
                 >
                     <SidebarMenu>
                         {visibleItems.map((item) => (
-                            // <SidebarMenuItem key={item.href}>
-                            //     <SidebarMenuButton asChild className="pl-8">
-                            //         <Link href={item.href} className="flex items-center space-x-1">
-                            //             <item.icon />
-                            //             <span>{item.title}</span>
-                            //         </Link>
-                            //     </SidebarMenuButton>
-                            // </SidebarMenuItem>
                             <SidebarMenuButton asChild className="pl-8">
                                 <Link href={item.href} className="flex items-center justify-between w-full">
                                     <div className="flex items-center space-x-2">
@@ -304,7 +296,6 @@ export function AppSidebar() {
                             ))}
                     </SidebarMenu>
                 </div>
-                <pre>{JSON.stringify(pendingApprovals, null, 2)}</pre>
             </SidebarContent>
 
             <SidebarFooter>
