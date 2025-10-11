@@ -138,8 +138,14 @@ function canView(item: NavItem, permissions: string[]): boolean {
 
 // ------------------ COMPONENT ------------------
 export function AppSidebar() {
-    const page = usePage<{ auth: { permissions: string[] } }>();
+    const page = usePage<{ 
+        auth: { permissions: string[] }
+        nav_metrics?: {
+            pending_user_approvals?: number
+        }
+    }>();
     const permissions = page.props.auth?.permissions ?? [];
+    const pendingApprovals = page.props.nav_metrics?.pending_user_approvals ?? 0;
 
     const { url } = usePage();
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -198,14 +204,29 @@ export function AppSidebar() {
                 >
                     <SidebarMenu>
                         {visibleItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <SidebarMenuButton asChild className="pl-8">
-                                    <Link href={item.href} className="flex items-center space-x-1">
-                                        <item.icon />
+                            // <SidebarMenuItem key={item.href}>
+                            //     <SidebarMenuButton asChild className="pl-8">
+                            //         <Link href={item.href} className="flex items-center space-x-1">
+                            //             <item.icon />
+                            //             <span>{item.title}</span>
+                            //         </Link>
+                            //     </SidebarMenuButton>
+                            // </SidebarMenuItem>
+                            <SidebarMenuButton asChild className="pl-8">
+                                <Link href={item.href} className="flex items-center justify-between w-full">
+                                    <div className="flex items-center space-x-2">
+                                        <item.icon className="h-4 w-4" />
                                         <span>{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
+                                    </div>
+
+                                    {/* Pending badge (visible only for Users) */}
+                                    {item.title === "Users" && pendingApprovals > 0 && (
+                                        <span className="ml-auto rounded-full bg-red-600 text-white text-xs font-semibold px-2 py-0.5">
+                                            {pendingApprovals}
+                                        </span>
+                                    )}
+                                </Link>
+                            </SidebarMenuButton>
                         ))}
                     </SidebarMenu>
                 </div>
@@ -283,6 +304,7 @@ export function AppSidebar() {
                             ))}
                     </SidebarMenu>
                 </div>
+                <pre>{JSON.stringify(pendingApprovals, null, 2)}</pre>
             </SidebarContent>
 
             <SidebarFooter>

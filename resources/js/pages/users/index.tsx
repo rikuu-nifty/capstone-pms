@@ -236,6 +236,11 @@ export default function UserApprovals() {
                         }`}
                     >
                         User Approvals
+                        {props.totals?.pending > 0 && (
+                            <span className="ml-1 rounded-full bg-red-600 text-white text-xs font-medium px-2 py-0.5">
+                                {props.totals.pending}
+                            </span>
+                        )}
                     </button>
                 </div>
 

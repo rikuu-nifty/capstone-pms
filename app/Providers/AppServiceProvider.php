@@ -108,7 +108,7 @@ class AppServiceProvider extends ServiceProvider
         TurnoverDisposalSignatory::observe(TurnoverDisposalSignatoryObserver::class);
         OffCampusSignatory::observe(OffCampusSignatoryObserver::class);
         
-        // ✅ Existing nav metrics
+        // Existing nav metrics
         Inertia::share('nav_metrics', function () {
             return Cache::remember('nav_metrics', 30, function () {
                 return [
@@ -117,21 +117,20 @@ class AppServiceProvider extends ServiceProvider
             });
         });
 
-        // ✅ Notifications (all + unread count)
+        // Notifications (all + unread count)
         Inertia::share('notifications', function () {
             $user = auth()->user();
 
-    return $user
-        ? [
-            'items' => $user->notifications()->latest()->take(10)->get(),
-            'unread_count' => $user->unreadNotifications()->count(),
-        ]
-        : [
-            'items' => [],
-            'unread_count' => 0,
-        ];
-    });
-
-      
-    }
+            return $user
+                ? [
+                    'items' => $user->notifications()->latest()->take(10)->get(),
+                    'unread_count' => $user->unreadNotifications()->count(),
+                ]
+                : [
+                    'items' => [],
+                    'unread_count' => 0,
+                ];
+            });
+        
+        }
 }
