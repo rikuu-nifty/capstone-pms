@@ -25,12 +25,14 @@ class PasswordResetNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
+        $url = url('/login'); // or your actual login route
+
         return (new MailMessage)
             ->subject('Your Password Has Been Reset')
-            ->greeting("Hello {$notifiable->name},")
-            ->line('Your account password has been reset by the administrator.')
-            ->line("Here is your new password: **{$this->newPassword}**")
-            ->line('For security, please log in and change this password as soon as possible.')
-            ->salutation('Thank you, Property Management System');
+            ->view('emails.password-reset', [
+                'name'        => $notifiable->name,
+                'newPassword' => $this->newPassword,
+                'url'         => $url,
+            ]);
     }
 }

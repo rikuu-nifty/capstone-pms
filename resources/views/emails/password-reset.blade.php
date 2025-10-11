@@ -7,16 +7,16 @@
 <p>Hi <strong>{{ $name }}</strong>,</p>
 <p>
     This is to inform you that your account password for the
-    <strong>Tap & Track Property Management System</strong> has been reset.
+    <strong>Tap & Track: Property Management System</strong> has been reset.
 </p>
 
 <p>
     This may have been done upon your request, or as part of the
-    <strong>Property Management Office’s</strong> regular account security maintenance.
+    >Property Management Office’s regular account security maintenance.
 </p>
 
 <p>
-    <strong>New Password:</strong> {{ $newPassword }}
+    New Password: <strong>{{ $newPassword }}</strong> 
 </p>
 
 <p>
@@ -27,5 +27,7 @@
     <a href="{{ $url }}" class="button">Log In to System</a>
 </div>
 
-<p>If you did not expect this password reset, please contact the Property Management Office immediately.</p>
+<p style="line-height:1.3;">
+    <small><em>If you did not expect this password reset, please contact the Property Management Office (PMO) immediately.</em></small>
+</p>
 @endsection
