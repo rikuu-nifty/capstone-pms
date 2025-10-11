@@ -57,7 +57,7 @@ class UserApprovalController extends Controller
         $roleId = $request->input('role_id');
         $role   = Role::findOrFail($roleId);
 
-        $this->authorize('assign-role', $role->code);
+        $this->authorize('approve-users', $role->code);
 
         $user->unit_or_department_id = $request->input('unit_or_department_id') ?: null;
         $user->save();
