@@ -153,7 +153,8 @@
     .signature-block td {
         border: none !important;
         vertical-align: top;
-        padding: 10px 15px;
+        /* padding: 10px 15px; */
+        padding: 0 15px;
     }
 
     .signature-line {
@@ -251,46 +252,51 @@ $chunks = collect([$assets]);
 <table class="assets-table">
     <thead>
         <tr class="spacer-row">
-            <td colspan="4" style="height:10px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
+            <td colspan="5" style="height:10px; border:none; border-bottom:1px solid #000; background:#fff;"></td>
         </tr>
         <tr>
-            <th style="width:8%;">Qty</th>
-            <th style="width:42%;">Items / Description</th>
-            <th style="width:25%;">Issuing Office</th>
-            <th style="width:25%;">Receiving Office</th>
+            <th style="width:6%;">Quantity</th>
+            <th style="width:30%;">Items / Description</th>
+            <th style="width:20%;">Issuing Office</th>
+            <th style="width:20%;">Receiving Office</th>
+            <th style="width:24%;">Remarks</th>
         </tr>
     </thead>
     <tbody>
         @foreach($chunk as $index => $a)
         <tr>
             <td>1</td>
-            <td style="text-align:center;">
+            <td style="text-align:center; font-size:12px;">
                 {{ $a->asset_name ?? '—' }}
                 @if($a->assetModel)
-                <br><small>Brand: {{ $a->assetModel->brand ?? '—' }}, Model: {{ $a->assetModel->model ?? '—' }}</small>
+                <br><small><strong>Brand: </strong>{{ $a->assetModel->brand ?? '—' }}, <strong>Model: </strong>{{ $a->assetModel->model ?? '—' }}</small>
                 @endif
                 @if($a->serial_no)
-                <br><small>Serial: {{ $a->serial_no }}</small>
+                <br><small><strong>Serial: </strong>{{ $a->serial_no }}</small>
                 @endif
             </td>
-
-            {{-- Offices should appear on every page’s first visible row, so we repeat them visually --}}
             <td class="office-cell">{{ $turnoverDisposal->issuingOffice->name ?? '—' }}</td>
             <td class="office-cell">{{ $turnoverDisposal->receivingOffice->name ?? '—' }}</td>
+            <td style="text-align:left; line-height:1.4;">
+                @if(!empty($a->record_remarks))
+                <div style="margin-bottom:4px;">{{ $a->record_remarks }}</div>
+                @endif
+
+                @if(!empty($a->pivot_remarks))
+                <div style="margin-top:6px;">{{ $a->pivot_remarks }}</div>
+                @endif
+
+                @if(empty($a->pivot_remarks) && empty($a->record_remarks))
+                —
+                @endif
+            </td>
         </tr>
         @endforeach
     </tbody>
 </table>
 @endforeach
+
 <div class="page-break">
-    @if($turnoverDisposal->description)
-    <p class="remarks"><strong>Description:</strong> {{ $turnoverDisposal->description }}</p>
-    @endif
-
-    @if($turnoverDisposal->remarks)
-    <p class="remarks"><strong>Remarks:</strong> {{ $turnoverDisposal->remarks }}</p>
-    @endif
-
     {{-- SIGNATORIES --}}
     <div class="signature-block">
         <table style="width:100%; border:none; border-collapse:collapse; font-size:12px;">

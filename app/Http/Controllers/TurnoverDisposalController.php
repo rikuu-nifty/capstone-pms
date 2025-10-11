@@ -148,7 +148,6 @@ class TurnoverDisposalController extends Controller
         return back()->with('success', "Record #{$record->id} has been updated.");
     }
 
-
     public function show(TurnoverDisposal $turnoverDisposal)
     {
         $turnoverDisposal->load([
@@ -217,7 +216,17 @@ class TurnoverDisposalController extends Controller
             'turnoverDisposalAssets.assets',
         ])->findOrFail($id);
 
-        $assets = $turnoverDisposal->turnoverDisposalAssets->map(fn($t) => $t->assets)->filter();
+        // $assets = $turnoverDisposal->turnoverDisposalAssets->map(fn($t) => $t->assets)->filter();
+        
+        $assets = $turnoverDisposal->turnoverDisposalAssets->map(function ($t) use ($turnoverDisposal) {
+            $asset = $t->assets;
+            if ($asset) {
+                // Merge both pivot and main record remarks
+                $asset->pivot_remarks = $t->remarks;
+                $asset->record_remarks = $turnoverDisposal->remarks;
+            }
+            return $asset;
+        })->filter();
 
         $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
 
