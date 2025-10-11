@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Contracts\Auth\MustVerifyEmail;   
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,10 +20,10 @@ use App\Notifications\UserDeniedNotification;
 use App\Notifications\UserRoleReassignedNotification;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-// 🔹 Import the RoleChanged event
 use App\Events\RoleChanged;
 
-class User extends Authenticatable implements MustVerifyEmail  
+// class User extends Authenticatable implements MustVerifyEmail  
+class User extends Authenticatable
 {
     use HasFactory, Notifiable, SoftDeletes;
 
