@@ -31,18 +31,27 @@ class UserApprovedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
-            ->subject('Your account has been approved')
-            ->greeting('Hi '.$notifiable->name.',')
-            ->line('Good news! Your account has been approved.')
-            ->action('Go to Dashboard', url('/dashboard'))
-            ->line('You can now sign in and start using the system.');
+        $url = url('/dashboard');
 
-        if ($this->notes) {
-            $mail->line('Notes: '.$this->notes);
-        }
+        // $mail = (new MailMessage)
+        //     ->subject('Your account has been approved')
+        //     ->greeting('Hi '.$notifiable->name.',')
+        //     ->line('Good news! Your account has been approved.')
+        //     ->action('Go to Dashboard', url('/dashboard'))
+        //     ->line('You can now sign in and start using the system.');
 
-        return $mail;
+        // if ($this->notes) {
+        //     $mail->line('Notes: '.$this->notes);
+        // }
+
+        // return $mail;
+        return (new MailMessage)
+        ->subject('Your Account Has Been Approved')
+        ->view('emails.user-approved', [
+            'name' => $notifiable->name,
+            'notes' => $this->notes,
+            'url' => $url,
+        ]);
     }
 
     /**
