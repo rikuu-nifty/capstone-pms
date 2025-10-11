@@ -76,7 +76,7 @@
             right: 0;
             height: 30px;
             font-size: 10px;
-            color: #444;
+            color: #000;
             padding-top: 5px;
             font-family: 'Times New Roman', Times, serif;
         }
@@ -86,13 +86,18 @@
             left: 0;
         }
 
+        footer .footer-left div+div {
+            margin-top: 2px;
+        }
+
         footer .footer-right {
             position: absolute;
             right: 0;
         }
 
         /* ---------- BODY ---------- */
-        h2, h3 {
+        h2,
+        h3 {
             margin: 0 0 8px;
             font-weight: 700;
         }
@@ -103,7 +108,8 @@
             font-size: 11px;
         }
 
-        th, td {
+        th,
+        td {
             border: 1px solid #ccc;
             padding: 6px 8px;
             vertical-align: middle;
@@ -166,10 +172,22 @@
         @yield('content')
     </main>
 
-    <footer>
+    <!-- <footer>
         <div class="footer-left">
             AUF-FORM-AS/PMO-33&nbsp;&nbsp;November 22, 2011&nbsp;&nbsp;Rev. 0
         </div>
+        <div class="footer-right">
+            {{-- Page number placeholder --}}
+        </div>
+    </footer> -->
+
+    <footer>
+        @if (!View::hasSection('hide-footer-text'))
+        <div class="footer-left">
+            <div>AUF-FORM-AS/PMO-33</div>
+            <div>November 22, 2011&nbsp;&nbsp;Rev. 0</div>
+        </div>
+        @endif
         <div class="footer-right">
             {{-- Page number placeholder --}}
         </div>
