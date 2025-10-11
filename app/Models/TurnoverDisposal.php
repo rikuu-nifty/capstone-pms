@@ -189,7 +189,8 @@ class TurnoverDisposal extends Model
                 default     => 'pending', // pending_review, approved, rejected
             };
             $detail->date_finalized = $this->document_date;
-            $detail->remarks        = $this->remarks;
+            // $detail->remarks        = $this->remarks;    // Old version, copies record remarks to asset remarks
+            $detail->remarks = $item['remarks'] ?? $detail->remarks;
 
             $detail->save();
             $keptIds[] = $detail->id;
