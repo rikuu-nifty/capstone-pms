@@ -18,6 +18,8 @@ const badgeVariants = cva(
         outline:
           'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         primary: 'bg-black text-white',
+        warning:
+        'border-transparent bg-yellow-500 text-white [a&]:hover:bg-yellow-500 focus-visible:ring-yellow-300 dark:focus-visible:ring-yellow-400',
 
         // ✅ status-specific
         active:   'bg-emerald-100 text-emerald-700 border border-emerald-200',

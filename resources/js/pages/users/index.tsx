@@ -376,7 +376,7 @@ export default function UserApprovals() {
                                             </TableCell>
                                             <TableCell>
                                                 {u.status === "approved" && <Badge variant="success">Approved</Badge>}
-                                                {u.status === "pending" && <Badge variant="primary">Pending</Badge>}
+                                                {u.status === "pending" && <Badge variant="warning">Pending</Badge>}
                                                 {u.status === "denied" && <Badge variant="destructive">Rejected</Badge>}
                                             </TableCell>
 
