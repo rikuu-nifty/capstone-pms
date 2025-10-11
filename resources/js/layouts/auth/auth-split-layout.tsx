@@ -60,7 +60,7 @@
                 <div className="text-center sm:text-left">
                 <h2 className="text-3xl font-semibold text-gray-900">Welcome Back!</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                    Sign in to access your request management dashboard.
+                    Sign in to access <strong>Tap & Track</strong>'s dashboard.
                 </p>
                 </div>
 

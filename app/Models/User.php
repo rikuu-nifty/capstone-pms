@@ -280,4 +280,14 @@ class User extends Authenticatable
     {
         return $this->notifications()->whereNull('read_at');
     }
+
+    /**
+     * Override the default password reset link email
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $url = url(route('password.reset', ['token' => $token, 'email' => $this->email], false));
+
+        $this->notify(new \App\Notifications\PasswordResetLinkNotification($url));
+    }
 }
