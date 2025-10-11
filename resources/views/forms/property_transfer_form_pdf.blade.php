@@ -65,7 +65,8 @@
         border-bottom: 0.8px solid #000;
         padding: 0 0 1px 6px;
         min-width: 180px;
-        margin-left: 5px;
+        max-width: 200px;
+        margin-left: -15px;
         text-align: center;
     }
 
@@ -226,7 +227,12 @@ use Carbon\Carbon;
             <div class="tf-heading">Transfer From</div>
 
             <div class="label-row">
-                <span class="label-text">Item/Unit/Department:</span>
+                <span class="label-text">Item/Unit:</span>
+                <span class="value-line">&nbsp;</span>
+            </div>
+
+            <div class="label-row">
+                <span class="label-text">Department:</span>
                 <span class="value-line">{{ $transfer->currentOrganization->name ?? '' }}</span>
             </div>
 
@@ -242,7 +248,12 @@ use Carbon\Carbon;
             <div class="tf-heading">Transfer To</div>
 
             <div class="label-row">
-                <span class="label-text">Item/Unit/Department:</span>
+                <span class="label-text">Item/Unit:</span>
+                <span class="value-line">&nbsp;</span>
+            </div>
+
+            <div class="label-row">
+                <span class="label-text">Department:</span>
                 <span class="value-line">{{ $transfer->receivingOrganization->name ?? '' }}</span>
             </div>
 
