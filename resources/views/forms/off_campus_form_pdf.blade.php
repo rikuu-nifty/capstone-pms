@@ -114,7 +114,7 @@
 
     /* --- SIGNATURE BLOCK --- */
     .signature-block {
-        margin-top: 45px;
+        margin-top: 35px;
         text-align: center;
         page-break-inside: avoid;
     }
@@ -288,32 +288,50 @@ $chunks = collect([$assets]); // render one continuous table
                 <br><small>Serial: {{ $a->serial_no }}</small>
                 @endif
             </td>
-            <td>{{ $offCampus->comments ?? '—' }}</td>
+            <td>{{ $offCampus->comments ?? '' }}</td>
         </tr>
         @endforeach
     </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="4" style="text-align:center; font-size:12px; padding-top:6px; border:none;">
+                Note: Valid only on the specified date.
+            </td>
+        </tr>
+    </tfoot>
 </table>
 
-
 <div class="continuation-page">
-    @if($offCampus->purpose)
-    <p class="purpose"><strong>Purpose:</strong> {{ $offCampus->purpose }}</p>
-    @endif
+    <table style="width:100%; border:none; border-collapse:collapse; margin-top:10px; font-size:12px; border-spacing:0;">
+        <tr style="border: 0.8px solid #444;">
+            <td style="width:40px; vertical-align:top; font-weight:bold; border:none;">Purpose:</td>
+            <td style="text-align:justify; border:none;">
+                {{ $offCampus->purpose ?? '—' }}
+            </td>
+        </tr>
+    </table>
 
-    <p class="remarks">
-        Approved for release for:
-        <span class="checkbox {{ $offCampus->remarks === 'official_use' ? 'checked' : '' }}"></span>
-        <span style="font-weight:bold; text-transform:uppercase;">Official Use</span>
-        &nbsp;&nbsp;&nbsp;
-        <span class="checkbox {{ $offCampus->remarks === 'repair' ? 'checked' : '' }}"></span>
-        <span style="font-weight:bold; text-transform:uppercase;">Repair</span>
-    </p>
-
-    <p class="remarks">
+    <p class="remarks" style="margin-left:10px; text-align:justify; text-indent:40px; margin-top:10px;">
         Above item shall be returned on or before
         <strong><u>{{ $offCampus->return_date ? Carbon::parse($offCampus->return_date)->format('F d, Y') : '—' }}</u></strong>,
         the requester will be responsible for any damages incurred while the items are in his/her possession.
     </p>
+
+    <table style="width:100%; border:none; border-collapse:collapse; margin-top:6px; font-size:12px; border-spacing:0;">
+        <tr style="border:none;">
+            <td style="vertical-align:top; font-weight:bold; border:none; width:50px; white-space:nowrap;">
+                Remarks:
+            </td>
+            <td style="border:none; padding-left:2px;">
+                Approved for release for:&nbsp;
+                <span class="checkbox {{ $offCampus->remarks === 'official_use' ? 'checked' : '' }}"></span>
+                <span style="font-weight:bold; text-transform:uppercase;">Official Use</span>
+                &nbsp;&nbsp;
+                <span class="checkbox {{ $offCampus->remarks === 'repair' ? 'checked' : '' }}"></span>
+                <span style="font-weight:bold; text-transform:uppercase;">Repair</span>
+            </td>
+        </tr>
+    </table>
 
     {{-- SIGNATORIES --}}
     <div class="signature-block">
@@ -321,7 +339,7 @@ $chunks = collect([$assets]); // render one continuous table
             <tr>
                 {{-- Requester --}}
                 <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
-                    <p>Requester:</p>
+                    <p style="font-weight: bold;">Requester:</p>
                     <table style="width:100%; border:none;">
                         <tr>
                             <td class="sig-name">
@@ -344,7 +362,7 @@ $chunks = collect([$assets]); // render one continuous table
 
                 {{-- Approved By --}}
                 <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
-                    <p>Approved By:</p>
+                    <p style="font-weight: bold;">Approved By:</p>
                     <table style="width:100%; border:none;">
                         <tr>
                             <td class="sig-name">
@@ -352,7 +370,7 @@ $chunks = collect([$assets]); // render one continuous table
                                     <div class="signature-line"></div>
                                     @if($offCampus->approved_by_name)
                                     <p style="font-weight:bold;">{{ strtoupper($offCampus->approved_by_name) }}</p>
-                                    <p style="font-size:11px;">Dean / Head Concerned</p>
+                                    <p style="font-size:11px;">Dean/Head Concerned</p>
                                     @else
                                     <p style="color:#888;">—</p>
                                     <p style="font-size:11px;">Dean/Head Concerned</p>
@@ -374,7 +392,7 @@ $chunks = collect([$assets]); // render one continuous table
             <tr>
                 {{-- Issued By --}}
                 <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
-                    <p>Issued By:</p>
+                    <p style="font-weight: bold;">Issued By:</p>
                     <table style="width:100%; border:none;">
                         <tr>
                             <td class="sig-name">
@@ -403,7 +421,7 @@ $chunks = collect([$assets]); // render one continuous table
 
                 {{-- Checked By --}}
                 <td style="width:50%; text-align:left; vertical-align:top; padding:10px;">
-                    <p>Checked By:</p>
+                    <p style="font-weight: bold;">Checked By:</p>
                     <table style="width:100%; border:none;">
                         <tr>
                             <td class="sig-name">
