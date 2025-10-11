@@ -94,18 +94,19 @@ class TurnoverDisposalController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'issuing_office_id'   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'type'                => ['required', Rule::in(['turnover', 'disposal'])],
-            'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'description'         => ['nullable', 'string'],
-            'personnel_in_charge' => ['nullable', 'string'],
-            'personnel_id'          => ['required', 'integer', Rule::exists('personnels', 'id')],
-            'document_date'       => ['required', 'date'],
-            'status'              => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
-            'remarks'             => ['nullable', 'string'],
+            'issuing_office_id'                     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type'                                  => ['required', Rule::in(['turnover', 'disposal'])],
+            'receiving_office_id'                   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description'                           => ['nullable', 'string'],
+            'personnel_in_charge'                   => ['nullable', 'string'],
+            'personnel_id'                          => ['required', 'integer', Rule::exists('personnels', 'id')],
+            'document_date'                         => ['required', 'date'],
+            'status'                                => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
+            'remarks'                               => ['nullable', 'string'],
 
-            'turnover_disposal_assets'                  => ['required', 'array', 'min:1'],
-            'turnover_disposal_assets.*.asset_id'       => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'turnover_disposal_assets'              => ['required', 'array', 'min:1'],
+            'turnover_disposal_assets.*.asset_id'   => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'turnover_disposal_assets.*.remarks'    => ['nullable', 'string'],
         ]);
 
         $lines = $validated['turnover_disposal_assets'];
@@ -123,18 +124,20 @@ class TurnoverDisposalController extends Controller
     public function update(Request $request, TurnoverDisposal $turnoverDisposal)
     {
         $validated = $request->validate([
-            'issuing_office_id'   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'type'                => ['required', Rule::in(['turnover', 'disposal'])],
-            'receiving_office_id' => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'description'         => ['nullable', 'string'],
-            'personnel_in_charge' => ['nullable', 'string'],
-            'personnel_id'          => ['required', 'integer', Rule::exists('personnels', 'id')],
-            'document_date'       => ['required', 'date'],
-            'status'              => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
-            'remarks'             => ['nullable', 'string'],
+            'issuing_office_id'                     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type'                                  => ['required', Rule::in(['turnover', 'disposal'])],
+            'receiving_office_id'                   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description'                           => ['nullable', 'string'],
+            'personnel_in_charge'                   => ['nullable', 'string'],
+            'personnel_id'                          => ['required', 'integer', Rule::exists('personnels', 'id')],
+            'document_date'                         => ['required', 'date'],
+            'status'                                => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
+            'remarks'                               => ['nullable', 'string'],
 
-            'turnover_disposal_assets'                  => ['required', 'array', 'min:1'],
-            'turnover_disposal_assets.*.asset_id'       => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'turnover_disposal_assets'              => ['required', 'array', 'min:1'],
+            'turnover_disposal_assets.*.asset_id'   => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'turnover_disposal_assets.*.remarks'    => ['nullable', 'string'],
+
         ]);
 
         $lines = $validated['turnover_disposal_assets'];
@@ -227,7 +230,7 @@ class TurnoverDisposalController extends Controller
 
         $timestamp = now()->format('Y-m-d');
 
-        return $pdf->download("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
-        // return $pdf->stream("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
+        // return $pdf->download("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
+        return $pdf->stream("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
     }
 }

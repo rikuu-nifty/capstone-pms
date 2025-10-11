@@ -1,4 +1,4 @@
-// PerTdaFields.tsx
+import React from 'react';
 import type { InventoryList } from '@/types/custom-index';
 import type { TurnoverDisposalAssetInput } from '@/types/turnover-disposal-assets';
 
@@ -9,7 +9,12 @@ type Props = {
   parentStatus?: string;
 };
 
-export default function PerTdaFields({ asset }: Props) {
+export default function PerTdaFields({ 
+  value,
+  asset,
+  // parentStatus,
+  onChange,
+}: Props) {
   return (
     <div className="grid w-full grid-cols-2 gap-3 text-sm">
       {/* Building */}
@@ -40,6 +45,18 @@ export default function PerTdaFields({ asset }: Props) {
         <dd className="mt-1 font-semibold text-gray-900">
           {asset.sub_area?.name ?? '—'}
         </dd>
+      </div>
+
+      {/* Remarks */}
+      <div className="col-span-2">
+        <label className="mb-1 block font-medium">Remarks</label>
+        <input
+          type="text"
+          className="w-full rounded-md border p-2 text-sm"
+          value={value.remarks ?? ''}
+          onChange={(e) => onChange({ ...value, remarks: e.target.value })}
+          placeholder="Optional notes specific to this asset"
+        />
       </div>
     </div>
   );
