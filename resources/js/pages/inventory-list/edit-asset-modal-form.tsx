@@ -1,6 +1,6 @@
 import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +11,7 @@ import { useRef, useState, useMemo, useEffect } from 'react';
 import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';
 
 import Select from 'react-select';
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 type Props = {
     asset: Asset;
@@ -175,6 +176,11 @@ export const EditAssetModalForm = ({
                 <DialogContent className="max-h-[90vh] w-[98vw] max-w-none overflow-y-auto p-6 sm:w-[90vw] sm:max-w-none md:w-[85vw] lg:w-[80vw] xl:w-[1200px]">
                     <DialogHeader>
                         <DialogTitle>Update Asset - Asset Record #{asset.id}</DialogTitle>
+                        <VisuallyHidden>
+                            <DialogDescription>
+                                Edit the details of this asset record below and click Save Changes when done.
+                            </DialogDescription>
+                        </VisuallyHidden>
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-4 py-4">
 
