@@ -204,7 +204,11 @@ export function AppSidebar() {
                 >
                     <SidebarMenu>
                         {visibleItems.map((item) => (
-                            <SidebarMenuButton asChild className="pl-8">
+                            <SidebarMenuButton
+                                key={item.href}
+                                asChild
+                                className="pl-8"
+                            >
                                 <Link href={item.href} className="flex items-center justify-between w-full">
                                     <div className="flex items-center space-x-2">
                                         <item.icon className="h-4 w-4" />
