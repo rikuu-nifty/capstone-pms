@@ -155,7 +155,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                     href={route('notifications.markAllRead')}
                                     method="post"
                                     as="button"
-                                    className="text-xs text-blue-600 hover:underline"
+                                    className="text-xs text-blue-600 hover:underline cursor-pointer"
                                 >
                                     Mark all as read
                                 </Link>
@@ -170,7 +170,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                         <div className="group relative flex w-full items-start gap-3 px-4 py-3 transition hover:bg-gray-50">
                                             {/* Icon */}
                                             <Link href={route('notifications.index')}>
-                                                <Button variant="ghost" className="flex items-center gap-2">
+                                                <Button variant="ghost" className="flex items-center gap-2 cursor-pointer hover:bg-blue-100">
                                                     <Bell className="h-4 w-4" />
                                                     Notifications
                                                 </Button>
@@ -207,7 +207,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                                 href={route('notifications.dismiss', n.id)}
                                                 method="post"
                                                 as="button"
-                                                className="absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-md bg-red-100 px-2 py-1 text-xs text-red-600 transition group-hover:flex hover:bg-red-200"
+                                                className="cursor-pointer absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-md bg-red-100 px-2 py-1 text-xs text-red-600 transition group-hover:flex hover:bg-red-200"
                                             >
                                                 Dismiss
                                             </Link>
