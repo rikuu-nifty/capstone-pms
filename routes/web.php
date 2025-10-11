@@ -211,6 +211,8 @@
     Route::post('/users/{user}/reassign-role', [UserApprovalController::class, 'reassignRole'])
         ->name('users.reassignRole')
         ->middleware('can:approve-users');
+    Route::get('/users/{user}', [UserApprovalController::class, 'show'])->name('users.show')
+        ->middleware('can:view-users-page');
 
     //ROLES & PERMISSIONS
     Route::get('/role-management', [RoleController::class, 'index'])

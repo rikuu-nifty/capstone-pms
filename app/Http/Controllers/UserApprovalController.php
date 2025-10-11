@@ -101,4 +101,10 @@ class UserApprovalController extends Controller
 
         return back()->with('status', "Email change request sent to {$user->email}");
     }
+
+    public function show(User $user)
+    {
+        $user->load(['role', 'unitOrDepartment', 'detail']);
+        return response()->json(['user' => $user]);
+    }
 }
