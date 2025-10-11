@@ -290,45 +290,110 @@ use Carbon\Carbon;
     </tbody>
 </table>
 
-{{-- SIGNATORIES --}}
-<div class="signature-block">
+{{-- SIGNATORIES (no outer border; clean AUF format) --}}
+<table style="width:100%; border-collapse:collapse; font-size:12px; margin-top:40px;">
     {{-- Prepared By --}}
-    @if($transfer->assignedBy)
-    <div style="display:inline-block; width:30%; vertical-align:top;">
-        <p>Prepared By:</p>
-        <div class="signature-line"></div>
-        <p style="font-weight:bold;">{{ strtoupper($transfer->assignedBy->name) }}</p>
-        <p style="font-size:11px;">
-            {{ $transfer->assignedBy->role->name ?? '—' }}
-        </p>
-    </div>
-    @endif
+    <tr>
+        <td style="width:18%; vertical-align:top; padding:6px 8px; font-weight:bold;">Prepared by:</td>
+        <td style="width:82%; padding:0;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
+                <colgroup>
+                    <col style="width:40%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Print or Type Name</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Signature</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Date</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Tel. Ext.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="height:45px;">
+                        <td style="border:1px solid #000; padding:6px;">
+                            {{ strtoupper($transfer->assignedBy->name ?? '—') }}<br>
+                            <span style="font-size:11px;">{{ $transfer->assignedBy->role->name ?? '' }}</span>
+                        </td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
 
     {{-- Reviewed/Checked & Approved By --}}
-    <div style="display:inline-block; width:30%; vertical-align:top;">
-        <p>Reviewed/Checked & Approved By:</p>
-        <div class="signature-line"></div>
-        @php $approvedSig = $signatories['approved_by'] ?? null; @endphp
-        @if($approvedSig)
-        <p style="font-weight:bold;">{{ strtoupper($approvedSig->name ?? '—') }}</p>
-        <p style="font-size:11px;">{{ $approvedSig->title ?? 'Head, Property Management' }}</p>
-        @else
-        <p style="color:#888;">—</p>
-        <p style="font-size:11px;">Head, Property Management</p>
-        @endif
-    </div>
+    <tr>
+        <td style="width:18%; vertical-align:top; padding:6px 8px; font-weight:bold;">Reviewed/Checked &amp; Approved by:</td>
+        <td style="width:82%; padding:0;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
+                <colgroup>
+                    <col style="width:40%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Print or Type Name</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Signature</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Date</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Tel. Ext.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $approvedSig = $signatories['approved_by'] ?? null; @endphp
+                    <tr style="height:45px;">
+                        <td style="border:1px solid #000; padding:6px;">
+                            {{ strtoupper($approvedSig->name ?? '—') }}<br>
+                            <span style="font-size:11px;">{{ $approvedSig->title ?? 'Head, Property Management' }}</span>
+                        </td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
 
     {{-- Received By --}}
-    @if(!empty($transfer->received_by))
-    <div style="display:inline-block; width:30%; vertical-align:top;">
-        <p>Received By:</p>
-        <div class="signature-line"></div>
-        <p style="font-weight:bold;">{{ strtoupper($transfer->received_by) }}</p>
-        {{-- optional role/title if available --}}
-        @if(!empty($transfer->received_by_title))
-        <p style="font-size:11px;">{{ $transfer->received_by_title }}</p>
-        @endif
-    </div>
-    @endif
-</div>
+    <tr>
+        <td style="width:18%; vertical-align:top; padding:6px 8px; font-weight:bold;">Received by:</td>
+        <td style="width:82%; padding:0;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
+                <colgroup>
+                    <col style="width:40%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Print or Type Name</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Signature</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Date</th>
+                        <th style="border:1px solid #000; text-align:center; padding:6px;">Tel. Ext.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="height:45px;">
+                        <td style="border:1px solid #000; padding:6px;">
+                            {{ strtoupper($transfer->received_by ?? '—') }}<br>
+                            <span style="font-size:11px;">{{ $transfer->received_by_title ?? '' }}</span>
+                        </td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                        <td style="border:1px solid #000;">&nbsp;</td>
+                    </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>
+
 @endsection
