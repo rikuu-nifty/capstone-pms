@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +45,9 @@ export default function ViewModal({
             >
                 <VisuallyHidden>
                     <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription className="sr-only">
+                            Detailed view of this specific record.
+                        </DialogDescription>
                 </VisuallyHidden>
 
                 <div className={cn('print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100', contentClassName)}>
