@@ -273,10 +273,10 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                                 <InputError message={errors.image} />
                             </div>
-
-                            <div className="mt-8 w-full">
+                            
+                            {/* <div className="mt-8 w-full">
                                 <DeleteUser />
-                            </div>
+                            </div> */}
                         </div>
                     </form>
                 </div>
