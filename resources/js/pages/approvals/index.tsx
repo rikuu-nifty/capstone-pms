@@ -78,6 +78,11 @@ function StatusPill({ s }: { s: ApprovalItem['status'] }) {
 
 export default function ApprovalsIndex() {
     const { props } = usePage<PageProps & SharedData>();
+    const userPermissions = props.auth?.permissions || [];
+
+    const canDeleteApprovals = userPermissions.includes('delete-form-approvals');
+    const canApproveApprovals = userPermissions.includes('approve-form-approvals');
+
     const [search, setSearch] = useState(props.q ?? '');
 
     const [extFor, setExtFor] = useState<{ id: number; label?: string } | null>(null);
@@ -300,6 +305,7 @@ export default function ApprovalsIndex() {
                                                         setToDelete(a.id);
                                                         setShowDelete(true);
                                                     }}
+                                                    disabled={!canDeleteApprovals}
                                                 >
                                                     Delete
                                                 </Button>
@@ -357,8 +363,10 @@ export default function ApprovalsIndex() {
                                                     <Button
                                                         variant="primary"
                                                         title="Move back to Pending Review"
-                                                        className="cursor-pointer"
+                                                        className={`cursor-pointer ${!canApproveApprovals ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        disabled={!canApproveApprovals}
                                                         onClick={() => {
+                                                            if (!canApproveApprovals) return;
                                                             setSelectedApprovalId(a.id);
                                                             setShowReset(true);
                                                         }}
