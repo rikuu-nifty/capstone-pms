@@ -90,18 +90,31 @@ const systemMonitoringNavItems = [
     auditLogItem,
 ];
 
-const inventoryNavItems = [
-    {
-        title: 'Inventory List',
-        href: '/inventory-list',
-        icon: Package2,
-        permission: ['view-all-inventory-list', 'view-own-unit-inventory-list'],
-    },
-    { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
-    { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
-    { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
-    { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
-];
+// // Dynamic link for Inventory List based on permission
+// const inventoryListLink = permissions.includes('view-inventory-list')
+//   ? '/inventory-list'
+//   : permissions.includes('view-own-unit-inventory-list')
+//   ? '/inventory-list/own'
+//   : null;
+
+// const inventoryNavItems = [
+//     // {
+//     //     title: 'Inventory List',
+//     //     href: '/inventory-list',
+//     //     icon: Package2,
+//     //     permission: ['view-inventory-list', 'view-own-unit-inventory-list'],
+//     // },
+//     inventoryListLink && {
+//         title: 'Inventory List',
+//         href: inventoryListLink,
+//         icon: Package2,
+//         permission: ['view-inventory-list', 'view-own-unit-inventory-list'],
+//     },
+//     { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
+//     { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
+//     { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
+//     { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
+// ].filter(Boolean);
 
 const assetsNavItems = [
     { title: 'Categories', href: '/categories', icon: Blocks, permission: 'view-categories' },
@@ -150,6 +163,37 @@ export function AppSidebar() {
     const { url } = usePage();
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+    // ✅ Dynamic Inventory link based on permissions
+    const inventoryListLink =
+        permissions.includes('view-inventory-list')
+            ? '/inventory-list'
+            : permissions.includes('view-own-unit-inventory-list')
+            ? '/inventory-list/own'
+            : null;
+
+    // ✅ Inventory menu items
+    const inventoryNavItems: NavItem[] = [
+        ...(inventoryListLink
+            ? [
+                  {
+                      title: 'Inventory List',
+                      href: inventoryListLink,
+                      icon: Package2,
+                      permission: ['view-inventory-list', 'view-own-unit-inventory-list'],
+                  } as NavItem,
+              ]
+            : []),
+        {
+            title: 'Inventory Scheduling',
+            href: '/inventory-scheduling',
+            icon: CalendarCheck2,
+            permission: 'view-inventory-scheduling',
+        },
+        { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
+        { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
+        { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
+    ]
+
     useEffect(() => {
         if (inventoryNavItems.some((item) => url.startsWith(item.href))) {
             setOpenGroups((prev) => ({ ...prev, Inventory: true }));
@@ -166,6 +210,7 @@ export function AppSidebar() {
         if (systemMonitoringNavItems.some((item) => url.startsWith(item.href))) {
             setOpenGroups((prev) => ({ ...prev, 'System Monitoring': true }));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url]);
 
     const toggleGroup = (group: string) => {

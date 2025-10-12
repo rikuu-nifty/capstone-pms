@@ -267,13 +267,12 @@
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
         ->name('inventory-list.index')
         ->middleware('can:view-inventory-list');
-    Route::get('/inventory-list', [InventoryListController::class, 'index'])
-        ->name('inventory-list.index')
+    Route::get('/inventory-list/own', [InventoryListController::class, 'ownUnitIndex'])
+        ->name('inventory-list.own')
         ->middleware('can:view-own-unit-inventory-list');
     Route::post('/inventory-list', [InventoryListController::class, 'store'])
         ->name('inventory-list.store')
         ->middleware('can:create-inventory-list');
-    // Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
     Route::get('/inventory-list/{inventory_list}', [InventoryListController::class, 'show'])
         ->name('inventory-list.show')
         ->middleware('can:view-inventory-list');
