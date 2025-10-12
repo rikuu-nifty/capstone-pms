@@ -140,52 +140,60 @@ export default function TransferEditModal({
 
     // Run only once when modal opens (on show)
     useEffect(() => {
-    const pendingCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'pending').length;
-    const transferredCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'transferred').length;
-    const cancelledCount = data.transfer_assets.filter(ta => ta.asset_transfer_status === 'cancelled').length;
+        if (!data.actual_transfer_date) {
+            return;
+        }
 
-    let newStatus: TransferFormData['status'] | null = null;
+        const pendingCount = data.transfer_assets.filter(
+            ta => ta.asset_transfer_status === 'pending'
+        ).length;
+        const transferredCount = data.transfer_assets.filter(
+            ta => ta.asset_transfer_status === 'transferred'
+        ).length;
+        const cancelledCount = data.transfer_assets.filter(
+            ta => ta.asset_transfer_status === 'cancelled'
+        ).length;
 
-    // ✅ Only auto-recalculate if current status is auto-managed (pending_review or upcoming)
-    if (['pending_review', 'upcoming'].includes(data.status)) {
-        if (pendingCount === 0) {
-            if (transferredCount > 0 && cancelledCount === 0) {
-                newStatus = 'completed';
-            } else if (cancelledCount > 0 && transferredCount === 0) {
-                newStatus = 'cancelled';
-            } else if (transferredCount > 0 && cancelledCount > 0) {
-                // mixed case → don’t force to completed/cancelled
-                newStatus = 'in_progress';
-            }
-        } else if (pendingCount > 0) {
-            const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+        let newStatus: TransferFormData['status'] | null = null;
 
-            if (data.status === 'completed') {
-                // ⚠️ Do nothing here — let handleSubmit + warning modal decide
-                return;
-            } else if (scheduledDate && scheduledDate < new Date()) {
-                // Past due → overdue
-                newStatus = 'overdue';
-            } else if (scheduledDate && scheduledDate >= new Date()) {
-                if (data.status !== 'pending_review') {
-                    newStatus = 'upcoming';
+        // Only auto-recalculate if current status is auto-managed (pending_review or upcoming)
+        if (['pending_review', 'upcoming'].includes(data.status)) {
+            if (pendingCount === 0) {
+                if (transferredCount > 0 && cancelledCount === 0) {
+                    newStatus = 'completed';
+                } else if (cancelledCount > 0 && transferredCount === 0) {
+                    newStatus = 'cancelled';
+                } else if (transferredCount > 0 && cancelledCount > 0) {
+                    // mixed case → don’t force to completed/cancelled
+                    newStatus = 'in_progress';
+                }
+            } else if (pendingCount > 0) {
+                const scheduledDate = data.scheduled_date ? new Date(data.scheduled_date) : null;
+
+                if (data.status === 'completed') {
+                    return; // Do nothing here — let handleSubmit + warning modal decide
+                } else if (scheduledDate && scheduledDate < new Date()) {
+                    newStatus = 'overdue'; // Past due → overdue
+                } else if (scheduledDate && scheduledDate >= new Date()) {
+                    if (data.status !== 'pending_review') {
+                        newStatus = 'upcoming';
+                    }
                 }
             }
-            // else {
-            //     still active with pending → keep whatever the user selected (default: pending_review)
-            // }
         }
-    }
 
-    if (newStatus && newStatus !== data.status) {
-        setData('status', newStatus);
-    }
-}, [data.transfer_assets, data.scheduled_date, data.status, setData]);
-
-
+        if (newStatus && newStatus !== data.status) {
+            setData('status', newStatus);
+        }
+    }, [data.transfer_assets, data.scheduled_date, data.status, data.actual_transfer_date, setData]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Prevent accidental 'completed' UI flicker when no completion date is set
+        if (data.status === 'completed' && !data.actual_transfer_date) {
+            setData('status', transfer.status); // restore original status
+        }
 
         const desiredStatus = data.status as 'completed' | 'cancelled' | 'overdue' | 'pending_review' | string;
 
@@ -202,14 +210,14 @@ export default function TransferEditModal({
             });
 
         // Overdue selected but no pending assets → auto-downgrade to completed
-        if (desiredStatus === 'overdue' && pendingAssets.length === 0) {
-            const allCancelled = data.transfer_assets.every(
-                (ta) => ta.asset_transfer_status === 'cancelled'
-            );
-            const nextStatus: 'completed' | 'cancelled' = allCancelled ? 'cancelled' : 'completed';
+        // if (desiredStatus === 'overdue' && pendingAssets.length === 0) {
+        //     const allCancelled = data.transfer_assets.every(
+        //         (ta) => ta.asset_transfer_status === 'cancelled'
+        //     );
+        //     const nextStatus: 'completed' | 'cancelled' = allCancelled ? 'cancelled' : 'completed';
 
-            setData('status', nextStatus);
-        }
+        //     setData('status', nextStatus);
+        // }
 
         // Special case: record is completed but some assets are pending → downgrade to in_progress OR overdue
         if (desiredStatus === 'completed' && pendingAssets.length > 0) {
@@ -485,17 +493,17 @@ export default function TransferEditModal({
 
                         if (!data.actual_transfer_date) {
                             if (newDate) {
-                            const selected = new Date(newDate);
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
+                                const selected = new Date(newDate);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
 
-                            if (selected < today) {
-                                setData('status', 'overdue');
-                            } else if (selected > today) {
-                                setData('status', 'upcoming');
-                            } else {
-                                setData('status', 'in_progress');
-                            }
+                                if (selected < today) {
+                                    setData('status', 'overdue');
+                                } else if (selected > today) {
+                                    setData('status', 'upcoming');
+                                } else {
+                                    setData('status', 'in_progress');
+                                }
                             }
                         }
                     }}

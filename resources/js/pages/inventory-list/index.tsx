@@ -22,7 +22,6 @@ import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
 import { SubArea, ucwords, UnitOrDepartment } from '@/types/custom-index';
 import { WebcamCapture } from './WebcamCapture';
-// ✅ instead use the shared type
 import type { Personnel } from '@/types/personnel';
 
 import Select from 'react-select';
@@ -103,18 +102,18 @@ export type Asset = {
     serial_no: string;
     supplier: string;
     unit_cost: number | string;
-    depreciation_value?: number | string | null; // ✅ NEW
+    depreciation_value?: number | string | null; // NEW
     date_purchased: string;
     quantity: number;
-    assigned_to?: number | null;   // ✅ FK now (personnel.id)
-    personnel?: Personnel | null;  // ✅ relation for easier display
+    assigned_to?: number | null;   // FK now (personnel.id)
+    personnel?: Personnel | null;  // relation for easier display
 
-    // ✅ Changed: transfer relation instead of transfer_status
+    // Changed: transfer relation instead of transfer_status
     transfer?: Transfer | null;
 
     brand: string;
-    image_path?: string | null; // ✅ new field
-    maintenance_due_date: string; // ✅ new field
+    image_path?: string | null; // new field
+    maintenance_due_date: string; // new field
     sub_area?: SubArea | null;
 
     current_transfer_status?: string | null;
@@ -139,16 +138,16 @@ export type AssetFormData = {
     serial_no: string;
     supplier: string;
     unit_cost: number | string; // can be number or string
-    depreciation_value: number | string; // ✅ add this
-    assigned_to?: number | string | null; // ✅ can still accept string from <select>, but backend expects number
+    depreciation_value: number | string; // add this
+    assigned_to?: number | string | null; // can still accept string from <select>, but backend expects number
     date_purchased: string;
     asset_type: string;
     category_id: number | '';
     quantity: number | string; // can be number or string
     brand: string;
     // transfer_status: string;  ❌ Removed: transfer_status
-    image?: File | null; // ✅ add this
-    maintenance_due_date: string; // ✅ new field
+    image?: File | null; // add this
+    maintenance_due_date: string; // new field
 
     sub_area_id: number | string | null;
 };
@@ -164,7 +163,7 @@ type KPIs = {
 
 export default function InventoryListIndex({
     assets = [],
-    personnels = [],   // ✅ add here
+    personnels = [],   // add here
     assetModels = [],
     buildings = [],
     buildingRooms = [],
@@ -185,13 +184,13 @@ export default function InventoryListIndex({
     subAreas = [],
 }: {
     assets: Asset[];
-    personnels: Personnel[];   // ✅ add to type
+    personnels: Personnel[];   // add to type
     assetModels: AssetModel[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
     categories: Category[];
-    show_view_modal?: boolean; // ✅ new
+    show_view_modal?: boolean; // new
     viewing_asset?: Asset | null;
 
     kpis?: KPIs;
@@ -204,7 +203,7 @@ export default function InventoryListIndex({
         building_room_id: '',
         sub_area_id: '',
         date_purchased: '',
-        maintenance_due_date: '', // ✅ new default
+        maintenance_due_date: '', // new default
         category_id: '',
         asset_type: '',
         asset_name: '',
@@ -269,7 +268,7 @@ export default function InventoryListIndex({
     //     ).values()
     // );
 
-    // ✅ Memoize filteredBrands so it doesn't trigger unnecessary re-renders
+    // Memoize filteredBrands so it doesn't trigger unnecessary re-renders
 const filteredBrands = useMemo(() => {
     // No category selected → no brands
     if (!data.category_id) return [];
@@ -407,7 +406,7 @@ const filteredBrands = useMemo(() => {
     // Webcam
     const [showWebcam, setShowWebcam] = useState(false);
 
-    // ✅ Placeholder formula: Straight-line depreciation // 20% per year.
+    // Placeholder formula: Straight-line depreciation // 20% per year.
     const calculateDepreciation = (unitCost: number, usefulLife = 5, salvageValue = 0): string => {
         if (!unitCost || unitCost <= 0) return '0.00';
         return ((unitCost - salvageValue) / usefulLife).toFixed(2);
@@ -464,7 +463,7 @@ const filteredBrands = useMemo(() => {
             item.asset_name?.toLowerCase().includes(keyword) ||
             item.supplier?.toLowerCase().includes(keyword) ||
             item.asset_type?.toLowerCase().includes(keyword) ||
-            item.transfer?.status?.toLowerCase().includes(keyword) || // ✅ Now searches transfer relation
+            item.transfer?.status?.toLowerCase().includes(keyword) || // Now searches transfer relation
             String(item.quantity).padStart(2, '0').includes(keyword) ||
             String(item.date_purchased).toLowerCase().includes(keyword) ||
             item.quantity?.toString().includes(keyword) ||
@@ -472,12 +471,12 @@ const filteredBrands = useMemo(() => {
             item.unit_or_department?.name?.toLowerCase().includes(keyword) ||
             item.status?.toLowerCase().includes(keyword);
 
-        // ✅ then add your filter checks
+        // then add your filter checks
         const matchesCategory = selectedCategoryId === '' || item.category_id === selectedCategoryId;
         const matchesUnit = selectedUnitId === '' || item.unit_or_department?.id === selectedUnitId;
         const matchesStatus = selectedStatus === '' || item.status === selectedStatus;
 
-        // ✅ final return
+        // final return
         return matchesSearch && matchesCategory && matchesUnit && matchesStatus;
     });
 
@@ -504,38 +503,39 @@ const filteredBrands = useMemo(() => {
                 </div>
 
                 {kpis && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                    // <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         {/* Total Assets */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 shrink-0">
                                 <Boxes className="h-6 w-6 text-yellow-600" />
                             </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Assets</div>
-                                <div className="text-2xl font-semibold">{formatNumber(kpis.total_assets)}</div>
+                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
+                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Total Assets</div>
+                                <div className="text-lg sm:text-base md:text-xl font-semibold leading-snug break-words">{formatNumber(kpis.total_assets)}</div>
                             </div>
                         </div>
 
                         {/* Active vs Archived */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
+                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 shrink-0">
                                 <FolderArchive className="h-6 w-6 text-emerald-600" />
                             </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Active vs Archived</div>
-                                <div className="text-2xl font-semibold">
+                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
+                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Active vs Archived</div>
+                                <div className="text-lg sm:text-base md:text-xl font-semibold leading-snug break-words">
                                     {kpis.active_pct}% vs {kpis.archived_pct}%
                                 </div>
                             </div>
                         </div>
 
                         {/* Fixed vs Not Fixed */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
+                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 shrink-0">
                                 <Pin className="h-6 w-6 text-indigo-600" />
                             </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Fixed vs Not Fixed</div>
+                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
+                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Fixed vs Not Fixed</div>
                                 <div className="text-2xl font-semibold">
                                     {kpis.fixed_pct}% vs {kpis.not_fixed_pct}%
                                 </div>
@@ -543,18 +543,19 @@ const filteredBrands = useMemo(() => {
                         </div>
 
                         {/* Total Inventory Value */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
+                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 shrink-0">
                                 <Banknote className="h-6 w-6 text-orange-600" />
                             </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Inventory Value</div>
+                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
+                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Total Inventory Value</div>
                                 <div className="text-2xl font-semibold">{formatPeso(kpis.total_inventory_sum)}</div>
                             </div>
                         </div>
                     </div>
                 )}
-                {/* 🔹 Unit restriction notice */}
+
+                {/* Unit restriction notice */}
                 {canViewOwn && !canViewAll && (
                     <div className="mt-2 rounded-md border border-yellow-300 bg-yellow-100 px-3 py-2 text-sm text-yellow-800">
                         You are viewing <strong>only the assets assigned to your unit/department</strong>
@@ -795,8 +796,8 @@ const filteredBrands = useMemo(() => {
                                             variant="ghost"
                                             className="cursor-pointer"
                                             onClick={() => {
-                                                setSelectedAsset(item); // ✅ set the current asset
-                                                setChooseViewVisible(true); // ✅ open ChooseViewModal
+                                                setSelectedAsset(item); // set the current asset
+                                                setChooseViewVisible(true); // open ChooseViewModal
                                             }}
                                         >
                                             <Eye className="h-4 w-4 text-muted-foreground" />
@@ -827,7 +828,7 @@ const filteredBrands = useMemo(() => {
                     assetModels={assetModels}
                     uniqueBrands={[...new Set(assetModels.map((m) => m.brand))]}
                     subAreas={subAreas}
-                    personnels={personnels}   // ✅ pass here
+                    personnels={personnels}   // pass here
                 />
             )}
 
@@ -863,7 +864,7 @@ const filteredBrands = useMemo(() => {
                     onViewAsset={() => {
                         setChooseViewVisible(false);
                         if (selectedAsset) {
-                            openView(selectedAsset.id); // ✅ deep link route
+                            openView(selectedAsset.id); // deep link route
                         }
                     }}
                     onViewMemo={() => {
@@ -889,28 +890,28 @@ const filteredBrands = useMemo(() => {
                         setReceiptAssets([]);
                         setReceiptMemoNo('');
                     }}
-                    assets={receiptAssets} // ✅ now an array
-                    memo_no={receiptMemoNo} // ✅ shared memo number
+                    assets={receiptAssets} // now an array
+                    memo_no={receiptMemoNo} // shared memo number
                 />
             )}
 
-            {/* ✅ Choose Add Modal */}
+            {/* Choose Add Modal */}
             {chooseAddVisible && (
                 <ChooseAddTypeModal
                     open={chooseAddVisible}
                     onClose={() => setChooseAddVisible(false)}
                     onSingle={() => {
                         setChooseAddVisible(false);
-                        setShowAddAsset(true); // ✅ open single modal
+                        setShowAddAsset(true); // open single modal
                     }}
                     onBulk={() => {
                         setChooseAddVisible(false);
-                        setShowAddBulkAsset(true); // ✅ open bulk modal
+                        setShowAddBulkAsset(true); // open bulk modal
                     }}
                 />
             )}
 
-            {/* ✅ Bulk Add Modal */}
+            {/* Bulk Add Modal */}
             {showAddBulkAsset && (
                 <AddBulkAssetModalForm
                     open={showAddBulkAsset}
@@ -921,7 +922,7 @@ const filteredBrands = useMemo(() => {
                     categories={categories}
                     assetModels={assetModels}
                     subAreas={subAreas}
-                    personnels={personnels}   // ✅ add this
+                    personnels={personnels}   // add this
                     />
             )}
 

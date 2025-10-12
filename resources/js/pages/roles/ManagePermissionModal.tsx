@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Role, Permission } from "@/types/custom-index";
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
     show: boolean;
@@ -194,7 +195,7 @@ export default function ManagePermissionsModal({
             processing={processing}
             contentClassName="flex max-h-[80vh] min-h-[80vh] flex-col overflow-hidden"
         >
-            <div className="col-span-2 mb-4">
+            <div className="col-span-2 mb-4 flex items-center gap-2">
                 <Input
                     type="text"
                     placeholder="Search permissions..."
@@ -202,6 +203,31 @@ export default function ManagePermissionsModal({
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full"
                 />
+
+                <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                        setData("permissions", permissions.map((p) => p.id));
+                        setSearch("");
+                    }}
+                    className="cursor-pointer whitespace-nowrap"
+                >
+                    Select All
+                </Button>
+
+                <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                        setData("permissions", []);
+                        setSearch("");
+                    }}
+                    className="cursor-pointer whitespace-nowrap"
+                >
+                    Clear All
+                </Button>
             </div>
 
             {/* Permission groups */}

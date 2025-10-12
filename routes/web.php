@@ -33,8 +33,9 @@
     use App\Http\Controllers\InventorySchedulingSignatoryController;
     use App\Http\Controllers\TransferSignatoryController;
     use App\Http\Controllers\SignatoryController;
-        use App\Http\Controllers\TrashBinController;
-
+    use App\Http\Controllers\TrashBinController;
+    use App\Http\Controllers\Settings\ProfileController;
+    use App\Http\Controllers\CalendarController;
 
     Route::get('/', function () {
         if (Auth::check()) {
@@ -149,8 +150,9 @@
         Route::delete('/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
     });
 
-    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])
-        ->name('calendar');
+    Route::get('/calendar', [CalendarController::class, 'index'])
+        ->name('calendar')
+        ->middleware('can:view-calendar');
 
     Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
         ->name('asset-summary.show');
@@ -211,6 +213,8 @@
     Route::post('/users/{user}/reassign-role', [UserApprovalController::class, 'reassignRole'])
         ->name('users.reassignRole')
         ->middleware('can:approve-users');
+    Route::get('/users/{user}', [UserApprovalController::class, 'show'])->name('users.show')
+        ->middleware('can:view-users-page');
 
     //ROLES & PERMISSIONS
     Route::get('/role-management', [RoleController::class, 'index'])
@@ -265,13 +269,12 @@
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
         ->name('inventory-list.index')
         ->middleware('can:view-inventory-list');
-    Route::get('/inventory-list', [InventoryListController::class, 'index'])
-        ->name('inventory-list.index')
+    Route::get('/inventory-list/own', [InventoryListController::class, 'ownUnitIndex'])
+        ->name('inventory-list.own')
         ->middleware('can:view-own-unit-inventory-list');
     Route::post('/inventory-list', [InventoryListController::class, 'store'])
         ->name('inventory-list.store')
         ->middleware('can:create-inventory-list');
-    // Route::get('/inventory-list/add-asset', [InventoryListController::class, 'create'])->name('inventory-list.create'); // renamed
     Route::get('/inventory-list/{inventory_list}', [InventoryListController::class, 'show'])
         ->name('inventory-list.show')
         ->middleware('can:view-inventory-list');
@@ -531,6 +534,8 @@
         ->middleware('can:delete-equipment-codes');
 
     //PROFILE
+    Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // RESTORATION
     Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index')

@@ -7,16 +7,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PasswordResetNotification extends Notification implements ShouldQueue
+class PasswordResetLinkNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected string $newPassword;
-
-    public function __construct(string $newPassword)
-    {
-        $this->newPassword = $newPassword;
-    }
+    public function __construct(protected string $resetUrl) {}
 
     public function via($notifiable)
     {
@@ -25,14 +20,12 @@ class PasswordResetNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
-        $url = url('/login'); // your login route
-
         return (new MailMessage)
-            ->subject('Your Password Has Been Reset')
+            ->subject('Reset Your Password')
             ->view('emails.password-reset', [
                 'name'        => $notifiable->name,
-                'newPassword' => $this->newPassword,
-                'url'         => $url,
+                'url'         => $this->resetUrl,
+                'newPassword' => null, // signals to show "Reset Link" section
             ]);
     }
 }

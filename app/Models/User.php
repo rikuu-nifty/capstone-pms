@@ -160,7 +160,7 @@ class User extends Authenticatable
     {
         return static::query()
             ->with([
-                'detail:id,user_id,first_name,middle_name,last_name', 
+                'detail:id,user_id,first_name,middle_name,last_name,image_path', 
                 'role:id,name,code',
                 'unitOrDepartment:id,name',
             ])
@@ -279,5 +279,15 @@ class User extends Authenticatable
     public function unreadNotifications()
     {
         return $this->notifications()->whereNull('read_at');
+    }
+
+    /**
+     * Override the default password reset link email
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $url = url(route('password.reset', ['token' => $token, 'email' => $this->email], false));
+
+        $this->notify(new \App\Notifications\PasswordResetLinkNotification($url));
     }
 }

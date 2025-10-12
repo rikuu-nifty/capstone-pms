@@ -16,7 +16,10 @@ export function ChooseViewModal({ open, onClose, asset, onViewAsset, onViewMemo 
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="p-6 sm:max-w-4xl">
+            <DialogContent 
+                className="p-6 sm:max-w-4xl"
+                aria-describedby={undefined}
+            >
                 <DialogHeader className="text-center">
                     <DialogTitle className="text-xl font-bold">Choose View Option</DialogTitle>
                     <p className="mt-1 text-sm text-muted-foreground">

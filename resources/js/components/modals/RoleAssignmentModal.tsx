@@ -78,69 +78,72 @@ export default function RoleAssignmentModal({
 
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="w-full max-w-md space-y-4">
-            <DialogHeader>
-            <DialogTitle>
-                {action === "approve" ? "Assign Role & Unit" : "Reassign Role & Unit"}
-            </DialogTitle>
-            <DialogDescription>
-                {action === "approve"
-                ? "Select a role and unit before approving this user."
-                : "Select a new role and/or unit for this user."}
-            </DialogDescription>
-            </DialogHeader>
+            <DialogContent className="w-full max-w-md space-y-4">
+                <DialogHeader>
+                    <DialogTitle>
+                        {action === "approve" ? "Assign Role & Unit" : "Reassign Role & Unit"}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {action === "approve"
+                        ? "Select a role and unit before approving this user."
+                        : "Select a new role and/or unit for this user."}
+                    </DialogDescription>
+                </DialogHeader>
 
-            <div className="grid gap-4">
-            {/* Role Select */}
-            <div className="grid gap-1">
-                <Label htmlFor="role">Role</Label>
-                <Select
-                    options={roleOptions}
-                    value={roleOptions.find((o) => o.value === roleId) || null}
-                    onChange={(opt: SingleValue<Option>) =>
-                        setRoleId(opt ? opt.value : "")
-                    }
-                    placeholder="Select a role..."
-                />
-            </div>
+                <div className="grid gap-4">
+                    {/* Role Select */}
+                    <div className="grid gap-1">
+                        <Label htmlFor="role">Role</Label>
+                        <Select
+                            options={roleOptions}
+                            value={roleOptions.find((o) => o.value === roleId) || null}
+                            onChange={(opt: SingleValue<Option>) =>
+                                setRoleId(opt ? opt.value : "")
+                            }
+                            placeholder="Select a role..."
+                        />
+                    </div>
 
-            {/* Unit/Department Select */}
-            <div className="grid gap-1">
-                <Label htmlFor="unit">Unit/Department (Optional)</Label>
-                <Select
-                    options={unitOptions}
-                    value={unitOptions.find((o) => o.value === unitOrDeptId) || null}
-                    onChange={(opt: SingleValue<Option>) =>
-                        setUnitOrDeptId(opt ? opt.value : "")
-                    }
-                    placeholder="Select a unit/department"
-                    isClearable
-                />
-            </div>
+                    {/* Unit/Department Select */}
+                    <div className="grid gap-1">
+                        <Label htmlFor="unit">Unit/Department (Optional)</Label>
+                        <Select
+                            options={unitOptions}
+                            value={unitOptions.find((o) => o.value === unitOrDeptId) || null}
+                            onChange={(opt: SingleValue<Option>) =>
+                                setUnitOrDeptId(opt ? opt.value : "")
+                            }
+                            placeholder="Select a unit/department"
+                            isClearable
+                        />
+                    </div>
 
-            {/* Notes */}
-            <div className="grid gap-1">
-                <Label htmlFor="notes">Notes (Optional)</Label>
-                <Input
-                id="notes"
-                placeholder="Add notes..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                />
-            </div>
-            </div>
+                    {/* Notes */}
+                    <div className="grid gap-1">
+                        <Label htmlFor="notes">Notes (Optional)</Label>
+                        <Input
+                        id="notes"
+                        placeholder="Add notes..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
+                </div>
 
-            <DialogFooter className="flex justify-end gap-2">
-            <DialogClose asChild>
-                <Button variant="outline" className="cursor-pointer">
-                Cancel
-                </Button>
-            </DialogClose>
-            <Button onClick={handleSubmit} className="cursor-pointer">
-                {action === "approve" ? "Approve & Assign" : "Reassign"}
-            </Button>
-            </DialogFooter>
-        </DialogContent>
+                <DialogFooter className="flex justify-end gap-2">
+                    <DialogClose asChild>
+                        <Button variant="outline" className="cursor-pointer">
+                            Cancel
+                        </Button>
+                    </DialogClose>
+                    <Button 
+                        onClick={handleSubmit} 
+                        className="cursor-pointer"
+                    >
+                        {action === "approve" ? "Approve & Assign" : "Reassign"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
         </Dialog>
     );
 }

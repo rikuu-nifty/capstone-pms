@@ -294,6 +294,7 @@ class TurnoverDisposal extends Model
             'receiving_office_id' => $payload['receiving_office_id'],
             'description'         => $payload['description'] ?? null,
             'personnel_in_charge' => $payload['personnel_in_charge'],
+            'personnel_id'        => $payload['personnel_id'],
             'document_date'       => $payload['document_date'],
             'status'              => $payload['status'],
             'remarks'             => $payload['remarks'] ?? null,

@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
+
 use App\Models\User;
 
 class UserDetail extends Model
@@ -19,7 +21,10 @@ class UserDetail extends Model
         'last_name',
         'gender',
         'contact_no',
+        'image_path',
     ];
+
+    protected $appends = ['image_url'];
 
     public function user()
     {
@@ -38,5 +43,20 @@ class UserDetail extends Model
         }
 
         return "{$first} {$last}";
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        $p = $this->image_path;
+        if (!$p) return null;
+
+        // Already a full URL or absolute path
+        if (Str::startsWith($p, ['http://', 'https://', '/'])) return $p;
+
+        // Saved under /public/images/...
+        if (Str::startsWith($p, 'images/')) return asset($p);
+
+        // Default: stored on 'public' disk => /storage/...
+        return asset('storage/' . $p);
     }
 }
