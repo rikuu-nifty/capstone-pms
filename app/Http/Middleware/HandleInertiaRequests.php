@@ -7,7 +7,9 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
+
 use App\Models\User;
+use App\Models\UserDetail;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -46,12 +48,25 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $user = $request->user()?->loadMissing('detail');
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                // 'user' => $request->user(),
+
+                'user' => $user ? [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email,
+                    // dynamic image URL based on relation or fallback
+                    'avatar' => $user->detail?->image_path
+                        ? asset('storage/' . $user->detail->image_path)
+                        : asset('images/default-avatar.png'),
+                ] : null,
+
                 'permissions' => $request->user()?->role?->permissions->pluck('code')->toArray() ?? [],
                 'role' => $request->user()?->role?->code,
                 'unit_or_department_id' => $request->user()?->unit_or_department_id,
@@ -66,9 +81,6 @@ class HandleInertiaRequests extends Middleware
                 // Lazy evaluates only if referenced on the client
                 'pending_user_count' => fn () => User::where('status', 'pending')->count(),
             ],
-            // 'flash' => [
-            //     'unauthorized' => fn() => $request->session()->get('unauthorized'),
-            // ],
             'flash' => [
                 'unauthorized' => fn() => $request->session()->has('unauthorized')
                     ? [

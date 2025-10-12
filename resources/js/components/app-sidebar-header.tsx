@@ -48,9 +48,9 @@ export interface SharedData extends PageProps {
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
     const page = usePage<SharedData>();
     const user = page.props.auth?.user;
-    const { notifications } = page.props; // ✅ no extra cast needed
+    const { notifications } = page.props; // no extra cast needed
 
-    // ✅ Debug log here
+    // Debug log here
     console.log('🔔 Notifications', notifications);
 
     return (
@@ -69,7 +69,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="flex items-center gap-3 rounded-full px-3 hover:bg-gray-100">
-                                    <Avatar className="h-8 w-8 border border-gray-300">
+                                    {/* <Avatar className="h-8 w-8 border border-gray-300">
                                         <AvatarImage src={user.avatar || '/default-avatar.png'} alt={user.name} />
                                         <AvatarFallback>
                                             {user.name
@@ -78,7 +78,18 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                                 .join('')
                                                 .toUpperCase()}
                                         </AvatarFallback>
-                                    </Avatar>
+                                    </Avatar> */}
+                                    <Avatar className="h-8 w-8 border border-gray-300">
+    <AvatarImage src={user.avatar} alt={user.name} />
+    <AvatarFallback>
+        {user.name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()}
+    </AvatarFallback>
+</Avatar>
+
                                     <div className="hidden max-w-[150px] flex-col items-start text-left sm:flex">
                                         <p className="truncate text-sm leading-none font-medium">{user.name}</p>
                                         <p className="truncate text-xs leading-none text-muted-foreground">{user.email}</p>
