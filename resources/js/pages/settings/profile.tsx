@@ -231,39 +231,62 @@ export default function Profile({
                                 <Label className="text-lg font-semibold mb-5">Profile Picture</Label>
 
                                 <div className="relative group mb-6">
-                                    {data.image ? (
-                                        <img
-                                            src={URL.createObjectURL(data.image as File)}
-                                            alt="Preview"
-                                            className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
-                                        />
-                                    ) : userDetail?.image_path ? (
-                                        <img
-                                            src={`/storage/${userDetail.image_path}`}
-                                            alt="Profile"
-                                            className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
-                                        />
-                                    ) : (
-                                        <div className="flex h-44 w-44 items-center justify-center rounded-full border-4 border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">
-                                            No Image
-                                        </div>
-                                    )}
+                                    {/* Hidden input but linked by label htmlFor */}
+                                    <input
+                                        id="profileImageInput"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            if (e.target.files?.[0]) setData('image', e.target.files[0]);
+                                        }}
+                                        className="hidden"
+                                    />
 
-                                    <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                        <span className="text-white text-sm font-medium">Change Photo</span>
-                                    </div>
+                                    {/* Label wraps the image preview for clickable behavior */}
+                                    <label htmlFor="profileImageInput" className="cursor-pointer block relative group">
+                                        {data.image ? (
+                                            <img
+                                                src={URL.createObjectURL(data.image as File)}
+                                                alt="Preview"
+                                                className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
+                                            />
+                                        ) : userDetail?.image_path ? (
+                                            <img
+                                                src={`/storage/${userDetail.image_path}`}
+                                                alt="Profile"
+                                                className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
+                                            />
+                                        ) : (
+                                            <div className="flex h-44 w-44 items-center justify-center rounded-full border-4 border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">
+                                                No Image
+                                            </div>
+                                        )}
+
+                                        {/* Overlay on hover */}
+                                        <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                            <span className="text-white text-sm font-medium">Click to Change</span>
+                                        </div>
+                                    </label>
                                 </div>
 
+                                {/* Hidden real input */}
                                 <input
+                                    id="fileUploadInput"
                                     type="file"
                                     accept="image/*"
                                     onChange={(e) => {
                                         if (e.target.files?.[0]) setData('image', e.target.files[0]);
                                     }}
-                                    className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
-                                            file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
-                                            file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                    className="hidden"
                                 />
+
+                                {/* Styled label acting as custom button */}
+                                <label
+                                    htmlFor="fileUploadInput"
+                                    className="mt-3 inline-block cursor-pointer rounded-lg border bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100 active:bg-blue-200"
+                                >
+                                    Choose File
+                                </label>
 
                                 <p className="mt-4 text-xs text-muted-foreground leading-snug">
                                     Accepted formats: <span className="font-medium">JPG, PNG, WEBP</span><br />
@@ -274,8 +297,8 @@ export default function Profile({
                             </div>
                             
                             <div className="mt-8 w-full">
-        <DeleteUser />
-    </div>
+                                <DeleteUser />
+                            </div>
                         </div>
                     </form>
                 </div>
