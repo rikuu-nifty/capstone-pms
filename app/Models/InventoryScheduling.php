@@ -424,7 +424,8 @@ class InventoryScheduling extends Model
         } elseif ($completed === $total) {
             $newStatus = 'completed';
         } elseif ($notInventoried === $total) {
-            $newStatus = 'not_inventoried';
+            // $newStatus = 'not_inventoried';
+            $newStatus = 'cancelled';
         } elseif ($scheduled === $total) {
             // check if past due
             $ym = $this->inventory_schedule;
