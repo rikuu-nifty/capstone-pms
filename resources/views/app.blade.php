@@ -32,13 +32,7 @@
 
         <title inertia>{{ config('app.name', 'Tap & Track: Property Management System') }}</title>
 
-
-
-        <!-- Updated favicon -->
-<link rel="icon" type="image/png" href="{{ asset('storage/assets/logocapstone23.png') }}">
-<link rel="apple-touch-icon" href="{{ asset('storage/assets/logocapstone23.png') }}">
-
-      {{-- <!-- ✅ Updated favicon (S3-safe) -->
+      <!-- ✅ Updated favicon (S3-safe) -->
 <link
     rel="icon"
     type="image/png"
@@ -52,7 +46,7 @@
     href="{{ config('filesystems.default') === 's3'
         ? 'https://' . env('AWS_BUCKET') . '.s3.' . env('AWS_DEFAULT_REGION') . '.amazonaws.com/logo_image/logocapstone23.png'
         : asset('storage/assets/logocapstone23.png') }}"
-> --}}
+>
 
 
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
