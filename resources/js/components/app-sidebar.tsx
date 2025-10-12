@@ -114,7 +114,7 @@ const userNavItems = [
 ];
 
 const configNavItems = [
-    { title: 'Profile', href: '/settings/profile', icon: User },
+    { title: 'Profile', href: '/settings/profile', icon: User, permission: 'view-profile' },
     { title: 'Settings', href: '/settings/password', icon: Settings },
 ];
 
