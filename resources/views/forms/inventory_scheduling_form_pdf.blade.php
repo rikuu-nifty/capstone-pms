@@ -26,8 +26,11 @@
         padding: 4px 6px;
         text-align: center;
         vertical-align: middle;
-        word-wrap: break-word;
+        word-break: break-word;
+        /* breaks long words */
         white-space: normal;
+        /* allows multi-line wrapping */
+        overflow-wrap: anywhere;
     }
 
     th {
@@ -126,14 +129,14 @@
 <table>
     <thead>
         <tr>
-            <th style="width:25%;">UNIT / DEPT / LABORATORIES</th>
+            <th style="width:21%;">UNIT / DEPT / LABORATORIES</th>
             <th style="width:10%;">Inventory<br>Schedule</th>
-            <th style="width:12%;">Actual Date<br>of Inventory</th>
-            <th style="width:10%;">Checked By<br>(PMO)</th>
-            <th style="width:10%;">Verified By<br>(IA)</th>
-            <th style="width:10%;">Inventory Copy<br>Received By</th>
-            <th style="width:8%;">Date</th>
-            <th style="width:10%;">Status</th>
+            <th style="width:11%;">Actual Date<br>of Inventory</th>
+            <th style="width:13%;">Checked By<br>(PMO)</th>
+            <th style="width:13%;">Verified By<br>(IA)</th>
+            <th style="width:13%;">Inventory Copy<br>Received By</th>
+            <th style="width:11%;">Date</th>
+            <th style="width:8%;">Status</th>
         </tr>
     </thead>
 
@@ -152,7 +155,7 @@
 
         @foreach($roomRows as $room)
         <tr class="room-row">
-            <td style="text-align:left; padding-left:40px;">
+            <td>
                 {{ $room['room'] }}
                 @if(!empty($room['asset_count']) && $room['asset_count'] > 0)
                 ({{ $room['asset_count'] }})
@@ -164,9 +167,9 @@
                 ? Carbon::parse($schedule->actual_date_of_inventory)->format('F d, Y')
                 : '—' }}
             </td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{ $schedule->checked_by ?? '' }}</td>
+            <td>{{ $schedule->verified_by ?? '' }}</td>
+            <td>{{ $schedule->received_by ?? '' }}</td>
             <td></td>
             <td>{{ ucfirst($room['status']) }}</td>
         </tr>
@@ -183,7 +186,7 @@
 
         @foreach($roomRows as $room)
         <tr class="room-row">
-            <td style="text-align:left; padding-left:40px;">
+            <td>
                 {{ $room['room'] }}
                 @if(!empty($room['asset_count']) && $room['asset_count'] > 0)
                 ({{ $room['asset_count'] }})
@@ -195,9 +198,9 @@
                 ? Carbon::parse($schedule->actual_date_of_inventory)->format('F d, Y')
                 : '—' }}
             </td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{ $schedule->checked_by ?? '' }}</td>
+            <td>{{ $schedule->verified_by ?? '' }}</td>
+            <td>{{ $schedule->received_by ?? '' }}</td>
             <td></td>
             <td>{{ ucfirst($room['status']) }}</td>
         </tr>

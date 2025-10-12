@@ -313,6 +313,12 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                 // className="w-[350px] max-w-[95vw] h-[90vh] sm:h-auto sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-y-auto p-0"
                 className="w-[350px] max-w-[95vw] h-[70vh] sm:w-[min(1000px,95vw)] sm:max-w-[1100px] overflow-hidden p-0"
             >
+                {refreshing && (
+                    <div className="absolute top-2 right-4 text-xs text-blue-500 animate-pulse z-10">
+                        Refreshing…
+                    </div>
+                )}
+                
                 <div className="h-full overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>

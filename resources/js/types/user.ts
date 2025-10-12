@@ -37,15 +37,3 @@ export type QueryParams = {
 };
 
 export type UserStatus = '' | 'pending' | 'approved' | 'denied';
-
-// export function formatFullName(
-//     firstName: string,
-//     middleName: string | null,
-//     lastName: string
-// ): string {
-//     if (middleName && middleName.trim().length > 0) {
-//         const initial = middleName.trim().charAt(0).toUpperCase();
-//         return `${firstName} ${initial}. ${lastName}`;
-//     }
-//     return `${firstName} ${lastName}`;
-// }

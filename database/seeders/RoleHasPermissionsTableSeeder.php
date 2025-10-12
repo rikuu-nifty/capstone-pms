@@ -64,7 +64,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
             'pmo_head' => [
                 // INVENTORY LIST
                 'view-inventory-list',
-                'view-own-unit-inventory-list',
+                // 'view-own-unit-inventory-list',
                 'create-inventory-list',
                 'update-inventory-list',
                 'delete-inventory-list',
@@ -191,7 +191,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
             'pmo_staff' => [
                 // INVENTORY LIST
                 'view-inventory-list',
-                'view-own-unit-inventory-list',
+                // 'view-own-unit-inventory-list',
                 'create-inventory-list',
                 'update-inventory-list',
                 'delete-inventory-list',

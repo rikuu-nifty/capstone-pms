@@ -35,11 +35,12 @@ import {
     FileDigit,
     Bell,
     Trash2,
-    Monitor, // ✅ optional icon for "System Monitoring"
+    Monitor, // optional icon for "System Monitoring"
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
+// import { permission } from 'process';
 
 // ------------------ TYPES ------------------
 type NavItem = {
@@ -52,7 +53,7 @@ type NavItem = {
 // ------------------ NAV ITEMS ------------------
 const dashboardNavItems = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-    { title: 'Calendar', href: '/calendar', icon: Calendar },
+    { title: 'Calendar', href: '/calendar', icon: Calendar, permission: 'view-calendar' },
 ];
 
 const reportsNavItem = {
@@ -66,6 +67,7 @@ const notificationsNavItem = {
     title: 'Notifications',
     href: '/notifications',
     icon: Bell,
+    permission: 'view-notifications',
 };
 
 const auditLogItem = {  
@@ -88,19 +90,6 @@ const systemMonitoringNavItems = [
     reportsNavItem,
     trashBinItem,
     auditLogItem,
-];
-
-const inventoryNavItems = [
-    {
-        title: 'Inventory List',
-        href: '/inventory-list',
-        icon: Package2,
-        permission: ['view-all-inventory-list', 'view-own-unit-inventory-list'],
-    },
-    { title: 'Inventory Scheduling', href: '/inventory-scheduling', icon: CalendarCheck2, permission: 'view-inventory-scheduling' },
-    { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
-    { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
-    { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
 ];
 
 const assetsNavItems = [
@@ -136,6 +125,12 @@ function canView(item: NavItem, permissions: string[]): boolean {
     return permissions.includes(item.permission);
 }
 
+const hasVisibleItems = (items: NavItem[], permissions: string[]) =>
+  items.some((item) => canView(item, permissions));
+
+const hasVisibleGroups = (groups: NavItem[][], permissions: string[]) =>
+  groups.some((items) => hasVisibleItems(items, permissions));
+
 // ------------------ COMPONENT ------------------
 export function AppSidebar() {
     const page = usePage<{ 
@@ -149,6 +144,37 @@ export function AppSidebar() {
 
     const { url } = usePage();
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+    // Dynamic Inventory link based on permissions
+    const inventoryListLink =
+        permissions.includes('view-inventory-list')
+            ? '/inventory-list'
+            : permissions.includes('view-own-unit-inventory-list')
+            ? '/inventory-list/own'
+            : null;
+
+    // Inventory menu items
+    const inventoryNavItems: NavItem[] = [
+        ...(inventoryListLink
+            ? [
+                  {
+                      title: 'Inventory List',
+                      href: inventoryListLink,
+                      icon: Package2,
+                      permission: ['view-inventory-list', 'view-own-unit-inventory-list'],
+                  } as NavItem,
+              ]
+            : []),
+        {
+            title: 'Inventory Scheduling',
+            href: '/inventory-scheduling',
+            icon: CalendarCheck2,
+            permission: 'view-inventory-scheduling',
+        },
+        { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
+        { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
+        { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
+    ]
 
     useEffect(() => {
         if (inventoryNavItems.some((item) => url.startsWith(item.href))) {
@@ -166,6 +192,7 @@ export function AppSidebar() {
         if (systemMonitoringNavItems.some((item) => url.startsWith(item.href))) {
             setOpenGroups((prev) => ({ ...prev, 'System Monitoring': true }));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url]);
 
     const toggleGroup = (group: string) => {
@@ -246,47 +273,12 @@ export function AppSidebar() {
 
             <SidebarContent className="flex-1 overflow-y-auto">
                 {/* MAIN PLATFORM */}
-                <SidebarGroupLabel>Main Platform</SidebarGroupLabel>
-                <SidebarMenu>
-                    {dashboardNavItems
-                        .filter((item) => canView(item, permissions))
-                        .map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <SidebarMenuButton asChild className="px-3 py-2">
-                                    <Link href={item.href} className="flex items-center space-x-2">
-                                        <item.icon className="h-4 w-4" />
-                                        <span>{item.title}</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        ))}
-                </SidebarMenu>
 
-                {/* PROPERTY MANAGEMENT */}
-                <div className="mt-1">
-                    <SidebarGroupLabel>Property Management</SidebarGroupLabel>
+                {hasVisibleItems(dashboardNavItems, permissions) && (
+                    <>
+                    <SidebarGroupLabel>Main Platform</SidebarGroupLabel>
                     <SidebarMenu>
-                        {renderCollapsible('Inventory', Package2, inventoryNavItems)}
-                        {renderCollapsible('Assets', Blocks, assetsNavItems)}
-                        {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
-                    </SidebarMenu>
-                </div>
-
-                {/* ADMINISTRATION */}
-                <div className="mt-1">
-                    <SidebarGroupLabel>Administration</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {renderCollapsible('User Management', User, userNavItems)}
-                        {/* ✅ NEW COLLAPSIBLE GROUP: System Monitoring */}
-                        {renderCollapsible('System Monitoring', Monitor, systemMonitoringNavItems)}
-                    </SidebarMenu>
-                </div>
-
-                {/* CONFIGURATION */}
-                <div className="mt-1">
-                    <SidebarGroupLabel>Configuration</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {configNavItems
+                        {dashboardNavItems
                             .filter((item) => canView(item, permissions))
                             .map((item) => (
                                 <SidebarMenuItem key={item.href}>
@@ -299,7 +291,59 @@ export function AppSidebar() {
                                 </SidebarMenuItem>
                             ))}
                     </SidebarMenu>
-                </div>
+                    </>
+                )}
+
+                {/* PROPERTY MANAGEMENT */}
+                {hasVisibleGroups([inventoryNavItems, assetsNavItems, institutionalSetUpNavItems], permissions) && (
+                    <>
+                    <div className="mt-1">
+                        <SidebarGroupLabel>Property Management</SidebarGroupLabel>
+                        <SidebarMenu>
+                            {renderCollapsible('Inventory', Package2, inventoryNavItems)}
+                            {renderCollapsible('Assets', Blocks, assetsNavItems)}
+                            {renderCollapsible('Institutional Setup', Building2, institutionalSetUpNavItems)}
+                        </SidebarMenu>
+                    </div>
+                    </>
+                )}
+
+                {/* ADMINISTRATION */}
+                {hasVisibleGroups([userNavItems, systemMonitoringNavItems], permissions) && (
+                    <>
+                    <div className="mt-1">
+                        <SidebarGroupLabel>Administration</SidebarGroupLabel>
+                        <SidebarMenu>
+                            {renderCollapsible('User Management', User, userNavItems)}
+                            {/* NEW COLLAPSIBLE GROUP: System Monitoring */}
+                            {renderCollapsible('System Monitoring', Monitor, systemMonitoringNavItems)}
+                        </SidebarMenu>
+                    </div>
+                    </>
+                )}
+
+                {/* CONFIGURATION */}
+                {hasVisibleItems(configNavItems, permissions) && (
+                    <>
+                    <div className="mt-1">
+                        <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+                        <SidebarMenu>
+                            {configNavItems
+                                .filter((item) => canView(item, permissions))
+                                .map((item) => (
+                                    <SidebarMenuItem key={item.href}>
+                                        <SidebarMenuButton asChild className="px-3 py-2">
+                                            <Link href={item.href} className="flex items-center space-x-2">
+                                                <item.icon className="h-4 w-4" />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                        </SidebarMenu>
+                    </div>
+                    </>
+                )}
             </SidebarContent>
 
             <SidebarFooter>

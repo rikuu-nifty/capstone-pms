@@ -10,6 +10,9 @@ class PermissionsTableSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            // CALENDAR
+            ['code' => 'view-calendar', 'name' => 'View Calendar'],
+
             // INVENTORY LIST
             ['code' => 'view-inventory-list', 'name' => 'View Inventory List'],
             ['code' => 'view-own-unit-inventory-list', 'name' => 'View Own Unit Inventory List'],

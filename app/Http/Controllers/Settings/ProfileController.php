@@ -30,34 +30,44 @@ class ProfileController extends Controller
     /**
      * Update the user's profile settings.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $validated = $request->validated();
+        $validated = $request->all();
 
-        $user->fill([
-            'name'  => $validated['name'],
-            'email' => $validated['email'],
-        ]);
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('user_profiles', 'public');
+            $validated['image_path'] = $path;
         }
 
-        $request->user()->save();
+        // Always assign fields (even if unchanged)
+        $user->fill([
+            'name'  => $validated['name'] ?? $user->name,
+            'email' => $validated['email'] ?? $user->email,
+        ]);
 
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        // dd($validated, $user->getDirty());
+
+        $user->save();
+
+        // Update user details safely
         $user->detail()->updateOrCreate(
             ['user_id' => $user->id],
             [
-                'first_name'  => $validated['first_name'],
-                'middle_name' => $validated['middle_name'] ?? null,
-                'last_name'   => $validated['last_name'],
-                'gender'      => $validated['gender'] ?? null,
-                'contact_no'  => $validated['contact_no'] ?? null,
+                'first_name'  => $validated['first_name'] ?? $user->detail->first_name ?? null,
+                'middle_name' => $validated['middle_name'] ?? $user->detail->middle_name ?? null,
+                'last_name'   => $validated['last_name'] ?? $user->detail->last_name ?? null,
+                'gender'      => $validated['gender'] ?? $user->detail->gender ?? null,
+                'contact_no'  => $validated['contact_no'] ?? $user->detail->contact_no ?? null,
+                'image_path'  => $validated['image_path'] ?? $user->detail->image_path ?? null,
             ]
         );
 
-        return to_route('profile.edit');
+        return to_route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 
     /**

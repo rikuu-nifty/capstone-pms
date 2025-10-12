@@ -57,12 +57,6 @@ class MaintenanceDueNotification extends Notification
         $formattedDate = Carbon::parse($this->asset->maintenance_due_date)->format('F j, Y');
         $url = route('inventory-list.view', $this->asset->id);
 
-        // return (new MailMessage)
-        //     ->subject("Maintenance Due: {$this->asset->asset_name}")
-        //     ->greeting("Hello {$notifiable->name},")
-        //     ->line("The asset **{$this->asset->asset_name}** is due for maintenance on {$formattedDate}.")
-        //     ->action('View Asset', route('inventory-list.view', $this->asset->id))
-        //     ->line('Please take action as soon as possible.');
         return (new \Illuminate\Notifications\Messages\MailMessage)
             ->subject("Maintenance Due: {$this->asset->asset_name}")
             ->view('emails.maintenance-due', [
