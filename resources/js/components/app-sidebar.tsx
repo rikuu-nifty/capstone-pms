@@ -35,7 +35,8 @@ import {
     FileDigit,
     Bell,
     Trash2,
-    Monitor, // optional icon for "System Monitoring"
+    Monitor,
+    UserCircle, // optional icon for "System Monitoring"
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -113,7 +114,8 @@ const userNavItems = [
 ];
 
 const configNavItems = [
-    { title: 'Settings', href: '/settings', icon: Settings },
+    { title: 'Profile', href: '/settings/profile', icon: User },
+    { title: 'Settings', href: '/settings/password', icon: Settings },
 ];
 
 // ------------------ HELPERS ------------------
@@ -314,7 +316,7 @@ export function AppSidebar() {
                     <div className="mt-1">
                         <SidebarGroupLabel>Administration</SidebarGroupLabel>
                         <SidebarMenu>
-                            {renderCollapsible('User Management', User, userNavItems)}
+                            {renderCollapsible('User Management', UserCircle, userNavItems)}
                             {/* NEW COLLAPSIBLE GROUP: System Monitoring */}
                             {renderCollapsible('System Monitoring', Monitor, systemMonitoringNavItems)}
                         </SidebarMenu>
