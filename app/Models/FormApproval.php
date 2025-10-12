@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\FormApprovalSteps;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Notifications\FormApprovalStepPending;
+
 class FormApproval extends Model
 {
     use SoftDeletes;
@@ -183,6 +185,13 @@ class FormApproval extends Model
         }
 
         $this->recomputeOverallStatus();
+        
+        // Notify only the *first* pending approver (the current step)
+        if ($firstPending = $this->currentStep()) {
+            if (!$firstPending->is_external) {
+                $this->notifyDesignatedApprover($firstPending);
+            }
+        }
     }
 
     //user-based
@@ -205,6 +214,13 @@ class FormApproval extends Model
 
         $this->applyStepSideEffects($step);
         $this->recomputeOverallStatus();
+
+        // Notify next approver if any
+        if ($nextStep = $this->currentStep()) {
+            if ($nextStep->status === 'pending' && !$nextStep->is_external) {
+                $this->notifyDesignatedApprover($nextStep);
+            }
+        }
     }
 
     /** Reject current step */
@@ -249,6 +265,13 @@ class FormApproval extends Model
 
         $this->applyStepSideEffects($step);
         $this->recomputeOverallStatus();
+
+        // Notify next approver if any
+        if ($nextStep = $this->currentStep()) {
+            if ($nextStep->status === 'pending' && !$nextStep->is_external) {
+                $this->notifyDesignatedApprover($nextStep);
+            }
+        }
     }
 
     public function resetToPending(?int $toStepOrder = null): void
@@ -356,6 +379,39 @@ class FormApproval extends Model
 
         if (isset($handlers[$class])) {
             $handlers[$class]($model, $status, $approved);
+        }
+    }
+
+    /**
+     * Resolve approver role code based on the current step and form type.
+     * This matches the same logic used by the FormApprovalController actorMap.
+     */
+    protected function resolveApproverRoleCode(FormApprovalSteps $step): ?string
+    {
+        $map = [
+            'inventory_scheduling:noted_by'       => 'pmo_head',
+            'inventory_scheduling:approved_by'    => 'vp_admin',
+            'off_campus:issued_by'                => 'pmo_head',
+            'off_campus:external_approved_by'     => 'external',
+            'transfer:approved_by'                => 'pmo_head',
+            'turnover_disposal:noted_by'          => 'pmo_head',
+            'turnover_disposal:external_noted_by' => 'external',
+        ];
+
+        $key = "{$this->form_type}:{$step->code}";
+        return $map[$key] ?? null;
+    }
+
+    protected function notifyDesignatedApprover(FormApprovalSteps $step): void
+    {
+        $roleCode = $this->resolveApproverRoleCode($step);
+        if (!$roleCode || $roleCode === 'external') return;
+
+        // Notify *all* users with that role code
+        $approvers = User::whereHas('role', fn($q) => $q->where('code', $roleCode))->get();
+
+        foreach ($approvers as $approver) {
+            $approver->notify(new FormApprovalStepPending($step, $this->form_title));
         }
     }
 }
