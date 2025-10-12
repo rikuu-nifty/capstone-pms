@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -118,5 +119,20 @@ public function update(Request $request): RedirectResponse
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function removeImage(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->detail && $user->detail->image_path) {
+            // Delete from storage
+            Storage::disk('public')->delete($user->detail->image_path);
+
+            // Set image_path to null
+            $user->detail->update(['image_path' => null]);
+        }
+
+        return back()->with('success', 'Profile image removed successfully.');
     }
 }

@@ -536,6 +536,8 @@
     //PROFILE
     Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/remove-image', [\App\Http\Controllers\Settings\ProfileController::class, 'removeImage'])
+        ->name('profile.removeImage');
 
     // RESTORATION
     Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index')
