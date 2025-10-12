@@ -226,10 +226,9 @@ export default function ApprovalsIndex() {
                                 <TableHead className="text-center">Date Updated</TableHead>
                                 <TableHead className="text-center">Requested By</TableHead>
                                 <TableHead className="text-center">Approval Status</TableHead>
-                                {/* <TableHead className="text-center">Requires Attention From</TableHead> */}
                                 {props.tab !== 'approved' && (
                                     <TableHead className="text-center">
-                                        {props.tab === 'rejected' ? 'Reason' : 'Requires Attention From'}
+                                        {props.tab === 'rejected' ? 'Reason' : 'Requires Approval From'}
                                     </TableHead>
                                 )}
                                 <TableHead className="text-center">Actions</TableHead>
