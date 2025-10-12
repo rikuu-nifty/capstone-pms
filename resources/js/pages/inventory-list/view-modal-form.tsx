@@ -168,7 +168,7 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                     }
                                 />
                                 <InfoCard label="Unit / Department" value={humanize(asset.unit_or_department?.name)} />
-                                <InfoCard label="Personnel-in-Charge" value={asset.assigned_to_name ?? '—'} />
+                                <InfoCard label="Personnel-in-Charge" value={asset.personnel?.full_name ?? asset.assigned_to_name ?? '—'} />
                             </div>
                         </div>
 

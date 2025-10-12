@@ -424,7 +424,7 @@ const filteredBrands = useMemo(() => {
             onSuccess: () => {
                 reset();
                 setShowAddAsset(false);
-                router.reload({ only: ['notifications'] });
+                router.reload({ only: ['assets','notifications'] });
             },
         });
         console.log('Form Submitted', data);
