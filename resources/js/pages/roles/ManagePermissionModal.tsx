@@ -205,6 +205,7 @@ export default function ManagePermissionsModal({
                 />
 
                 <Button
+                    type="button"
                     size="sm"
                     onClick={() => {
                         setData("permissions", permissions.map((p) => p.id));
@@ -216,6 +217,7 @@ export default function ManagePermissionsModal({
                 </Button>
 
                 <Button
+                    type="button"
                     variant="destructive"
                     size="sm"
                     onClick={() => {
