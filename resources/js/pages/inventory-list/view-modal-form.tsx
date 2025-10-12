@@ -49,7 +49,10 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-gray-50 p-0 shadow-2xl animate-in fade-in-50 zoom-in-95 sm:max-w-[1100px]">
+            <DialogContent
+                aria-describedby={undefined}
+                className="max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-gray-50 p-0 shadow-2xl animate-in fade-in-50 zoom-in-95 sm:max-w-[1100px]"
+            >
                 <DialogTitle className="sr-only">View Asset Details</DialogTitle>
                 
                 {/* Hero Section */}
@@ -181,7 +184,7 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                 {/* Footer */}
                 <DialogFooter className="flex justify-center rounded-b-2xl bg-gray-100 px-10 py-6">
                     <DialogClose asChild>
-                        <Button className="rounded-full bg-blue-600 px-6 py-2 text-white shadow-md hover:bg-blue-700">Close</Button>
+                        <Button className="cursor-pointer rounded-full bg-blue-600 px-6 py-2 text-white shadow-md hover:bg-blue-700">Close</Button>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>
