@@ -35,6 +35,7 @@
     use App\Http\Controllers\SignatoryController;
     use App\Http\Controllers\TrashBinController;
     use App\Http\Controllers\Settings\ProfileController;
+    use App\Http\Controllers\CalendarController;
 
     Route::get('/', function () {
         if (Auth::check()) {
@@ -149,8 +150,9 @@
         Route::delete('/{signatory}', [SignatoryController::class, 'destroy'])->name('signatories.destroy');
     });
 
-    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])
-        ->name('calendar');
+    Route::get('/calendar', [CalendarController::class, 'index'])
+        ->name('calendar')
+        ->middleware('can:view-calendar');
 
     Route::get('/asset-summary/{inventory_list}', [InventoryListController::class, 'publicSummary'])
         ->name('asset-summary.show');
