@@ -191,15 +191,15 @@ export type SchedulingTotals = {
 
 export default function InventorySchedulingIndex({
     schedules = [],
-    assets = [], // 👈 default empty array
+    assets = [], // default empty array
     buildings = [],
     buildingRooms = [],
     unitOrDepartments = [],
     users = [],
 }: {
     schedules: Scheduled[];
-    viewing?: Scheduled; // 👈 may exist when opening View modal
-    assets?: Asset[]; // 👈 fixed type         // 👈 new, will be passed for view modal
+    viewing?: Scheduled; // may exist when opening View modal
+    assets?: Asset[]; // fixed type         // new, will be passed for view modal
     buildings: Building[];
     buildingRooms: SchedulingBuildingRoom[];
     unitOrDepartments: UnitOrDepartment[];
@@ -209,8 +209,6 @@ export default function InventorySchedulingIndex({
     const { signatories, totals } = props; // extract signatories
     const currentUser = props.auth.user;
 
-     // 👇 Add this line to debug
-    console.log("buildingRooms", buildingRooms);
     const { data, setData, post, reset, processing, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         building_id: '',
         building_room_id: '',
@@ -692,9 +690,19 @@ export default function InventorySchedulingIndex({
             {viewModalVisible && selectedSchedule && (
                 <ViewScheduleModal
                     schedule={selectedSchedule}
-                    assets={assets ?? []} // 👈 pass assets safely
-                    onClose={closeView}
+                    assets={assets ?? []} // pass assets safely
+                    // onClose={closeView}
                     signatories={signatories}
+                    onClose={() => {
+                        closeView();
+                        setTimeout(() => {
+                            router.visit(route('inventory-scheduling.index'), {
+                                replace: true,
+                                preserveScroll: true,
+                                preserveState: false,
+                            });
+                        }, 200);
+                    }}
                 />
             )}
 
@@ -785,7 +793,7 @@ export default function InventorySchedulingIndex({
                                                 building_ids: buildingSelections.building_ids,
                                                 room_ids: buildingSelections.room_ids,
                                                 sub_area_ids: buildingSelections.sub_area_ids,
-                                                unit_ids: [], // 👈 usually empty when scoping by building
+                                                unit_ids: [], // usually empty when scoping by building
                                             }));
                                             setExpandedBuildings(buildingSelections.expanded ?? []); // ✅ restore expanded buildings
 
