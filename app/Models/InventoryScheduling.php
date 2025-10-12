@@ -344,12 +344,12 @@ class InventoryScheduling extends Model
         $quarterStart = $now->copy()->firstOfQuarter();
         $quarterEnd = $now->copy()->lastOfQuarter();
 
-        // ✅ Completed this month
+        // Completed this month
         $completedThisMonth = static::where('scheduling_status', 'completed')
             ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
             ->count();
 
-        // ✅ On-time completion using proper date comparison
+        // On-time completion using proper date comparison
         $onTimeThisMonth = static::where('scheduling_status', 'completed')
             ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
             ->whereRaw("DATE_FORMAT(actual_date_of_inventory, '%Y-%m') = inventory_schedule")
@@ -359,21 +359,21 @@ class InventoryScheduling extends Model
             ? round(($onTimeThisMonth / $completedThisMonth) * 100, 1)
             : 0;
 
-        // ✅ Overdue from last month
+        // Overdue from last month
         $overdueLastMonth = static::whereRaw("
             STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') BETWEEN ? AND ?
         ", [$lastMonthStart, $lastMonthEnd])
                 ->whereIn('scheduling_status', ['pending', 'pending_review', 'overdue'])
                 ->count();
 
-        // ✅ Pending next 30 days
+        // Pending next 30 days
         $pendingNext30Days = static::whereIn('scheduling_status', ['pending', 'pending_review'])
             ->whereRaw("
             STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') BETWEEN ? AND ?
         ", [$now, $now->copy()->addDays(30)])
             ->count();
 
-        // ✅ Cancellation rate
+        // Cancellation rate
         $totalQuarter = static::whereRaw("
             STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') BETWEEN ? AND ?
         ", [$quarterStart, $quarterEnd])->count();
@@ -388,7 +388,7 @@ class InventoryScheduling extends Model
             ? round(($cancelledQuarter / $totalQuarter) * 100, 1)
             : 0;
 
-        // ✅ Average delay
+        // Average delay
         $delays = static::where('scheduling_status', 'completed')
             ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
             ->selectRaw("DATEDIFF(actual_date_of_inventory, STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d')) as delay")
@@ -403,5 +403,44 @@ class InventoryScheduling extends Model
             'cancellation_rate'       => $cancellationRate,
             'avg_delay_days'          => $avgDelay,
         ];
+    }
+
+    public function refreshSchedulingStatus(): void
+    {
+        $counts = $this->assets()
+            ->select('inventory_status', DB::raw('COUNT(*) as total'))
+            ->groupBy('inventory_status')
+            ->pluck('total', 'inventory_status');
+
+        $total = $counts->sum();
+        $completed = $counts['inventoried'] ?? 0;
+        $scheduled = $counts['scheduled'] ?? 0;
+        $notInventoried = $counts['not_inventoried'] ?? 0;
+
+        $newStatus = 'pending';
+
+        if ($total === 0) {
+            $newStatus = 'pending';
+        } elseif ($completed === $total) {
+            $newStatus = 'completed';
+        } elseif ($notInventoried === $total) {
+            $newStatus = 'not_inventoried';
+        } elseif ($scheduled === $total) {
+            // check if past due
+            $ym = $this->inventory_schedule;
+            if ($ym) {
+                [$y, $m] = explode('-', $ym);
+                $scheduleEnd = Carbon::create($y, $m)->endOfMonth();
+                $newStatus = now()->gt($scheduleEnd) ? 'overdue' : 'pending';
+            } else {
+                $newStatus = 'pending';
+            }
+        } else {
+            $newStatus = 'in_progress';
+        }
+
+        if ($this->scheduling_status !== $newStatus) {
+            $this->update(['scheduling_status' => $newStatus]);
+        }
     }
 }

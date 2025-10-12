@@ -79,14 +79,18 @@ class InventorySchedulingController extends Controller
         // also load signatories for the page
         $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
 
+        // if (request()->inertia()) {
+        //     Inertia::version(md5(now())); // ensures Inertia sees this as a new version every time
+        // }
+
         return Inertia::render('inventory-scheduling/index', [
             'schedules' => $schedules,
             'buildings' => $buildings,
             'buildingRooms' => $buildingRooms,
             'unitOrDepartments' => $unitOrDepartments,
             'users' => $users,
-            // 'auth' => ['user' => auth()->user()], // 👈 make sure this is included
-            'signatories' => $signatories, // 👈 pass signatories
+            // 'auth' => ['user' => auth()->user()], // make sure this is included
+            'signatories' => $signatories, // pass signatories
             'assets' => $assets,
 
             'totals' => InventoryScheduling::kpiStats(),
@@ -170,7 +174,7 @@ class InventorySchedulingController extends Controller
             'user',
             'designatedEmployee',
             'assignedBy',
-            'preparedBy', // 👈 include preparer
+            'preparedBy', // include preparer
             // approvals omitted here to keep list lightweight
         ])->latest()->get();
 
@@ -240,12 +244,12 @@ class InventorySchedulingController extends Controller
             'unitOrDepartments' => $unitOrDepartments,
             'users'             => $users,
 
-            'viewing'           => $viewing,      // 👈 now provided with full approvals
-            'assets'            => $viewing->assets,       // 👈 pass assets to frontend
-            'signatories'       => $signatories,  // 👈 now provided
-            'isFullyApproved'   => $isFullyApproved, // 👈 pass flag to frontend
+            'viewing'           => $viewing,      // now provided with full approvals
+            'assets'            => $viewing->assets,       // pass assets to frontend
+            'signatories'       => $signatories,  // now provided
+            'isFullyApproved'   => $isFullyApproved, // pass flag to frontend
 
-            // 'auth'              => ['user' => auth()->user()], // 👈 FIX: include auth like in index()
+            // 'auth'              => ['user' => auth()->user()], // FIX: include auth like in index()
         ]);
     }
 
@@ -339,7 +343,7 @@ class InventorySchedulingController extends Controller
     {
         $perPage = (int) $request->input('per_page', 10);
         $type = $request->input('type', 'building_room');
-        $unitId = $request->input('unit_id'); // 👈
+        $unitId = $request->input('unit_id');
 
         $query = $schedule->assets()->with(['asset.assetModel.category']);
 
@@ -411,6 +415,9 @@ class InventorySchedulingController extends Controller
             'route'                 => $request->path(),
         ]);
 
+        // Refresh overall schedule status
+        $schedule->refreshSchedulingStatus();
+
         return response()->json(['success' => true]);
     }
 
@@ -456,6 +463,9 @@ class InventorySchedulingController extends Controller
         AuditTrail::latest()->first()->update([
             'subject_type' => 'InventoryAssetStatus',
         ]);
+
+        // Refresh overall schedule status
+        $schedule->refreshSchedulingStatus();
 
         return response()->json(['success' => true]);
     }
