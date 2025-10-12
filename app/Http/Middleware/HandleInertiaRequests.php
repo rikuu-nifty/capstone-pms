@@ -38,7 +38,7 @@ class HandleInertiaRequests extends Middleware
         [$message, $author] = str(\Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
 
         // Always reload the user's related detail + role + permissions + department
-        $user = $request->user()?->loadMissing(['detail', 'role.permissions', 'unitOrDepartment']);
+        $user = $request->user()?->fresh(['detail', 'role.permissions', 'unitOrDepartment']);
 
         return [
             ...parent::share($request),
