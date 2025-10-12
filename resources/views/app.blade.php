@@ -32,22 +32,20 @@
 
         <title inertia>{{ config('app.name', 'Tap & Track: Property Management System') }}</title>
 
-      <!-- ✅ S3-safe favicon with cache busting -->
+<!-- ✅ S3-safe favicon with cache busting -->
 @php
+    $bucket = config('filesystems.disks.s3.bucket');
+    $region = config('filesystems.disks.s3.region');
+
     $faviconUrl = config('filesystems.default') === 's3'
-        ? 'https://' . env('AWS_BUCKET') . '.s3.' . env('AWS_DEFAULT_REGION') . '.amazonaws.com/logo_image/logocapstone23.png'
+        ? "https://{$bucket}.s3.{$region}.amazonaws.com/logo_image/logocapstone23.png"
         : asset('storage/assets/logocapstone23.png');
 @endphp
 
-<link
-    rel="icon"
-    type="image/png"
-    href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}"
->
-<link
-    rel="apple-touch-icon"
-    href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}"
->
+<link rel="icon" type="image/png" href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}">
+<link rel="shortcut icon" type="image/png" href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}">
+<link rel="apple-touch-icon" href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}">
+
 
 
         <link rel="preconnect" href="https://fonts.bunny.net">
