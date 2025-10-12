@@ -1,7 +1,7 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
 
 import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { UserDetail } from '@/types/user-detail';
+
+import SaveConfirmationModal from '@/components/modals/SaveConfirmationModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -29,13 +31,13 @@ type ProfileForm = {
     last_name: string;
     gender?: 'female' | 'male' | 'other' | '';
     contact_no?: string;
+    image?: File | null;
 };
 
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
-    // const { auth } = usePage<SharedData>().props;
     const { auth, userDetail } = usePage<SharedData & { userDetail?: UserDetail | null }>().props;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
+    const { data, setData, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
         name: auth.user.name,
         email: auth.user.email,
         first_name: userDetail?.first_name || '',
@@ -43,15 +45,34 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         last_name: userDetail?.last_name || '',
         gender: userDetail?.gender || '',
         contact_no: userDetail?.contact_no || '',
+        image: null,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'), {
+        const formData = new FormData();
+        formData.append('_method', 'PATCH'); // 👈 tell Laravel it’s a PATCH request
+        formData.append('_token', (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '');
+
+        (Object.entries(data) as [keyof ProfileForm, FormDataEntryValue | File | null][])
+        .forEach(([key, value]) => {
+            if (value instanceof File) {
+                formData.append(key, value);
+            } else if (typeof value === 'string') {
+                formData.append(key, value);
+            } else if (value !== null && value !== undefined) {
+                formData.append(key, String(value));
+            }
+        });
+
+        router.post(route('profile.update'), formData, {
             preserveScroll: true,
+            onSuccess: () => setShowSaved(true),
         });
     };
+
+    const [showSaved, setShowSaved] = useState(false);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -177,6 +198,43 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                             <InputError message={errors.contact_no} />
                         </div>
 
+                        <div className="grid gap-2">
+                            <Label>Profile Picture</Label>
+
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    if (e.target.files?.[0]) setData('image', e.target.files[0]);
+                                }}
+                                className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
+                                           file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
+                                           file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                            />
+
+                            <div className="mt-3 flex items-center gap-4">
+                                {data.image ? (
+                                    <img
+                                        src={URL.createObjectURL(data.image as File)}
+                                        alt="Preview"
+                                        className="h-24 w-24 rounded-full object-cover border shadow-md"
+                                    />
+                                ) : userDetail?.image_path ? (
+                                    <img
+                                        src={`/storage/${userDetail.image_path}`}
+                                        alt="Profile"
+                                        className="h-24 w-24 rounded-full object-cover border shadow-md"
+                                    />
+                                ) : (
+                                    <div className="flex h-24 w-24 items-center justify-center rounded-full border bg-gray-50 text-sm text-gray-400">
+                                        No Image
+                                    </div>
+                                )}
+                            </div>
+
+                            <InputError message={errors.image} />
+                        </div>
+
                         <div className="flex items-center gap-4">
                             <Button
                                 disabled={processing}
@@ -198,6 +256,13 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                     </form>
                 </div>
                 <DeleteUser />
+                
+                <SaveConfirmationModal
+                    show={showSaved}
+                    onClose={() => setShowSaved(false)}
+                    title="Profile Updated"
+                    message="Your profile changes have been saved successfully."
+                />
             </SettingsLayout>
         </AppLayout>
     );

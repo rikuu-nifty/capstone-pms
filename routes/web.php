@@ -33,8 +33,8 @@
     use App\Http\Controllers\InventorySchedulingSignatoryController;
     use App\Http\Controllers\TransferSignatoryController;
     use App\Http\Controllers\SignatoryController;
-        use App\Http\Controllers\TrashBinController;
-
+    use App\Http\Controllers\TrashBinController;
+    use App\Http\Controllers\Settings\ProfileController;
 
     Route::get('/', function () {
         if (Auth::check()) {
@@ -533,6 +533,8 @@
         ->middleware('can:delete-equipment-codes');
 
     //PROFILE
+    Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // RESTORATION
     Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index')

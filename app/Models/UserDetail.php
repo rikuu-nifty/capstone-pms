@@ -19,6 +19,7 @@ class UserDetail extends Model
         'last_name',
         'gender',
         'contact_no',
+        'image_path',
     ];
 
     public function user()

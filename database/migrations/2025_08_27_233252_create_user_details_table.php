@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('last_name');
             $table->enum('gender', ['female', 'male', 'other'])->nullable();
             $table->string('contact_no', 13)->nullable();
+            $table->string('image_path')->nullable();
             
             $table->timestamps();
             $table->softDeletes();

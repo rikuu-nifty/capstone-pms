@@ -22,7 +22,6 @@ import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
 import { SubArea, ucwords, UnitOrDepartment } from '@/types/custom-index';
 import { WebcamCapture } from './WebcamCapture';
-// ✅ instead use the shared type
 import type { Personnel } from '@/types/personnel';
 
 import Select from 'react-select';

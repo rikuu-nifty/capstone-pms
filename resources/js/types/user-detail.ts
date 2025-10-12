@@ -4,4 +4,5 @@ export type UserDetail = {
     last_name: string;
     gender?: 'female' | 'male' | 'other' | '';
     contact_no?: string;
+    image_path?: string | null;
 };
