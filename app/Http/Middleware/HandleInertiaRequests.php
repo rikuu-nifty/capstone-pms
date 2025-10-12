@@ -33,7 +33,7 @@ class HandleInertiaRequests extends Middleware
             // parent::version() will try to read your mix-manifest.json or vite manifest
             return parent::version($request) ?? 'dev';
         } catch (\Throwable $e) {
-            return 'dev'; // 👈 always a fallback
+            return 'dev'; // always a fallback
         }
     }
 
@@ -61,7 +61,15 @@ class HandleInertiaRequests extends Middleware
                     'id'    => $user->id,
                     'name'  => $user->name,
                     'email' => $user->email,
-                    // dynamic image URL based on relation or fallback
+
+                    // Role details embedded directly for frontend access
+                    'role' => $user->role ? [
+                        'id'   => $user->role->id,
+                        'name' => $user->role->name,
+                        'code' => $user->role->code,
+                    ] : null,
+                    'permissions' => $user->role?->permissions?->pluck('code')->toArray() ?? [],
+                    
                     'avatar' => $user->detail?->image_path
                         ? asset('storage/' . $user->detail->image_path)
                         : asset('images/default-avatar.png'),
