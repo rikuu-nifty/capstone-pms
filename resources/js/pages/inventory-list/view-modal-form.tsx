@@ -51,7 +51,7 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
         <Dialog open onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-gray-50 p-0 shadow-2xl animate-in fade-in-50 zoom-in-95 sm:max-w-[1100px]">
                 <DialogTitle className="sr-only">View Asset Details</DialogTitle>
-                
+
                 {/* Hero Section */}
                 <div className="relative rounded-t-2xl bg-gradient-to-r from-[#1d4ed8] to-[#3b82f6] p-10 text-white">
                     {/* AUF Mascot Logo (left side) */}
@@ -67,9 +67,16 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                     {asset.image_path ? (
                         <div className="mx-auto mb-6 max-w-[280px]">
                             <img
-                                src={`/storage/${asset.image_path}`}
+                                src={
+                                    asset.image_path.startsWith('http')
+                                        ? asset.image_path
+                                        : `https://${import.meta.env.VITE_AWS_BUCKET}.s3.${import.meta.env.VITE_AWS_DEFAULT_REGION}.amazonaws.com/${asset.image_path}`
+                                }
                                 alt={asset.asset_name}
                                 className="mx-auto max-h-64 w-auto rounded-xl object-cover shadow-lg sm:max-h-72"
+                                onError={(e) => {
+                                    e.currentTarget.src = '/images/placeholder.png'; // fallback if image fails
+                                }}
                             />
                         </div>
                     ) : (
@@ -102,8 +109,8 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                     label="Equipment Code"
                                     value={
                                         asset.asset_model?.equipment_code
-                                        ? `${ucwords(asset.asset_model.equipment_code.description ?? '')} [${asset.asset_model.equipment_code.code}]`
-                                        : humanize(asset.asset_type)
+                                            ? `${ucwords(asset.asset_model.equipment_code.description ?? '')} [${asset.asset_model.equipment_code.code}]`
+                                            : humanize(asset.asset_type)
                                     }
                                 />
 
@@ -142,10 +149,10 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                     label="Room"
                                     value={
                                         asset.building_room?.room
-                                        ? `${humanize(asset.building_room?.room)}${
-                                            asset.sub_area?.name ? ` (${humanize(asset.sub_area?.name)})` : ''
-                                            }`
-                                        : humanize(asset.sub_area?.name)
+                                            ? `${humanize(asset.building_room?.room)}${
+                                                  asset.sub_area?.name ? ` (${humanize(asset.sub_area?.name)})` : ''
+                                              }`
+                                            : humanize(asset.sub_area?.name)
                                     }
                                 />
                                 <InfoCard label="Unit / Department" value={humanize(asset.unit_or_department?.name)} />
@@ -163,14 +170,8 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 {/* <InfoCard label="Transfer Status" value={humanize(asset.transfer?.status)} /> */}
                                 <InfoCard label="Transfer Status" value={humanize(asset.current_transfer_status)} />
                                 <InfoCard label="Inventory Status" value={humanize(asset.current_inventory_status)} />
-                                <InfoCard
-                                    label="Turnover/Disposal Status"
-                                    value={humanize(asset.current_turnover_disposal_status) || '—'}
-                                />
-                                <InfoCard
-                                    label="Off Campus Status"
-                                    value={humanize(asset.current_off_campus_status) || '—'}
-                                />
+                                <InfoCard label="Turnover/Disposal Status" value={humanize(asset.current_turnover_disposal_status) || '—'} />
+                                <InfoCard label="Off Campus Status" value={humanize(asset.current_off_campus_status) || '—'} />
                                 <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
                                 <InfoCard label="Date Purchased" value={dateFormat(asset.date_purchased)} />
                             </div>

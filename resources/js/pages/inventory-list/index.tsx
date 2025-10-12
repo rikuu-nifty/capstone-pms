@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { DeleteAssetModal } from '@/components/delete-modal-form';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { PickerInput } from '@/components/picker-input';
@@ -12,7 +11,7 @@ import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { Banknote, Boxes, Eye, FolderArchive, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
 import { ChooseAddTypeModal } from './chooseAddTypeModal';
@@ -106,8 +105,8 @@ export type Asset = {
     depreciation_value?: number | string | null; // ✅ NEW
     date_purchased: string;
     quantity: number;
-    assigned_to?: number | null;   // ✅ FK now (personnel.id)
-    personnel?: Personnel | null;  // ✅ relation for easier display
+    assigned_to?: number | null; // ✅ FK now (personnel.id)
+    personnel?: Personnel | null; // ✅ relation for easier display
 
     // ✅ Changed: transfer relation instead of transfer_status
     transfer?: Transfer | null;
@@ -164,7 +163,7 @@ type KPIs = {
 
 export default function InventoryListIndex({
     assets = [],
-    personnels = [],   // ✅ add here
+    personnels = [], // ✅ add here
     assetModels = [],
     buildings = [],
     buildingRooms = [],
@@ -185,7 +184,7 @@ export default function InventoryListIndex({
     subAreas = [],
 }: {
     assets: Asset[];
-    personnels: Personnel[];   // ✅ add to type
+    personnels: Personnel[]; // ✅ add to type
     assetModels: AssetModel[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
@@ -253,9 +252,7 @@ export default function InventoryListIndex({
     // const filteredModels = assetModels.filter((model) => model.brand === data.brand);
 
     // Filter models based on selected category
-    const filteredModels = assetModels.filter(
-        (m) => m.category_id === Number(data.category_id)
-    );
+    const filteredModels = assetModels.filter((m) => m.category_id === Number(data.category_id));
 
     // Gather all brands for that category (case-insensitive + unique)
     // const categoryBrands = Array.from(
@@ -270,51 +267,40 @@ export default function InventoryListIndex({
     // );
 
     // ✅ Memoize filteredBrands so it doesn't trigger unnecessary re-renders
-const filteredBrands = useMemo(() => {
-    // No category selected → no brands
-    if (!data.category_id) return [];
+    const filteredBrands = useMemo(() => {
+        // No category selected → no brands
+        if (!data.category_id) return [];
 
-    // If a model is selected, show only brands tied to that model within the category
-    if (data.asset_model_id) {
-        const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
+        // If a model is selected, show only brands tied to that model within the category
+        if (data.asset_model_id) {
+            const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
 
-        if (selectedModel) {
-            return Array.from(
-                new Map(
-                    assetModels
-                        .filter(
-                            (m) =>
-                                m.category_id === selectedModel.category_id &&
-                                m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
-                                m.brand &&
-                                m.brand.trim() !== ''
-                        )
-                        .map((m) => [
-                            m.brand.trim().toLowerCase(),
-                            m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
-                        ])
-                ).values()
-            );
+            if (selectedModel) {
+                return Array.from(
+                    new Map(
+                        assetModels
+                            .filter(
+                                (m) =>
+                                    m.category_id === selectedModel.category_id &&
+                                    m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
+                                    m.brand &&
+                                    m.brand.trim() !== '',
+                            )
+                            .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+                    ).values(),
+                );
+            }
         }
-    }
 
-    // Otherwise, return all brands under the category
-    return Array.from(
-        new Map(
-            assetModels
-                .filter(
-                    (m) =>
-                        m.category_id === Number(data.category_id) &&
-                        m.brand &&
-                        m.brand.trim() !== ''
-                )
-                .map((m) => [
-                    m.brand.trim().toLowerCase(),
-                    m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
-                ])
-        ).values()
-    );
-}, [data.category_id, data.asset_model_id, assetModels]);
+        // Otherwise, return all brands under the category
+        return Array.from(
+            new Map(
+                assetModels
+                    .filter((m) => m.category_id === Number(data.category_id) && m.brand && m.brand.trim() !== '')
+                    .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+            ).values(),
+        );
+    }, [data.category_id, data.asset_model_id, assetModels]);
 
     // Check if there is only one unique brand for this category
     const isSingleBrand = filteredBrands.length === 1;
@@ -328,12 +314,7 @@ const filteredBrands = useMemo(() => {
         }
 
         // If exactly one brand exists, auto-fill it
-        if (
-            isSingleBrand &&
-            data.category_id &&
-            !data.brand &&
-            filteredBrands.length > 0
-        ) {
+        if (isSingleBrand && data.category_id && !data.brand && filteredBrands.length > 0) {
             setData('brand', filteredBrands[0]);
         }
     }, [data.category_id, data.asset_model_id, data.brand, filteredBrands, isSingleBrand, setData]);
@@ -686,14 +667,22 @@ const filteredBrands = useMemo(() => {
                                     <TableCell>
                                         {item.image_path ? (
                                             <img
-                                                src={`/storage/${item.image_path}`}
+                                                src={
+                                                    item.image_path.startsWith('http')
+                                                        ? item.image_path
+                                                        : `https://${import.meta.env.VITE_AWS_BUCKET}.s3.${import.meta.env.VITE_AWS_DEFAULT_REGION}.amazonaws.com/${item.image_path}`
+                                                }
                                                 alt={item.asset_name}
                                                 className="mx-auto max-h-24 w-auto rounded object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = '/images/placeholder.png'; // optional fallback image
+                                                }}
                                             />
                                         ) : (
                                             'No Image Uploaded'
                                         )}
                                     </TableCell>
+
                                     <TableCell>{ucwords(item.asset_model?.brand ?? '—')}</TableCell>
                                     <TableCell>{formatDate(item.date_purchased)}</TableCell>
                                     <TableCell>
@@ -827,7 +816,7 @@ const filteredBrands = useMemo(() => {
                     assetModels={assetModels}
                     uniqueBrands={[...new Set(assetModels.map((m) => m.brand))]}
                     subAreas={subAreas}
-                    personnels={personnels}   // ✅ pass here
+                    personnels={personnels} // ✅ pass here
                 />
             )}
 
@@ -921,8 +910,8 @@ const filteredBrands = useMemo(() => {
                     categories={categories}
                     assetModels={assetModels}
                     subAreas={subAreas}
-                    personnels={personnels}   // ✅ add this
-                    />
+                    personnels={personnels} // ✅ add this
+                />
             )}
 
             {/* Webcam modal
@@ -959,7 +948,6 @@ const filteredBrands = useMemo(() => {
                     <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
                         {/*overflow-y-auto */}
                         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
-
                             <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Asset Name</label>
                                 <input
@@ -991,11 +979,11 @@ const filteredBrands = useMemo(() => {
                                     classNamePrefix="react-select"
                                     placeholder="Select Asset Category"
                                     isClearable
-                                    options={categories.map(c => ({ value: c.id, label: c.name }))}
+                                    options={categories.map((c) => ({ value: c.id, label: c.name }))}
                                     value={
-                                        categories.find(c => c.id === data.category_id)
-                                        ? { value: data.category_id, label: categories.find(c => c.id === data.category_id)!.name }
-                                        : null
+                                        categories.find((c) => c.id === data.category_id)
+                                            ? { value: data.category_id, label: categories.find((c) => c.id === data.category_id)!.name }
+                                            : null
                                     }
                                     onChange={(option) => {
                                         setData('category_id', option ? option.value : '');
@@ -1018,20 +1006,19 @@ const filteredBrands = useMemo(() => {
                                     }))}
                                     value={
                                         filteredModels.find((m) => m.id === data.asset_model_id)
-                                        ? {
-                                            value: data.asset_model_id,
-                                            label: filteredModels.find((m) => m.id === data.asset_model_id)!.model,
-                                            }
-                                        : null
+                                            ? {
+                                                  value: data.asset_model_id,
+                                                  label: filteredModels.find((m) => m.id === data.asset_model_id)!.model,
+                                              }
+                                            : null
                                     }
                                     onChange={(option) => {
                                         setData('asset_model_id', option ? option.value : '');
-                                        
+
                                         // When a model is selected, auto-fill its brand (if any)
                                         const model = assetModels.find((m) => m.id === option?.value);
                                         if (model?.brand) {
-                                            const formattedBrand =
-                                                model.brand.charAt(0).toUpperCase() + model.brand.slice(1).toLowerCase();
+                                            const formattedBrand = model.brand.charAt(0).toUpperCase() + model.brand.slice(1).toLowerCase();
                                             setData('brand', formattedBrand);
                                         }
                                     }}
@@ -1044,10 +1031,10 @@ const filteredBrands = useMemo(() => {
                                 <Select
                                     placeholder={
                                         !data.category_id
-                                            ? "Select a category first"
+                                            ? 'Select a category first'
                                             : filteredBrands.length === 0
-                                            ? "No brands available"
-                                            : "Select Brand"
+                                              ? 'No brands available'
+                                              : 'Select Brand'
                                     }
                                     isClearable={!isSingleBrand}
                                     isDisabled={!data.category_id || isSingleBrand}
@@ -1167,35 +1154,40 @@ const filteredBrands = useMemo(() => {
 
                             {/* Divider */}
                             <div className="col-span-2 border-t"></div>
-                            
+
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Unit/Department</label>
                                 <Select
                                     placeholder="Select Unit/Department"
                                     isClearable
-                                    options={unitOrDepartments.map(u => ({
+                                    options={unitOrDepartments.map((u) => ({
                                         value: u.id,
                                         label: `${u.name}`,
                                     }))}
                                     value={
-                                        unitOrDepartments.find(u => u.id === data.unit_or_department_id)
-                                        ? { value: data.unit_or_department_id, label: `${unitOrDepartments.find(u => u.id === data.unit_or_department_id)!.name}` }
-                                        : null
+                                        unitOrDepartments.find((u) => u.id === data.unit_or_department_id)
+                                            ? {
+                                                  value: data.unit_or_department_id,
+                                                  label: `${unitOrDepartments.find((u) => u.id === data.unit_or_department_id)!.name}`,
+                                              }
+                                            : null
                                     }
                                     onChange={(option) => setData('unit_or_department_id', option ? option.value : '')}
                                 />
                                 {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
                             </div>
-                            
+
                             <div className="col-span-1">
                                 <label className="mb-1 block font-medium">Building</label>
                                 <Select
                                     placeholder="Select Building"
                                     isClearable
-                                    options={buildings.map(b => ({ value: b.id, label: `${b.name}` }))}
-                                    value={buildings.find(b => b.id === data.building_id)
-                                        ? { value: data.building_id, label: `${buildings.find(b => b.id === data.building_id)!.name}` }
-                                        : null}
+                                    options={buildings.map((b) => ({ value: b.id, label: `${b.name}` }))}
+                                    value={
+                                        buildings.find((b) => b.id === data.building_id)
+                                            ? { value: data.building_id, label: `${buildings.find((b) => b.id === data.building_id)!.name}` }
+                                            : null
+                                    }
                                     onChange={(option) => {
                                         setData('building_id', option ? option.value : '');
                                         setData('building_room_id', '');
@@ -1211,10 +1203,15 @@ const filteredBrands = useMemo(() => {
                                     placeholder="Select Room"
                                     isClearable
                                     isDisabled={!data.building_id}
-                                    options={filteredRooms.map(r => ({ value: r.id, label: r.room.toString() }))}
-                                    value={filteredRooms.find(r => r.id === data.building_room_id)
-                                        ? { value: data.building_room_id, label: filteredRooms.find(r => r.id === data.building_room_id)!.room.toString() }
-                                        : null}
+                                    options={filteredRooms.map((r) => ({ value: r.id, label: r.room.toString() }))}
+                                    value={
+                                        filteredRooms.find((r) => r.id === data.building_room_id)
+                                            ? {
+                                                  value: data.building_room_id,
+                                                  label: filteredRooms.find((r) => r.id === data.building_room_id)!.room.toString(),
+                                              }
+                                            : null
+                                    }
                                     onChange={(option) => {
                                         setData('building_room_id', option ? option.value : '');
                                         setData('sub_area_id', '');
@@ -1229,11 +1226,13 @@ const filteredBrands = useMemo(() => {
                                     isClearable
                                     isDisabled={!data.building_room_id}
                                     options={subAreas
-                                        .filter(s => s.building_room_id === Number(data.building_room_id))
-                                        .map(s => ({ value: s.id, label: s.name }))}
-                                    value={subAreas.find(s => s.id === data.sub_area_id)
-                                        ? { value: data.sub_area_id, label: subAreas.find(s => s.id === data.sub_area_id)!.name }
-                                        : null}
+                                        .filter((s) => s.building_room_id === Number(data.building_room_id))
+                                        .map((s) => ({ value: s.id, label: s.name }))}
+                                    value={
+                                        subAreas.find((s) => s.id === data.sub_area_id)
+                                            ? { value: data.sub_area_id, label: subAreas.find((s) => s.id === data.sub_area_id)!.name }
+                                            : null
+                                    }
                                     onChange={(option) => setData('sub_area_id', option ? option.value : null)}
                                 />
                                 {errors.sub_area_id && <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>}
@@ -1244,14 +1243,17 @@ const filteredBrands = useMemo(() => {
                                 <Select
                                     placeholder="Select Personnel"
                                     isClearable
-                                    options={personnels.map(p => ({
+                                    options={personnels.map((p) => ({
                                         value: p.id,
                                         label: `${p.full_name}${p.position ? ` – ${p.position}` : ''}`,
                                     }))}
                                     value={
-                                        personnels.find(p => p.id === data.assigned_to)
-                                        ? { value: data.assigned_to, label: `${personnels.find(p => p.id === data.assigned_to)!.full_name}${personnels.find(p => p.id === data.assigned_to)!.position ? ` – ${personnels.find(p => p.id === data.assigned_to)!.position}` : ''}` }
-                                        : null
+                                        personnels.find((p) => p.id === data.assigned_to)
+                                            ? {
+                                                  value: data.assigned_to,
+                                                  label: `${personnels.find((p) => p.id === data.assigned_to)!.full_name}${personnels.find((p) => p.id === data.assigned_to)!.position ? ` – ${personnels.find((p) => p.id === data.assigned_to)!.position}` : ''}`,
+                                              }
+                                            : null
                                     }
                                     onChange={(option) => setData('assigned_to', option ? option.value : null)}
                                 />
@@ -1315,18 +1317,18 @@ const filteredBrands = useMemo(() => {
                                 />
                             </div>
 
-                           <div className="col-span-1 pt-0.5">
+                            <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Date Purchased</label>
                                 <PickerInput type="date" value={data.date_purchased} onChange={(v) => setData('date_purchased', v)} />
                                 {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                             </div>
-                            
-                             <div className="col-span-1 pt-0.5">
+
+                            <div className="col-span-1 pt-0.5">
                                 <label className="mb-1 block font-medium">Maintenance Due Date</label>
                                 <PickerInput type="date" value={data.maintenance_due_date} onChange={(v) => setData('maintenance_due_date', v)} />
                                 {errors.maintenance_due_date && <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>}
                             </div>
-                            
+
                             <div className="col-span-2">
                                 <label className="mb-1 block font-medium">Total Cost</label>
                                 <input

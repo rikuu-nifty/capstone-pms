@@ -1,17 +1,17 @@
 import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Asset, AssetFormData, AssetModel, Building, BuildingRoom, Category } from '@/pages/inventory-list/index';
-import type { UnitOrDepartment, SubArea,} from '@/types/custom-index';
-import { router } from '@inertiajs/react';
-import { useRef, useState, useMemo, useEffect } from 'react';
 import { WebcamCapture } from '@/pages/inventory-list/WebcamCapture';
+import type { SubArea, UnitOrDepartment } from '@/types/custom-index';
+import { router } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import Select from 'react-select';
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 type Props = {
     asset: Asset;
@@ -26,16 +26,16 @@ type Props = {
     personnels: { id: number; full_name: string; position?: string | null }[]; // ✅ new
 };
 
-export const EditAssetModalForm = ({ 
-    onClose, 
+export const EditAssetModalForm = ({
+    onClose,
     asset,
-    subAreas, 
-    buildings, 
-    unitOrDepartments, 
-    buildingRooms, 
-    categories, 
-    assetModels, 
-    personnels,   // ✅ add this
+    subAreas,
+    buildings,
+    unitOrDepartments,
+    buildingRooms,
+    categories,
+    assetModels,
+    personnels, // ✅ add this
 }: Props) => {
     const [form, setForm] = useState<AssetFormData>({
         asset_name: asset.asset_name,
@@ -77,9 +77,7 @@ export const EditAssetModalForm = ({
     const [showWebcam, setShowWebcam] = useState(false); // ✅ webcam toggle
 
     // Filter models based on selected category
-    const filteredModels = assetModels.filter(
-        (m) => m.category_id === Number(form.category_id)
-    );
+    const filteredModels = assetModels.filter((m) => m.category_id === Number(form.category_id));
 
     // ✅ Memoize filteredBrands so it doesn’t trigger unnecessary re-renders
     const filteredBrands = useMemo(() => {
@@ -99,13 +97,10 @@ export const EditAssetModalForm = ({
                                     m.category_id === selectedModel.category_id &&
                                     m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
                                     m.brand &&
-                                    m.brand.trim() !== ''
+                                    m.brand.trim() !== '',
                             )
-                            .map((m) => [
-                                m.brand.trim().toLowerCase(),
-                                m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
-                            ])
-                    ).values()
+                            .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+                    ).values(),
                 );
             }
         }
@@ -114,17 +109,9 @@ export const EditAssetModalForm = ({
         return Array.from(
             new Map(
                 assetModels
-                    .filter(
-                        (m) =>
-                            m.category_id === Number(form.category_id) &&
-                            m.brand &&
-                            m.brand.trim() !== ''
-                    )
-                    .map((m) => [
-                        m.brand.trim().toLowerCase(),
-                        m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
-                    ])
-            ).values()
+                    .filter((m) => m.category_id === Number(form.category_id) && m.brand && m.brand.trim() !== '')
+                    .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+            ).values(),
         );
     }, [form.category_id, form.asset_model_id, assetModels]);
 
@@ -138,12 +125,7 @@ export const EditAssetModalForm = ({
             return;
         }
 
-        if (
-            isSingleBrand &&
-            form.category_id &&
-            !form.brand &&
-            filteredBrands.length > 0
-        ) {
+        if (isSingleBrand && form.category_id && !form.brand && filteredBrands.length > 0) {
             handleChange('brand', filteredBrands[0]);
         }
     }, [form.category_id, form.asset_model_id, form.brand, filteredBrands, isSingleBrand]);
@@ -155,7 +137,7 @@ export const EditAssetModalForm = ({
             `/inventory-list/${asset.id}`,
             {
                 ...form,
-                 sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
+                sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
                 _method: 'put',
             },
             {
@@ -177,13 +159,10 @@ export const EditAssetModalForm = ({
                     <DialogHeader>
                         <DialogTitle>Update Asset - Asset Record #{asset.id}</DialogTitle>
                         <VisuallyHidden>
-                            <DialogDescription>
-                                Edit the details of this asset record below and click Save Changes when done.
-                            </DialogDescription>
+                            <DialogDescription>Edit the details of this asset record below and click Save Changes when done.</DialogDescription>
                         </VisuallyHidden>
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-4 py-4">
-
                         <div>
                             <Label>Asset Name</Label>
                             <Input placeholder="Enter Assets" value={form.asset_name} onChange={(e) => handleChange('asset_name', e.target.value)} />
@@ -206,14 +185,14 @@ export const EditAssetModalForm = ({
                                 isClearable
                                 options={categories.map((c) => ({ value: c.id, label: c.name }))}
                                 value={
-                                categories.find((c) => c.id === form.category_id)
-                                    ? { value: form.category_id, label: categories.find((c) => c.id === form.category_id)!.name }
-                                    : null
+                                    categories.find((c) => c.id === form.category_id)
+                                        ? { value: form.category_id, label: categories.find((c) => c.id === form.category_id)!.name }
+                                        : null
                                 }
                                 onChange={(option) => {
-                                handleChange('category_id', option ? option.value : '');
-                                handleChange('asset_model_id', '');
-                                handleChange('brand', '');
+                                    handleChange('category_id', option ? option.value : '');
+                                    handleChange('asset_model_id', '');
+                                    handleChange('brand', '');
                                 }}
                             />
                         </div>
@@ -226,20 +205,20 @@ export const EditAssetModalForm = ({
                                 isDisabled={!form.category_id}
                                 options={filteredModels.map((m) => ({ value: m.id, label: m.model || '(No Model)' }))}
                                 value={
-                                filteredModels.find((m) => m.id === form.asset_model_id)
-                                    ? {
-                                        value: form.asset_model_id,
-                                        label: filteredModels.find((m) => m.id === form.asset_model_id)!.model,
-                                    }
-                                    : null
+                                    filteredModels.find((m) => m.id === form.asset_model_id)
+                                        ? {
+                                              value: form.asset_model_id,
+                                              label: filteredModels.find((m) => m.id === form.asset_model_id)!.model,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => {
-                                handleChange('asset_model_id', option ? option.value : '');
-                                const model = assetModels.find((m) => m.id === option?.value);
-                                if (model?.brand) {
-                                    const formattedBrand = model.brand.charAt(0).toUpperCase() + model.brand.slice(1).toLowerCase();
-                                    handleChange('brand', formattedBrand);
-                                }
+                                    handleChange('asset_model_id', option ? option.value : '');
+                                    const model = assetModels.find((m) => m.id === option?.value);
+                                    if (model?.brand) {
+                                        const formattedBrand = model.brand.charAt(0).toUpperCase() + model.brand.slice(1).toLowerCase();
+                                        handleChange('brand', formattedBrand);
+                                    }
                                 }}
                             />
                         </div>
@@ -248,11 +227,11 @@ export const EditAssetModalForm = ({
                             <Label>Brand</Label>
                             <Select
                                 placeholder={
-                                !form.category_id
-                                    ? 'Select a category first'
-                                    : filteredBrands.length === 0
-                                    ? 'No brands available'
-                                    : 'Select Brand'
+                                    !form.category_id
+                                        ? 'Select a category first'
+                                        : filteredBrands.length === 0
+                                          ? 'No brands available'
+                                          : 'Select Brand'
                                 }
                                 isClearable={!isSingleBrand}
                                 isDisabled={!form.category_id || isSingleBrand}
@@ -274,7 +253,7 @@ export const EditAssetModalForm = ({
                                 <option value="not_fixed">Not Fixed</option>
                             </select>
                         </div>
-                        
+
                         <div>
                             <Label>Status</Label>
                             <select
@@ -293,13 +272,22 @@ export const EditAssetModalForm = ({
 
                             <div className="flex justify-center gap-6">
                                 {/* Before (current DB image) */}
+                                {/* Before (current DB image) */}
                                 <div className="flex min-h-[300px] flex-1 flex-col items-center justify-center rounded-lg border bg-gray-50 p-6">
                                     <p className="mb-3 text-sm font-medium text-gray-600">Current Image</p>
+
                                     {asset.image_path ? (
                                         <img
-                                            src={`/storage/${asset.image_path}`}
+                                            src={
+                                                asset.image_path.startsWith('http')
+                                                    ? asset.image_path
+                                                    : `https://${import.meta.env.VITE_AWS_BUCKET}.s3.${import.meta.env.VITE_AWS_DEFAULT_REGION}.amazonaws.com/${asset.image_path}`
+                                            }
                                             alt={asset.asset_name}
                                             className="max-h-64 w-auto rounded-md border object-contain"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/images/placeholder.png'; // fallback
+                                            }}
                                         />
                                     ) : (
                                         <span className="text-sm text-gray-400">No image available</span>
@@ -330,9 +318,7 @@ export const EditAssetModalForm = ({
                                                             handleChange('image', e.target.files[0]);
                                                         }
                                                     }}
-                                                    className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
-                                                        file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
-                                                        file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                                    className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                                 />
                                                 <Button type="button" onClick={() => setShowWebcam(true)}>
                                                     Use Camera
@@ -387,21 +373,21 @@ export const EditAssetModalForm = ({
                                 placeholder="Select Unit/Department"
                                 isClearable
                                 options={unitOrDepartments.map((u) => ({
-                                value: u.id,
-                                label: `${u.name}`,
+                                    value: u.id,
+                                    label: `${u.name}`,
                                 }))}
                                 value={
-                                unitOrDepartments.find((u) => u.id === form.unit_or_department_id)
-                                    ? {
-                                        value: form.unit_or_department_id,
-                                        label: `${unitOrDepartments.find((u) => u.id === form.unit_or_department_id)!.name}`,
-                                    }
-                                    : null
+                                    unitOrDepartments.find((u) => u.id === form.unit_or_department_id)
+                                        ? {
+                                              value: form.unit_or_department_id,
+                                              label: `${unitOrDepartments.find((u) => u.id === form.unit_or_department_id)!.name}`,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => handleChange('unit_or_department_id', option ? option.value : '')}
                             />
                         </div>
-                        
+
                         {/* Building */}
                         <div>
                             <Label>Building</Label>
@@ -413,12 +399,12 @@ export const EditAssetModalForm = ({
                                     label: `${b.name}`,
                                 }))}
                                 value={
-                                buildings.find((b) => b.id === form.building_id)
-                                    ? {
-                                        value: form.building_id,
-                                        label: `${buildings.find((b) => b.id === form.building_id)!.name}`,
-                                    }
-                                    : null
+                                    buildings.find((b) => b.id === form.building_id)
+                                        ? {
+                                              value: form.building_id,
+                                              label: `${buildings.find((b) => b.id === form.building_id)!.name}`,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => {
                                     handleChange('building_id', option ? option.value : '');
@@ -437,13 +423,16 @@ export const EditAssetModalForm = ({
                                 isDisabled={!form.building_id}
                                 options={filteredRooms.map((r) => ({ value: r.id, label: r.room.toString() }))}
                                 value={
-                                filteredRooms.find((r) => r.id === form.building_room_id)
-                                    ? { value: form.building_room_id, label: filteredRooms.find((r) => r.id === form.building_room_id)!.room.toString() }
-                                    : null
+                                    filteredRooms.find((r) => r.id === form.building_room_id)
+                                        ? {
+                                              value: form.building_room_id,
+                                              label: filteredRooms.find((r) => r.id === form.building_room_id)!.room.toString(),
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => {
-                                handleChange('building_room_id', option ? option.value : '');
-                                handleChange('sub_area_id', '');
+                                    handleChange('building_room_id', option ? option.value : '');
+                                    handleChange('sub_area_id', '');
                                 }}
                             />
                         </div>
@@ -456,12 +445,12 @@ export const EditAssetModalForm = ({
                                 isClearable
                                 isDisabled={!form.building_room_id}
                                 options={subAreas
-                                .filter((s) => s.building_room_id === Number(form.building_room_id))
-                                .map((s) => ({ value: s.id, label: s.name }))}
+                                    .filter((s) => s.building_room_id === Number(form.building_room_id))
+                                    .map((s) => ({ value: s.id, label: s.name }))}
                                 value={
-                                subAreas.find((s) => s.id === form.sub_area_id)
-                                    ? { value: form.sub_area_id, label: subAreas.find((s) => s.id === form.sub_area_id)!.name }
-                                    : null
+                                    subAreas.find((s) => s.id === form.sub_area_id)
+                                        ? { value: form.sub_area_id, label: subAreas.find((s) => s.id === form.sub_area_id)!.name }
+                                        : null
                                 }
                                 onChange={(option) => handleChange('sub_area_id', option ? option.value : null)}
                             />
@@ -474,21 +463,21 @@ export const EditAssetModalForm = ({
                                 placeholder="Select Personnel"
                                 isClearable
                                 options={personnels.map((p) => ({
-                                value: p.id,
-                                label: `${p.full_name}${p.position ? ` – ${p.position}` : ''}`,
+                                    value: p.id,
+                                    label: `${p.full_name}${p.position ? ` – ${p.position}` : ''}`,
                                 }))}
                                 value={
-                                personnels.find((p) => p.id === form.assigned_to)
-                                    ? {
-                                        value: form.assigned_to,
-                                        label: `${personnels.find((p) => p.id === form.assigned_to)!.full_name}${personnels.find((p) => p.id === form.assigned_to)!.position ? ` – ${personnels.find((p) => p.id === form.assigned_to)!.position}` : ''}`,
-                                    }
-                                    : null
+                                    personnels.find((p) => p.id === form.assigned_to)
+                                        ? {
+                                              value: form.assigned_to,
+                                              label: `${personnels.find((p) => p.id === form.assigned_to)!.full_name}${personnels.find((p) => p.id === form.assigned_to)!.position ? ` – ${personnels.find((p) => p.id === form.assigned_to)!.position}` : ''}`,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => handleChange('assigned_to', option ? option.value : null)}
                             />
                         </div>
-                        
+
                         {/* Divider */}
                         <div className="col-span-2 border-t"></div>
 
@@ -506,13 +495,7 @@ export const EditAssetModalForm = ({
                         {/* Supplier */}
                         <div>
                             <Label>Supplier</Label>
-                            <Input 
-                                placeholder="Enter Suppliers" 
-                                value={form.supplier} 
-                                onChange={(e) => 
-                                    handleChange('supplier', e.target.value)
-                                }
-                            />
+                            <Input placeholder="Enter Suppliers" value={form.supplier} onChange={(e) => handleChange('supplier', e.target.value)} />
                         </div>
 
                         {/* Unit Cost */}
@@ -561,13 +544,15 @@ export const EditAssetModalForm = ({
                             <Input
                                 type="text"
                                 value={
-                                form.quantity && form.unit_cost
-                                    ? `₱ ${(Number(form.quantity) * Number(form.unit_cost))
-                                        .toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : ''
+                                    form.quantity && form.unit_cost
+                                        ? `₱ ${(Number(form.quantity) * Number(form.unit_cost)).toLocaleString('en-PH', {
+                                              minimumFractionDigits: 2,
+                                              maximumFractionDigits: 2,
+                                          })}`
+                                        : ''
                                 }
                                 readOnly
-                                className="bg-white text-black cursor-default"
+                                className="cursor-default bg-white text-black"
                             />
                         </div>
 
@@ -585,23 +570,16 @@ export const EditAssetModalForm = ({
 
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button 
-                                variant="outline"
-                                className='cursor-pointer'
-                            >
+                            <Button variant="outline" className="cursor-pointer">
                                 Cancel
                             </Button>
                         </DialogClose>
-                        <Button 
-                            type="button"
-                            className='cursor-pointer'
-                            onClick={handleSubmit}
-                        >
+                        <Button type="button" className="cursor-pointer" onClick={handleSubmit}>
                             Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </form>
-    </Dialog>
+        </Dialog>
     );
 };
