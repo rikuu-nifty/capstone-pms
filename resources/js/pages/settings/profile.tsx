@@ -3,8 +3,7 @@ import { Transition } from '@headlessui/react';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
-
-import DeleteUser from '@/components/delete-user';
+// import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
 import SaveConfirmationModal from '@/components/modals/SaveConfirmationModal';
