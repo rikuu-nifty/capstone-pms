@@ -26,7 +26,7 @@ class HandleInertiaRequests extends Middleware
         try {
             return parent::version($request) ?? 'dev';
         } catch (\Throwable $e) {
-            return 'dev';
+            return 'dev'; // always a fallback
         }
     }
 
