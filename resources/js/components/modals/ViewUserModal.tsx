@@ -36,6 +36,15 @@ export default function ViewUserModal({ open, onClose, user, roles, unitOrDepart
         ? `${localUser.detail.first_name?.[0] ?? ""}${localUser.detail.last_name?.[0] ?? ""}`.toUpperCase()
         : (localUser.name?.[0] ?? "").toUpperCase();
 
+    const avatarSrc = localUser?.detail?.image_url ?? (localUser?.detail?.image_path
+        ? (localUser.detail.image_path.startsWith('http')
+            ? localUser.detail.image_path
+            : localUser.detail.image_path.startsWith('images/')
+                ? `/${localUser.detail.image_path}`
+                : `/storage/${localUser.detail.image_path}`)
+        : '')
+    ;
+
     return (
         <>
             <ViewModal
@@ -52,18 +61,26 @@ export default function ViewUserModal({ open, onClose, user, roles, unitOrDepart
 
                 {/* Header */}
                 <div className="flex items-center gap-6 border-b pb-4">
-                    <div className="h-20 w-20 flex items-center justify-center rounded-full bg-gray-200 text-xl font-bold text-gray-700">
-                        {initials || "?"}
-                    </div>
+                    {avatarSrc ? (
+                        <img
+                            src={avatarSrc}
+                            alt={localUser?.name ?? 'User'}
+                            className="h-20 w-20 rounded-full object-cover border shadow-md"
+                        />
+                    ) : (
+                        <div className="h-20 w-20 flex items-center justify-center rounded-full bg-gray-200 text-xl font-bold text-gray-700">
+                            {initials || "?"}
+                        </div>
+                    )}
 
                     <div>
                         <h2 className="text-2xl font-semibold">
                             {localUser.detail
                                 ? formatFullName(
-                                      localUser.detail.first_name,
-                                      localUser.detail.middle_name ?? "",
-                                      localUser.detail.last_name
-                                  )
+                                    localUser.detail.first_name,
+                                    localUser.detail.middle_name ?? "",
+                                    localUser.detail.last_name
+                                )
                                 : localUser.name}
                         </h2>
                         <p className="text-sm text-muted-foreground">{localUser.email}</p>

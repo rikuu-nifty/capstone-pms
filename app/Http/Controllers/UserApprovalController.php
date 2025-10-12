@@ -105,6 +105,13 @@ class UserApprovalController extends Controller
     public function show(User $user)
     {
         $user->load(['role', 'unitOrDepartment', 'detail']);
-        return response()->json(['user' => $user]);
+
+        if ($user->detail) {
+            $user->detail->append('image_url');
+        }
+
+        return response()->json([
+            'user' => $user,
+        ]);
     }
 }

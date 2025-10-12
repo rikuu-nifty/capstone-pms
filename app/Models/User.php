@@ -160,7 +160,7 @@ class User extends Authenticatable
     {
         return static::query()
             ->with([
-                'detail:id,user_id,first_name,middle_name,last_name', 
+                'detail:id,user_id,first_name,middle_name,last_name,image_path', 
                 'role:id,name,code',
                 'unitOrDepartment:id,name',
             ])
