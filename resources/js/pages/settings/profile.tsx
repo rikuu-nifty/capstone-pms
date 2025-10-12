@@ -226,47 +226,60 @@ export default function Profile({
                         </div>
 
                         {/* RIGHT SIDE — Profile Image */}
-                        <div className="w-full md:w-1/3 space-y-4">
-                            <Label>Profile Picture</Label>
-                            
-                            <div className="mt-4 flex justify-center">
-                                {data.image ? (
-                                    <img
-                                        src={URL.createObjectURL(data.image as File)}
-                                        alt="Preview"
-                                        className="h-36 w-36 rounded-full object-cover border shadow-md"
-                                    />
-                                ) : userDetail?.image_path ? (
-                                    <img
-                                        src={`/storage/${userDetail.image_path}`}
-                                        alt="Profile"
-                                        className="h-36 w-36 rounded-full object-cover border shadow-md"
-                                    />
-                                ) : (
-                                    <div className="flex h-36 w-36 items-center justify-center rounded-full border bg-gray-50 text-sm text-gray-400">
-                                        No Image
+                        <div className="w-full md:w-[380px]">
+                            <div className="rounded-2xl border bg-white dark:bg-neutral-900 shadow-md p-8 flex flex-col items-center text-center">
+                                <Label className="text-lg font-semibold mb-5">Profile Picture</Label>
+
+                                <div className="relative group mb-6">
+                                    {data.image ? (
+                                        <img
+                                            src={URL.createObjectURL(data.image as File)}
+                                            alt="Preview"
+                                            className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                    ) : userDetail?.image_path ? (
+                                        <img
+                                            src={`/storage/${userDetail.image_path}`}
+                                            alt="Profile"
+                                            className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="flex h-44 w-44 items-center justify-center rounded-full border-4 border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">
+                                            No Image
+                                        </div>
+                                    )}
+
+                                    <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                        <span className="text-white text-sm font-medium">Change Photo</span>
                                     </div>
-                                )}
+                                </div>
+
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) setData('image', e.target.files[0]);
+                                    }}
+                                    className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
+                                            file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
+                                            file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+                                />
+
+                                <p className="mt-4 text-xs text-muted-foreground leading-snug">
+                                    Accepted formats: <span className="font-medium">JPG, PNG, WEBP</span><br />
+                                    Max size: <span className="font-medium">5MB</span>
+                                </p>
+
+                                <InputError message={errors.image} />
                             </div>
                             
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    if (e.target.files?.[0]) setData('image', e.target.files[0]);
-                                }}
-                                className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 
-                                        file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 
-                                        file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
-                            />
-
-                            <InputError message={errors.image} />
+                            <div className="mt-8 w-full">
+        <DeleteUser />
+    </div>
                         </div>
                     </form>
                 </div>
-
-                <DeleteUser />
-
+                
                 <SaveConfirmationModal
                     show={showSaved}
                     onClose={() => setShowSaved(false)}
