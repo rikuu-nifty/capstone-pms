@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -38,9 +39,15 @@ class ProfileController extends Controller
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('user_profiles', 'public');
             $validated['image_path'] = $path;
+        } 
+        elseif ($request->boolean('remove_image')) {
+            if ($user->detail && $user->detail->image_path) {
+                Storage::disk('public')->delete($user->detail->image_path);
+            }
+            $validated['image_path'] = null;
         }
 
-        // Always assign fields (even if unchanged)
+        // Save basic user info
         $user->fill([
             'name'  => $validated['name'] ?? $user->name,
             'email' => $validated['email'] ?? $user->email,
@@ -54,7 +61,6 @@ class ProfileController extends Controller
 
         $user->save();
 
-        // Update user details safely
         $user->detail()->updateOrCreate(
             ['user_id' => $user->id],
             [
@@ -63,7 +69,10 @@ class ProfileController extends Controller
                 'last_name'   => $validated['last_name'] ?? $user->detail->last_name ?? null,
                 'gender'      => $validated['gender'] ?? $user->detail->gender ?? null,
                 'contact_no'  => $validated['contact_no'] ?? $user->detail->contact_no ?? null,
-                'image_path'  => $validated['image_path'] ?? $user->detail->image_path ?? null,
+
+                'image_path'  => $request->boolean('remove_image')
+                    ? null
+                    : ($validated['image_path'] ?? $user->detail->image_path ?? null),
             ]
         );
 
@@ -89,5 +98,20 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function removeImage(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->detail && $user->detail->image_path) {
+            // Delete from storage
+            Storage::disk('public')->delete($user->detail->image_path);
+
+            // Set image_path to null
+            $user->detail->update(['image_path' => null]);
+        }
+
+        return back()->with('success', 'Profile image removed successfully.');
     }
 }

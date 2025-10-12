@@ -12,7 +12,9 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { UserDetail } from '@/types/user-detail';
+
 import SaveConfirmationModal from '@/components/modals/SaveConfirmationModal';
+import ConfirmActionModal from '@/components/modals/ConfirmActionModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -30,6 +32,8 @@ type ProfileForm = {
     gender?: 'female' | 'male' | 'other' | '';
     contact_no?: string;
     image?: File | null;
+
+    remove_image?: boolean;
 };
 
 export default function Profile({
@@ -53,6 +57,13 @@ export default function Profile({
     });
 
     const [showSaved, setShowSaved] = useState(false);
+    const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+
+    const handleConfirmRemove = () => {
+        setData('image', null);
+        setData('remove_image', true);
+        setShowRemoveConfirm(false);
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -280,13 +291,35 @@ export default function Profile({
                                     className="hidden"
                                 />
 
-                                {/* Styled label acting as custom button */}
-                                <label
-                                    htmlFor="fileUploadInput"
-                                    className="mt-3 inline-block cursor-pointer rounded-lg border bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100 active:bg-blue-200"
-                                >
-                                    Choose File
-                                </label>
+                                {/* File and Remove buttons row */}
+                                <div className="mt-3 flex items-center justify-center gap-3">
+                                    {/* Choose File */}
+                                    <label
+                                        htmlFor="fileUploadInput"
+                                        className="inline-block cursor-pointer rounded-lg border bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100 active:bg-blue-200"
+                                    >
+                                        Choose File
+                                    </label>
+
+                                    {/* Remove Image */}
+                                    {(userDetail?.image_path || data.image) && (
+                                        <Button
+                                            type="button"
+                                            variant={data.remove_image ? "outline" : "destructive"}
+                                            className="text-sm cursor-pointer"
+                                            onClick={() => {
+                                                if (data.remove_image) {
+                                                    setData('remove_image', false);
+                                                    setData('image', null);
+                                                } else {
+                                                    setShowRemoveConfirm(true);
+                                                }
+                                            }}
+                                        >
+                                            {data.remove_image ? 'Undo Remove' : 'Remove Image'}
+                                        </Button>
+                                    )}
+                                </div>
 
                                 <p className="mt-4 text-xs text-muted-foreground leading-snug">
                                     Accepted formats: <span className="font-medium">JPG, PNG, WEBP</span><br />
@@ -294,6 +327,7 @@ export default function Profile({
                                 </p>
 
                                 <InputError message={errors.image} />
+
                             </div>
                             
                             {/* <div className="mt-8 w-full">
@@ -308,6 +342,23 @@ export default function Profile({
                     onClose={() => setShowSaved(false)}
                     title="Profile Updated"
                     message="Your profile changes have been saved successfully."
+                />
+
+                {/* Confirm Remove Image Modal */}
+                <ConfirmActionModal
+                    show={showRemoveConfirm}
+                    onCancel={() => setShowRemoveConfirm(false)}
+                    onConfirm={handleConfirmRemove}
+                    title="Confirm Image Removal"
+                    message={
+                        <>
+                            Are you sure you want to remove your profile image?
+                            <br />
+                            This change will only take effect after you click <strong>Save</strong>.
+                        </>
+                    }
+                    confirmText="Yes, Remove"
+                    cancelText="Cancel"
                 />
             </SettingsLayout>
         </AppLayout>
