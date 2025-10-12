@@ -534,10 +534,13 @@
         ->middleware('can:delete-equipment-codes');
 
     //PROFILE
-    Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile/remove-image', [\App\Http\Controllers\Settings\ProfileController::class, 'removeImage'])
-        ->name('profile.removeImage');
+    Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit')
+        ->middleware('can:view-profile');
+    Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update')
+        ->middleware('can:manage-profile');
+    Route::delete('/profile/remove-image', [ProfileController::class, 'removeImage'])->name('profile.removeImage')
+        ->middleware('can:manage-profile');
+    Route::get('/settings/profile/json', [ProfileController::class, 'fetch'])->name('profile.fetch');
 
     // RESTORATION
     Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index')

@@ -2,6 +2,7 @@ import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import axios from 'axios';
 
 // import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
@@ -65,6 +66,26 @@ export default function Profile({
         setShowRemoveConfirm(false);
     };
 
+    const refreshProfile = async () => {
+        try {
+            const res = await axios.get(route('profile.fetch'));
+            const refreshed = res.data.detail;
+            // Update form state with latest DB data
+            setData({
+                ...data,
+                first_name: refreshed?.first_name || '',
+                middle_name: refreshed?.middle_name || '',
+                last_name: refreshed?.last_name || '',
+                gender: refreshed?.gender || '',
+                contact_no: refreshed?.contact_no || '',
+                image: null,
+                remove_image: false,
+            });
+        } catch (err) {
+            console.error('Failed to refresh profile:', err);
+        }
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
@@ -87,10 +108,18 @@ export default function Profile({
             }
         );
 
+        // router.post(route('profile.update'), formData, {
+        //     preserveScroll: true,
+        //     onSuccess: () => setShowSaved(true),
+        // });
         router.post(route('profile.update'), formData, {
             preserveScroll: true,
-            onSuccess: () => setShowSaved(true),
+            onSuccess: async () => {
+                await refreshProfile();
+                setShowSaved(true);
+            },
         });
+
     };
 
     return (
@@ -333,6 +362,10 @@ export default function Profile({
                             {/* <div className="mt-8 w-full">
                                 <DeleteUser />
                             </div> */}
+
+                            <pre className="mt-6 max-h-64 overflow-auto rounded-lg bg-neutral-900 p-3 text-xs text-green-400">
+                                {JSON.stringify(userDetail?.image_path, null, 2)}
+                            </pre>
                         </div>
                     </form>
                 </div>

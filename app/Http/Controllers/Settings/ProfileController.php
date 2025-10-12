@@ -114,4 +114,18 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Profile image removed successfully.');
     }
+
+    public function fetch(Request $request)
+    {
+        $user = $request->user()->load('detail');
+
+        if ($user->detail) {
+            $user->detail->append('image_url');
+        }
+
+        return response()->json([
+            'user' => $user,
+            'detail' => $user->detail,
+        ]);
+    }
 }
