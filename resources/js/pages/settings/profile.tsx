@@ -296,9 +296,9 @@ export default function Profile({
                                 <InputError message={errors.image} />
                             </div>
                             
-                            <div className="mt-8 w-full">
+                            {/* <div className="mt-8 w-full">
                                 <DeleteUser />
-                            </div>
+                            </div> */}
                         </div>
                     </form>
                 </div>
