@@ -2,7 +2,12 @@ import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
 
 export interface Auth {
-    user: User;
+    // user: User;
+    user: User | null;
+    permissions: string[];
+    role?: string | null;
+    unit_or_department_id?: number | null;
+    unit_or_department?: { id: number; name: string; code: string } | null;
 }
 
 export interface BreadcrumbItem {
