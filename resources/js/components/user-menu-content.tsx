@@ -52,7 +52,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                     onClick={handleLogout}
                 >
                     <LogOut className="mr-2 text-red-600" />
-                    Logout
+                    <span className='text-red-600'>Logout</span>
                 </Link>
             </DropdownMenuItem>
         </>
