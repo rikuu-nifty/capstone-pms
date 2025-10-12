@@ -57,6 +57,9 @@ use App\Observers\EquipmentCodeObserver;
 use App\Models\Personnel;
 use App\Observers\PersonnelObserver;
 
+use App\Models\Role;
+use App\Observers\RoleObserver;
+
 // Signatories
 use App\Models\InventorySchedulingSignatory;
 use App\Observers\InventorySchedulingSignatoryObserver;
@@ -101,6 +104,7 @@ class AppServiceProvider extends ServiceProvider
         AssetAssignmentItem::observe(AssetAssignmentItemObserver::class);
         EquipmentCode::observe(EquipmentCodeObserver::class);
         Personnel::observe(PersonnelObserver::class);
+        Role::observe(RoleObserver::class);
 
 
         InventorySchedulingSignatory::observe(InventorySchedulingSignatoryObserver::class);

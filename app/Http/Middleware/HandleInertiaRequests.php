@@ -15,112 +15,100 @@ class HandleInertiaRequests extends Middleware
 {
     /**
      * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
      */
     protected $rootView = 'app';
 
     /**
      * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
      */
     public function version(Request $request): ?string
     {
         try {
-            // parent::version() will try to read your mix-manifest.json or vite manifest
             return parent::version($request) ?? 'dev';
         } catch (\Throwable $e) {
-            return 'dev'; // 👈 always a fallback
+            return 'dev';
         }
     }
 
     /**
      * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
      */
-   public function share(Request $request): array
-{
-    [$message, $author] = str(\Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
+    public function share(Request $request): array
+    {
+        [$message, $author] = str(\Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
 
-    // ✅ Always reload the user's related detail (fresh data every request)
-    $user = $request->user()?->loadMissing('detail', 'role.permissions', 'unitOrDepartment');
+        // ✅ Always reload the user's related detail + role + permissions + department
+        $user = $request->user()?->loadMissing(['detail', 'role.permissions', 'unitOrDepartment']);
 
-    return [
-        ...parent::share($request),
+        return [
+            ...parent::share($request),
 
-        // ---------- APP METADATA ----------
-        'name' => config('app.name'),
-        'quote' => [
-            'message' => trim($message),
-            'author'  => trim($author),
-        ],
+            // ---------- APP METADATA ----------
+            'name' => config('app.name'),
+            'quote' => [
+                'message' => trim($message),
+                'author'  => trim($author),
+            ],
 
-        // ---------- AUTH SHARED DATA ----------
-        'auth' => [
-            'user' => $user ? [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
+            // ---------- AUTH SHARED DATA ----------
+            'auth' => [
+                'user' => $user ? [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email,
 
-                // ✅ Always resolve avatar to a full public URL (handles S3, local, or absolute)
-                'avatar' => $user->detail?->image_path
-                    ? (
-                        str_starts_with($user->detail->image_path, 'http')
-                            ? $user->detail->image_path
-                            : (
-                                config('filesystems.default') === 's3'
-                                    // 🟦 S3 public URL
-                                    ? 'https://' . env('AWS_BUCKET') . '.s3.' . env('AWS_DEFAULT_REGION') . '.amazonaws.com/' . ltrim($user->detail->image_path, '/')
-                                    // 🟩 Local fallback (for dev)
-                                    : asset('storage/' . ltrim($user->detail->image_path, '/'))
-                              )
-                      )
-                    // 🩶 Default avatar image
-                    : asset('images/default-avatar.png'),
-            ] : null,
+                    // ✅ Role details embedded directly for frontend access
+                    'role' => $user->role ? [
+                        'id'   => $user->role->id,
+                        'name' => $user->role->name,
+                        'code' => $user->role->code,
+                    ] : null,
 
-            // ✅ Permissions, roles, and department data
-            'permissions' => $user?->role?->permissions->pluck('code')->toArray() ?? [],
-            'role' => $user?->role?->code,
-            'unit_or_department_id' => $user?->unit_or_department_id,
-            'unit_or_department' => $user?->unitOrDepartment?->only(['id', 'name', 'code']),
-        ],
+                    // ✅ Avatar with S3 + local support
+                    'avatar' => $user->detail?->image_path
+                        ? (
+                            str_starts_with($user->detail->image_path, 'http')
+                                ? $user->detail->image_path
+                                : (
+                                    config('filesystems.default') === 's3'
+                                        ? 'https://' . env('AWS_BUCKET') . '.s3.' . env('AWS_DEFAULT_REGION') . '.amazonaws.com/' . ltrim($user->detail->image_path, '/')
+                                        : asset('storage/' . ltrim($user->detail->image_path, '/'))
+                                  )
+                          )
+                        : asset('images/default-avatar.png'),
+                ] : null,
 
-        // ---------- ZIGGY ROUTES ----------
-        'ziggy' => fn(): array => [
-            ...(new \Tighten\Ziggy\Ziggy)->toArray(),
-            'location' => $request->url(),
-        ],
+                // ✅ Permissions, role code, and department data
+                'permissions' => $user?->role?->permissions?->pluck('code')->toArray() ?? [],
+                'role' => $user?->role?->code,
+                'unit_or_department_id' => $user?->unit_or_department_id,
+                'unit_or_department' => $user?->unitOrDepartment?->only(['id', 'name', 'code']),
+            ],
 
-        // ---------- SIDEBAR STATE ----------
-        'sidebarOpen' => ! $request->hasCookie('sidebar_state')
-            || $request->cookie('sidebar_state') === 'true',
+            // ---------- ZIGGY ROUTES ----------
+            'ziggy' => fn(): array => [
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(),
+            ],
 
-        // ---------- APP METRICS (lazy evaluation) ----------
-        'metrics' => [
-            'pending_user_count' => fn () => \App\Models\User::where('status', 'pending')->count(),
-        ],
+            // ---------- SIDEBAR STATE ----------
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state')
+                || $request->cookie('sidebar_state') === 'true',
 
-        // ---------- FLASH MESSAGES ----------
-        'flash' => [
-            'unauthorized' => fn() => $request->session()->has('unauthorized')
-                ? [
-                    'message' => $request->session()->get('unauthorized'),
-                    'time'    => now()->timestamp,
-                ]
-                : null,
-        ],
+            // ---------- APP METRICS ----------
+            'metrics' => [
+                'pending_user_count' => fn () => \App\Models\User::where('status', 'pending')->count(),
+            ],
 
-        // ---------- DEBUG (optional - can remove later) ----------
-        // 'debug_avatar' => $user?->detail?->image_path,
-    ];
-}
-
-
+            // ---------- FLASH MESSAGES ----------
+            'flash' => [
+                'unauthorized' => fn() => $request->session()->has('unauthorized')
+                    ? [
+                        'message' => $request->session()->get('unauthorized'),
+                        'time'    => now()->timestamp,
+                    ]
+                    : null,
+            ],
+        ];
+    }
 }
