@@ -48,7 +48,16 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
     );
 
     return (
-        <Dialog open onOpenChange={(open) => !open && onClose()}>
+        // <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <Dialog
+            open
+            onOpenChange={(open) => {
+                if (!open) {
+                    onClose();
+                    history.back(); // go back when modal closes
+                }
+            }}
+        >
             <DialogContent
                 aria-describedby={undefined}
                 className="max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-gray-50 p-0 shadow-2xl animate-in fade-in-50 zoom-in-95 sm:max-w-[1100px]"
