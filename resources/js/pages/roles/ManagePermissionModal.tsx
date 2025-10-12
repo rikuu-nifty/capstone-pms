@@ -29,6 +29,9 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "view-own-unit-inventory-list",
         "view-own-unit-buildings",
     ],
+    "Calendar": [
+        "view-calendar"
+    ],
     "Trash Bin": [
         "view-trash-bin",
         "restore-trash-bin",
