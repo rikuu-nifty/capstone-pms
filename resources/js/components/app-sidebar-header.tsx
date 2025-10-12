@@ -69,8 +69,8 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="flex items-center gap-3 rounded-full px-3 hover:bg-gray-100">
-                                    {/* <Avatar className="h-8 w-8 border border-gray-300">
-                                        <AvatarImage src={user.avatar || '/default-avatar.png'} alt={user.name} />
+                                    <Avatar className="h-8 w-8 border border-gray-300">
+                                        <AvatarImage src={user.avatar} alt={user.name} />
                                         <AvatarFallback>
                                             {user.name
                                                 .split(' ')
@@ -78,32 +78,31 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                                 .join('')
                                                 .toUpperCase()}
                                         </AvatarFallback>
-                                    </Avatar> */}
-                                    <Avatar className="h-8 w-8 border border-gray-300">
-    <AvatarImage src={user.avatar} alt={user.name} />
-    <AvatarFallback>
-        {user.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()}
-    </AvatarFallback>
-</Avatar>
+                                    </Avatar>
 
-                                    <div className="hidden max-w-[150px] flex-col items-start text-left sm:flex">
-                                        <p className="truncate text-sm leading-none font-medium">{user.name}</p>
-                                        <p className="truncate text-xs leading-none text-muted-foreground">{user.email}</p>
+                                    <div className="hidden max-w-[200px] flex-col items-start text-left sm:flex">
+                                        <p className="truncate text-sm leading-none font-medium text-gray-900 w-full">
+                                            {user.name}
+                                        </p>
+                                        <p className="truncate text-xs leading-tight text-muted-foreground w-full">
+                                            {user.email}
+                                        </p>
                                     </div>
                                 </Button>
                             </DropdownMenuTrigger>
 
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel className="font-normal">
-                                    <div className="flex max-w-[200px] flex-col space-y-1">
-                                        <p className="truncate text-sm leading-none font-medium">{user.name}</p>
-                                        <p className="truncate text-xs leading-none text-muted-foreground">{user.email}</p>
+                                    <div className="flex max-w-[200px] flex-col space-y-1 text-left">
+                                        <p className="truncate text-sm leading-none font-medium text-gray-900 w-full">
+                                            {user.name}
+                                        </p>
+                                        <p className="truncate text-xs leading-tight text-muted-foreground w-full">
+                                            {user.email}
+                                        </p>
                                     </div>
                                 </DropdownMenuLabel>
+
                                 <DropdownMenuSeparator />
 
                                 {/* Profile Link */}
