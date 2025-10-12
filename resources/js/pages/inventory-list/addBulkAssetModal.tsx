@@ -1,11 +1,11 @@
 import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
+import type { Personnel, SubArea, UnitOrDepartment } from '@/types/custom-index';
 import { useForm } from '@inertiajs/react';
-import { useRef, useState, useMemo, useEffect } from 'react';
-import type { AssetModel, Building, BuildingRoom, Category } from './index';
-import type { UnitOrDepartment, SubArea, Personnel } from '@/types/custom-index';
-import { WebcamCapture } from './WebcamCapture';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Select from 'react-select';
+import type { AssetModel, Building, BuildingRoom, Category } from './index';
+import { WebcamCapture } from './WebcamCapture';
 
 type Props = {
     open: boolean;
@@ -19,16 +19,16 @@ type Props = {
     personnels: Personnel[]; // ✅ add this
 };
 
-export function AddBulkAssetModalForm({ 
-    open, 
-    onClose, 
-    buildings, 
-    buildingRooms, 
-    unitOrDepartments, 
-    categories, 
+export function AddBulkAssetModalForm({
+    open,
+    onClose,
+    buildings,
+    buildingRooms,
+    unitOrDepartments,
+    categories,
     assetModels,
     subAreas,
-    personnels,   // ✅ add this
+    personnels, // ✅ add this
 }: Props) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         building_id: '',
@@ -50,7 +50,7 @@ export function AddBulkAssetModalForm({
         asset_model_id: '',
         image: null as File | null,
         quantity: '',
-        serial_no: '',  
+        serial_no: '',
         serial_numbers: [] as string[], // ✅ for multiple serials
         status: '',
         mode: 'bulk',
@@ -64,73 +64,52 @@ export function AddBulkAssetModalForm({
     // const qty = Number(data.quantity) || 0;
 
     const filteredRooms = buildingRooms.filter((room) => room.building_id === Number(data.building_id));
-    
-    const filteredModels = assetModels.filter(
-        (m) => m.category_id === Number(data.category_id)
-    );
+
+    const filteredModels = assetModels.filter((m) => m.category_id === Number(data.category_id));
 
     // ✅ Memoize filteredBrands so it doesn’t re-run unnecessarily
     const filteredBrands = useMemo(() => {
         if (!data.category_id) return [];
 
         if (data.asset_model_id) {
-            const selectedModel = assetModels.find(
-            (m) => m.id === Number(data.asset_model_id)
-            );
+            const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
 
             if (selectedModel) {
-            return Array.from(
-                new Map(
-                assetModels
-                    .filter(
-                    (m) =>
-                        m.category_id === selectedModel.category_id &&
-                        m.model.toLowerCase().trim() ===
-                        selectedModel.model.toLowerCase().trim() &&
-                        m.brand &&
-                        m.brand.trim() !== ''
-                    )
-                    .map((m) => [
-                    m.brand.trim().toLowerCase(),
-                    m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
-                    ])
-                ).values()
-            );
+                return Array.from(
+                    new Map(
+                        assetModels
+                            .filter(
+                                (m) =>
+                                    m.category_id === selectedModel.category_id &&
+                                    m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
+                                    m.brand &&
+                                    m.brand.trim() !== '',
+                            )
+                            .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+                    ).values(),
+                );
             }
         }
 
         // Otherwise, return all brands under the category
         return Array.from(
             new Map(
-            assetModels
-                .filter(
-                (m) =>
-                    m.category_id === Number(data.category_id) &&
-                    m.brand &&
-                    m.brand.trim() !== ''
-                )
-                .map((m) => [
-                m.brand.trim().toLowerCase(),
-                m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase(),
-                ])
-            ).values()
+                assetModels
+                    .filter((m) => m.category_id === Number(data.category_id) && m.brand && m.brand.trim() !== '')
+                    .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+            ).values(),
         );
-        }, [data.category_id, data.asset_model_id, assetModels]);
+    }, [data.category_id, data.asset_model_id, assetModels]);
 
-        const isSingleBrand = filteredBrands.length === 1;
+    const isSingleBrand = filteredBrands.length === 1;
 
-        useEffect(() => {
+    useEffect(() => {
         if (data.category_id && filteredBrands.length === 0 && data.brand) {
             setData('brand', '');
             return;
         }
 
-        if (
-            isSingleBrand &&
-            data.category_id &&
-            !data.brand &&
-            filteredBrands.length > 0
-        ) {
+        if (isSingleBrand && data.category_id && !data.brand && filteredBrands.length > 0) {
             setData('brand', filteredBrands[0]);
         }
     }, [data.category_id, data.asset_model_id, data.brand, filteredBrands, isSingleBrand, setData]);
@@ -181,7 +160,6 @@ export function AddBulkAssetModalForm({
                 {/* Scrollable Form Section */}
                 <div className="auto overflow-y-auto px-6" style={{ flex: 1 }}>
                     <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-6 gap-y-4 pb-6 text-sm">
-                        
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Asset Name</label>
                             <input
@@ -204,7 +182,10 @@ export function AddBulkAssetModalForm({
                                 options={categories.map((c) => ({ value: c.id.toString(), label: c.name }))}
                                 value={
                                     categories.find((c) => c.id === Number(data.category_id))
-                                        ? { value: data.category_id.toString(), label: categories.find((c) => c.id === Number(data.category_id))!.name }
+                                        ? {
+                                              value: data.category_id.toString(),
+                                              label: categories.find((c) => c.id === Number(data.category_id))!.name,
+                                          }
                                         : null
                                 }
                                 onChange={(option) => {
@@ -212,7 +193,6 @@ export function AddBulkAssetModalForm({
                                     setData('asset_model_id', '');
                                     setData('brand', '');
                                 }}
-
                             />
                             {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
                         </div>
@@ -224,13 +204,16 @@ export function AddBulkAssetModalForm({
                                 isClearable
                                 isDisabled={!data.category_id}
                                 options={filteredModels.map((m) => ({
-                                value: m.id.toString(),
-                                label: m.model || '(No Model Name)',
+                                    value: m.id.toString(),
+                                    label: m.model || '(No Model Name)',
                                 }))}
                                 value={
-                                filteredModels.find((m) => m.id === Number(data.asset_model_id))
-                                    ? { value: data.asset_model_id.toString(), label: filteredModels.find((m) => m.id === Number(data.asset_model_id))!.model }
-                                    : null
+                                    filteredModels.find((m) => m.id === Number(data.asset_model_id))
+                                        ? {
+                                              value: data.asset_model_id.toString(),
+                                              label: filteredModels.find((m) => m.id === Number(data.asset_model_id))!.model,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => {
                                     setData('asset_model_id', option ? option.value : '');
@@ -240,7 +223,6 @@ export function AddBulkAssetModalForm({
                                         setData('brand', formattedBrand);
                                     }
                                 }}
-
                             />
                             {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                         </div>
@@ -250,10 +232,10 @@ export function AddBulkAssetModalForm({
                             <Select
                                 placeholder={
                                     !data.category_id
-                                    ? 'Select a category first'
-                                    : filteredBrands.length === 0
-                                    ? 'No brands available'
-                                    : 'Select Brand'
+                                        ? 'Select a category first'
+                                        : filteredBrands.length === 0
+                                          ? 'No brands available'
+                                          : 'Select Brand'
                                 }
                                 isClearable={!isSingleBrand}
                                 isDisabled={!data.category_id || isSingleBrand}
@@ -277,15 +259,12 @@ export function AddBulkAssetModalForm({
                             </select>
                             {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                         </div>
-                        
+
                         {/*  Status (required) */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Status</label>
-                            <select
-                                className="w-full rounded-lg border p-2"
-                                value={data.status}
-                                onChange={(e) => setData('status', e.target.value)}
-                            >
+                            <select className="w-full rounded-lg border p-2" value={data.status} onChange={(e) => setData('status', e.target.value)}>
+                                <option value="">Select Status</option>
                                 <option value="active">Active</option>
                                 <option value="archived">Archived</option>
                             </select>
@@ -426,10 +405,7 @@ export function AddBulkAssetModalForm({
                                         if (checked) {
                                             let newSerials = [...data.serial_numbers];
                                             if (newQty > newSerials.length) {
-                                                newSerials = [
-                                                    ...newSerials,
-                                                    ...Array(newQty - newSerials.length).fill(''),
-                                                ];
+                                                newSerials = [...newSerials, ...Array(newQty - newSerials.length).fill('')];
                                             }
                                             setData('serial_numbers', newSerials);
                                         } else {
@@ -495,17 +471,17 @@ export function AddBulkAssetModalForm({
                                 }))}
                                 value={
                                     unitOrDepartments.find((u) => u.id === Number(data.unit_or_department_id))
-                                    ? {
-                                        value: data.unit_or_department_id.toString(),
-                                        label: `${unitOrDepartments.find((u) => u.id === Number(data.unit_or_department_id))!.name}`,
-                                        }
-                                    : null
+                                        ? {
+                                              value: data.unit_or_department_id.toString(),
+                                              label: `${unitOrDepartments.find((u) => u.id === Number(data.unit_or_department_id))!.name}`,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => setData('unit_or_department_id', option ? option.value : '')}
                             />
                             {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
                         </div>
-                        
+
                         {/* Building */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Building</label>
@@ -518,11 +494,11 @@ export function AddBulkAssetModalForm({
                                 }))}
                                 value={
                                     buildings.find((b) => b.id === Number(data.building_id))
-                                    ? {
-                                        value: data.building_id.toString(),
-                                        label: `${buildings.find((b) => b.id === Number(data.building_id))!.name}`,
-                                        }
-                                    : null
+                                        ? {
+                                              value: data.building_id.toString(),
+                                              label: `${buildings.find((b) => b.id === Number(data.building_id))!.name}`,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => {
                                     setData('building_id', option ? option.value : '');
@@ -545,11 +521,11 @@ export function AddBulkAssetModalForm({
                                 }))}
                                 value={
                                     filteredRooms.find((r) => r.id === Number(data.building_room_id))
-                                    ? {
-                                        value: data.building_room_id.toString(),
-                                        label: filteredRooms.find((r) => r.id === Number(data.building_room_id))!.room.toString(),
-                                        }
-                                    : null
+                                        ? {
+                                              value: data.building_room_id.toString(),
+                                              label: filteredRooms.find((r) => r.id === Number(data.building_room_id))!.room.toString(),
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => {
                                     setData('building_room_id', option ? option.value : '');
@@ -568,22 +544,20 @@ export function AddBulkAssetModalForm({
                                 options={subAreas
                                     .filter((s) => s.building_room_id === Number(data.building_room_id || 0))
                                     .map((s) => ({
-                                    value: s.id.toString(),
-                                    label: s.name,
+                                        value: s.id.toString(),
+                                        label: s.name,
                                     }))}
                                 value={
                                     subAreas.find((s) => s.id === Number(data.sub_area_id))
-                                    ? {
-                                        value: data.sub_area_id!.toString(),
-                                        label: subAreas.find((s) => s.id === Number(data.sub_area_id))!.name,
-                                        }
-                                    : null
+                                        ? {
+                                              value: data.sub_area_id!.toString(),
+                                              label: subAreas.find((s) => s.id === Number(data.sub_area_id))!.name,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => setData('sub_area_id', option ? option.value : '')}
                             />
-                            {errors.sub_area_id && (
-                                <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>
-                            )}
+                            {errors.sub_area_id && <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>}
                         </div>
 
                         {/* Assigned To */}
@@ -598,18 +572,16 @@ export function AddBulkAssetModalForm({
                                 }))}
                                 value={
                                     personnels.find((p) => p.id === Number(data.assigned_to))
-                                    ? {
-                                        value: data.assigned_to!.toString(),
-                                        label: `${personnels.find((p) => p.id === Number(data.assigned_to))!.full_name}${personnels.find((p) => p.id === Number(data.assigned_to))!.position ? ` – ${personnels.find((p) => p.id === Number(data.assigned_to))!.position}` : ''}`,
-                                        }
-                                    : null
+                                        ? {
+                                              value: data.assigned_to!.toString(),
+                                              label: `${personnels.find((p) => p.id === Number(data.assigned_to))!.full_name}${personnels.find((p) => p.id === Number(data.assigned_to))!.position ? ` – ${personnels.find((p) => p.id === Number(data.assigned_to))!.position}` : ''}`,
+                                          }
+                                        : null
                                 }
                                 onChange={(option) => setData('assigned_to', option ? option.value : '')}
                             />
                             {errors.assigned_to && <p className="mt-1 text-xs text-red-500">{errors.assigned_to}</p>}
                         </div>
-                        
-                        
 
                         {/* Divider */}
                         <div className="col-span-2 border-t"></div>

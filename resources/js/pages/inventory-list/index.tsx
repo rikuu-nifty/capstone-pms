@@ -1065,12 +1065,12 @@ const filteredBrands = useMemo(() => {
                                 <select
                                     className="w-full rounded-lg border p-2"
                                     value={data.status}
-                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived')}
+                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived' | '')}
                                 >
+                                    <option value="">Select Status</option>
                                     <option value="active">Active</option>
                                     <option value="archived">Archived</option>
                                 </select>
-
                                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                             </div>
 
