@@ -11,7 +11,7 @@ class PermissionsTableSeeder extends Seeder
     {
         $permissions = [
             // INVENTORY LIST
-            ['code' => 'view-inventory-list', 'name' => 'View Inventory List'],
+            ['code' => 'view-all-inventory-list', 'name' => 'View Inventory List'],
             ['code' => 'view-own-unit-inventory-list', 'name' => 'View Own Unit Inventory List'],
             ['code' => 'create-inventory-list', 'name' => 'Create Inventory List'],
             ['code' => 'update-inventory-list', 'name' => 'Update Inventory List'],

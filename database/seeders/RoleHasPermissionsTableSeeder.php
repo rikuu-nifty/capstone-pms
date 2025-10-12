@@ -14,7 +14,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
             'superuser' => Permission::pluck('id')->toArray(),
 
             'vp_admin' => [
-                'view-inventory-list',
+                'view-all-inventory-list',
                 'view-inventory-scheduling',
                 'view-transfers',
                 'view-turnover-disposal',
@@ -63,7 +63,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
 
             'pmo_head' => [
                 // INVENTORY LIST
-                'view-inventory-list',
+                'view-all-inventory-list',
                 'view-own-unit-inventory-list',
                 'create-inventory-list',
                 'update-inventory-list',
@@ -190,7 +190,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
 
             'pmo_staff' => [
                 // INVENTORY LIST
-                'view-inventory-list',
+                'view-all-inventory-list',
                 'view-own-unit-inventory-list',
                 'create-inventory-list',
                 'update-inventory-list',
