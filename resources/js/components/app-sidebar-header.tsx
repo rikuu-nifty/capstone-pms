@@ -107,15 +107,22 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
 
                                 {/* Profile Link */}
                                 <DropdownMenuItem asChild>
-                                    <Link href={route().has('profile.edit') ? route('profile.edit') : '#'} className="flex items-center">
-                                        <User className="mr-2 h-4 w-4" />
+                                    <Link 
+                                        href={route().has('profile.edit') ? route('profile.edit') : '#'} 
+                                        className="flex items-center cursor-pointer hover:bg-gray-100"
+                                    >
+                                        <User 
+                                            className="mr-2 h-4 w-4" />
                                         Profile
                                     </Link>
                                 </DropdownMenuItem>
 
                                 {/* Settings Link */}
                                 <DropdownMenuItem asChild>
-                                    <Link href={route().has('settings') ? route('settings') : '#'} className="flex items-center">
+                                    <Link 
+                                        href={route().has('password.edit') ? route('password.edit') : '#'}
+                                        className="flex items-center cursor-pointer hover:bg-gray-100"
+                                    >
                                         <Settings className="mr-2 h-4 w-4" />
                                         Settings
                                     </Link>
@@ -129,10 +136,10 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                         href={route().has('logout') ? route('logout') : '#'}
                                         method="post"
                                         as="button"
-                                        className="flex items-center text-red-600"
+                                        className="flex items-center text-red-600 cursor-pointer hover:bg-gray-100 hover:text-red-600 w-full"
                                     >
-                                        <LogOut className="mr-2 h-4 w-4" />
-                                        Logout
+                                        <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                                        <span className='text-red-600'>Logout</span>
                                     </Link>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
