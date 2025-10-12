@@ -35,11 +35,12 @@ import {
     FileDigit,
     Bell,
     Trash2,
-    Monitor, // ✅ optional icon for "System Monitoring"
+    Monitor, // optional icon for "System Monitoring"
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
+import { permission } from 'process';
 
 // ------------------ TYPES ------------------
 type NavItem = {
@@ -66,6 +67,7 @@ const notificationsNavItem = {
     title: 'Notifications',
     href: '/notifications',
     icon: Bell,
+    permission: 'view-notifications',
 };
 
 const auditLogItem = {  
@@ -163,7 +165,7 @@ export function AppSidebar() {
     const { url } = usePage();
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-    // ✅ Dynamic Inventory link based on permissions
+    // Dynamic Inventory link based on permissions
     const inventoryListLink =
         permissions.includes('view-inventory-list')
             ? '/inventory-list'
@@ -171,7 +173,7 @@ export function AppSidebar() {
             ? '/inventory-list/own'
             : null;
 
-    // ✅ Inventory menu items
+    // Inventory menu items
     const inventoryNavItems: NavItem[] = [
         ...(inventoryListLink
             ? [
@@ -322,7 +324,7 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Administration</SidebarGroupLabel>
                     <SidebarMenu>
                         {renderCollapsible('User Management', User, userNavItems)}
-                        {/* ✅ NEW COLLAPSIBLE GROUP: System Monitoring */}
+                        {/* NEW COLLAPSIBLE GROUP: System Monitoring */}
                         {renderCollapsible('System Monitoring', Monitor, systemMonitoringNavItems)}
                     </SidebarMenu>
                 </div>
