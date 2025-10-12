@@ -678,7 +678,7 @@ export function AddBulkAssetModalForm({
                             <Button type="button" variant="secondary" onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={processing}>
+                            <Button type="submit" disabled={processing}>    
                                 Add Bulk Assets
                             </Button>
                         </div>
