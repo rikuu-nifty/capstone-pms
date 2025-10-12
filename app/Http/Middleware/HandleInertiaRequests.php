@@ -37,7 +37,7 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(\Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
 
-        // ✅ Always reload the user's related detail + role + permissions + department
+        // Always reload the user's related detail + role + permissions + department
         $user = $request->user()?->loadMissing(['detail', 'role.permissions', 'unitOrDepartment']);
 
         return [
@@ -57,14 +57,15 @@ class HandleInertiaRequests extends Middleware
                     'name'  => $user->name,
                     'email' => $user->email,
 
-                    // ✅ Role details embedded directly for frontend access
+                    // Role details embedded directly for frontend access
                     'role' => $user->role ? [
                         'id'   => $user->role->id,
                         'name' => $user->role->name,
                         'code' => $user->role->code,
                     ] : null,
+                    'permissions' => $user->role?->permissions?->pluck('code')->toArray() ?? [],
 
-                    // ✅ Avatar with S3 + local support
+                    // Avatar with S3 + local support
                     'avatar' => $user->detail?->image_path
                         ? (
                             str_starts_with($user->detail->image_path, 'http')
@@ -78,7 +79,7 @@ class HandleInertiaRequests extends Middleware
                         : asset('images/default-avatar.png'),
                 ] : null,
 
-                // ✅ Permissions, role code, and department data
+                // Permissions, role code, and department data
                 'permissions' => $user?->role?->permissions?->pluck('code')->toArray() ?? [],
                 'role' => $user?->role?->code,
                 'unit_or_department_id' => $user?->unit_or_department_id,
