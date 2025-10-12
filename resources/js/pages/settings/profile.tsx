@@ -38,8 +38,8 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { auth, userDetail } = usePage<SharedData & { userDetail?: UserDetail | null }>().props;
 
     const { data, setData, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
-        name: auth.user.name,
-        email: auth.user.email,
+        name: auth?.user?.name ?? '',
+        email: auth?.user?.email ?? '',
         first_name: userDetail?.first_name || '',
         middle_name: userDetail?.middle_name || '',
         last_name: userDetail?.last_name || '',
@@ -112,7 +112,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 <InputError className="mt-2" message={errors.email} />
                             </div>
 
-                            {mustVerifyEmail && auth.user.email_verified_at === null && (
+                            {mustVerifyEmail && auth?.user?.email_verified_at === null && (
                                 <div>
                                     <p className="-mt-4 text-sm text-muted-foreground">
                                         Your email address is unverified.{' '}

@@ -29,7 +29,7 @@ class ProfileController extends Controller
     /**
      * Update the user's profile settings.
      */
-  public function update(Request $request): RedirectResponse
+public function update(Request $request): RedirectResponse
 {
     $user = $request->user();
     $validated = $request->all();
@@ -42,7 +42,7 @@ class ProfileController extends Controller
         $hash = sha1($original . microtime(true) . \Illuminate\Support\Str::random(16));
         $filename = "{$hash}.{$ext}";
 
-        // Upload to S3 under 'user_profiles/' folder, public visibility
+        // Upload to S3 under 'user_profiles/' folder
         $path = \Illuminate\Support\Facades\Storage::disk('s3')->putFileAs(
             'user_profiles',
             $file,
@@ -50,32 +50,29 @@ class ProfileController extends Controller
             'public'
         );
 
-        // Save just the key (e.g., 'user_profiles/filename.jpg')
         $validated['image_path'] = $path;
 
-        // 🧹 Delete old image from S3 if replaced
-        if (
-            !empty($user->detail?->image_path)
-            && \Illuminate\Support\Facades\Storage::disk('s3')->exists($user->detail->image_path)
+        // 🧹 Delete old image if exists
+        if (!empty($user->detail?->image_path) &&
+            \Illuminate\Support\Facades\Storage::disk('s3')->exists($user->detail->image_path)
         ) {
             \Illuminate\Support\Facades\Storage::disk('s3')->delete($user->detail->image_path);
         }
     }
 
-    // ✅ Always update name and email
+    // ✅ Update user main data
     $user->fill([
         'name'  => $validated['name'] ?? $user->name,
         'email' => $validated['email'] ?? $user->email,
     ]);
 
-    // Reset verification if email was changed
     if ($user->isDirty('email')) {
         $user->email_verified_at = null;
     }
 
     $user->save();
 
-    // ✅ Update or create user detail record
+    // ✅ Update or create detail
     $user->detail()->updateOrCreate(
         ['user_id' => $user->id],
         [
@@ -88,14 +85,14 @@ class ProfileController extends Controller
         ]
     );
 
-    // ✅ Force refresh of authenticated user instance (so Inertia gets updated avatar)
-    auth()->setUser($user->load('detail')); // 👈 key line that reloads the user + relation
+    // ✅ Force refresh of user in session (fix for avatar disappearing)
+    $user->load('detail', 'role.permissions', 'unitOrDepartment');
+    auth()->setUser($user);
 
-    // ✅ Redirect back with success message
-    return to_route('profile.edit')
-        ->with('success', 'Profile updated successfully.')
-        ->with('force_refresh', true); // optional flag if you ever want to handle it in React
+    // ✅ Redirect back with flash message
+    return to_route('profile.edit')->with('success', 'Profile updated successfully.');
 }
+
 
 
     /**
