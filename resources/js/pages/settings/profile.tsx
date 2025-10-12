@@ -1,18 +1,19 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+
 
 import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
+import SaveConfirmationModal from '@/components/modals/SaveConfirmationModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { UserDetail } from '@/types/user-detail';
-import SaveConfirmationModal from '@/components/modals/SaveConfirmationModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -32,13 +33,8 @@ type ProfileForm = {
     image?: File | null;
 };
 
-export default function Profile({
-    mustVerifyEmail,
-    status,
-}: {
-    mustVerifyEmail: boolean;
-    status?: string;
-}) {
+
+export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth, userDetail } = usePage<SharedData & { userDetail?: UserDetail | null }>().props;
 
     const { data, setData, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
@@ -51,7 +47,8 @@ export default function Profile({
         contact_no: userDetail?.contact_no || '',
         image: null,
     });
-
+    
+    
     const [showSaved, setShowSaved] = useState(false);
 
     const submit: FormEventHandler = (e) => {
@@ -59,26 +56,22 @@ export default function Profile({
 
         const formData = new FormData();
         formData.append('_method', 'PATCH');
-        formData.append(
-            '_token',
-            (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? ''
-        );
+        formData.append('_token', (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '');
 
-        (Object.entries(data) as [keyof ProfileForm, FormDataEntryValue | File | null][]).forEach(
-            ([key, value]) => {
-                if (value instanceof File) {
-                    formData.append(key, value);
-                } else if (typeof value === 'string') {
-                    formData.append(key, value);
-                } else if (value !== null && value !== undefined) {
-                    formData.append(key, String(value));
-                }
+        (Object.entries(data) as [keyof ProfileForm, FormDataEntryValue | File | null][]).forEach(([key, value]) => {
+            if (value instanceof File) {
+                formData.append(key, value);
+            } else if (typeof value === 'string') {
+                formData.append(key, value);
+            } else if (value !== null && value !== undefined) {
+                formData.append(key, String(value));
             }
-        );
+        });
 
         router.post(route('profile.update'), formData, {
             preserveScroll: true,
             onSuccess: () => setShowSaved(true),
+            
         });
     };
 
@@ -88,16 +81,10 @@ export default function Profile({
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <HeadingSmall
-                        title="Profile information"
-                        description="Update your name, contact details, and profile picture."
-                    />
+                    <HeadingSmall title="Profile information" description="Update your name, contact details, and profile picture." />
 
                     {/* Form Container */}
-                    <form
-                        onSubmit={submit}
-                        className="flex flex-col md:flex-row gap-12 px-2 md:px-6"
-                    >
+                    <form onSubmit={submit} className="flex flex-col gap-12 px-2 md:flex-row md:px-6">
                         {/* LEFT SIDE — Form Fields */}
                         <div className="flex-1 space-y-6">
                             <div className="grid gap-2">
@@ -149,33 +136,19 @@ export default function Profile({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="first_name">First Name</Label>
-                                <Input
-                                    id="first_name"
-                                    value={data.first_name}
-                                    onChange={(e) => setData('first_name', e.target.value)}
-                                    required
-                                />
+                                <Input id="first_name" value={data.first_name} onChange={(e) => setData('first_name', e.target.value)} required />
                                 <InputError message={errors.first_name} />
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="middle_name">Middle Name</Label>
-                                <Input
-                                    id="middle_name"
-                                    value={data.middle_name || ''}
-                                    onChange={(e) => setData('middle_name', e.target.value)}
-                                />
+                                <Input id="middle_name" value={data.middle_name || ''} onChange={(e) => setData('middle_name', e.target.value)} />
                                 <InputError message={errors.middle_name} />
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="last_name">Last Name</Label>
-                                <Input
-                                    id="last_name"
-                                    value={data.last_name}
-                                    onChange={(e) => setData('last_name', e.target.value)}
-                                    required
-                                />
+                                <Input id="last_name" value={data.last_name} onChange={(e) => setData('last_name', e.target.value)} required />
                                 <InputError message={errors.last_name} />
                             </div>
 
@@ -184,10 +157,8 @@ export default function Profile({
                                 <select
                                     id="gender"
                                     value={data.gender || ''}
-                                    onChange={(e) =>
-                                        setData('gender', e.target.value as 'female' | 'male' | 'other' | '')
-                                    }
-                                    className="border rounded-md p-2 text-sm cursor-pointer"
+                                    onChange={(e) => setData('gender', e.target.value as 'female' | 'male' | 'other' | '')}
+                                    className="cursor-pointer rounded-md border p-2 text-sm"
                                 >
                                     <option value="">Select Gender</option>
                                     <option value="female">Female</option>
@@ -227,10 +198,10 @@ export default function Profile({
 
                         {/* RIGHT SIDE — Profile Image */}
                         <div className="w-full md:w-[380px]">
-                            <div className="rounded-2xl border bg-white dark:bg-neutral-900 shadow-md p-8 flex flex-col items-center text-center">
-                                <Label className="text-lg font-semibold mb-5">Profile Picture</Label>
+                            <div className="flex flex-col items-center rounded-2xl border bg-white p-8 text-center shadow-md dark:bg-neutral-900">
+                                <Label className="mb-5 text-lg font-semibold">Profile Picture</Label>
 
-                                <div className="relative group mb-6">
+                                <div className="group relative mb-6">
                                     {/* Hidden input but linked by label htmlFor */}
                                     <input
                                         id="profileImageInput"
@@ -243,28 +214,34 @@ export default function Profile({
                                     />
 
                                     {/* Label wraps the image preview for clickable behavior */}
-                                    <label htmlFor="profileImageInput" className="cursor-pointer block relative group">
-                                        {data.image ? (
-                                            <img
-                                                src={URL.createObjectURL(data.image as File)}
-                                                alt="Preview"
-                                                className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
-                                            />
-                                        ) : userDetail?.image_path ? (
-                                            <img
-                                                src={`/storage/${userDetail.image_path}`}
-                                                alt="Profile"
-                                                className="h-44 w-44 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-blue-200 dark:ring-blue-400 transition-transform duration-300 group-hover:scale-105"
-                                            />
-                                        ) : (
-                                            <div className="flex h-44 w-44 items-center justify-center rounded-full border-4 border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">
-                                                No Image
-                                            </div>
-                                        )}
+                                    <label htmlFor="profileImageInput" className="group relative block cursor-pointer">
+                                   {data.image ? (
+    // Local preview if a new image is selected
+    <img
+        src={URL.createObjectURL(data.image as File)}
+        alt="Preview"
+        className="h-44 w-44 rounded-full border-4 border-white object-cover shadow-lg ring-2 ring-blue-200 transition-transform duration-300 group-hover:scale-105 dark:ring-blue-400"
+    />
+) : auth?.user?.avatar ? (
+    // Persistent avatar (from shared props)
+    <img
+        src={auth.user.avatar}
+        alt="Profile"
+        className="h-44 w-44 rounded-full border-4 border-white object-cover shadow-lg ring-2 ring-blue-200 transition-transform duration-300 group-hover:scale-105 dark:ring-blue-400"
+        onError={(e) => {
+            e.currentTarget.src = '/images/placeholder.png';
+        }}
+    />
+) : (
+    // Fallback placeholder
+    <div className="flex h-44 w-44 items-center justify-center rounded-full border-4 border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">
+        No Image
+    </div>
+)}
 
                                         {/* Overlay on hover */}
-                                        <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                            <span className="text-white text-sm font-medium">Click to Change</span>
+                                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                            <span className="text-sm font-medium text-white">Click to Change</span>
                                         </div>
                                     </label>
                                 </div>
@@ -288,21 +265,22 @@ export default function Profile({
                                     Choose File
                                 </label>
 
-                                <p className="mt-4 text-xs text-muted-foreground leading-snug">
-                                    Accepted formats: <span className="font-medium">JPG, PNG, WEBP</span><br />
+                                <p className="mt-4 text-xs leading-snug text-muted-foreground">
+                                    Accepted formats: <span className="font-medium">JPG, PNG, WEBP</span>
+                                    <br />
                                     Max size: <span className="font-medium">5MB</span>
                                 </p>
 
                                 <InputError message={errors.image} />
                             </div>
-                            
+
                             <div className="mt-8 w-full">
                                 <DeleteUser />
                             </div>
                         </div>
                     </form>
                 </div>
-                
+
                 <SaveConfirmationModal
                     show={showSaved}
                     onClose={() => setShowSaved(false)}

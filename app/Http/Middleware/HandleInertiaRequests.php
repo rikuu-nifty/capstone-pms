@@ -44,52 +44,83 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
-    public function share(Request $request): array
-    {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+   public function share(Request $request): array
+{
+    [$message, $author] = str(\Illuminate\Foundation\Inspiring::quotes()->random())->explode('-');
 
-        $user = $request->user()?->loadMissing('detail');
+    // ✅ Always reload the user's related detail (fresh data every request)
+    $user = $request->user()?->loadMissing('detail', 'role.permissions', 'unitOrDepartment');
 
-        return [
-            ...parent::share($request),
-            'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'auth' => [
-                // 'user' => $request->user(),
+    return [
+        ...parent::share($request),
 
-                'user' => $user ? [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                    // dynamic image URL based on relation or fallback
-                    'avatar' => $user->detail?->image_path
-                        ? asset('storage/' . $user->detail->image_path)
-                        : asset('images/default-avatar.png'),
-                ] : null,
+        // ---------- APP METADATA ----------
+        'name' => config('app.name'),
+        'quote' => [
+            'message' => trim($message),
+            'author'  => trim($author),
+        ],
 
-                'permissions' => $request->user()?->role?->permissions->pluck('code')->toArray() ?? [],
-                'role' => $request->user()?->role?->code,
-                'unit_or_department_id' => $request->user()?->unit_or_department_id,
-                'unit_or_department' => $request->user()?->unitOrDepartment?->only(['id', 'name', 'code']),
-            ],
-            'ziggy' => fn (): array => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'metrics' => [
-                // Lazy evaluates only if referenced on the client
-                'pending_user_count' => fn () => User::where('status', 'pending')->count(),
-            ],
-            'flash' => [
-                'unauthorized' => fn() => $request->session()->has('unauthorized')
-                    ? [
-                        'message' => $request->session()->get('unauthorized'),
-                        'time'    => now()->timestamp, // 🔑 makes each flash unique
-                    ]
-                    : null,
-            ],
+        // ---------- AUTH SHARED DATA ----------
+        'auth' => [
+            'user' => $user ? [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
 
-        ];
-    }
+                // ✅ Always resolve avatar to a full public URL (handles S3, local, or absolute)
+                'avatar' => $user->detail?->image_path
+                    ? (
+                        str_starts_with($user->detail->image_path, 'http')
+                            ? $user->detail->image_path
+                            : (
+                                config('filesystems.default') === 's3'
+                                    // 🟦 S3 public URL
+                                    ? 'https://' . env('AWS_BUCKET') . '.s3.' . env('AWS_DEFAULT_REGION') . '.amazonaws.com/' . ltrim($user->detail->image_path, '/')
+                                    // 🟩 Local fallback (for dev)
+                                    : asset('storage/' . ltrim($user->detail->image_path, '/'))
+                              )
+                      )
+                    // 🩶 Default avatar image
+                    : asset('images/default-avatar.png'),
+            ] : null,
+
+            // ✅ Permissions, roles, and department data
+            'permissions' => $user?->role?->permissions->pluck('code')->toArray() ?? [],
+            'role' => $user?->role?->code,
+            'unit_or_department_id' => $user?->unit_or_department_id,
+            'unit_or_department' => $user?->unitOrDepartment?->only(['id', 'name', 'code']),
+        ],
+
+        // ---------- ZIGGY ROUTES ----------
+        'ziggy' => fn(): array => [
+            ...(new \Tighten\Ziggy\Ziggy)->toArray(),
+            'location' => $request->url(),
+        ],
+
+        // ---------- SIDEBAR STATE ----------
+        'sidebarOpen' => ! $request->hasCookie('sidebar_state')
+            || $request->cookie('sidebar_state') === 'true',
+
+        // ---------- APP METRICS (lazy evaluation) ----------
+        'metrics' => [
+            'pending_user_count' => fn () => \App\Models\User::where('status', 'pending')->count(),
+        ],
+
+        // ---------- FLASH MESSAGES ----------
+        'flash' => [
+            'unauthorized' => fn() => $request->session()->has('unauthorized')
+                ? [
+                    'message' => $request->session()->get('unauthorized'),
+                    'time'    => now()->timestamp,
+                ]
+                : null,
+        ],
+
+        // ---------- DEBUG (optional - can remove later) ----------
+        // 'debug_avatar' => $user?->detail?->image_path,
+    ];
+}
+
+
 }
