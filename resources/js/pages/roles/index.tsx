@@ -221,7 +221,14 @@ export default function RoleManagement() {
                                         <div className="flex justify-center gap-2">
                                             <Button
                                                 variant="outline"
-                                                className="cursor-pointer"
+                                                // className="cursor-pointer"
+                                                className={`cursor-pointer ${
+                                                    ['superuser'].includes(r.code)
+                                                        ? 'bg-gray-500 text-white cursor-not-allowed'
+                                                        : ''
+                                                }`}
+                                                disabled={['superuser'].includes(r.code)}
+                                                hidden={['superuser'].includes(r.code)}
                                                 onClick={() => {
                                                     setEditingRole(r);
                                                     setShowEdit(true);
@@ -231,7 +238,13 @@ export default function RoleManagement() {
                                             </Button>
                                             <Button
                                                 variant="blue"
-                                                className="cursor-pointer"
+                                                className={`cursor-pointer ${
+                                                    ['superuser'].includes(r.code)
+                                                        ? 'bg-gray-500 text-white cursor-not-allowed'
+                                                        : ''
+                                                }`}
+                                                disabled={['superuser'].includes(r.code)}
+                                                hidden={['superuser'].includes(r.code)}
                                                 onClick={() => {
                                                     setEditingRole(r);
                                                     setShowManagePermissions(true);
@@ -247,6 +260,7 @@ export default function RoleManagement() {
                                                         : ''
                                                 }`}
                                                 disabled={['superuser', 'vp_admin', 'pmo_head'].includes(r.code)}
+                                                hidden={['superuser'].includes(r.code)}
                                                 onClick={() => {
                                                     if (!['superuser', 'vp_admin', 'pmo_head'].includes(r.code)) {
                                                         setDeletingRole(r);
