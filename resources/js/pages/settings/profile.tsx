@@ -345,9 +345,9 @@ export default function Profile({
                                 <DeleteUser />
                             </div> */}
 
-                            <pre className="mt-6 max-h-64 overflow-auto rounded-lg bg-neutral-900 p-3 text-xs text-green-400">
+                            {/* <pre className="mt-6 max-h-64 overflow-auto rounded-lg bg-neutral-900 p-3 text-xs text-green-400">
                                 {JSON.stringify(userDetail?.image_path, null, 2)}
-                            </pre>
+                            </pre> */}
                         </div>
                     </form>
                 </div>
