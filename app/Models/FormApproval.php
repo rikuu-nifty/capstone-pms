@@ -318,6 +318,13 @@ class FormApproval extends Model
         });
 
         $this->updateParentFormStatus('reset');
+
+        // After reset, notify the first pending approver
+        if ($firstPending = $this->currentStep()) {
+            if (!$firstPending->is_external) {
+                $this->notifyDesignatedApprover($firstPending);
+            }
+        }
     }
 
     public function isFullyApproved(): bool
