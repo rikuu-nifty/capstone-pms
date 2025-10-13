@@ -22,6 +22,7 @@ import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
 import { SubArea, ucwords, UnitOrDepartment } from '@/types/custom-index';
 import { WebcamCapture } from './WebcamCapture';
 import type { Personnel } from '@/types/personnel';
+import SortDropdown from '@/components/filters/SortDropdown';
 
 import Select from 'react-select';
 
@@ -31,6 +32,14 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/inventory-list',
     },
 ];
+
+const inventorySortOptions = [
+  { value: 'id', label: 'Record ID' },
+  { value: 'asset_name', label: 'Asset Name' },
+  { value: 'date_purchased', label: 'Date Purchased' },
+] as const;
+
+type InventorySortKey = (typeof inventorySortOptions)[number]['value'];
 
 export type Category = {
     id: number;
@@ -234,6 +243,9 @@ export default function InventoryListIndex({
         };
     };
 
+    const [sortKey, setSortKey] = useState<InventorySortKey>('id');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
     const canViewAll = auth.permissions.includes('view-inventory-list');
     const canViewOwn = auth.permissions.includes('view-own-unit-inventory-list');
     const canCreate = auth.permissions.includes('create-inventory-list');
@@ -266,39 +278,39 @@ export default function InventoryListIndex({
     // );
 
     // Memoize filteredBrands so it doesn't trigger unnecessary re-renders
-const filteredBrands = useMemo(() => {
-    // No category selected → no brands
-    if (!data.category_id) return [];
+    const filteredBrands = useMemo(() => {
+        // No category selected → no brands
+        if (!data.category_id) return [];
 
-        // If a model is selected, show only brands tied to that model within the category
-        if (data.asset_model_id) {
-            const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
+            // If a model is selected, show only brands tied to that model within the category
+            if (data.asset_model_id) {
+                const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
 
-            if (selectedModel) {
-                return Array.from(
-                    new Map(
-                        assetModels
-                            .filter(
-                                (m) =>
-                                    m.category_id === selectedModel.category_id &&
-                                    m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
-                                    m.brand &&
-                                    m.brand.trim() !== '',
-                            )
-                            .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
-                    ).values(),
-                );
+                if (selectedModel) {
+                    return Array.from(
+                        new Map(
+                            assetModels
+                                .filter(
+                                    (m) =>
+                                        m.category_id === selectedModel.category_id &&
+                                        m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
+                                        m.brand &&
+                                        m.brand.trim() !== '',
+                                )
+                                .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+                        ).values(),
+                    );
+                }
             }
-        }
 
-        // Otherwise, return all brands under the category
-        return Array.from(
-            new Map(
-                assetModels
-                    .filter((m) => m.category_id === Number(data.category_id) && m.brand && m.brand.trim() !== '')
-                    .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
-            ).values(),
-        );
+            // Otherwise, return all brands under the category
+            return Array.from(
+                new Map(
+                    assetModels
+                        .filter((m) => m.category_id === Number(data.category_id) && m.brand && m.brand.trim() !== '')
+                        .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+                ).values(),
+            );
     }, [data.category_id, data.asset_model_id, assetModels]);
 
     // Check if there is only one unique brand for this category
@@ -461,15 +473,34 @@ const filteredBrands = useMemo(() => {
         return matchesSearch && matchesCategory && matchesUnit && matchesStatus;
     });
 
+    const sortedData = useMemo(() => {
+        const dir = sortDir === 'asc' ? 1 : -1;
+
+        return [...filteredData].sort((a, b) => {
+            if (sortKey === 'asset_name') {
+                const da = (a.asset_name ?? '').toLowerCase();
+                const db = (b.asset_name ?? '').toLowerCase();
+                return da.localeCompare(db) * dir;
+            }
+            if (sortKey === 'date_purchased') {
+                const da = new Date(a.date_purchased ?? '').getTime();
+                const db = new Date(b.date_purchased ?? '').getTime();
+                return (da - db) * dir;
+            }
+            // Default by ID
+            return (Number(a.id) - Number(b.id)) * dir;
+        });
+    }, [filteredData, sortKey, sortDir]);
+
     const [page, setPage] = useState(1);
     const pageSize = 10;
 
-    const total = filteredData.length;
-    const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+    const total = sortedData.length;
+    const paginatedData = sortedData.slice((page - 1) * pageSize, page * pageSize);
 
     useEffect(() => {
         setPage(1);
-    }, [search]);
+    }, [search, selectedCategoryId, selectedUnitId, selectedStatus, sortKey, sortDir]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -608,6 +639,16 @@ const filteredBrands = useMemo(() => {
                     </div>
 
                     <div className="flex gap-2">
+                        <SortDropdown<InventorySortKey>
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            options={inventorySortOptions}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
+                        />
+
                         <AssetFilterDropdown
                             categories={categories}
                             units={unitOrDepartments}

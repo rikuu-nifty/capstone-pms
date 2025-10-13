@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-// ✅ Added imports for notifications
 use App\Models\User;
 use App\Notifications\MaintenanceDueNotification;
 use Carbon\Carbon;
@@ -361,7 +360,7 @@ public function assignments()
     //     return $this->hasMany(offCampusAsset::class, 'asset_id');
     // }
 
-    // ✅ Hook into model events for instant notifications
+    // Hook into model events for instant notifications
     protected static function booted()
     {
         // When a new asset is created
@@ -387,7 +386,7 @@ public function assignments()
     }
 
     /**
-     * ✅ Helper to check if due and send notifications
+     * Helper to check if due and send notifications
      */protected static function checkAndNotify($asset)
     {
         if ($asset->maintenance_due_date && (
@@ -399,7 +398,7 @@ public function assignments()
             })->get();
 
             foreach ($users as $user) {
-                // ✅ Always send a new notification, even if same asset already had one
+                // Always send a new notification, even if same asset already had one
                 $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
             }
         }
@@ -418,7 +417,7 @@ public function assignments()
 //         })->get();
 
 //         foreach ($users as $user) {
-//             // ✅ Always send a new notification, even if same asset already had one
+//             // Always send a new notification, even if same asset already had one
 //             $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
 //         }
 //     }

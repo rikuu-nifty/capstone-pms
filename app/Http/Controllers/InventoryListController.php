@@ -114,7 +114,7 @@ class InventoryListController extends Controller
             'building',
             'buildingRoom.building',
             'roomBuilding',
-            'transfer', // view-all-inventory-listeager load transfer
+            'transfer', // view-all-inventory-list eager load transfer
             'subArea',
             'transfers' => function ($q) {
                 $q->latest('transfers.created_at'); // just order for accessor
@@ -214,7 +214,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
         $data['maintenance_due_date'] = $request->input('maintenance_due_date');
     }
 
-    // ✅ Handle image upload to S3 if provided
+    // Handle image upload to S3 if provided
     if ($request->hasFile('image')) {
         $file = $request->file('image');
         $original = $file->getClientOriginalName();
@@ -225,7 +225,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
         // Upload to S3 under 'asset_image/' folder
         $path = Storage::disk('s3')->putFileAs('asset_image', $file, $filename, 'public');
 
-        // ✅ Save full public URL
+        // Save full public URL
         $data['image_path'] = Storage::disk('s3')->url($path);
     }
 
@@ -247,7 +247,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
                 $asset = InventoryList::create($newData);
                 $created[] = $asset;
 
-                // ✅ Sync assignment if assigned_to is set
+                // Sync assignment if assigned_to is set
                 if (!empty($newData['assigned_to'])) {
                     $assignment = \App\Models\AssetAssignment::firstOrCreate(
                         ['personnel_id' => $newData['assigned_to']],
@@ -263,7 +263,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
                     );
                 }
 
-                // ✅ Load related personnel for immediate use in frontend
+                // Load related personnel for immediate use in frontend
                 $asset->load(['personnel']);
                 $asset->assigned_to_name = $asset->personnel?->full_name;
             }
@@ -276,7 +276,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
                 $asset = InventoryList::create($newData);
                 $created[] = $asset;
 
-                // ✅ Sync assignment if assigned_to is set
+                // Sync assignment if assigned_to is set
                 if (!empty($newData['assigned_to'])) {
                     $assignment = \App\Models\AssetAssignment::firstOrCreate(
                         ['personnel_id' => $newData['assigned_to']],
@@ -292,7 +292,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
                     );
                 }
 
-                // ✅ Load related personnel for immediate use
+                // Load related personnel for immediate use
                 $asset->load(['personnel']);
                 $asset->assigned_to_name = $asset->personnel?->full_name;
             }
@@ -308,7 +308,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
     // ================================
     $asset = InventoryList::create($data);
 
-    // ✅ Sync assignment if assigned_to is set
+    // Sync assignment if assigned_to is set
     if (!empty($data['assigned_to'])) {
         $assignment = \App\Models\AssetAssignment::firstOrCreate(
             ['personnel_id' => $data['assigned_to']],
@@ -324,7 +324,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
         );
     }
 
-    // ✅ Load related data for immediate frontend reflection
+    // Load related data for immediate frontend reflection
     $asset->load([
         'assetModel.category',
         'unitOrDepartment',
@@ -333,7 +333,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
         'personnel',
     ]);
 
-    // ✅ Add assigned_to_name for View Modal
+    // Add assigned_to_name for View Modal
     $asset->assigned_to_name = $asset->personnel?->full_name;
 
     return redirect()->back()->with([
@@ -387,14 +387,14 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
         'sub_area_id' => 'nullable|exists:sub_areas,id',
     ]);
 
-    // ✅ Normalize nullables
+    // Normalize nullables
     $data['sub_area_id'] = $data['sub_area_id'] ?? null;
 
     if ($request->filled('maintenance_due_date')) {
         $data['maintenance_due_date'] = $request->input('maintenance_due_date');
     }
 
-    // ✅ Handle new image upload to S3 (keep old if none provided)
+    // Handle new image upload to S3 (keep old if none provided)
     if ($request->hasFile('image')) {
         $file = $request->file('image');
         $original = $file->getClientOriginalName();
@@ -405,11 +405,11 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
         // Upload to S3 under the 'asset_image/' folder, public visibility
         $path = Storage::disk('s3')->putFileAs('asset_image', $file, $filename, 'public');
 
-        // ✅ Save full public URL instead of just path
+        // Save full public URL instead of just path
         $data['image_path'] = Storage::disk('s3')->url($path);
     }
 
-    // ✅ Update the record
+    // Update the record
     $inventoryList->update($data);
 
     // ================================
@@ -451,7 +451,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
         'personnel',
     ]);
 
-    // ✅ Add computed assigned_to_name for frontend
+    // Add computed assigned_to_name for frontend
     $inventoryList->assigned_to_name = $inventoryList->personnel?->full_name;
 
     return redirect()->back()->with([
