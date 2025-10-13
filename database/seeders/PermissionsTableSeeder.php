@@ -68,6 +68,7 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'create-assignments', 'name' => 'Create Assignments'],
             ['code' => 'update-assignments', 'name' => 'Update Assignments'],
             ['code' => 'delete-assignments', 'name' => 'Delete Assignments'],
+            ['code' => 'reassign-assignments', 'name' => 'Reassign Assignments'],
             
             // BUILDINGS
             ['code' => 'view-buildings', 'name' => 'View Buildings'],

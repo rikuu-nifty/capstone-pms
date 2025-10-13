@@ -73,6 +73,7 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "view-assignments",
         "create-assignments",
         "update-assignments",
+        "reassign-assignments",
         "delete-assignments",
     ],
     "Inventory Scheduling": [

@@ -512,12 +512,13 @@
         ->name('assignments.items.unassign')
         ->middleware('can:update-assignments');
 
+    // ASSET REASSIGNMENTS
     Route::get('/assignments/personnel/{personnel}/assets', [AssetAssignmentController::class, 'personnelAssets'])->name('assignments.personnelAssets')
         ->middleware('can:view-assignments');
-    Route::put('/assignments/{assignment}/bulk-reassign-items', [AssetAssignmentController::class, 'bulkReassignItems'])
-        ->name('assignments.bulkReassignItems');
-    Route::put('/assignments/{assignment}/bulk-reassign', [AssetAssignmentController::class, 'bulkReassign'])
-        ->name('assignments.bulkReassign');
+    Route::put('/assignments/{assignment}/bulk-reassign-items', [AssetAssignmentController::class, 'bulkReassignItems'])->name('assignments.bulkReassignItems')
+        ->middleware('can:reassign-assignments');
+    Route::put('/assignments/{assignment}/bulk-reassign', [AssetAssignmentController::class, 'bulkReassign'])->name('assignments.bulkReassign')
+        ->middleware('can:reassign-assignments');
     Route::get('/assignments/{assignment}/assets', [AssetAssignmentController::class, 'assignmentAssets'])->name('assignments.assignmentAssets')
         ->middleware('can:view-assignments');
     Route::get('/assignments/{assignment}/json', [AssetAssignmentController::class, 'showJson'])->name('assignments.show.json')

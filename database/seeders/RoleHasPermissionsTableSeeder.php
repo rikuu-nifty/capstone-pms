@@ -117,6 +117,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
                 'view-assignments',
                 'create-assignments',
                 'update-assignments',
+                'reassign-assignments',
                 'delete-assignments',
 
                 // BUILDINGS
@@ -244,6 +245,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
                 'view-assignments',
                 'create-assignments',
                 'update-assignments',
+                'reassign-assignments',
                 'delete-assignments',
 
                 // BUILDINGS
