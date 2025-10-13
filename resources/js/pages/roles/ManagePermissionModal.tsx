@@ -61,6 +61,7 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
         "view-form-approvals",
         "approve-form-approvals",
         "delete-form-approvals",
+        "reset-form-approvals",
     ],
     "Personnels": [
         "view-personnels",

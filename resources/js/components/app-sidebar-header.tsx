@@ -67,9 +67,9 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                 <div>
                     {user && (
                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="flex items-center gap-3 rounded-full px-3 hover:bg-gray-100">
-                                    <Avatar className="h-8 w-8 border border-gray-300">
+                                    <Avatar className="h-10 w-10 border border-gray-300">
                                         <AvatarImage src={user.avatar} alt={user.name} />
                                         <AvatarFallback>
                                             {user.name
@@ -89,7 +89,43 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                         </p>
                                     </div>
                                 </Button>
-                            </DropdownMenuTrigger>
+                            </DropdownMenuTrigger> 
+
+                             {/* WITH CIRCULAR LINE UPPER  */}
+
+                           
+
+                            {/* <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="flex items-center gap-3 rounded-full px-3 hover:bg-gray-100"
+                                >
+                                    <Avatar className="h-8 w-8 rounded-full border-0 shadow-none ring-0 outline-none">
+                                        <AvatarImage
+                                            src={user.avatar}
+                                            alt={user.name}
+                                            className="object-cover rounded-full"
+                                        />
+                                        <AvatarFallback className="rounded-full bg-gray-200 text-gray-700">
+                                            {user.name
+                                                .split(' ')
+                                                .map((n) => n[0])
+                                                .join('')
+                                                .toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+
+                                    <div className="hidden max-w-[200px] flex-col items-start text-left sm:flex">
+                                        <p className="truncate text-sm leading-none font-medium text-gray-900 w-full">
+                                            {user.name}
+                                        </p>
+                                        <p className="truncate text-xs leading-tight text-muted-foreground w-full">
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                </Button>
+                            </DropdownMenuTrigger> */}
+
 
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel className="font-normal">

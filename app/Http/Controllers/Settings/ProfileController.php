@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Storage;
@@ -22,7 +21,7 @@ class ProfileController extends Controller
         $user = $request->user()->load('detail');
 
         return Inertia::render('settings/profile', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'userDetail' => $user->detail,
         ]);
@@ -31,53 +30,71 @@ class ProfileController extends Controller
     /**
      * Update the user's profile settings.
      */
-    public function update(Request $request): RedirectResponse
-    {
-        $user = $request->user();
-        $validated = $request->all();
+public function update(Request $request): RedirectResponse
+{
+    $user = $request->user();
+    $validated = $request->all();
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('user_profiles', 'public');
-            $validated['image_path'] = $path;
-        } 
-        elseif ($request->boolean('remove_image')) {
-            if ($user->detail && $user->detail->image_path) {
-                Storage::disk('public')->delete($user->detail->image_path);
-            }
-            $validated['image_path'] = null;
-        }
+    // ✅ Handle profile image upload to S3
+    if ($request->hasFile('image')) {
+        $file = $request->file('image');
+        $original = $file->getClientOriginalName();
+        $ext = $file->getClientOriginalExtension();
+        $hash = sha1($original . microtime(true) . \Illuminate\Support\Str::random(16));
+        $filename = "{$hash}.{$ext}";
 
-        // Save basic user info
-        $user->fill([
-            'name'  => $validated['name'] ?? $user->name,
-            'email' => $validated['email'] ?? $user->email,
-        ]);
-
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
-
-        // dd($validated, $user->getDirty());
-
-        $user->save();
-
-        $user->detail()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'first_name'  => $validated['first_name'] ?? $user->detail->first_name ?? null,
-                'middle_name' => $validated['middle_name'] ?? $user->detail->middle_name ?? null,
-                'last_name'   => $validated['last_name'] ?? $user->detail->last_name ?? null,
-                'gender'      => $validated['gender'] ?? $user->detail->gender ?? null,
-                'contact_no'  => $validated['contact_no'] ?? $user->detail->contact_no ?? null,
-
-                'image_path'  => $request->boolean('remove_image')
-                    ? null
-                    : ($validated['image_path'] ?? $user->detail->image_path ?? null),
-            ]
+        // Upload to S3 under 'user_profiles/' folder
+        $path = \Illuminate\Support\Facades\Storage::disk('s3')->putFileAs(
+            'user_profiles',
+            $file,
+            $filename,
+            'public'
         );
 
-        return to_route('profile.edit')->with('success', 'Profile updated successfully.');
+        $validated['image_path'] = $path;
+
+        // 🧹 Delete old image if exists
+        if (!empty($user->detail?->image_path) &&
+            \Illuminate\Support\Facades\Storage::disk('s3')->exists($user->detail->image_path)
+        ) {
+            \Illuminate\Support\Facades\Storage::disk('s3')->delete($user->detail->image_path);
+        }
     }
+
+    // ✅ Update user main data
+    $user->fill([
+        'name'  => $validated['name'] ?? $user->name,
+        'email' => $validated['email'] ?? $user->email,
+    ]);
+
+    if ($user->isDirty('email')) {
+        $user->email_verified_at = null;
+    }
+
+    $user->save();
+
+    // ✅ Update or create detail
+    $user->detail()->updateOrCreate(
+        ['user_id' => $user->id],
+        [
+            'first_name'  => $validated['first_name'] ?? $user->detail->first_name ?? null,
+            'middle_name' => $validated['middle_name'] ?? $user->detail->middle_name ?? null,
+            'last_name'   => $validated['last_name'] ?? $user->detail->last_name ?? null,
+            'gender'      => $validated['gender'] ?? $user->detail->gender ?? null,
+            'contact_no'  => $validated['contact_no'] ?? $user->detail->contact_no ?? null,
+            'image_path'  => $validated['image_path'] ?? $user->detail->image_path ?? null,
+        ]
+    );
+
+    // ✅ Force refresh of user in session (fix for avatar disappearing)
+    $user->load('detail', 'role.permissions', 'unitOrDepartment');
+    auth()->setUser($user);
+
+    // ✅ Redirect back with flash message
+    return to_route('profile.edit')->with('success', 'Profile updated successfully.');
+}
+
+
 
     /**
      * Delete the user's account.
@@ -90,8 +107,12 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        // Optional: remove user's S3 profile photo
+        if ($user->detail && $user->detail->image_path) {
+            Storage::disk('s3')->delete($user->detail->image_path);
+        }
 
+        Auth::logout();
         $user->delete();
 
         $request->session()->invalidate();

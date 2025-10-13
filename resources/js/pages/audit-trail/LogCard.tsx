@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, User, CheckCircle2, XCircle } from 'lucide-react';
 import { AuditLog } from './index';
-import { renderChanges } from './RenderChanges';
+import { renderChanges } from './renderChanges';
 
 // Helper to make action names friendly
 function formatAction(action: string): string {

@@ -131,26 +131,44 @@ export const EditAssetModalForm = ({
     }, [form.category_id, form.asset_model_id, form.brand, filteredBrands, isSingleBrand]);
 
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        router.post(
-            `/inventory-list/${asset.id}`,
-            {
-                ...form,
-                sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
-                _method: 'put',
-            },
-            {
-                forceFormData: true, // ✅ ensures File objects get sent as FormData
-                onSuccess: () => {
-                    onClose();
-                    // refresh notifications if due date was set to today/past
-                    router.reload({ only: ['notifications'] });
-                },
-                onError: (errors) => console.error(errors),
-            },
-        );
-    };
+    // ✅ Explicitly create FormData for file-safe uploads
+    const formData = new FormData();
+
+    // ✅ Safely append fields (type-checked)
+    Object.entries({
+        ...form,
+        sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
+        _method: 'put', // Laravel expects this for updates
+    }).forEach(([key, value]) => {
+        if (value instanceof File) {
+            // append files directly
+            formData.append(key, value);
+        } else if (typeof value === 'number') {
+            // convert numbers to string
+            formData.append(key, value.toString());
+        } else if (typeof value === 'string') {
+            formData.append(key, value);
+        } else if (value === null) {
+            // represent nulls as empty strings for backend consistency
+            formData.append(key, '');
+        }
+        // undefined values are ignored
+    });
+
+    // ✅ Send multipart/form-data via Inertia
+    router.post(`/inventory-list/${asset.id}`, formData, {
+        forceFormData: true, // ensures file fields are preserved
+        onSuccess: () => {
+            onClose();
+            // refresh notifications if due date was set to today/past
+            router.reload({ only: ['notifications'] });
+        },
+        onError: (errors) => console.error(errors),
+    });
+};
+
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>

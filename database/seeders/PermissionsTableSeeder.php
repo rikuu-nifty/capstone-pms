@@ -112,6 +112,7 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'view-form-approvals', 'name' => 'View Form Approvals'],
             ['code' => 'approve-form-approvals', 'name' => 'Approve Form Approvals'],
             ['code' => 'delete-form-approvals', 'name' => 'Delete Form Approvals'],
+            ['code' => 'reset-form-approvals', 'name' => 'Reset Form Approvals'],
             
             // SIGNATORIES
             ['code' => 'view-signatories', 'name' => 'View Signatories'],

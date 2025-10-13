@@ -296,7 +296,7 @@ export default function ApprovalsIndex() {
                                                         View
                                                     </Link>
                                                 </Button>
-
+                                                
                                                 <Button
                                                     variant="destructive"
                                                     className="cursor-pointer"
@@ -370,7 +370,7 @@ export default function ApprovalsIndex() {
                                                             setSelectedApprovalId(a.id);
                                                             setShowReset(true);
                                                         }}
-                                                    >
+                                                        >
                                                         Reset
                                                     </Button>
                                                 )}

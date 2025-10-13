@@ -15,10 +15,13 @@
 
 
 export default function AppLogoIcon(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+  const logoUrl = import.meta.env.VITE_APP_LOGO_URL 
+    ?? "https://tapandtrackfiles.s3.ap-southeast-1.amazonaws.com/logo_image/logocapstone23.png";
+
   return (
     <img
       {...props}
-      src="/storage/assets/logocapstone23.png" // ✅ public path
+      src={logoUrl}
       alt="App Logo"
       className={`h-8 w-8 ${props.className ?? ''}`}
     />

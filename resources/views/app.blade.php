@@ -32,11 +32,21 @@
 
         <title inertia>{{ config('app.name', 'Tap & Track: Property Management System') }}</title>
 
-        <!-- Updated favicon -->
-        <link rel="icon" type="image/png" href="{{ asset('storage/assets/logocapstone23.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('storage/assets/logocapstone23.png') }}">
+<!-- ✅ S3-safe favicon with cache busting -->
+@php
+    $bucket = config('filesystems.disks.s3.bucket');
+    $region = config('filesystems.disks.s3.region');
 
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    $faviconUrl = config('filesystems.default') === 's3'
+        ? "https://{$bucket}.s3.{$region}.amazonaws.com/logo_image/logocapstone23.png"
+        : asset('storage/assets/logocapstone23.png');
+@endphp
+
+<link rel="icon" type="image/png" href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}">
+<link rel="shortcut icon" type="image/png" href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}">
+<link rel="apple-touch-icon" href="{{ $faviconUrl }}?v={{ filemtime(public_path('index.php')) }}">
+
+
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
