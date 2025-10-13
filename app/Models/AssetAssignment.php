@@ -38,7 +38,7 @@ class AssetAssignment extends Model
 
     public function items()
     {
-        // ✅ Explicitly set FK so Laravel doesn’t default to `asset_assignment_id`
+        // Explicitly set FK so Laravel doesn’t default to `asset_assignment_id`
         return $this->hasMany(AssetAssignmentItem::class, 'asset_assignment_id');
     }
 
@@ -123,7 +123,7 @@ class AssetAssignment extends Model
                 ]
             );
 
-            // ✅ Ensure correct FK is updated
+            // Ensure correct FK is updated
             $item->update(['asset_assignment_id' => $assignment->id]);
 
             return $item;
@@ -141,13 +141,13 @@ class AssetAssignment extends Model
                 ]
             );
 
-            // ✅ Make sure bulk update uses correct FK
+            // Make sure bulk update uses correct FK
             return AssetAssignmentItem::whereHas('assignment', fn($q) => $q->where('personnel_id', $fromPersonnelId))
                 ->update(['asset_assignment_id' => $assignment->id]);
         });
     }
 
-    // ✅ NEW helper: safely attach assets to an assignment
+    // NEW helper: safely attach assets to an assignment
     public function attachAssets(array $assetIds): void
     {
         foreach ($assetIds as $assetId) {

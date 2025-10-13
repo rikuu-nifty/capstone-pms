@@ -52,7 +52,7 @@ class AssetAssignmentController extends Controller
                 'remarks'       => $data['remarks'] ?? null,
             ]);
 
-            // ✅ Attach assets and sync assigned_to
+            // Attach assets and sync assigned_to
             foreach ($data['selected_assets'] as $assetId) {
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
@@ -178,13 +178,21 @@ public function destroy(AssetAssignment $assignment)
     public function assignmentAssets(Request $request, AssetAssignment $assignment)
     {
         $items = AssetAssignmentItem::with([
-            'asset.assetModel.category',
-            'asset.unitOrDepartment',
-            'asset.building',
-            'asset.buildingRoom',
-            'asset.subArea',
+            'asset' => function ($q) {
+                $q->whereNull('deleted_at');
+                $q->with([
+                    'assetModel.category',
+                    'unitOrDepartment',
+                    'building',
+                    'buildingRoom',
+                    'subArea',
+                ]);
+            },
         ])
         ->where('asset_assignment_id', $assignment->id)
+        ->whereHas('asset', function ($q) {
+            $q->whereNull('deleted_at'); // double-check filter at query level
+        })
         ->paginate($request->input('per_page', 10));
 
         return [
@@ -223,7 +231,7 @@ public function destroy(AssetAssignment $assignment)
                 'asset_assignment_id' => $newAssignment->id,
             ]);
 
-            // ✅ Sync inventory_lists.assigned_to
+            // Sync inventory_lists.assigned_to
             $item->asset->update([
                 'assigned_to' => $newAssignment->personnel_id,
             ]);
@@ -254,7 +262,7 @@ public function destroy(AssetAssignment $assignment)
             AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
                 ->update(['asset_assignment_id' => $newAssignment->id]);
 
-            // ✅ Sync assigned_to for all affected assets
+            // Sync assigned_to for all affected assets
             InventoryList::whereIn('id', $assetIds)->update([
                 'assigned_to' => $newAssignment->personnel_id,
             ]);
