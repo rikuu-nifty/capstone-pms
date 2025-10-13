@@ -476,7 +476,7 @@
         ->middleware('can:approve-form-approvals');
     Route::post('/approvals/{approval}/reset', [FormApprovalController::class, 'reset'])
         ->name('approvals.reset')
-        ->middleware('can:approve-form-approvals');
+        ->middleware('can:reset-form-approvals');
     Route::post('/approvals/{approval}/external-approve', [FormApprovalController::class, 'externalApprove'])
         ->name('approvals.external_approve')
         ->middleware('can:approve-form-approvals');

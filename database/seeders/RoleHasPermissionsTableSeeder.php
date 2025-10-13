@@ -48,6 +48,7 @@ class RoleHasPermissionsTableSeeder extends Seeder
                 'view-form-approvals',
                 'approve-form-approvals',
                 'delete-form-approvals',
+                'reset-form-approvals',
                 
                 'view-signatories',
 
