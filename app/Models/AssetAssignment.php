@@ -147,7 +147,7 @@ class AssetAssignment extends Model
         });
     }
 
-    // NEW helper: safely attach assets to an assignment
+    // safely attach assets to an assignment
     public function attachAssets(array $assetIds): void
     {
         foreach ($assetIds as $assetId) {

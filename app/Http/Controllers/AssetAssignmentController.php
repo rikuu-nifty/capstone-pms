@@ -104,29 +104,24 @@ class AssetAssignmentController extends Controller
         return redirect()->route('assignments.index')->with('success', "Assignment updated successfully.");
     }
 
-public function destroy(AssetAssignment $assignment)
-{
-    DB::transaction(function () use ($assignment) {
-        // Get all asset IDs from this assignment
-        $assetIds = $assignment->items()->pluck('asset_id');
+    public function destroy(AssetAssignment $assignment)
+    {
+        DB::transaction(function () use ($assignment) {
+            $assetIds = $assignment->items()->pluck('asset_id');
 
-        // Nullify assigned_to in inventory_lists for those assets
-        if ($assetIds->isNotEmpty()) {
-            \App\Models\InventoryList::whereIn('id', $assetIds)->update([
-                'assigned_to' => null,
-            ]);
-        }
+            if ($assetIds->isNotEmpty()) {
+                InventoryList::whereIn('id', $assetIds)->update([
+                    'assigned_to' => null,
+                ]);
+            }
+            
+            $assignment->items()->delete(); // Delete related items first
 
-        // Delete related items first (optional but cleaner)
-        $assignment->items()->delete();
+            $assignment->delete(); // Delete the assignment itself
+        });
 
-        // Delete the assignment itself
-        $assignment->delete();
-    });
-
-    return redirect()->route('assignments.index')->with('success', "Assignment deleted successfully, and assets were unassigned.");
-}
-
+        return redirect()->route('assignments.index')->with('success', "Assignment deleted successfully, and assets were unassigned.");
+    }
 
     public function show(Request $request, AssetAssignment $assignment)
     {
@@ -206,7 +201,7 @@ public function destroy(AssetAssignment $assignment)
         $changes = $request->validate([
             'changes' => ['required', 'array'],
             'changes.*.item_id' => ['required', 'integer', Rule::exists('asset_assignment_items', 'id')],
-            'changes.*.new_personnel_id' => ['required', 'integer', Rule::exists('personnels', 'id')],
+            'changes.*.new_personnel_id' => ['nullable', 'integer', Rule::exists('personnels', 'id')],
         ])['changes'];
 
         foreach ($changes as $change) {
@@ -214,10 +209,16 @@ public function destroy(AssetAssignment $assignment)
                 ->where('asset_assignment_id', $assignment->id)
                 ->first();
 
-            if (!$item) {
+            if (!$item) continue;
+
+            if (empty($change['new_personnel_id'])) {
+                // Handle Unassignment
+                $item->asset->update(['assigned_to' => null]);
+                $item->delete(); // Soft-delete the assignment link
                 continue;
             }
 
+            // Handle reassignment
             $newAssignment = AssetAssignment::firstOrCreate(
                 ['personnel_id' => $change['new_personnel_id']],
                 [
@@ -227,14 +228,8 @@ public function destroy(AssetAssignment $assignment)
                 ]
             );
 
-            $item->update([
-                'asset_assignment_id' => $newAssignment->id,
-            ]);
-
-            // Sync inventory_lists.assigned_to
-            $item->asset->update([
-                'assigned_to' => $newAssignment->personnel_id,
-            ]);
+            $item->update(['asset_assignment_id' => $newAssignment->id]);
+            $item->asset->update(['assigned_to' => $newAssignment->personnel_id]);
         }
 
         return back()->with('success', 'Assets reassigned successfully.');
@@ -271,5 +266,17 @@ public function destroy(AssetAssignment $assignment)
         return back()->with('success', 'All assets reassigned successfully.');
     }
 
-    
+    public function unassignItem(Request $request, AssetAssignmentItem $item)
+    {
+        DB::transaction(function () use ($item) {
+            $assetId = $item->asset_id; // Nullify assigned_to in inventory_lists
+            InventoryList::where('id', $assetId)->update([
+                'assigned_to' => null,
+            ]);
+
+            $item->delete();
+        });
+
+        return response()->json(['success' => true]);
+    }
 }

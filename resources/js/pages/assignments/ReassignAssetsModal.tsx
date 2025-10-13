@@ -15,6 +15,8 @@ import Select from 'react-select';
 import axios from 'axios';
 import type { AssetAssignmentItem, AssignmentAssetsResponse } from '@/types/asset-assignment';
 
+import UnassignConfirmationModal from '@/components/modals/UnassignConfirmationModal';
+
 interface Props {
     open: boolean;
     onClose: () => void;
@@ -34,6 +36,15 @@ export default function ReassignAssetsModal({
     const [fromPersonnel, setFromPersonnel] = useState<number | null>(null);
     const [toPersonnel, setToPersonnel] = useState<number | null>(null);
 
+    const [confirmUnassign, setConfirmUnassign] = useState<{ 
+        show: boolean; 
+        assetId?: number; 
+        assetName?: string;
+        personnelName?: string;
+    }>({
+        show: false,
+    });
+
     const [assets, setAssets] = useState<AssetAssignmentItem[]>([]);
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
@@ -41,8 +52,7 @@ export default function ReassignAssetsModal({
 
     const [mode, setMode] = useState<'single' | 'bulk'>('single');
 
-    // Per-row selection memory for single-mode
-    const [rowSelections, setRowSelections] = useState<Record<number, number | null>>({});
+    const [rowSelections, setRowSelections] = useState<Record<number, number | null>>({}); // Per-row selection memory for single-mode
 
     const fetchAssets = useCallback(
         async (p: number, id: number | null) => {
@@ -72,54 +82,76 @@ export default function ReassignAssetsModal({
     }, [open, assignmentId, fetchAssets]);
 
     const bulkReassign = () => {
-        if (!toPersonnel || !assignmentId) return;
+        if (!assignmentId) return;
+
+        // Per-row changes (unassign or specific reassigns)
+        let changes = Object.entries(rowSelections).map(([itemIdStr, targetId]) => ({
+            item_id: Number(itemIdStr),
+            new_personnel_id: targetId ?? toPersonnel ?? null,
+        }));
+
+        // No per-row edits, but a global reassign (move all toPersonnel)
+        if (changes.length === 0 && toPersonnel) {
+            changes = assets.map((a) => ({
+                item_id: a.id,
+                new_personnel_id: toPersonnel,
+            }));
+        }
+
+        // no changes, no personnel
+        if (changes.length === 0) return;
 
         router.put(
-            route('assignments.bulkReassign', { assignment: assignmentId }),
-            { new_personnel_id: toPersonnel },
+            route('assignments.bulkReassignItems', { assignment: assignmentId }),
+            { changes },
             {
-            preserveScroll: true,
-            onSuccess: () => {
-                onClose();
-            },
-            onError: (errors) => {
-                console.error(errors);
-            },
+                preserveScroll: true,
+                onSuccess: () => {
+                    setRowSelections({});
+                    setToPersonnel(null);
+                    onClose();
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                },
             }
         );
     };
 
     const saveSingleReassignments = () => {
-  const changes = Object.entries(rowSelections)
-    .filter(([, targetId]) => targetId != null)
-    .map(([itemIdStr, targetId]) => ({
-      item_id: Number(itemIdStr),
-      new_personnel_id: targetId!,
-    }));
+        const changes = Object.entries(rowSelections)
+            // include both reassignment (targetId != null) and unassignment (targetId === null)
+            .map(([itemIdStr, targetId]) => ({
+                item_id: Number(itemIdStr),
+                new_personnel_id: targetId, // can be null to unassign
+            }));
 
-  if (changes.length === 0) return;
+        if (changes.length === 0) return;
 
-  router.put(
-    route('assignments.bulkReassignItems', { assignment: assignmentId }),
-    { changes },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        onClose();
-      },
-      onError: (errors) => {
-        console.error(errors);
-      },
-    }
-  );
-};
+        router.put(
+            route('assignments.bulkReassignItems', { assignment: assignmentId }),
+            { changes },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setRowSelections({});
+                    onClose();
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                },
+            }
+        );
+    };
+
+    const hasPendingChanges = Object.keys(rowSelections).length > 0;
 
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
             <DialogContent className="flex max-h-[90vh] min-h-[75vh] w-full max-w-[750px] flex-col overflow-hidden p-6 sm:max-w-[850px]">
                 <DialogHeader>
                     <DialogTitle>
-                        Reassign Assets
+                        Reassign Assets 
                         {/* {fromPersonnel && (
                             <span className="ml-1 font-bold text-blue-700">
                                 {personnels.find((p) => p.id === fromPersonnel)?.full_name ?? ''}
@@ -148,9 +180,7 @@ export default function ReassignAssetsModal({
                     </Button>
                 </div>
 
-                {/* <div className="flex-1 overflow-y-auto pr-2 -mr-2 text-sm"> */}
                 <div className="flex-1 overflow-y-scroll pr-2 -mr-2 text-sm">
-
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label className="mb-1 block text-sm font-medium text-muted-foreground">
@@ -165,7 +195,7 @@ export default function ReassignAssetsModal({
 
                         {mode === 'bulk' && (
                             <div>
-                                <label className="mb-1 block font-medium">Transfer To</label>
+                                <label className="mb-1 block font-medium">Reassign To</label>
                                 <Select
                                     className="w-full"
                                     value={
@@ -197,9 +227,9 @@ export default function ReassignAssetsModal({
                                     <thead className="bg-gray-100 text-gray-700">
                                         <tr>
                                             <th className="px-3 py-2 text-center w-12">#</th>
-                                            <th className="px-3 py-2 text-center w-50">Serial No</th>
+                                            <th className="px-3 py-2 text-center w-40">Serial No</th>
                                             <th className="px-3 py-2 text-center w-50">Asset Name</th>
-                                            <th className="px-3 py-2 text-center" style={{ width: '18rem' }}>
+                                            <th className="px-3 py-2 text-center w-75">
                                                 Action
                                             </th>
                                         </tr>
@@ -217,47 +247,75 @@ export default function ReassignAssetsModal({
                                                     <td className="px-3 py-2 text-center">
                                                         {(page - 1) * pageSize + idx + 1}
                                                     </td>
-                                                    <td className="px-3 py-2 text-center">
+                                                    <td className="px-3 py-2 text-center align-middle whitespace-normal break-words">
                                                         {a.asset?.serial_no ?? '—'}
                                                     </td>
-                                                    <td className="px-3 py-2 text-center">
+                                                    <td className="px-3 py-2 text-center align-middle whitespace-normal break-words">
                                                         {a.asset?.asset_name ?? '—'}
                                                     </td>
                                                     <td className="px-3 py-2 align-middle">
-                                                        <div className="w-64 mx-auto">
-                                                            <Select
-                                                                className="w-full"
-                                                                value={selectedOption}
-                                                                options={personnels.filter((p) => p.id !== fromPersonnel)}
-                                                                getOptionValue={(p) => String(p.id)}
-                                                                getOptionLabel={(p) => p.full_name}
-                                                                onChange={(opt) => {
-                                                                    const newId = opt ? opt.id : null;
-                                                                    setRowSelections((prev) => ({ ...prev, [a.id]: newId }));
-                                                                    // if (newId) reassignItem(a.id, newId); THIS IS AUTO REASSIGN IMMEDIATELY
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <div className="w-48 flex-grow">
+                                                                <Select
+                                                                    className="w-full"
+                                                                    isDisabled={rowSelections[a.id] === null}
+                                                                    value={selectedOption}
+                                                                    options={personnels.filter((p) => p.id !== fromPersonnel)}
+                                                                    getOptionValue={(p) => String(p.id)}
+                                                                    getOptionLabel={(p) => p.full_name}
+                                                                    onChange={(opt) => {
+                                                                        const newId = opt ? opt.id : null;
+                                                                        setRowSelections((prev) => ({
+                                                                            ...prev,
+                                                                            [a.id]: newId,
+                                                                        }));
+                                                                    }}
+                                                                    placeholder="Reassign to..."
+                                                                    isClearable
+                                                                    styles={{
+                                                                        container: (base) => ({ ...base, width: '100%' }),
+                                                                        control: (base) => ({
+                                                                            ...base,
+                                                                            minHeight: 36,
+                                                                            textAlign: 'left',
+                                                                            backgroundColor:
+                                                                                rowSelections[a.id] === null
+                                                                                    ? '#e0e0e0ff'
+                                                                                    : base.backgroundColor,
+                                                                            opacity: rowSelections[a.id] === null ? 0.7 : 1,
+                                                                            cursor: rowSelections[a.id] === null ? 'not-allowed' : 'default',
+
+                                                                        }),
+                                                                        menu: (base) => ({ ...base, zIndex: 50 }),
+                                                                    }}
+                                                                />
+                                                            </div>
+
+                                                            <Button
+                                                                variant={
+                                                                    rowSelections[a.id] === null ? 'outline' : 'destructive'
+                                                                }
+                                                                size="sm"
+                                                                className="cursor-pointer"
+                                                                onClick={() => {
+                                                                    if (rowSelections[a.id] === null) {
+                                                                        setRowSelections((prev) => {
+                                                                            const updated = { ...prev };
+                                                                            delete updated[a.id]; // unmark
+                                                                            return updated;
+                                                                        });
+                                                                    } else {
+                                                                        setConfirmUnassign({
+                                                                            show: true,
+                                                                            assetId: a.id,
+                                                                            assetName: a.asset?.asset_name ?? '',
+                                                                            personnelName: personnels.find((p) => p.id === fromPersonnel)?.full_name ?? '',
+                                                                        });
+                                                                    }
                                                                 }}
-                                                                placeholder="Reassign to..."
-                                                                isClearable
-                                                                // IMPORTANT: no menuPortalTarget here (Radix Dialog would inert it)
-                                                                styles={{
-                                                                    container: (base) => ({ ...base, width: '100%' }),
-                                                                    control: (base) => ({
-                                                                        ...base,
-                                                                        minHeight: 36,
-                                                                        textAlign: 'left',
-                                                                    }),
-                                                                    valueContainer: (base) => ({
-                                                                        ...base,
-                                                                        textAlign: 'left',
-                                                                    }),
-                                                                    placeholder: (base) => ({ ...base, marginLeft: 2 }),
-                                                                    menu: (base) => ({
-                                                                        ...base,
-                                                                        zIndex: 50,
-                                                                        position: 'absolute',
-                                                                    }),
-                                                                }}
-                                                            />
+                                                            >
+                                                                {rowSelections[a.id] === null ? 'Undo' : 'Remove'}
+                                                            </Button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -278,29 +336,56 @@ export default function ReassignAssetsModal({
                     {mode === 'bulk' && (
                         <div className="mt-4 overflow-hidden rounded-md border border-gray-200">
                             {assets.length > 0 ? (
-                                <table className="w-full text-sm border-collapse">
-                                <thead className="bg-gray-100 text-gray-700">
-                                    <tr>
-                                    <th className="px-3 py-2 text-center w-12">#</th>
-                                    <th className="px-3 py-2 text-center">Serial No</th>
-                                    <th className="px-3 py-2 text-center">Asset Name</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {assets.map((a, idx) => (
-                                    <tr key={a.id} className="border-t">
-                                        <td className="px-3 py-2 text-center">
-                                        {(page - 1) * pageSize + idx + 1}
-                                        </td>
-                                        <td className="px-3 py-2 text-center">
-                                        {a.asset?.serial_no ?? '—'}
-                                        </td>
-                                        <td className="px-3 py-2 text-center">
-                                        {a.asset?.asset_name ?? '—'}
-                                        </td>
-                                    </tr>
-                                    ))}
-                                </tbody>
+                                <table className="w-full text-sm border-collapse table-fixed">
+                                    <thead className="bg-gray-100 text-gray-700">
+                                        <tr>
+                                            <th className="px-3 py-2 text-center w-12">#</th>
+                                            <th className="px-3 py-2 text-center w-40">Serial No</th>
+                                            <th className="px-3 py-2 text-center w-60">Asset Name</th>
+                                            <th className="px-3 py-2 text-center w-60">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {assets.map((a, idx) => (
+                                            <tr key={a.id} className="border-t">
+                                                <td className="px-3 py-2 text-center align-middle">
+                                                    {(page - 1) * pageSize + idx + 1}
+                                                </td>
+                                                <td className="px-3 py-2 text-center align-middle whitespace-normal break-words">
+                                                    {a.asset?.serial_no ?? '—'}
+                                                </td>
+                                                <td className="px-3 py-2 text-center align-middle whitespace-normal break-words">
+                                                    {a.asset?.asset_name ?? '—'}
+                                                </td>
+                                                <td className="px-3 py-2 text-center align-middle">
+                                                    <Button
+                                                    variant={rowSelections[a.id] === null ? 'outline' : 'destructive'}
+                                                    size="sm"
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        if (rowSelections[a.id] === null) {
+                                                            setRowSelections((prev) => {
+                                                                const updated = { ...prev };
+                                                                delete updated[a.id];
+                                                                return updated;
+                                                            });
+                                                            } else {
+                                                            setConfirmUnassign({
+                                                                show: true,
+                                                                assetId: a.id,
+                                                                assetName: a.asset?.asset_name ?? '',
+                                                                personnelName:
+                                                                personnels.find((p) => p.id === fromPersonnel)?.full_name ?? '',
+                                                            });
+                                                        }
+                                                    }}
+                                                    >
+                                                        {rowSelections[a.id] === null ? 'Undo Removal' : 'Remove Assignment'}
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
                                 </table>
                             ) : (
                                 <p className="p-4 text-center text-muted-foreground">
@@ -330,7 +415,10 @@ export default function ReassignAssetsModal({
                         <Button
                             variant="destructive"
                             type="button"
-                            onClick={onClose}
+                            onClick={() => {
+                                setRowSelections({}); // clear selections
+                                onClose();
+                            }}
                             className="cursor-pointer"
                         >
                             Cancel
@@ -340,7 +428,7 @@ export default function ReassignAssetsModal({
                         {mode === 'single' && assets.length > 0 && (
                             <Button
                                 onClick={saveSingleReassignments}
-                                disabled={Object.values(rowSelections).every((v) => v == null)}
+                                disabled={!hasPendingChanges}
                                 className="cursor-pointer"
                             >
                                 Save Changes
@@ -350,13 +438,29 @@ export default function ReassignAssetsModal({
                         {mode === 'bulk' && (
                             <Button
                                 onClick={bulkReassign}
-                                disabled={!fromPersonnel || !toPersonnel}
+                                disabled={!fromPersonnel || (!toPersonnel && !hasPendingChanges)}
                                 className="cursor-pointer"
                             >
-                                Reassign All
+                                {hasPendingChanges ? 'Apply Changes' : 'Reassign All'}
                             </Button>
                         )}
                 </DialogFooter>
+
+                <UnassignConfirmationModal
+                    show={confirmUnassign.show}
+                    assetName={confirmUnassign.assetName}
+                    personnelName={confirmUnassign.personnelName}
+                    onCancel={() => setConfirmUnassign({ show: false })}
+                    onConfirm={() => {
+                        if (confirmUnassign.assetId) {
+                            setRowSelections((prev) => ({
+                                ...prev,
+                                [confirmUnassign.assetId!]: null,
+                            }));
+                        }
+                        setConfirmUnassign({ show: false });
+                    }}
+                />
             </DialogContent>
         </Dialog>
     );

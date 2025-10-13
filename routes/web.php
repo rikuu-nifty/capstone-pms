@@ -506,9 +506,11 @@
         ->middleware('can:view-assignments');
     Route::delete('/assignments/{assignment}', [AssetAssignmentController::class, 'destroy'])->name('assignments.destroy')
         ->middleware('can:delete-assignments');
-    Route::get('/inventory-list/{inventory_list}/json', [InventoryListController::class, 'fetch'])
-        ->name('inventory-list.fetch'); //this is for seeing the asset
-
+    Route::get('/inventory-list/{inventory_list}/json', [InventoryListController::class, 'fetch']) //this is for seeing the asset
+        ->name('inventory-list.fetch'); 
+    Route::delete('/assignments/items/{item}/unassign', [AssetAssignmentController::class, 'unassignItem'])
+        ->name('assignments.items.unassign')
+        ->middleware('can:update-assignments');
 
     Route::get('/assignments/personnel/{personnel}/assets', [AssetAssignmentController::class, 'personnelAssets'])->name('assignments.personnelAssets')
         ->middleware('can:view-assignments');
