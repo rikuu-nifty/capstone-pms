@@ -57,16 +57,18 @@ class InventorySchedulingController extends Controller
         $buildingRooms = BuildingRoom::with(['building', 'subAreas'])->get();
         $unitOrDepartments = UnitOrDepartment::all();
         $users = User::with('role:id,name,code')
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role_name' => $user->role->name ?? null,
-                ];
-            }
-        );
+        ->whereHas('role', function ($q) {
+            $q->whereIn('code', ['pmo_head', 'pmo_staff']);
+        })
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role_name' => $user->role->name ?? null,
+            ];
+        });
 
         // Add computed flag to each schedule
         $schedules->each(function ($schedule) {
