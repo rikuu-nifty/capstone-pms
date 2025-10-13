@@ -38,8 +38,11 @@ class AssetAssignment extends Model
 
     public function items()
     {
-        // Explicitly set FK so Laravel doesn’t default to `asset_assignment_id`
-        return $this->hasMany(AssetAssignmentItem::class, 'asset_assignment_id');
+        return $this->hasMany(AssetAssignmentItem::class, 'asset_assignment_id')
+            ->whereHas('asset', function ($q) {
+                $q->whereNull('deleted_at');
+            })
+        ;
     }
 
     public function getAssignedByUserAttribute()
@@ -88,12 +91,30 @@ class AssetAssignment extends Model
 
         return [
             'total_assignments'             => static::count(),
-            'total_personnels_with_assets'  => static::whereIn('personnel_id', $activePersonnels)->distinct('personnel_id')->count('personnel_id'),
-            'total_inactive_personnels_with_assets' => static::whereIn('personnel_id', $inactivePersonnels)->distinct('personnel_id')->count('personnel_id'),
-            'total_assets_assigned'         => AssetAssignmentItem::distinct('asset_id')->count('asset_id'),
-            'assets_assigned_to_left_university' => AssetAssignmentItem::whereHas('assignment', function ($q) use ($leftUniversityPersonnels) {
-                $q->whereIn('personnel_id', $leftUniversityPersonnels);
-            })->distinct('asset_id')->count('asset_id'),
+            
+            'total_personnels_with_assets' => static::whereHas('items.asset', fn($q) => $q->whereNull('deleted_at'))
+                ->whereIn('personnel_id', $activePersonnels)
+                ->distinct('personnel_id')
+                ->count('personnel_id')
+            ,
+
+            'total_inactive_personnels_with_assets' => static::whereHas('items.asset', fn($q) => $q->whereNull('deleted_at'))
+                ->whereIn('personnel_id', $inactivePersonnels)
+                ->distinct('personnel_id')
+                ->count('personnel_id')
+            ,
+
+            'total_assets_assigned' => AssetAssignmentItem::whereHas('asset', fn($q) => $q->whereNull('deleted_at'))
+                ->distinct('asset_id')
+                ->count('asset_id')
+            ,
+            'assets_assigned_to_left_university' => AssetAssignmentItem::whereHas('asset', fn($q) => $q->whereNull('deleted_at'))
+                ->whereHas('assignment', function ($q) use ($leftUniversityPersonnels) {
+                    $q->whereIn('personnel_id', $leftUniversityPersonnels);
+                })
+                ->distinct('asset_id')
+                ->count('asset_id')
+            ,
             'assignments_with_no_assets'          => static::doesntHave('items')->count(),
         ];
     }
