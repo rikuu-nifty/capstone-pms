@@ -235,7 +235,7 @@ export default function ManagePermissionsModal({
             </div>
 
             {/* Permission groups */}
-            <div className="col-span-2 space-y-6 max-h-[500px] min-h-[500px] overflow-y-auto rounded-lg p-4 bg-muted/10">
+            <div className="col-span-2 space-y-6 max-h-[460px] min-h-[460px] overflow-y-auto rounded-lg p-4 bg-muted/10">
                 {Object.entries(PERMISSION_GROUPS).map(([group, codes]) => {
                     const groupPerms = codes
                         .map((code) => permMap[code])
