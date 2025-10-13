@@ -2,12 +2,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { PageInfo } from '@/components/Pagination';
 import Pagination from '@/components/Pagination';
-import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { router, Link, usePage } from '@inertiajs/react';
+import type { SharedData } from '@/types';
 
 import type { AssetAssignment, AssetAssignmentItem, Paginated } from '@/types/asset-assignment';
-
-import { ViewAssetModal } from './ViewAssetModal';
 
 const formatDateLong = (d?: string | null) => {
     if (!d) return '—';
@@ -33,11 +31,15 @@ export default function ViewAssignmentModal({
     items,
 }: Props) {
 
-    const [viewAssetId, setViewAssetId] = useState<number | null>(null);
+    const { props } = usePage<SharedData>();
+    const currentUser = props.auth?.user;
 
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-            <DialogContent className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] min-h-[60vh] overflow-y-auto p-0 sm:max-w-[1100px]">
+            <DialogContent
+                aria-describedby={undefined}
+                className="w-[min(1000px,95vw)] max-w-none max-h-[90vh] min-h-[60vh] overflow-y-auto p-0 sm:max-w-[1100px]"
+            >
                 <DialogTitle className="sr-only">View Assignment {assignment.id}</DialogTitle>
                 <div className="print-force-light bg-white p-8 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
                     {/* Header */}
@@ -145,12 +147,28 @@ export default function ViewAssignmentModal({
                                     <tr key={i.id}>
                                         <td className="border px-2 py-1">{(items.current_page - 1) * items.per_page + idx + 1}</td>
                                         <td className="border px-2 py-1">
-                                            <button
+                                            {/* <button
                                                 onClick={() => setViewAssetId(i.asset?.id ?? null)}
                                                 className="text-blue-600 underline cursor-pointer"
                                             >
                                                 {i.asset?.serial_no ?? '—'}
-                                            </button>
+                                            </button> */}
+                                            {i.asset ? (
+                                                <Link
+                                                    href={route(
+                                                        currentUser && props.auth.permissions.includes('view-own-unit-inventory-list')
+                                                        ? 'inventory-list.own.view'
+                                                        : 'inventory-list.view',
+                                                        i.asset.id
+                                                    )}
+                                                    className="text-blue-600 underline cursor-pointer"
+                                                    preserveScroll
+                                                >
+                                                    {i.asset.serial_no ?? '—'}
+                                                </Link>
+                                            ) : (
+                                                '—'
+                                            )}
                                         </td>
                                         <td className="border px-2 py-1">{i.asset?.asset_name ?? '—'}</td>
                                         <td className="border px-2 py-1">
@@ -200,12 +218,6 @@ export default function ViewAssignmentModal({
                         </Button>
                     </div>
                 </div>
-                {viewAssetId && (
-                    <ViewAssetModal
-                        assetId={viewAssetId}
-                        onClose={() => setViewAssetId(null)}
-                    />
-                )}
             </DialogContent>
         </Dialog>
     );

@@ -101,7 +101,61 @@ class InventoryListController extends Controller
         ));
     }
 
-    // 🔹 Extracted so you don’t repeat code
+    public function ownUnitView(Request $request, InventoryList $inventory_list)
+    {
+        $user = Auth::user();
+
+        // Prevent direct access to assets outside their unit
+        if ($inventory_list->unit_or_department_id !== $user->unit_or_department_id) {
+            return redirect()
+                ->route('unauthorized')
+                ->with('unauthorized', 'You are not authorized to view this asset.');
+        }
+
+        $inventory_list->load([
+            'assetModel.category',
+            'category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom',
+            'transfer',
+            'subArea',
+            'schedulingAssets',
+            'latestAssignment.assignment.personnel',
+            'assetModel.equipmentCode',
+            'equipmentCode',
+            'turnoverDisposalAsset.turnoverDisposal',
+            'offCampusAssets.offCampus',
+        ]);
+
+        // Log the viewing for audit
+        $this->logViewing($inventory_list);
+
+        $pageProps = $this->pageProps();
+        $pageProps['assets'] = InventoryList::with([
+            'assetModel.category',
+            'category',
+            'unitOrDepartment',
+            'building',
+            'buildingRoom',
+            'subArea',
+            'transfer',
+            'schedulingAssets',
+        ])
+            ->where('unit_or_department_id', $user->unit_or_department_id)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return Inertia::render('inventory-list/index', array_merge(
+            $pageProps,
+            [
+                'show_view_modal' => true,
+                'viewing_asset'   => $inventory_list,
+            ]
+        ));
+    }
+
+    // Extracted so you don’t repeat code
     private function pageProps(): array
     {
         /** @var User $user */
@@ -230,7 +284,7 @@ public function store(InventoryListAddNewAssetFormRequest $request): RedirectRes
     }
 
     // ================================
-    // 🧩 BULK MODE
+    // BULK MODE
     // ================================
     if ($request->input('mode') === 'bulk') {
         $created = [];

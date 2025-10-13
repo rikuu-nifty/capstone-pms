@@ -131,14 +131,19 @@ class AssetAssignmentController extends Controller
         ]);
 
         $items = AssetAssignmentItem::with([
-            'asset.assetModel.category',
-            'asset.unitOrDepartment',
-            'asset.building',
-            'asset.buildingRoom',
-            'asset.subArea',
-            'asset.transfer',
+            'asset' => fn($q) =>
+            $q->whereNull('deleted_at')
+                ->with([
+                    'assetModel.category',
+                    'unitOrDepartment',
+                    'building',
+                    'buildingRoom',
+                    'subArea',
+                    'transfer',
+                ]),
         ])
         ->where('asset_assignment_id', $assignment->id)
+        ->whereHas('asset', fn($q) => $q->whereNull('deleted_at'))
         ->paginate($request->input('per_page', 10));
 
         return Inertia::render('assignments/index', [

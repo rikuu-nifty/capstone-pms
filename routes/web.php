@@ -290,8 +290,8 @@
     Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
         ->name('inventory-list.view')
         ->middleware('can:view-inventory-list');
-    Route::get('/inventory-list/{inventory_list}/view-asset-details', [InventoryListController::class, 'view'])
-        ->name('inventory-list.view')
+    Route::get('/inventory-list/own/{inventory_list}/view-asset-details', [InventoryListController::class, 'ownUnitView'])
+        ->name('inventory-list.own.view')
         ->middleware('can:view-own-unit-inventory-list');
 
     // TRANSFERS
@@ -312,7 +312,6 @@
         ->middleware('can:delete-transfers');
     Route::get('/transfers/{id}/print', [TransferController::class, 'exportPdf'])
     ->name('transfers.print');
-
 
     // TURNOVER / DISPOSAL
     Route::get('/turnover-disposal', [TurnoverDisposalController::class, 'index'])
