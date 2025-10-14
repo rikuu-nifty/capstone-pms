@@ -174,6 +174,16 @@ export default function OffCampusIndex({
 
     const { props } = usePage<PagePropsWithViewing>();
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-off-campus');
+    const canEdit = auth.permissions.includes('update-off-campus');
+    const canDelete = auth.permissions.includes('delete-off-campus');
+
     useEffect(() => {
         if (!props.viewing) return;
         setSelectedOffCampus(props.viewing);
@@ -384,9 +394,11 @@ export default function OffCampusIndex({
                             }))}
                         />
 
-                        <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Off Campus
-                        </Button>
+                        {canCreate && (
+                            <Button onClick={() => setShowAddOffCampus(true)} className="cursor-pointer">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Off Campus
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -425,28 +437,32 @@ export default function OffCampusIndex({
                                         </TableCell>
 
                                         <TableCell className="flex justify-center gap-2">
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                onClick={() => {
-                                                    setSelectedOffCampus(row);
-                                                    setEditModalVisible(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        setSelectedOffCampus(row);
+                                                        setEditModalVisible(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setOffCampusToDelete({ id: row.id });
-                                                    setShowDeleteModal(true);
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canDelete && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        setOffCampusToDelete({ id: row.id });
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
 
                                             {/* <Button
                                                 size="icon"
