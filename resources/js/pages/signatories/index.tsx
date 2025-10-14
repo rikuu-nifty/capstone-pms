@@ -22,7 +22,17 @@ type PageProps = {
 };
 
 export default function SignatoriesIndex() {
-    // ----------------- TAB DEFINITIONS -----------------
+
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    // const canCreate = auth.permissions.includes('create-signatories');
+    const canEdit = auth.permissions.includes('update-signatories');
+    const canDelete = auth.permissions.includes('delete-signatories');
+
     const tabs = [
         { key: 'inventory_scheduling', label: 'Inventory Scheduling' },
         { key: 'property_transfer', label: 'Property Transfer' },
@@ -61,10 +71,13 @@ export default function SignatoriesIndex() {
                             Unified management of approval signatories across all property management processes
                         </p>
                     </div>
-                    {/* <Button onClick={() => setShowAddModal(true)}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Signatory
-                    </Button> */}
+                    {/* 
+                    {canCreate && (
+                        <Button onClick={() => setShowAddModal(true)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Signatory
+                        </Button>
+                    )}*/}
                 </div>
 
                 {/* Tab Bar */}
@@ -101,12 +114,25 @@ export default function SignatoriesIndex() {
                                         <TableCell>{s.title}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-2">
-                                                <Button size="sm" variant="outline" onClick={() => setEditSignatory(s)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button size="sm" variant="destructive" onClick={() => setDeleteSignatory(s)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                    <Button 
+                                                        size="icon"
+                                                        className="cursor-pointer disabled:bg-gray-600 disabled:text-gray-300 disabled:opacity-100 " 
+                                                        variant="outline" 
+                                                        onClick={() => setEditSignatory(s)}
+                                                        disabled={!canEdit}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+
+                                                    <Button 
+                                                        size="icon"
+                                                        className="cursor-pointer disabled:bg-gray-600 disabled:text-gray-300 disabled:opacity-100 " 
+                                                        variant="destructive" 
+                                                        onClick={() => setDeleteSignatory(s)}
+                                                        disabled={!canDelete}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>

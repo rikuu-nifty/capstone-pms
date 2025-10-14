@@ -39,6 +39,17 @@ type SortKey = (typeof sortOptions)[number]["value"];
 export default function RoleManagement() {
     const { props } = usePage<RoleManagementPageProps>();
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-roles');
+    const canEdit = auth.permissions.includes('update-roles');
+    const canDelete = auth.permissions.includes('delete-role');
+    const canManagePermissions = auth.permissions.includes('update-permissions');
+
     const [rawSearch, setRawSearch] = useState("");
     const search = rawSearch.trim().toLowerCase();
 
@@ -120,13 +131,14 @@ export default function RoleManagement() {
                                 }}
                             />
 
-                            <Button
-                                // variant="primary"
-                                className="cursor-pointer"
-                                onClick={() => setShowAdd(true)}
-                            >
-                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Role
-                            </Button>
+                            {canCreate && (
+                                <Button
+                                    className="cursor-pointer"
+                                    onClick={() => setShowAdd(true)}
+                                >
+                                    <PlusCircle className="mr-1 h-4 w-4" /> Add New Role
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -221,7 +233,8 @@ export default function RoleManagement() {
                                         <div className="flex justify-center gap-2">
                                             <Button
                                                 variant="outline"
-                                                className="cursor-pointer"
+                                                className="cursor-pointer disabled:bg-gray-500 disabled:text-gray-300 disabled:opacity-100"
+                                                disabled={!canEdit}
                                                 // className={`cursor-pointer ${
                                                 //     ['superuser'].includes(r.code)
                                                 //         ? 'bg-gray-500 text-white cursor-not-allowed'
@@ -235,9 +248,11 @@ export default function RoleManagement() {
                                             >
                                                 Edit
                                             </Button>
+
                                             <Button
                                                 variant="blue"
-                                                className="cursor-pointer"
+                                                className="cursor-pointer disabled:bg-gray-600 disabled:text-gray-300 disabled:opacity-100"
+                                                disabled={!canManagePermissions}
                                                 // className={`cursor-pointer ${
                                                 //     ['superuser'].includes(r.code)
                                                 //         ? 'bg-gray-500 text-white cursor-not-allowed'
@@ -251,9 +266,11 @@ export default function RoleManagement() {
                                             >
                                                 Manage Permissions
                                             </Button>
+
                                             <Button
                                                 variant="destructive"
-                                                className="cursor-pointer"
+                                                className="cursor-pointer disabled:bg-gray-500 disabled:text-gray-300 disabled:opacity-100 disabled:border"
+                                                disabled={!canDelete}
                                                 onClick={() => {
                                                     setDeletingRole(r);
                                                     setShowDelete(true);
@@ -315,7 +332,6 @@ export default function RoleManagement() {
                     </div>
                 )}
 
-                {/* Modals */}
                 <AddRoleModal
                     show={showAdd}
                     onClose={() => setShowAdd(false)}
@@ -332,25 +348,25 @@ export default function RoleManagement() {
                 )}
 
                 {deletingRole && (
-                <DeleteConfirmationModal
-                    show={showDelete}
-                    onCancel={() => setShowDelete(false)}
-                    onConfirm={() => {
-                    if (deletingRole) {
-                        router.delete(route("role-management.destroy", deletingRole.id), {
-                        preserveScroll: true,
-                        onSuccess: () => setShowDelete(false),
-                        });
-                    }
-                    }}
-                    title="Delete Role"
-                    message={
-                    <>
-                        Are you sure you want to delete the role{" "}
-                        <strong>{deletingRole.name}</strong>?
-                    </>
-                    }
-                />
+                    <DeleteConfirmationModal
+                        show={showDelete}
+                        onCancel={() => setShowDelete(false)}
+                        onConfirm={() => {
+                        if (deletingRole) {
+                            router.delete(route("role-management.destroy", deletingRole.id), {
+                            preserveScroll: true,
+                            onSuccess: () => setShowDelete(false),
+                            });
+                        }
+                        }}
+                        title="Delete Role"
+                        message={
+                        <>
+                            Are you sure you want to delete the role{" "}
+                            <strong>{deletingRole.name}</strong>?
+                        </>
+                        }
+                    />
                 )}
 
                 {editingRole && showManagePermissions && (
