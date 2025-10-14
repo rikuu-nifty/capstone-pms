@@ -125,9 +125,13 @@
                     <tr style="height:80px;">
                         <td align="left" valign="middle" style="padding:20px;">
                             <img
-                                src="{{ isset($message) ? $message->embed(public_path('images/email-logo.png')) : asset('images/email-logo.png') }}"
-                                alt="AUF Logo"
-                                style="display:block; width:200px; max-width:100%; height:auto; margin:0; padding:0; border:0;" />
+    src="{{ isset($message)
+        ? $message->embed(public_path('images/email-logo.png'))
+        : config('app.url') . '/images/email-logo.png' }}"
+    alt="Angeles University Foundation"
+    style="display:block; width:200px; max-width:100%; height:auto; margin:0; padding:0; border:0;"
+/>
+
                         </td>
                     </tr>
                 </table>

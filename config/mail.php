@@ -61,9 +61,11 @@ return [
             // ],
         ],
 
-        'resend' => [
-            'transport' => 'resend',
-        ],
+        // 'resend' => [
+        //     'transport' => 'resend',
+        //     'key' => env('RESEND_API_KEY'),
+
+        // ],
 
         'sendmail' => [
             'transport' => 'sendmail',
