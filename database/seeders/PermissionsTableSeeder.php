@@ -43,7 +43,7 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'create-off-campus', 'name' => 'Create Off Campus'],
             ['code' => 'update-off-campus', 'name' => 'Update Off Campus'],
             ['code' => 'delete-off-campus', 'name' => 'Delete Off Campus'],
-            ['code' => 'restore-off-campus', 'name' => 'Restore Off Campus'],
+            // ['code' => 'restore-off-campus', 'name' => 'Restore Off Campus'],
             
             // CATEGORIES
             ['code' => 'view-categories', 'name' => 'View Categories'],
