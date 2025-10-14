@@ -6,7 +6,6 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem} from '@/types';
 import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
-// import { Eye, Pencil, PlusCircle, Trash2, Inbox, Calendar, Clock, CheckCircle2, Timer } from 'lucide-react';
 import { Eye, Pencil, PlusCircle, Trash2, Inbox, Calendar, CheckCircle2, Timer } from 'lucide-react';
 
 import useDebouncedValue from '@/hooks/useDebouncedValue';
@@ -50,10 +49,18 @@ export default function TransferIndex({
 
 }: TransferPageProps & { totals?: TransferTotals }) {
 
-    // const { props } = usePage<TransferPageProps>();
-
     const { props } = usePage<PagePropsWithViewing>();
     const successMessage = props.flash?.success;
+
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-transfers');
+    const canEdit = auth.permissions.includes('update-transfers');
+    const canDelete = auth.permissions.includes('delete-transfers');
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [transferToDelete, setTransferToDelete] = useState<Transfer | null>(null);
@@ -217,57 +224,57 @@ export default function TransferIndex({
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                         {/* Pending Review */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-                            <Inbox className="h-7 w-7 text-orange-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Pending Review</div>
-                            <div className="text-3xl font-bold">{totals.pending_review}</div>
-                        </div>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                                <Inbox className="h-7 w-7 text-orange-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Pending Review</div>
+                                <div className="text-3xl font-bold">{totals.pending_review}</div>
+                            </div>
                         </div>
 
                         {/* Upcoming */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
-                            <Calendar className="h-7 w-7 text-sky-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Upcoming (30 Days)</div>
-                            <div className="text-3xl font-bold">{totals.upcoming}</div>
-                        </div>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                                <Calendar className="h-7 w-7 text-sky-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Upcoming (30 Days)</div>
+                                <div className="text-3xl font-bold">{totals.upcoming}</div>
+                            </div>
                         </div>
 
                         {/* Overdue */}
                         {/* <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                            <Clock className="h-7 w-7 text-red-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Overdue (Last + Current)</div>
-                            <div className="text-3xl font-bold">{totals.overdue}</div>
-                        </div>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                                <Clock className="h-7 w-7 text-red-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Overdue (Last + Current)</div>
+                                <div className="text-3xl font-bold">{totals.overdue}</div>
+                            </div>
                         </div> */}
 
                         {/* Completion Rate */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                            <CheckCircle2 className="h-7 w-7 text-green-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Completion Rate</div>
-                            <div className="text-3xl font-bold">{totals.completion_rate}%</div>
-                        </div>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                <CheckCircle2 className="h-7 w-7 text-green-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Completion Rate</div>
+                                <div className="text-3xl font-bold">{totals.completion_rate}%</div>
+                            </div>
                         </div>
 
                         {/* Avg Delay */}
                         <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
-                            <Timer className="h-7 w-7 text-purple-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Avg Delay (Days)</div>
-                            <div className="text-3xl font-bold">{totals.avg_delay_days}</div>
-                        </div>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                                <Timer className="h-7 w-7 text-purple-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Avg Delay (Days)</div>
+                                <div className="text-3xl font-bold">{totals.avg_delay_days}</div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -276,41 +283,43 @@ export default function TransferIndex({
                 <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2 w-96">
                         <Input
-                        type="text"
-                        placeholder="Search by status, room, or unit/dept..."
-                        value={rawSearch}
-                        onChange={(e) => setRawSearch(e.target.value)}
-                        className="max-w-xs"
+                            type="text"
+                            placeholder="Search by status, room, or unit/dept..."
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
+                            className="max-w-xs"
                         />
                     </div>
 
                     <div className="flex gap-2">
                         <TransferSortDropdown
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        onChange={(key, dir) => {
-                            setSortKey(key);
-                            setSortDir(dir);
-                        }}
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
                         />
 
                         <TransferFilterDropdown
-                        onApply={applyFilters}
-                        onClear={clearFilters}
-                        selected_status={selected_status}
-                        selected_building={selected_building}
-                        selected_receiving_building={selected_receiving_building}
-                        selected_org={selected_org}
-                        buildings={buildings}
-                        unitOrDepartments={unitOrDepartments}
+                            onApply={applyFilters}
+                            onClear={clearFilters}
+                            selected_status={selected_status}
+                            selected_building={selected_building}
+                            selected_receiving_building={selected_receiving_building}
+                            selected_org={selected_org}
+                            buildings={buildings}
+                            unitOrDepartments={unitOrDepartments}
                         />
 
-                        <Button
-                        onClick={() => setShowAddTransfer(true)}
-                        className="cursor-pointer"
-                        >
-                        <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Transfer
-                        </Button>
+                        {canCreate && (
+                            <Button
+                                onClick={() => setShowAddTransfer(true)}
+                                className="cursor-pointer"
+                            >
+                                <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Transfer
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -371,28 +380,34 @@ export default function TransferIndex({
                                         <TableCell>{transfer.designatedEmployee?.name ?? '—'}</TableCell>
                                         
                                         <TableCell className="flex justify-center items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setSelectedTransfer(transfer);
-                                                    setShowEditTransfer(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon"
-                                                onClick={() => {
-                                                    setTransferToDelete(transfer);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setSelectedTransfer(transfer);
+                                                        setShowEditTransfer(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            
+                                            {canDelete && (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setTransferToDelete(transfer);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
+
                                             <Button 
                                                 variant="ghost" 
                                                 size="icon" 
@@ -466,14 +481,14 @@ export default function TransferIndex({
             )}
 
            {selectedTransfer && (
-  <TransferViewModal
-    open={showViewTransfer}
-    onClose={closeViewTransfer}
-    transfer={selectedTransfer}
-    assets={selectedAssets}
-    signatories={props.signatories} // ✅ fix
-  />
-)}
+                <TransferViewModal
+                    open={showViewTransfer}
+                    onClose={closeViewTransfer}
+                    transfer={selectedTransfer}
+                    assets={selectedAssets}
+                    signatories={props.signatories}
+                />
+            )}
 
             <DeleteConfirmationModal
                 show={showDeleteModal}

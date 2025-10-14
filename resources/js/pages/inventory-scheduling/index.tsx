@@ -608,16 +608,16 @@ export default function InventorySchedulingIndex({
                                             )}
 
                                             {canDelete && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                onClick={() => {
-                                                    setSelectedSchedule(item);
-                                                    setDeleteModalVisible(true);
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        setSelectedSchedule(item);
+                                                        setDeleteModalVisible(true);
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
                                             )}
 
                                             <Button size="icon" variant="ghost" asChild>
