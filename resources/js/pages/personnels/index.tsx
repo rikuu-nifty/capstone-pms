@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
@@ -46,6 +46,15 @@ export default function PersonnelsIndex({
     units = [],
     totals,
 }: PersonnelPageProps) {
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-personnels');
+    const canEdit = auth.permissions.includes('update-personnels');
+    const canDelete = auth.permissions.includes('delete-personnels');
 
     const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase();
@@ -181,9 +190,11 @@ export default function PersonnelsIndex({
                                 }}
                             />
 
-                            <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
-                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Personnel
-                            </Button>
+                            {canCreate && (
+                                <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
+                                    <PlusCircle className="mr-1 h-4 w-4" /> Add New Personnel
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -288,29 +299,33 @@ export default function PersonnelsIndex({
 
                                     <TableCell className="h-full">
                                         <div className="flex justify-center items-center gap-2 h-full">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setSelected(p);
-                                                    setShowEdit(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        setSelected(p);
+                                                        setShowEdit(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setToDelete(p);
-                                                    setShowDelete(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setToDelete(p);
+                                                        setShowDelete(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
 
                                             <Button
                                                 variant="ghost"

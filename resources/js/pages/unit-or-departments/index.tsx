@@ -39,6 +39,16 @@ export default function UnitOrDepartmentsIndex({
     const { props } = usePage<UnitDeptPageProps>();
     const viewing = props.viewing;
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-unit-or-departments');
+    const canEdit = auth.permissions.includes('update-unit-or-departments');
+    const canDelete = auth.permissions.includes('delete-unit-or-departments');
+
     const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase();
 
@@ -117,34 +127,36 @@ export default function UnitOrDepartmentsIndex({
                     <div className="flex flex-col gap-2">
                         <h1 className="text-2xl font-semibold">Units / Departments</h1>
                         <p className="text-sm text-muted-foreground">
-                        List of organizational units and departments.
+                            List of organizational units and departments.
                         </p>
 
                         <div className="flex items-center gap-2 w-96">
-                        <Input
-                            type="text"
-                            placeholder="Search by id, unit/lab/dept, or code..."
-                            value={rawSearch}
-                            onChange={(e) => setRawSearch(e.target.value)}
-                            className="max-w-xs"
-                        />
+                            <Input
+                                type="text"
+                                placeholder="Search by id, unit/lab/dept, or code..."
+                                value={rawSearch}
+                                onChange={(e) => setRawSearch(e.target.value)}
+                                className="max-w-xs"
+                            />
                         </div>
                     </div>
 
                     <div className="flex gap-2">
                         <SortDropdown<SortKey>
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        options={sortOptions}
-                        onChange={(key, dir) => {
-                            setSortKey(key);
-                            setSortDir(dir);
-                        }}
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            options={sortOptions}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
                         />
 
-                        <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
-                        <PlusCircle className="mr-1 h-4 w-4" /> Add New Unit / Department
-                        </Button>
+                        {canCreate && (
+                            <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
+                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Unit / Department
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -215,29 +227,33 @@ export default function UnitOrDepartmentsIndex({
                                     <TableCell>{u.assets_count ?? 0}</TableCell>
                                     <TableCell className="h-full">
                                         <div className="flex justify-center items-center gap-2 h-full">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setSelected(u);
-                                                    setShowEdit(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        setSelected(u);
+                                                        setShowEdit(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                setToDelete(u);
-                                                setShowDelete(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                    setToDelete(u);
+                                                    setShowDelete(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
 
                                             <Button variant="ghost" size="icon" asChild className="cursor-pointer">
                                                 <Link href={`/unit-or-departments/view/${u.id}`} preserveScroll>
