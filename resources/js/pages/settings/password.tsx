@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
@@ -21,6 +21,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+
+    // const { auth } = usePage().props as { auth: { permissions: string[] } };
+    const { auth } = usePage().props as unknown as { auth: { permissions: string[] } };
+
+    const canManageProfile = auth?.permissions?.includes('manage-profile');
 
     const { data, setData, errors, put, reset, processing, recentlySuccessful } = useForm({
         current_password: '',
@@ -66,9 +71,10 @@ export default function Password() {
                                 value={data.current_password}
                                 onChange={(e) => setData('current_password', e.target.value)}
                                 type="password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full disabled:bg-gray-300"
                                 autoComplete="current-password"
                                 placeholder="Current password"
+                                disabled={!canManageProfile}
                             />
 
                             <InputError message={errors.current_password} />
@@ -83,9 +89,10 @@ export default function Password() {
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 type="password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full disabled:bg-gray-300"
                                 autoComplete="new-password"
                                 placeholder="New password"
+                                disabled={!canManageProfile}
                             />
 
                             <InputError message={errors.password} />
@@ -99,16 +106,25 @@ export default function Password() {
                                 value={data.password_confirmation}
                                 onChange={(e) => setData('password_confirmation', e.target.value)}
                                 type="password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full disabled:bg-gray-300"
                                 autoComplete="new-password"
                                 placeholder="Confirm password"
+                                disabled={!canManageProfile}
                             />
 
                             <InputError message={errors.password_confirmation} />
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save password</Button>
+                            {canManageProfile && (
+                                <Button 
+                                    disabled={processing} 
+                                    className="cursor-pointer"
+                                >
+                                    Save password
+                                </Button>
+                            )}
+
 
                             <Transition
                                 show={recentlySuccessful}

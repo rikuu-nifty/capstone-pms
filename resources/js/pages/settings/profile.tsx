@@ -47,6 +47,8 @@ export default function Profile({
 }) {
     const { auth, userDetail } = usePage<SharedData & { userDetail?: UserDetail | null }>().props;
 
+    const canManageProfile = auth?.permissions?.includes('manage-profile');
+
     const { data, setData, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
         name: auth?.user?.name ?? '',
         email: auth?.user?.email ?? '',
@@ -144,6 +146,8 @@ export default function Profile({
                                     onChange={(e) => setData('name', e.target.value.replace(/\s/g, ''))}
                                     required
                                     placeholder="Username"
+                                    disabled={!canManageProfile}
+                                    className='cursor-pointer disabled:bg-gray-300'
                                 />
                                 <InputError className="mt-2" message={errors.name || (/\s/.test(data.name) ? 'Username cannot contain spaces.' : '')} />
                             </div>
@@ -157,6 +161,8 @@ export default function Profile({
                                     onChange={(e) => setData('email', e.target.value)}
                                     required
                                     placeholder="Email address"
+                                    disabled={!canManageProfile}
+                                    className='cursor-pointer disabled:bg-gray-300'
                                 />
                                 <InputError className="mt-2" message={errors.email} />
                             </div>
@@ -185,19 +191,39 @@ export default function Profile({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="first_name">First Name</Label>
-                                <Input id="first_name" value={data.first_name} onChange={(e) => setData('first_name', e.target.value)} required />
+                                <Input 
+                                    id="first_name" 
+                                    value={data.first_name} 
+                                    onChange={(e) => setData('first_name', e.target.value)} 
+                                    required
+                                    disabled={!canManageProfile}
+                                    className='cursor-pointer disabled:bg-gray-300'
+                                />
                                 <InputError message={errors.first_name} />
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="middle_name">Middle Name</Label>
-                                <Input id="middle_name" value={data.middle_name || ''} onChange={(e) => setData('middle_name', e.target.value)} />
+                                <Input 
+                                    id="middle_name" 
+                                    value={data.middle_name || ''} 
+                                    onChange={(e) => setData('middle_name', e.target.value)}
+                                    disabled={!canManageProfile}
+                                    className='cursor-pointer disabled:bg-gray-300'
+                                />
                                 <InputError message={errors.middle_name} />
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="last_name">Last Name</Label>
-                                <Input id="last_name" value={data.last_name} onChange={(e) => setData('last_name', e.target.value)} required />
+                                <Input 
+                                    id="last_name" 
+                                    value={data.last_name} 
+                                    onChange={(e) => setData('last_name', e.target.value)} 
+                                    required
+                                    disabled={!canManageProfile}
+                                    className='cursor-pointer disabled:bg-gray-300'
+                                />
                                 <InputError message={errors.last_name} />
                             </div>
 
@@ -207,7 +233,8 @@ export default function Profile({
                                     id="gender"
                                     value={data.gender || ''}
                                     onChange={(e) => setData('gender', e.target.value as 'female' | 'male' | 'other' | '')}
-                                    className="cursor-pointer rounded-md border p-2 text-sm"
+                                    className="cursor-pointer rounded-md border p-2 text-sm disabled:cursor-default  disabled:bg-gray-200"
+                                    disabled={!canManageProfile}
                                 >
                                     <option value="">Select Gender</option>
                                     <option value="female">Female</option>
@@ -225,14 +252,22 @@ export default function Profile({
                                     placeholder="+63 912 345 6789"
                                     value={data.contact_no || ''}
                                     onChange={(e) => setData('contact_no', e.target.value)}
+                                    disabled={!canManageProfile}
+                                    className='cursor-pointer disabled:bg-gray-300'
                                 />
                                 <InputError message={errors.contact_no} />
                             </div>
 
                             <div className="flex items-center gap-4 pt-4">
-                                <Button disabled={processing} className="cursor-pointer">
-                                    Save
-                                </Button>
+                                {canManageProfile && (
+                                    <Button 
+                                        disabled={processing} 
+                                        className="cursor-pointer"
+                                    >
+                                        Save
+                                    </Button>
+                                )}
+
                                 <Transition
                                     show={recentlySuccessful}
                                     enter="transition ease-in-out"
@@ -309,12 +344,14 @@ export default function Profile({
                                 {/* File and Remove buttons row */}
                                 <div className="mt-3 flex items-center justify-center gap-3">
                                     {/* Choose File */}
-                                    <label
-                                        htmlFor="fileUploadInput"
-                                        className="inline-block cursor-pointer rounded-lg border bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100 active:bg-blue-200"
-                                    >
-                                        Choose File
-                                    </label>
+                                    {canManageProfile && (
+                                        <label
+                                            htmlFor="fileUploadInput"
+                                            className="inline-block cursor-pointer rounded-lg border bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100 active:bg-blue-200"
+                                        >
+                                            Choose File
+                                        </label>
+                                    )}
 
                                     {/* Remove Image */}
                                     {(userDetail?.image_path || data.image) && (
