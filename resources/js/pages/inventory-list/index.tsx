@@ -361,13 +361,17 @@ export default function InventoryListIndex({
     }, [show_view_modal]);
 
     const openView = (id: number) => {
+        const routeName = canViewAll
+            ? 'inventory-list.view'
+            : 'inventory-list.own.view'; // 🟢 dynamically choose route
+
         router.get(
-            route('inventory-list.view', id), // points to /inventory-list/{id}/viewAssetDetails
+            route(routeName, id),
             {},
             {
                 preserveScroll: true,
                 preserveState: true,
-                only: ['show_view_modal', 'viewing_asset'], // only fetch these props
+                only: ['show_view_modal', 'viewing_asset'],
             },
         );
     };
@@ -749,7 +753,12 @@ export default function InventoryListIndex({
                                     <TableCell>
                                         <button
                                             onClick={() => {
-                                                const url = route('inventory-list.view', item.id);
+                                                // const url = route('inventory-list.view', item.id);
+                                                const url = route(
+                                                    canViewAll ? 'inventory-list.view' : 'inventory-list.own.view',
+                                                    item.id
+                                                );
+
                                                 navigator.clipboard.writeText(url).then(() => {
                                                     toast.success('Link copied!', {
                                                         description: 'The viewing link has been copied to your clipboard.',
