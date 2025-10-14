@@ -7,6 +7,7 @@ use App\Models\EmailVerificationCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EmailOtpService
@@ -21,14 +22,15 @@ class EmailOtpService
         int $ttlMinutes = 10,
         int $maxAttempts = 5
     ): void {
-        // Remove any previous active codes
+        // 🔹 Remove any previous active codes
         EmailVerificationCode::where('user_id', $user->id)
             ->whereNull('consumed_at')
             ->delete();
 
-        // 6-digit code
+        // 🔹 Generate a secure 6-digit OTP
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
+        // 🔹 Save new verification record
         EmailVerificationCode::create([
             'user_id'       => $user->id,
             'code_hash'     => Hash::make($otp),
@@ -40,9 +42,24 @@ class EmailOtpService
             'user_agent'    => Str::limit((string) $userAgent, 255),
         ]);
 
-        // Send (queue in prod if you run a worker)
-        Mail::to($user->email)->send(new EmailOtpMail($user, $otp));
-        // Mail::to($user->email)->queue(new EmailOtpMail($user, $otp));
+        // 🔹 Send OTP email via Resend mailer
+        try {
+            Log::info('📨 Sending OTP via Resend', [
+                'email' => $user->email,
+                'otp' => $otp,
+            ]);
+
+            Mail::mailer('resend')
+                ->to($user->email)
+                ->send(new EmailOtpMail($user, $otp));
+
+            Log::info('✅ OTP email sent successfully to ' . $user->email);
+        } catch (\Throwable $e) {
+            Log::error('❌ Failed to send OTP email', [
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
