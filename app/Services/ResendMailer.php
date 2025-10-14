@@ -2,44 +2,38 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 
 class ResendMailer
 {
-    public static function send(string $to, string $subject, string $html): bool
+    /**
+     * Send a plain text email via Laravel Mail (SMTP).
+     */
+    public static function send(string $to, string $subject, string $body, ?string $from = null): void
     {
-        try {
-            $apiKey = env('RESEND_API_KEY');
-            $fromName = config('mail.from.name', 'Property Management System');
-            $fromAddress = config('mail.from.address', 'aufpmo@tapandtrack.online');
+        $fromAddress = $from ?? config('mail.from.address');
+        $fromName = config('mail.from.name');
 
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$apiKey}",
-                'Content-Type'  => 'application/json',
-            ])->post('https://api.resend.com/emails', [
-                'from'    => "{$fromName} <{$fromAddress}>", // ✅ Proper display name
-                'to'      => [$to],
-                'subject' => $subject,
-                'html'    => $html,
-            ]);
+        Mail::raw($body, function ($message) use ($to, $subject, $fromAddress, $fromName) {
+            $message->to($to)
+                ->subject($subject)
+                ->from($fromAddress, $fromName);
+        });
+    }
 
-            if ($response->successful()) {
-                Log::info("✅ Resend email sent to {$to} ({$subject})");
-                return true;
-            }
+    /**
+     * Send an HTML email (optional if you later use Mailable classes).
+     */
+    public static function sendHtml(string $to, string $subject, string $html, ?string $from = null): void
+    {
+        $fromAddress = $from ?? config('mail.from.address');
+        $fromName = config('mail.from.name');
 
-            Log::error('❌ Resend API error', [
-                'status' => $response->status(),
-                'body'   => $response->body(),
-            ]);
-            return false;
-
-        } catch (\Throwable $e) {
-            Log::error('❌ ResendMailer exception', [
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
+        Mail::send([], [], function ($message) use ($to, $subject, $html, $fromAddress, $fromName) {
+            $message->to($to)
+                ->subject($subject)
+                ->from($fromAddress, $fromName)
+                ->html($html);
+        });
     }
 }
