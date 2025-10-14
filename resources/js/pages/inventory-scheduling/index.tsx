@@ -209,6 +209,16 @@ export default function InventorySchedulingIndex({
     const { signatories, totals } = props; // extract signatories
     const currentUser = props.auth.user;
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-inventory-scheduling');
+    const canEdit = auth.permissions.includes('update-inventory-scheduling');
+    const canDelete = auth.permissions.includes('delete-inventory-scheduling');
+
     const { data, setData, post, reset, processing, errors, setError, clearErrors } = useForm<InventorySchedulingFormData>({
         building_id: '',
         building_room_id: '',
@@ -535,9 +545,11 @@ export default function InventorySchedulingIndex({
                             selected_actual_date={selected_actual_date}
                         />
 
-                        <Button onClick={() => setShowAddScheduleInventory(true)} className="cursor-pointer">
-                            <PlusCircle className="mr-1 h-4 w-4" /> Schedule Inventory
-                        </Button>
+                        {canCreate && (
+                            <Button onClick={() => setShowAddScheduleInventory(true)} className="cursor-pointer">
+                                <PlusCircle className="mr-1 h-4 w-4" /> Schedule Inventory
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -582,17 +594,20 @@ export default function InventorySchedulingIndex({
                                     {/* Actions */}
                                     <TableCell>
                                         <div className="flex items-center justify-center gap-2">
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                onClick={() => {
-                                                    setSelectedSchedule(item);
-                                                    setEditModalVisible(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        setSelectedSchedule(item);
+                                                        setEditModalVisible(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
 
+                                            {canDelete && (
                                             <Button
                                                 size="icon"
                                                 variant="ghost"
@@ -603,6 +618,7 @@ export default function InventorySchedulingIndex({
                                             >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
+                                            )}
 
                                             <Button size="icon" variant="ghost" asChild>
                                                 <Link
