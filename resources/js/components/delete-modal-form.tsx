@@ -22,8 +22,9 @@ export const DeleteAssetModal = ({ asset, onClose, onDelete }: DeleteAssetModalP
                 <DialogHeader className="items-center space-y-2">
                     <DialogTitle className="text-2xl font-semibold">Are you sure?</DialogTitle>
                     <DialogDescription className="text-center text-base leading-snug text-muted-foreground">
-                        Do you really want to delete <strong>"{asset.asset_name}"</strong>?<br />
-                        This process cannot be undone.
+                        Do you really want to delete "<strong className='text-blue-600'>{asset.asset_name}</strong>"?
+                        <br /><br />
+                        This will move it to the Trash Bin and can be restored later.
                     </DialogDescription>
                 </DialogHeader>
 

@@ -32,8 +32,8 @@ export const DeleteScheduleModal = ({ schedule, onClose, onDelete }: DeleteSched
                         Do you really want to delete this schedule?
                         <br />
                         {/* <strong>"{label}"</strong> */}
-                        {/* <br /> */}
-                        This process cannot be undone.
+                        <br />
+                        This will move it to the Trash Bin and can be restored later.
                     </DialogDescription>
                 </DialogHeader>
 

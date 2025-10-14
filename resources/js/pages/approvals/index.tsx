@@ -502,7 +502,7 @@ export default function ApprovalsIndex() {
                 message={
                     <>
                         Are you sure you want to delete this form approval record?
-                        <br />
+                        <br /><br />
                         This will move it to the Trash Bin and can be restored later.
                     </>
                 }
