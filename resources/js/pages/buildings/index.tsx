@@ -107,17 +107,37 @@ export default function BuildingIndex({
     const closeViewRoom = () => {
         setShowViewRoom(false);
         setRoomView(null);
-        if (/^\/?buildings\/rooms\/view\/\d+\/?$/.test(window.location.pathname)) {
-            history.back();
-        }
+
+        setTimeout(() => {
+            // Navigate back to /buildings after closing a room view
+            if (/^\/?buildings\/rooms\/view\/\d+\/?$/.test(window.location.pathname)) {
+                router.visit(route('buildings.index'), {
+                    replace: true,
+                    preserveScroll: true,
+                    preserveState: false,
+                });
+            } else {
+                // Fallback for direct URL visits
+                history.back();
+            }
+        }, 200);
     };
 
     const closeViewBuilding = () => {
         setShowViewBuilding(false);
         setViewBuilding(null);
-        if (/^\/?buildings\/view\/\d+\/?$/.test(window.location.pathname)) {
-            history.back();
-        }
+
+        setTimeout(() => {
+            if (/^\/?buildings\/view\/\d+\/?$/.test(window.location.pathname)) {
+                router.visit(route('buildings.index'), {
+                    replace: true,
+                    preserveScroll: true,
+                    preserveState: false,
+                });
+            } else {
+                history.back();
+            }
+        }, 200);
     };
 
     return (
