@@ -65,7 +65,13 @@ export default function BuildingIndex({
     const [showDeleteRoomModal, setShowDeleteRoomModal] = useState(false);
     const [roomToDelete, setRoomToDelete] = useState<BuildingRoom | null>(null);
 
-    const { auth } = usePage<{ auth: { permissions: string[], user: { unit_or_department?: { name: string, code: string } } } }>().props;
+    const { auth } = usePage<{
+        auth: {
+            permissions: string[];
+            user: { name: string; email: string; role?: { name: string; code: string } };
+            unit_or_department?: { id: number; name: string; code: string };
+        };
+    }>().props;
 
     const canViewAll = auth.permissions.includes('view-buildings');
     const canViewOwn = auth.permissions.includes('view-own-unit-buildings');
@@ -129,12 +135,13 @@ export default function BuildingIndex({
                         {canViewOwn && !canViewAll && (
                             <div className="mt-2 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 text-sm">
                                 You are viewing <strong>only the buildings and rooms assigned to your unit/department</strong>
-                                {auth.user?.unit_or_department && (
-                                <> :
-                                    <span className="ml-1 text-sm font-bold text-blue-800">
-                                        {auth.user.unit_or_department.name}
-                                    </span>
-                                </>
+                                {auth.unit_or_department?.name && (
+                                    <>
+                                        <span>:</span>
+                                        <span className="ml-1 font-semibold text-blue-800">
+                                            {auth.unit_or_department.name}
+                                        </span>
+                                    </>
                                 )}
                             </div>
                         )}
