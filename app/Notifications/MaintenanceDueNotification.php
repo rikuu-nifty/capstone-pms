@@ -2,80 +2,110 @@
 
 namespace App\Notifications;
 
+use App\Models\InventoryList;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\InventoryList;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Log;
+use App\Services\ResendMailer;
 use Carbon\Carbon;
 
-use Illuminate\Mail\Mailable;
-use Illuminate\Support\Facades\Mail;
-
-class MaintenanceDueNotification extends Notification
+class MaintenanceDueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    protected $asset;
 
     /**
      * Create a new notification instance.
      */
-   public function __construct(InventoryList $asset)
+    public function __construct(InventoryList $asset)
     {
         $this->asset = $asset;
     }
 
     /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
+     * Deliver channels — store in DB, send email manually via Resend.
      */
-      public function via(object $notifiable): array
+    public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['database']; // Email handled manually below
     }
 
-     /**
-     * Database payload (for bell icon).
+    /**
+     * Store database notification (for bell icon).
      */
-    public function toDatabase(object $notifiable): array
+    public function toArray(object $notifiable): array
     {
         return [
             'asset_id'   => $this->asset->id,
             'asset_name' => $this->asset->asset_name,
             'maintenance_due_date' => $this->asset->maintenance_due_date,
-            'message'    => "Maintenance due for {$this->asset->asset_name} on {$this->asset->maintenance_due_date}",
-            // 'message' => "Please check this asset: {$this->asset->asset_name}.",
-            'message' => "Please check {$this->asset->asset_name} — maintenance due.",
+            'title'      => 'Maintenance Due Reminder',
+            'message'    => "Maintenance for {$this->asset->asset_name} is due on {$this->asset->maintenance_due_date}.",
+            'link'       => route('inventory-list.view', $this->asset->id),
         ];
     }
 
     /**
-     * Get the mail representation of the notification.
+     * Send via Resend API manually (not queue-dependent).
      */
-   public function toMail(object $notifiable): MailMessage
+    public function toMailCustom(object $notifiable): void
     {
-        $formattedDate = Carbon::parse($this->asset->maintenance_due_date)->format('F j, Y');
-        $url = route('inventory-list.view', $this->asset->id);
+        try {
+            $formattedDate = $this->asset->maintenance_due_date
+            ? Carbon::parse($this->asset->maintenance_due_date)->format('F j, Y')
+            : 'Not specified';
+            $url = route('inventory-list.view', $this->asset->id);
 
-        return (new \Illuminate\Notifications\Messages\MailMessage)
-            ->subject("Maintenance Due: {$this->asset->asset_name}")
-            ->view('emails.maintenance-due', [
+            // 🔹 Render Blade email template
+            $html = View::make('emails.maintenance-due', [
                 'name'       => $notifiable->name,
                 'asset_name' => $this->asset->asset_name,
                 'due_date'   => $formattedDate,
                 'url'        => $url,
+            ])->render();
+
+            // 🔹 Send using reusable ResendMailer service
+            $ok = ResendMailer::send(
+                $notifiable->email,
+                "Maintenance Due: {$this->asset->asset_name}",
+                $html
+            );
+
+            if ($ok) {
+                Log::info('✅ MaintenanceDueNotification email sent via Resend', [
+                    'email' => $notifiable->email,
+                    'asset' => $this->asset->asset_name,
+                ]);
+            } else {
+                Log::warning('⚠️ MaintenanceDueNotification email failed', [
+                    'email' => $notifiable->email,
+                    'asset' => $this->asset->asset_name,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('❌ MaintenanceDueNotification Resend error', [
+                'email' => $notifiable->email ?? 'unknown',
+                'error' => $e->getMessage(),
             ]);
+        }
     }
 
     /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
+     * Automatically send after notification is committed to DB.
      */
-    public function toArray(object $notifiable): array
+    public function afterCommit(): void
     {
-        return [
-            //
-        ];
+        try {
+            if (property_exists($this, 'notifiable') && $this->notifiable) {
+                $this->toMailCustom($this->notifiable);
+            }
+        } catch (\Throwable $e) {
+            Log::error('❌ MaintenanceDueNotification.afterCommit error', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

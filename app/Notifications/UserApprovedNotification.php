@@ -3,11 +3,12 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Log;
+use App\Services\ResendMailer;
 
-class UserApprovedNotification extends Notification implements ShouldQueue
+class UserApprovedNotification extends Notification
 {
     use Queueable;
 
@@ -17,55 +18,54 @@ class UserApprovedNotification extends Notification implements ShouldQueue
     public function __construct(public ?string $notes = null) {}
 
     /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
+     * Channels: send instantly (no queue) and store in DB.
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // 🔹 Send instantly via Resend before storing in database
+        $this->sendEmailNow($notifiable);
+        return ['database'];
     }
 
     /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        $url = url('/dashboard');
-
-        // $mail = (new MailMessage)
-        //     ->subject('Your account has been approved')
-        //     ->greeting('Hi '.$notifiable->name.',')
-        //     ->line('Good news! Your account has been approved.')
-        //     ->action('Go to Dashboard', url('/dashboard'))
-        //     ->line('You can now sign in and start using the system.');
-
-        // if ($this->notes) {
-        //     $mail->line('Notes: '.$this->notes);
-        // }
-
-        // return $mail;
-        return (new MailMessage)
-        ->subject('Your Account Has Been Approved')
-        ->view('emails.user-approved', [
-            'name' => $notifiable->name,
-            'notes' => $this->notes,
-            'url' => $url,
-        ]);
-    }
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
+     * Store the notification in the database.
      */
     public function toArray(object $notifiable): array
     {
         return [
-            'title'   => 'Account approved',
+            'title'   => 'Account Approved',
             'message' => 'Your account has been approved.',
             'notes'   => $this->notes,
             'link'    => url('/dashboard'),
         ];
+    }
+
+    /**
+     * Send email immediately through ResendMailer.
+     */
+    protected function sendEmailNow(object $notifiable): void
+    {
+        try {
+            $html = View::make('emails.user-approved', [
+                'name'  => $notifiable->name,
+                'notes' => $this->notes,
+                'url'   => url('/dashboard'),
+            ])->render();
+
+            ResendMailer::send(
+                $notifiable->email,
+                'Your Account Has Been Approved',
+                $html
+            );
+
+            Log::info("✅ UserApprovedNotification email sent via Resend", [
+                'email' => $notifiable->email,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("❌ Failed to send UserApprovedNotification", [
+                'email' => $notifiable->email ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

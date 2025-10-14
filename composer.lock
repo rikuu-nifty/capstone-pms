@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d07eaca2b74b21ba3bb08f77fed561d4",
+    "content-hash": "ed7528d60d076755b3b723f0b597753b",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -62,16 +62,16 @@
         },
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.356.37",
+            "version": "3.356.38",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "855bcaaa4c486fc67447bf17cfbff9ff75341ad7"
+                "reference": "b53c1e580b025da5e068106330125894a347cc75"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/855bcaaa4c486fc67447bf17cfbff9ff75341ad7",
-                "reference": "855bcaaa4c486fc67447bf17cfbff9ff75341ad7",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/b53c1e580b025da5e068106330125894a347cc75",
+                "reference": "b53c1e580b025da5e068106330125894a347cc75",
                 "shasum": ""
             },
             "require": {
@@ -153,9 +153,9 @@
             "support": {
                 "forum": "https://github.com/aws/aws-sdk-php/discussions",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/3.356.37"
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.356.38"
             },
-            "time": "2025-10-10T18:50:12+00:00"
+            "time": "2025-10-13T18:05:18+00:00"
         },
         {
             "name": "barryvdh/laravel-dompdf",
@@ -4774,86 +4774,17 @@
             "time": "2025-09-04T20:59:21+00:00"
         },
         {
-            "name": "resend/resend-laravel",
-            "version": "v0.23.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/resend/resend-laravel.git",
-                "reference": "a40ee95d5976eaf79e594a1f793d3e7c8648c66c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/resend/resend-laravel/zipball/a40ee95d5976eaf79e594a1f793d3e7c8648c66c",
-                "reference": "a40ee95d5976eaf79e594a1f793d3e7c8648c66c",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/http": "^10.0|^11.0|^12.0",
-                "illuminate/support": "^10.0|^11.0|^12.0",
-                "php": "^8.1",
-                "resend/resend-php": "^0.21.0",
-                "symfony/mailer": "^6.2|^7.0"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.14",
-                "mockery/mockery": "^1.5",
-                "orchestra/testbench": "^8.17|^9.0|^10.0",
-                "pestphp/pest": "^2.0|^3.7"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Resend\\Laravel\\ResendServiceProvider"
-                    ]
-                },
-                "branch-alias": {
-                    "dev-main": "1.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Resend\\Laravel\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Resend and contributors",
-                    "homepage": "https://github.com/resend/resend-laravel/contributors"
-                }
-            ],
-            "description": "Resend for Laravel",
-            "homepage": "https://resend.com/",
-            "keywords": [
-                "api",
-                "client",
-                "laravel",
-                "php",
-                "resend",
-                "sdk"
-            ],
-            "support": {
-                "issues": "https://github.com/resend/resend-laravel/issues",
-                "source": "https://github.com/resend/resend-laravel/tree/v0.23.0"
-            },
-            "time": "2025-10-11T04:19:52+00:00"
-        },
-        {
             "name": "resend/resend-php",
-            "version": "v0.21.0",
+            "version": "v0.20.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/resend/resend-php.git",
-                "reference": "16d481c8347d2b2aa9910ca0ae7f252b2f7d8b8c"
+                "reference": "25391cb93382601e3b2678c4c57d34d3a84210e8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/resend/resend-php/zipball/16d481c8347d2b2aa9910ca0ae7f252b2f7d8b8c",
-                "reference": "16d481c8347d2b2aa9910ca0ae7f252b2f7d8b8c",
+                "url": "https://api.github.com/repos/resend/resend-php/zipball/25391cb93382601e3b2678c4c57d34d3a84210e8",
+                "reference": "25391cb93382601e3b2678c4c57d34d3a84210e8",
                 "shasum": ""
             },
             "require": {
@@ -4895,9 +4826,9 @@
             ],
             "support": {
                 "issues": "https://github.com/resend/resend-php/issues",
-                "source": "https://github.com/resend/resend-php/tree/v0.21.0"
+                "source": "https://github.com/resend/resend-php/tree/v0.20.0"
             },
-            "time": "2025-09-24T05:02:03+00:00"
+            "time": "2025-09-18T05:31:42+00:00"
         },
         {
             "name": "sabberworm/php-css-parser",

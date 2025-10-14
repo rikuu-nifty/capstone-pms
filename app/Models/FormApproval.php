@@ -410,15 +410,24 @@ class FormApproval extends Model
     }
 
     protected function notifyDesignatedApprover(FormApprovalSteps $step): void
-    {
-        $roleCode = $this->resolveApproverRoleCode($step);
-        if (!$roleCode || $roleCode === 'external') return;
+{
+    $roleCode = $this->resolveApproverRoleCode($step);
+    if (!$roleCode || $roleCode === 'external') return;
 
-        // Notify *all* users with that role code
-        $approvers = User::whereHas('role', fn($q) => $q->where('code', $roleCode))->get();
+    $approvers = User::whereHas('role', fn($q) => $q->where('code', $roleCode))->get();
 
-        foreach ($approvers as $approver) {
-            $approver->notify(new FormApprovalStepPending($step, $this->form_title));
+    foreach ($approvers as $approver) {
+        try {
+            $notification = new \App\Notifications\FormApprovalStepPending($step, $this->form_title);
+            $approver->notifyNow($notification); // 👈 Sends immediately
+            \Log::info("✅ Approval pending email sent to {$approver->email}");
+        } catch (\Throwable $e) {
+            \Log::error("❌ Failed to send approval email", [
+                'email' => $approver->email ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
         }
     }
+}
+
 }

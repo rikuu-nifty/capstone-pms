@@ -4,8 +4,10 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Log;
+use App\Services\ResendMailer;
 
 class PasswordResetNotification extends Notification implements ShouldQueue
 {
@@ -18,21 +20,74 @@ class PasswordResetNotification extends Notification implements ShouldQueue
         $this->newPassword = $newPassword;
     }
 
-    public function via($notifiable)
+    /**
+     * Channels — we’ll store in DB and send email manually via ResendMailer.
+     */
+    public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database'];
     }
 
-    public function toMail($notifiable)
+    /**
+     * Save to database for in-app notifications.
+     */
+    public function toArray(object $notifiable): array
     {
-        $url = url('/login'); // your login route
+        return [
+            'title'   => 'Password Reset Successful',
+            'message' => 'Your password has been reset successfully.',
+            'link'    => url('/login'),
+        ];
+    }
 
-        return (new MailMessage)
-            ->subject('Your Password Has Been Reset')
-            ->view('emails.password-reset', [
+    /**
+     * Send password reset email via ResendMailer.
+     */
+    public function toMailCustom(object $notifiable): void
+    {
+        try {
+            $html = View::make('emails.password-reset', [
                 'name'        => $notifiable->name,
                 'newPassword' => $this->newPassword,
-                'url'         => $url,
+                'url'         => url('/login'),
+            ])->render();
+
+            $ok = ResendMailer::send(
+                $notifiable->email,
+                'Your Password Has Been Reset',
+                $html
+            );
+
+            if ($ok) {
+                Log::info('✅ PasswordResetNotification email sent via Resend', [
+                    'email' => $notifiable->email,
+                ]);
+            } else {
+                Log::warning('⚠️ PasswordResetNotification failed to send', [
+                    'email' => $notifiable->email,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('❌ Failed to send PasswordResetNotification', [
+                'email' => $notifiable->email ?? 'unknown',
+                'error' => $e->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Send email after DB commit (even if queued).
+     */
+    public function afterCommit(): void
+    {
+        try {
+            if (property_exists($this, 'notifiable') && $this->notifiable) {
+                $this->toMailCustom($this->notifiable);
+            }
+        } catch (\Throwable $e) {
+            Log::error('❌ PasswordResetNotification.afterCommit error', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

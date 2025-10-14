@@ -4,12 +4,12 @@ namespace App\Notifications;
 
 use App\Models\FormApprovalSteps;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Log;
+use App\Services\ResendMailer;
 
-class FormApprovalStepPending extends Notification implements ShouldQueue
+class FormApprovalStepPending extends Notification
 {
     use Queueable;
 
@@ -22,31 +22,61 @@ class FormApprovalStepPending extends Notification implements ShouldQueue
         $this->formTitle = $formTitle;
     }
 
+    /**
+     * Channels — stores in DB and sends email instantly through Resend.
+     */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        // Send immediately when triggered
+        $this->sendEmailNow($notifiable);
+
+        return ['database'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    /**
+     * For in-app (database) notification center.
+     */
+    public function toArray(object $notifiable): array
     {
-        $approvalUrl = url('/approvals'); // adjust if needed
+        return [
+            'title'   => 'Form Approval Pending',
+            'message' => "Approval is required for: {$this->formTitle}.",
+            'step'    => $this->step->label,
+            'link'    => url('/approvals'),
+        ];
+    }
 
-        // Render Blade template
-        $html = View::make('emails.form-approval-pending', [
-            'approverName' => $notifiable->name,
-            'formTitle'    => $this->formTitle,
-            'stepLabel'    => $this->step->label,
-            'approvalUrl'  => $approvalUrl,
-        ])->render();
+    /**
+     * Send the email directly through ResendMailer.
+     */
+    protected function sendEmailNow(object $notifiable): void
+    {
+        try {
+            $approvalUrl = url('/approvals');
 
-        // Build MailMessage using rendered HTML
-        return (new MailMessage)
-            ->subject("Approval Needed: {$this->formTitle}")
-            ->view('emails.form-approval-pending', [
+            $html = View::make('emails.form-approval-pending', [
                 'approverName' => $notifiable->name,
                 'formTitle'    => $this->formTitle,
                 'stepLabel'    => $this->step->label,
                 'approvalUrl'  => $approvalUrl,
+            ])->render();
+
+            ResendMailer::send(
+                $notifiable->email,
+                "Approval Needed: {$this->formTitle}",
+                $html
+            );
+
+            Log::info("✅ FormApprovalStepPending email sent via Resend", [
+                'email' => $notifiable->email,
+                'form'  => $this->formTitle,
+                'step'  => $this->step->label,
             ]);
+        } catch (\Throwable $e) {
+            Log::error("❌ Failed to send FormApprovalStepPending email", [
+                'email' => $notifiable->email ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

@@ -6,8 +6,8 @@ use App\Mail\EmailOtpMail;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class EmailOtpService
@@ -42,20 +42,36 @@ class EmailOtpService
             'user_agent'    => Str::limit((string) $userAgent, 255),
         ]);
 
-        // 🔹 Send OTP email via Resend mailer
+        // 🔹 Send OTP email using Resend API (manual HTTP request)
         try {
-            Log::info('📨 Sending OTP via Resend', [
+            Log::info('📨 Sending OTP via Resend HTTP API', [
                 'email' => $user->email,
-                'otp' => $otp,
+                'otp'   => $otp,
             ]);
 
-            Mail::mailer('resend')
-                ->to($user->email)
-                ->send(new EmailOtpMail($user, $otp));
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('RESEND_API_KEY'),
+                'Content-Type'  => 'application/json',
+            ])->post('https://api.resend.com/emails', [
+                'from'    => 'Property Management System <aufpmo@tapandtrack.online>',
+                'to'      => [$user->email],
+                'subject' => 'Your Email Verification Code',
+                'html' => view('emails.verify-otp', [
+                'otp'  => $otp,
+                'name' => $user->name ?? 'User',
+            ])->render(),
+            ]);
 
-            Log::info('✅ OTP email sent successfully to ' . $user->email);
+            if ($response->failed()) {
+                Log::error('❌ Resend API failed', [
+                    'email' => $user->email,
+                    'response' => $response->json(),
+                ]);
+            } else {
+                Log::info('✅ OTP email sent successfully to ' . $user->email);
+            }
         } catch (\Throwable $e) {
-            Log::error('❌ Failed to send OTP email', [
+            Log::error('❌ Failed to send OTP email via Resend HTTP API', [
                 'email' => $user->email,
                 'error' => $e->getMessage(),
             ]);
@@ -81,7 +97,7 @@ class EmailOtpService
             return false;
         }
 
-        if ($record->attempts >= $record->max_attempts) {   
+        if ($record->attempts >= $record->max_attempts) {
             return false;
         }
 

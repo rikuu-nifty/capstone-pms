@@ -178,28 +178,54 @@ class User extends Authenticatable
         return $query;
     }
 
-    public function approveWithRoleAndNotify(Role $role, ?string $notes = null): void
-    {
-        if ($this->status === 'approved') {
-            return;
-        }
-
-        $oldRoleName = $this->role?->name ?? 'Unassigned';
-
-        $this->update([
-            'status'         => 'approved',
-            'role_id'        => $role->id,
-            'approved_at'    => now(),
-            'approval_notes' => $notes,
-        ]);
-
-        $newRoleName = $role->name;
-
-        // 🔹 Fire RoleChanged event
-        RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
-
-        $this->notify(new UserApprovedNotification($notes));
+public function approveWithRoleAndNotify(Role $role, ?string $notes = null): void
+{
+    if ($this->status === 'approved') {
+        return;
     }
+
+    $oldRoleName = $this->role?->name ?? 'Unassigned';
+
+    $this->update([
+        'status'         => 'approved',
+        'role_id'        => $role->id,
+        'approved_at'    => now(),
+        'approval_notes' => $notes,
+    ]);
+
+    $newRoleName = $role->name;
+
+    // 🔹 Fire RoleChanged event
+    RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
+
+    // 🔹 Store database notification
+    $this->notify(new UserApprovedNotification($notes));
+
+    // 🔹 Send email instantly (ResendMailer direct)
+    try {
+        $html = view('emails.user-approved', [
+            'name'  => $this->name,
+            'notes' => $notes,
+            'url'   => url('/dashboard'),
+        ])->render();
+
+        \App\Services\ResendMailer::send(
+            $this->email,
+            'Your Account Has Been Approved',
+            $html
+        );
+
+        \Log::info('✅ Account approved email sent via Resend', [
+            'email' => $this->email,
+        ]);
+    } catch (\Throwable $e) {
+        \Log::error('❌ Account approved email failed', [
+            'email' => $this->email,
+            'error' => $e->getMessage(),
+        ]);
+    }
+}
+
 
     public function rejectWithNotes(?string $notes = null): void
     {
@@ -218,27 +244,55 @@ class User extends Authenticatable
         }
     }
 
-    public function reassignRoleWithNotify(Role $role, ?string $notes = null): void
-    {
-        $oldRoleName = $this->role?->name ?? 'Unassigned';
+public function reassignRoleWithNotify(Role $role, ?string $notes = null): void
+{
+    $oldRoleName = $this->role?->name ?? 'Unassigned';
 
-        $this->update([
-            'role_id'           => $role->id,
-            'role_changed_at'   => now(),
-            'role_change_notes' => $notes,
+    $this->update([
+        'role_id'           => $role->id,
+        'role_changed_at'   => now(),
+        'role_change_notes' => $notes,
+    ]);
+
+    $newRoleName = $role->name;
+
+    // 🔹 Fire RoleChanged event
+    RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
+
+    // 🔹 Store database notification
+    $this->notify(new UserRoleReassignedNotification(
+        $oldRoleName, 
+        $newRoleName, 
+        $notes
+    ));
+
+    // 🔹 Send email instantly (ResendMailer direct)
+    try {
+        $html = view('emails.user-role-reassigned', [
+            'name'        => $this->name,
+            'oldRoleName' => $oldRoleName,
+            'newRoleName' => $newRoleName,
+            'notes'       => $notes,
+            'url'         => url('/'),
+        ])->render();
+
+        \App\Services\ResendMailer::send(
+            $this->email,
+            'Your Account Role Has Been Updated',
+            $html
+        );
+
+        \Log::info('✅ Role change email sent via Resend', [
+            'email' => $this->email,
         ]);
-
-        $newRoleName = $role->name;
-
-        // 🔹 Fire RoleChanged event
-        RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
-
-        $this->notify(new UserRoleReassignedNotification(
-            $oldRoleName, 
-            $newRoleName, 
-            $notes
-        ));
+    } catch (\Throwable $e) {
+        \Log::error('❌ Role change email failed', [
+            'email' => $this->email,
+            'error' => $e->getMessage(),
+        ]);
     }
+}
+
 
     public static function fetchApprovals(string $filter = '', string $q = '', int $perPage = 10)
     {

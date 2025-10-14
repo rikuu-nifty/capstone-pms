@@ -3,11 +3,12 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Log;
+use App\Services\ResendMailer;
 
-class UserDeniedNotification extends Notification implements ShouldQueue
+class UserDeniedNotification extends Notification
 {
     use Queueable;
 
@@ -15,58 +16,56 @@ class UserDeniedNotification extends Notification implements ShouldQueue
      * Create a new notification instance.
      */
     public function __construct(public ?string $notes = null) {}
+
     /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
+     * Channels: store in DB + send instantly via Resend.
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // 🔹 Send email immediately using ResendMailer
+        $this->sendEmailNow($notifiable);
+        return ['database'];
     }
 
     /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-
-        $url = url('/');
-
-        // $mail = (new MailMessage)
-        //     ->subject('Your account request was denied')
-        //     ->greeting('Hi '.$notifiable->name.',')
-        //     ->line('We’re sorry—your account request was not approved.')
-        //     ->line('If you believe this is an error, please reach out to the administrator.')
-        //     ->action('Go to Home', url('/'))
-        //     ->line('Thank you.');
-
-        // if ($this->notes) {
-        //     $mail->line('Notes: '.$this->notes);
-        // }
-
-        // return $mail;
-        return (new MailMessage)
-        ->subject('Your Account Request Was Denied')
-        ->view('emails.user-denied', [
-            'name'  => $notifiable->name,
-            'notes' => $this->notes,
-            'url'   => $url,
-        ]);
-    }
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
+     * Store the notification in the database.
      */
     public function toArray(object $notifiable): array
     {
         return [
-            'title'   => 'Account denied',
+            'title'   => 'Account Denied',
             'message' => 'Your account request was denied.',
             'notes'   => $this->notes,
             'link'    => url('/'),
         ];
+    }
+
+    /**
+     * Send the denial email through ResendMailer.
+     */
+    protected function sendEmailNow(object $notifiable): void
+    {
+        try {
+            $html = View::make('emails.user-denied', [
+                'name'  => $notifiable->name,
+                'notes' => $this->notes,
+                'url'   => url('/'),
+            ])->render();
+
+            ResendMailer::send(
+                $notifiable->email,
+                'Your Account Request Was Denied',
+                $html
+            );
+
+            Log::info("✅ UserDeniedNotification email sent via Resend", [
+                'email' => $notifiable->email,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("❌ Failed to send UserDeniedNotification", [
+                'email' => $notifiable->email ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
