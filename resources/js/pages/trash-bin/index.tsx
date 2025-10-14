@@ -34,7 +34,9 @@ interface SharedAuth {
             name: string;
             code: string;
         };
+        permissions?: string[];
     };
+    permissions?: string[];
 }
 
 interface TrashRecord {
@@ -49,7 +51,7 @@ interface TrashRecord {
     code?: string;
     title?: string;
 
-    // ✅ Added for Signatories and module identification
+    // Added for Signatories and module identification
     module_type?: string;
     role_key?: string;
 
@@ -512,7 +514,11 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
 
 export default function TrashBinIndex(props: TrashBinProps) {
     const { auth } = usePage<PageProps & { auth: SharedAuth }>().props;
-    const currentRole: string = auth?.user?.role?.code ?? '';
+
+    const canRestore = auth?.permissions?.includes('restore-trash-bin');
+    const canPermanentDelete = auth?.permissions?.includes('permanent-delete-trash-bin');
+
+    // const currentRole: string = auth?.user?.role?.code ?? '';
     
     const [activeGroup, setActiveGroup] = useState<keyof typeof groups>('forms');
     const [activeTab, setActiveTab] = useState<string>(groups.forms[0].key);
@@ -620,18 +626,18 @@ export default function TrashBinIndex(props: TrashBinProps) {
     };
 
 const handleRestore = (type: string, id: number, row?: TrashRecord) => {
-  const mappedType = restoreMap[type as keyof typeof restoreMap];
-  if (!mappedType) return;
+    const mappedType = restoreMap[type as keyof typeof restoreMap];
+    if (!mappedType) return;
 
-  // ✅ Explicitly type payload as RequestPayload
-  const payload: RequestPayload =
-    mappedType === "signatory" && row?.module_type
-      ? { module_type: row.module_type }
-      : {};
+    // Explicitly type payload as RequestPayload
+    const payload: RequestPayload =
+        mappedType === "signatory" && row?.module_type
+        ? { module_type: row.module_type }
+        : {};
 
-  router.post(`/trash-bin/restore/${mappedType}/${id}`, payload, {
-    preserveScroll: true,
-  });
+    router.post(`/trash-bin/restore/${mappedType}/${id}`, payload, {
+        preserveScroll: true,
+    });
 };
 
 
@@ -992,7 +998,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                         value: localFilters.month ?? "",
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, month: val })),
                                     },
-                                    // ✅ NEW STATUS FILTER
+                                    // NEW STATUS FILTER
                                     {
                                         key: "status",
                                         label: "Status",
@@ -1292,7 +1298,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                         value: localFilters.approvable_type ?? "",
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, approvable_type: val })),
                                     },
-                                    // ✅ NEW STATUS FILTER
+                                    // NEW STATUS FILTER
                                     {
                                         key: "status",
                                         label: "Status",
@@ -1412,26 +1418,30 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                     <TableCell className="max-w-[80px]">{row.id}</TableCell>
                                     <TableCell className="max-w-[400px] whitespace-normal break-words">{formatRecordName(row, activeTab)}</TableCell>
                                     <TableCell className="max-w-[180px]">{formatDateTime(row.deleted_at)}</TableCell>
-                                    <TableCell className="max-w-[120px]">
+                                    <TableCell className="max-w-[150px]">
                                         <div className="flex justify-center gap-2">
+                                            
                                             <Button 
                                                 onClick={() => handleRestore(activeTab, row.id, row)}
-                                                className="cursor-pointer"
+                                                className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={!canRestore}
                                             >
                                                 Restore
                                             </Button>
 
                                             <Button
-                                                className={`cursor-pointer ${["superuser", "pmo_head"].includes(currentRole) ? '' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}
+                                                // className={`cursor-pointer ${["superuser", "pmo_head"].includes(currentRole) ? '' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}
+                                                className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 variant="destructive"
-                                                disabled={!["superuser", "pmo_head"].includes(currentRole)}
+                                                // disabled={!["superuser", "pmo_head"].includes(currentRole)}
+                                                disabled={!canPermanentDelete}
                                                 onClick={() => {
-                                                    if (!["superuser", "pmo_head"].includes(currentRole)) return;
+                                                    // if (!["superuser", "pmo_head"].includes(currentRole)) return;
                                                     setSelectedDeleteId(row.id);
                                                     setShowDeleteModal(true);
                                                 }}
                                             >
-                                                Delete
+                                                Permanent Delete
                                             </Button>
 
                                         </div>
