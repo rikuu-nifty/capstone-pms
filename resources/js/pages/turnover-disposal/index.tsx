@@ -72,6 +72,16 @@ export default function TurnoverDisposalsIndex({
     const { props } = usePage<PageProps>();
     const viewing = props.viewing;
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-turnover-disposal');
+    const canEdit = auth.permissions.includes('update-turnover-disposal');
+    const canDelete = auth.permissions.includes('delete-turnover-disposal');
+
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [turnoverDisposalToDelete, setTurnoverDisposalToDelete] = useState<TurnoverDisposals | null>(null);
 
@@ -218,97 +228,99 @@ export default function TurnoverDisposalsIndex({
                 {/* KPI Cards */}
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                    {/* Pending Review (This Month) */}
-                    <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-                        <Inbox className="h-7 w-7 text-orange-600" />
+                        {/* Pending Review (This Month) */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                                <Inbox className="h-7 w-7 text-orange-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Pending Review (This Month)</div>
+                                <div className="text-3xl font-bold">{totals.pending_review_this_month}</div>
+                            </div>
                         </div>
-                        <div>
-                        <div className="text-sm text-muted-foreground">Pending Review (This Month)</div>
-                        <div className="text-3xl font-bold">{totals.pending_review_this_month}</div>
-                        </div>
-                    </div>
 
-                    {/* Turnover vs Disposal (This Month) */}
-                    <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                        <RefreshCw className="h-7 w-7 text-blue-600" />
+                        {/* Turnover vs Disposal (This Month) */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                                <RefreshCw className="h-7 w-7 text-blue-600" />
+                            </div>
+                            <div>
+                            <div className="text-sm text-muted-foreground">Turnover vs Disposal (This Month)</div>
+                                <div className="text-lg font-semibold">
+                                    <span className="text-blue-600">{totals.turnover_percentage_month}% Turnover</span>
+                                    <span className="text-muted-foreground"> / </span>
+                                    <span className="text-purple-600">{totals.disposal_percentage_month}% Disposal</span>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                        <div className="text-sm text-muted-foreground">Turnover vs Disposal (This Month)</div>
-                        <div className="text-lg font-semibold">
-                            <span className="text-blue-600">{totals.turnover_percentage_month}% Turnover</span>
-                            <span className="text-muted-foreground"> / </span>
-                            <span className="text-purple-600">{totals.disposal_percentage_month}% Disposal</span>
-                        </div>
-                        </div>
-                    </div>
 
-                    {/* Turnover vs Disposal (Overall) */}
-                    <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
-                        <BarChart3 className="h-7 w-7 text-indigo-600" />
+                        {/* Turnover vs Disposal (Overall) */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                                <BarChart3 className="h-7 w-7 text-indigo-600" />
+                            </div>
+                            <div>
+                            <div className="text-sm text-muted-foreground">Turnover vs Disposal (Overall)</div>
+                                <div className="text-lg font-semibold">
+                                    <span className="text-blue-600">{totals.turnover_percentage_all}% Turnover</span>
+                                    <span className="text-muted-foreground"> / </span>
+                                    <span className="text-purple-600">{totals.disposal_percentage_all}% Disposal</span>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                        <div className="text-sm text-muted-foreground">Turnover vs Disposal (Overall)</div>
-                        <div className="text-lg font-semibold">
-                            <span className="text-blue-600">{totals.turnover_percentage_all}% Turnover</span>
-                            <span className="text-muted-foreground"> / </span>
-                            <span className="text-purple-600">{totals.disposal_percentage_all}% Disposal</span>
-                        </div>
-                        </div>
-                    </div>
 
-                    {/* Cancellation Rate */}
-                    <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                        <XCircle className="h-7 w-7 text-red-600" />
+                        {/* Cancellation Rate */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                                <XCircle className="h-7 w-7 text-red-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Cancellation Rate</div>
+                                <div className="text-3xl font-bold">{totals.cancellation_rate}%</div>
+                            </div>
                         </div>
-                        <div>
-                        <div className="text-sm text-muted-foreground">Cancellation Rate</div>
-                        <div className="text-3xl font-bold">{totals.cancellation_rate}%</div>
-                        </div>
-                    </div>
                     </div>
                 )}
 
                 {/* Search + Filters + Add Button Row */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 w-96">
-                    <Input
-                        type="text"
-                        placeholder="Search by status, type, or office..."
-                        value={rawSearch}
-                        onChange={(e) => setRawSearch(e.target.value)}
-                        className="max-w-xs"
-                    />
+                        <Input
+                            type="text"
+                            placeholder="Search by status, type, or office..."
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
+                            className="max-w-xs"
+                        />
                     </div>
 
                     <div className="flex gap-2">
-                    <SortDropdown<TurnoverSortKey>
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        options={turnoverSortOptions}
-                        onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
-                    />
+                        <SortDropdown<TurnoverSortKey>
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            options={turnoverSortOptions}
+                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+                        />
 
-                    <TurnoverDisposalFilterDropdown
-                        onApply={applyFilters}
-                        onClear={clearFilters}
-                        selected_status={selected_status}
-                        selected_type={selected_type}
-                        selected_issuing_office={selected_issuing_office}
-                        unitOrDepartments={unitOrDepartments}
-                    />
+                        <TurnoverDisposalFilterDropdown
+                            onApply={applyFilters}
+                            onClear={clearFilters}
+                            selected_status={selected_status}
+                            selected_type={selected_type}
+                            selected_issuing_office={selected_issuing_office}
+                            unitOrDepartments={unitOrDepartments}
+                        />
 
-                    <Button
-                        onClick={() => {
-                        setShowAddTurnoverDisposals(true);
-                        }}
-                        className="cursor-pointer"
-                    >
-                        <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Turnover/Disposal
-                    </Button>
+                        {canCreate && (
+                            <Button
+                                onClick={() => {
+                                    setShowAddTurnoverDisposals(true);
+                                }}
+                                className="cursor-pointer"
+                            >
+                                <PlusCircle className="mr-1 h-4 w-4 cursor-pointer" /> Add New Turnover/Disposal
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -351,28 +363,34 @@ export default function TurnoverDisposalsIndex({
                                         </TableCell>
 
                                         <TableCell className="flex justify-center items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setSelectedTurnoverDisposals(turnoverDisposals);
-                                                    setShowEditTurnoverDisposals(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon"
-                                                onClick={() => {
-                                                    setTurnoverDisposalToDelete(turnoverDisposals);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setSelectedTurnoverDisposals(turnoverDisposals);
+                                                        setShowEditTurnoverDisposals(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
+
+                                            {canDelete && (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setTurnoverDisposalToDelete(turnoverDisposals);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
+                                            
                                             {/* <Button 
                                                 variant="ghost" 
                                                 size="icon"
