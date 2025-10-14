@@ -91,6 +91,11 @@ export default function Profile({
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
+        if (/\s/.test(data.name)) {
+            errors.name = 'Username cannot contain spaces.';
+            return;
+        }
+
         const formData = new FormData();
         formData.append('_method', 'PATCH');
         formData.append('_token', (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '');
@@ -136,11 +141,11 @@ export default function Profile({
                                 <Input
                                     id="name"
                                     value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
+                                    onChange={(e) => setData('name', e.target.value.replace(/\s/g, ''))}
                                     required
                                     placeholder="Username"
                                 />
-                                <InputError className="mt-2" message={errors.name} />
+                                <InputError className="mt-2" message={errors.name || (/\s/.test(data.name) ? 'Username cannot contain spaces.' : '')} />
                             </div>
 
                             <div className="grid gap-2">

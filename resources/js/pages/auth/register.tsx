@@ -26,6 +26,11 @@ export default function Register() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+
+        if (/\s/.test(data.name)) {
+            errors.name = 'Username cannot contain spaces.';
+            return;
+        }
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
@@ -46,12 +51,13 @@ export default function Register() {
                             tabIndex={1}
                             autoComplete="name"
                             value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
+                            onChange={(e) => setData('name', e.target.value.replace(/\s/g, ''))}
                             disabled={processing}
                             placeholder="Username"
                         />
-                        <InputError message={errors.name} className="mt-2" />
+                        <InputError message={errors.name || (/\s/.test(data.name) ? 'Username cannot contain spaces.' : '')} className="mt-2" />
                     </div>
+
 
                     <div className="grid gap-2">
                         <Label htmlFor="email">Email address</Label>

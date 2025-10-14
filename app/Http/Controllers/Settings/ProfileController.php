@@ -32,6 +32,14 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255', 'regex:/^\S+$/'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
+        ], [
+            'name.regex' => 'Username cannot contain spaces.',
+        ]);
+
         $validated = $request->all();
 
         // Handle profile image upload to S3
@@ -52,7 +60,7 @@ class ProfileController extends Controller
 
             $validated['image_path'] = $path;
 
-            // 🧹 Delete old image if exists
+            // Delete old image if exists
             if (!empty($user->detail?->image_path) &&
                 \Illuminate\Support\Facades\Storage::disk('s3')->exists($user->detail->image_path)
             ) {

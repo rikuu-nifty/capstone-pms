@@ -33,19 +33,15 @@ class RegisteredUserController extends Controller
     public function store(Request $request, EmailOtpService $otpService): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'name' => ['required', 'string', 'max:255', 'regex:/^\S+$/'],
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => [
-                'required', 
-                'confirmed', 
-                Password::min(8)
-                    ->letters()
-                    ->mixedCase()     // has UPPER + lower
-                    ->numbers() 
-                    ->symbols(),
+                'required',
+                'confirmed',
+                Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
             ],
         ], [
-            'password.regex' => 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+            'name.regex' => 'Username cannot contain spaces.',
         ]);
 
         $user = User::create([
@@ -58,12 +54,12 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        // 🔹 Reset the session so no old session data can bypass verification
+        // Reset the session so no old session data can bypass verification
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         $request->session()->regenerate();
 
-        // 🔹 Issue OTP and send email
+        // Issue OTP and send email
         $otpService->issue($user, $request->ip(), $request->userAgent());
 
         // Save a "pending verification" user id in the session (guest flow)
@@ -74,7 +70,7 @@ class RegisteredUserController extends Controller
         $request->session()->regenerate();
 
 
-        // 🔹 Redirect to verification page, NOT dashboard
+        // Redirect to verification page, NOT dashboard
         return redirect()->route('otp.notice');
         // return redirect()->intended(route('dashboard', absolute: false));
     }
