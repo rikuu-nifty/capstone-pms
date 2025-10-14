@@ -106,11 +106,21 @@ class InventoryListController extends Controller
         $user = Auth::user();
 
         // Prevent direct access to assets outside their unit
-        if ($inventory_list->unit_or_department_id !== $user->unit_or_department_id) {
+        // if ($inventory_list->unit_or_department_id !== $user->unit_or_department_id) {
+        //     return redirect()
+        //         ->route('unauthorized')
+        //         ->with('unauthorized', 'You are not authorized to view this asset.');
+        // }
+        if (
+            !$user->unit_or_department_id ||
+            !$inventory_list->unit_or_department_id ||
+            (int) $inventory_list->unit_or_department_id !== (int) $user->unit_or_department_id
+        ) {
             return redirect()
                 ->route('unauthorized')
                 ->with('unauthorized', 'You are not authorized to view this asset.');
         }
+
 
         $inventory_list->load([
             'assetModel.category',
