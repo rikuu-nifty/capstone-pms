@@ -373,8 +373,8 @@
     Route::get('/buildings', [BuildingController::class, 'index'])
         ->name('buildings.index')
         ->middleware('can:view-buildings');
-    Route::get('/buildings', [BuildingController::class, 'index'])
-        ->name('buildings.index')
+    Route::get('/buildings/own', [BuildingController::class, 'ownUnitIndex'])
+        ->name('buildings.own.unit.index')
         ->middleware('can:view-own-unit-buildings');
     Route::post('/buildings', [BuildingController::class, 'store'])
         ->name('buildings.store')
@@ -385,8 +385,8 @@
     Route::get('/buildings/view/{building}', [BuildingController::class, 'show'])
         ->name('buildings.view')
         ->middleware('can:view-buildings');
-    Route::get('/buildings/view/{building}', [BuildingController::class, 'show'])
-        ->name('buildings.view')
+    Route::get('/buildings/own/view/{building}', [BuildingController::class, 'show'])
+        ->name('buildings.own.view')
         ->middleware('can:view-own-unit-buildings');
     Route::delete('/buildings/{building}', [BuildingController::class, 'destroy'])
         ->name('buildings.destroy')
@@ -408,8 +408,8 @@
     Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])
         ->name('building-rooms.view')
         ->middleware('can:view-building-rooms');
-    Route::get('/buildings/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])
-        ->name('building-rooms.view')
+    Route::get('/buildings/own/rooms/view/{buildingRoom}', [BuildingController::class, 'showRoom'])
+        ->name('building-rooms.own.view')
         ->middleware('can:view-own-unit-buildings');
 
     // CATEGORIES

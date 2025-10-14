@@ -204,23 +204,30 @@ class BuildingRoom extends Model
                         'unit_or_department_id',
                     ]);
 
-                    // 🔹 Restrict to user's unit if they only have "view-own"
-                    if ($user->hasPermission('view-own-unit-inventory-list') && !$user->hasPermission('view-inventory-list')) {
+                // Restrict to user's unit if they only have "view-own"
+                    if (
+                        ($user->hasPermission('view-own-unit-inventory-list') && !$user->hasPermission('view-inventory-list')) ||
+                        ($user->hasPermission('view-own-unit-buildings') && !$user->hasPermission('view-buildings'))
+                    ) {
                         $q->where('unit_or_department_id', $user->unit_or_department_id);
                     }
+
                 },
                 'assets.assetModel:id,category_id,brand,model',
                 'assets.assetModel.category:id,name',
             ])
             ->withCount(['assets' => function ($q) use ($user) {
-                if ($user->hasPermission('view-own-unit-inventory-list') && !$user->hasPermission('view-inventory-list')) {
+                if (
+                    ($user->hasPermission('view-own-unit-inventory-list') && !$user->hasPermission('view-inventory-list')) ||
+                    ($user->hasPermission('view-own-unit-buildings') && !$user->hasPermission('view-buildings'))
+                ) {
                     $q->where('unit_or_department_id', $user->unit_or_department_id);
                 }
             }]);
 
         $room = $query->findOrFail($id);
 
-        // 🔹 Calculate asset share if requested
+        // Calculate asset share if requested
         if ($totalAssets !== null) {
             $assetsCount = (int) ($room->assets_count ?? 0);
             $room->asset_share = $totalAssets > 0

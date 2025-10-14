@@ -85,7 +85,7 @@ const trashBinItem = {
     permission: 'view-trash-bin',
 };
 
-// NEW — grouped “System Monitoring” items
+// grouped “System Monitoring” items
 const systemMonitoringNavItems = [
     notificationsNavItem,
     reportsNavItem,
@@ -100,11 +100,11 @@ const assetsNavItems = [
     { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
 ];
 
-const institutionalSetUpNavItems = [
-    { title: 'Buildings', href: '/buildings', icon: Landmark, permission: ['view-buildings', 'view-own-unit-buildings'],},
-    { title: 'Personnels', href: '/personnels', icon: User, permission: 'view-personnels' },
-    { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
-];
+// const institutionalSetUpNavItems = [
+//     { title: 'Buildings', href: '/buildings', icon: Landmark, permission: ['view-buildings', 'view-own-unit-buildings'],},
+//     { title: 'Personnels', href: '/personnels', icon: User, permission: 'view-personnels' },
+//     { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
+// ];
 
 const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
@@ -177,6 +177,28 @@ export function AppSidebar() {
         { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
         { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
     ]
+
+    const buildingsLink =
+        permissions.includes('view-buildings')
+            ? '/buildings'
+            : permissions.includes('view-own-unit-buildings')
+            ? '/buildings/own'
+            : null;
+
+        const institutionalSetUpNavItems = [
+        ...(buildingsLink
+            ? [
+                {
+                title: 'Buildings',
+                href: buildingsLink,
+                icon: Landmark,
+                permission: ['view-buildings', 'view-own-unit-buildings'],
+                } as NavItem,
+            ]
+            : []),
+        { title: 'Personnels', href: '/personnels', icon: User, permission: 'view-personnels' },
+        { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
+    ];
 
     useEffect(() => {
         if (inventoryNavItems.some((item) => url.startsWith(item.href))) {

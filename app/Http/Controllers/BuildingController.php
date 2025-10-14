@@ -16,42 +16,6 @@ use App\Http\Requests\StoreBuildingRequest;
 class BuildingController extends Controller
 {
 
-    // private function indexProps(): array
-    // {
-    //     $user = Auth::user();
-
-    //     $buildings = Building::indexProps();
-
-    //     $totals = [
-    //         'total_buildings' => $buildings->count(),
-    //         'total_rooms' => $buildings->sum('building_rooms_count'),
-    //         'total_assets' => $buildings->sum('assets_count'),
-    //     ];
-
-    //     $totals['avg_assets_per_building'] = $totals['total_buildings'] > 0
-    //         ? round($totals['total_assets'] / $totals['total_buildings'], 2)
-    //         : 0
-    //     ;
-
-    //     $totals['avg_assets_per_room'] = $totals['total_rooms'] > 0
-    //         ? round($totals['total_assets'] / $totals['total_rooms'], 2)
-    //         : 0
-    //     ;
-
-    //     // Filtered buildings + rooms depending on user permissions
-    //     $buildings = Building::indexProps($user);
-    //     $rooms     = BuildingRoom::listAllRoomsWithAssetShare(
-    //         (int) $totals['total_assets'], 
-    //         $user
-    //     );
-
-    //     return [
-    //         'buildings' => $buildings,
-    //         'totals' => $totals,
-    //         'rooms' => $rooms,
-    //     ];
-    // }
-
     private function indexProps(): array
     {
         /** @var \App\Models\User $user */
@@ -92,6 +56,74 @@ class BuildingController extends Controller
         $props['selectedBuilding'] = $request->integer('selected');
 
         return Inertia::render('buildings/index', $props);
+    }
+
+    private function indexPropsForOwnUnit(): array
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $unitId = $user->unit_or_department_id;
+
+        $buildings = Building::query()
+            ->whereHas('assets', fn($q) => $q->where('unit_or_department_id', $unitId))
+            ->withCount([
+                'buildingRooms as building_rooms_count' => fn($q) =>
+                $q->whereHas('assets', fn($qq) => $qq->where('unit_or_department_id', $unitId)),
+                'assets as assets_count' => fn($q) =>
+                $q->where('unit_or_department_id', $unitId),
+            ])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $totals = [
+            'total_buildings' => $buildings->count(),
+            'total_rooms'     => $buildings->sum('building_rooms_count'),
+            'total_assets'    => $buildings->sum('assets_count'),
+        ];
+
+        $totals['avg_assets_per_building'] = $totals['total_buildings'] > 0
+            ? round($totals['total_assets'] / $totals['total_buildings'], 2)
+            : 0;
+
+        $totals['avg_assets_per_room'] = $totals['total_rooms'] > 0
+            ? round($totals['total_assets'] / $totals['total_rooms'], 2)
+            : 0;
+
+        $rooms = BuildingRoom::listAllRoomsWithAssetShareForUnit(
+            (int) $totals['total_assets'],
+            $unitId
+        );
+
+        return [
+            'buildings' => $buildings,
+            'totals'    => $totals,
+            'rooms'     => $rooms,
+        ];
+    }
+
+    public function ownUnitIndex(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->unit_or_department_id) {
+            return redirect()->route('unauthorized')
+                ->with('unauthorized', 'You are not assigned to a unit or department.');
+        }
+
+        $props = $this->indexPropsForOwnUnit();
+        $props['selectedBuilding'] = $request->integer('selected');
+
+        return Inertia::render('buildings/index', array_merge($props, [
+            'show_own_view' => true,
+        ]));
+        // dd([
+        //     'current_url' => url()->current(),
+        //     'user_id' => $user->id,
+        //     'role' => $user->role?->code,
+        //     'unit_id' => $user->unit_or_department_id,
+        //     'permissions' => $user->role?->permissions->pluck('code'),
+        // ]);
     }
 
     /**
@@ -157,19 +189,23 @@ class BuildingController extends Controller
      */
     public function show(Building $building)
     {
-        /** @var User $user */
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $viewing = $user->hasPermission('view-own-unit-buildings') && !$user->hasPermission('view-buildings')
+        $isOwnUnitOnly = $user->hasPermission('view-own-unit-buildings') && !$user->hasPermission('view-buildings');
+
+        $props = $isOwnUnitOnly
+            ? $this->indexPropsForOwnUnit()
+            : $this->indexProps();
+
+        $viewing = $isOwnUnitOnly
             ? Building::showPropsByIdForUser($building->id)
             : Building::showPropsById($building->id);
 
-        return Inertia::render('buildings/index', array_merge(
-            $this->indexProps(),
-            [
-                'viewing' => $viewing,
-            ],
-        ));
+        return Inertia::render('buildings/index', array_merge($props, [
+            'viewing' => $viewing,
+            'show_own_view' => $isOwnUnitOnly,
+        ]));
     }
 
     /**
@@ -240,25 +276,25 @@ class BuildingController extends Controller
 
     public function showRoom(BuildingRoom $buildingRoom)
     {
-        $props = $this->indexProps();
-        $totalAssets = (int) ($props['totals']['total_assets'] ?? 0);
-
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $room = $user->hasPermission('view-own-unit-buildings')
-            && !$user->hasPermission('view-buildings')
+        $isOwnUnitOnly = $user->hasPermission('view-own-unit-buildings') && !$user->hasPermission('view-buildings');
+
+        $props = $isOwnUnitOnly
+            ? $this->indexPropsForOwnUnit()
+            : $this->indexProps();
+
+        $totalAssets = (int) ($props['totals']['total_assets'] ?? 0);
+
+        $room = $isOwnUnitOnly
             ? BuildingRoom::viewPropsByIdForUserWithAssetShare($buildingRoom->id, $totalAssets)
             : BuildingRoom::viewPropsByIdWithAssetShare($buildingRoom->id, $totalAssets);
 
-        return Inertia::render('buildings/index', array_merge(
-            $this->indexProps(),
-            [
-                'viewingRoom' => $room,
-                'selected'    => (int) $room->building_id,
-            ],
-        ));
+        return Inertia::render('buildings/index', array_merge($props, [
+            'viewingRoom'   => $room,
+            'selected'      => (int) $room->building_id,
+            'show_own_view' => $isOwnUnitOnly,
+        ]));
     }
-
-    
 }

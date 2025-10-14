@@ -3,7 +3,7 @@ import Pagination, { PageInfo } from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { type Building } from '@/types/building';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PAGE_SIZE, numberKey, type BuildingSortKey } from './building-index.helpers';
@@ -34,6 +34,12 @@ export default function BuildingsTable({
     canDelete,
 }: Props) {
     const [page, setPage] = useState(1);
+
+    const { props } = usePage<{ auth: { permissions: string[] } }>();
+    const permissions = props.auth.permissions || [];
+
+    const canViewAll = permissions.includes('view-buildings');
+    const canViewOwn = permissions.includes('view-own-unit-buildings');
 
     useEffect(() => {
         setPage(1);
@@ -134,7 +140,14 @@ export default function BuildingsTable({
                                                 className="cursor-pointer"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                <Link href={`/buildings/view/${b.id}`} preserveScroll>
+                                                <Link 
+                                                    href={
+                                                        canViewAll ? route('buildings.view', b.id) : canViewOwn
+                                                            ? route('buildings.own.view', b.id)
+                                                            : '#'
+                                                    }
+                                                    preserveScroll
+                                                >
                                                     <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Link>
                                             </Button>

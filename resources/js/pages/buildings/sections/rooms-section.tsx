@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
@@ -42,6 +42,13 @@ export default function RoomsSection({
     canUpdate,
     canDelete,
 }: Props) {
+
+    const { props } = usePage<{ auth: { permissions: string[] } }>();
+    const permissions = props.auth.permissions || [];
+
+    const canViewAll = permissions.includes('view-buildings');
+    const canViewOwn = permissions.includes('view-own-unit-buildings');
+
     const [roomSearch, setRoomSearch] = useState('');
     const [roomSortKey, setRoomSortKey] = useState<RoomSortKey>('id');
     const [roomSortDir, setRoomSortDir] = useState<SortDir>('asc');
@@ -204,7 +211,11 @@ export default function RoomsSection({
                                                 e.stopPropagation()
                                             }>
                                             <Link 
-                                                href={`/buildings/rooms/view/${r.id}`}
+                                                href={
+                                                    canViewAll ? route('building-rooms.view', r.id) : canViewOwn
+                                                        ? route('building-rooms.own.view', r.id)
+                                                        : '#'
+                                                }
                                                 preserveScroll
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
