@@ -62,6 +62,16 @@ export default function CategoriesIndex({
     const { props } = usePage<PageProps>();
     const viewing = props.viewing;
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-categories');
+    const canEdit = auth.permissions.includes('update-categories');
+    const canDelete = auth.permissions.includes('delete-categories');
+
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [showEditCategory, setShowEditCategory] = useState(false);
     const [showViewCategory, setShowViewCategory] = useState(false);
@@ -280,13 +290,15 @@ export default function CategoriesIndex({
                             options={categorySortOptions}
                             onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
                         />
-
-                        <Button
-                            onClick={() => { setShowAddCategory(true); }}
-                            className="cursor-pointer"
-                        >
-                            <PlusCircle className="mr-1 h-4 w-4" /> Add New Category
-                        </Button>
+                        
+                        {canCreate && (
+                            <Button
+                                onClick={() => { setShowAddCategory(true); }}
+                                className="cursor-pointer"
+                            >
+                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Category
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -330,29 +342,33 @@ export default function CategoriesIndex({
                                     <TableCell>{cat.assets_count}</TableCell>
                                     <TableCell className="h-full">
                                         <div className="flex justify-center items-center gap-2 h-full">
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setSelectedCategory(cat);
-                                                    setShowEditCategory(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        setSelectedCategory(cat);
+                                                        setShowEditCategory(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setCategoryToDelete(cat);
-                                                    setShowDeleteCategoryModal(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setCategoryToDelete(cat);
+                                                        setShowDeleteCategoryModal(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
 
                                             <Button
                                                 variant="ghost"

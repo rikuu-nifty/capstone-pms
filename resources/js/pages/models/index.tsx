@@ -53,6 +53,16 @@ export default function AssetModelsIndex({
     const { props } = usePage<PageProps>();
     const viewing = props.viewing;
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-asset-models');
+    const canEdit = auth.permissions.includes('update-asset-models');
+    const canDelete = auth.permissions.includes('delete-asset-models');
+
     const totalAssets = totals?.assets ?? 0;
     const activeAssets = totals?.active_assets ?? 0;
     const inactiveAssets = Math.max(totalAssets - activeAssets, 0);
@@ -269,12 +279,14 @@ export default function AssetModelsIndex({
                             categories={categories}
                             equipment_codes={equipment_codes}
                         />
-                        <Button
-                            onClick={() => setShowAddModel(true)}
-                            className="cursor-pointer"
-                        >
-                            <PlusCircle className="mr-1 h-4 w-4" /> Add New Model
-                        </Button>
+                        {canCreate && (
+                            <Button
+                                onClick={() => setShowAddModel(true)}
+                                className="cursor-pointer"
+                            >
+                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Model
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -307,28 +319,33 @@ export default function AssetModelsIndex({
                                 <TableCell>{m.assets_count}</TableCell>
                                 <TableCell className="h-full">
                                     <div className="flex justify-center items-center gap-2 h-full">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="cursor-pointer" 
-                                            onClick={() => {
-                                                setSelectedModel(m);
-                                                setShowEditModel(true);
-                                            }}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="cursor-pointer" 
-                                            onClick={() => {
-                                                setAssetModelToDelete(m);
-                                                setShowDeleteAssetModel(true);
-                                            }}
-                                        >
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
+                                        {canEdit && (
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="cursor-pointer" 
+                                                onClick={() => {
+                                                    setSelectedModel(m);
+                                                    setShowEditModel(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                        {canDelete && (
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="cursor-pointer" 
+                                                onClick={() => {
+                                                    setAssetModelToDelete(m);
+                                                    setShowDeleteAssetModel(true);
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        )}
+                                        
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 

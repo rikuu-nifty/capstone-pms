@@ -33,6 +33,17 @@ const sortOptions = [
 type SortKey = (typeof sortOptions)[number]['value']
 
 export default function EquipmentCodesIndex({ equipment_codes, totals }: EquipmentCodesPageProps) {
+
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-equipment-codes');
+    const canEdit = auth.permissions.includes('update-equipment-codes');
+    const canDelete = auth.permissions.includes('delete-equipment-codes');
+
     const [showView, setShowView] = useState(false);
     const [viewing, setViewing] = useState<EquipmentCodeWithModels | null>(null);
 
@@ -174,9 +185,11 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                             onClear={() => setSelectedCategoryId('')}
                         />
 
-                        <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
-                            <PlusCircle className="mr-1 h-4 w-4" /> Add New Code
-                        </Button>
+                        {canCreate && (
+                            <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
+                                <PlusCircle className="mr-1 h-4 w-4" /> Add New Code
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -210,22 +223,28 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                                     <TableCell>{c.assets_count ?? 0}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => { setSelected(c); setShowEdit(true) }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => { setToDelete(c); setShowDelete(true) }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => { setSelected(c); setShowEdit(true) }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
+
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => { setToDelete(c); setShowDelete(true) }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
+                                            
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

@@ -37,6 +37,17 @@ export default function AssignmentsIndex({
 }: AssignmentPageProps) {
     const { props } = usePage<AssignmentPageProps>();
 
+    const { auth } = usePage().props as unknown as {
+        auth: {
+            permissions: string[];
+        };
+    };
+
+    const canCreate = auth.permissions.includes('create-assignments');
+    const canEdit = auth.permissions.includes('update-assignments');
+    const canDelete = auth.permissions.includes('delete-assignments');
+    const canReassign = auth.permissions.includes('reassign-assignments');
+
     const [showAdd, setShowAdd] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [toEdit, setToEdit] = useState<AssetAssignment | null>(null);
@@ -188,10 +199,12 @@ export default function AssignmentsIndex({
                                     setSelectedStatus('');
                                 }}
                             />
-
-                            <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
-                                <PlusCircle className="mr-1 h-4 w-4" /> New Assignment
-                            </Button>
+                            
+                            {canCreate && (
+                                <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
+                                    <PlusCircle className="mr-1 h-4 w-4" /> Add New Assignment
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -303,41 +316,47 @@ export default function AssignmentsIndex({
                                     <TableCell>{formatDateLong(a.updated_at) ?? '—'}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setReassignPersonnel(a.id);
-                                                    setShowReassign(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <UserPen className="h-4 w-4 text-blue-600" />
-                                            </Button>
+                                            {canReassign && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setReassignPersonnel(a.id);
+                                                        setShowReassign(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <UserPen className="h-4 w-4 text-blue-600" />
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setToEdit(a);
-                                                    setShowEdit(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setToEdit(a);
+                                                        setShowEdit(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    setToDelete(a);
-                                                    setShowDelete(true);
-                                                }}
-                                                className="cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setToDelete(a);
+                                                        setShowDelete(true);
+                                                    }}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            )}
 
                                             <Button
                                                 variant="ghost"
