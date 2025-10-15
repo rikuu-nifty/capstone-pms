@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Notifications\MaintenanceDueNotification;
-use App\Notifications\OverdueNotification;
 use Carbon\Carbon;
 
 use App\Models\OffCampusAsset;
@@ -397,8 +396,13 @@ public function assignments()
 
         $dueDate = Carbon::parse($asset->maintenance_due_date);
         $today   = Carbon::today();
+        $daysBeforeDue = 3;
 
-        $users = User::whereNull('deleted_at')
+        if ($dueDate->greaterThan($today->copy()->addDays($daysBeforeDue))) {
+            return; // too early to notify
+        }
+
+        $users = \App\Models\User::whereNull('deleted_at')
             ->where('status', 'approved')
             ->whereHas('role', fn($q) => $q->whereIn('code', ['pmo_staff', 'pmo_head']))
             ->get();
@@ -408,13 +412,7 @@ public function assignments()
         }
 
         foreach ($users as $user) {
-            if ($dueDate->equalTo($today)) {
-                $user->notify(new MaintenanceDueNotification($asset));
-            }
-
-            if ($dueDate->lessThan($today)) {
-                $user->notify(new OverdueNotification($asset));
-            }
+            $user->notify(new MaintenanceDueNotification($asset));
         }
     }
 }

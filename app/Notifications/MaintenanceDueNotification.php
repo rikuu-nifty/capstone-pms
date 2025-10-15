@@ -27,18 +27,32 @@ class MaintenanceDueNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $due = $this->asset->maintenance_due_date;
-        $formatted = $due instanceof Carbon
+        $due = $this->asset->maintenance_due_date
+            ? Carbon::parse($this->asset->maintenance_due_date)
+            : null;
+
+        $today = Carbon::today();
+        $isOverdue = $due && $due->lessThan($today);
+
+        $formattedDue = $due
             ? $due->timezone(config('app.timezone'))->format('F j, Y')
             : 'Not specified';
 
+        $daysOverdue = $isOverdue ? $due->diffInDays($today) : 0;
+
+        $subject = $isOverdue
+            ? "Maintenance OVERDUE: {$this->asset->asset_name}"
+            : "Maintenance Due: {$this->asset->asset_name}";
+
         return (new MailMessage)
-            ->subject("Maintenance Due: {$this->asset->asset_name}")
+            ->subject($subject)
             ->view('emails.maintenance-due', [
-                'name'       => $notifiable->name,
-                'asset_name' => $this->asset->asset_name,
-                'due_date'   => $formatted,
-                'url'        => route('inventory-list.view', $this->asset->id),
+                'name'         => $notifiable->name,
+                'asset_name'   => $this->asset->asset_name,
+                'due_date'     => $formattedDue,
+                'url'          => route('inventory-list.view', $this->asset->id),
+                'is_overdue'   => $isOverdue,
+                'days_overdue' => $daysOverdue,
             ]);
     }
 
@@ -47,17 +61,23 @@ class MaintenanceDueNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        $dueStr = $this->asset->maintenance_due_date
-            ? $this->asset->maintenance_due_date->toDateString()
+        $due = $this->asset->maintenance_due_date
+            ? Carbon::parse($this->asset->maintenance_due_date)
             : null;
 
+        $today = Carbon::today();
+        $isOverdue = $due && $due->lessThan($today);
+        $dueStr = $due ? $due->toDateString() : null;
+
         return [
-            'asset_id'   => $this->asset->id,
-            'asset_name' => $this->asset->asset_name,
+            'asset_id'            => $this->asset->id,
+            'asset_name'          => $this->asset->asset_name,
             'maintenance_due_date' => $dueStr,
-            'title'      => 'Maintenance Due Reminder',
-            'message'    => "Maintenance for {$this->asset->asset_name} is due on {$dueStr}.",
-            'link'       => route('inventory-list.view', $this->asset->id),
+            'title'               => $isOverdue ? 'Maintenance Overdue' : 'Maintenance Due Reminder',
+            'message'             => $isOverdue
+                ? "Maintenance for {$this->asset->asset_name} is OVERDUE (due on {$dueStr})."
+                : "Maintenance for {$this->asset->asset_name} is due on {$dueStr}.",
+            'link'                => route('inventory-list.view', $this->asset->id),
         ];
     }
 }
