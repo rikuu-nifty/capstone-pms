@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Notifications\MaintenanceDueNotification;
+use App\Notifications\OverdueNotification;
 use Carbon\Carbon;
 
 use App\Models\OffCampusAsset;
@@ -390,17 +391,29 @@ public function assignments()
      * Helper to check if due and send notifications
      */protected static function checkAndNotify($asset)
     {
-        if ($asset->maintenance_due_date && (
-            Carbon::parse($asset->maintenance_due_date)->isToday() ||
-            Carbon::parse($asset->maintenance_due_date)->isPast()
-        )) {
-            $users = \App\Models\User::whereHas('role', function ($q) {
-                $q->whereIn('code', ['pmo_staff', 'pmo_head']);
-            })->get();
+        if (! $asset->maintenance_due_date) {
+            return;
+        }
 
-            foreach ($users as $user) {
-                // Always send a new notification, even if same asset already had one
-                $user->notify(new \App\Notifications\MaintenanceDueNotification($asset));
+        $dueDate = Carbon::parse($asset->maintenance_due_date);
+        $today   = Carbon::today();
+
+        $users = User::whereNull('deleted_at')
+            ->where('status', 'approved')
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['pmo_staff', 'pmo_head']))
+            ->get();
+
+        if ($users->isEmpty()) {
+            return;
+        }
+
+        foreach ($users as $user) {
+            if ($dueDate->equalTo($today)) {
+                $user->notify(new MaintenanceDueNotification($asset));
+            }
+
+            if ($dueDate->lessThan($today)) {
+                $user->notify(new OverdueNotification($asset));
             }
         }
     }
