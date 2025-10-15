@@ -23,8 +23,11 @@ type Props = {
     assetModels: AssetModel[];
     uniqueBrands: string[];
     subAreas: SubArea[];
-    personnels: { id: number; full_name: string; position?: string | null }[]; // ✅ new
+    personnels: { id: number; full_name: string; position?: string | null }[]; // new
 };
+
+const safeDate = (val?: string | null) =>
+    val ? new Date(val).toISOString().substring(0, 10) : '';
 
 export const EditAssetModalForm = ({
     onClose,
@@ -35,26 +38,27 @@ export const EditAssetModalForm = ({
     buildingRooms,
     categories,
     assetModels,
-    personnels, // ✅ add this
+    personnels, // add this
 }: Props) => {
     const [form, setForm] = useState<AssetFormData>({
         asset_name: asset.asset_name,
         supplier: asset.supplier,
         date_purchased: asset.date_purchased,
-        maintenance_due_date: asset.maintenance_due_date || '', // ✅ no `any`
-        assigned_to: asset.assigned_to ?? '', // ✅ new field
+        // maintenance_due_date: asset.maintenance_due_date || '',
+        maintenance_due_date: safeDate(asset.maintenance_due_date),
+        assigned_to: asset.assigned_to ?? '',
         quantity: asset.quantity,
-        serial_no: asset.serial_no || '', // or asset.serial_no if available
+        serial_no: asset.serial_no || '',
         unit_cost: asset.unit_cost || '', // or asset.unit_cost if available NAGKAKAEEROR KAPAG NILALAGAY KOTO
         depreciation_value: asset.depreciation_value || '',
-        memorandum_no: asset.memorandum_no || '', // or asset.memorandum_no if available
+        memorandum_no: asset.memorandum_no || '',
         // transfer_status: asset.transfer_status || '',
         description: asset.description || '',
 
-        // ✅ ensure we have the FK even if only relation is loaded
+        // ensure we have the FK even if only relation is loaded
         category_id: (asset.category_id ?? asset.asset_model?.category_id ?? '') as number | '',
 
-        // ✅ read from the row, not from category name
+        // read from the row, not from category name
         asset_type: (asset.asset_type ?? '') as '' | 'fixed' | 'not_fixed',
         brand: asset.asset_model?.brand || '',
         asset_model_id: asset.asset_model?.id || '',
@@ -62,11 +66,11 @@ export const EditAssetModalForm = ({
         building_id: asset.building?.id || '',
         building_room_id: asset.building_room?.id || '',
         status: asset.status || 'archived',
-        // ✅ new field
         image: null,
 
         sub_area_id: asset.sub_area?.id || '',
     });
+
 
     const handleChange = <K extends keyof AssetFormData>(field: K, value: AssetFormData[K]) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -74,12 +78,12 @@ export const EditAssetModalForm = ({
 
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const [showWebcam, setShowWebcam] = useState(false); // ✅ webcam toggle
+    const [showWebcam, setShowWebcam] = useState(false); // webcam toggle
 
     // Filter models based on selected category
     const filteredModels = assetModels.filter((m) => m.category_id === Number(form.category_id));
 
-    // ✅ Memoize filteredBrands so it doesn’t trigger unnecessary re-renders
+    // Memoize filteredBrands so it doesn’t trigger unnecessary re-renders
     const filteredBrands = useMemo(() => {
         // No category selected → no brands
         if (!form.category_id) return [];
@@ -115,10 +119,10 @@ export const EditAssetModalForm = ({
         );
     }, [form.category_id, form.asset_model_id, assetModels]);
 
-    // ✅ Check if there is only one unique brand
+    // Check if there is only one unique brand
     const isSingleBrand = filteredBrands.length === 1;
 
-    // ✅ Auto-select brand if only one exists
+    // Auto-select brand if only one exists
     useEffect(() => {
         if (form.category_id && filteredBrands.length === 0 && form.brand) {
             handleChange('brand', '');
@@ -133,10 +137,10 @@ export const EditAssetModalForm = ({
     const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ✅ Explicitly create FormData for file-safe uploads
+    // Explicitly create FormData for file-safe uploads
     const formData = new FormData();
 
-    // ✅ Safely append fields (type-checked)
+    // Safely append fields (type-checked)
     Object.entries({
         ...form,
         sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
@@ -157,7 +161,7 @@ export const EditAssetModalForm = ({
         // undefined values are ignored
     });
 
-    // ✅ Send multipart/form-data via Inertia
+    // Send multipart/form-data via Inertia
     router.post(`/inventory-list/${asset.id}`, formData, {
         forceFormData: true, // ensures file fields are preserved
         onSuccess: () => {
@@ -527,7 +531,7 @@ export const EditAssetModalForm = ({
                                     const value = e.target.value;
                                     handleChange('unit_cost', value);
 
-                                    // ✅ Auto-calc depreciation (straight-line, 5 years as placeholder)
+                                    // Auto-calc depreciation (straight-line, 5 years as placeholder)
                                     const depreciation = value ? (Number(value) / 5).toFixed(2) : '0.00';
                                     handleChange('depreciation_value', depreciation);
                                 }}
@@ -540,7 +544,7 @@ export const EditAssetModalForm = ({
                             <Input
                                 type="text"
                                 value={form.depreciation_value ? `₱ ${Number(form.depreciation_value).toFixed(2)}` : ''}
-                                readOnly // ✅ same as Total Cost, user can’t edit
+                                readOnly // same as Total Cost, user can’t edit
                                 className="bg-white text-black"
                             />
                         </div>
