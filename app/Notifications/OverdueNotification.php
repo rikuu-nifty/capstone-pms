@@ -9,7 +9,7 @@ use Illuminate\Notifications\Messages\MailMessage;     // Native mail channel
 use Illuminate\Notifications\Notification;
 use Carbon\Carbon;                                     // For date math
 
-class MaintenanceOverdueNotification extends Notification implements ShouldQueue
+class OverdueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
