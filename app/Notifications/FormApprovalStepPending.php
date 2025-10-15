@@ -61,7 +61,7 @@ class FormApprovalStepPending extends Notification
                 'approvalUrl'  => $approvalUrl,
             ])->render();
 
-            ResendMailer::send(
+            ResendMailer::sendHtml(
                 $notifiable->email,
                 "Approval Needed: {$this->formTitle}",
                 $html
