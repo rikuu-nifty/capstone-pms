@@ -102,7 +102,7 @@ export default function VerifyEmailOtp({ email, resendCooldownSec }: Props) {
               </p>
             </div>
 
-            <Button type="submit" disabled={!canSubmit} className="w-full">
+            <Button type="submit" disabled={!canSubmit} className="w-full cursor-pointer">
               {processing ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" /> Verifying…
