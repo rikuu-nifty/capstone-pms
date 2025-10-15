@@ -32,19 +32,16 @@ class FormApprovalStepPending extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $approvalUrl = url('/approvals');
-
-        $html = View::make('emails.form-approval-pending', [
-            'approverName' => $notifiable->name,
-            'formTitle'    => $this->formTitle,
-            'stepLabel'    => $this->step->label,
-            'approvalUrl'  => $approvalUrl,
-        ])->render();
-
         return (new MailMessage)
             ->subject("Approval Needed: {$this->formTitle}")
-            ->html($html);
+            ->view('emails.form-approval-pending', [
+                'approverName' => $notifiable->name,
+                'formTitle'    => $this->formTitle,
+                'stepLabel'    => $this->step->label,
+                'approvalUrl'  => url('/approvals'),
+            ]);
     }
+
 
     /**
      * Same as before: in-app database notification.
