@@ -53,39 +53,38 @@ class FormApprovalStepPending extends Notification implements ShouldQueue
             'link'    => url('/approvals'),
         ];
     }
+
+    /**
+     * Send the email directly through ResendMailer.
+     */
+    protected function sendEmailNow(object $notifiable): void
+    {
+        try {
+            $approvalUrl = url('/approvals');
+
+            $html = View::make('emails.form-approval-pending', [
+                'approverName' => $notifiable->name,
+                'formTitle'    => $this->formTitle,
+                'stepLabel'    => $this->step->label,
+                'approvalUrl'  => $approvalUrl,
+            ])->render();
+
+            ResendMailer::send(
+                $notifiable->email,
+                "Approval Needed: {$this->formTitle}",
+                $html
+            );
+
+            Log::info("✅ FormApprovalStepPending email sent via Resend", [
+                'email' => $notifiable->email,
+                'form'  => $this->formTitle,
+                'step'  => $this->step->label,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("❌ Failed to send FormApprovalStepPending email", [
+                'email' => $notifiable->email ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
 }
-
-/**
- * Send the email directly through ResendMailer.
- */
-    // protected function sendEmailNow(object $notifiable): void
-    // {
-    //     try {
-    //         $approvalUrl = url('/approvals');
-
-    //         $html = View::make('emails.form-approval-pending', [
-    //             'approverName' => $notifiable->name,
-    //             'formTitle'    => $this->formTitle,
-    //             'stepLabel'    => $this->step->label,
-    //             'approvalUrl'  => $approvalUrl,
-    //         ])->render();
-
-    //         ResendMailer::send(
-    //             $notifiable->email,
-    //             "Approval Needed: {$this->formTitle}",
-    //             $html
-    //         );
-
-    //         Log::info("✅ FormApprovalStepPending email sent via Resend", [
-    //             'email' => $notifiable->email,
-    //             'form'  => $this->formTitle,
-    //             'step'  => $this->step->label,
-    //         ]);
-    //     } catch (\Throwable $e) {
-    //         Log::error("❌ Failed to send FormApprovalStepPending email", [
-    //             'email' => $notifiable->email ?? 'unknown',
-    //             'error' => $e->getMessage(),
-    //         ]);
-    //     }
-    // }
-// }
