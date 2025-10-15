@@ -395,7 +395,7 @@ public function assignments()
             Carbon::parse($asset->maintenance_due_date)->isPast()
         )) {
             $users = \App\Models\User::whereHas('role', function ($q) {
-                $q->where('code', '!=', 'vp_admin'); // 👈 exclude VP Admin
+                $q->whereIn('code', ['pmo_staff', 'pmo_head']);
             })->get();
 
             foreach ($users as $user) {

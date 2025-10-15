@@ -36,7 +36,7 @@ class CheckMaintenanceDue extends Command
         }
 
         // Fetch only users with approved accounts and correct roles
-        $users = User::without('role') // 👈 disables global eager loading
+        $users = User::without('role') // disables global eager loading
             ->where('status', 'approved')
             ->whereNotNull('role_id')
             ->whereHas('role', function ($q) {
