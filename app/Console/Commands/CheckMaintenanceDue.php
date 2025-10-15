@@ -16,39 +16,40 @@ class CheckMaintenanceDue extends Command
 
     public function handle(): void
     {
-        $today = Carbon::today();
+        $now = Carbon::now();
+        $today = $now->toDateString();
 
         $dueTodayAssets = InventoryList::whereDate('maintenance_due_date', $today)->get();
-        $overdueAssets  = InventoryList::whereDate('maintenance_due_date', '<', $today)->get();
+        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $now->toDateString())->get();
 
         if ($dueTodayAssets->isEmpty() && $overdueAssets->isEmpty()) {
-            $this->info('✅ No maintenance due or overdue today.');
+            $this->info('No maintenance due or overdue today.');
             return;
         }
 
-        $users = User::without('role') // disables global eager loading
+        // Only approved, active PMO Staff & Head
+        $users = User::without('role')
+            ->whereNull('deleted_at')
             ->where('status', 'approved')
             ->whereNotNull('role_id')
-            ->whereHas('role', function ($q) {
-                $q->whereIn('code', ['pmo_staff', 'pmo_head']);
-            })
-            ->with('role:id,code,name') // load fresh role data only for matched users
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['pmo_staff', 'pmo_head']))
+            ->with('role:id,code,name')
             ->get();
 
         if ($users->isEmpty()) {
-            $this->warn('⚠️ No PMO Head or PMO Staff users found.');
+            $this->warn('⚠️ No active PMO Staff or PMO Head users found.');
             return;
         }
 
         foreach ($users as $user) {
             $roleCode = strtolower($user->role?->code ?? '');
 
-            // Notify for assets DUE TODAY
+            //  Maintenance due today
             foreach ($dueTodayAssets as $asset) {
                 $user->notify(new MaintenanceDueNotification($asset));
             }
 
-            // Notify for assets ALREADY OVERDUE
+            // Maintenance already overdue (before current day)
             foreach ($overdueAssets as $asset) {
                 $user->notify(new OverdueNotification($asset));
             }
@@ -59,7 +60,7 @@ class CheckMaintenanceDue extends Command
         $this->info(
             "📢 Sent " .
                 $dueTodayAssets->count() . " due and " .
-                $overdueAssets->count() . " overdue notifications to {$users->count()} users."
+                $overdueAssets->count() . " overdue notifications to {$users->count()} active users."
         );
     }
 }
