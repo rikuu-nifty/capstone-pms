@@ -132,10 +132,9 @@
                                 style="display:block; width:200px; max-width:100%; height:auto; margin:0; padding:0; border:0;"
                             /> -->
                             <img
-                                src="cid:email-logo.png"
+                                src="https://tapandtrackfiles.s3.ap-southeast-1.amazonaws.com/logo_image/email-logo.png"
                                 alt="Angeles University Foundation"
                                 style="display:block; width:200px; max-width:100%; height:auto; margin:0; padding:0; border:0;" />
-
 
                         </td>
                     </tr>
