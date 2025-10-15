@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
 use App\Services\ResendMailer;
 
-class FormApprovalStepPending extends Notification
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+
+class FormApprovalStepPending extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -22,15 +25,34 @@ class FormApprovalStepPending extends Notification
         $this->formTitle = $formTitle;
     }
 
-    /**
-     * Channels — stores in DB and sends email instantly through Resend.
-     */
+    // public function via(object $notifiable): array
+    // {
+    //     // Send immediately when triggered
+    //     $this->sendEmailNow($notifiable);
+
+    //     return ['database'];
+    // }
     public function via(object $notifiable): array
     {
-        // Send immediately when triggered
-        $this->sendEmailNow($notifiable);
+        return ['mail', 'database'];
+    }
 
-        return ['database'];
+    public function toMail(object $notifiable): MailMessage
+    {
+        $approvalUrl = url('/approvals');
+
+        // Render the Blade email view into a full HTML string
+        $html = View::make('emails.form-approval-pending', [
+            'approverName' => $notifiable->name,
+            'formTitle'    => $this->formTitle,
+            'stepLabel'    => $this->step->label,
+            'approvalUrl'  => $approvalUrl,
+        ])->render();
+
+        // Send HTML using Laravel's built-in mail channel
+        return (new MailMessage)
+            ->subject("Approval Needed: {$this->formTitle}")
+            ->html($html);
     }
 
     /**
