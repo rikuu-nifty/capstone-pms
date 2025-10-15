@@ -2,90 +2,65 @@
 
 namespace App\Notifications;
 
+use App\Models\InventoryList;
 use Illuminate\Bus\Queueable;
-// use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;            // Queue for reliability
+use Illuminate\Notifications\Messages\MailMessage;     // Native mail channel
 use Illuminate\Notifications\Notification;
-use Carbon\Carbon;
+use Carbon\Carbon;                                     // For date math
 
-class OverdueNotification extends Notification
+class MaintenanceOverdueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected $message;
-    protected $dueDate;
-    protected $relatedId;
-    protected $module;
+    protected InventoryList $asset;
 
-    /**
-     * Create a new notification instance.
-     *
-     * @param  string  $message
-     * @param  string|null  $dueDate
-     * @param  int|string  $relatedId
-     * @param  string  $module
-     * @return void
-     */
-    public function __construct($message, $dueDate, $relatedId, $module)
+    public function __construct(InventoryList $asset)
     {
-        $this->message = $message;
-        $this->dueDate = $dueDate;
-        $this->relatedId = $relatedId;
-        $this->module = $module;
+        $this->asset = $asset;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @param  object  $notifiable
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
-        return ['database']; // store in notifications table
+        return ['mail', 'database'];
     }
 
-    /**
-     * Get the database representation of the notification.
-     *
-     * @param  object  $notifiable
-     * @return array<string, mixed>
-     */
-    public function toDatabase(object $notifiable): array
+    public function toMail(object $notifiable): MailMessage
     {
-        // Format module name nicely for display
-        $formattedModule = match ($this->module) {
-            'property_transfer'    => 'Property Transfer',
-            'inventory_scheduling' => 'Inventory Scheduling',
-            'off_campus'           => 'Off-Campus',
-            'maintenance'          => 'Maintenance',
-            default                => ucwords(str_replace('_', ' ', $this->module)),
-        };
+        // Compute formatted due date and days overdue (safe if null)
+        $due = $this->asset->maintenance_due_date
+            ? Carbon::parse($this->asset->maintenance_due_date)
+            : null;
 
-        return [
-            'asset_id'   => $this->relatedId,
-            'asset_name' => "{$formattedModule} #{$this->relatedId}",
-            'maintenance_due_date' => $this->dueDate
-                ? \Carbon\Carbon::parse($this->dueDate)->format('F j, Y')
-                : null,
-            'message' => $this->message,
-            'module'  => $this->module,
-            'status'  => 'unread',
-        ];
+        $formattedDue = $due?->format('F j, Y') ?? 'Not specified';
+
+        // If date exists and is in the past => positive days overdue
+        $daysOverdue = $due ? $due->diffInDays(Carbon::now(), false) : 0; // negative if future
+        $daysOverdue = max(0, $daysOverdue); // force >= 0
+
+        return (new MailMessage)
+            ->subject("Maintenance OVERDUE: {$this->asset->asset_name}")
+            ->view('emails.maintenance-overdue', [   // Render your Blade directly
+                'name'         => $notifiable->name,
+                'asset_name'   => $this->asset->asset_name,
+                'due_date'     => $formattedDue,
+                'days_overdue' => $daysOverdue,
+                'url'          => route('inventory-list.view', $this->asset->id),
+            ]);
     }
 
     /**
-     * Get the array representation of the notification.
-     *
-     * @param  object  $notifiable
-     * @return array<string, mixed>
+     * In-app (database) notification payload for your bell center
      */
     public function toArray(object $notifiable): array
     {
         return [
-            'message' => $this->message,
-            'due_date' => $this->dueDate,
-            'related_id' => $this->relatedId,
-            'module' => $this->module,
+            'asset_id'            => $this->asset->id,
+            'asset_name'          => $this->asset->asset_name,
+            'maintenance_due_date' => $this->asset->maintenance_due_date,
+            'title'               => 'Maintenance Overdue',
+            'message'             => "Maintenance for {$this->asset->asset_name} is OVERDUE.",
+            'link'                => route('inventory-list.view', $this->asset->id),
         ];
     }
 }
