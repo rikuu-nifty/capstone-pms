@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;           
 use Illuminate\Notifications\Messages\MailMessage;     
 use Illuminate\Notifications\Notification;
-use Carbon\Carbon;                                     
+use Illuminate\Support\Carbon;                                     
 
 class OverdueNotification extends Notification implements ShouldQueue
 {
@@ -27,20 +27,21 @@ class OverdueNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        // Compute formatted due date and days overdue (safe if null)
         $due = $this->asset->maintenance_due_date
-            ? Carbon::parse($this->asset->maintenance_due_date)
+            ? Carbon::createFromFormat('Y-m-d', (string) $this->asset->maintenance_due_date)
             : null;
 
-        $formattedDue = $due ? $due->timezone(config('app.timezone'))->format('F j, Y') : 'Not specified';
+        $formattedDue = $due
+            ? $due->timezone(config('app.timezone'))->format('F j, Y')
+            : 'Not specified';
 
         // If date exists and is in the past => positive days overdue
-        $daysOverdue = $due ? $due->diffInDays(Carbon::now(), false) : 0; // negative if future
-        $daysOverdue = max(0, $daysOverdue); // force >= 0
+        $daysOverdue = $due ? $due->diffInDays(Carbon::now(), false) : 0;
+        $daysOverdue = max(0, $daysOverdue);
 
         return (new MailMessage)
             ->subject("Maintenance OVERDUE: {$this->asset->asset_name}")
-            ->view('emails.maintenance-overdue', [   // Render your Blade directly
+            ->view('emails.maintenance-overdue', [
                 'name'         => $notifiable->name,
                 'asset_name'   => $this->asset->asset_name,
                 'due_date'     => $formattedDue,
@@ -54,6 +55,10 @@ class OverdueNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $dueStr = $this->asset->maintenance_due_date
+            ? (string) $this->asset->maintenance_due_date
+            : null;
+            
         return [
             'asset_id'            => $this->asset->id,
             'asset_name'          => $this->asset->asset_name,

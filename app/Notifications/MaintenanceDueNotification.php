@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;        
 use Illuminate\Notifications\Messages\MailMessage; 
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Carbon;
 
 class MaintenanceDueNotification extends Notification implements ShouldQueue
 {
@@ -26,12 +27,17 @@ class MaintenanceDueNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $due = $this->asset->maintenance_due_date;
+        $formatted = $due instanceof Carbon
+            ? $due->timezone(config('app.timezone'))->format('F j, Y')
+            : 'Not specified';
+
         return (new MailMessage)
             ->subject("Maintenance Due: {$this->asset->asset_name}")
             ->view('emails.maintenance-due', [
                 'name'       => $notifiable->name,
                 'asset_name' => $this->asset->asset_name,
-                'due_date'   => optional($this->asset->maintenance_due_date)->format('F j, Y'),
+                'due_date'   => $formatted,
                 'url'        => route('inventory-list.view', $this->asset->id),
             ]);
     }
@@ -41,12 +47,16 @@ class MaintenanceDueNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $dueStr = $this->asset->maintenance_due_date
+            ? $this->asset->maintenance_due_date->toDateString()
+            : null;
+
         return [
             'asset_id'   => $this->asset->id,
             'asset_name' => $this->asset->asset_name,
-            'maintenance_due_date' => $this->asset->maintenance_due_date,
+            'maintenance_due_date' => $dueStr,
             'title'      => 'Maintenance Due Reminder',
-            'message'    => "Maintenance for {$this->asset->asset_name} is due on {$this->asset->maintenance_due_date}.",
+            'message'    => "Maintenance for {$this->asset->asset_name} is due on {$dueStr}.",
             'link'       => route('inventory-list.view', $this->asset->id),
         ];
     }
