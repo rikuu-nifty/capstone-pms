@@ -9,10 +9,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
 use App\Services\ResendMailer;
 
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Contracts\Queue\ShouldQueue;
-
-class FormApprovalStepPending extends Notification implements ShouldQueue
+class FormApprovalStepPending extends Notification
 {
     use Queueable;
 
@@ -25,25 +22,20 @@ class FormApprovalStepPending extends Notification implements ShouldQueue
         $this->formTitle = $formTitle;
     }
 
+    /**
+     * Channels — stores in DB and sends email instantly through Resend.
+     */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        // Send immediately when triggered
+        $this->sendEmailNow($notifiable);
+
+        return ['database'];
     }
 
-    public function toMail(object $notifiable): MailMessage
-    {
-        $html = View::make('emails.form-approval-pending', [
-            'approverName' => $notifiable->name,
-            'formTitle'    => $this->formTitle,
-            'stepLabel'    => $this->step->label,
-            'approvalUrl'  => url('/approvals'),
-        ])->render();
-
-        return (new MailMessage)
-            ->subject("Approval Needed: {$this->formTitle}")
-            ->html($html);
-    }
-
+    /**
+     * For in-app (database) notification center.
+     */
     public function toArray(object $notifiable): array
     {
         return [
