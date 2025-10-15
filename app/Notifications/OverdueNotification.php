@@ -4,10 +4,10 @@ namespace App\Notifications;
 
 use App\Models\InventoryList;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;            // Queue for reliability
-use Illuminate\Notifications\Messages\MailMessage;     // Native mail channel
+use Illuminate\Contracts\Queue\ShouldQueue;           
+use Illuminate\Notifications\Messages\MailMessage;     
 use Illuminate\Notifications\Notification;
-use Carbon\Carbon;                                     // For date math
+use Carbon\Carbon;                                     
 
 class OverdueNotification extends Notification implements ShouldQueue
 {
@@ -32,7 +32,7 @@ class OverdueNotification extends Notification implements ShouldQueue
             ? Carbon::parse($this->asset->maintenance_due_date)
             : null;
 
-        $formattedDue = $due?->format('F j, Y') ?? 'Not specified';
+        $formattedDue = $due ? $due->timezone(config('app.timezone'))->format('F j, Y') : 'Not specified';
 
         // If date exists and is in the past => positive days overdue
         $daysOverdue = $due ? $due->diffInDays(Carbon::now(), false) : 0; // negative if future
