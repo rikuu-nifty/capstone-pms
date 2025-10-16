@@ -3,12 +3,11 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;                 
+use Illuminate\Notifications\Messages\MailMessage;        
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Log;
-use App\Services\ResendMailer;
 
-class UserRoleReassignedNotification extends Notification
+class UserRoleReassignedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -20,12 +19,20 @@ class UserRoleReassignedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        Log::info('🔔 via() entered for UserRoleReassignedNotification', [
-            'email' => $notifiable->email ?? null,
-        ]);
+        return ['mail', 'database'];
+    }
 
-        $this->sendEmailNow($notifiable);   // fire synchronously
-        return ['database'];                // still store DB notif
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Your Account Role Has Been Updated')
+            ->view('emails.user-role-reassigned', [
+                'name'        => $notifiable->name,
+                'oldRoleName' => $this->oldRoleName,
+                'newRoleName' => $this->newRoleName,
+                'notes'       => $this->notes,
+                'url'         => url('/'),
+            ]);
     }
 
     public function toArray(object $notifiable): array
@@ -36,33 +43,5 @@ class UserRoleReassignedNotification extends Notification
             'notes'   => $this->notes,
             'link'    => url('/'),
         ];
-    }
-
-    protected function sendEmailNow(object $notifiable): void
-    {
-        try {
-            $html = View::make('emails.user-role-reassigned', [
-                'name'        => $notifiable->name,
-                'oldRoleName' => $this->oldRoleName,
-                'newRoleName' => $this->newRoleName,
-                'notes'       => $this->notes,
-                'url'         => url('/'),
-            ])->render();
-
-            ResendMailer::send(
-                $notifiable->email,
-                'Your Account Role Has Been Updated',
-                $html
-            );
-
-            Log::info("✅ UserRoleReassignedNotification email sent via Resend", [
-                'email' => $notifiable->email,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error("❌ Failed to send UserRoleReassignedNotification", [
-                'email' => $notifiable->email ?? 'unknown',
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 }
