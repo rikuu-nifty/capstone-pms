@@ -36,7 +36,7 @@ class MarkOverdueInventoryScheduling extends Command
         }
 
         $users = User::whereHas('role', function ($q) {
-            $q->whereIn('code', ['superuser', 'pmo_staff', 'pmo_head', 'vp_admin']);
+            $q->whereIn('code', ['pmo_staff', 'pmo_head']);
         })->get();
 
         Log::info("🕒 [Overdue Command] Notifying {$users->count()} users.");
