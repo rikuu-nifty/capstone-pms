@@ -2,22 +2,23 @@
 
 namespace App\Notifications;
 
-use App\Models\InventoryList;
+use App\Models\InventoryScheduling;                            // ← target scheduling
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;           
-use Illuminate\Notifications\Messages\MailMessage;     
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Carbon;                                     
+use Illuminate\Support\Carbon;
 
 class OverdueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    protected InventoryList $asset;
+    protected InventoryScheduling $schedule;
 
-    public function __construct(InventoryList $asset)
+    // Accept an InventoryScheduling instance
+    public function __construct(InventoryScheduling $schedule)
     {
-        $this->asset = $asset;
+        $this->schedule = $schedule;
     }
 
     public function via(object $notifiable): array
@@ -27,45 +28,36 @@ class OverdueNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $due = $this->asset->maintenance_due_date
-            ? Carbon::createFromFormat('Y-m-d', (string) $this->asset->maintenance_due_date)
-            : null;
+        // inventory_schedule is 'YYYY-MM'
+        $ym  = (string) $this->schedule->inventory_schedule;
+        $end = $ym ? Carbon::createFromFormat('Y-m', $ym)->endOfMonth() : null;
 
-        $formattedDue = $due
-            ? $due->timezone(config('app.timezone'))->format('F j, Y')
+        $scheduledFor = $end
+            ? $end->timezone(config('app.timezone'))->format('F Y') // e.g., "October 2025"
             : 'Not specified';
 
-        // If date exists and is in the past => positive days overdue
-        $daysOverdue = $due ? $due->diffInDays(Carbon::now(), false) : 0;
-        $daysOverdue = max(0, $daysOverdue);
+        $daysOverdue = $end ? max(0, $end->diffInDays(now(), false)) : 0;
 
         return (new MailMessage)
-            ->subject("Maintenance OVERDUE: {$this->asset->asset_name}")
-            ->view('emails.maintenance-overdue', [
-                'name'         => $notifiable->name,
-                'asset_name'   => $this->asset->asset_name,
-                'due_date'     => $formattedDue,
-                'days_overdue' => $daysOverdue,
-                'url'          => route('inventory-list.view', $this->asset->id),
+            ->subject("Inventory Scheduling OVERDUE: #{$this->schedule->id}")
+            ->view('emails.inventory-scheduling-overdue', [
+                'name'          => $notifiable->name,
+                'schedule_id'   => $this->schedule->id,
+                'scheduled_for' => $scheduledFor,                  
+                'days_overdue'  => $daysOverdue,
+                'status'        => $this->schedule->scheduling_status, // one of: Pending_Review, Pending, Completed, Overdue, Cancelled
+                'url'           => route('inventory-scheduling.show', $this->schedule->id),
             ]);
     }
 
-    /**
-     * In-app (database) notification payload for your bell center
-     */
     public function toArray(object $notifiable): array
     {
-        $dueStr = $this->asset->maintenance_due_date
-            ? (string) $this->asset->maintenance_due_date
-            : null;
-            
         return [
-            'asset_id'            => $this->asset->id,
-            'asset_name'          => $this->asset->asset_name,
-            'maintenance_due_date' => $this->asset->maintenance_due_date,
-            'title'               => 'Maintenance Overdue',
-            'message'             => "Maintenance for {$this->asset->asset_name} is OVERDUE.",
-            'link'                => route('inventory-list.view', $this->asset->id),
+            'title'         => 'Inventory Scheduling Overdue',
+            'message'       => "Inventory Scheduling #{$this->schedule->id} is OVERDUE.",
+            'scheduled_for' => $this->schedule->inventory_schedule, // 'YYYY-MM'
+            'status'        => $this->schedule->scheduling_status,
+            'link'          => route('inventory-scheduling.show', $this->schedule->id),
         ];
     }
 }

@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\InventoryScheduling;
 use App\Models\User;
 use App\Notifications\OverdueNotification;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 
 class MarkOverdueInventoryScheduling extends Command
 {
@@ -17,28 +17,24 @@ class MarkOverdueInventoryScheduling extends Command
     {
         $today = Carbon::today();
 
-        $overdueSchedules = InventoryScheduling::whereDate('actual_date_of_inventory', '<', $today)
+        $overdue = InventoryScheduling::query()
             ->whereNotIn('scheduling_status', ['Completed', 'Cancelled', 'Overdue'])
+            ->whereRaw("LAST_DAY(STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d')) < ?", [$today])
             ->get();
 
-        // ✅ Include Super User, PMO Staff, PMO Head, and VP Admin
+        // Include Super User, PMO Staff, PMO Head, and VP Admin
         $users = User::whereHas('role', function ($q) {
             $q->whereIn('code', ['superuser', 'pmo_staff', 'pmo_head', 'vp_admin']);
         })->get();
 
-        foreach ($overdueSchedules as $schedule) {
+        foreach ($overdue as $schedule) {
             $schedule->update(['scheduling_status' => 'Overdue']);
 
             foreach ($users as $user) {
-                $user->notify(new OverdueNotification(
-                    "Inventory Scheduling #{$schedule->id} is overdue.",
-                    $schedule->actual_date_of_inventory,
-                    $schedule->id,
-                    'inventory_scheduling'
-                ));
+                $user->notify(new OverdueNotification($schedule));
             }
         }
 
-        $this->info("{$overdueSchedules->count()} inventory schedulings marked as overdue and notifications sent.");
+        $this->info("{$overdue->count()} inventory schedulings marked as Overdue and notifications queued.");
     }
 }
