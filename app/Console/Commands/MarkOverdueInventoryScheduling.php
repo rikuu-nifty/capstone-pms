@@ -21,11 +21,12 @@ class MarkOverdueInventoryScheduling extends Command
         // Only include approved forms (Fully Approved)
         $overdue = InventoryScheduling::query()
             ->whereNotIn('scheduling_status', ['Completed', 'Cancelled', 'Overdue'])
-            ->whereHas('approvals.steps', function ($q) {
-                $q->whereIn('code', ['approved_by', 'noted_by'])
-                    ->where('status', 'approved');
+            ->whereRaw("STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') < ?", [$today])
+            ->whereHas('approvals', function ($q) {
+                // Require BOTH noted_by and approved_by to be approved
+                $q->whereHas('steps', fn($s) => $s->where('code', 'approved_by')->where('status', 'approved'))
+                    ->whereHas('steps', fn($s) => $s->where('code', 'noted_by')->where('status', 'approved'));
             })
-            ->whereRaw("LAST_DAY(STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d')) < ?", [$today])
             ->get();
 
         Log::info("🕒 [Overdue Command] Found {$overdue->count()} schedulings potentially overdue.");

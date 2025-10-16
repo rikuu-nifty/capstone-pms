@@ -24,7 +24,7 @@ class MarkOverdueTransfers extends Command
 
         // Include Super User, PMO Staff, PMO Head, and VP Admin
         $users = User::whereHas('role', function ($q) {
-            $q->whereIn('code', ['superuser', 'pmo_staff', 'pmo_head', 'vp_admin']);
+            $q->whereIn('code', ['pmo_staff', 'pmo_head']);
         })->get();
 
         foreach ($overdueTransfers as $transfer) {
