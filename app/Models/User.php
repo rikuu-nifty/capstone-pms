@@ -21,6 +21,7 @@ use App\Notifications\UserRoleReassignedNotification;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Events\RoleChanged;
+use Illuminate\Support\Facades\Log;
 
 // class User extends Authenticatable implements MustVerifyEmail  
 class User extends Authenticatable
@@ -178,155 +179,125 @@ class User extends Authenticatable
         return $query;
     }
 
-public function approveWithRoleAndNotify(Role $role, ?string $notes = null): void
-{
-    if ($this->status === 'approved') {
-        return;
-    }
+    public function approveWithRoleAndNotify(Role $role, ?string $notes = null): void
+    {
+        if ($this->status === 'approved') {
+            return;
+        }
 
-    $oldRoleName = $this->role?->name ?? 'Unassigned';
+        $oldRoleName = $this->role?->name ?? 'Unassigned';
 
-    $this->update([
-        'status'         => 'approved',
-        'role_id'        => $role->id,
-        'approved_at'    => now(),
-        'approval_notes' => $notes,
-    ]);
-
-    $newRoleName = $role->name;
-
-    // 🔹 Fire RoleChanged event
-    RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
-
-    // 🔹 In-app database notification
-    if (class_exists(\App\Notifications\UserApprovedNotification::class)) {
-        $this->notify(new \App\Notifications\UserApprovedNotification($notes));
-    }
-
-    // 🔹 Send AUF-styled HTML email via ResendMailer
-    try {
-        $html = view('emails.user-approved', [
-            'name'  => $this->name,
-            'notes' => $notes,
-            'url'   => url('/dashboard'),
-        ])->render();
-
-        \App\Services\ResendMailer::sendHtml(
-            $this->email,
-            'Your Account Has Been Approved',
-            $html
-        );
-
-        \Log::info('✅ Account approved email sent via Resend', [
-            'email' => $this->email,
+        $this->update([
+            'status'         => 'approved',
+            'role_id'        => $role->id,
+            'approved_at'    => now(),
+            'approval_notes' => $notes,
         ]);
-    } catch (\Throwable $e) {
-        \Log::error('❌ Account approved email failed', [
-            'email' => $this->email,
-            'error' => $e->getMessage(),
+
+        $newRoleName = $role->name;
+
+        // Fire RoleChanged event
+        RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
+
+        // In-app database notification
+        if (class_exists(\App\Notifications\UserApprovedNotification::class)) {
+            $this->notify(new \App\Notifications\UserApprovedNotification($notes));
+        }
+
+        // Send AUF-styled HTML email via ResendMailer
+        try {
+            $html = view('emails.user-approved', [
+                'name'  => $this->name,
+                'notes' => $notes,
+                'url'   => url('/dashboard'),
+            ])->render();
+
+            \App\Services\ResendMailer::sendHtml(
+                $this->email,
+                'Your Account Has Been Approved',
+                $html
+            );
+
+            Log::info('✅ Account approved email sent via Resend', [
+                'email' => $this->email,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('❌ Account approved email failed', [
+                'email' => $this->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function rejectWithNotes(?string $notes = null): void
+    {
+        if ($this->status === 'denied') {
+            return;
+        }
+
+        $this->update([
+            'status'          => 'denied',
+            'rejected_at'     => now(),
+            'rejection_notes' => $notes,
         ]);
-    }
-}
 
-
-public function rejectWithNotes(?string $notes = null): void
-{
-    if ($this->status === 'denied') {
-        return;
+        if (class_exists(UserDeniedNotification::class)) {
+            $this->notify(new UserDeniedNotification($notes));
+        }
     }
 
-    $this->update([
-        'status'          => 'denied',
-        'rejected_at'     => now(),
-        'rejection_notes' => $notes,
-    ]);
+    public function reassignRoleWithNotify(Role $role, ?string $notes = null): void
+    {
+        $oldRoleName = $this->role?->name ?? 'Unassigned';
 
-    // 🔹 In-app database notification (still needed)
-    if (class_exists(\App\Notifications\UserDeniedNotification::class)) {
-        $this->notify(new \App\Notifications\UserDeniedNotification($notes));
-    }
-
-    // 🔹 Send AUF-styled HTML email via ResendMailer
-    try {
-        // ✅ Make sure the Blade view is rendered to HTML
-        $html = view('emails.user-denied', [
-            'name'  => $this->name,
-            'notes' => $notes,
-            'url'   => url('/'),
-        ])->render();
-
-        // ✅ Force send as HTML (not raw)
-        \App\Services\ResendMailer::sendHtml(
-            $this->email,
-            'Your Account Request Was Denied',
-            $html
-        );
-
-        \Log::info('✅ Account denied email sent via ResendMailer', [
-            'email' => $this->email,
+        $this->update([
+            'role_id'           => $role->id,
+            'role_changed_at'   => now(),
+            'role_change_notes' => $notes,
         ]);
-    } catch (\Throwable $e) {
-        \Log::error('❌ Account denied email failed to send', [
-            'email' => $this->email,
-            'error' => $e->getMessage(),
-        ]);
+
+        $newRoleName = $role->name;
+
+        // Fire RoleChanged event
+        RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
+
+        // Store in-app (database) notification
+        if (class_exists(\App\Notifications\UserRoleReassignedNotification::class)) {
+            $this->notify(new \App\Notifications\UserRoleReassignedNotification(
+                $oldRoleName,
+                $newRoleName,
+                $notes
+            ));
+        }
+
+        // Send AUF-styled HTML email via ResendMailer
+        try {
+            $html = view('emails.user-role-reassigned', [
+                'name'        => $this->name,
+                'oldRoleName' => $oldRoleName,
+                'newRoleName' => $newRoleName,
+                'notes'       => $notes,
+                'url'         => url('/dashboard'),
+            ])->render();
+
+            \App\Services\ResendMailer::sendHtml(
+                $this->email,
+                'Your Account Role Has Been Updated',
+                $html
+            );
+
+            Log::info('✅ Role change email sent via Resend', [
+                'email' => $this->email,
+                'old_role' => $oldRoleName,
+                'new_role' => $newRoleName,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('❌ Role change email failed', [
+                'email' => $this->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
-}
-
-
-public function reassignRoleWithNotify(Role $role, ?string $notes = null): void
-{
-    $oldRoleName = $this->role?->name ?? 'Unassigned';
-
-    $this->update([
-        'role_id'           => $role->id,
-        'role_changed_at'   => now(),
-        'role_change_notes' => $notes,
-    ]);
-
-    $newRoleName = $role->name;
-
-    // 🔹 Fire RoleChanged event
-    RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
-
-    // 🔹 Store in-app (database) notification
-    if (class_exists(\App\Notifications\UserRoleReassignedNotification::class)) {
-        $this->notify(new \App\Notifications\UserRoleReassignedNotification(
-            $oldRoleName,
-            $newRoleName,
-            $notes
-        ));
-    }
-
-    // 🔹 Send AUF-styled HTML email via ResendMailer
-    try {
-        $html = view('emails.user-role-reassigned', [
-            'name'        => $this->name,
-            'oldRoleName' => $oldRoleName,
-            'newRoleName' => $newRoleName,
-            'notes'       => $notes,
-            'url'         => url('/dashboard'),
-        ])->render();
-
-        \App\Services\ResendMailer::sendHtml(
-            $this->email,
-            'Your Account Role Has Been Updated',
-            $html
-        );
-
-        \Log::info('✅ Role change email sent via Resend', [
-            'email' => $this->email,
-            'old_role' => $oldRoleName,
-            'new_role' => $newRoleName,
-        ]);
-    } catch (\Throwable $e) {
-        \Log::error('❌ Role change email failed', [
-            'email' => $this->email,
-            'error' => $e->getMessage(),
-        ]);
-    }
-}
-
 
     public static function fetchApprovals(string $filter = '', string $q = '', int $perPage = 10)
     {
