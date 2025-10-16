@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Notifications\OverdueNotification;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Log;
+
 class MarkOverdueTransfers extends Command
 {
     protected $signature = 'transfers:mark-overdue';
@@ -30,13 +32,10 @@ class MarkOverdueTransfers extends Command
         foreach ($overdueTransfers as $transfer) {
             $transfer->update(['status' => 'overdue']);
 
+            Log::info("📦 Marked Transfer #{$transfer->id} as overdue and notifying users...");
+
             foreach ($users as $user) {
-                $user->notify(new OverdueNotification(
-                    "Property Transfer #{$transfer->id} is overdue.",
-                    $transfer->scheduled_date,
-                    $transfer->id,
-                    'property_transfer'
-                ));
+                $user->notify(new OverdueNotification($transfer));
             }
         }
 
