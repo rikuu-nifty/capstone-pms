@@ -60,11 +60,11 @@ class OverdueNotification extends Notification implements ShouldQueue
         if ($this->type === 'inventory_scheduling' && $this->scheduledDate) {
             $end = Carbon::createFromFormat('Y-m', $this->scheduledDate)->endOfMonth(); // 'YYYY-MM' → end of that month
             $scheduledFor = $end->format('F Y');
-            $daysOverdue = max(0, $end->diffInDays(now()));
+            $daysOverdue = (int) floor(max(0, $end->diffInDays(now(), false)));
         } elseif ($this->type === 'property_transfer' && $this->scheduledDate) {
             $date = Carbon::parse($this->scheduledDate); // Full date string
             $scheduledFor = $date->format('F j, Y');
-            $daysOverdue = max(0, $date->diffInDays(now()));
+            $daysOverdue = (int) floor(max(0, $date->diffInDays(now(), false)));
         }
 
         $url = $this->type === 'inventory_scheduling'
