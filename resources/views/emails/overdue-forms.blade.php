@@ -1,14 +1,14 @@
 @extends('emails.layout')
 
-@section('title', 'Inventory Scheduling Overdue')
+@section('title', 'Overdue Notification')
 
 @section('content')
-<h2>Inventory Scheduling Overdue</h2>
+<h2>{{ $title }} Overdue</h2>
 
 <p>Dear <strong>{{ $name }}</strong>,</p>
 
 <p>
-    This is to notify you that <strong>Inventory Scheduling #{{ $schedule_id }}</strong>
+    This is to notify you that <strong>{{ $title }}</strong>
     has been marked as <strong style="color:#D32F2F;">OVERDUE</strong>.
 </p>
 
@@ -19,15 +19,15 @@
 </p>
 
 <p>
-    Please take the necessary action to update or complete this inventory schedule
-    as soon as possible to maintain accurate asset tracking and reporting.
+    Please take the necessary action to update or complete this record
+    as soon as possible to maintain accurate tracking and reporting.
 </p>
 
 <div class="button-container">
-    <a href="{{ $url }}" class="button">View Inventory Schedule</a>
+    <a href="{{ $url }}" class="button">View Record</a>
 </div>
 
 <p>
-    Thank you for your attention to this matter.
+    Thank you for your prompt attention.
 </p>
 @endsection

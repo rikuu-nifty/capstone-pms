@@ -22,7 +22,7 @@ class MarkOverdueTransfers extends Command
             ->whereNotIn('status', ['completed', 'cancelled', 'overdue'])
             ->get();
 
-        // ✅ Include Super User, PMO Staff, PMO Head, and VP Admin
+        // Include Super User, PMO Staff, PMO Head, and VP Admin
         $users = User::whereHas('role', function ($q) {
             $q->whereIn('code', ['superuser', 'pmo_staff', 'pmo_head', 'vp_admin']);
         })->get();
