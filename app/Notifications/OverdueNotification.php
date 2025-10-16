@@ -68,8 +68,8 @@ class OverdueNotification extends Notification implements ShouldQueue
         }
 
         $url = $this->type === 'inventory_scheduling'
-            ? route('inventory-scheduling.show', $this->recordId)
-            : route('transfers.show', $this->recordId);
+            ? route('inventory-scheduling.view', $this->recordId)
+            : route('transfers.view', $this->recordId);
 
         return (new MailMessage)
             ->subject("{$this->title} OVERDUE")
@@ -86,8 +86,8 @@ class OverdueNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         $link = $this->type === 'inventory_scheduling'
-            ? route('inventory-scheduling.show', $this->recordId)
-            : route('transfers.show', $this->recordId);
+            ? route('inventory-scheduling.view', $this->recordId)
+            : route('transfers.view', $this->recordId);
 
         return [
             'title'   => "{$this->title} Overdue",
