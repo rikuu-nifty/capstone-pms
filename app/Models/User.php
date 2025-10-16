@@ -15,6 +15,8 @@ use App\Models\EmailVerificationCode;
 use App\Models\OffCampus;
 use App\Models\Role;
 
+use Illuminate\Support\Facades\Storage;
+
 use App\Notifications\UserApprovedNotification;
 use App\Notifications\UserDeniedNotification;
 use App\Notifications\UserRoleReassignedNotification;
@@ -86,6 +88,17 @@ class User extends Authenticatable
             }
         });
     }
+
+    public function getAvatarAttribute()
+{
+    if ($this->detail && $this->detail->image_path) {
+        // Return full S3 public URL
+        return Storage::disk('s3')->url($this->detail->image_path);
+    }
+
+    // Return a placeholder or null if no image
+    return asset('images/placeholder.png');
+}
 
     public function role()
     {
