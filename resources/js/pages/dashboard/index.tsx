@@ -43,15 +43,15 @@ export default function Dashboard() {
     assetsOverTime
   } = usePage<DashboardPageProps>().props;
 
-  const { auth } = usePage().props as unknown as {
-    auth: {
-      permissions: string[];
-      role: string;
-    };
-  };
+  // const { auth } = usePage().props as unknown as {
+  //   auth: {
+  //     permissions: string[];
+  //     role: string;
+  //   };
+  // };
 
-  const canViewReports = auth.permissions.includes('view-reports');
-  const canViewBuildings = auth.permissions.includes('view-buildings');
+  // const canViewReports = auth.permissions.includes('view-reports');
+  // const canViewBuildings = auth.permissions.includes('view-buildings');
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -102,14 +102,14 @@ export default function Dashboard() {
         </div>
         
         {/* Charts Row: Line Chart + Donut Chart */}
-        {canViewReports && (
+        {/* {canViewReports && ( */}
           <div className="grid gap-4 md:grid-cols-3">
             <div className="col-span-2">
               <AssetsOverTimeChart data={assetsOverTime} />
             </div>
             <CategoryDonutChart categories={categories} assetTrend={assetTrend} />
           </div>
-        )}
+        {/* )} */}
 
         {/* Charts Row 2 */}
         <div className="grid gap-4 md:grid-cols-1">
