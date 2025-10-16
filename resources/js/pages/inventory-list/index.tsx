@@ -363,7 +363,7 @@ export default function InventoryListIndex({
     const openView = (id: number) => {
         const routeName = canViewAll
             ? 'inventory-list.view'
-            : 'inventory-list.own.view'; // 🟢 dynamically choose route
+            : 'inventory-list.own.view';
 
         router.get(
             route(routeName, id),

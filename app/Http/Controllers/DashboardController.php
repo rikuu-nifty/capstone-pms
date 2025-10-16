@@ -18,7 +18,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // ✅ Assets by Building
+        // Assets by Building
         $buildings = Building::withCount('inventoryLists')
             ->get(['id', 'name'])
             ->map(fn($b) => [
@@ -26,7 +26,7 @@ class DashboardController extends Controller
                 'assets'   => $b->inventory_lists_count,
             ]);
 
-        // ✅ Assets by Department (with building name)
+        // Assets by Department (with building name)
         $departments = InventoryList::select(
                 'unit_or_departments.name as dept_name',
                 'buildings.name as building_name',
@@ -41,7 +41,7 @@ class DashboardController extends Controller
                 'assets'   => $row->assets,
             ]);
 
-        // ✅ Assets by Room (with building name)
+        // Assets by Room (with building name)
         $rooms = InventoryList::select(
                 'building_rooms.room as room_name',
                 'buildings.name as building_name',
@@ -56,7 +56,7 @@ class DashboardController extends Controller
                 'assets'   => $row->assets,
             ]);
 
-        // ✅ calculate this month's and last month's asset counts
+        // calculate this month's and last month's asset counts
         $thisMonth = InventoryList::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
@@ -65,12 +65,12 @@ class DashboardController extends Controller
             ->whereYear('created_at', now()->subMonth()->year)
             ->count();
 
-        // ✅ compute % change
+        // compute % change
         $assetTrend = $lastMonth > 0
             ? (($thisMonth - $lastMonth) / $lastMonth) * 100
             : ($thisMonth > 0 ? 100 : 0);
 
-        // ✅ Categories with asset counts (limit to top 9, group the rest as "Others")
+        // Categories with asset counts (limit to top 9, group the rest as "Others")
         $categories = Category::withCount('inventoryLists')
             ->orderByDesc('inventory_lists_count')
             ->get(['id', 'name'])
@@ -88,9 +88,9 @@ class DashboardController extends Controller
             ]);
         }
 
-        // ✅ Assets Over Time (last 6 months: added, disposed, transferred, cumulative)
+        // Assets Over Time (last 6 months: added, disposed, transferred, cumulative)
         $months = collect(range(0, 5))
-            ->map(fn($i) => Carbon::now()->subMonths($i)->format('F Y')) // ✅ match query format
+            ->map(fn($i) => Carbon::now()->subMonths($i)->format('F Y')) // match query format
             ->reverse()
             ->values();
 
@@ -124,7 +124,7 @@ class DashboardController extends Controller
             ->orderBy('ym')
             ->pluck('total', 'month');
 
-        // ✅ Build cumulative active asset counts
+        // Build cumulative active asset counts
         $runningTotal = 0;
         $assetsOverTime = $months->map(function ($month) use ($assetsAdded, $assetsDisposed, $assetsTransferred, &$runningTotal) {
             $added     = $assetsAdded[$month] ?? 0;
@@ -169,12 +169,12 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get(['id', 'status', 'created_at']),
 
-            'categories'      => $categories,   // ✅ now passed properly
+            'categories'      => $categories,   // now passed properly
             'assetTrend'      => round($assetTrend, 1),
             'buildings'       => $buildings,
             'rooms'           => $rooms,
             'departments'     => $departments,
-            'assetsOverTime'  => $assetsOverTime, // ✅ new dataset with cumulative
+            'assetsOverTime'  => $assetsOverTime, // new dataset with cumulative
         ]);
     }
 }

@@ -5,7 +5,7 @@ import AssetsByLocationBarChart from './AssetsByLocationBarChart';
 import CategoryDonutChart from './categoryDonutChart';
 import AssetsOverTimeChart from './AssetsOverTime';
 import { Boxes, ArrowRightLeft, Clock, CheckCircle2, Building } from 'lucide-react';
-import KpiCard from './KpiCard'; // ✅ now using external component
+import KpiCard from './KpiCard';
 
 type DashboardPageProps = {
   stats: {
@@ -32,7 +32,7 @@ type DashboardPageProps = {
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
-export default function Dashboard() { //recentTransfers,
+export default function Dashboard() {
   const {
     stats,
     categories,
@@ -42,6 +42,16 @@ export default function Dashboard() { //recentTransfers,
     rooms,
     assetsOverTime
   } = usePage<DashboardPageProps>().props;
+
+  const { auth } = usePage().props as unknown as {
+    auth: {
+      permissions: string[];
+      role: string;
+    };
+  };
+
+  const canViewReports = auth.permissions.includes('view-reports');
+  const canViewBuildings = auth.permissions.includes('view-buildings');
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -90,15 +100,16 @@ export default function Dashboard() { //recentTransfers,
 
           />
         </div>
-
-
+        
         {/* Charts Row: Line Chart + Donut Chart */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="col-span-2">
-            <AssetsOverTimeChart data={assetsOverTime} />
+        {canViewReports && (
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="col-span-2">
+              <AssetsOverTimeChart data={assetsOverTime} />
+            </div>
+            <CategoryDonutChart categories={categories} assetTrend={assetTrend} />
           </div>
-          <CategoryDonutChart categories={categories} assetTrend={assetTrend} />
-        </div>
+        )}
 
         {/* Charts Row 2 */}
         <div className="grid gap-4 md:grid-cols-1">
