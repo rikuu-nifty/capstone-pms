@@ -9,6 +9,8 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 
+use Illuminate\Support\Facades\Log;
+
 class OverdueNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -28,12 +30,14 @@ class OverdueNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        Log::info("✉️ Sending OverdueNotification for schedule #{$this->schedule->id} to {$notifiable->email}");
+
         // inventory_schedule is 'YYYY-MM'
         $ym  = (string) $this->schedule->inventory_schedule;
         $end = $ym ? Carbon::createFromFormat('Y-m', $ym)->endOfMonth() : null;
 
         $scheduledFor = $end
-            ? $end->timezone(config('app.timezone'))->format('F Y') // e.g., "October 2025"
+            ? $end->timezone(config('app.timezone'))->format('F Y')
             : 'Not specified';
 
         $daysOverdue = $end ? max(0, $end->diffInDays(now(), false)) : 0;
@@ -43,10 +47,10 @@ class OverdueNotification extends Notification implements ShouldQueue
             ->view('emails.inventory-scheduling-overdue', [
                 'name'          => $notifiable->name,
                 'schedule_id'   => $this->schedule->id,
-                'scheduled_for' => $scheduledFor,                  
+                'scheduled_for' => $scheduledFor,
                 'days_overdue'  => $daysOverdue,
-                'status'        => $this->schedule->scheduling_status, // one of: Pending_Review, Pending, Completed, Overdue, Cancelled
-                'url'           => route('inventory-scheduling.show', $this->schedule->id),
+                'status'        => $this->schedule->scheduling_status,
+                'url'           => url('/inventory-scheduling/' . $this->schedule->id),
             ]);
     }
 
