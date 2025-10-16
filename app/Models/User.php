@@ -47,6 +47,7 @@ class User extends Authenticatable
         'status',
         'approved_at',
         'approval_notes',
+        'unit_or_department_id',
     ];
 
     /**
@@ -69,9 +70,10 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'deleted_at'        => 'datetime',
+            'email_verified_at'     => 'datetime',
+            'password'              => 'hashed',
+            'deleted_at'            => 'datetime',
+            'unit_or_department_id' => 'integer',
         ];
     }
 

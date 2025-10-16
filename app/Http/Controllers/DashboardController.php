@@ -187,6 +187,9 @@ class DashboardController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
+        // Ensure the relation is loaded (important for view-own-unit users)
+        $user->loadMissing('unitOrDepartment');
+
         // Determine permission scope using your existing hasPermission() method
         $canViewAll = $user->hasPermission('view-inventory-list');
         $canViewOwn = $user->hasPermission('view-own-unit-inventory-list');
@@ -197,6 +200,8 @@ class DashboardController extends Controller
         $transferQuery = Transfer::query();
         $turnoverQuery = TurnoverDisposal::query();
         $offCampusQuery = OffCampus::query();
+
+        $unitId = $user->unit_or_department_id ?: null;
 
         if ($canViewOwn && !$canViewAll && $unitId) {
             $inventoryQuery->where('unit_or_department_id', $unitId);
