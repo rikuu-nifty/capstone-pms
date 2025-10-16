@@ -3,6 +3,8 @@
     use Illuminate\Support\Facades\Route;
     use Inertia\Inertia;
     use Illuminate\Support\Facades\Auth;
+    use App\Http\Controllers\Auth\AuthenticatedSessionController;
+
     use App\Http\Controllers\AssetModelController;
     use App\Http\Controllers\InventoryListController;
     use App\Http\Controllers\InventorySchedulingController;
@@ -44,7 +46,17 @@
         return redirect()->route('login'); // send guests to login
     })->name('home');
 
-    Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+        ->name('logout');
+
+    Route::get('/logout', function () {
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        return redirect()->route('login')->with('status', 'You have been logged out.');
+    })->name('logout');
+
+Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         'message' => session('unauthorized'),
     ]))->name('unauthorized');
 

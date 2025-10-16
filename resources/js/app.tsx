@@ -23,20 +23,22 @@ createInertiaApp({
 });
 
 
-// ✅ Global 500 Error Interceptor
+// ✅ Global error interceptor for expired session, auth, or server crash
 router.on('error', (event) => {
-    // Cast detail safely (the event.detail from Inertia is dynamic)
     const detail = (event as unknown as { detail?: { response?: { status?: number } } }).detail
     const status = detail?.response?.status
 
-    if (status === 500) {
-        console.error('500 Server Error detected — forcing logout...')
+    if ([401, 419, 440, 500].includes(status ?? 0)) {
+        console.error(`Server/Auth error (${status}) — forcing logout...`)
 
-        // Clear cached data
+        // Clear any stored session data
         localStorage.clear()
         sessionStorage.clear()
 
-        // Redirect to Laravel logout route
+        // Optionally show a quick message
+        alert('Your session has expired. You will be redirected to login.')
+
+        // Redirect to Laravel's logout (which also invalidates session server-side)
         window.location.href = route('logout')
     }
 })
