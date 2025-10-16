@@ -205,13 +205,20 @@ class DashboardController extends Controller
 
         if ($canViewOwn && !$canViewAll && $unitId) {
             $inventoryQuery->where('unit_or_department_id', $unitId);
+
             $transferQuery->where(function ($q) use ($unitId) {
-                $q->where('current_unit_id', $unitId)
-                    ->orWhere('receiving_unit_id', $unitId);
+                $q->where('current_organization', $unitId)
+                    ->orWhere('receiving_organization', $unitId);
             });
-            $turnoverQuery->where('unit_or_department_id', $unitId);
-            $offCampusQuery->where('unit_or_department_id', $unitId);
+
+            $turnoverQuery->where(function ($q) use ($unitId) {
+                $q->where('issuing_office_id', $unitId)
+                    ->orWhere('receiving_office_id', $unitId);
+            });
+
+            $offCampusQuery->where('college_or_unit_id', $unitId);
         }
+
 
         // 🧮 KPI cards
         $stats = [
