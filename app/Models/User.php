@@ -258,45 +258,16 @@ class User extends Authenticatable
 
         $newRoleName = $role->name;
 
-        // Fire RoleChanged event
         RoleChanged::dispatch($this, $oldRoleName, $newRoleName);
 
-        // Store in-app (database) notification
-        if (class_exists(\App\Notifications\UserRoleReassignedNotification::class)) {
-            $this->notify(new \App\Notifications\UserRoleReassignedNotification(
+        if (class_exists(UserRoleReassignedNotification::class)) {
+            $this->notify(new UserRoleReassignedNotification(
                 $oldRoleName,
                 $newRoleName,
                 $notes
             ));
         }
 
-        // Send AUF-styled HTML email via ResendMailer
-        try {
-            $html = view('emails.user-role-reassigned', [
-                'name'        => $this->name,
-                'oldRoleName' => $oldRoleName,
-                'newRoleName' => $newRoleName,
-                'notes'       => $notes,
-                'url'         => url('/dashboard'),
-            ])->render();
-
-            \App\Services\ResendMailer::sendHtml(
-                $this->email,
-                'Your Account Role Has Been Updated',
-                $html
-            );
-
-            Log::info('✅ Role change email sent via Resend', [
-                'email' => $this->email,
-                'old_role' => $oldRoleName,
-                'new_role' => $newRoleName,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('❌ Role change email failed', [
-                'email' => $this->email,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     public static function fetchApprovals(string $filter = '', string $q = '', int $perPage = 10)
