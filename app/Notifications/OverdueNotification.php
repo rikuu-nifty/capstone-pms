@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\InventoryScheduling;
 use App\Models\Transfer;
+use App\Models\OffCampus;
 
 class OverdueNotification extends Notification implements ShouldQueue
 {
@@ -18,7 +19,7 @@ class OverdueNotification extends Notification implements ShouldQueue
 
     protected string $type;
     protected int $recordId;
-    protected ?string $scheduledDate;
+    protected ?string $dueDate;
     protected string $status;
     protected string $title;
 
@@ -30,15 +31,21 @@ class OverdueNotification extends Notification implements ShouldQueue
         if ($record instanceof InventoryScheduling) {
             $this->type = 'inventory_scheduling';
             $this->recordId = $record->id;
-            $this->scheduledDate = $record->inventory_schedule;
+            $this->dueDate = $record->inventory_schedule; // YYYY-MM format
             $this->status = $record->scheduling_status;
             $this->title = "Inventory Scheduling #{$record->id}";
         } elseif ($record instanceof Transfer) {
             $this->type = 'property_transfer';
             $this->recordId = $record->id;
-            $this->scheduledDate = $record->scheduled_date;
+            $this->dueDate = $record->scheduled_date;
             $this->status = $record->status;
             $this->title = "Property Transfer #{$record->id}";
+        } elseif ($record instanceof OffCampus) {
+            $this->type = 'off_campus';
+            $this->recordId = $record->id;
+            $this->dueDate = $record->return_date;
+            $this->status = $record->status;
+            $this->title = "Off-Campus #{$record->id}";
         } else {
             throw new \InvalidArgumentException('Invalid model type for OverdueNotification.');
         }
@@ -53,30 +60,34 @@ class OverdueNotification extends Notification implements ShouldQueue
     {
         Log::info("✉️ Sending OverdueNotification for {$this->title} to {$notifiable->email}");
 
-        // Format date and compute days overdue
-        $scheduledFor = 'Not specified';
+        $label = $this->type === 'off_campus' ? 'Return Date' : 'Scheduled For';
+        $formattedDate = 'Not specified';
         $daysOverdue = 0;
 
-        if ($this->type === 'inventory_scheduling' && $this->scheduledDate) {
-            $end = Carbon::createFromFormat('Y-m', $this->scheduledDate)->endOfMonth(); // 'YYYY-MM' → end of that month
-            $scheduledFor = $end->format('F Y');
-            $daysOverdue = (int) floor(max(0, $end->diffInDays(now(), false)));
-        } elseif ($this->type === 'property_transfer' && $this->scheduledDate) {
-            $date = Carbon::parse($this->scheduledDate); // Full date string
-            $scheduledFor = $date->format('F j, Y');
-            $daysOverdue = (int) floor(max(0, $date->diffInDays(now(), false)));
+        if ($this->type === 'inventory_scheduling' && $this->dueDate) {
+            $end = Carbon::createFromFormat('Y-m', $this->dueDate)->endOfMonth();
+            $formattedDate = $end->format('F Y');
+            $daysOverdue = (int) max(0, $end->diffInDays(now(), false));
+        } elseif (in_array($this->type, ['property_transfer', 'off_campus']) && $this->dueDate) {
+            $date = Carbon::parse($this->dueDate);
+            $formattedDate = $date->format('F j, Y');
+            $daysOverdue = (int) max(0, $date->diffInDays(now(), false));
         }
 
-        $url = $this->type === 'inventory_scheduling'
-            ? route('inventory-scheduling.view', $this->recordId)
-            : route('transfers.view', $this->recordId);
+        $url = match ($this->type) {
+            'inventory_scheduling' => route('inventory-scheduling.view', $this->recordId),
+            'property_transfer'    => route('transfers.view', $this->recordId),
+            'off_campus'           => route('off-campus.view', $this->recordId),
+            default                => '#',
+        };
 
         return (new MailMessage)
             ->subject("{$this->title} OVERDUE")
             ->view('emails.overdue-forms', [
                 'name'          => $notifiable->name,
                 'title'         => $this->title,
-                'scheduled_for' => $scheduledFor,
+                'scheduled_for' => $formattedDate,
+                'label'         => $label,
                 'days_overdue'  => $daysOverdue,
                 'status'        => $this->status,
                 'url'           => $url,
@@ -85,13 +96,18 @@ class OverdueNotification extends Notification implements ShouldQueue
 
     public function toArray(object $notifiable): array
     {
-        $link = $this->type === 'inventory_scheduling'
-            ? route('inventory-scheduling.view', $this->recordId)
-            : route('transfers.view', $this->recordId);
+        $link = match ($this->type) {
+            'inventory_scheduling' => route('inventory-scheduling.view', $this->recordId),
+            'property_transfer'    => route('transfers.view', $this->recordId),
+            'off_campus'           => route('off-campus.view', $this->recordId),
+            default                => '#',
+        };
 
         return [
             'title'   => "{$this->title} Overdue",
-            'message' => "{$this->title} has been marked as overdue.",
+            'message' => $this->type === 'off_campus'
+                ? "{$this->title} has not been returned by its due date."
+                : "{$this->title} has been marked as overdue.",
             'status'  => $this->status,
             'link'    => $link,
         ];
