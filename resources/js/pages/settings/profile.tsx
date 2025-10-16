@@ -116,11 +116,14 @@ export default function Profile({
         //     preserveScroll: true,
         //     onSuccess: () => setShowSaved(true),
         // });
-        router.post(route('profile.update'), formData, {
+         router.post(route('profile.update'), formData, {
             preserveScroll: true,
             onSuccess: async () => {
                 await refreshProfile();
                 setShowSaved(true);
+
+                // ✅ Dispatch browser event so AppHeader + Sidebar can reload avatar
+                window.dispatchEvent(new Event('profile-updated'));
             },
         });
 
@@ -308,14 +311,18 @@ export default function Profile({
     />
 ) : auth?.user?.avatar ? (
     // Persistent avatar (from shared props)
-    <img
-        src={auth.user.avatar}
-        alt="Profile"
-        className="h-44 w-44 rounded-full border-4 border-white object-cover shadow-lg ring-2 ring-blue-200 transition-transform duration-300 group-hover:scale-105 dark:ring-blue-400"
-        onError={(e) => {
-            e.currentTarget.src = '/images/placeholder.png';
-        }}
-    />
+   <img
+  src={`${auth.user.avatar}?v=${Date.now()}`}
+  alt="Profile"
+  className="h-44 w-44 rounded-full border-4 border-white object-cover shadow-lg ring-2 ring-blue-200 transition-transform duration-300 group-hover:scale-105 dark:ring-blue-400"
+  onError={(e) => {
+    if (!e.currentTarget.dataset.fallback) {
+      e.currentTarget.dataset.fallback = 'true'; // Prevent repeat
+      e.currentTarget.src = '/images/placeholder.png';
+    }
+  }}
+/>
+
 ) : (
     // Fallback placeholder
     <div className="flex h-44 w-44 items-center justify-center rounded-full border-4 border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">

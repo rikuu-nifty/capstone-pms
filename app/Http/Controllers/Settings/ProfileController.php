@@ -97,8 +97,10 @@ class ProfileController extends Controller
         $user->load('detail', 'role.permissions', 'unitOrDepartment');
         auth()->setUser($user);
 
-        // Redirect back with flash message
-        return to_route('profile.edit')->with('success', 'Profile updated successfully.');
+       // Redirect back with flash message + trigger frontend refresh
+        return to_route('profile.edit')
+            ->with('success', 'Profile updated successfully.')
+            ->with('profile_updated', true);
     }
 
     /**
