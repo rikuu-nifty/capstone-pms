@@ -39,7 +39,7 @@ router.on('error', (event) => {
         alert('Your session has expired. You will be redirected to login.')
 
         // Redirect to Laravel's logout (which also invalidates session server-side)
-        window.location.href = route('logout')
+        window.location.href = route('force.logout')
     }
 })
 

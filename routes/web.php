@@ -49,12 +49,13 @@
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 
-    Route::get('/logout', function () {
+    Route::get('/force-logout', function () {
         Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
+
         return redirect()->route('login')->with('status', 'You have been logged out.');
-    })->name('logout');
+    })->name('force.logout');
 
 Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         'message' => session('unauthorized'),
