@@ -43,15 +43,13 @@ export default function Dashboard() {
     assetsOverTime
   } = usePage<DashboardPageProps>().props;
 
-  // const { auth } = usePage().props as unknown as {
-  //   auth: {
-  //     permissions: string[];
-  //     role: string;
-  //   };
-  // };
-
-  // const canViewReports = auth.permissions.includes('view-reports');
-  // const canViewBuildings = auth.permissions.includes('view-buildings');
+  const { auth } = usePage().props as unknown as {
+    auth: {
+      user: {
+        name: string;
+      };
+    };
+  };
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -59,7 +57,7 @@ export default function Dashboard() {
       <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4">
         {/* Welcome Header */}
         <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Welcome Back!
+          Welcome back, <span className="text-blue-600">{auth.user?.name ?? 'User'}</span>!
         </h1>
 
         {/* KPI Cards */}
