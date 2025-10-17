@@ -17,8 +17,10 @@ return new class extends Migration
             $table->unsignedBigInteger('issuing_office_id');
             $table->enum('type', ['turnover', 'disposal']);
             $table->enum('turnover_category', ['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'])->nullable();
-            
-            $table->unsignedBigInteger('receiving_office_id');
+
+            $table->unsignedBigInteger('receiving_office_id')->nullable();
+            $table->string('external_recipient')->nullable();
+
             $table->text('description')->nullable();
             $table->string('personnel_in_charge')->nullable();
 
@@ -35,7 +37,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->foreign('issuing_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
-            $table->foreign('receiving_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
+            $table->foreign('receiving_office_id')->references('id')->on('unit_or_departments')->nullOnDelete();
             $table->foreign('personnel_id')->references('id')->on('personnels')->onDelete('cascade');
         });
     }
