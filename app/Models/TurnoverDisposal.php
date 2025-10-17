@@ -396,8 +396,8 @@ public function getNotedByNameAttribute(): ?string
         ? $this->getRelation('formApproval')
         : $this->formApproval()->with([
             'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
-                                   ->whereIn('status',['approved','rejected']) // ✅ include rejected
-                                   ->orderByDesc('acted_at'),
+                ->whereIn('status',['approved','rejected']) // include rejected
+                ->orderByDesc('acted_at'),
             'steps.actor:id,name',
         ])->first();
 
@@ -423,8 +423,8 @@ public function getNotedByTitleAttribute(): ?string
         ? $this->getRelation('formApproval')
         : $this->formApproval()->with([
             'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
-                                   ->whereIn('status',['approved','rejected']) // ✅ include rejected
-                                   ->orderByDesc('acted_at'),
+                    ->whereIn('status',['approved','rejected']) // include rejected
+                    ->orderByDesc('acted_at'),
             'steps.actor:id,name',
         ])->first();
 
@@ -502,6 +502,8 @@ public function getNotedByTitleAttribute(): ?string
             ->select([
                 'td.id as turnover_disposal_id',
                 'td.type',
+                'td.turnover_category',
+                'td.is_donation',
                 'td.status as td_status',
                 'td.document_date',
                 'issuing.name as issuing_office',
@@ -521,6 +523,14 @@ public function getNotedByTitleAttribute(): ?string
             ->when($filters['receiving_office_id'] ?? null, fn($q, $receiving) => $q->where('td.receiving_office_id', $receiving))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
             ->when($filters['category_id'] ?? null, fn($q, $cat) => $q->where('c.id', $cat))
+            ->when(
+                $filters['turnover_category'] ?? null,
+                fn($q, $cat) =>
+                $q->where('td.turnover_category', $cat)
+            )
+            ->when(isset($filters['is_donation']) && $filters['is_donation'] !== '', function ($q) use ($filters) {
+                $q->where('td.is_donation', (int) $filters['is_donation']);
+            })
             ->paginate($perPage)
             ->withQueryString();
     }
@@ -542,7 +552,7 @@ public function getNotedByTitleAttribute(): ?string
     {
         return DB::table('turnover_disposals as td')
             ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
-            ->where('tda.asset_status', '=', 'completed') // ✅ Only completed assets
+            ->where('tda.asset_status', '=', 'completed') // Only completed assets
             ->selectRaw("
                 DATE_FORMAT(td.document_date, '%Y-%m') as ym,
                 SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,

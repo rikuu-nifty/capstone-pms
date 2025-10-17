@@ -44,7 +44,7 @@
 
     th,
     td {
-        padding: 6px 8px;
+        padding: 4px 6px;
     }
 
     th {
@@ -98,6 +98,11 @@
 
     table.details td.value {
         width: 30%;
+    }
+
+    .report td:last-child {
+        white-space: normal;
+        word-wrap: break-word;
     }
 
     /* Signatories */
@@ -208,17 +213,20 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
 <table class="report" cellspacing="0" cellpadding="0">
     <thead>
         <tr class="head-gap">
-            <td colspan="8"></td>
+            <td colspan="10"></td>
         </tr>
         <tr>
-            <th style="width:36px;">Record #</th>
-            <th style="width:120px;">Asset Name (Type)</th>
-            <th style="width:100px;">Serial No.</th>
-            <th style="width:100px;">Receiving Office</th>
-            <th style="width:90px;">Unit Cost</th>
-            <th style="width:80px;">Status</th>
-            <th style="width:90px;">Document Date</th>
-            <th style="width:150px;">Remarks</th>
+            <th style="width:30px;">Record No.</th>
+            <th style="width:105px;">Asset Name</th>
+            <th style="width:75px;">Serial No.</th>
+            <th style="width:80px;">Turnover Category</th>
+            <th style="width:55px;">For Donation</th>
+            <th style="width:90px;">Receiving Office</th>
+            <th style="width:75px;">Unit Cost</th>
+            <th style="width:70px;">Status</th>
+            <th style="width:80px;">Date</th>
+            <th style="width:110px;">Remarks</th>
+
         </tr>
     </thead>
     <tbody>
@@ -226,7 +234,7 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
 
         @foreach ($grouped as $month => $offices)
         <tr class="group-month">
-            <td colspan="8">{{ $month }}</td>
+            <td colspan="10">{{ $month }}</td>
         </tr>
 
         @foreach ($offices as $office => $types)
@@ -239,7 +247,7 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
 
         @if ($showOfficeRow)
         <tr class="group-office">
-            <td colspan="8">Issuing Office: {{ $office ?? '—' }}</td>
+            <td colspan="10">Issuing Office: {{ $office ?? '—' }}</td>
         </tr>
         @endif
 
@@ -253,7 +261,7 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
 
         @if ($showTypeRow)
         <tr class="group-type">
-            <td colspan="8">{{ ucfirst($type) }}</td>
+            <td colspan="10">{{ ucfirst($type) }}</td>
         </tr>
         @endif
 
@@ -267,6 +275,8 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
                 </div>
             </td>
             <td>{{ $r->serial_no ?? '—' }}</td>
+            <td>{{ $r->turnover_category ? ucfirst(str_replace('_', ' ', $r->turnover_category)) : '—' }}</td>
+            <td>{{ $r->is_donation ? 'Yes' : 'No' }}</td>
             <td>{{ $r->receiving_office ?? '—' }}</td>
             <td>{{ isset($r->unit_cost) ? '₱ ' . number_format((float)$r->unit_cost, 2) : '—' }}</td>
             <td>{{ ucfirst($r->asset_status ?? $r->td_status ?? '—') }}</td>
@@ -281,12 +291,12 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
         {{-- ✅ Subtotals for the entire issuing office --}}
         @php $officeAssets = $types->flatten(1); @endphp
         <tr style="font-weight:bold; background:#f9f9f9; border-top:2px solid #000;">
-            <td colspan="8" style="text-align:right; padding:6px;">
+            <td colspan="10" style="text-align:right; padding:6px;">
                 Total Assets: {{ number_format($officeAssets->count()) }}
             </td>
         </tr>
         <tr style="font-weight:bold; background:#f9f9f9; border-bottom:2px solid #000;">
-            <td colspan="8" style="text-align:right; padding:6px;">
+            <td colspan="10" style="text-align:right; padding:6px;">
                 Total Cost: ₱ {{ number_format($officeAssets->sum(fn($r) => (float) ($r->unit_cost ?? 0)), 2) }}
             </td>
         </tr>
@@ -307,31 +317,31 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
 
     {{-- Section heading --}}
     <tr class="head-gap">
-        <td colspan="8"></td>
+        <td colspan="10"></td>
     </tr>
     <tr style="background:#e2e8f0; font-weight:bold; border-top:2px solid #000; border-bottom:2px solid #000;">
-        <td style="text-align:center; padding:8px; font-size:13px;" colspan="8">
+        <td style="text-align:center; padding:8px; font-size:13px;" colspan="10">
             SUMMARY
         </td>
     </tr>
 
     <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="8" style="text-align:right; padding:8px;">
+        <td colspan="10" style="text-align:right; padding:8px;">
             Total Turnovers: {{ number_format($totalTurnovers) }}
         </td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="8" style="text-align:right; padding:8px;">
+        <td colspan="10" style="text-align:right; padding:8px;">
             Total Disposals: {{ number_format($totalDisposals) }}
         </td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="8" style="text-align:right; padding:8px;">
+        <td colspan="10" style="text-align:right; padding:8px;">
             Total Assets: {{ number_format($totalAssets) }}
         </td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9; border-bottom:2px solid #000;">
-        <td colspan="8" style="text-align:right; padding:8px;">
+        <td colspan="10" style="text-align:right; padding:8px;">
             Total Cost: ₱ {{ number_format($totalCost, 2) }}
         </td>
     </tr>

@@ -32,13 +32,14 @@ class TurnoverDisposalReportController extends Controller
                 'issuing_office_id',
                 'receiving_office_id',
                 'category_id',
+                'turnover_category',
+                'is_donation',
             ]),
             fn($value) => !is_null($value) && $value !== ''
         );
 
         $perPage = (int) $request->get('per_page', 10);
 
-        // $paginator = TurnoverDisposal::filterAndPaginate($filters, $perPage);
         $paginator = TurnoverDisposal::filterAndPaginateAssets($filters, $perPage);
         $paginator->appends($filters);
 
@@ -92,7 +93,7 @@ class TurnoverDisposalReportController extends Controller
         $filename  = "Turnover_Disposal_Report-{$timestamp}.xlsx";
 
         return Excel::download(
-            new \App\Exports\TurnoverDisposalReportExport($records->items(), $filters),
+            new TurnoverDisposalReportExport($records->items(), $filters),
             $filename
         );
     }
