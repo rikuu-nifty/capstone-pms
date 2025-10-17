@@ -626,4 +626,32 @@ public function getNotedByTitleAttribute(): ?string
             'cancellation_rate' => $total > 0 ? round(($cancelled / $total) * 100, 1) : 0,
         ];
     }
+
+    public static function donationSummary(array $filters = [])
+    {
+        return DB::table('turnover_disposals as td')
+            ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
+            ->select([
+                'td.id as record_id',
+                'td.document_date',
+                'td.description',
+                'td.turnover_category',
+                'issuing.name as issuing_office',
+                'td.remarks',
+                DB::raw('(SELECT COUNT(*) FROM turnover_disposal_assets WHERE turnover_disposal_id = td.id) as quantity'),
+                DB::raw('(
+                    SELECT COALESCE(SUM(il.unit_cost), 0)
+                    FROM turnover_disposal_assets tda
+                    JOIN inventory_lists il ON il.id = tda.asset_id
+                    WHERE tda.turnover_disposal_id = td.id
+                ) as total_cost')
+            ])
+            ->where('td.is_donation', 1)
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
+            ->when($filters['issuing_office_id'] ?? null, fn($q, $issuing) => $q->where('td.issuing_office_id', $issuing))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
+            ->orderByDesc('td.document_date')
+            ->get();
+    }
 }

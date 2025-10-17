@@ -8,6 +8,7 @@ import Select from "react-select";
 import { Filter, RotateCcw, FileDown, FileSpreadsheet, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import TurnoverDisposalTable from "./TurnoverDisposalTable";
+import DonationSummaryTable from "./DonationSummaryTable";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import {
@@ -80,6 +81,17 @@ type PageProps = {
         is_donation?: string | null;   
     };
     chartData: ChartRow[];
+
+    donationSummary: {
+        record_id: number;
+        document_date: string;
+        description: string | null;
+        issuing_office: string | null;
+        quantity: number;
+        turnover_category: string | null;
+        remarks: string | null;
+        total_cost: number;
+    }[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -90,7 +102,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function TurnoverDisposalReport() {
     const firstLoadRef = React.useRef(true);
     
-    const { records, departments, categories, filters: initialFilters, chartData: initialChartData } = usePage<PageProps>().props;
+    const {
+        records,
+        departments,
+        categories,
+        filters: initialFilters,
+        chartData: initialChartData,
+        donationSummary,
+    } = usePage<PageProps>().props;
     const [chartData, setChartData] = useState(initialChartData);
 
     const chartConfig = {
@@ -116,7 +135,8 @@ export default function TurnoverDisposalReport() {
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
 
-    const [viewMode, setViewMode] = useState<'chart' | 'table'>('table');
+    // const [viewMode, setViewMode] = useState<'chart' | 'table'>('table');
+    const [viewMode, setViewMode] = useState<'chart' | 'table' | 'donations'>('table');
 
     function updateFilter<K extends keyof typeof filters>(
         key: K,
@@ -506,7 +526,7 @@ export default function TurnoverDisposalReport() {
                                     Download as
                                 </p>
                                 <div className="mb-2 border-t" />
-                                <button
+                                {/* <button
                                     onClick={() => {
                                         const query = buildQuery(filters)
                                         window.open(
@@ -520,16 +540,31 @@ export default function TurnoverDisposalReport() {
                                 >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel
+                                </button> */}
+                                <button
+                                    onClick={() => {
+                                        const query = buildQuery(filters);
+                                        const excelRoute =
+                                        viewMode === "donations"
+                                            ? route("reports.turnover-disposal.export.donations.excel")
+                                            : route("reports.turnover-disposal.export.excel");
+
+                                        window.open(`${excelRoute}?${query}`, "_blank");
+                                    }}
+                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                    >
+                                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                    Excel
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const query = buildQuery(filters)
-                                        window.open(
-                                        route("reports.turnover-disposal.export.pdf") +
-                                            "?" +
-                                            query,
-                                        "_blank"
-                                        )
+                                        const query = buildQuery(filters);
+                                        const pdfRoute =
+                                            viewMode === "donations"
+                                                ? route("reports.turnover-disposal.export.donations.pdf")
+                                                : route("reports.turnover-disposal.export.pdf");
+
+                                        window.open(`${pdfRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                 >
@@ -546,7 +581,7 @@ export default function TurnoverDisposalReport() {
                     <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                         <CardTitle>Turnover / Disposal Records</CardTitle>
                         <div className="mt-2 flex gap-2 sm:mt-0">
-                            <div className="inline-flex rounded-md shadow-sm">
+                            {/* <div className="inline-flex rounded-md shadow-sm">
                                 <button
                                     onClick={() => {
                                         setViewMode("chart");
@@ -563,7 +598,7 @@ export default function TurnoverDisposalReport() {
                                 <button
                                     onClick={() => {
                                         setViewMode("table");
-                                        // refreshData(page); // 🔄 reload data + chart
+                                        // refreshData(page);
                                     }}
                                     className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
                                         viewMode === 'table'
@@ -572,6 +607,40 @@ export default function TurnoverDisposalReport() {
                                     } rounded-r-md`}
                                 >
                                     Table
+                                </button>
+                            </div> */}
+                            <div className="inline-flex rounded-md shadow-sm">
+                                <button
+                                    onClick={() => setViewMode("chart")}
+                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
+                                    viewMode === 'chart'
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    } rounded-l-md`}
+                                >
+                                    Chart
+                                </button>
+
+                                <button
+                                    onClick={() => setViewMode("table")}
+                                    className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
+                                    viewMode === 'table'
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    General
+                                </button>
+
+                                <button
+                                    onClick={() => setViewMode("donations")}
+                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
+                                    viewMode === 'donations'
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    } rounded-r-md`}
+                                >
+                                    Donations
                                 </button>
                             </div>
                         </div>
@@ -614,7 +683,8 @@ export default function TurnoverDisposalReport() {
                                 </ResponsiveContainer>
                             </ChartContainer>
 
-                        ) : (
+                        // ) : (
+                        ) : viewMode === 'table' ? (
                             <TurnoverDisposalTable
                                 records={displayed}
                                 page={page}
@@ -623,9 +693,12 @@ export default function TurnoverDisposalReport() {
                                 onPageChange={(newPage) => setPage(newPage)}
                                 hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
                             />
-
-
-                        )}
+                            ) : (
+                                <DonationSummaryTable 
+                                    donationSummary={donationSummary}
+                                />
+                            )}
+                        {/* )} */}
                     </CardContent>
                     {viewMode === 'chart' && (
                         <CardFooter className="flex-col gap-2 pt-4 text-sm">

@@ -34,7 +34,7 @@ class TurnoverDisposalReportExport implements FromView, WithColumnWidths, WithSt
             'B' => 30, // Asset Name
             'C' => 18, // Serial No.
             'D' => 20, // Turnover Category
-            'E' => 14, // For Donation
+            'E' => 18, // For Donation
             'F' => 25, // Receiving Office
             'G' => 18, // Unit Cost
             'H' => 15, // Status

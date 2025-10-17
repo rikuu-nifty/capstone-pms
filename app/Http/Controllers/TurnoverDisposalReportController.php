@@ -14,6 +14,7 @@ use App\Models\BuildingRoom;
 use App\Models\UnitOrDepartment;
 use App\Models\Category;
 use App\Exports\TurnoverDisposalReportExport;
+use App\Exports\TurnoverDisposalDonationsExport;
 
 use Carbon\CarbonPeriod;
 
@@ -58,6 +59,8 @@ class TurnoverDisposalReportController extends Controller
             ];
         });
 
+        $donationSummary = TurnoverDisposal::donationSummary($filters);
+
         return Inertia::render('reports/TurnoverDisposalReport', [
             'title'         => 'Turnover/Disposal Report',
             'summary'       => TurnoverDisposal::summaryCounts(),
@@ -81,6 +84,7 @@ class TurnoverDisposalReportController extends Controller
             'rooms'         => BuildingRoom::select('id', 'room as name', 'building_id')->get(),
             'filters'       => $filters,
             'chartData'     => $chartData,
+            'donationSummary' => $donationSummary,
         ]);
     }
 
@@ -109,7 +113,37 @@ class TurnoverDisposalReportController extends Controller
         ])->setPaper('A4', 'landscape')
         ->setOption('isPhpEnabled', true);
 
-        // return $pdf->download('Turnover_Disposal_Report-' . now()->format('Y-m-d') . '.pdf');
+        // return $pdf->download('Turnover_Disposal_Report -' . now()->format('Y-m-d') . '.pdf');
         return $pdf->stream('Turnover_Disposal_Report');
+    }
+
+    public function exportDonationPdf(Request $request)
+    {
+        $filters = $request->all();
+        $donationSummary = TurnoverDisposal::donationSummary($filters);
+
+        $pdf = Pdf::loadView('reports.turnover_disposal_donations_pdf', [
+            'donationSummary' => $donationSummary,
+            'filters' => $filters,
+        ])
+            ->setPaper('A4', 'landscape')
+            ->setOption('isPhpEnabled', true);
+
+        // return $pdf->download('Donation_Summary_Report -' . now()->format('Y-m-d') . '.pdf');
+        return $pdf->stream('Donation_Summary_Report');
+    }
+
+    public function exportDonationExcel(Request $request)
+    {
+        $filters = $request->all();
+        $donationSummary = \App\Models\TurnoverDisposal::donationSummary($filters);
+
+        $timestamp = now()->format('Y-m-d');
+        $filename  = "Donation_Summary_Report-{$timestamp}.xlsx";
+
+        return Excel::download(
+            new TurnoverDisposalDonationsExport($donationSummary, $filters),
+            $filename
+        );
     }
 }

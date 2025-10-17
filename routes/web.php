@@ -153,6 +153,10 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         Route::get('/turnover-disposal', [TurnoverDisposalReportController::class, 'index']) ->name('reports.turnover-disposal');
         Route::get('/turnover-disposal/export/pdf', [TurnoverDisposalReportController::class, 'exportPdf'])->name('reports.turnover-disposal.export.pdf');
         Route::get('/turnover-disposal/export/excel', [TurnoverDisposalReportController::class, 'exportExcel'])->name('reports.turnover-disposal.export.excel');
+
+        Route::get('reports/turnover-disposal/export/donations/pdf', [TurnoverDisposalReportController::class, 'exportDonationPdf'])->name('reports.turnover-disposal.export.donations.pdf');
+        Route::get('/reports/turnover-disposal/export/donations/excel', [TurnoverDisposalReportController::class, 'exportDonationExcel'])
+            ->name('reports.turnover-disposal.export.donations.excel');
     });
 
     // Unified Signatories Management
