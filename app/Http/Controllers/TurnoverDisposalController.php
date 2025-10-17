@@ -23,86 +23,82 @@ use App\Models\TurnoverDisposalSignatory;
 class TurnoverDisposalController extends Controller
 {
     private function indexProps(): array
-{
-    $assignedBy = Auth::user();
+    {
+        $assignedBy = Auth::user();
 
-    $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
+        $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
 
-    $pmoHead = User::where('role_id', $pmoHeadRoleId)
-        ->where('status', 'approved')
-        ->first();
+        $pmoHead = User::where('role_id', $pmoHeadRoleId)
+            ->where('status', 'approved')
+            ->first();
 
-    $unitOrDepartments = UnitOrDepartment::all();
-    $personnels = Personnel::activeForAssignments();
+        $unitOrDepartments = UnitOrDepartment::all();
+        $personnels = Personnel::activeForAssignments();
 
-    $turnoverDisposals = TurnoverDisposal::with([
-        'turnoverDisposalAssets.assets.assetModel.category',
-        'issuingOffice',
-        'receivingOffice',
-        'turnoverDisposalAssets.assets.building',
-        'turnoverDisposalAssets.assets.buildingRoom',
-        'turnoverDisposalAssets.assets.subArea',
-        'turnoverDisposalAssets.assets.assetModel.equipmentCode',
-    ])
-    ->withCount('turnoverDisposalAssets as asset_count')
-    ->latest()
-    ->get();
+        $turnoverDisposals = TurnoverDisposal::with([
+            'turnoverDisposalAssets.assets.assetModel.category',
+            'issuingOffice',
+            'receivingOffice',
+            'turnoverDisposalAssets.assets.building',
+            'turnoverDisposalAssets.assets.buildingRoom',
+            'turnoverDisposalAssets.assets.subArea',
+            'turnoverDisposalAssets.assets.assetModel.equipmentCode',
+        ])
+        ->withCount('turnoverDisposalAssets as asset_count')
+        ->latest()
+        ->get();
 
-    $turnoverDisposalAssets = TurnoverDisposalAsset::with([
-        'assets.assetModel.category',
-    ])
-    ->whereHas('turnoverDisposal', function ($q) {
-        $q->where('status', '!=', 'disposed');
-    })
-    ->get();
+        $turnoverDisposalAssets = TurnoverDisposalAsset::with([
+            'assets.assetModel.category',
+        ])
+        ->whereHas('turnoverDisposal', function ($q) {
+            $q->where('status', '!=', 'disposed');
+        })
+        ->get();
 
-    $assets = InventoryList::with([
-        'assetModel.category',
-        'building:id,name',
-        'buildingRoom:id,room,building_id',
-        'subArea:id,name,building_room_id',
-    ])->get();
+        $assets = InventoryList::with([
+            'assetModel.category',
+            'building:id,name',
+            'buildingRoom:id,room,building_id',
+            'subArea:id,name,building_room_id',
+        ])->get();
 
-    // ✅ NEW: load global signatories
-    $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
+        $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
 
-    return [
-        'turnoverDisposals'      => $turnoverDisposals,
-        'turnoverDisposalAssets' => $turnoverDisposalAssets,
-        'assets'                 => $assets,
-        'unitOrDepartments'      => $unitOrDepartments,
-        'assignedBy'             => $assignedBy,
-        'pmoHead'                => $pmoHead,
-        'personnels'             => $personnels,
-        'signatories'            => $signatories, // ✅ include this
+        return [
+            'turnoverDisposals'      => $turnoverDisposals,
+            'turnoverDisposalAssets' => $turnoverDisposalAssets,
+            'assets'                 => $assets,
+            'unitOrDepartments'      => $unitOrDepartments,
+            'assignedBy'             => $assignedBy,
+            'pmoHead'                => $pmoHead,
+            'personnels'             => $personnels,
+            'signatories'            => $signatories,
 
-        'totals'            => TurnoverDisposal::dashboardTotals(),
-    ];
-}
+            'totals'            => TurnoverDisposal::dashboardTotals(),
+        ];
+    }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         return Inertia::render('turnover-disposal/index', $this->indexProps());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'issuing_office_id'                                       => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'type'                                                    => ['required', Rule::in(['turnover', 'disposal'])],
-            'receiving_office_id'                                     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'description'                                             => ['nullable', 'string'],
-            'personnel_in_charge'                                     => ['nullable', 'string'],
-            'personnel_id'                                          => ['required', 'integer', Rule::exists('personnels', 'id')],
-            'document_date'                                           => ['required', 'date'],
-            'status'                                                  => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
-            'remarks'                                                 => ['nullable', 'string'],
+            'issuing_office_id'         => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type'                      => ['required', Rule::in(['turnover', 'disposal'])],
+            'turnover_category'         => ['nullable', Rule::in(['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'])],
+
+            'receiving_office_id'       => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description'               => ['nullable', 'string'],
+            'personnel_in_charge'       => ['nullable', 'string'],
+            'personnel_id'              => ['required', 'integer', Rule::exists('personnels', 'id')],
+            'document_date'             => ['required', 'date'],
+            'status'                    => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
+            'remarks'                   => ['nullable', 'string'],
+            'is_donation'               => ['boolean'],
 
             'turnover_disposal_assets'              => ['required', 'array', 'min:1'],
             'turnover_disposal_assets.*.asset_id'   => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
@@ -124,15 +120,18 @@ class TurnoverDisposalController extends Controller
     public function update(Request $request, TurnoverDisposal $turnoverDisposal)
     {
         $validated = $request->validate([
-            'issuing_office_id'                     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'type'                                  => ['required', Rule::in(['turnover', 'disposal'])],
-            'receiving_office_id'                   => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'description'                           => ['nullable', 'string'],
-            'personnel_in_charge'                   => ['nullable', 'string'],
-            'personnel_id'                          => ['required', 'integer', Rule::exists('personnels', 'id')],
-            'document_date'                         => ['required', 'date'],
-            'status'                                => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
-            'remarks'                               => ['nullable', 'string'],
+            'issuing_office_id'         => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'type'                      => ['required', Rule::in(['turnover', 'disposal'])],
+            'turnover_category'         => ['nullable', Rule::in(['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'])],
+
+            'receiving_office_id'       => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'description'               => ['nullable', 'string'],
+            'personnel_in_charge'       => ['nullable', 'string'],
+            'personnel_id'              => ['required', 'integer', Rule::exists('personnels', 'id')],
+            'document_date'             => ['required', 'date'],
+            'status'                    => ['required', Rule::in(['pending_review', 'approved', 'rejected', 'cancelled', 'completed'])],
+            'remarks'                   => ['nullable', 'string'],
+            'is_donation'               => ['boolean'],
 
             'turnover_disposal_assets'              => ['required', 'array', 'min:1'],
             'turnover_disposal_assets.*.asset_id'   => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
@@ -229,7 +228,7 @@ class TurnoverDisposalController extends Controller
     // Load DB signatories
     $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
 
-    // ✅ Inject "Head / Unit" dynamically (if not in DB)
+    // Inject "Head / Unit" dynamically (if not in DB)
     $signatories['head_unit'] = [
         'name'  => $turnoverDisposal->issuingOffice->unit_head ?? '—',
         'title' => 'Head / Unit',

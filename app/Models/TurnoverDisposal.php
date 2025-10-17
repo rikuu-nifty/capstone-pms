@@ -18,6 +18,7 @@ class TurnoverDisposal extends Model
     protected $fillable = [
         'issuing_office_id',
         'type',
+        'turnover_category',
         'receiving_office_id',
         'description',
         'personnel_in_charge',
@@ -25,12 +26,14 @@ class TurnoverDisposal extends Model
         'document_date',
         'status',
         'remarks',
+        'is_donation',
     ];
 
     protected $casts = 
     [
         'document_date' => 'date:Y-m-d',
         'deleted_at'    => 'datetime',
+        'is_donation'   => 'boolean',
     ];
 
     protected $appends = ['noted_by_name', 'noted_by_title'];
@@ -291,6 +294,8 @@ class TurnoverDisposal extends Model
         $this->fill([
             'issuing_office_id'   => $payload['issuing_office_id'],
             'type'                => $payload['type'],
+            'turnover_category'   => $payload['turnover_category'] ?? null,
+
             'receiving_office_id' => $payload['receiving_office_id'],
             'description'         => $payload['description'] ?? null,
             'personnel_in_charge' => $payload['personnel_in_charge'],
@@ -298,6 +303,7 @@ class TurnoverDisposal extends Model
             'document_date'       => $payload['document_date'],
             'status'              => $payload['status'],
             'remarks'             => $payload['remarks'] ?? null,
+            'is_donation'         => $payload['is_donation'] ?? false,
         ])->save();
     }
 

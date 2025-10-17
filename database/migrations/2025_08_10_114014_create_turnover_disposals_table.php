@@ -16,15 +16,19 @@ return new class extends Migration
 
             $table->unsignedBigInteger('issuing_office_id');
             $table->enum('type', ['turnover', 'disposal']);
+            $table->enum('turnover_category', ['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'])->nullable();
+            
             $table->unsignedBigInteger('receiving_office_id');
-            $table->text('description')->nullable(); // keep to describe reason
-            $table->string('personnel_in_charge')->nullable(); //who the asset was assigned to
+            $table->text('description')->nullable();
+            $table->string('personnel_in_charge')->nullable();
 
             $table->unsignedBigInteger('personnel_id');
 
-            $table->date('document_date'); // date written on the signed form
+            $table->date('document_date');
             $table->enum('status', ['pending_review', 'approved', 'rejected', 'cancelled', 'completed']);
             $table->text('remarks')->nullable();
+            $table->boolean('is_donation')->default(false);
+
             $table->foreignId('created_by_id')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();

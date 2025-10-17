@@ -22,6 +22,7 @@ interface TurnoverDisposalEditModalProps {
 
 const typeOptions = ['turnover', 'disposal'] as const;
 const statusOptions = ['pending_review', 'approved', 'rejected', 'cancelled', 'completed'] as const;
+const categoryOptions = ['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'] as const;
 
 export default function TurnoverDisposalEditModal({
   show,
@@ -34,12 +35,16 @@ export default function TurnoverDisposalEditModal({
   const { data, setData, put, processing, errors, clearErrors } = useForm<TurnoverDisposalFormData>({
     issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
     type: turnoverDisposal.type,
+    turnover_category: turnoverDisposal.turnover_category ?? null,
+
     receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
     description: turnoverDisposal.description ?? '',
     personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
     document_date: turnoverDisposal.document_date ?? '',
     status: turnoverDisposal.status,
     remarks: turnoverDisposal.remarks ?? '',
+    is_donation: turnoverDisposal.is_donation ?? false,
+
     turnover_disposal_assets: (turnoverDisposal.turnover_disposal_assets ?? []).map<TurnoverDisposalAssetInput>((li) => ({
       asset_id: li.asset_id,
       asset_status: li.asset_status as TdaStatus,
@@ -60,6 +65,8 @@ export default function TurnoverDisposalEditModal({
       ...prev,
       issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
       type: turnoverDisposal.type,
+      turnover_category: turnoverDisposal.turnover_category ?? null,
+      
       receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
       description: turnoverDisposal.description ?? '',
       personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
@@ -67,6 +74,8 @@ export default function TurnoverDisposalEditModal({
       document_date: formatForPrefillDate(turnoverDisposal.document_date) ?? '',
       status: turnoverDisposal.status,
       remarks: turnoverDisposal.remarks ?? '',
+      is_donation: turnoverDisposal.is_donation ?? false,
+
       turnover_disposal_assets: (turnoverDisposal.turnover_disposal_assets ?? []).map<TurnoverDisposalAssetInput>((li) => ({
         asset_id: li.asset_id,
         asset_status: li.asset_status as TdaStatus,
@@ -144,22 +153,44 @@ export default function TurnoverDisposalEditModal({
         {errors.type && <p className="mt-1 text-xs text-red-500">{errors.type}</p>}
       </div>
 
-      {/* Status */}
+      {/* Turnover Category */}
       <div className="col-span-1">
-        <label className="mb-1 block font-medium">Status</label>
+        <label className="mb-1 block font-medium">Turnover Category</label>
         <select
           className="w-full rounded-lg border p-2"
-          value={data.status}
-          onChange={(e) => setData('status', e.target.value as (typeof statusOptions)[number])}
+          value={data.turnover_category ?? ''}
+          onChange={(e) =>
+            setData(
+              'turnover_category',
+              (e.target.value === '' ? null : e.target.value as (typeof categoryOptions)[number])
+            )
+          }
         >
-          <option value="">Select Status</option>
-          {statusOptions.map((s) => (
-            <option key={s} value={s}>
-              {formatEnums(s)}
+          <option value="">Select Category</option>
+          {categoryOptions.map((cat) => (
+            <option key={cat} value={cat}>
+              {formatEnums(cat)}
             </option>
           ))}
         </select>
-        {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+        {errors.turnover_category && <p className="mt-1 text-xs text-red-500">{errors.turnover_category}</p>}
+      </div>
+
+      {/* Donation Checkbox */}
+      <div className="col-span-2 flex items-center gap-2">
+        <input
+          id="is_donation"
+          type="checkbox"
+          className="cursor-pointer"
+          checked={!!data.is_donation}
+          onChange={(e) => setData('is_donation', e.target.checked)}
+        />
+        <label 
+          htmlFor="is_donation" 
+          className="text-sm font-medium"
+        >
+          For Donation
+        </label>
       </div>
 
       {/* Issuing Office */}
@@ -180,7 +211,7 @@ export default function TurnoverDisposalEditModal({
             const id = opt ? opt.value : 0;
             setData('issuing_office_id', id);
             setData('personnel_id', null);
-            setData('turnover_disposal_assets', []); // reset linked assets if office changes
+            setData('turnover_disposal_assets', []);
             setShowAssetDropdown([true]);
           }}
           options={unitOrDepartments.map((unit) => ({
@@ -223,6 +254,24 @@ export default function TurnoverDisposalEditModal({
         )}
       </div>
 
+      {/* Status */}
+      <div className="col-span-1">
+        <label className="mb-1 block font-medium">Status</label>
+        <select
+          className="w-full rounded-lg border p-2"
+          value={data.status}
+          onChange={(e) => setData('status', e.target.value as (typeof statusOptions)[number])}
+        >
+          <option value="">Select Status</option>
+          {statusOptions.map((s) => (
+            <option key={s} value={s}>
+              {formatEnums(s)}
+            </option>
+          ))}
+        </select>
+        {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+      </div>
+      
       {/* Description */}
       <div className="col-span-2">
         <label className="mb-1 block font-medium">Description</label>

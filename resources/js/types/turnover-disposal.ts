@@ -5,6 +5,8 @@ export type TurnoverDisposals = {
     id: number;
     issuing_office_id: number;
     type: 'turnover' | 'disposal';
+    turnover_category?: 'sharps' | 'breakages' | 'chemical' | 'hazardous' | 'non_hazardous' | null;
+
     receiving_office_id: number;
     description: string | null;
     personnel_in_charge: string;
@@ -12,6 +14,8 @@ export type TurnoverDisposals = {
     document_date: string;
     status: 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed';
     remarks: string | null;
+    is_donation?: boolean;
+
     asset_count: number;
 
     issuing_office?: UnitOrDepartment;
@@ -32,14 +36,16 @@ export type TurnoverDisposals = {
 export type TurnoverDisposalFormData = {
     issuing_office_id: number;
     type: 'turnover' | 'disposal';
+    turnover_category?: 'sharps' | 'breakages' | 'chemical' | 'hazardous' | 'non_hazardous' | null;
+
     receiving_office_id: number;
     description: string | null;
     personnel_in_charge: string;
     document_date: string;
     status: 'pending_review' | 'approved' | 'rejected' | 'cancelled' | 'completed';
     remarks: string | null;
+    is_donation?: boolean;
 
-    // selected_assets: number[];
     turnover_disposal_assets: TurnoverDisposalAssetInput[];
 
     personnel_id?: number | null;
