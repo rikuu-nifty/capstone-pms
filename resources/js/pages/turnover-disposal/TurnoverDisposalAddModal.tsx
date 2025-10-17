@@ -29,12 +29,14 @@ export default function TurnoverDisposalAddModal({
   assets,
   personnels,
 }: TurnoverDisposalAddModalProps) {
-  const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TurnoverDisposalFormData>({
+  const { data, setData, post, processing, errors, reset, clearErrors, setError } = useForm<TurnoverDisposalFormData>({
     issuing_office_id: 0,
     type: 'turnover',
     turnover_category: null,
 
-    receiving_office_id: 0,
+    receiving_office_id: null, // null not 0 for nullable to be less buggy
+    external_recipient: '',
+
     description: '',
     personnel_in_charge: '',
     document_date: '',
@@ -69,6 +71,26 @@ export default function TurnoverDisposalAddModal({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    clearErrors();
+
+    let hasError = false;
+
+    if (data.is_donation) {
+        const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
+        const isReceivingOfficeEmpty = !data.receiving_office_id;
+
+        if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
+            hasError = true;
+            const errorMessage = 'For Donations, either the External Recipient or the Receiving Office must be filled.';
+            setError('external_recipient', errorMessage);
+            // setError('receiving_office_id', errorMessage);
+        }
+    }
+
+    if (hasError) {
+        return;
+    }
+
     post('/turnover-disposal', {
       preserveScroll: true,
       onSuccess: () => {
@@ -163,6 +185,22 @@ export default function TurnoverDisposalAddModal({
         >
           For Donation
         </label>
+      </div>
+
+      {/* External Recipient */}
+      <div className="col-span-2">
+        <label className="mb-1 block font-medium">External Recipient</label>
+        <input
+          type="text"
+          className={`w-full rounded-lg border p-2 ${!data.is_donation ? 'bg-gray-100 text-gray-500' : ''}`}
+          placeholder="Enter recipient name or organization for donation"
+          value={data.external_recipient ?? ''}
+          onChange={(e) => setData('external_recipient', e.target.value)}
+          disabled={!data.is_donation}
+        />
+        {errors.external_recipient && (
+          <p className="mt-1 text-xs text-red-500">{errors.external_recipient}</p>
+        )}
       </div>
 
       {/* Issuing Office */}

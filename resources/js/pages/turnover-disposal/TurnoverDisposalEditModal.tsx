@@ -32,12 +32,14 @@ export default function TurnoverDisposalEditModal({
   assets,
   personnels,
 }: TurnoverDisposalEditModalProps) {
-  const { data, setData, put, processing, errors, clearErrors } = useForm<TurnoverDisposalFormData>({
+  const { data, setData, put, processing, errors, clearErrors, setError } = useForm<TurnoverDisposalFormData>({
     issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
     type: turnoverDisposal.type,
     turnover_category: turnoverDisposal.turnover_category ?? null,
 
-    receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
+    receiving_office_id: turnoverDisposal.receiving_office_id ?? null,
+    external_recipient: turnoverDisposal.external_recipient ?? '',
+
     description: turnoverDisposal.description ?? '',
     personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
     document_date: turnoverDisposal.document_date ?? '',
@@ -67,7 +69,7 @@ export default function TurnoverDisposalEditModal({
       type: turnoverDisposal.type,
       turnover_category: turnoverDisposal.turnover_category ?? null,
       
-      receiving_office_id: turnoverDisposal.receiving_office_id ?? 0,
+      receiving_office_id: turnoverDisposal.receiving_office_id ?? null,
       description: turnoverDisposal.description ?? '',
       personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
       // document_date: formatForInputDate(turnoverDisposal.document_date) ?? '',
@@ -101,6 +103,27 @@ export default function TurnoverDisposalEditModal({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    clearErrors();
+
+    let hasError = false;
+
+    if (data.is_donation) {
+        const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
+        const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+
+        if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
+            hasError = true;
+            const errorMessage = 'For Donations, either the External Recipient or the Receiving Office must be filled.';
+            setError('external_recipient', errorMessage);
+            // setError('receiving_office_id', errorMessage);
+        }
+    }
+
+    if (hasError) {
+        // Stop the form submission if validation failed
+        return;
+    }
+
     put(`/turnover-disposal/${turnoverDisposal.id}`, {
       preserveScroll: true,
       onSuccess: () => {
@@ -193,6 +216,22 @@ export default function TurnoverDisposalEditModal({
         </label>
       </div>
 
+      {/* External Recipient */}
+      <div className="col-span-2">
+        <label className="mb-1 block font-medium">External Recipient</label>
+        <input
+          type="text"
+          className={`w-full rounded-lg border p-2 ${!data.is_donation ? 'bg-gray-100 text-gray-500' : ''}`}
+          placeholder="Enter recipient name or organization for donation"
+          value={data.external_recipient ?? ''}
+          onChange={(e) => setData('external_recipient', e.target.value)}
+          disabled={!data.is_donation}
+        />
+        {errors.external_recipient && (
+          <p className="mt-1 text-xs text-red-500">{errors.external_recipient}</p>
+        )}
+      </div>
+
       {/* Issuing Office */}
       <div className="col-span-1">
         <label className="mb-1 block font-medium">Issuing Office</label>
@@ -240,7 +279,7 @@ export default function TurnoverDisposalEditModal({
               .find((opt) => opt.value === data.receiving_office_id) ?? null
           }
           onChange={(opt) => {
-            const id = opt ? opt.value : 0;
+            const id = opt ? opt.value : null;
             setData('receiving_office_id', id);
           }}
           options={unitOrDepartments.map((unit) => ({

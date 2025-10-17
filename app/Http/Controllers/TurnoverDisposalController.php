@@ -91,7 +91,14 @@ class TurnoverDisposalController extends Controller
             'type'                      => ['required', Rule::in(['turnover', 'disposal'])],
             'turnover_category'         => ['nullable', Rule::in(['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'])],
 
-            'receiving_office_id'       => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'receiving_office_id'       => ['nullable', 'integer', Rule::exists('unit_or_departments', 'id')],
+            // 'external_recipient'        => ['nullable', 'string', 'max:255'],
+            'external_recipient'  => [
+                Rule::requiredIf(fn() => $request->boolean('is_donation') && !$request->input('receiving_office_id')),
+                'nullable',
+                'string'
+            ],
+
             'description'               => ['nullable', 'string'],
             'personnel_in_charge'       => ['nullable', 'string'],
             'personnel_id'              => ['required', 'integer', Rule::exists('personnels', 'id')],
@@ -104,6 +111,16 @@ class TurnoverDisposalController extends Controller
             'turnover_disposal_assets.*.asset_id'   => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
             'turnover_disposal_assets.*.remarks'    => ['nullable', 'string'],
         ]);
+
+        if (
+            ($validated['is_donation'] ?? false) &&
+            empty($validated['receiving_office_id']) &&
+            empty($validated['external_recipient'])
+        ) {
+            return back()
+                ->withErrors(['external_recipient' => 'Please specify either a receiving office or an external recipient for this donation.'])
+                ->withInput();
+        }
 
         $lines = $validated['turnover_disposal_assets'];
         unset($validated['turnover_disposal_assets']);
@@ -124,7 +141,9 @@ class TurnoverDisposalController extends Controller
             'type'                      => ['required', Rule::in(['turnover', 'disposal'])],
             'turnover_category'         => ['nullable', Rule::in(['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'])],
 
-            'receiving_office_id'       => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'receiving_office_id'       => ['nullable', 'integer', Rule::exists('unit_or_departments', 'id')],
+            'external_recipient'        => ['nullable', 'string', 'max:255'],
+
             'description'               => ['nullable', 'string'],
             'personnel_in_charge'       => ['nullable', 'string'],
             'personnel_id'              => ['required', 'integer', Rule::exists('personnels', 'id')],
@@ -138,6 +157,16 @@ class TurnoverDisposalController extends Controller
             'turnover_disposal_assets.*.remarks'    => ['nullable', 'string'],
 
         ]);
+
+        if (
+            ($validated['is_donation'] ?? false) &&
+            empty($validated['receiving_office_id']) &&
+            empty($validated['external_recipient'])
+        ) {
+            return back()
+                ->withErrors(['external_recipient' => 'Please specify either a receiving office or an external recipient for this donation.'])
+                ->withInput();
+        }
 
         $lines = $validated['turnover_disposal_assets'];
         unset($validated['turnover_disposal_assets']);

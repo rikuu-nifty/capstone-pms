@@ -7,7 +7,9 @@ export type TurnoverDisposals = {
     type: 'turnover' | 'disposal';
     turnover_category?: 'sharps' | 'breakages' | 'chemical' | 'hazardous' | 'non_hazardous' | null;
 
-    receiving_office_id: number;
+    receiving_office_id: number | null; // now nullable
+    external_recipient?: string | null;
+
     description: string | null;
     personnel_in_charge: string;
     personnel_id?: number | null;
@@ -38,7 +40,9 @@ export type TurnoverDisposalFormData = {
     type: 'turnover' | 'disposal';
     turnover_category?: 'sharps' | 'breakages' | 'chemical' | 'hazardous' | 'non_hazardous' | null;
 
-    receiving_office_id: number;
+    receiving_office_id: number | null; // now nullable
+    external_recipient?: string | null;
+
     description: string | null;
     personnel_in_charge: string;
     document_date: string;

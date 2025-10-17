@@ -352,6 +352,7 @@ export default function TurnoverDisposalsIndex({
                                 <TableHead className="text-center">Turnover Category</TableHead>
                                 <TableHead className="text-center">For Donation</TableHead>
                                 <TableHead className="text-center">Receiving Office Code</TableHead>
+                                <TableHead className="text-center">External Recipient</TableHead>
                                 {/* <TableHead className="text-center">Description</TableHead> */}
                                 <TableHead className="text-center">Asset Count</TableHead>
                                 <TableHead className="text-center">Document Date</TableHead>
@@ -386,9 +387,13 @@ export default function TurnoverDisposalsIndex({
                                                 )}
                                         </TableCell>
                                         <TableCell>
-                                            {(formatEnums(turnoverDisposals.receiving_office?.code).toUpperCase())}
+                                            {(formatEnums(turnoverDisposals.receiving_office?.code ?? '—').toUpperCase())}
                                         </TableCell>
-                                        {/* <TableCell>{ turnoverDisposals.description ?? '—'}</TableCell> */}
+                                        <TableCell>
+                                            {turnoverDisposals.external_recipient
+                                                ? turnoverDisposals.external_recipient
+                                                : '—'}
+                                        </TableCell>
                                         <TableCell>{ turnoverDisposals.asset_count }</TableCell>
                                         <TableCell>{ formatDateLong(turnoverDisposals.document_date) }</TableCell>
                                         <TableCell>
@@ -456,7 +461,7 @@ export default function TurnoverDisposalsIndex({
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                    <TableCell colSpan={10} className="text-center text-sm text-muted-foreground">
                                         No turnover or disposal records found.
                                     </TableCell>
                                 </TableRow>

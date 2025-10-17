@@ -20,6 +20,7 @@ class TurnoverDisposal extends Model
         'type',
         'turnover_category',
         'receiving_office_id',
+        'external_recipient',
         'description',
         'personnel_in_charge',
         'personnel_id',
