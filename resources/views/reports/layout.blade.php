@@ -150,6 +150,8 @@
         </div>
     </header>
 
+    
+
     <main>
         {{-- Default section for content --}}
         @yield('content')

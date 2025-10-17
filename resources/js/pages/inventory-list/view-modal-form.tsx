@@ -38,6 +38,7 @@ const StatusBadge = ({ status }: { status?: string | null }) => {
 
 // -------------------- COMPONENT --------------------
 export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () => void }) => {
+    // console.log('🧩 Asset Data:', asset);
     const totalCost = asset.unit_cost && asset.quantity ? Number(asset.unit_cost) * Number(asset.quantity) : null;
 
     const InfoCard = ({ label, value }: { label: string; value: string }) => (
@@ -119,10 +120,15 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 {/* <InfoCard label="Type" value={humanize(asset.asset_type)} /> */}
                                 <InfoCard
                                     label="Equipment Code"
+                                    value={asset.asset_model?.equipment_code ? (asset.asset_model.equipment_code.code ?? '-') : '-'}
+                                />
+                                {/* ✅ New: Asset Type */}
+                                <InfoCard
+                                    label="Asset Type"
                                     value={
-                                        asset.asset_model?.equipment_code
-                                            ? `${ucwords(asset.asset_model.equipment_code.description ?? '')} [${asset.asset_model.equipment_code.code}]`
-                                            : humanize(asset.asset_type)
+                                        asset.asset_type
+                                            ? ucwords(asset.asset_type) // shows "Fixed" or "Not Fixed"
+                                            : '-'
                                     }
                                 />
 
@@ -130,7 +136,9 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <InfoCard label="Brand" value={humanize(asset.asset_model?.brand)} />
                                 <InfoCard label="Model" value={humanize(asset.asset_model?.model)} />
                                 <InfoCard label="Serial Number" value={humanize(asset.serial_no)} />
-                                <InfoCard label="Description" value={humanize(asset.description)} />
+                                <div className="sm:col-span-2">
+                                    <InfoCard label="Description" value={humanize(asset.description)} />
+                                </div>
                             </div>
                         </div>
 

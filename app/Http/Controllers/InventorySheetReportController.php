@@ -239,8 +239,8 @@ class InventorySheetReportController extends Controller
         $timestamp = now()->format('Y-m-d');
 
         // dd($assets->first());
-        // return $pdf->download("Inventory-Sheet-Report-{$timestamp}.pdf");
-        return $pdf->stream('inventory_sheet_report.pdf');
+        return $pdf->download("Inventory-Sheet-Report-{$timestamp}.pdf");
+        // return $pdf->stream('inventory_sheet_report.pdf');
     }
 
     public function exportExcel(Request $request)

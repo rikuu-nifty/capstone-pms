@@ -34,19 +34,25 @@ class InventoryListController extends Controller
      * Display a listing of the resource.
      */
 
-    public function publicSummary(InventoryList $inventory_list)
-    {
-        $inventory_list->load([
-            'assetModel.category',
-            'category',
-            'unitOrDepartment',
-            'transfer', // view-all-inventory-listeager load transfer
-        ]);
+   public function publicSummary(InventoryList $inventory_list)
+{
+    $inventory_list->load([
+        'assetModel' => function ($query) {
+            $query->with(['category', 'equipment_code']);
+        },
+        'category',
+        'unitOrDepartment',
+        'transfer',
+    ]);
 
-        return Inertia::render('inventory-list/assetSummaryDetail', [
-            'asset' => $inventory_list,
-        ]);
-    }
+    // 👇 Temporary test — print what Laravel is about to send
+    dd($inventory_list->toArray());
+
+    return Inertia::render('inventory-list/assetSummaryDetail', [
+        'asset' => $inventory_list->toArray(),
+    ]);
+}
+
 
     public function showMemorandumReceipt(InventoryList $inventoryList)
     {

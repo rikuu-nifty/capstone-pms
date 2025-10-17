@@ -33,6 +33,12 @@ class AssetModel extends Model
             ->whereNull('inventory_lists.deleted_at');
     }
 
+    public function equipment_code()
+{
+    return $this->belongsTo(EquipmentCode::class, 'equipment_code_id')
+                ->whereNull('equipment_codes.deleted_at');
+}
+
     public function equipmentCode()
     {
         return $this->belongsTo(EquipmentCode::class, 'equipment_code_id');
