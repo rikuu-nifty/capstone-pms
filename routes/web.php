@@ -157,6 +157,10 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         Route::get('reports/turnover-disposal/export/donations/pdf', [TurnoverDisposalReportController::class, 'exportDonationPdf'])->name('reports.turnover-disposal.export.donations.pdf');
         Route::get('/reports/turnover-disposal/export/donations/excel', [TurnoverDisposalReportController::class, 'exportDonationExcel'])
             ->name('reports.turnover-disposal.export.donations.excel');
+
+        // Asset Assignment Report
+        Route::get('/reports/personnel-assignments', [ReportController::class, 'personnelAssignments'])
+            ->name('reports.personnel-assignments');
     });
 
     // Unified Signatories Management

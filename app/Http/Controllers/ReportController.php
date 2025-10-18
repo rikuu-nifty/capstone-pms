@@ -73,13 +73,13 @@ class ReportController extends Controller
         )
         ->get();
 
-        // ✅ Asset Type mapping
+        // Asset Type mapping
         $assetTypeLabels = [
             'fixed' => 'Fixed',
             'not_fixed' => 'Not Fixed',
         ];
 
-        // ✅ Map asset_type for each asset
+        // Map asset_type for each asset
         $assets = $assets->map(function ($a) use ($assetTypeLabels) {
             $a->asset_type = $assetTypeLabels[$a->asset_type] ?? ($a->asset_type ?? '-');
             return $a;
@@ -97,7 +97,7 @@ class ReportController extends Controller
             'condition','cost_min','cost_max','building_id','brand','report_type'
         ]);
 
-        // ✅ Replace IDs with actual names for display
+        // Replace IDs with actual names for display
         if (!empty($filters['department_id'])) {
             $filters['department_id'] = UnitOrDepartment::find($filters['department_id'])->name ?? $filters['department_id'];
         }
@@ -107,12 +107,12 @@ class ReportController extends Controller
         if (!empty($filters['building_id'])) {
             $filters['building_id'] = Building::find($filters['building_id'])->name ?? $filters['building_id'];
         }
-        // ✅ Map asset_type filter value
+        // Map asset_type filter value
         if (!empty($filters['asset_type'])) {
             $filters['asset_type'] = $assetTypeLabels[$filters['asset_type']] ?? $filters['asset_type'];
         }
 
-        // ✅ Normalize and choose the Blade view based on report_type
+        // Normalize and choose the Blade view based on report_type
         $reportType = $request->input('report_type', 'inventory_list');
 
         switch ($reportType) {
@@ -149,7 +149,7 @@ class ReportController extends Controller
             'value' => $cat->inventory_lists_count ?? 0,
         ]);
 
-    // ✅ Inventory Scheduling summary
+    // Inventory Scheduling summary
     $schedulingData = (new InventorySchedulingReportController)->summaryForDashboard();
 
     // 🔹 Optional filters (same as in PropertyTransferReportController)
@@ -160,7 +160,7 @@ class ReportController extends Controller
     $receivingBuilding = $request->input('receiving_building_id');
     $department = $request->input('department_id');
 
-    // ✅ Base query with filters
+    // Base query with filters
     $query = Transfer::query()
         ->when($from, fn($q) => $q->whereDate('created_at', '>=', Carbon::parse($from)))
         ->when($to, fn($q) => $q->whereDate('created_at', '<=', Carbon::parse($to)))
@@ -171,7 +171,7 @@ class ReportController extends Controller
 
     $transfers = $query->get();
 
-    // ✅ Monthly trends by status (continuous range)
+    // Monthly trends by status (continuous range)
     // If no from/to filter → use all transfers for chart
     if (empty($from) && empty($to)) {
         $chartSource = Transfer::all();
@@ -217,7 +217,7 @@ class ReportController extends Controller
         $monthlyStatusTrends = collect();
     }
 
-    // ✅ Off-Campus summary
+    // Off-Campus summary
     $offCampusRecords = OffCampus::all();
     $offCampusData = [
         'statusSummary' => [
@@ -291,8 +291,8 @@ class ReportController extends Controller
         'inventorySheetChartData' => $inventorySheetChartData,
         'schedulingData' => $schedulingData,
         'turnoverDisposalChartData' => $turnoverDisposalChartData,
-        'transferData'   => $monthlyStatusTrends, // ✅ filtered + continuous months
-        'offCampusData'  => $offCampusData,       // ✅ added for Off-Campus chart
+        'transferData'   => $monthlyStatusTrends, // filtered + continuous months
+        'offCampusData'  => $offCampusData,       // added for Off-Campus chart
         'filters'        => $request->only([
             'from','to','status','current_building_id','receiving_building_id','department_id'
         ]),
@@ -303,14 +303,14 @@ class ReportController extends Controller
 
     public function inventoryList(Request $request)
     {
-        // ✅ Start from categories
+        // Start from categories
         $query = Category::query()
             ->leftJoin('inventory_lists', 'categories.id', '=', 'inventory_lists.category_id');
 
-        // ✅ Join asset_models for brand filtering
+        // Join asset_models for brand filtering
         $query->leftJoin('asset_models', 'inventory_lists.asset_model_id', '=', 'asset_models.id');
 
-        // ✅ Apply filters on inventory_lists
+        // Apply filters on inventory_lists
         if ($request->filled('from')) {
             $query->whereDate('inventory_lists.date_purchased', '>=', $request->input('from'));
         }
@@ -342,12 +342,12 @@ class ReportController extends Controller
             $query->where('inventory_lists.building_id', $request->input('building_id'));
         }
 
-        // ✅ Brand filter via joined asset_models
+        // Brand filter via joined asset_models
         if ($request->filled('brand')) {
             $query->where('asset_models.brand', $request->input('brand'));
         }
 
-        // ✅ FIX: prevent duplicate counting by using DISTINCT
+        // FIX: prevent duplicate counting by using DISTINCT
         $chartData = $query
             ->select('categories.name as label')
             ->selectRaw('COUNT(DISTINCT inventory_lists.id) as value') // 👈 important fix
@@ -356,13 +356,13 @@ class ReportController extends Controller
             ->orderBy('categories.created_at')
             ->get();
 
-         // ✅ Asset type label mapping
+         // Asset type label mapping
     $assetTypeLabels = [
         'fixed' => 'Fixed',
         'not_fixed' => 'Not Fixed',
     ];
 
-    // ✅ Fetch assets with all filters applied
+    // Fetch assets with all filters applied
     $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
         ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
         ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
@@ -379,12 +379,12 @@ class ReportController extends Controller
         )
         ->get();
 
-    // ✅ Build counts from assets
+    // Build counts from assets
     $assetCounts = $assets
         ->groupBy(fn($a) => $a->category?->id)
         ->map(fn($group) => $group->count());
 
-    // ✅ Ensure all categories are included (even if 0)
+    // Ensure all categories are included (even if 0)
     $chartData = Category::select('id', 'name')
         ->orderBy('created_at')
         ->get()
@@ -393,7 +393,7 @@ class ReportController extends Controller
             'value' => $assetCounts[$cat->id] ?? 0,
         ]);
 
-    // ✅ Map assets for frontend
+    // Map assets for frontend
     $assets = $assets->map(fn($a) => [
         'id'             => $a->id,
         'asset_name'     => $a->asset_name,
@@ -410,7 +410,7 @@ class ReportController extends Controller
         'memorandum_no'  => $a->memorandum_no ?? '-',
     ]);
 
-        // ✅ define reportType before returning
+        // define reportType before returning
     $reportType = $request->input('report_type', 'inventory_list');
 
         return Inertia::render('reports/InventoryListReport', [
@@ -425,57 +425,14 @@ class ReportController extends Controller
             ],
             'buildings'   => Building::select('id', 'name')->get(),
             'brands'      => AssetModel::select('brand')->distinct()->pluck('brand')->filter()->values(),
-            'reportType'  => $reportType, // ✅ pass to frontend
+            'reportType'  => $reportType, // pass to frontend
         ]);
     }
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function personnelAssignments()
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Report $report)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Report $report)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Report $report)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Report $report)
-    {
-        //
+        return Inertia::render('reports/PersonnelAssignmentsReport', [
+            'title' => 'Personnel Assignments Report',
+        ]);
     }
 }
