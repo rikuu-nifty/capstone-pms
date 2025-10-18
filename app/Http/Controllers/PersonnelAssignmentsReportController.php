@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
+
 use App\Models\Personnel;
 use App\Models\UnitOrDepartment;
 use App\Models\Category;
@@ -57,7 +60,7 @@ class PersonnelAssignmentsReportController extends Controller
             'personnel_name' => $r->personnel_name,
             'previous_personnel_name' => $r->previous_personnel_name,
             'date_assigned' => $r->date_assigned,
-            
+
             'current_transfer_status' => $r->current_transfer_status,
             'current_turnover_disposal_status' => $r->current_turnover_disposal_status,
             'current_off_campus_status' => $r->current_off_campus_status,
@@ -103,6 +106,49 @@ class PersonnelAssignmentsReportController extends Controller
             'chartData' => $chartData,
         ]);
     }
+
+    public function exportPdf(Request $request)
+    {
+        $filters = $request->all();
+
+        if (!empty($filters['department_id'])) {
+            $filters['department_name'] = UnitOrDepartment::find($filters['department_id'])?->name ?? '—';
+        } else {
+            $filters['department_name'] = '—';
+        }
+
+        if (!empty($filters['status'])) {
+            $filters['status_label'] = ucfirst(str_replace('_', ' ', $filters['status']));
+        } else {
+            $filters['status_label'] = '—';
+        }
+
+        // Fetch paginated report data
+        $paginator = Personnel::reportPaginated($filters, 2000);
+
+        $records = $paginator->getCollection()->map(function ($personnel) {
+            return [
+                'id'                    => $personnel->id,
+                'full_name'             => $personnel->full_name,
+                'department'            => $personnel->unitOrDepartment?->name ?? '—',
+                'status'                => Str::title(str_replace('_', ' ', $personnel->status)),
+                'past_assets_count'     => (int) $personnel->past_assets_count,
+                'current_assets_count'  => (int) $personnel->current_assets_count,
+            ];
+        });
+
+        $pdf = Pdf::loadView('reports.personnel_assignments_pdf', [
+            'records' => $records,
+            'filters' => $filters,
+        ])
+            ->setPaper('A4', 'landscape')
+            ->setOption('isPhpEnabled', true);
+
+        $filename = 'Personnel_Assignments_Report_' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
 
     public function exportExcel(Request $request)
     {

@@ -420,10 +420,11 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        window.open(
-                                        `${route("reports.personnel-assignments.export.excel")}?${query}`,
-                                        "_blank"
-                                        );
+                                        const excelRoute =
+                                        viewMode === "detailed"
+                                            ? route("reports.personnel-assignments.export.detailed.excel")
+                                            : route("reports.personnel-assignments.export.excel");
+                                        window.open(`${excelRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                 >
@@ -433,10 +434,11 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        window.open(
-                                        `${route("reports.personnel-assignments.export.pdf")}?${query}`,
-                                        "_blank"
-                                        );
+                                        const pdfRoute =
+                                        viewMode === "detailed"
+                                            ? route("reports.personnel-assignments.export.detailed.pdf")
+                                            : route("reports.personnel-assignments.export.pdf");
+                                        window.open(`${pdfRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                 >

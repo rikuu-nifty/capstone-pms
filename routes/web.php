@@ -162,8 +162,16 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         // Asset Assignment Report
         Route::get('personnel-assignments', [PersonnelAssignmentsReportController::class, 'index'])
             ->name('reports.personnel-assignments');
-        Route::get('personnel-assignments/export/excel', [PersonnelAssignmentsReportController::class, 'exportExcel'])
+
+        Route::get('/personnel-assignments/export/pdf', [PersonnelAssignmentsReportController::class, 'exportPdf'])
+            ->name('reports.personnel-assignments.export.pdf');
+        Route::get('/personnel-assignments/export/excel', [PersonnelAssignmentsReportController::class, 'exportExcel'])
             ->name('reports.personnel-assignments.export.excel');
+
+        Route::get('/personnel-assignments/export/detailed/pdf', [PersonnelAssignmentsReportController::class, 'exportDetailedPdf'])
+            ->name('reports.personnel-assignments.export.detailed.pdf');
+        Route::get('/personnel-assignments/export/detailed/excel', [PersonnelAssignmentsReportController::class, 'exportDetailedExcel'])
+            ->name('reports.personnel-assignments.export.detailed.excel');
     });
 
     // Unified Signatories Management
