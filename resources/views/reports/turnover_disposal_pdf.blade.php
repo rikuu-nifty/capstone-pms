@@ -1,6 +1,6 @@
 @extends('reports.layout')
 
-@section('title', 'Turnover/Disposal Report')
+@section('title', 'Donation Summary Report')
 
 @push('styles')
 <style>
@@ -53,7 +53,7 @@
         text-align: center;
     }
 
-    /* Spacer row inside thead to keep header clear of the letterhead on every page */
+    /* Spacer row inside thead to keep header clear of letterhead on every page */
     .head-gap td {
         height: 26px;
         border: none !important;
@@ -73,46 +73,7 @@
         padding-left: 20px;
     }
 
-    .group-type td {
-        font-weight: bold;
-        font-style: italic;
-        background: #f5f5f5;
-        padding-left: 40px;
-    }
-
-    table.details {
-        width: 100%;
-        border-collapse: collapse;
-        /* margin-bottom: 10px; */
-        table-layout: fixed;
-    }
-
-    table.details td {
-        padding: 6px;
-    }
-
-    table.details td.label {
-        width: 20%;
-        font-weight: bold;
-    }
-
-    table.details td.value {
-        width: 30%;
-    }
-
-    .report td:last-child {
-        white-space: normal;
-        word-wrap: break-word;
-    }
-
-    /* Signatories */
-    /* === match Inventory Sheet helpers === */
-    .acknowledgement {
-        margin-top: 50px;
-        font-size: 12px;
-        text-align: justify;
-    }
-
+    /* Signature styles reused */
     .signature-block {
         margin-top: 40px;
         width: 100%;
@@ -120,35 +81,18 @@
     }
 
     .signatories-table,
-    .signatories-table td,
-    .signatories-table th {
+    .signatories-table td {
         border: none !important;
         background: none !important;
         padding: 8px;
     }
 
-    .signature-block td {
-        text-align: center;
-        vertical-align: top;
-    }
-
-    /* extras for this form */
     .sig-line {
         border-bottom: 1px solid #111;
         width: 50%;
         margin: 50px auto 6px;
     }
-
-    .chk {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border: 1px solid #000;
-        vertical-align: middle;
-        margin: 10px 2px 0 4px;
-    }
 </style>
-
 @endpush
 
 @section('content')
@@ -167,17 +111,16 @@ if ($fromDate && $toDate) $reportPeriod = $fromDate->format('F d, Y') . ' – ' 
 elseif ($fromDate) $reportPeriod = $fromDate->format('F d, Y') . ' – Present';
 elseif ($toDate) $reportPeriod = 'Until ' . $toDate->format('F d, Y');
 
-$filterIssuing = !empty($filters['issuing_office_id']) ? optional(\App\Models\UnitOrDepartment::find($filters['issuing_office_id']))->name : null;
-$filterReceiving = !empty($filters['receiving_office_id']) ? optional(\App\Models\UnitOrDepartment::find($filters['receiving_office_id']))->name : null;
-$filterType = !empty($filters['type']) ? ucfirst($filters['type']) : null;
-
-/* ------- Group: Month → Issuing Office → Type ------- */
-$grouped = collect($records)
+/* ------- Group: Month → Issuing Office ------- */
+$grouped = collect($donationSummary)
 ->groupBy(fn($r) => $r->document_date ? Carbon::parse($r->document_date)->format('F Y') : 'Undated')
 ->map(fn($monthItems) =>
 $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
-->map(fn($officeItems) => $officeItems->groupBy('type'))
 );
+
+function formatPeso($amount) {
+return '₱ ' . number_format((float)$amount, 2, '.', ', ');
+}
 @endphp
 
 {{-- Title --}}
@@ -189,202 +132,126 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
 
 <div style="text-align:center; margin-bottom:14px;">
     <h2 style="margin:0; font-size:16px; font-weight:bold; text-transform:uppercase;">
-        Turnover / Disposal Report
+        Donation Summary Report
     </h2>
 </div>
 
 {{-- Report Details --}}
-<table class="details">
+<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
     <tr>
-        <td class="label">Issuing Office (Filter):</td>
-        <td class="value">{{ $filterIssuing ?? '—' }}</td>
-        <td class="label">Receiving Office (Filter):</td>
-        <td class="value">{{ $filterReceiving ?? '—' }}</td>
-    </tr>
-    <tr>
-        <td class="label">Type:</td>
-        <td class="value">{{ $filterType ?? '—' }}</td>
-        <td class="label">Date:</td>
-        <td class="value">{{ $reportPeriod }}</td>
+        <td style="font-weight:bold; width:20%;">Date:</td>
+        <td style="width:30%;">{{ $reportPeriod }}</td>
+        <td style="font-weight:bold; width:20%;">Date Generated:</td>
+        <td style="width:30%;">{{ now()->format('F d, Y') }}</td>
     </tr>
 </table>
 
-{{-- Main table --}}
+{{-- Main grouped table --}}
 <table class="report" cellspacing="0" cellpadding="0">
     <thead>
         <tr class="head-gap">
-            <td colspan="10"></td>
+            <td colspan="8"></td>
         </tr>
         <tr>
-            <th style="width:30px;">Record No.</th>
-            <th style="width:105px;">Asset Name</th>
-            <th style="width:75px;">Serial No.</th>
-            <th style="width:80px;">Turnover Category</th>
-            <th style="width:55px;">For Donation</th>
-            <th style="width:90px;">Receiving Office</th>
-            <th style="width:75px;">Unit Cost</th>
-            <th style="width:70px;">Status</th>
-            <th style="width:80px;">Date</th>
-            <th style="width:110px;">Remarks</th>
-
+            <th style="width:60px;">Record No.</th>
+            <th style="width:100px;">Date</th>
+            <th style="width:150px;">Issuing Office</th>
+            <th style="width:140px;">Recipient</th>
+            <th style="width:150px;">Asset Name</th>
+            <th style="width:90px;">Turnover Category</th>
+            <th style="width:80px;">Unit Cost</th>
+            <th style="width:150px;">Remarks</th>
         </tr>
     </thead>
+
     <tbody>
-        @php $i = 1; @endphp
+        @php
+        $grandCount = 0;
+        $grandCost = 0;
+        @endphp
 
         @foreach ($grouped as $month => $offices)
         <tr class="group-month">
-            <td colspan="10">{{ $month }}</td>
+            <td colspan="8">{{ $month }}</td>
         </tr>
 
-        @foreach ($offices as $office => $types)
-        @php
-        // Show Issuing Office row if:
-        // - Issuing office filter was NOT applied
-        // - OR this month has more than one office
-        $showOfficeRow = empty($filters['issuing_office_id']) || $offices->count() > 1;
-        @endphp
-
-        @if ($showOfficeRow)
+        @foreach ($offices as $office => $rows)
         <tr class="group-office">
-            <td colspan="10">Issuing Office: {{ $office ?? '—' }}</td>
+            <td colspan="8">Issuing Office: {{ $office ?? '—' }}</td>
         </tr>
-        @endif
 
-        @foreach ($types as $type => $rows)
         @php
-        // Show Type row if:
-        // - Type filter was NOT applied
-        // - OR this office has more than one type
-        $showTypeRow = empty($filters['type']) || $types->count() > 1;
+        $officeCount = 0;
+        $officeCost = 0;
         @endphp
-
-        @if ($showTypeRow)
-        <tr class="group-type">
-            <td colspan="10">{{ ucfirst($type) }}</td>
-        </tr>
-        @endif
 
         @foreach ($rows as $r)
-        <tr style="text-align:center; border-bottom:1px solid #ddd;">
-            <td>{{ $i++ }}</td>
+        @php
+        $unitCost = (float) ($r->unit_cost ?? 0);
+        $officeCount++;
+        $officeCost += $unitCost;
+        $grandCount++;
+        $grandCost += $unitCost;
+        @endphp
+        <tr style="text-align:center;">
+            <td>{{ $r->record_id }}</td>
+            <td>{{ $r->document_date ? Carbon::parse($r->document_date)->format('M d, Y') : '—' }}</td>
+            <td>{{ $r->issuing_office ?? '—' }}</td>
+            <td>{{ $r->receiving_office ?? $r->external_recipient ?? '—' }}</td>
             <td>
-                <div>
-                    <strong>{{ $r->asset_name ?? '—' }}</strong><br>
-                    <small>{{ $r->category ?? '—' }}</small>
-                </div>
+                <strong>{{ $r->asset_name ?? '—' }}</strong><br>
+                @if($r->serial_no)
+                <small style="color:#555;">SN: {{ $r->serial_no }}</small><br>
+                @endif
+                <small style="color:#555;">{{ $r->category ?? '—' }}</small>
             </td>
-            <td>{{ $r->serial_no ?? '—' }}</td>
             <td>{{ $r->turnover_category ? ucfirst(str_replace('_', ' ', $r->turnover_category)) : '—' }}</td>
-            <td>{{ $r->is_donation ? 'Yes' : 'No' }}</td>
-            <td>{{ $r->receiving_office ?? '—' }}</td>
-            <td>{{ isset($r->unit_cost) ? '₱ ' . number_format((float)$r->unit_cost, 2) : '—' }}</td>
-            <td>{{ ucfirst($r->asset_status ?? $r->td_status ?? '—') }}</td>
-            <td>{{ $r->document_date ? \Carbon\Carbon::parse($r->document_date)->format('M d, Y') : '—' }}</td>
-            <td style="white-space:normal; word-break:break-word;">
-                {{ $r->remarks ?? '—' }}
-            </td>
+            <td>{{ formatPeso($r->unit_cost ?? 0) }}</td>
+            <td>{{ $r->asset_remarks ?? '—' }}</td>
         </tr>
         @endforeach
-        @endforeach
 
-        {{-- ✅ Subtotals for the entire issuing office --}}
-        @php $officeAssets = $types->flatten(1); @endphp
+        {{-- Office subtotal --}}
         <tr style="font-weight:bold; background:#f9f9f9; border-top:2px solid #000;">
-            <td colspan="10" style="text-align:right; padding:6px;">
-                Total Assets: {{ number_format($officeAssets->count()) }}
+            <td colspan="8" style="text-align:right; padding:6px;">
+                Total Donations: {{ number_format($officeCount) }}
             </td>
         </tr>
         <tr style="font-weight:bold; background:#f9f9f9; border-bottom:2px solid #000;">
-            <td colspan="10" style="text-align:right; padding:6px;">
-                Total Cost: ₱ {{ number_format($officeAssets->sum(fn($r) => (float) ($r->unit_cost ?? 0)), 2) }}
+            <td colspan="8" style="text-align:right; padding:6px;">
+                Total Cost: {{ formatPeso($officeCost) }}
             </td>
         </tr>
         @endforeach
         @endforeach
-    </tbody>
 
+        @if($grandCount === 0)
+        <tr>
+            <td colspan="8" style="text-align:center; padding:12px;">No donation records found.</td>
+        </tr>
+        @endif
+    </tbody>
 </table>
 
-<table width="100%" cellspacing="0" cellpadding="0"
-    style="border-collapse:collapse; margin-top:12px; page-break-inside: avoid;">
-    @php
-    $totalTurnovers = collect($records)->where('type','turnover')->count();
-    $totalDisposals = collect($records)->where('type','disposal')->count();
-    $totalAssets = collect($records)->count();
-    $totalCost = collect($records)->sum(fn($r) => (float) ($r->unit_cost ?? 0));
-    @endphp
-
-    {{-- Section heading --}}
+{{-- Summary Section --}}
+<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse; margin-top:12px; page-break-inside: avoid;">
     <tr class="head-gap">
-        <td colspan="10"></td>
+        <td colspan="8"></td>
     </tr>
     <tr style="background:#e2e8f0; font-weight:bold; border-top:2px solid #000; border-bottom:2px solid #000;">
-        <td style="text-align:center; padding:8px; font-size:13px;" colspan="10">
-            SUMMARY
-        </td>
-    </tr>
-
-    <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="10" style="text-align:right; padding:8px;">
-            Total Turnovers: {{ number_format($totalTurnovers) }}
-        </td>
+        <td colspan="8" style="text-align:center; padding:8px; font-size:13px;">SUMMARY</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="10" style="text-align:right; padding:8px;">
-            Total Disposals: {{ number_format($totalDisposals) }}
-        </td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="10" style="text-align:right; padding:8px;">
-            Total Assets: {{ number_format($totalAssets) }}
+        <td colspan="8" style="text-align:right; padding:8px;">
+            Total Donation Records: {{ number_format($grandCount) }}
         </td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9; border-bottom:2px solid #000;">
-        <td colspan="10" style="text-align:right; padding:8px;">
-            Total Cost: ₱ {{ number_format($totalCost, 2) }}
+        <td colspan="8" style="text-align:right; padding:8px;">
+            Grand Total Cost: {{ formatPeso($grandCost) }}
         </td>
     </tr>
 </table>
-
-<div style="page-break-before: always; margin-top:80px;"></div>
-
-{{-- SIGNATORIES – BLOCK 1 (same layout as Inventory Sheet) --}}
-<table class="signatories-table signature-block" width="100%" cellspacing="0" cellpadding="8">
-    <tr>
-        <td style="width:50%;">Personnel-in-Charge:<div class="sig-line"></div>
-        </td>
-        <td style="width:50%;">Head / Unit:<div class="sig-line"></div>
-        </td>
-    </tr>
-</table>
-
-{{-- ACKNOWLEDGEMENT --}}
-<table class="signatories-table acknowledgement" width="100%" cellspacing="0" cellpadding="8" style="table-layout:fixed;">
-    <tr>
-        <td colspan="2" style="vertical-align:top; padding:0 40px; line-height:1.6;">
-            <p style="margin:0 0 12px;">
-                This is to authorize Mr./Mrs.
-                <span style="display:inline-block; border-bottom:1px solid #000; min-width:200px;"></span>
-                of the College/Unit
-                <span style="display:inline-block; border-bottom:1px solid #000; min-width:200px;"></span>
-                to <span class="chk"></span> <strong>Turn-over</strong> /
-                <span class="chk"></span> <strong>Dispose</strong> the following properties/equipment as follows:
-            </p>
-        </td>
-    </tr>
-</table>
-
-{{-- SIGNATORIES – BLOCK 2 (same layout as Inventory Sheet) --}}
-<table class="signatories-table signature-block" width="100%" cellspacing="0" cellpadding="8">
-    <tr>
-        <td style="width:50%;">Dean / Head:<div class="sig-line"></div>
-        </td>
-        <td style="width:50%;">Head, PMO:<div class="sig-line"></div>
-        </td>
-    </tr>
-</table>
-
 @endsection
 
 @push('pdf-scripts')
@@ -393,18 +260,10 @@ $monthItems->groupBy(fn($r) => trim(strtoupper($r->issuing_office ?? '—')))
         $pdf->page_script('
             $font = $fontMetrics->get_font("DejaVu Sans", "normal");
             $size = 9;
-
-            // Y positions
-            $yLine1 = $pdf->get_height() - 85; // AUF-FORM code
-            $yLine2 = $pdf->get_height() - 70; // Date + Rev
-
-            // Left: AUF-FORM (line 1)
-            $formCode = "AUF-FORM-AS/PMO-32";
-            $pdf->text(40, $yLine1, $formCode, $font, $size);
-
-            // Left: Date + Revision (line 2)
-            $formMeta = "November 22, 2011   Rev. 0";
-            $pdf->text(40, $yLine2, $formMeta, $font, $size);
+            $y1 = $pdf->get_height() - 85;
+            $y2 = $pdf->get_height() - 70;
+            $pdf->text(40, $y1, "AUF-FORM-AS/PMO-32", $font, $size);
+            $pdf->text(40, $y2, "November 22, 2011   Rev. 0", $font, $size);
         ');
     }
 </script>

@@ -630,32 +630,38 @@ public function getNotedByTitleAttribute(): ?string
 
     public static function donationSummary(array $filters = [])
     {
-        return DB::table('turnover_disposals as td')
+        return DB::table('turnover_disposal_assets as tda')
+            ->join('turnover_disposals as td', 'td.id', '=', 'tda.turnover_disposal_id')
+            ->leftJoin('inventory_lists as il', 'il.id', '=', 'tda.asset_id')
+            ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
+            ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
             ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
             ->leftJoin('unit_or_departments as receiving', 'receiving.id', '=', 'td.receiving_office_id')
             ->select([
                 'td.id as record_id',
                 'td.document_date',
-                'td.description',
                 'td.turnover_category',
+                'td.remarks as record_remarks',
                 'issuing.name as issuing_office',
                 'receiving.name as receiving_office',
                 'td.external_recipient',
-                'td.remarks',
-                DB::raw('(SELECT COUNT(*) FROM turnover_disposal_assets WHERE turnover_disposal_id = td.id) as quantity'),
-                DB::raw('(
-                    SELECT COALESCE(SUM(il.unit_cost), 0)
-                    FROM turnover_disposal_assets tda
-                    JOIN inventory_lists il ON il.id = tda.asset_id
-                    WHERE tda.turnover_disposal_id = td.id
-                ) as total_cost')
+                'il.id as asset_id',
+                'il.asset_name',
+                'il.serial_no',
+                'il.unit_cost',
+                'c.name as category',
+                'tda.asset_status',
+                'tda.remarks as asset_remarks',
+                'td.is_donation',
             ])
             ->where('td.is_donation', 1)
             ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
             ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
             ->when($filters['issuing_office_id'] ?? null, fn($q, $issuing) => $q->where('td.issuing_office_id', $issuing))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
-            ->orderByDesc('td.document_date')
+            ->orderBy('td.document_date')
+            ->orderBy('issuing.name')
+            ->orderBy('td.id')
             ->get();
     }
 }

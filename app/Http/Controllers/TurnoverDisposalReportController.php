@@ -129,17 +129,18 @@ class TurnoverDisposalReportController extends Controller
             ->setPaper('A4', 'landscape')
             ->setOption('isPhpEnabled', true);
 
-        // return $pdf->download('Donation_Summary_Report -' . now()->format('Y-m-d') . '.pdf');
-        return $pdf->stream('Donation_Summary_Report');
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        // return $pdf->download("Donation_Summary_Report_{$timestamp}.pdf");
+        return $pdf->stream("Donation_Summary_Report_{$timestamp}.pdf");
     }
 
     public function exportDonationExcel(Request $request)
     {
         $filters = $request->all();
-        $donationSummary = \App\Models\TurnoverDisposal::donationSummary($filters);
+        $donationSummary = TurnoverDisposal::donationSummary($filters);
 
-        $timestamp = now()->format('Y-m-d');
-        $filename  = "Donation_Summary_Report-{$timestamp}.xlsx";
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $filename  = "Donation_Summary_Report_{$timestamp}.xlsx";
 
         return Excel::download(
             new TurnoverDisposalDonationsExport($donationSummary, $filters),

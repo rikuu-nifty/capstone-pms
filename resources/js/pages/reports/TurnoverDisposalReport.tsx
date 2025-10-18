@@ -83,17 +83,19 @@ type PageProps = {
     chartData: ChartRow[];
 
     donationSummary: {
+        asset_id: number | null;
         record_id: number;
         document_date: string;
-        description: string | null;
         issuing_office: string | null;
-        quantity: number;
-        turnover_category: string | null;
-        remarks: string | null;
-        total_cost: number;
-
         receiving_office: string | null;
         external_recipient: string | null;
+        asset_name: string | null;
+        serial_no: string | null;
+        category: string | null;
+        turnover_category: string | null;
+        unit_cost: number | null;
+        asset_status: string | null;
+        asset_remarks: string | null;
     }[];
 }
 
@@ -697,17 +699,21 @@ export default function TurnoverDisposalReport() {
                                 hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
                             />
                             ) : (
-                                <DonationSummaryTable 
+                                <DonationSummaryTable
                                     donationSummary={donationSummary}
+                                    page={page}
+                                    total={total}
+                                    pageSize={pageSize}
+                                    onPageChange={(newPage) => setPage(newPage)}
+                                    hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
                                 />
                             )}
-                        {/* )} */}
                     </CardContent>
                     {viewMode === 'chart' && (
                         <CardFooter className="flex-col gap-2 pt-4 text-sm">
                             {trendLabel ? (
                                 <div className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}>
-                                {trendLabel} <TrendIcon className="h-4 w-4" />
+                                    {trendLabel} <TrendIcon className="h-4 w-4" />
                                 </div>
                             ) : (
                                 <div className="text-muted-foreground">No data to compare</div>
