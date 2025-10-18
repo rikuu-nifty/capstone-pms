@@ -391,63 +391,58 @@ class TurnoverDisposal extends Model
         return 'Turnover/Disposal -  #' . $this->id;
     }
 
-public function getNotedByNameAttribute(): ?string
-{
-    $fa = $this->relationLoaded('formApproval')
-        ? $this->getRelation('formApproval')
-        : $this->formApproval()->with([
-            'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
-                ->whereIn('status',['approved','rejected']) // include rejected
-                ->orderByDesc('acted_at'),
-            'steps.actor:id,name',
-        ])->first();
-
-    if (!$fa) return null;
-
-    // Prefer external_noted_by if present
-    $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
-    if ($externalStep) {
-        return $externalStep->external_name ?: null;
-    }
-
-    $internalStep = $fa->steps->firstWhere('code', 'noted_by');
-    if ($internalStep) {
-        return $internalStep->actor->name ?? null;
-    }
-
-    return null;
-}
-
-public function getNotedByTitleAttribute(): ?string
-{
-    $fa = $this->relationLoaded('formApproval')
-        ? $this->getRelation('formApproval')
-        : $this->formApproval()->with([
-            'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+    public function getNotedByNameAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval')
+            ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
                     ->whereIn('status',['approved','rejected']) // include rejected
                     ->orderByDesc('acted_at'),
-            'steps.actor:id,name',
-        ])->first();
+                'steps.actor:id,name',
+            ])->first();
 
-    if (!$fa) return null;
+        if (!$fa) return null;
 
-    $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
-    if ($externalStep) {
-        return $externalStep->external_title ?: null;
+        // Prefer external_noted_by if present
+        $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
+        if ($externalStep) {
+            return $externalStep->external_name ?: null;
+        }
+
+        $internalStep = $fa->steps->firstWhere('code', 'noted_by');
+        if ($internalStep) {
+            return $internalStep->actor->name ?? null;
+        }
+
+        return null;
     }
 
-    $internalStep = $fa->steps->firstWhere('code', 'noted_by');
-    if ($internalStep) {
-        return 'Dean / Head';
+    public function getNotedByTitleAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval')
+            ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+                        ->whereIn('status',['approved','rejected']) // include rejected
+                        ->orderByDesc('acted_at'),
+                'steps.actor:id,name',
+            ])->first();
+
+        if (!$fa) return null;
+
+        $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
+        if ($externalStep) {
+            return $externalStep->external_title ?: null;
+        }
+
+        $internalStep = $fa->steps->firstWhere('code', 'noted_by');
+        if ($internalStep) {
+            return 'Dean / Head';
+        }
+
+        return null;
     }
-
-    return null;
-}
-
-
-    /*
-        REPORTS
-    */
 
     public static function filterAndPaginate(array $filters, int $perPage = 10)
     {
@@ -487,7 +482,6 @@ public function getNotedByTitleAttribute(): ?string
                 $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('model', 'like', "%{$model}%"));
             });
             
-
         return $query->paginate($perPage)->withQueryString();
     }
 
@@ -553,7 +547,7 @@ public function getNotedByTitleAttribute(): ?string
     {
         return DB::table('turnover_disposals as td')
             ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
-            ->where('tda.asset_status', '=', 'completed') // Only completed assets
+            // ->where('tda.asset_status', '=', 'completed') // Only completed assets
             ->selectRaw("
                 DATE_FORMAT(td.document_date, '%Y-%m') as ym,
                 SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,

@@ -306,7 +306,7 @@ export default function TurnoverDisposalReport() {
                             <Select
                                 className="w-full"
                                 isClearable
-                                placeholder="Select an asset type"
+                                placeholder="Select status"
                                 value={
                                     filters.status
                                         ? {
