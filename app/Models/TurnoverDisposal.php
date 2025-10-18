@@ -543,11 +543,26 @@ class TurnoverDisposal extends Model
         ];
     }
 
-    public static function monthlyCompletedTrendData()
+    public static function monthlyCompletedTrendData(array $filters = [])
     {
         return DB::table('turnover_disposals as td')
             ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
-            // ->where('tda.asset_status', '=', 'completed') // Only completed assets
+            ->leftJoin('inventory_lists as il', 'il.id', '=', 'tda.asset_id')
+            ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
+            ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
+            ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
+            ->leftJoin('unit_or_departments as receiving', 'receiving.id', '=', 'td.receiving_office_id')
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('td.type', $type))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
+            ->when($filters['issuing_office_id'] ?? null, fn($q, $id) => $q->where('td.issuing_office_id', $id))
+            ->when($filters['receiving_office_id'] ?? null, fn($q, $id) => $q->where('td.receiving_office_id', $id))
+            ->when($filters['category_id'] ?? null, fn($q, $cat) => $q->where('c.id', $cat))
+            ->when($filters['turnover_category'] ?? null, fn($q, $cat) => $q->where('td.turnover_category', $cat))
+            ->when(isset($filters['is_donation']) && $filters['is_donation'] !== '', function ($q) use ($filters) {
+                $q->where('td.is_donation', (int) $filters['is_donation']);
+            })
             ->selectRaw("
                 DATE_FORMAT(td.document_date, '%Y-%m') as ym,
                 SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,

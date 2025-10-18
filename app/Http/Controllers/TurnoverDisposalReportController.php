@@ -44,7 +44,8 @@ class TurnoverDisposalReportController extends Controller
         $paginator = TurnoverDisposal::filterAndPaginateAssets($filters, $perPage);
         $paginator->appends($filters);
 
-        $rawData = TurnoverDisposal::monthlyCompletedTrendData();
+        // $rawData = TurnoverDisposal::monthlyCompletedTrendData();
+        $rawData = TurnoverDisposal::monthlyCompletedTrendData($filters);
 
         // Generate Jan–Dec for current year
         $year = now()->year;

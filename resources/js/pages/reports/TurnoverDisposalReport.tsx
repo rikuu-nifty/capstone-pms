@@ -140,7 +140,7 @@ export default function TurnoverDisposalReport() {
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
 
-    const [viewMode, setViewMode] = useState<'chart' | 'table' | 'donations'>('table');
+    const [viewMode, setViewMode] = useState<'chart' | 'table' | 'donations'>('chart');
 
     useEffect(() => {
         if (viewMode === "donations") {
@@ -479,12 +479,15 @@ export default function TurnoverDisposalReport() {
                                     {}, // no filters
                                     {
                                         preserveState: true,
+                                        preserveScroll: true,
                                         replace: true,
                                         onSuccess: (pageData) => {
                                             const paginator = pageData.props.records as Paginator<RecordRow>
                                             setDisplayed(paginator.data)
                                             setTotal(paginator.meta.total ?? 0)
                                             setPageSize(paginator.meta.per_page ?? 10)
+
+                                            setChartData(pageData.props.chartData as ChartRow[]);
                                         },
                                     }
                                 )
@@ -506,12 +509,14 @@ export default function TurnoverDisposalReport() {
                                     { ...cleanFilters(filters), page: 1 },
                                     {
                                         preserveState: true,
+                                        preserveScroll: true,
                                         replace: true,
                                         onSuccess: (pageData) => {
                                             const paginator = pageData.props.records as Paginator<RecordRow>
                                             setDisplayed(paginator.data)
                                             setTotal(paginator.meta.total ?? 0)
                                             setPageSize(paginator.meta.per_page ?? 10)
+                                            setChartData(pageData.props.chartData as ChartRow[])
                                         },
                                     }
                                 )
