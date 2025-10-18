@@ -404,7 +404,7 @@ public function assignments()
 
         $users = \App\Models\User::whereNull('deleted_at')
             ->where('status', 'approved')
-            ->whereHas('role', fn($q) => $q->whereIn('code', ['pmo_staff', 'pmo_head']))
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser','pmo_staff', 'pmo_head'])) // INCLUDE SUPERUSER FOR TESTING
             ->get();
 
         if ($users->isEmpty()) {
