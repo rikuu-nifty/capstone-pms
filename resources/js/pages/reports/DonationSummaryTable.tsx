@@ -14,6 +14,8 @@ type DonationSummary = {
     description: string | null;
     turnover_category: string | null;
     issuing_office: string | null;
+    receiving_office: string | null;
+    external_recipient: string | null;
     quantity: number;
     remarks: string | null;
     total_cost: number;
@@ -42,6 +44,7 @@ export default function DonationSummaryTable({ donationSummary }: Props) {
                             <TableHead className="w-[100px] text-center">Record No.</TableHead>
                             <TableHead className="w-[150px] text-center">Date of Donation</TableHead>
                             <TableHead className="w-[200px] text-center">Issuing Office (Source)</TableHead>
+                            <TableHead className="w-[200px] text-center">Recipient</TableHead>
                             <TableHead className="w-[150px] text-center">Description of Items</TableHead>
                             <TableHead className="w-[120px] text-center">Quantity</TableHead>
                             <TableHead className="w-[120px] text-center">Total Cost</TableHead>
@@ -54,6 +57,11 @@ export default function DonationSummaryTable({ donationSummary }: Props) {
                                 <TableCell>{r.record_id}</TableCell>
                                 <TableCell>{formatDate(r.document_date)}</TableCell>
                                 <TableCell>{r.issuing_office || '—'}</TableCell>
+                                <TableCell>
+                                    {r.receiving_office 
+                                        ? r.receiving_office 
+                                        : (r.external_recipient || '—')}
+                                </TableCell>
                                 <TableCell className="whitespace-normal break-words text-center">
                                     <div className="flex flex-col items-center">
                                         {r.turnover_category && (

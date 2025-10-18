@@ -12,7 +12,6 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 11px;
-        margin-bottom: 60px;
     }
 
     th,
@@ -83,16 +82,17 @@ return '₱ ' . number_format((float)$amount, 2, '.', ', ');
 <table class="report" cellspacing="0" cellpadding="0">
     <thead>
         <tr class="spacer-row">
-            <td colspan="7" style="height:10px; border:none; border-bottom:0.8px solid #000; background:#fff;"></td>
+            <td colspan="8" style="height:10px; border:none; border-bottom:0.8px solid #000; background:#fff;"></td>
         </tr>
         <tr>
-            <th style="width:40px;">Record No.</th>
-            <th style="width:100px;">Date of Donation</th>
+            <th style="width:60px;">Record No.</th>
+            <th style="width:90px;">Date of Donation</th>
             <th style="width:160px;">Issuing Office (Source)</th>
-            <th style="width:170px;">Description of Items</th>
-            <th style="width:50px;">Quantity</th>
+            <th style="width:140px;">Recipient</th>
+            <th style="width:160px;">Description of Items</th>
+            <th style="width:60px;">Quantity</th>
             <th style="width:100px;">Total Cost</th>
-            <th style="width:170px;">Remarks</th>
+            <th style="width:160px;">Remarks</th>
         </tr>
     </thead>
     <tbody>
@@ -106,6 +106,7 @@ return '₱ ' . number_format((float)$amount, 2, '.', ', ');
             <td>{{ $r->record_id }}</td>
             <td>{{ $r->document_date ? Carbon::parse($r->document_date)->format('M d, Y') : '—' }}</td>
             <td>{{ $r->issuing_office ?? '—' }}</td>
+            <td>{{ $r->receiving_office ?? $r->external_recipient ?? '—' }}</td>
             <td>
                 @if($r->turnover_category)
                 <strong>{{ ucfirst(str_replace('_', ' ', $r->turnover_category)) }}</strong><br>
@@ -123,23 +124,37 @@ return '₱ ' . number_format((float)$amount, 2, '.', ', ');
         @endphp
         @empty
         <tr>
-            <td colspan="7" style="text-align:center; padding:12px;">No donation records found.</td>
+            <td colspan="8" style="text-align:center; padding:12px;">No donation records found.</td>
         </tr>
         @endforelse
     </tbody>
 </table>
 
-<table width="100%" style="margin-top:10px; border-collapse:collapse;">
-    <tr style="font-weight:bold; background:#f9f9f9;">
-        <td style="text-align:right; padding:8px;">Total Donation Records: {{ number_format(count($donationSummary)) }}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-        <td style="text-align:right; padding:8px;">Total Items Donated: {{ number_format($totalItems) }}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9; border-top:2px solid #000;">
-        <td style="text-align:right; padding:8px;">Grand Total Cost: {{ formatPeso($grandTotalCost) }}</td>
-    </tr>
+<table style="border-collapse:collapse; table-layout:fixed;">
+    <thead style="display:table-header-group;">
+        <tr class="spacer-row">
+            <td colspan="8" style="height:20px; border:none; border-bottom:0.8px solid #000; background:#fff;"></td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="font-weight:bold; background:#f9f9f9;">
+            <td colspan="8" style="text-align:right; padding:8px;">
+                Total Donation Records: {{ number_format(count($donationSummary)) }}
+            </td>
+        </tr>
+        <tr style="font-weight:bold; background:#f9f9f9;">
+            <td colspan="8" style="text-align:right; padding:8px;">
+                Total Items Donated: {{ number_format($totalItems) }}
+            </td>
+        </tr>
+        <tr style="font-weight:bold; background:#f9f9f9; border-top:2px solid #000;">
+            <td colspan="8" style="text-align:right; padding:8px;">
+                Grand Total Cost: {{ formatPeso($grandTotalCost) }}
+            </td>
+        </tr>
+    </tbody>
 </table>
+
 @endsection
 
 @push('pdf-scripts')

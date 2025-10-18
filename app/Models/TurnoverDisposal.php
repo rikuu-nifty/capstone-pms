@@ -632,12 +632,15 @@ public function getNotedByTitleAttribute(): ?string
     {
         return DB::table('turnover_disposals as td')
             ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
+            ->leftJoin('unit_or_departments as receiving', 'receiving.id', '=', 'td.receiving_office_id')
             ->select([
                 'td.id as record_id',
                 'td.document_date',
                 'td.description',
                 'td.turnover_category',
                 'issuing.name as issuing_office',
+                'receiving.name as receiving_office',
+                'td.external_recipient',
                 'td.remarks',
                 DB::raw('(SELECT COUNT(*) FROM turnover_disposal_assets WHERE turnover_disposal_id = td.id) as quantity'),
                 DB::raw('(

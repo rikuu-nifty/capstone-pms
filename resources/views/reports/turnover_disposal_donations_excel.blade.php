@@ -17,29 +17,30 @@ $totalCost = collect($donationSummary)->sum('total_cost');
 
 {{-- ================= HEADER ================= --}}
 <tr>
-    <td colspan="7" style="font-weight:bold; text-align:center; font-size:14px; padding:6px;">
+    <td colspan="8" style="font-weight:bold; text-align:center; font-size:14px; padding:6px;">
         Office of the Administrative Services
     </td>
 </tr>
 
 <tr>
-    <td colspan="7"></td>
+    <td colspan="8"></td>
 </tr> {{-- spacer --}}
 
 {{-- Report Details --}}
 <tr>
     <td style="font-weight:bold;">Report Title:</td>
-    <td colspan="2">Donation Summary Report</td>
+    <td colspan="3">Donation Summary Report</td> {{-- spans B–D --}}
     <td style="font-weight:bold;">Date Range:</td>
-    <td colspan="3">{{ $reportPeriod }}</td>
-</tr>
-<tr>
-    <td style="font-weight:bold;">Generated:</td>
-    <td colspan="6">{{ now()->format('F d, Y') }}</td>
+    <td colspan="3">{{ $reportPeriod }}</td> {{-- spans F–H --}}
 </tr>
 
 <tr>
-    <td colspan="7"></td>
+    <td style="font-weight:bold;">Generated:</td>
+    <td colspan="7">{{ now()->format('F d, Y') }}</td>
+</tr>
+
+<tr>
+    <td colspan="8"></td>
 </tr>
 
 {{-- ================= MAIN TABLE ================= --}}
@@ -49,6 +50,7 @@ $totalCost = collect($donationSummary)->sum('total_cost');
             <th>RECORD #</th>
             <th>DATE OF DONATION</th>
             <th>ISSUING OFFICE (SOURCE)</th>
+            <th>RECIPIENT</th>
             <th>DESCRIPTION OF ITEMS</th>
             <th>QUANTITY</th>
             <th>TOTAL COST</th>
@@ -61,9 +63,10 @@ $totalCost = collect($donationSummary)->sum('total_cost');
             <td>{{ $r->record_id }}</td>
             <td>{{ $r->document_date ? Carbon::parse($r->document_date)->format('M d, Y') : '—' }}</td>
             <td>{{ $r->issuing_office ?? '—' }}</td>
+            <td>{{ $r->receiving_office ?? $r->external_recipient ?? '—' }}</td>
             <td>
                 @if($r->turnover_category)
-                <strong>{{ ucfirst(str_replace('_',' ',$r->turnover_category)) }}</strong><br>
+                <strong>{{ ucfirst(str_replace('_', ' ', $r->turnover_category)) }}</strong><br>
                 @endif
                 {{ $r->description ?? '—' }}
             </td>
@@ -73,7 +76,7 @@ $totalCost = collect($donationSummary)->sum('total_cost');
         </tr>
         @empty
         <tr>
-            <td colspan="7" style="text-align:center; padding:10px;">No donation records found.</td>
+            <td colspan="8" style="text-align:center; padding:10px;">No donation records found.</td>
         </tr>
         @endforelse
     </tbody>
@@ -81,18 +84,18 @@ $totalCost = collect($donationSummary)->sum('total_cost');
 
 {{-- ================= SUMMARY ================= --}}
 <tr>
-    <td colspan="7"></td>
+    <td colspan="8"></td>
 </tr>
 <tr style="background:#e2e8f0; font-weight:bold;">
-    <td colspan="7" style="text-align:center; padding:8px; font-size:13px;">SUMMARY</td>
+    <td colspan="8" style="text-align:center; padding:8px; font-size:13px;">SUMMARY</td>
 </tr>
 <tr>
-    <td colspan="7" style="text-align:right; font-weight:bold;">
+    <td colspan="8" style="text-align:right; font-weight:bold;">
         Total Items Donated: {{ number_format($totalItems) }}
     </td>
 </tr>
 <tr>
-    <td colspan="7" style="text-align:right; font-weight:bold;">
+    <td colspan="8" style="text-align:right; font-weight:bold;">
         Grand Total Cost: ₱ {{ number_format($totalCost, 2) }}
     </td>
 </tr>

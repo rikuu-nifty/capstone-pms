@@ -91,6 +91,9 @@ type PageProps = {
         turnover_category: string | null;
         remarks: string | null;
         total_cost: number;
+
+        receiving_office: string | null;
+        external_recipient: string | null;
     }[];
 }
 
