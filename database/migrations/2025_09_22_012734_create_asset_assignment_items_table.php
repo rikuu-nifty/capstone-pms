@@ -17,6 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('asset_assignment_id');
             $table->unsignedBigInteger('asset_id');
 
+            $table->date('date_assigned');
+
             $table->timestamps();
             $table->softDeletes();
 
