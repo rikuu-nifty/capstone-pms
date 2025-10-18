@@ -160,9 +160,9 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
             ->name('reports.turnover-disposal.export.donations.excel');
 
         // Asset Assignment Report
-        Route::get('/reports/personnel-assignments', [PersonnelAssignmentsReportController::class, 'index'])
+        Route::get('personnel-assignments', [PersonnelAssignmentsReportController::class, 'index'])
             ->name('reports.personnel-assignments');
-        Route::get('/reports/personnel-assignments/export/excel', [PersonnelAssignmentsReportController::class, 'exportExcel'])
+        Route::get('personnel-assignments/export/excel', [PersonnelAssignmentsReportController::class, 'exportExcel'])
             ->name('reports.personnel-assignments.export.excel');
     });
 
