@@ -102,7 +102,24 @@ class AssetAssignmentController extends Controller
             foreach ($data['selected_assets'] as $row) {
                 $assetId = data_get($row, 'id');
                 $rawDate = data_get($row, 'date_assigned');
-                $itemDate = $rawDate ?: $data['date_assigned'] ?: now()->toDateString();
+                // $itemDate = $rawDate ?: $data['date_assigned'] ?: now()->toDateString();
+
+                // AssetAssignmentItem::create([
+                //     'asset_assignment_id' => $assignment->id,
+                //     'asset_id'            => $assetId,
+                //     'date_assigned'       => $itemDate,
+                // ]);
+
+                // Check if this asset was already linked before (means it's being retained)
+                $existingItem = $assignment->items()->withTrashed()->where('asset_id', $assetId)->first();
+
+                if ($existingItem) {
+                    // Use existing date_assigned if available, or record date as fallback
+                    $itemDate = $rawDate ?: $existingItem->date_assigned ?: $data['date_assigned'] ?: now()->toDateString();
+                } else {
+                    // New asset being added — use manual date or today's date
+                    $itemDate = $rawDate ?: now()->toDateString();
+                }
 
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
