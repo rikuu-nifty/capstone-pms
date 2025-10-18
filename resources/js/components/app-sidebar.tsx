@@ -37,6 +37,8 @@ import {
     Trash2,
     Monitor,
     UserCircle, // optional icon for "System Monitoring"
+
+    BookOpenCheck,
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -45,10 +47,10 @@ import AppLogo from './app-logo';
 
 // ------------------ TYPES ------------------
 type NavItem = {
-  title: string
-  href: string
-  icon: React.ComponentType<Record<string, unknown>>
-  permission?: string | string[]
+    title: string
+    href: string
+    icon: React.ComponentType<Record<string, unknown>>
+    permission?: string | string[]
 }
 
 // ------------------ NAV ITEMS ------------------
@@ -85,7 +87,6 @@ const trashBinItem = {
     permission: 'view-trash-bin',
 };
 
-// grouped “System Monitoring” items
 const systemMonitoringNavItems = [
     notificationsNavItem,
     reportsNavItem,
@@ -99,12 +100,6 @@ const assetsNavItems = [
     { title: 'Models', href: '/models', icon: PackageCheck, permission: 'view-asset-models' },
     { title: 'Assignments', href: '/assignments', icon: FileUser, permission: 'view-assignments' },
 ];
-
-// const institutionalSetUpNavItems = [
-//     { title: 'Buildings', href: '/buildings', icon: Landmark, permission: ['view-buildings', 'view-own-unit-buildings'],},
-//     { title: 'Personnels', href: '/personnels', icon: User, permission: 'view-personnels' },
-//     { title: 'Units & Departments', href: '/unit-or-departments', icon: Network, permission: 'view-unit-or-departments' },
-// ];
 
 const userNavItems = [
     { title: 'Users', href: '/users', icon: UserCheck2, permission: 'view-users-page' },
@@ -176,6 +171,8 @@ export function AppSidebar() {
         { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
         { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
         { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
+        // { title: 'Verification Form', href: '/verification-form', icon: BookOpenCheck, permission: 'view-verification-form' },
+        { title: 'Verification Form', href: '/verification-form', icon: BookOpenCheck },
     ]
 
     const buildingsLink =
