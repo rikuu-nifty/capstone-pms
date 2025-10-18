@@ -52,8 +52,10 @@ type TurnoverDisposalChartData = {
 import { AssetInventoryListChart } from './charts/AssetInventoryListChart'
 import { InventorySchedulingStatusChart } from './charts/InventorySchedulingStatusChart'
 import TransferStatusChart from './charts/TransferStatusChart'
-import OffCampusStatusChart from './charts/OffCampusStatusChart' // import chart
+import OffCampusStatusChart from './charts/OffCampusStatusChart'
 // import { ReportCard } from './ReportCard'; // Already imported above
+
+import PersonnelAssignmentsChart from './charts/PersonnelAssignmentsChart';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type CategoryDataAlt = { label: string; value: number } // renamed to avoid redeclaration conflict
@@ -75,13 +77,20 @@ type OffCampusSummary = {
   purposeSummary: Record<string, number>
 }
 
+type ChartRow = {
+  name: string;
+  current: number;
+  past: number;
+}
+
 type ReportsPageProps = InertiaPageProps & {
-  categoryData: CategoryData[]
-  inventorySheetChartData: InventorySheetChartData[]
-  schedulingData: SchedulingData[]
-  transferData: TransferStatusData[]
-  offCampusData: OffCampusSummary
-  turnoverDisposalChartData: TurnoverDisposalChartData[],
+  categoryData: CategoryData[];
+  inventorySheetChartData: InventorySheetChartData[];
+  schedulingData: SchedulingData[];
+  transferData: TransferStatusData[];
+  offCampusData: OffCampusSummary;
+  turnoverDisposalChartData: TurnoverDisposalChartData[];
+  personnelAssignmentsChartData: ChartRow[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }]
@@ -355,19 +364,15 @@ export default function ReportsIndex() {
     {
       title: 'Personnel Assignments Report',
       description: 'View designated personnel and their current/past assigned assets.',
-      href: route('reports.personnel-assignments'), // to be created later
+      href: route('reports.personnel-assignments'),
       icon: <ClipboardList className="h-5 w-5 text-amber-600" />,
       footer: (
         <span className="text-xs text-muted-foreground">
           Click "View" to open the personnel assignment report
         </span>
       ),
-      chart: (
-        <div className="flex h-full flex-col items-center justify-center text-center text-sm text-gray-400 p-4">
-          <p>📋 Personnel assignments report placeholder</p>
-          <p className="mt-1 text-xs text-muted-foreground">Data will appear once implemented</p>
-        </div>
-      ),
+      chart: 
+        <PersonnelAssignmentsChart data={usePage<ReportsPageProps>().props.personnelAssignmentsChartData ?? []} />,
     },
 
   ]

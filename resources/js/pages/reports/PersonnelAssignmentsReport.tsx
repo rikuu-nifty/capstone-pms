@@ -496,28 +496,36 @@ export default function PersonnelAssignmentsReport() {
                         </div>
                     </CardHeader>
 
-                    <CardContent className="h-[450px]">
+                    <CardContent className="h-[400px]">
                         {viewMode === 'chart' ? (
-                            <ChartContainer config={chartConfig} className="mx-auto aspect-[4/3] max-h-[400px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                            chartData && chartData.length > 0 ? (
+                                <ChartContainer config={chartConfig} className="mx-auto aspect-[4/3] max-h-[400px]">
+                                    <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={chartData}>
                                         <CartesianGrid vertical={false} />
                                         <XAxis
-                                            dataKey="name"
-                                            tickLine={false}
-                                            axisLine={false}
-                                            tickMargin={8}
-                                            tickFormatter={(v) => (v.length > 12 ? v.slice(0, 12) + '…' : v)}
+                                        dataKey="name"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={8}
+                                        tickFormatter={(v) => (v.length > 12 ? v.slice(0, 12) + '…' : v)}
                                         />
-                                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
-
+                                        <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent indicator="dashed" />}
+                                        />
                                         <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
                                         <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
-
                                         <ChartLegend content={<ChartLegendContent />} />
                                     </BarChart>
-                                </ResponsiveContainer>
-                            </ChartContainer>
+                                    </ResponsiveContainer>
+                                </ChartContainer>
+                            ) : (
+                                <div className="flex h-full flex-col items-center justify-center text-center text-gray-500">
+                                    <p className="text-lg font-semibold">No Data Available</p>
+                                    <p className="text-sm">Try adjusting your filters to see results.</p>
+                                </div>
+                            )
                         ) : viewMode === 'summary' ? (
                             <PersonnelAssignmentsTable
                                 records={displayed}

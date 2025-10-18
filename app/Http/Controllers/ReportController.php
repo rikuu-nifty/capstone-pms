@@ -18,6 +18,7 @@ use App\Models\Category;
 use App\Models\BuildingRoom;
 use App\Models\SubArea;
 use App\Models\TurnoverDisposal;
+use App\Models\Personnel;
 
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;  
@@ -139,165 +140,182 @@ class ReportController extends Controller
     }
 
 
-  public function index(Request $request)
-{
-    // Asset Inventory List summary
-    $categoryData = Category::withCount('inventoryLists')
-        ->get()
-        ->map(fn($cat) => [
-            'label' => $cat->name,
-            'value' => $cat->inventory_lists_count ?? 0,
-        ]);
+    public function index(Request $request)
+    {
+        // Asset Inventory List summary
+        $categoryData = Category::withCount('inventoryLists')
+            ->get()
+            ->map(fn($cat) => [
+                'label' => $cat->name,
+                'value' => $cat->inventory_lists_count ?? 0,
+            ]);
 
-    // Inventory Scheduling summary
-    $schedulingData = (new InventorySchedulingReportController)->summaryForDashboard();
+        // Inventory Scheduling summary
+        $schedulingData = (new InventorySchedulingReportController)->summaryForDashboard();
 
-    // 🔹 Optional filters (same as in PropertyTransferReportController)
-    $from = $request->input('from');
-    $to = $request->input('to');
-    $status = $request->input('status');
-    $currentBuilding = $request->input('current_building_id');
-    $receivingBuilding = $request->input('receiving_building_id');
-    $department = $request->input('department_id');
+        // 🔹 Optional filters (same as in PropertyTransferReportController)
+        $from = $request->input('from');
+        $to = $request->input('to');
+        $status = $request->input('status');
+        $currentBuilding = $request->input('current_building_id');
+        $receivingBuilding = $request->input('receiving_building_id');
+        $department = $request->input('department_id');
 
-    // Base query with filters
-    $query = Transfer::query()
-        ->when($from, fn($q) => $q->whereDate('created_at', '>=', Carbon::parse($from)))
-        ->when($to, fn($q) => $q->whereDate('created_at', '<=', Carbon::parse($to)))
-        ->when($status, fn($q) => $q->where('status', $status))
-        ->when($currentBuilding, fn($q) => $q->whereHas('currentBuildingRoom', fn($q2) => $q2->where('building_id', $currentBuilding)))
-        ->when($receivingBuilding, fn($q) => $q->whereHas('receivingBuildingRoom', fn($q2) => $q2->where('building_id', $receivingBuilding)))
-        ->when($department, fn($q) => $q->where('current_organization', $department));
+        // Base query with filters
+        $query = Transfer::query()
+            ->when($from, fn($q) => $q->whereDate('created_at', '>=', Carbon::parse($from)))
+            ->when($to, fn($q) => $q->whereDate('created_at', '<=', Carbon::parse($to)))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($currentBuilding, fn($q) => $q->whereHas('currentBuildingRoom', fn($q2) => $q2->where('building_id', $currentBuilding)))
+            ->when($receivingBuilding, fn($q) => $q->whereHas('receivingBuildingRoom', fn($q2) => $q2->where('building_id', $receivingBuilding)))
+            ->when($department, fn($q) => $q->where('current_organization', $department));
 
-    $transfers = $query->get();
+        $transfers = $query->get();
 
-    // Monthly trends by status (continuous range)
-    // If no from/to filter → use all transfers for chart
-    if (empty($from) && empty($to)) {
-        $chartSource = Transfer::all();
-    } else {
-        // Respect filters for chart
-        $chartSource = $transfers;
-    }
+        // Monthly trends by status (continuous range)
+        // If no from/to filter → use all transfers for chart
+        if (empty($from) && empty($to)) {
+            $chartSource = Transfer::all();
+        } else {
+            // Respect filters for chart
+            $chartSource = $transfers;
+        }
 
-    // Always show last 6 months if no from/to filters are applied
-    if (empty($from) && empty($to)) {
-        $endDate = now()->endOfMonth();
-        $startDate = now()->subMonths(5)->startOfMonth(); // last 6 months
-    } else {
-        // Use actual min/max of filtered dataset
-        $startDate = $chartSource->min('created_at');
-        $endDate   = $chartSource->max('created_at');
-    }
+        // Always show last 6 months if no from/to filters are applied
+        if (empty($from) && empty($to)) {
+            $endDate = now()->endOfMonth();
+            $startDate = now()->subMonths(5)->startOfMonth(); // last 6 months
+        } else {
+            // Use actual min/max of filtered dataset
+            $startDate = $chartSource->min('created_at');
+            $endDate   = $chartSource->max('created_at');
+        }
 
-    if ($startDate && $endDate) {
-        $period = CarbonPeriod::create(
-            Carbon::parse($startDate)->startOfMonth(),
-            '1 month',
-            Carbon::parse($endDate)->endOfMonth()
-        );
-
-        $monthlyStatusTrends = collect($period)->map(function ($date) use ($chartSource) {
-            $monthKey = $date->format('Y-m');
-            $group = $chartSource->filter(fn($t) =>
-                Carbon::parse($t->created_at)->format('Y-m') === $monthKey
+        if ($startDate && $endDate) {
+            $period = CarbonPeriod::create(
+                Carbon::parse($startDate)->startOfMonth(),
+                '1 month',
+                Carbon::parse($endDate)->endOfMonth()
             );
 
-            return [
-                'month'          => $date->format('M Y'),
-                'completed'      => $group->where('status', 'completed')->count(),
-                'pending_review' => $group->where('status', 'pending_review')->count(),
-                'upcoming'       => $group->where('status', 'upcoming')->count(),
-                'in_progress'    => $group->where('status', 'in_progress')->count(),
-                'overdue'        => $group->where('status', 'overdue')->count(),
-                'cancelled'      => $group->where('status', 'cancelled')->count(),
-            ];
-        })->values();
-    } else {
-        $monthlyStatusTrends = collect();
-    }
+            $monthlyStatusTrends = collect($period)->map(function ($date) use ($chartSource) {
+                $monthKey = $date->format('Y-m');
+                $group = $chartSource->filter(fn($t) =>
+                    Carbon::parse($t->created_at)->format('Y-m') === $monthKey
+                );
 
-    // Off-Campus summary
-    $offCampusRecords = OffCampus::all();
-    $offCampusData = [
-        'statusSummary' => [
-            'pending_review' => $offCampusRecords->where('status', 'pending_review')->count(),
-            'pending_return' => $offCampusRecords->where('status', 'pending_return')->count(),
-            'returned'       => $offCampusRecords->where('status', 'returned')->count(),
-            'overdue'        => $offCampusRecords->where('status', 'overdue')->count(),
-            'cancelled'      => $offCampusRecords->where('status', 'cancelled')->count(),
-            'missing'        => $offCampusRecords->where('status', 'missing')->count(),
-        ],
-        'purposeSummary' => [
-            'official_use' => $offCampusRecords->where('remarks', 'official_use')->count(),
-            'repair'       => $offCampusRecords->where('remarks', 'repair')->count(),
-        ],
-    ];
+                return [
+                    'month'          => $date->format('M Y'),
+                    'completed'      => $group->where('status', 'completed')->count(),
+                    'pending_review' => $group->where('status', 'pending_review')->count(),
+                    'upcoming'       => $group->where('status', 'upcoming')->count(),
+                    'in_progress'    => $group->where('status', 'in_progress')->count(),
+                    'overdue'        => $group->where('status', 'overdue')->count(),
+                    'cancelled'      => $group->where('status', 'cancelled')->count(),
+                ];
+            })->values();
+        } else {
+            $monthlyStatusTrends = collect();
+        }
 
-    // INVENTORY SHEET REPORTS PART
-        // $chartQuery = InventoryList::with(['schedulingAssets'])->get();
+        // Off-Campus summary
+        $offCampusRecords = OffCampus::all();
+        $offCampusData = [
+            'statusSummary' => [
+                'pending_review' => $offCampusRecords->where('status', 'pending_review')->count(),
+                'pending_return' => $offCampusRecords->where('status', 'pending_return')->count(),
+                'returned'       => $offCampusRecords->where('status', 'returned')->count(),
+                'overdue'        => $offCampusRecords->where('status', 'overdue')->count(),
+                'cancelled'      => $offCampusRecords->where('status', 'cancelled')->count(),
+                'missing'        => $offCampusRecords->where('status', 'missing')->count(),
+            ],
+            'purposeSummary' => [
+                'official_use' => $offCampusRecords->where('remarks', 'official_use')->count(),
+                'repair'       => $offCampusRecords->where('remarks', 'repair')->count(),
+            ],
+        ];
 
         // INVENTORY SHEET REPORTS PART
+            // $chartQuery = InventoryList::with(['schedulingAssets'])->get();
 
-        $chartQuery = InventoryList::with(['schedulingAssets'])->get();
+            // INVENTORY SHEET REPORTS PART
 
-        // Flatten and normalize scheduling assets
-        $chartData = $chartQuery->flatMap(function ($asset) {
-            return $asset->schedulingAssets->map(function ($s) {
-                $date = $s->inventory_status === 'inventoried' && $s->inventoried_at
-                    ? Carbon::parse($s->inventoried_at)->toDateString()
-                    : Carbon::parse($s->created_at)->toDateString();
+            $chartQuery = InventoryList::with(['schedulingAssets'])->get();
 
-                return [
-                    'date'             => $date,
-                    'inventory_status' => $s->inventory_status ?? 'not_inventoried',
-                ];
-            });
-        })
-        ->filter(fn($item) => $item['date'] >= $startDate); // Enforce strict 90-day cutoff here
+            // Flatten and normalize scheduling assets
+            $chartData = $chartQuery->flatMap(function ($asset) {
+                return $asset->schedulingAssets->map(function ($s) {
+                    $date = $s->inventory_status === 'inventoried' && $s->inventoried_at
+                        ? Carbon::parse($s->inventoried_at)->toDateString()
+                        : Carbon::parse($s->created_at)->toDateString();
 
-        // Group by date and count statuses
-        $inventorySheetChartData = $chartData
-            ->groupBy('date')
-            ->map(function (Collection $items, $date) {
-                return [
-                    'date'            => $date,
-                    'inventoried'     => $items->where('inventory_status', 'inventoried')->count(),
-                    'scheduled'       => $items->where('inventory_status', 'scheduled')->count(),
-                    'not_inventoried' => $items->where('inventory_status', 'not_inventoried')->count(),
-                ];
+                    return [
+                        'date'             => $date,
+                        'inventory_status' => $s->inventory_status ?? 'not_inventoried',
+                    ];
+                });
             })
-            ->sortKeys()
-            ->values()
-            ->toArray()
-        ;
+            ->filter(fn($item) => $item['date'] >= $startDate); // Enforce strict 90-day cutoff here
 
-        $rawData = TurnoverDisposal::monthlyCompletedTrendData();
-        $year = now()->year;
-        $months = CarbonPeriod::create("{$year}-01-01", '1 month', "{$year}-12-01");
+            // Group by date and count statuses
+            $inventorySheetChartData = $chartData
+                ->groupBy('date')
+                ->map(function (Collection $items, $date) {
+                    return [
+                        'date'            => $date,
+                        'inventoried'     => $items->where('inventory_status', 'inventoried')->count(),
+                        'scheduled'       => $items->where('inventory_status', 'scheduled')->count(),
+                        'not_inventoried' => $items->where('inventory_status', 'not_inventoried')->count(),
+                    ];
+                })
+                ->sortKeys()
+                ->values()
+                ->toArray()
+            ;
 
-        $turnoverDisposalChartData = collect($months)->map(function ($date) use ($rawData) {
-            $ym = $date->format('Y-m');
-            return [
-                'month'    => $date->format('F'),
-                'turnover' => (int) ($rawData[$ym]->turnover ?? 0),
-                'disposal' => (int) ($rawData[$ym]->disposal ?? 0),
-            ];
-        })->toArray();
+            $rawData = TurnoverDisposal::monthlyCompletedTrendData();
+            $year = now()->year;
+            $months = CarbonPeriod::create("{$year}-01-01", '1 month', "{$year}-12-01");
 
-    return Inertia::render('reports/index', [
-        'title'          => 'Reports Dashboard',
-        'categoryData'   => $categoryData,
-        'inventorySheetChartData' => $inventorySheetChartData,
-        'schedulingData' => $schedulingData,
-        'turnoverDisposalChartData' => $turnoverDisposalChartData,
-        'transferData'   => $monthlyStatusTrends, // filtered + continuous months
-        'offCampusData'  => $offCampusData,       // added for Off-Campus chart
-        'filters'        => $request->only([
-            'from','to','status','current_building_id','receiving_building_id','department_id'
-        ]),
-    ]);
-}
+            $turnoverDisposalChartData = collect($months)->map(function ($date) use ($rawData) {
+                $ym = $date->format('Y-m');
+                return [
+                    'month'    => $date->format('F'),
+                    'turnover' => (int) ($rawData[$ym]->turnover ?? 0),
+                    'disposal' => (int) ($rawData[$ym]->disposal ?? 0),
+                ];
+            })->toArray();
+
+        // $personnelAssignmentsChartData = Personnel::reportChartData();
+
+        // Limit Personnel Assignments Chart to current quarter
+        $currentQuarter = now()->quarter;
+        $currentYear = now()->year;
+
+        // Calculate the start and end date of the current quarter
+        $quarterStart = now()->setDate($currentYear, ($currentQuarter - 1) * 3 + 1, 1)->startOfMonth();
+        $quarterEnd = (clone $quarterStart)->addMonths(2)->endOfMonth();
+
+        // Pass date filters to reportChartData()
+        $personnelAssignmentsChartData = Personnel::reportChartData([
+            'from' => $quarterStart->toDateString(),
+            'to'   => $quarterEnd->toDateString(),
+        ]);
+
+        return Inertia::render('reports/index', [
+            'title'          => 'Reports Dashboard',
+            'categoryData'   => $categoryData,
+            'inventorySheetChartData' => $inventorySheetChartData,
+            'schedulingData' => $schedulingData,
+            'turnoverDisposalChartData' => $turnoverDisposalChartData,
+            'transferData'   => $monthlyStatusTrends, // filtered + continuous months
+            'offCampusData'  => $offCampusData,
+            'personnelAssignmentsChartData' => $personnelAssignmentsChartData->toArray(),
+            'filters'        => $request->only([
+                'from','to','status','current_building_id','receiving_building_id','department_id'
+            ]),
+        ]);
+    }
 
 
 
