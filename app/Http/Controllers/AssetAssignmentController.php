@@ -36,12 +36,13 @@ class AssetAssignmentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
-            'assigned_by'       => ['sometimes', Rule::exists('users', 'id')],
-            'date_assigned'     => ['required', 'date'],
-            'remarks'           => ['nullable', 'string'],
-            'selected_assets'   => ['required', 'array', 'min:1'],
-            'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
+            'personnel_id'                      => ['required', Rule::exists('personnels', 'id')],
+            'assigned_by'                       => ['sometimes', Rule::exists('users', 'id')],
+            'date_assigned'                     => ['required', 'date'],
+            'remarks'                           => ['nullable', 'string'],
+            'selected_assets'                   => ['required', 'array', 'min:1'],
+            'selected_assets.*.id'              => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'selected_assets.*.date_assigned'   => ['nullable', 'date'],
         ]);
 
         DB::transaction(function () use ($data, $request) {
@@ -53,10 +54,15 @@ class AssetAssignmentController extends Controller
             ]);
 
             // Attach assets and sync assigned_to
-            foreach ($data['selected_assets'] as $assetId) {
+            foreach ($data['selected_assets'] as $row) {
+                $assetId = data_get($row, 'id');
+                $rawDate = data_get($row, 'date_assigned');
+                $itemDate = $rawDate ?: $data['date_assigned'] ?: now()->toDateString();
+
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
+                    'date_assigned'       => $itemDate,
                 ]);
 
                 InventoryList::where('id', $assetId)->update([
@@ -71,15 +77,18 @@ class AssetAssignmentController extends Controller
     public function update(Request $request, AssetAssignment $assignment)
     {
         $data = $request->validate([
-            'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
-            'date_assigned'     => ['required', 'date'],
-            'assigned_by'       => ['sometimes', Rule::exists('users', 'id')],
-            'remarks'           => ['nullable', 'string'],
-            'selected_assets'   => ['required', 'array', 'min:1'],
-            'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
+            'personnel_id'                      => ['required', Rule::exists('personnels', 'id')],
+            'date_assigned'                     => ['required', 'date'],
+            'assigned_by'                       => ['sometimes', Rule::exists('users', 'id')],
+            'remarks'                           => ['nullable', 'string'],
+            'selected_assets'                   => ['required', 'array', 'min:1'],
+            'selected_assets.*.id'              => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'selected_assets.*.date_assigned'   => ['nullable', 'date'],
         ]);
 
         DB::transaction(function () use ($assignment, $data, $request) {
+            $recordDate = $data['date_assigned'] ?: now()->toDateString();
+
             $assignment->update([
                 'personnel_id'  => $data['personnel_id'],
                 'date_assigned' => $data['date_assigned'],
@@ -89,10 +98,16 @@ class AssetAssignmentController extends Controller
 
             // Replace items + sync
             $assignment->items()->delete();
-            foreach ($data['selected_assets'] as $assetId) {
+
+            foreach ($data['selected_assets'] as $row) {
+                $assetId = data_get($row, 'id');
+                $rawDate = data_get($row, 'date_assigned');
+                $itemDate = $rawDate ?: $data['date_assigned'] ?: now()->toDateString();
+
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
+                    'date_assigned'       => $itemDate,
                 ]);
 
                 InventoryList::where('id', $assetId)->update([

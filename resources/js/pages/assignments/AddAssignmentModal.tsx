@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import AddModal from '@/components/modals/AddModal';
 import AssignmentAssetItemDetails from './AssignmentAssetItemDetails';
 import { MinimalAsset } from '@/types/asset-assignment';
@@ -17,6 +17,8 @@ interface Props {
     users: { id: number; name: string }[];
 }
 
+type SelectedAssetPayload = { id: number; date_assigned: string };
+
 export default function AddAssignmentModal({
     show,
     onClose,
@@ -27,7 +29,7 @@ export default function AddAssignmentModal({
     currentUserId,
     users,
 }: Props) {
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<{
+    const { data, setData, processing, errors, reset, clearErrors } = useForm<{
         personnel_id: number | null;
         unit_or_department_id: number | null;
         assigned_by: number;
@@ -46,6 +48,7 @@ export default function AddAssignmentModal({
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
 
     const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
+    const [itemDates, setItemDates] = useState<Record<number, string>>({});
 
     useEffect(() => {
         if (show) {
@@ -74,6 +77,14 @@ export default function AddAssignmentModal({
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        const payload = {
+            ...data,
+            selected_assets: data.selected_assets.map((id): SelectedAssetPayload => ({
+                id,
+                date_assigned: itemDates[id] ?? '',
+            })),
+        };
+
         if (!data.date_assigned) {
             setData('date_assigned', new Date().toISOString().split('T')[0]);
         }
@@ -82,7 +93,18 @@ export default function AddAssignmentModal({
             setData('assigned_by', currentUserId);
         }
 
-        post('/assignments', {
+        // post('/assignments', {
+        //     preserveScroll: true,
+        //     onSuccess: () => {
+        //         reset();
+        //         clearErrors();
+        //         setShowAssetDropdown([true]);
+        //         setSelectedUnit(null);
+        //         onClose();
+        //     },
+        // });
+
+        router.post('/assignments', payload, {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
@@ -221,10 +243,18 @@ export default function AddAssignmentModal({
                                     updated.splice(index, 1);
                                     setData('selected_assets', updated);
 
+                                    setItemDates((m) => {
+                                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                        const { [assetId]: _, ...rest } = m;
+                                        return rest;
+                                    });
+
                                     const newDropdowns = [...showAssetDropdown];
                                     newDropdowns.splice(index, 1);
                                     setShowAssetDropdown(newDropdowns);
                                 }}
+                                dateValue={itemDates[assetId] ?? ''}
+                                onDateChange={(v) => setItemDates((m) => ({ ...m, [assetId]: v }))}
                             />
                         )
                     );

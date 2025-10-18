@@ -20,7 +20,7 @@ class AssetAssignment extends Model
     protected $appends = ['assigned_by_user'];
 
     protected $casts = [
-        'date_assigned' => 'date',
+        'date_assigned' => 'date:Y-m-d',
         'created_at'    => 'datetime',
         'updated_at'    => 'datetime',
         'deleted_at'    => 'datetime',

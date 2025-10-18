@@ -16,18 +16,9 @@ class AssetAssignmentItem extends Model
     ];
 
     protected $casts = [
-        'date_assigned' => 'date',
+        'date_assigned' => 'date:Y-m-d',
         'deleted_at'    => 'datetime',
     ];
-
-    protected static function booted()
-    {
-        static::creating(function ($item) {
-            if (empty($item->date_assigned)) {
-                $item->date_assigned = now()->toDateString();
-            }
-        });
-    }
 
     public function assignment()
     {

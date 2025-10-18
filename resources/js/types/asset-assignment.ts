@@ -25,6 +25,7 @@ export type AssetAssignmentItem = {
     id: number;
     asset_assignment_id: number;
     asset_id: number;
+    date_assigned?: string;
 
     asset?: {
         id: number;
