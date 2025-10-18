@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\FormApprovalSteps;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 use App\Notifications\FormApprovalStepPending;
 
@@ -418,11 +419,11 @@ class FormApproval extends Model
 
     foreach ($approvers as $approver) {
         try {
-            $notification = new \App\Notifications\FormApprovalStepPending($step, $this->form_title);
+            $notification = new FormApprovalStepPending($step, $this->form_title);
             $approver->notifyNow($notification); // 👈 Sends immediately
-            \Log::info("✅ Approval pending email sent to {$approver->email}");
+            Log::info("✅ Approval pending email sent to {$approver->email}");
         } catch (\Throwable $e) {
-            \Log::error("❌ Failed to send approval email", [
+            Log::error("❌ Failed to send approval email", [
                 'email' => $approver->email ?? 'unknown',
                 'error' => $e->getMessage(),
             ]);
