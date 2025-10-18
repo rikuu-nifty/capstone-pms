@@ -32,7 +32,7 @@ class CheckMaintenanceDue extends Command
             ->whereNull('deleted_at')
             ->where('status', 'approved')
             ->whereNotNull('role_id')
-            ->whereHas('role', fn($q) => $q->whereIn('code', ['pmo_staff', 'pmo_head']))
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser','pmo_staff', 'pmo_head'])) // INCLUDED SUPERSUSER FOR TESTING
             ->with('role:id,code,name')
             ->get();
 
