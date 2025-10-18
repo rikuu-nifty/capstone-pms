@@ -236,43 +236,43 @@ class TurnoverDisposalController extends Controller
     }
 
     public function exportPdf(int $id)
-{
-    $turnoverDisposal = TurnoverDisposal::with([
-        'issuingOffice',
-        'receivingOffice',
-        'personnel',
-        'turnoverDisposalAssets.assets',
-    ])->findOrFail($id);
+    {
+        $turnoverDisposal = TurnoverDisposal::with([
+            'issuingOffice',
+            'receivingOffice',
+            'personnel',
+            'turnoverDisposalAssets.assets',
+        ])->findOrFail($id);
 
-    // Build assets with remarks
-    $assets = $turnoverDisposal->turnoverDisposalAssets->map(function ($t) use ($turnoverDisposal) {
-        $asset = $t->assets;
-        if ($asset) {
-            $asset->pivot_remarks = $t->remarks;
-            $asset->record_remarks = $turnoverDisposal->remarks;
-        }
-        return $asset;
-    })->filter();
+        // Build assets with remarks
+        $assets = $turnoverDisposal->turnoverDisposalAssets->map(function ($t) use ($turnoverDisposal) {
+            $asset = $t->assets;
+            if ($asset) {
+                $asset->pivot_remarks = $t->remarks;
+                $asset->record_remarks = $turnoverDisposal->remarks;
+            }
+            return $asset;
+        })->filter();
 
-    // Load DB signatories
-    $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
+        // Load DB signatories
+        $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
 
-    // Inject "Head / Unit" dynamically (if not in DB)
-    $signatories['head_unit'] = [
-        'name'  => $turnoverDisposal->issuingOffice->unit_head ?? '—',
-        'title' => 'Head / Unit',
-    ];
+        // Inject "Head / Unit" dynamically (if not in DB)
+        $signatories['head_unit'] = [
+            'name'  => $turnoverDisposal->issuingOffice->unit_head ?? '—',
+            'title' => 'Head / Unit',
+        ];
 
-    $pdf = Pdf::loadView('forms.turnover_disposal_form_pdf', [
-        'turnoverDisposal' => $turnoverDisposal,
-        'assets' => $assets,
-        'signatories' => $signatories,
-    ])->setPaper('A4', 'portrait')
-      ->setOption('isPhpEnabled', true);
+        $pdf = Pdf::loadView('forms.turnover_disposal_form_pdf', [
+            'turnoverDisposal' => $turnoverDisposal,
+            'assets' => $assets,
+            'signatories' => $signatories,
+        ])->setPaper('A4', 'portrait')
+        ->setOption('isPhpEnabled', true);
 
-    $timestamp = now()->format('Y-m-d');
+        $timestamp = now()->format('Y-m-d');
 
-    return $pdf->download("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
-}
+        return $pdf->download("Turnover-Disposal-Form-{$turnoverDisposal->id}-{$timestamp}.pdf");
+    }
 
 }

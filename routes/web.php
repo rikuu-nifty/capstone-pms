@@ -39,6 +39,7 @@
     use App\Http\Controllers\Settings\ProfileController;
     use App\Http\Controllers\CalendarController;
     use App\Http\Controllers\PersonnelAssignmentsReportController;
+    use App\Http\Controllers\VerificationFormController;
 
     Route::get('/', function () {
         if (Auth::check()) {
@@ -363,6 +364,12 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         ->middleware('can:delete-turnover-disposal');
     Route::get('/turnover-disposal/{id}/print', [TurnoverDisposalController::class, 'exportPdf'])
         ->name('turnover-disposal.print');
+
+    //  VERIFICATION FORM
+    Route::get('/verification-form', [VerificationFormController::class, 'index'])
+        ->name('verification-form.index');
+    Route::get('/verification-form/{id}', [VerificationFormController::class, 'show'])
+        ->name('verification-form.show');
 
     /// OFF CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {
