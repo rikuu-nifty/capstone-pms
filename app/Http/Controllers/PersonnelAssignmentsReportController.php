@@ -13,7 +13,7 @@ use App\Models\Personnel;
 use App\Models\UnitOrDepartment;
 use App\Models\Category;
 
-use App\Exports\PersonnelAssignmentsExport;
+use App\Exports\PersonnelAssignmentsSummaryExport;
 
 class PersonnelAssignmentsReportController extends Controller
 {
@@ -153,11 +153,39 @@ class PersonnelAssignmentsReportController extends Controller
     public function exportExcel(Request $request)
     {
         $filters = $request->all();
-        $data = Personnel::reportExportData($filters);
+
+        // Add readable names
+        if (!empty($filters['department_id'])) {
+            $filters['department_name'] = UnitOrDepartment::find($filters['department_id'])?->name ?? '—';
+        } else {
+            $filters['department_name'] = '—';
+        }
+
+        if (!empty($filters['status'])) {
+            $filters['status_label'] = ucfirst(str_replace('_', ' ', $filters['status']));
+        } else {
+            $filters['status_label'] = '—';
+        }
+
+        $paginator = Personnel::reportPaginated($filters, 2000);
+
+        $records = $paginator->getCollection()->map(function ($personnel) {
+            return [
+                'id'                   => $personnel->id,
+                'full_name'            => $personnel->full_name,
+                'department'           => $personnel->unitOrDepartment?->name ?? '—',
+                'status'               => ucfirst(str_replace('_', ' ', $personnel->status)),
+                'past_assets_count'    => (int) $personnel->past_assets_count,
+                'current_assets_count' => (int) $personnel->current_assets_count,
+            ];
+        });
 
         $timestamp = now()->format('Y-m-d');
-        $filename = "Personnel_Assignments_Report_{$timestamp}.xlsx";
+        $filename = "Personnel_Assignments_Summary_Report_{$timestamp}.xlsx";
 
-        return Excel::download(new PersonnelAssignmentsExport($data, $filters), $filename);
+        return Excel::download(
+            new PersonnelAssignmentsSummaryExport($records, $filters),
+            $filename
+        );
     }
 }
