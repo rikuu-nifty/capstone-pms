@@ -140,8 +140,14 @@ export default function TurnoverDisposalReport() {
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
 
-    // const [viewMode, setViewMode] = useState<'chart' | 'table'>('table');
     const [viewMode, setViewMode] = useState<'chart' | 'table' | 'donations'>('table');
+
+    useEffect(() => {
+        if (viewMode === "donations") {
+            setFilters((prev) => ({ ...prev, is_donation: null })); // Clear the is_donation filter automatically
+            setAppliedFilters((prev) => ({ ...prev, is_donation: null }));
+        }
+    }, [viewMode]);
 
     function updateFilter<K extends keyof typeof filters>(
         key: K,
@@ -441,6 +447,7 @@ export default function TurnoverDisposalReport() {
                             <Select
                                 className="w-full"
                                 isClearable
+                                isDisabled={viewMode === "donations"}
                                 placeholder="Select donation status"
                                 value={
                                 filters.is_donation !== null && filters.is_donation !== undefined
