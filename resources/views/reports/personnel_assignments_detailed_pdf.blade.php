@@ -18,7 +18,7 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 11px;
-        /* margin-bottom: 10px; */
+        margin-bottom: 10px;
         word-wrap: break-word;
         overflow-wrap: break-word;
         white-space: normal;
@@ -47,6 +47,15 @@
 
     tr {
         page-break-inside: avoid;
+    }
+
+    /* Group row styles */
+    .group-dept td {
+        font-weight: bold;
+        background: #dfdedeff;
+        padding-left: 40px;
+        text-align: left;
+        color: #053eb9ff;
     }
 
     /* Text colors */
@@ -101,6 +110,12 @@ $dateAssigned = '—';
 if ($fromDate && $toDate) $dateAssigned = $fromDate->format('F d, Y') . ' – ' . $toDate->format('F d, Y');
 elseif ($fromDate) $dateAssigned = $fromDate->format('F d, Y') . ' – Present';
 elseif ($toDate) $dateAssigned = 'Until ' . $toDate->format('F d, Y');
+
+/* ---- Group by Department only if no department filter ---- */
+$grouped = null;
+if (empty($filters['department_id'])) {
+$grouped = collect($records)->groupBy(fn($r) => $r['asset_unit_or_department'] ?? '—');
+}
 @endphp
 
 <div class="container">
@@ -118,7 +133,7 @@ elseif ($toDate) $dateAssigned = 'Until ' . $toDate->format('F d, Y');
     </div>
 
     {{-- FILTERS --}}
-    <table style="width:100%; border-collapse:collapse; margin-bottom:-30px;">
+    <table style="width:100%; border-collapse:collapse; margin-bottom:-20px;">
         <tr>
             <td style="font-weight:bold; width:22%;">Unit / Department:</td>
             <td style="width:28%;">{{ $filters['department_name'] ?? '—' }}</td>
@@ -134,7 +149,7 @@ elseif ($toDate) $dateAssigned = 'Until ' . $toDate->format('F d, Y');
     </table>
 
     {{-- MAIN TABLE --}}
-    <table class="report">
+    <table class="report" cellspacing="0" cellpadding="0">
         <thead>
             <tr class="head-gap">
                 <td colspan="7"></td>
@@ -151,6 +166,46 @@ elseif ($toDate) $dateAssigned = 'Until ' . $toDate->format('F d, Y');
         </thead>
 
         <tbody>
+            @if ($grouped)
+            @foreach ($grouped as $dept => $rows)
+            <tr class="group-dept">
+                <td colspan="7">Unit / Department: {{ $dept ?? '—' }}</td>
+            </tr>
+            @foreach ($rows as $r)
+            <tr>
+                <td>{{ $r['equipment_code'] ?? '—' }}</td>
+                <td style="text-align:center;">
+                    <strong>{{ $r['asset_name'] ?? '—' }}</strong><br>
+                    <small class="text-gray">{{ $r['category'] ?? '—' }}</small><br>
+                    @if($r['serial_no'])
+                    <small class="text-blue">SN: {{ $r['serial_no'] }}</small>
+                    @endif
+                </td>
+                <td>{{ $r['asset_unit_or_department'] ?? '—' }}</td>
+                <td class="text-red">{{ $r['previous_personnel_name'] ?? '—' }}</td>
+                <td style="font-weight:bold;">{{ $r['personnel_name'] ?? '—' }}</td>
+                <td>{{ $r['date_assigned'] ? Carbon::parse($r['date_assigned'])->format('M d, Y') : '—' }}</td>
+                <td style="text-align:center;">
+                    @if($r['current_inventory_status'])
+                    <div class="text-green">Inventory: {{ ucwords(str_replace('_',' ', $r['current_inventory_status'])) }}</div>
+                    @endif
+                    @if($r['current_transfer_status'])
+                    <div class="text-purple">Transfer: {{ ucwords(str_replace('_',' ', $r['current_transfer_status'])) }}</div>
+                    @endif
+                    @if($r['current_turnover_disposal_status'])
+                    <div class="text-orange">Turnover/Disposal: {{ ucwords(str_replace('_',' ', $r['current_turnover_disposal_status'])) }}</div>
+                    @endif
+                    @if($r['current_off_campus_status'])
+                    <div class="text-blue">Off-Campus: {{ ucwords(str_replace('_',' ', $r['current_off_campus_status'])) }}</div>
+                    @endif
+                    @if(!$r['current_transfer_status'] && !$r['current_turnover_disposal_status'] && !$r['current_off_campus_status'] && !$r['current_inventory_status'])
+                    <div class="text-gray">No recent activity</div>
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+            @endforeach
+            @else
             @forelse($records as $r)
             <tr>
                 <td>{{ $r['equipment_code'] ?? '—' }}</td>
@@ -167,16 +222,16 @@ elseif ($toDate) $dateAssigned = 'Until ' . $toDate->format('F d, Y');
                 <td>{{ $r['date_assigned'] ? Carbon::parse($r['date_assigned'])->format('M d, Y') : '—' }}</td>
                 <td style="text-align:center;">
                     @if($r['current_inventory_status'])
-                    <div class="text-green">Inventory: {{ ucwords(str_replace('_', ' ', $r['current_inventory_status'])) }}</div>
+                    <div class="text-green">Inventory: {{ ucwords(str_replace('_',' ', $r['current_inventory_status'])) }}</div>
                     @endif
                     @if($r['current_transfer_status'])
-                    <div class="text-purple">Transfer: {{ ucwords(str_replace('_', ' ', $r['current_transfer_status'])) }}</div>
+                    <div class="text-purple">Transfer: {{ ucwords(str_replace('_',' ', $r['current_transfer_status'])) }}</div>
                     @endif
                     @if($r['current_turnover_disposal_status'])
-                    <div class="text-orange">Turnover/Disposal: {{ ucwords(str_replace('_', ' ', $r['current_turnover_disposal_status'])) }}</div>
+                    <div class="text-orange">Turnover/Disposal: {{ ucwords(str_replace('_',' ', $r['current_turnover_disposal_status'])) }}</div>
                     @endif
                     @if($r['current_off_campus_status'])
-                    <div class="text-blue">Off-Campus: {{ ucwords(str_replace('_', ' ', $r['current_off_campus_status'])) }}</div>
+                    <div class="text-blue">Off-Campus: {{ ucwords(str_replace('_',' ', $r['current_off_campus_status'])) }}</div>
                     @endif
                     @if(!$r['current_transfer_status'] && !$r['current_turnover_disposal_status'] && !$r['current_off_campus_status'] && !$r['current_inventory_status'])
                     <div class="text-gray">No recent activity</div>
@@ -188,6 +243,7 @@ elseif ($toDate) $dateAssigned = 'Until ' . $toDate->format('F d, Y');
                 <td colspan="7" style="text-align:center; padding:12px;">No data available.</td>
             </tr>
             @endforelse
+            @endif
         </tbody>
     </table>
 </div>
