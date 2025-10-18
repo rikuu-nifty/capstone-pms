@@ -14,6 +14,7 @@ use App\Models\UnitOrDepartment;
 use App\Models\Category;
 
 use App\Exports\PersonnelAssignmentsSummaryExport;
+use App\Exports\PersonnelAssignmentsDetailedExport;
 
 class PersonnelAssignmentsReportController extends Controller
 {
@@ -227,5 +228,27 @@ class PersonnelAssignmentsReportController extends Controller
 
         $filename = 'Personnel_Assignments_Detailed_Report_' . now()->format('Y-m-d') . '.pdf';
         return $pdf->stream($filename);
+    }
+
+    public function exportDetailedExcel(Request $request)
+    {
+        $filters = $request->all();
+
+        $filters['department_name'] = !empty($filters['department_id'])
+            ? UnitOrDepartment::find($filters['department_id'])?->name ?? '—'
+            : '—';
+        $filters['status_label'] = !empty($filters['status'])
+            ? ucfirst(str_replace('_', ' ', $filters['status']))
+            : '—';
+
+        $assetPaginator = Personnel::reportAssetRowsPaginated($filters, 2000);
+        $records = collect($assetPaginator->items());
+
+        $filename = 'Personnel_Assignments_Detailed_Report_' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(
+            new PersonnelAssignmentsDetailedExport($records, $filters),
+            $filename
+        );
     }
 }

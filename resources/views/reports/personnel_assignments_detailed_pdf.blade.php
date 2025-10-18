@@ -159,7 +159,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['asset_unit_or_department'] ?
                 <th style="width:150px;">Asset Name</th>
                 <th style="width:150px;">Unit / Department</th>
                 <th style="width:140px;">Previously Assigned To</th>
-                <th style="width:140px;">Personnel in Charge</th>
+                <th style="width:140px;">Personnel-in-Charge</th>
                 <th style="width:90px;">Date Assigned</th>
                 <th style="width:170px;">Status</th>
             </tr>
