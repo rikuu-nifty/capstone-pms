@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Personnel extends Model
 {
@@ -24,7 +25,6 @@ class Personnel extends Model
         'deleted_at'    => 'datetime',
     ];
 
-    // ✅ Accessor for full_name
     protected $appends = ['full_name'];
 
     public function unitOrDepartment()
@@ -160,5 +160,129 @@ class Personnel extends Model
                 'position' => $p->position,
                 'unit_or_department_id' => $p->unit_or_department_id,
             ]);
+    }
+
+    public static function reportPaginated(array $filters, int $perPage = 10)
+    {
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+
+        return static::query()
+            ->with('unitOrDepartment:id,name')
+            ->select('personnels.*')
+            // 🧭 Count of CURRENT assets (active assignment items)
+            ->addSelect([
+                'current_assets_count' => DB::table('asset_assignment_items')
+                    ->join('asset_assignments', 'asset_assignments.id', '=', 'asset_assignment_items.asset_assignment_id')
+                    ->join('inventory_lists', 'inventory_lists.id', '=', 'asset_assignment_items.asset_id')
+                    ->whereNull('asset_assignment_items.deleted_at')
+                    ->whereNull('inventory_lists.deleted_at')
+                    ->whereColumn('asset_assignments.personnel_id', 'personnels.id')
+                    ->when($from, fn($q) => $q->whereDate('asset_assignment_items.created_at', '>=', $from))
+                    ->when($to, fn($q) => $q->whereDate('asset_assignment_items.created_at', '<=', $to))
+                    ->selectRaw('COUNT(asset_assignment_items.id)')
+            ])
+            // 🧭 Count of PAST assets (soft-deleted items)
+            ->addSelect([
+                'past_assets_count' => DB::table('asset_assignment_items')
+                    ->join('asset_assignments', 'asset_assignments.id', '=', 'asset_assignment_items.asset_assignment_id')
+                    ->whereColumn('asset_assignments.personnel_id', 'personnels.id')
+                    ->whereNotNull('asset_assignment_items.deleted_at')
+                    ->when($from, fn($q) => $q->whereDate('asset_assignment_items.deleted_at', '>=', $from))
+                    ->when($to, fn($q) => $q->whereDate('asset_assignment_items.deleted_at', '<=', $to))
+                    ->selectRaw('COUNT(asset_assignment_items.id)')
+            ])
+            ->when(
+                $filters['department_id'] ?? null,
+                fn($q, $dept) =>
+                $q->where('unit_or_department_id', $dept)
+            )
+            ->when(
+                $filters['status'] ?? null,
+                fn($q, $status) =>
+                $q->where('status', $status)
+            )
+            ->having('current_assets_count', '>', 0)
+            ->orderBy('last_name')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    public static function reportChartData(array $filters = [])
+    {
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+
+        $records = static::query()
+            ->select('personnels.*')
+            ->addSelect([
+                'current_assets_count' => DB::table('asset_assignment_items')
+                    ->join('asset_assignments', 'asset_assignments.id', '=', 'asset_assignment_items.asset_assignment_id')
+                    ->join('inventory_lists', 'inventory_lists.id', '=', 'asset_assignment_items.asset_id')
+                    ->whereNull('asset_assignment_items.deleted_at')
+                    ->whereNull('inventory_lists.deleted_at')
+                    ->whereColumn('asset_assignments.personnel_id', 'personnels.id')
+                    ->when($from, fn($q) => $q->whereDate('asset_assignment_items.created_at', '>=', $from))
+                    ->when($to, fn($q) => $q->whereDate('asset_assignment_items.created_at', '<=', $to))
+                    ->selectRaw('COUNT(asset_assignment_items.id)')
+            ])
+            ->addSelect([
+                'past_assets_count' => DB::table('asset_assignment_items')
+                    ->join('asset_assignments', 'asset_assignments.id', '=', 'asset_assignment_items.asset_assignment_id')
+                    ->whereColumn('asset_assignments.personnel_id', 'personnels.id')
+                    ->whereNotNull('asset_assignment_items.deleted_at')
+                    ->when($from, fn($q) => $q->whereDate('asset_assignment_items.deleted_at', '>=', $from))
+                    ->when($to, fn($q) => $q->whereDate('asset_assignment_items.deleted_at', '<=', $to))
+                    ->selectRaw('COUNT(asset_assignment_items.id)')
+            ])
+            ->having('current_assets_count', '>', 0)
+            ->orderBy('last_name')
+            ->get();
+
+        return $records->map(fn($p) => [
+            'name'    => $p->full_name,
+            'current' => (int) $p->current_assets_count,
+            'past'    => (int) $p->past_assets_count,
+        ]);
+    }
+
+    public static function reportExportData(array $filters = [])
+    {
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+
+        $records = static::query()
+            ->with('unitOrDepartment:id,name')
+            ->select('personnels.*')
+            ->withCount([
+                'assignments as current_assets_count' => function ($q) use ($from, $to) {
+                    $q->whereHas('items', function ($i) use ($from, $to) {
+                        $i->whereNull('deleted_at')
+                            ->whereHas('asset', fn($a) => $a->whereNull('deleted_at'))
+                            ->when($from, fn($x) => $x->whereDate('created_at', '>=', $from))
+                            ->when($to, fn($x) => $x->whereDate('created_at', '<=', $to));
+                    })
+                        ->selectRaw('COUNT(asset_assignment_items.id)');
+                },
+            ])
+            ->addSelect([
+                'past_assets_count' => AssetAssignment::selectRaw('COUNT(asset_assignment_items.id)')
+                    ->join('asset_assignment_items', 'asset_assignments.id', '=', 'asset_assignment_items.asset_assignment_id')
+                    ->whereColumn('asset_assignments.personnel_id', 'personnels.id')
+                    ->whereNotNull('asset_assignment_items.deleted_at')
+                    ->when($from, fn($q) => $q->whereDate('asset_assignment_items.deleted_at', '>=', $from))
+                    ->when($to, fn($q) => $q->whereDate('asset_assignment_items.deleted_at', '<=', $to))
+            ])
+            ->having('current_assets_count', '>', 0)
+            ->orderBy('last_name')
+            ->get();
+
+        return $records->map(fn($p) => [
+            'Personnel Name' => $p->full_name,
+            'Department'     => $p->unitOrDepartment?->name ?? '—',
+            'Status'         => ucfirst(str_replace('_', ' ', $p->status)),
+            'Current Assets' => $p->current_assets_count,
+            'Past Assets'    => $p->past_assets_count,
+        ]);
     }
 }

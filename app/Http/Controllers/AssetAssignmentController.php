@@ -224,6 +224,18 @@ class AssetAssignmentController extends Controller
             }
 
             // Handle reassignment
+            // $newAssignment = AssetAssignment::firstOrCreate(
+            //     ['personnel_id' => $change['new_personnel_id']],
+            //     [
+            //         'assigned_by'   => $request->user()->id,
+            //         'date_assigned' => now()->toDateString(),
+            //         'remarks'       => null,
+            //     ]
+            // );
+
+            // $item->update(['asset_assignment_id' => $newAssignment->id]);
+            // $item->asset->update(['assigned_to' => $newAssignment->personnel_id]);
+
             $newAssignment = AssetAssignment::firstOrCreate(
                 ['personnel_id' => $change['new_personnel_id']],
                 [
@@ -233,7 +245,15 @@ class AssetAssignmentController extends Controller
                 ]
             );
 
-            $item->update(['asset_assignment_id' => $newAssignment->id]);
+            // Soft-delete the old link so it's tracked as "past"
+            $item->delete();
+
+            // Create a new item under the new assignment
+            AssetAssignmentItem::create([
+                'asset_assignment_id' => $newAssignment->id,
+                'asset_id' => $item->asset_id,
+            ]);
+
             $item->asset->update(['assigned_to' => $newAssignment->personnel_id]);
         }
 
@@ -259,8 +279,24 @@ class AssetAssignmentController extends Controller
             $assetIds = AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
                 ->pluck('asset_id');
 
-            AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
-                ->update(['asset_assignment_id' => $newAssignment->id]);
+            // AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
+            //     ->update(['asset_assignment_id' => $newAssignment->id]);
+
+            $items = AssetAssignmentItem::where('asset_assignment_id', $assignment->id)->get();
+
+            foreach ($items as $item) {
+                $item->delete(); // soft-delete the old record
+
+                AssetAssignmentItem::create([
+                    'asset_assignment_id' => $newAssignment->id,
+                    'asset_id' => $item->asset_id,
+                ]);
+            }
+
+            InventoryList::whereIn('id', $assetIds)->update([
+                'assigned_to' => $newAssignment->personnel_id,
+            ]);
+
 
             // Sync assigned_to for all affected assets
             InventoryList::whereIn('id', $assetIds)->update([

@@ -38,6 +38,7 @@
     use App\Http\Controllers\TrashBinController;
     use App\Http\Controllers\Settings\ProfileController;
     use App\Http\Controllers\CalendarController;
+    use App\Http\Controllers\PersonnelAssignmentsReportController;
 
     Route::get('/', function () {
         if (Auth::check()) {
@@ -159,8 +160,10 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
             ->name('reports.turnover-disposal.export.donations.excel');
 
         // Asset Assignment Report
-        Route::get('/reports/personnel-assignments', [ReportController::class, 'personnelAssignments'])
+        Route::get('/reports/personnel-assignments', [PersonnelAssignmentsReportController::class, 'index'])
             ->name('reports.personnel-assignments');
+        Route::get('/reports/personnel-assignments/export/excel', [PersonnelAssignmentsReportController::class, 'exportExcel'])
+            ->name('reports.personnel-assignments.export.excel');
     });
 
     // Unified Signatories Management
