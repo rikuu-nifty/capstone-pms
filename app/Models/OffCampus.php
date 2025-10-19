@@ -34,8 +34,8 @@ class OffCampus extends Model
     ];
 
     protected $casts = [
-        'date_issued' => 'date',
-        'return_date' => 'date',
+        'date_issued' => 'date:Y-m-d',
+        'return_date' => 'date:Y-m-d',
         'deleted_at' => 'datetime',
     ];
 

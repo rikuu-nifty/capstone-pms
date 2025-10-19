@@ -6,45 +6,49 @@ use Illuminate\Console\Command;
 use App\Models\InventoryScheduling;
 use App\Models\User;
 use App\Notifications\OverdueNotification;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class MarkOverdueInventoryScheduling extends Command
 {
     protected $signature = 'inventory:mark-overdue';
-    protected $description = 'Mark inventory schedulings as Overdue if the scheduled month has passed and form is approved.';
+    protected $description = 'Mark inventory schedulings as overdue if the actual_date_of_inventory is today or earlier and form is approved.';
 
     public function handle()
     {
-        $today = Carbon::today();
+        // ✅ Use your app timezone (e.g., Asia/Manila)
+        $today = Carbon::now(config('app.timezone'))->startOfDay();
 
-        // Only include approved forms (Fully Approved)
-        $overdue = InventoryScheduling::query()
+        // Fetch all schedulings that should now be marked as overdue
+        $overdueSchedulings = InventoryScheduling::query()
             ->whereNotIn('scheduling_status', ['Completed', 'Cancelled', 'Overdue'])
-            ->whereRaw("STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') < ?", [$today])
+            ->whereDate('actual_date_of_inventory', '<=', $today)
             ->whereHas('approvals', function ($q) {
                 // Require BOTH noted_by and approved_by to be approved
-                $q->whereHas('steps', fn($s) => $s->where('code', 'approved_by')->where('status', 'approved'))
-                    ->whereHas('steps', fn($s) => $s->where('code', 'noted_by')->where('status', 'approved'));
+                $q->whereHas('steps', fn($s) => 
+                    $s->where('code', 'approved_by')->where('status', 'approved')
+                )->whereHas('steps', fn($s) => 
+                    $s->where('code', 'noted_by')->where('status', 'approved')
+                );
             })
             ->get();
 
-        Log::info("🕒 [Overdue Command] Found {$overdue->count()} schedulings potentially overdue.");
+        Log::info("🕒 [Overdue Command] Found {$overdueSchedulings->count()} schedulings due or past as of {$today->toDateString()}.");
 
-        if ($overdue->isEmpty()) {
-            $this->info('No overdue schedulings found.');
+        if ($overdueSchedulings->isEmpty()) {
+            $this->info('No overdue inventory schedulings found.');
             return;
         }
 
+        // Notify PMO Staff and PMO Head
         $users = User::whereHas('role', function ($q) {
             $q->whereIn('code', ['pmo_staff', 'pmo_head']);
         })->get();
 
-        Log::info("🕒 [Overdue Command] Notifying {$users->count()} users.");
-
-        foreach ($overdue as $schedule) {
+        foreach ($overdueSchedulings as $schedule) {
             $schedule->update(['scheduling_status' => 'Overdue']);
-            Log::info("📦 Marked scheduling #{$schedule->id} as Overdue.");
+
+            Log::info("📦 Marked Inventory Scheduling #{$schedule->id} as Overdue.");
 
             foreach ($users as $user) {
                 $user->notify(new OverdueNotification($schedule));
@@ -52,6 +56,6 @@ class MarkOverdueInventoryScheduling extends Command
             }
         }
 
-        $this->info("{$overdue->count()} inventory schedulings marked as Overdue and notifications queued.");
+        $this->info("{$overdueSchedulings->count()} inventory schedulings marked as overdue and notifications sent.");
     }
 }
