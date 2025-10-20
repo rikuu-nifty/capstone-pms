@@ -26,8 +26,7 @@ type Props = {
     personnels: { id: number; full_name: string; position?: string | null }[]; // new
 };
 
-const safeDate = (val?: string | null) =>
-    val ? new Date(val).toISOString().substring(0, 10) : '';
+const safeDate = (val?: string | null) => (val ? new Date(val).toISOString().substring(0, 10) : '');
 
 export const EditAssetModalForm = ({
     onClose,
@@ -71,7 +70,6 @@ export const EditAssetModalForm = ({
         sub_area_id: asset.sub_area?.id || '',
     });
 
-
     const handleChange = <K extends keyof AssetFormData>(field: K, value: AssetFormData[K]) => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };
@@ -79,6 +77,15 @@ export const EditAssetModalForm = ({
     const filteredRooms = buildingRooms.filter((room) => room.building_id === form.building_id);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [showWebcam, setShowWebcam] = useState(false); // webcam toggle
+
+    // ✅ Detect if user is on a mobile device (type-safe)
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent || navigator.vendor : '';
+
+        setIsMobile(/android|iphone|ipad|ipod/i.test(userAgent));
+    }, []);
 
     // Filter models based on selected category
     const filteredModels = assetModels.filter((m) => m.category_id === Number(form.category_id));
@@ -135,44 +142,43 @@ export const EditAssetModalForm = ({
     }, [form.category_id, form.asset_model_id, form.brand, filteredBrands, isSingleBrand]);
 
     const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    // Explicitly create FormData for file-safe uploads
-    const formData = new FormData();
+        // Explicitly create FormData for file-safe uploads
+        const formData = new FormData();
 
-    // Safely append fields (type-checked)
-    Object.entries({
-        ...form,
-        sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
-        _method: 'put', // Laravel expects this for updates
-    }).forEach(([key, value]) => {
-        if (value instanceof File) {
-            // append files directly
-            formData.append(key, value);
-        } else if (typeof value === 'number') {
-            // convert numbers to string
-            formData.append(key, value.toString());
-        } else if (typeof value === 'string') {
-            formData.append(key, value);
-        } else if (value === null) {
-            // represent nulls as empty strings for backend consistency
-            formData.append(key, '');
-        }
-        // undefined values are ignored
-    });
+        // Safely append fields (type-checked)
+        Object.entries({
+            ...form,
+            sub_area_id: form.sub_area_id === '' ? null : form.sub_area_id,
+            _method: 'put', // Laravel expects this for updates
+        }).forEach(([key, value]) => {
+            if (value instanceof File) {
+                // append files directly
+                formData.append(key, value);
+            } else if (typeof value === 'number') {
+                // convert numbers to string
+                formData.append(key, value.toString());
+            } else if (typeof value === 'string') {
+                formData.append(key, value);
+            } else if (value === null) {
+                // represent nulls as empty strings for backend consistency
+                formData.append(key, '');
+            }
+            // undefined values are ignored
+        });
 
-    // Send multipart/form-data via Inertia
-    router.post(`/inventory-list/${asset.id}`, formData, {
-        forceFormData: true, // ensures file fields are preserved
-        onSuccess: () => {
-            onClose();
-            // refresh notifications if due date was set to today/past
-            router.reload({ only: ['notifications'] });
-        },
-        onError: (errors) => console.error(errors),
-    });
-};
-
+        // Send multipart/form-data via Inertia
+        router.post(`/inventory-list/${asset.id}`, formData, {
+            forceFormData: true, // ensures file fields are preserved
+            onSuccess: () => {
+                onClose();
+                // refresh notifications if due date was set to today/past
+                router.reload({ only: ['notifications'] });
+            },
+            onError: (errors) => console.error(errors),
+        });
+    };
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -330,11 +336,14 @@ export const EditAssetModalForm = ({
                                         />
                                     ) : (
                                         <>
-                                            <div className="flex gap-2">
+                                            {/* ✅ Use top-level hook to detect mobile */}
+                                            <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                                                {/* File Upload Input */}
                                                 <input
                                                     ref={fileInputRef}
                                                     type="file"
                                                     accept="image/*"
+                                                    capture="environment" // ✅ automatically opens rear camera on mobile
                                                     onChange={(e) => {
                                                         if (e.target.files?.[0]) {
                                                             handleChange('image', e.target.files[0]);
@@ -342,9 +351,13 @@ export const EditAssetModalForm = ({
                                                     }}
                                                     className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                                 />
-                                                <Button type="button" onClick={() => setShowWebcam(true)}>
-                                                    Use Camera
-                                                </Button>
+
+                                                {/* ✅ Only show this on non-mobile devices */}
+                                                {!isMobile && (
+                                                    <Button type="button" onClick={() => setShowWebcam(true)} className="w-full sm:w-auto">
+                                                        Use Camera
+                                                    </Button>
+                                                )}
                                             </div>
 
                                             {form.image && (
@@ -365,17 +378,20 @@ export const EditAssetModalForm = ({
                                                         >
                                                             Remove
                                                         </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                handleChange('image', null);
-                                                                if (fileInputRef.current) fileInputRef.current.value = '';
-                                                                setShowWebcam(true);
-                                                            }}
-                                                            className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
-                                                        >
-                                                            Retake
-                                                        </button>
+
+                                                        {!isMobile && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    handleChange('image', null);
+                                                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                                                    setShowWebcam(true);
+                                                                }}
+                                                                className="rounded bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600"
+                                                            >
+                                                                Retake
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
