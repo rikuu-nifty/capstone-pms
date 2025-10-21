@@ -171,8 +171,8 @@ export function AppSidebar() {
         { title: 'Property Transfer', href: '/transfers', icon: ArrowRightLeft, permission: 'view-transfers' },
         { title: 'Turnover/Disposal', href: '/turnover-disposal', icon: ClipboardList, permission: 'view-turnover-disposal' },
         { title: 'Off-Campus', href: '/off-campus', icon: School, permission: 'view-off-campus' },
-        // { title: 'Verification Form', href: '/verification-form', icon: BookOpenCheck, permission: 'view-verification-form' },
-        { title: 'Verification Form', href: '/verification-form', icon: BookOpenCheck },
+        { title: 'Verification Form', href: '/verification-form', icon: BookOpenCheck, permission: 'view-verification-form' },
+        // { title: 'Verification Form', href: '/verification-form', icon: BookOpenCheck },
     ]
 
     const buildingsLink =
