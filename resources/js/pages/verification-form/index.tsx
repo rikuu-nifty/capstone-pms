@@ -1,162 +1,356 @@
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
-import { Eye, RefreshCw } from 'lucide-react';
+import { type BreadcrumbItem } from '@/types';
+import { Head, usePage, router, Link } from '@inertiajs/react';
+import { useState, useMemo, useEffect } from 'react';
+import { ClipboardCheck, Clock4, CalendarCheck, RefreshCw } from 'lucide-react';
 import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
-import type { BreadcrumbItem } from '@/types';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { formatStatusLabel } from '@/types/custom-index';
+
+import VerificationFormEditModal from './VerificationFormEditModal';
+import VerificationFormViewModal from './VerificationFormViewModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '#' },
-    { title: 'Verification Forms', href: '/verification-form' },
+    { title: 'Verification Form Registry', href: '/verification-form' },
 ];
 
-const sortOptions = [
-    { value: 'id', label: 'Record ID' },
-    { value: 'document_date', label: 'Document Date' },
+const verificationSortOptions = [
+    { value: 'id', label: 'VF Number' },
+    { value: 'document_date', label: 'Verification Date' },
 ] as const;
 
-type VerificationTurnover = {
+type VerificationSortKey = (typeof verificationSortOptions)[number]['value'];
+
+type VerificationFormRecord = {
     id: number;
     document_date: string;
     status: string;
+    notes?: string | null;
     issuing_office?: { name?: string };
-    receiving_office?: { name?: string };
+    form_approval?: {
+        reviewed_at?: string;
+    };
 };
 
-type SortKey = (typeof sortOptions)[number]['value'];
+type VerificationFormFull = {
+    id: number;
+    document_date: string;
+    type: string;
+    status: string;
+    issuing_office?: { name: string; code: string };
+    receiving_office?: { name: string; code: string };
+    remarks?: string;
+    personnel?: { name: string };
+    turnover_disposal_assets: {
+        id: number;
+        remarks?: string;
+        assets: { id: number; asset_name: string };
+    }[];
+    form_approval?: {
+        steps: {
+        id: number;
+        label: string;
+        status: string;
+        actor?: { name: string };
+        external_name?: string;
+        external_title?: string;
+        }[];
+    };
+};
+
+type PageProps = {
+    turnovers: {
+        data: VerificationFormRecord[];
+        total: number;
+        per_page: number;
+        current_page: number;
+    };
+    totals?: {
+        verified_this_month: number;
+        total_verified: number;
+        pending_verification: number;
+    };
+    viewing?: VerificationFormFull;
+};
+
+const formatDateLong = (d?: string | null) => {
+    if (!d) return '—';
+    const safeDate = d.includes('T') ? d : `${d}T00:00:00`;
+    const dt = new Date(safeDate);
+    if (isNaN(dt.getTime())) return '—';
+    return dt.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+};
 
 export default function VerificationFormIndex() {
-    const { turnovers } = (usePage().props as unknown as {
-        turnovers: {
-            data: VerificationTurnover[];
-            total: number;
-            per_page: number;
-            current_page: number;
-        };
-    });
+    const { turnovers, totals, viewing } = usePage<PageProps>().props;
 
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedVerificationId, setSelectedVerificationId] = useState<number | null>(null);
+
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [selectedVerification, setSelectedVerification] = useState<VerificationFormFull | null>(null);
+
+    const openEditModal = (id: number) => {
+        setSelectedVerificationId(id);
+        setShowEditModal(true);
+    };
+
+    const closeEditModal = () => {
+        setShowEditModal(false);
+        setSelectedVerificationId(null);
+    };
+    
+    const closeViewVerification = () => {
+        setShowViewModal(false);
+        setSelectedVerification(null);
+
+        if (/\/verification-form\/\d+$/.test(window.location.pathname)) {
+            history.back();
+        }
+    };
+
+    useEffect(() => {
+        if (!viewing) return;
+        setSelectedVerification(viewing);
+        setShowViewModal(true);
+    }, [viewing]);
+    
     const [rawSearch, setRawSearch] = useState('');
-    const [sortKey, setSortKey] = useState<SortKey>('id');
+    const search = useDebouncedValue(rawSearch, 200);
+
+    const [sortKey, setSortKey] = useState<VerificationSortKey>('id');
     const [sortDir, setSortDir] = useState<SortDir>('desc');
-    const search = rawSearch.trim().toLowerCase();
+
+    const [page, setPage] = useState(1);
+    const pageSize = 20;
 
     const filtered = useMemo(() => {
-        return turnovers.data.filter((t) => {
-        const haystack = `
-            ${t.id} ${t.issuing_office?.name ?? ''} ${t.receiving_office?.name ?? ''} ${t.status ?? ''}
-        `.toLowerCase();
-        return !search || haystack.includes(search);
+        const term = search.trim().toLowerCase();
+        return turnovers.data.filter((vf) => {
+        const haystack = `${vf.id} ${vf.issuing_office?.name ?? ''} ${vf.status ?? ''}`.toLowerCase();
+        return !term || haystack.includes(term);
         });
     }, [turnovers.data, search]);
 
     const sorted = useMemo(() => {
         const dir = sortDir === 'asc' ? 1 : -1;
         return [...filtered].sort((a, b) => {
-        if (sortKey === 'document_date') {
-            const da = new Date(a.document_date).getTime();
-            const db = new Date(b.document_date).getTime();
-            return (da - db) * dir;
-        }
-        return (a.id - b.id) * dir;
+        const getValue = (vf: VerificationFormRecord) =>
+            sortKey === 'document_date'
+            ? Date.parse(vf.document_date ?? '') || 0
+            : Number(vf.id) || 0;
+        return (getValue(a) - getValue(b)) * dir;
         });
     }, [filtered, sortKey, sortDir]);
 
-    const [page, setPage] = useState(1);
-    const pageSize = 10;
     const start = (page - 1) * pageSize;
     const pageItems = sorted.slice(start, start + pageSize);
 
+    
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Verification Forms" />
+            <Head title="Verification Form Registry" />
 
-        <div className="flex flex-col gap-4 p-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-            <div>
-                <h1 className="text-2xl font-semibold">Verification Forms</h1>
-                <p className="text-sm text-muted-foreground">
-                List of all approved/completed turnover verification forms.
-                </p>
+            <div className="flex flex-col gap-4 p-4">
+                {/* Header */}
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-semibold">Verification Form Registry</h1>
+                    <p className="text-sm text-muted-foreground">
+                        List of all verification forms corresponding to approved or completed turnovers.
+                    </p>
+                </div>
+
+                {/* KPI Cards */}
+                {totals && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        {/* Verified This Month */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                                <CalendarCheck className="h-7 w-7 text-blue-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Verified This Month</div>
+                                <div className="text-3xl font-bold">{totals.verified_this_month}</div>
+                            </div>
+                        </div>
+
+                        {/* Total Verified */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                <ClipboardCheck className="h-7 w-7 text-green-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Total Verified</div>
+                                <div className="text-3xl font-bold">{totals.total_verified}</div>
+                            </div>
+                        </div>
+
+                        {/* Pending Verification */}
+                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
+                                <Clock4 className="h-7 w-7 text-yellow-600" />
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">Pending Verification</div>
+                                <div className="text-3xl font-bold">{totals.pending_verification}</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Search + Sort */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 w-96">
+                        <Input
+                            type="text"
+                            placeholder="Search by form no., requester, or status..."
+                            value={rawSearch}
+                            onChange={(e) => setRawSearch(e.target.value)}
+                            className="max-w-xs"
+                        />
+                            <Button 
+                                variant="outline"
+                                className='cursor-pointer'
+                                onClick={() => setRawSearch('')}
+                            >
+                            <RefreshCw className="h-4 w-4 mr-1" /> 
+                            Clear
+                        </Button>
+                    </div>
+
+                    <SortDropdown<VerificationSortKey>
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        options={verificationSortOptions}
+                        onChange={(key, dir) => {
+                            setSortKey(key);
+                            setSortDir(dir);
+                        }}
+                    />
+                </div>
+
+                {/* Table */}
+                <div className="rounded-lg overflow-x-auto border">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-muted text-foreground">
+                            <TableHead className="w-[120px] text-center">VF No.</TableHead>
+                            <TableHead className="w-[150px] text-center">Requester</TableHead>
+                            <TableHead className="w-[120px] text-center">Status</TableHead>
+                            <TableHead className="w-[120px] text-center">Verification Date</TableHead>
+                            <TableHead className="w-[120px] text-center">Notes</TableHead>
+                            <TableHead className="w-[120px] text-center">Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="text-center">
+                        {pageItems.length > 0 ? (
+                            pageItems.map((vf) => (
+                            <TableRow key={vf.id}>
+                                <TableCell className="font-semibold">VF-{vf.id.toString().padStart(3, '0')}</TableCell>
+                                <TableCell>{vf.issuing_office?.name ?? '—'}</TableCell>
+                                <TableCell>{formatDateLong(vf.document_date)}</TableCell>
+                                <TableCell className="whitespace-pre-wrap break-words">{vf.notes ?? '—'}</TableCell>
+                                <TableCell>
+                                    <Badge
+                                        variant={
+                                            vf.status === 'pending'
+                                            ? 'Pending'
+                                            : vf.status === 'verified'
+                                            ? 'Completed'
+                                            : vf.status === 'rejected'
+                                            ? 'Cancelled'
+                                            : 'secondary'
+                                        }
+                                        className="capitalize"
+                                        >
+                                        {formatStatusLabel(vf.status)}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="flex justify-center gap-2">
+                                    <Button
+                                        asChild
+                                        className="cursor-pointer"
+                                        >
+                                        <Link href={`/verification-form/${vf.id}`} preserveScroll>
+                                            View
+                                        </Link>
+                                    </Button>
+                                    <Button
+                                        variant="success"
+                                        className="font-semibold cursor-pointer disabled:bg-gray-600"
+                                        disabled={vf.status !== 'pending'}
+                                        onClick={() => openEditModal(vf.id)}
+                                    >
+                                        Verify
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        className="font-semibold cursor-pointer disabled:bg-gray-600"
+                                        disabled={vf.status !== 'pending'}
+                                        onClick={() =>
+                                            router.patch(route('verification-form.reject', vf.id), {}, {
+                                                preserveScroll: true,
+                                                onSuccess: () => console.log(`Rejected form ${vf.id}`)
+                                            })
+                                        }
+                                    >
+                                        Reject
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                                    No verification forms found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </div>
-            <div className="flex gap-2">
-                <SortDropdown<SortKey>
-                sortKey={sortKey}
-                sortDir={sortDir}
-                options={sortOptions}
-                onChange={(key, dir) => {
-                    setSortKey(key);
-                    setSortDir(dir);
-                }}
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between mt-3">
+                <PageInfo
+                    page={page}
+                    total={sorted.length}
+                    pageSize={pageSize}
+                    label="verification forms"
+                />
+                <Pagination
+                    page={page}
+                    total={sorted.length}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
                 />
             </div>
-            </div>
-
-            {/* Search bar */}
-            <div className="flex items-center gap-2 w-96">
-            <Input
-                type="text"
-                placeholder="Search by ID, office, or status..."
-                value={rawSearch}
-                onChange={(e) => setRawSearch(e.target.value)}
-            />
-            <Button variant="outline" onClick={() => setRawSearch('')}>
-                <RefreshCw className="h-4 w-4 mr-1" /> Clear
-            </Button>
-            </div>
-
-            {/* Table */}
-            <div className="rounded-lg overflow-x-auto border">
-            <Table>
-                <TableHeader>
-                <TableRow className="bg-muted text-foreground">
-                    <TableHead className="text-center">ID</TableHead>
-                    <TableHead className="text-center">Date</TableHead>
-                    <TableHead className="text-center">Issuing Office</TableHead>
-                    <TableHead className="text-center">Receiving Office</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody className="text-center">
-                {pageItems.length > 0 ? (
-                    pageItems.map((t) => (
-                    <TableRow key={t.id}>
-                        <TableCell>{t.id}</TableCell>
-                        <TableCell>{new Date(t.document_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{t.issuing_office?.name ?? '—'}</TableCell>
-                        <TableCell>{t.receiving_office?.name ?? '—'}</TableCell>
-                        <TableCell>{formatStatusLabel(t.status)}</TableCell>
-                        <TableCell>
-                        <Button variant="ghost" size="icon" asChild className="cursor-pointer">
-                            <Link href={`/verification-form/${t.id}`} preserveScroll>
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Link>
-                        </Button>
-                        </TableCell>
-                    </TableRow>
-                    ))
-                ) : (
-                    <TableRow>
-                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
-                        No verification forms found.
-                    </TableCell>
-                    </TableRow>
-                )}
-                </TableBody>
-            </Table>
-            </div>
-
-            <div className="flex items-center justify-between">
-            <PageInfo page={page} total={sorted.length} pageSize={pageSize} label="verification forms" />
-            <Pagination page={page} total={sorted.length} pageSize={pageSize} onPageChange={setPage} />
-            </div>
         </div>
+
+        <VerificationFormEditModal
+            show={showEditModal}
+            onClose={closeEditModal}
+            verificationId={selectedVerificationId}
+        />
+        
+        {selectedVerification && (
+            <VerificationFormViewModal
+                open={showViewModal}
+                onClose={closeViewVerification}
+                turnover={selectedVerification}
+            />
+        )}
         </AppLayout>
     );
 }

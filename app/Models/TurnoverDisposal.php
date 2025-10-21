@@ -673,4 +673,10 @@ class TurnoverDisposal extends Model
             ->orderBy('td.id')
             ->get();
     }
+
+    public function verificationForm()
+    {
+        return $this->hasOne(VerificationForm::class);
+    }
+
 }

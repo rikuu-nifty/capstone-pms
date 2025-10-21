@@ -2,46 +2,67 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\VerificationForm;
 use App\Models\TurnoverDisposal;
+
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class VerificationFormController extends Controller
 {
     public function index()
     {
-        // 🔹 Fetch all approved/completed forms
-        $turnovers = TurnoverDisposal::with([
-            'issuingOffice:id,name,code',
-            'receivingOffice:id,name,code',
-            'formApproval.steps.actor:id,name',
-        ])
-            // ->whereIn('status', ['approved', 'completed'])
-            ->latest('document_date')
-            ->paginate(20);
-
-        // 🔹 Render the list page (index)
         return Inertia::render('verification-form/index', [
-            'turnovers' => $turnovers,
+            'turnovers' => VerificationForm::fetchPaginated(),
+            'totals'    => VerificationForm::summaryTotals(),
         ]);
     }
 
     public function show($id)
     {
-        // 🔹 Fetch a single verification form with all relations
-        $turnover = TurnoverDisposal::with([
-            'issuingOffice',
-            'receivingOffice',
-            'personnel',
-            'turnoverDisposalAssets.assets.assetModel.category',
-            'turnoverDisposalAssets.assets.building',
-            'turnoverDisposalAssets.assets.buildingRoom',
-            'turnoverDisposalAssets.assets.subArea',
-            'formApproval.steps.actor',
+        $verification = VerificationForm::with([
+            'turnoverDisposal.issuingOffice',
+            'turnoverDisposal.receivingOffice',
+            'turnoverDisposal.personnel',
+            'turnoverDisposal.turnoverDisposalAssets.assets.assetModel.category',
+            'turnoverDisposal.turnoverDisposalAssets.assets.building',
+            'turnoverDisposal.turnoverDisposalAssets.assets.buildingRoom',
+            'turnoverDisposal.turnoverDisposalAssets.assets.subArea',
+            'turnoverDisposal.formApproval.steps.actor',
         ])->findOrFail($id);
 
-        // 🔹 Render the detailed view page
-        return Inertia::render('verification-form/ViewVerificationForm', [
-            'turnover' => $turnover,
+        return Inertia::render('verification-form/index', [
+            'turnovers' => VerificationForm::fetchPaginated(),
+            'totals'    => VerificationForm::summaryTotals(),
+            'viewing'   => $verification->turnoverDisposal,
         ]);
+    }
+
+    public function verify(Request $request, $id)
+    {
+        $verification = VerificationForm::findOrFail($id);
+
+        $verification->update([
+            'status' => 'verified',
+            'verified_by_id' => Auth::id(),
+            'verified_at' => now(),
+            'notes' => $request->input('notes'),
+        ]);
+
+        return back()->with('success', "Verification Form #{$verification->id} verified successfully.");
+    }
+
+    public function reject($id)
+    {
+        $verification = VerificationForm::findOrFail($id);
+
+        $verification->update([
+            'status' => 'rejected',
+            'verified_by_id' => Auth::id(),
+            'verified_at' => now(),
+        ]);
+
+        return back()->with('success', "Verification Form #{$verification->id} has been rejected.");
     }
 }
