@@ -20,6 +20,17 @@ class AssetAssignmentItem extends Model
         'deleted_at'    => 'datetime',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) { // Automatically set today's date if none is provided
+            if (empty($model->date_assigned)) {
+                $model->date_assigned = now()->toDateString();
+            }
+        });
+    }
+
     public function assignment()
     {
         return $this->belongsTo(AssetAssignment::class, 'asset_assignment_id');

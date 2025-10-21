@@ -6,6 +6,7 @@ import { router, Link, usePage } from '@inertiajs/react';
 import type { SharedData } from '@/types';
 
 import type { AssetAssignment, AssetAssignmentItem, Paginated } from '@/types/asset-assignment';
+import { formatDate } from '@/types/custom-index';
 
 const formatDateLong = (d?: string | null) => {
     if (!d) return '—';
@@ -87,13 +88,13 @@ export default function ViewAssignmentModal({
                                             <td className="px-3 py-2 text-right">{assignment.personnel?.full_name ?? '—'}</td>
                                         </tr>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 font-medium">Position</td>
-                                            <td className="px-3 py-2 text-right">{assignment.personnel?.position ?? '—'}</td>
+                                            <td className="bg-gray-100 px-3 py-2 font-medium">Unit/Department</td>
+                                            <td className="px-3 py-2 text-right">{assignment.personnel?.unit_or_department?.name ?? '—'}</td>
                                         </tr>
                                         <tr>
-                                            <td className="bg-gray-100 px-3 py-2 font-medium">Unit/Department</td>
+                                            <td className="bg-gray-100 px-3 py-2 font-medium">Position</td>
                                             <td className="px-3 py-2 text-right">
-                                                {assignment.personnel?.unit_or_department?.name ?? '—'}
+                                                {assignment.personnel?.position ?? '—'}
                                             </td>
                                         </tr>
                                     </tbody>
@@ -108,16 +109,16 @@ export default function ViewAssignmentModal({
                                 <table className="w-full text-sm">
                                     <tbody>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 font-medium">Assigned By</td>
-                                            <td className="px-3 py-2 text-right">{assignment.assigned_by_user?.name ?? '—'}</td>
+                                            <td className="bg-gray-100 px-3 py-2 font-medium">Date Updated</td>
+                                            <td className="px-3 py-2 text-right">{formatDate(assignment.updated_at) ?? '—'}</td>
                                         </tr>
                                         <tr className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="bg-gray-100 px-3 py-2 font-medium">Remarks</td>
-                                            <td className="px-3 py-2 text-right">{assignment.remarks ?? '—'}</td>
-                                        </tr>
-                                        <tr>
                                             <td className="bg-gray-100 px-3 py-2 font-medium">Total Assets</td>
                                             <td className="px-3 py-2 text-right">{items.total}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="bg-gray-100 px-3 py-2 font-medium">Remarks</td>
+                                            <td className="px-3 py-2 text-right whitespace-pre-wrap break-words text-right">{assignment.remarks ?? '—'}</td>
                                         </tr>
                                     </tbody>
                                 </table>
