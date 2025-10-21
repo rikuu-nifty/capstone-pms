@@ -496,28 +496,33 @@ export default function PersonnelAssignmentsReport() {
                         </div>
                     </CardHeader>
 
-                    <CardContent className="h-[500px]">
+                    <CardContent className="h-[400px] px-6">
                         {viewMode === 'chart' ? (
                             chartData && chartData.length > 0 ? (
-                                <ChartContainer config={chartConfig} className="mx-auto aspect-[16/9] max-h-[500px]">
+                                <ChartContainer
+                                    config={chartConfig}
+                                    className="w-full aspect-[4/3] max-h-[400px]"
+                                >
                                     <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData}>
-                                        <CartesianGrid vertical={false} />
-                                        <XAxis
-                                        dataKey="name"
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickMargin={8}
-                                        tickFormatter={(v) => (v.length > 12 ? v.slice(0, 12) + '…' : v)}
-                                        />
-                                        <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent indicator="dashed" />}
-                                        />
-                                        <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
-                                        <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
-                                        <ChartLegend content={<ChartLegendContent />} />
-                                    </BarChart>
+                                        <BarChart data={chartData}>
+                                            <CartesianGrid vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickMargin={8}
+                                                tickFormatter={(v) =>
+                                                    v.length > 12 ? v.slice(0, 12) + '…' : v
+                                                }
+                                            />
+                                            <ChartTooltip
+                                                cursor={false}
+                                                content={<ChartTooltipContent indicator="dashed" />}
+                                            />
+                                            <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
+                                            <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
+                                            <ChartLegend content={<ChartLegendContent />} />
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 </ChartContainer>
                             ) : (
