@@ -111,6 +111,13 @@ type VerificationAction = 'verify' | 'reject';
 export default function VerificationFormIndex() {
     const { turnovers, totals, viewing, pmo_head, verification } = usePage<PageProps>().props;
 
+    const { auth } = usePage().props as unknown as {
+        auth: { permissions: string[] };
+    };
+
+    const canView = auth.permissions.includes('view-verification-form');
+    const canVerify = auth.permissions.includes('verify-verification-form');
+
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedVerificationId, setSelectedVerificationId] = useState<number | null>(null);
 
@@ -301,7 +308,9 @@ export default function VerificationFormIndex() {
                                     <Button
                                         asChild
                                         className="cursor-pointer"
-                                        >
+                                        variant={canView ? 'default' : 'outline'}
+                                        disabled={!canView}
+                                    >
                                         <Link href={`/verification-form/${vf.id}`} preserveScroll>
                                             View
                                         </Link>
@@ -309,23 +318,23 @@ export default function VerificationFormIndex() {
                                     <Button
                                         variant="success"
                                         className="font-semibold cursor-pointer disabled:bg-gray-600"
-                                        disabled={vf.status !== 'pending'}
+                                        disabled={vf.status !== 'pending' || !canVerify}
                                         onClick={() => openEditModal(vf.id)}
                                     >
                                         Verify
                                     </Button>
                                     <Button
-  variant="destructive"
-  className="font-semibold cursor-pointer disabled:bg-gray-600"
-  disabled={vf.status !== 'pending'}
-  onClick={() => {
-    setSelectedVerificationId(vf.id);
-    setActionMode('reject');
-    setShowEditModal(true);
-  }}
->
-  Reject
-</Button>
+                                        variant="destructive"
+                                        className="font-semibold cursor-pointer disabled:bg-gray-600"
+                                        disabled={vf.status !== 'pending' || !canVerify}
+                                        onClick={() => {
+                                            setSelectedVerificationId(vf.id);
+                                            setActionMode('reject');
+                                            setShowEditModal(true);
+                                        }}
+                                    >
+                                        Reject
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                             ))

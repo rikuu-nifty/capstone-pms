@@ -122,10 +122,10 @@ export default function VerificationFormViewModal({
                     <p>
                         <span className="font-semibold">AY: 2025–2026</span>
                     </p>
-                    <p>
+                    {/* <p>
                         <span className="font-semibold">Date:</span>{" "}
                         {formatDate(turnover.document_date)}
-                    </p>
+                    </p> */}
                 </div>
                 <p className="mt-1 font-bold">
                     <span className="mr-3">REQUESTER:</span>{" "}
