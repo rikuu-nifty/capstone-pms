@@ -156,7 +156,7 @@ export default function VerificationFormViewModal({
                             assets.map((a) => {
                                 const asset = a.assets;
                                 return (
-                                <tr key={a.id} className="border-t border-black align-top">
+                                <tr key={a.id} className="border-t border-black align-center">
                                     <td className="border-r border-black px-2 py-1 text-center">
                                         {formatDate(asset.date_purchased)}
                                     </td>
