@@ -4,20 +4,20 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, router, Link } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
 import { ClipboardCheck, Clock4, CalendarCheck, RefreshCw } from 'lucide-react';
 import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
-import { formatStatusLabel } from '@/types/custom-index';
+import { formatStatusLabel, ucwords } from '@/types/custom-index';
 
 import VerificationFormEditModal from './VerificationFormEditModal';
 import VerificationFormViewModal from './VerificationFormViewModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inventory', href: '#' },
-    { title: 'Verification Form Registry', href: '/verification-form' },
+    { title: 'Verification Form', href: '/verification-form' },
 ];
 
 const verificationSortOptions = [
@@ -32,6 +32,12 @@ type VerificationFormRecord = {
     document_date: string;
     status: string;
     notes?: string | null;
+    remarks?: string | null;
+    verified_at?: string | null;
+    verified_by?: {
+        id: number;
+        name: string;
+    } | null;
     issuing_office?: { name?: string };
     form_approval?: {
         reviewed_at?: string;
@@ -77,6 +83,15 @@ type PageProps = {
         pending_verification: number;
     };
     viewing?: VerificationFormFull;
+    pmo_head?: { id: number; name: string } | null;
+
+    verification?: {
+        id: number;
+        status: string;
+        notes?: string;
+        verified_at?: string;
+        verified_by?: { id: number; name: string };
+    };
 };
 
 const formatDateLong = (d?: string | null) => {
@@ -91,14 +106,17 @@ const formatDateLong = (d?: string | null) => {
     });
 };
 
+type VerificationAction = 'verify' | 'reject';
+
 export default function VerificationFormIndex() {
-    const { turnovers, totals, viewing } = usePage<PageProps>().props;
+    const { turnovers, totals, viewing, pmo_head, verification } = usePage<PageProps>().props;
 
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedVerificationId, setSelectedVerificationId] = useState<number | null>(null);
 
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedVerification, setSelectedVerification] = useState<VerificationFormFull | null>(null);
+    const [actionMode, setActionMode] = useState<VerificationAction>('verify');
 
     const openEditModal = (id: number) => {
         setSelectedVerificationId(id);
@@ -156,16 +174,14 @@ export default function VerificationFormIndex() {
     const start = (page - 1) * pageSize;
     const pageItems = sorted.slice(start, start + pageSize);
 
-    
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Verification Form Registry" />
+            <Head title="Verification Form" />
 
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl font-semibold">Verification Form Registry</h1>
+                    <h1 className="text-2xl font-semibold">Verification Form</h1>
                     <p className="text-sm text-muted-foreground">
                         List of all verification forms corresponding to approved or completed turnovers.
                     </p>
@@ -250,17 +266,16 @@ export default function VerificationFormIndex() {
                             <TableHead className="w-[120px] text-center">Status</TableHead>
                             <TableHead className="w-[120px] text-center">Verification Date</TableHead>
                             <TableHead className="w-[120px] text-center">Notes</TableHead>
+                            <TableHead className="w-[150px] text-center">Remarks</TableHead>
                             <TableHead className="w-[120px] text-center">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody className="text-center">
                         {pageItems.length > 0 ? (
                             pageItems.map((vf) => (
-                            <TableRow key={vf.id}>
-                                <TableCell className="font-semibold">VF-{vf.id.toString().padStart(3, '0')}</TableCell>
+                            <TableRow key={vf.id}> 
+                                <TableCell>VF-{vf.id.toString().padStart(3, '0')}</TableCell>
                                 <TableCell>{vf.issuing_office?.name ?? '—'}</TableCell>
-                                <TableCell>{formatDateLong(vf.document_date)}</TableCell>
-                                <TableCell className="whitespace-pre-wrap break-words">{vf.notes ?? '—'}</TableCell>
                                 <TableCell>
                                     <Badge
                                         variant={
@@ -276,6 +291,11 @@ export default function VerificationFormIndex() {
                                         >
                                         {formatStatusLabel(vf.status)}
                                     </Badge>
+                                </TableCell>
+                                <TableCell>{formatDateLong(vf.verified_at)}</TableCell>
+                                <TableCell className="whitespace-pre-wrap break-words">{ucwords(vf.notes ?? '—')}</TableCell>
+                                <TableCell className="whitespace-pre-wrap break-words">
+                                    {ucwords(vf.remarks ?? '—')}
                                 </TableCell>
                                 <TableCell className="flex justify-center gap-2">
                                     <Button
@@ -295,18 +315,17 @@ export default function VerificationFormIndex() {
                                         Verify
                                     </Button>
                                     <Button
-                                        variant="destructive"
-                                        className="font-semibold cursor-pointer disabled:bg-gray-600"
-                                        disabled={vf.status !== 'pending'}
-                                        onClick={() =>
-                                            router.patch(route('verification-form.reject', vf.id), {}, {
-                                                preserveScroll: true,
-                                                onSuccess: () => console.log(`Rejected form ${vf.id}`)
-                                            })
-                                        }
-                                    >
-                                        Reject
-                                    </Button>
+  variant="destructive"
+  className="font-semibold cursor-pointer disabled:bg-gray-600"
+  disabled={vf.status !== 'pending'}
+  onClick={() => {
+    setSelectedVerificationId(vf.id);
+    setActionMode('reject');
+    setShowEditModal(true);
+  }}
+>
+  Reject
+</Button>
                                 </TableCell>
                             </TableRow>
                             ))
@@ -322,7 +341,7 @@ export default function VerificationFormIndex() {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center justify-between">
                 <PageInfo
                     page={page}
                     total={sorted.length}
@@ -342,6 +361,7 @@ export default function VerificationFormIndex() {
             show={showEditModal}
             onClose={closeEditModal}
             verificationId={selectedVerificationId}
+            mode={actionMode}
         />
         
         {selectedVerification && (
@@ -349,6 +369,8 @@ export default function VerificationFormIndex() {
                 open={showViewModal}
                 onClose={closeViewVerification}
                 turnover={selectedVerification}
+                verification={verification}
+                pmo_head={pmo_head}
             />
         )}
         </AppLayout>

@@ -1,86 +1,83 @@
-import { useState, useEffect } from 'react';
-import { router } from '@inertiajs/react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-    DialogClose,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { useForm } from '@inertiajs/react';
+import EditModal from '@/components/modals/EditModal';
+import { Textarea } from '@/components/ui/textarea';
 
 interface VerificationFormEditModalProps {
     show: boolean;
     onClose: () => void;
     verificationId: number | null;
+    mode?: 'verify' | 'reject';
 }
 
 export default function VerificationFormEditModal({
     show,
     onClose,
     verificationId,
+    mode = 'verify',
 }: VerificationFormEditModalProps) {
-    const [notes, setNotes] = useState('');
+    const { data, setData, patch, processing, reset, errors, clearErrors } = useForm({
+        notes: '',
+        remarks: '',
+    });
 
-    useEffect(() => {
-        if (!show) {
-        setNotes('');
-        }
-    }, [show]);
-
-    const handleSubmit = () => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
         if (!verificationId) return;
 
-        router.patch(
-        route('verification-form.verify', verificationId),
-        { notes },
-        {
+        const routeName =
+            mode === 'reject' ? 'verification-form.reject' : 'verification-form.verify';
+
+        patch(route(routeName, verificationId), {
             preserveScroll: true,
             onSuccess: () => {
+            reset();
             onClose();
             },
-        }
-        );
+        });
     };
 
     return (
-        <Dialog open={show} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-full max-w-md space-y-4">
-                <DialogHeader>
-                    <DialogTitle>Verify Form</DialogTitle>
-                    <DialogDescription>
-                        Please confirm verification and optionally add your notes below.
-                    </DialogDescription>
-                </DialogHeader>
+        <EditModal
+            show={show}
+            onClose={() => {
+                onClose();
+                reset();
+                clearErrors();
+            }}
+            title={`Verification Form #${verificationId ?? ''}`}
+            onSubmit={handleSubmit}
+            processing={processing}
+            contentClassName='max-h-[490px] min-h-[490px]'
+        >
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">Notes</label>
+                <Textarea
+                    className="resize-none min-h-[110px] max-h-[110px]"
+                    value={data.notes}
+                    onChange={(e) => setData('notes', e.target.value)}
+                    placeholder={
+                        mode === 'reject'
+                        ? 'Enter reason for rejection'
+                        : 'Enter notes about this verification'
+                    }
+                />
+                    {errors.notes && <p className="mt-1 text-xs text-red-500">{errors.notes}</p>}
+            </div>
 
-                <div className="grid gap-4">
-                    <div className="grid gap-1">
-                        <Label htmlFor="notes">Notes (Optional)</Label>
-                        <textarea
-                            id="notes"
-                            placeholder="Add verification notes..."
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y whitespace-pre-wrap break-words"
-                            rows={5}
-                        />
-                    </div>
-                </div>
-
-                <DialogFooter className="flex justify-end gap-2">
-                    <DialogClose asChild>
-                        <Button variant="outline" className="cursor-pointer">
-                            Cancel
-                        </Button>
-                    </DialogClose>
-                    <Button onClick={handleSubmit} className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white">
-                        Confirm Verification
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">Remarks</label>
+                <Textarea
+                    className="resize-none min-h-[110px] max-h-[110px]"
+                    value={data.remarks}
+                    onChange={(e) => setData('remarks', e.target.value)}
+                    placeholder={
+                        mode === 'reject'
+                        ? 'Additional rejection details (optional)'
+                        : 'Additional verification remarks (optional)'
+                    }
+                />
+                    {errors.remarks && <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>}
+            </div>
+        </EditModal>
     );
 }

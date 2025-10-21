@@ -592,7 +592,8 @@ class TurnoverDisposal extends Model
         if (!$roleId) return null;
 
         $u = User::select('id', 'name') // keep payload minimal
-            ->where('role_id', $roleId)             // no joins/whereHas
+            ->where('role_id', $roleId)
+            ->whereNull('deleted_at')            
             ->first();
 
         return $u?->only(['id', 'name']);            // avoid hidden/serialization surprises

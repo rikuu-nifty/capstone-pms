@@ -13,6 +13,7 @@ class VerificationForm extends Model
         'verified_at',
         'notes',
         'status',
+        'remarks',
     ];
 
     protected $casts = [
@@ -43,22 +44,25 @@ class VerificationForm extends Model
         ];
     }
 
-    public static function fetchPaginated(int $perPage = 20)
+    public static function fetchPaginated(int $perPage = 10)
     {
         return static::with(['turnoverDisposal.issuingOffice:id,name,code'])
-            ->latest('verified_at')
-            ->paginate($perPage)
-            ->through(function ($vf) {
-                return [
-                    'id' => $vf->id,
-                    'document_date' => $vf->verified_at ?? $vf->created_at,
-                    'status' => $vf->status,
-                    'notes' => $vf->notes,
-                    'issuing_office' => $vf->turnoverDisposal?->issuingOffice?->only(['name', 'code']),
-                    'form_approval' => [
-                        'reviewed_at' => $vf->verified_at,
-                    ],
-                ];
-            });
+        ->latest('verified_at')
+        ->paginate($perPage)
+        ->through(function ($vf) {
+            return [
+                'id' => $vf->id,
+                'document_date' => $vf->verified_at ?? $vf->created_at,
+                'verified_at' => $vf->verified_at,
+                'verified_by_id' => $vf->verified_by_id,
+                'status' => $vf->status,
+                'notes' => $vf->notes,
+                'remarks' => $vf->remarks,
+                'issuing_office' => $vf->turnoverDisposal?->issuingOffice?->only(['name', 'code']),
+                'form_approval' => [
+                    'reviewed_at' => $vf->verified_at,
+                ],
+            ];
+        });
     }
 }

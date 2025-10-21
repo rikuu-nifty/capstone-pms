@@ -2,10 +2,8 @@ import { useEffect } from "react";
 import ViewModal from "@/components/modals/ViewModal";
 import { Button } from "@/components/ui/button";
 import { DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Printer } from "lucide-react";
-import { formatStatusLabel } from "@/types/custom-index";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { ucwords } from "@/types/custom-index";
 
 type AssetRecord = {
     id: number;
@@ -13,6 +11,7 @@ type AssetRecord = {
     serial_no?: string;
     supplier?: string;
     unit_cost?: number;
+    date_purchased?: string;
     description?: string;
     quantity?: number;
     condition?: string;
@@ -27,6 +26,7 @@ interface VerificationFormViewModalProps {
         document_date: string;
         type: string;
         status: string;
+        notes?: string;
         issuing_office?: { name: string; code: string };
         receiving_office?: { name: string; code: string };
         remarks?: string;
@@ -36,32 +36,42 @@ interface VerificationFormViewModalProps {
             remarks?: string;
             assets: AssetRecord;
         }[];
-        form_approval?: {
-            steps: {
-                id: number;
-                label: string;
-                status: string;
-                actor?: { name: string };
-                external_name?: string;
-                external_title?: string;
-            }[];
-        };
     };
+    verification?: {
+        id: number;
+        status: string;
+        notes?: string;
+        remarks?: string;
+        verified_at?: string;
+        verified_by?: { id: number; name: string };
+    };
+    pmo_head?: { id: number; name: string } | null;
 }
 
-const formatDateLong = (dateString?: string) => {
-    if (!dateString) return "—";
-    const d = new Date(dateString);
-    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+const formatDate = (d?: string | null) => {
+    if (!d) return "—";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return "—";
+    return dt.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
 };
 
-export default function VerificationFormViewModal({ open, onClose, turnover }: VerificationFormViewModalProps) {
+export default function VerificationFormViewModal({
+    open,
+    onClose,
+    turnover,
+    verification,
+    pmo_head,
+}: VerificationFormViewModalProps) {
     const assets = turnover.turnover_disposal_assets ?? [];
+    const recordNo = String(turnover.id).padStart(3, "0");
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
         if (!open) return;
-        // Prevent browser print shortcut from triggering accidentally
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
             e.preventDefault();
             e.stopPropagation();
@@ -73,146 +83,169 @@ export default function VerificationFormViewModal({ open, onClose, turnover }: V
 
     return (
         <ViewModal
-        open={open}
-        onClose={onClose}
-        size="xl"
-        contentClassName="relative max-h-[85vh] overflow-y-auto print:overflow-x-hidden"
+            open={open}
+            onClose={onClose}
+            size="xl"
+            contentClassName="relative max-h-[90vh] overflow-y-auto print:overflow-x-hidden bg-white text-black"
         >
-        <VisuallyHidden>
-            <DialogTitle>Verification Form #{turnover.id}</DialogTitle>
-        </VisuallyHidden>
+            <VisuallyHidden>
+                <DialogTitle>Verification Form #{recordNo}</DialogTitle>
+            </VisuallyHidden>
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-            <div>
-            <h1 className="text-xl font-bold">Verification Form</h1>
-            <p className="text-sm text-muted-foreground">
-                Cross-check of turnover record #{turnover.id}
-            </p>
+            <div className="flex items-start justify-between border-b border-black pb-2">
+                <img
+                    src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
+                    alt="AUF Logo"
+                    className="h-20 w-auto"
+                />
+
+                <div className="text-center flex-1">
+                    <h1 className="font-bold text-lg uppercase">
+                        Angeles University Foundation
+                    </h1>
+                    <p className="text-sm leading-tight italic">Angeles City</p>
+                    <p className="font-semibold text-sm uppercase">
+                        Property Management Office
+                    </p>
+                    <h2 className="mt-2 text-base font-bold uppercase underline">
+                        Verification Form
+                    </h2>
+                </div>
+
+                <div className="text-right text-sm leading-tight font-bold">
+                    <p>VF No. A-014</p>
+                </div>
             </div>
 
-            <Button
-            onClick={() => window.print()}
-            className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white"
-            >
-            <Printer className="h-4 w-4 mr-2" /> Print
-            </Button>
-        </div>
-
-        {/* Summary Info */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border p-4 rounded-lg bg-white mt-4">
-            <div>
-            <p className="text-xs text-gray-500">Record ID</p>
-            <p className="font-semibold">{turnover.id}</p>
-            </div>
-            <div>
-            <p className="text-xs text-gray-500">Date</p>
-            <p className="font-semibold">{formatDateLong(turnover.document_date)}</p>
-            </div>
-            <div>
-            <p className="text-xs text-gray-500">Status</p>
-            <p className="font-semibold capitalize">{formatStatusLabel(turnover.status ?? "—")}</p>
-            </div>
-            <div>
-            <p className="text-xs text-gray-500">Issuing Office</p>
-            <p className="font-semibold">{turnover.issuing_office?.name ?? "—"}</p>
-            </div>
-            <div>
-            <p className="text-xs text-gray-500">Receiving Office</p>
-            <p className="font-semibold">{turnover.receiving_office?.name ?? "—"}</p>
-            </div>
-            <div>
-            <p className="text-xs text-gray-500">Personnel in Charge</p>
-            <p className="font-semibold">{turnover.personnel?.name ?? "—"}</p>
-            </div>
-        </div>
-
-        {/* Assets Table */}
-        <div className="rounded-lg border overflow-x-auto mt-4">
-            <Table>
-            <TableHeader>
-                <TableRow className="bg-muted text-foreground">
-                <TableHead className="text-center">#</TableHead>
-                <TableHead className="text-center">Item Description</TableHead>
-                <TableHead className="text-center">Model / Brand</TableHead>
-                <TableHead className="text-center">Serial No.</TableHead>
-                <TableHead className="text-center">Supplier</TableHead>
-                <TableHead className="text-center">Unit Cost</TableHead>
-                <TableHead className="text-center">Quantity</TableHead>
-                <TableHead className="text-center">Condition</TableHead>
-                <TableHead className="text-center">Remarks</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody className="text-center">
-                {assets.length > 0 ? (
-                assets.map((a, i) => {
-                    const asset = a.assets;
-                    return (
-                    <TableRow key={a.id}>
-                        <TableCell>{i + 1}</TableCell>
-                        <TableCell>{asset.asset_name}</TableCell>
-                        <TableCell>
-                        {asset.asset_model
-                            ? `${asset.asset_model.brand ?? ""} ${asset.asset_model.model ?? ""}`
-                            : "—"}
-                        </TableCell>
-                        <TableCell>{asset.serial_no ?? "—"}</TableCell>
-                        <TableCell>{asset.supplier ?? "—"}</TableCell>
-                        <TableCell>{asset.unit_cost ? `₱${asset.unit_cost.toLocaleString()}` : "—"}</TableCell>
-                        <TableCell>{asset.quantity ?? 1}</TableCell>
-                        <TableCell>{asset.condition ?? "Good"}</TableCell>
-                        <TableCell>{a.remarks ?? "—"}</TableCell>
-                    </TableRow>
-                    );
-                })
-                ) : (
-                <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground">
-                    No assets found in this turnover.
-                    </TableCell>
-                </TableRow>
-                )}
-            </TableBody>
-            </Table>
-        </div>
-
-        {/* Remarks */}
-        <div className="border rounded-lg p-4 bg-white mt-4">
-            <h3 className="text-sm font-semibold mb-2">Remarks</h3>
-            <p className="text-sm text-gray-700 italic">
-            {turnover.remarks || "No remarks provided."}
-            </p>
-        </div>
-
-        {/* Signatories */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t pt-6 mt-4">
-            {turnover.form_approval?.steps?.map((s) => (
-            <div key={s.id} className="text-center">
-                <p className="font-semibold underline underline-offset-4">
-                {s.external_name ?? s.actor?.name ?? "__________________________"}
+            <div className="mt-3 text-sm">
+                <div className="flex justify-between">
+                    <p>
+                        <span className="font-semibold">AY: 2025–2026</span>
+                    </p>
+                    <p>
+                        <span className="font-semibold">Date:</span>{" "}
+                        {formatDate(turnover.document_date)}
+                    </p>
+                </div>
+                <p className="mt-1 font-bold">
+                    <span className="mr-3">REQUESTER:</span>{" "}
+                    {turnover.issuing_office?.name || "—"}
                 </p>
-                <p className="text-xs text-gray-500">{s.external_title ?? s.label}</p>
-                <p className="text-xs italic text-gray-400 mt-1">({formatStatusLabel(s.status)})</p>
             </div>
-            ))}
-        </div>
 
-        {/* Footer Actions */}
-        <div className="mt-6 flex justify-center gap-3 print:hidden">
-            <Button
-            variant="outline"
-            onClick={onClose}
-            className="cursor-pointer"
-            >
-            Close
-            </Button>
-            <Button
-            onClick={() => window.print()}
-            className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white"
-            >
-            🖨️ Print Verification Form
-            </Button>
-        </div>
+            <div className="mt-4 border border-black rounded-sm overflow-hidden">
+                <table className="w-full text-xs border-collapse">
+                    <thead className="bg-gray-100 border-b border-black">
+                        <tr className="text-center font-semibold">
+                            <th className="border-r border-black px-2 py-1 w-[15%]">
+                                DATE ACQUIRED
+                            </th>
+                            <th className="border-r border-black px-2 py-1 w-[40%]">
+                                DESCRIPTION OF ITEM/S
+                            </th>
+                            <th className="border-r border-black px-2 py-1 w-[10%]">PRICE</th>
+                            <th className="border-r border-black px-2 py-1 w-[10%]">
+                                SUPPLIER
+                            </th>
+                            <th className="border-r border-black px-2 py-1 w-[5%]">QTY</th>
+                            <th className="px-2 py-1 w-[20%]">REMARKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {assets.length > 0 ? (
+                            assets.map((a) => {
+                                const asset = a.assets;
+                                return (
+                                <tr key={a.id} className="border-t border-black align-top">
+                                    <td className="border-r border-black px-2 py-1 text-center">
+                                        {formatDate(asset.date_purchased)}
+                                    </td>
+                                    <td className="border-r border-black px-2 py-1 text-left">
+                                        <div className="font-semibold text-sm">
+                                            {asset.asset_name}{" "}
+
+                                            {asset.serial_no && (
+                                                <span className="text-xs font-bold">
+                                                    sn: {asset.serial_no}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {asset.asset_model?.brand || asset.asset_model?.model ? (
+                                            <div className="text-xs">
+                                                {asset.asset_model?.brand} {asset.asset_model?.model}
+                                            </div>
+                                        ) : null}
+
+                                        {verification?.notes && (
+                                            <div className="text-xs italic text-gray-700 mt-1">
+                                                *{verification.notes}*
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="border-r border-black px-2 py-1 text-center">
+                                        {asset.unit_cost ? `₱${asset.unit_cost}` : "—"}
+                                    </td>
+                                    <td className="border-r border-black px-2 py-1 text-center">
+                                        {asset.supplier || "—"}
+                                    </td>
+                                    <td className="border-r border-black px-2 py-1 text-center">
+                                        {asset.quantity ?? 1}
+                                    </td>
+                                    <td className="px-2 py-1 text-center whitespace-pre-line">
+                                        {ucwords(verification?.remarks || "—")}
+                                    </td>
+                                </tr>
+                                );
+                            })
+                        ) : (
+                        <tr>
+                            <td
+                            colSpan={6}
+                            className="text-center py-6 text-gray-600 italic"
+                            >
+                            No items found for this verification form.
+                            </td>
+                        </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="mt-8 grid grid-cols-2 gap-6 text-sm">
+                {/* Left: Prepared By */}
+                <div>
+                    <p className="mb-8">Prepared by:</p>
+                    <div className="border-t border-black w-56 mt-6" />
+
+                    <p className="font-semibold mt-1">
+                        {(pmo_head?.name)?.toUpperCase() || "—"}
+                    </p>
+                    <p className="text-xs italic">Head, PMO</p>
+                </div>
+
+                <div>
+                    <p className="mb-8">Received copy by:</p>
+                    <div className="border-t border-black w-56 mt-6" />
+                    {/* <p className="text-xs italic mt-1">Signature / Name</p> */}
+                </div>
+            </div>
+
+            <div className="mt-6 text-center print:hidden">
+                <a
+                    onClick={onClose}
+                    className="mr-2 inline-block cursor-pointer rounded bg-black px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black/70"
+                >
+                    ← Back to Verification List
+                </a>
+                <Button
+                    onClick={() =>
+                        window.open(route('verification-form.export-pdf', verification?.id), '_blank')
+                    }
+                    className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
+                >
+                    🖨️ Print Verification Form
+                </Button>
+            </div>
         </ViewModal>
     );
 }

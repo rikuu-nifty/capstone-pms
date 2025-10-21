@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('verified_at')->nullable();
             $table->text('notes')->nullable();
             $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');
+            $table->text('remarks')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

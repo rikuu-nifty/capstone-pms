@@ -374,6 +374,8 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         ->middleware('can:verify-verification-form');
     Route::patch('/verification-form/{id}/reject', [VerificationFormController::class, 'reject'])->name('verification-form.reject')
         ->middleware('can:verify-verification-form');
+    Route::get('/verification-form/{id}/export-pdf', [VerificationFormController::class, 'exportPdf'])
+        ->name('verification-form.export-pdf');
 
     /// OFF CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {
