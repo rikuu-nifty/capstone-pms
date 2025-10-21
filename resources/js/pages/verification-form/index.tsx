@@ -16,7 +16,6 @@ import VerificationFormEditModal from './VerificationFormEditModal';
 import VerificationFormViewModal from './VerificationFormViewModal';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '#' },
     { title: 'Verification Form', href: '/verification-form' },
 ];
 
