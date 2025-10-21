@@ -5,12 +5,13 @@ import Pagination, { PageInfo } from '@/components/Pagination';
 import { formatEnums } from '@/types/custom-index';
 
 type PersonnelRow = {
-    id: number
-    full_name: string
-    department: string | null
-    status: string
-    current_assets_count: number
-    past_assets_count: number
+    id: number;
+    full_name: string;
+    department: string | null;
+    status: string;
+    current_assets_count: number;
+    past_assets_count: number;
+    missing_assets_count: number;
 };
 
 type Props = {
@@ -51,6 +52,7 @@ export default function PersonnelAssignmentsTable({
                             <TableHead className="text-center w-[200px]">Status</TableHead>
                             <TableHead className="text-center w-[200px]">Past Assets</TableHead>
                             <TableHead className="text-center w-[200px]">Current Assets</TableHead>
+                            <TableHead className="text-center w-[200px]">Missing Assets</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -68,6 +70,9 @@ export default function PersonnelAssignmentsTable({
                                 </TableCell>
                                 <TableCell className="text-green-600 font-bold">
                                     {p.current_assets_count}
+                                </TableCell>
+                                <TableCell className="font-bold" style={{ color: '#dc2626' }}>
+                                    {p.missing_assets_count}
                                 </TableCell>
                             </TableRow>
                         ))}

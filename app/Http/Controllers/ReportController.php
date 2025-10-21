@@ -317,8 +317,6 @@ class ReportController extends Controller
         ]);
     }
 
-
-
     public function inventoryList(Request $request)
     {
         // Start from categories

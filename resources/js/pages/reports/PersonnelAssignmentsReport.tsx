@@ -36,6 +36,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { formatEnums } from '@/types/custom-index';
 
 type PersonnelRow = {
     id: number;
@@ -44,6 +45,7 @@ type PersonnelRow = {
     status: string;
     current_assets_count: number;
     past_assets_count: number;
+    missing_assets_count: number;
 };
 
 type PaginationMeta = {
@@ -70,6 +72,7 @@ type ChartRow = {
     name: string;
     current: number;
     past: number;
+    missing: number;
 };
 
 type AssetRecordRow = {
@@ -129,6 +132,7 @@ export default function PersonnelAssignmentsReport() {
         status: null as string | null,
         personnel_id: null as number | null,
         category_id: null as number | null,
+        asset_status: null as string | null,
     };
 
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
@@ -191,6 +195,7 @@ export default function PersonnelAssignmentsReport() {
     const chartConfig: ChartConfig = {
         past: { label: 'Past Assignments', color: 'var(--chart-1)' },
         current: { label: 'Current Assignments', color: 'var(--chart-2)' },
+        missing: { label: 'Missing Assets', color: '#741414ff', },
     };
 
     return (
@@ -290,7 +295,7 @@ export default function PersonnelAssignmentsReport() {
                             />
                         </div>
 
-                        {/* Status */}
+                        {/* Personnel Status */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
                                 Personnel Status
@@ -327,7 +332,6 @@ export default function PersonnelAssignmentsReport() {
                                 className="w-full"
                                 isClearable
                                 placeholder="Select category"
-                                isDisabled={viewMode === 'summary' || viewMode === 'chart'}
                                 value={
                                     filters.category_id
                                         ? {
@@ -342,6 +346,28 @@ export default function PersonnelAssignmentsReport() {
                                     label: c.name,
                                 }))}
                                 onChange={(opt) => updateFilter("category_id", opt?.value ?? null)}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Asset Status
+                            </label>
+                            <Select
+                                className="w-full"
+                                isClearable
+                                placeholder="Select asset status"
+                                value={
+                                    filters.asset_status
+                                        ? { value: filters.asset_status, label: formatEnums(filters.asset_status) }
+                                        : null
+                                }
+                                options={[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'archived', label: 'Archived' },
+                                    { value: 'missing', label: 'Missing' },
+                                ]}
+                                onChange={(opt) => updateFilter('asset_status', opt?.value ?? null)}
                             />
                         </div>
                     </div>
@@ -472,7 +498,6 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         setViewMode('summary');
-                                        if (filters.category_id) updateFilter('category_id', null);
                                     }}
                                     className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
                                     viewMode === 'summary'
@@ -521,6 +546,9 @@ export default function PersonnelAssignmentsReport() {
                                             />
                                             <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
                                             <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
+                                            {/* <Bar dataKey="missing" fill="var(--chart-5)" radius={4} /> */}
+                                            <Bar dataKey="missing" fill={chartConfig.missing.color} radius={4} />
+                                            
                                             <ChartLegend content={<ChartLegendContent />} />
                                         </BarChart>
                                     </ResponsiveContainer>

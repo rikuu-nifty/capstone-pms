@@ -81,6 +81,7 @@ type ChartRow = {
   name: string;
   current: number;
   past: number;
+  missing: number;
 }
 
 type ReportsPageProps = InertiaPageProps & {

@@ -168,6 +168,8 @@ class Personnel extends Model
     {
         $from = $filters['from'] ?? null;
         $to   = $filters['to'] ?? null;
+        $assetStatus = $filters['asset_status'] ?? null;
+        $categoryId  = $filters['category_id'] ?? null;
 
         return static::query()
             ->with('unitOrDepartment:id,name')
@@ -183,6 +185,16 @@ class Personnel extends Model
                     ->whereColumn('aa.personnel_id', 'personnels.id')
                     ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                     ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+                    ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
                     ->selectRaw('COUNT(aai.id)')
             ])
 
@@ -190,6 +202,7 @@ class Personnel extends Model
             ->addSelect([
                 'past_assets_count' => DB::table('asset_assignment_items as aai')
                     ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
+                    ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
                     ->whereColumn('aa.personnel_id', 'personnels.id')
                     ->whereNull('aai.deleted_at')
                     ->whereDate('aai.date_assigned', '<', DB::raw('(
@@ -200,6 +213,35 @@ class Personnel extends Model
                     )'))
                     ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                     ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+                    ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
+                    ->selectRaw('COUNT(aai.id)')
+            ])
+            ->addSelect([
+                'missing_assets_count' => DB::table('asset_assignment_items as aai')
+                    ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
+                    ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
+                    ->whereNull('aai.deleted_at')
+                    ->whereColumn('aa.personnel_id', 'personnels.id')
+                    ->where('il.status', '=', 'missing')
+                    ->when($assetStatus && $assetStatus !== 'missing', fn($q) => $q->whereRaw('1=0'))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
                     ->selectRaw('COUNT(aai.id)')
             ])
             ->when(
@@ -224,6 +266,8 @@ class Personnel extends Model
     {
         $from = $filters['from'] ?? null;
         $to   = $filters['to'] ?? null;
+        $assetStatus = $filters['asset_status'] ?? null;
+        $categoryId  = $filters['category_id'] ?? null;
 
         $records = static::query()->select('personnels.*')
             // CURRENT = all not soft-deleted assets
@@ -236,12 +280,23 @@ class Personnel extends Model
                     ->whereColumn('aa.personnel_id', 'personnels.id')
                     ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                     ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+                    ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
                     ->selectRaw('COUNT(aai.id)')
             ])
             // PAST = items assigned before the latest date_assigned per personnel
             ->addSelect([
                 'past_assets_count' => DB::table('asset_assignment_items as aai')
                     ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
+                    ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
                     ->whereColumn('aa.personnel_id', 'personnels.id')
                     ->whereNull('aai.deleted_at')
                     ->whereDate('aai.date_assigned', '<', DB::raw('(
@@ -252,6 +307,36 @@ class Personnel extends Model
                     )'))
                     ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                     ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+                    ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
+                    ->selectRaw('COUNT(aai.id)')
+            ])
+            // MISSING
+            ->addSelect([
+                'missing_assets_count' => DB::table('asset_assignment_items as aai')
+                    ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
+                    ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
+                    ->whereNull('aai.deleted_at')
+                    ->whereColumn('aa.personnel_id', 'personnels.id')
+                    ->where('il.status', '=', 'missing')
+                    ->when($assetStatus && $assetStatus !== 'missing', fn($q) => $q->whereRaw('1=0'))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
                     ->selectRaw('COUNT(aai.id)')
             ])
             ->when(
@@ -274,6 +359,7 @@ class Personnel extends Model
             'name'    => $p->full_name,
             'current' => (int) $p->current_assets_count,
             'past'    => (int) $p->past_assets_count,
+            'missing'  => (int) ($p->missing_assets_count ?? 0),
         ]);
     }
 
@@ -281,6 +367,8 @@ class Personnel extends Model
     {
         $from = $filters['from'] ?? null;
         $to   = $filters['to'] ?? null;
+        $assetStatus = $filters['asset_status'] ?? null;
+        $categoryId  = $filters['category_id'] ?? null;
 
         $records = static::query()
             ->with('unitOrDepartment:id,name')
@@ -296,9 +384,18 @@ class Personnel extends Model
                     ->whereColumn('aa.personnel_id', 'personnels.id')
                     ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                     ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+                    ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
                     ->selectRaw('COUNT(aai.id)')
             ])
-
             // PAST = earlier assignments before latest
             ->addSelect([
                 'past_assets_count' => DB::table('asset_assignment_items as aai')
@@ -313,6 +410,36 @@ class Personnel extends Model
                     )'))
                     ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                     ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+                    ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
+                    ->selectRaw('COUNT(aai.id)')
+            ])
+            // MISSING
+            ->addSelect([
+                'missing_assets_count' => DB::table('asset_assignment_items as aai')
+                    ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
+                    ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
+                    ->whereNull('aai.deleted_at')
+                    ->whereColumn('aa.personnel_id', 'personnels.id')
+                    ->where('il.status', '=', 'missing')
+                    ->when($assetStatus && $assetStatus !== 'missing', fn($q) => $q->whereRaw('1=0'))
+                    ->when(
+                        $categoryId,
+                        fn($q) =>
+                        $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
+                            $sub->select('id')
+                                ->from('asset_models')
+                                ->where('category_id', '=', $categoryId);
+                        })
+                    )
                     ->selectRaw('COUNT(aai.id)')
             ])
             ->when(
@@ -336,6 +463,7 @@ class Personnel extends Model
             'Status'         => ucfirst(str_replace('_', ' ', $p->status)),
             'Current Assets' => (int) $p->current_assets_count,
             'Past Assets'    => (int) $p->past_assets_count,
+            'Missing Assets' => (int) ($p->missing_assets_count ?? 0),
         ]);
     }
 
@@ -386,6 +514,15 @@ class Personnel extends Model
             )
             ->when($filters['category_id'] ?? null, function ($q, $categoryId) {
                 $q->where('am.category_id', $categoryId);
+            })
+            ->when($filters['asset_status'] ?? null, function ($q, $assetStatus) {
+                if ($assetStatus === 'missing') {
+                    $q->where('il.status', '=', 'missing');
+                } elseif ($assetStatus === 'active') {
+                    $q->where('il.status', '=', 'active');
+                } elseif ($assetStatus === 'archived') {
+                    $q->where('il.status', '=', 'archived');
+                }
             })
             ->orderBy('aai.date_assigned', 'desc');
 
