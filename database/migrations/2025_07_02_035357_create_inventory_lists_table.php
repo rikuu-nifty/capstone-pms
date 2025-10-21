@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('asset_name');
             $table->string('image_path')->nullable();
             $table->text('description')->nullable();
-            $table->enum('status', ['active', 'archived'])->default('archived');
+            $table->enum('status', ['active', 'archived', 'missing'])->default('archived');
 
             $table->unsignedBigInteger('unit_or_department_id')->nullable(); // Done FK UNIT_OR_DEPARTMENT Table
             $table->foreign('unit_or_department_id')

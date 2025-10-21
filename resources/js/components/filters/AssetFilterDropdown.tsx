@@ -101,6 +101,7 @@ export default function AssetFilterDropdown({
                             <option value="">All</option>
                             <option value="active">Active</option>
                             <option value="archived">Archived</option>
+                            <option value="missing">Missing</option>
                         </select>
                     </div>
 

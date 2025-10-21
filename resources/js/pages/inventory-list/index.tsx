@@ -10,7 +10,7 @@ import { EditAssetModalForm } from '@/pages/inventory-list/edit-asset-modal-form
 import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Banknote, Boxes, Eye, FolderArchive, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
+import { Banknote, Boxes, Eye, FolderArchive, Pencil, Pin, PlusCircle, Trash2, X, AlertTriangleIcon} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
@@ -93,7 +93,7 @@ export type Asset = {
     asset_name: string;
     asset_type: string;
     description: string;
-    status: 'active' | 'archived';
+    status: 'active' | 'archived' | 'missing';
     unit_or_department_id?: number | null;
     category_id: number;
     category?: Category | null;
@@ -139,7 +139,7 @@ export type AssetFormData = {
     asset_model_id: number | string; // can be number or string
     asset_name: string;
     description: string;
-    status: 'active' | 'archived' | '';
+    status: 'active' | 'archived' |'missing' |  '';
     unit_or_department_id: number | string;
     building_id: number | string;
     building_room_id: number | string;
@@ -165,6 +165,8 @@ type KPIs = {
     total_inventory_sum: number;
     active_pct: number;
     archived_pct: number;
+    missing_pct: number;
+    missing_count: number;
     fixed_pct: number;
     not_fixed_pct: number;
 };
@@ -184,6 +186,8 @@ export default function InventoryListIndex({
         total_assets: 0,
         total_inventory_sum: 0,
         active_pct: 0,
+        missing_pct: 0,
+        missing_count: 0,
         archived_pct: 0,
         fixed_pct: 0,
         not_fixed_pct: 0,
@@ -520,7 +524,7 @@ export default function InventoryListIndex({
 
                 {kpis && (
                     // <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                         {/* Total Assets */}
                         <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 shrink-0">
@@ -541,6 +545,24 @@ export default function InventoryListIndex({
                                 <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Active vs Archived</div>
                                 <div className="text-lg sm:text-base md:text-xl font-semibold leading-snug break-words">
                                     {kpis.active_pct}% vs {kpis.archived_pct}%
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Missing Assets */}
+                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 shrink-0">
+                                <AlertTriangleIcon className="h-6 w-6 text-red-600" />
+                            </div>
+                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
+                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">
+                                    Missing Assets
+                                </div>
+                                <div className="text-2xl font-semibold text-red-700">
+                                    {kpis.missing_pct}% 
+                                    <span className="ml-1 text-sm text-muted-foreground font-medium">
+                                        • {kpis.missing_count.toLocaleString()} missing
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -599,7 +621,14 @@ export default function InventoryListIndex({
                         <div className="flex flex-wrap gap-2 pt-1">
                             {selectedStatus && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
-                                    Status: {selectedStatus === 'active' ? 'Active' : 'Archived'}
+                                    Status: {selectedStatus === 'active'
+                                    ? 'Active'
+                                    : selectedStatus === 'archived'
+                                    ? 'Archived'
+                                    : selectedStatus === 'missing'
+                                    ? 'Missing'
+                                    : selectedStatus}
+
                                     <button onClick={() => setSelectedStatus('')} className="ml-1 hover:text-red-600">
                                         <X className="h-4 w-4" />
                                     </button>
@@ -746,9 +775,15 @@ export default function InventoryListIndex({
                                     </TableCell>
                                     <TableCell>{item.unit_or_department?.code ? String(item.unit_or_department.code).toUpperCase() : '—'}</TableCell>
                                     <TableCell className="text-center">
-                                        <Badge variant={item.status as 'active' | 'archived'}>
-                                            {item.status === 'active' ? 'Active' : 'Archived'}
-                                        </Badge>
+                                        {item.status === 'active' && (
+                                            <Badge className="bg-green-100 text-green-800 border-green-300">Active</Badge>
+                                        )}
+                                        {item.status === 'archived' && (
+                                            <Badge className="bg-gray-100 text-gray-800 border-gray-300">Archived</Badge>
+                                        )}
+                                        {item.status === 'missing' && (
+                                            <Badge className="bg-red-100 text-red-700 border-red-300">Missing</Badge>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <button
@@ -1115,11 +1150,12 @@ export default function InventoryListIndex({
                                 <select
                                     className="w-full rounded-lg border p-2"
                                     value={data.status}
-                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived' | '')}
+                                    onChange={(e) => setData('status', e.target.value as 'active' | 'archived' | 'missing' | '')}
                                 >
                                     <option value="">Select Status</option>
                                     <option value="active">Active</option>
                                     <option value="archived">Archived</option>
+                                    <option value="missing">Missing</option>
                                 </select>
                                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                             </div>

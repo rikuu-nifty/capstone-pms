@@ -323,7 +323,6 @@ class InventoryListController extends Controller
 
                         AssetAssignmentItem::updateOrCreate(
                             ['asset_id' => $asset->id],
-                            // ['asset_assignment_id' => $assignment->id]
                             [
                                 'asset_assignment_id' => $assignment->id,
                                 'date_assigned' => now(),
@@ -458,7 +457,7 @@ class InventoryListController extends Controller
         'building_id' => 'nullable|exists:buildings,id',
         'building_room_id' => 'nullable|exists:building_rooms,id',
         'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
-        'status' => 'nullable|string|in:active,archived',
+        'status' => 'nullable|string|in:active,archived,missing',
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'sub_area_id' => 'nullable|exists:sub_areas,id',
     ]);
