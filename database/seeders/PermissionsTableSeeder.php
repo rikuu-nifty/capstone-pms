@@ -37,6 +37,10 @@ class PermissionsTableSeeder extends Seeder
             ['code' => 'create-turnover-disposal', 'name' => 'Create Turnover/Disposal'],
             ['code' => 'update-turnover-disposal', 'name' => 'Update Turnover/Disposal'],
             ['code' => 'delete-turnover-disposal', 'name' => 'Delete Turnover/Disposal'],
+
+            // VERIFICATION FORM
+            ['code' => 'view-verification-form', 'name' => 'View Verification Form'],
+            ['code' => 'verify-verification-form', 'name' => 'Verify Verification Form'],
             
             // OFF CAMPUS
             ['code' => 'view-off-campus', 'name' => 'View Off Campus'],

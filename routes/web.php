@@ -366,10 +366,14 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         ->name('turnover-disposal.print');
 
     //  VERIFICATION FORM
-    Route::get('/verification-form', [VerificationFormController::class, 'index'])
-        ->name('verification-form.index');
-    Route::get('/verification-form/{id}', [VerificationFormController::class, 'show'])
-        ->name('verification-form.show');
+    Route::get('/verification-form', [VerificationFormController::class, 'index'])->name('verification-form.index')
+        ->middleware('can:view-verification-form');
+    Route::get('/verification-form/{id}', [VerificationFormController::class, 'show'])->name('verification-form.show')
+        ->middleware('can:view-verification-form');
+    Route::patch('/verification-form/{id}/verify', [VerificationFormController::class, 'verify'])->name('verification-form.verify')
+        ->middleware('can:verify-verification-form');
+    Route::patch('/verification-form/{id}/reject', [VerificationFormController::class, 'reject'])->name('verification-form.reject')
+        ->middleware('can:verify-verification-form');
 
     /// OFF CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {
