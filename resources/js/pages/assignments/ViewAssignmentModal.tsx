@@ -135,7 +135,7 @@ export default function ViewAssignmentModal({
                         <table className="w-full text-sm border-collapse text-center">
                             <thead className="bg-gray-100 text-gray-700">
                                 <tr>
-                                    <th className="border px-2 py-1">#</th>
+                                    <th className="border px-2 py-1">ID</th>
                                     <th className="border px-2 py-1">Serial No</th>
                                     <th className="border px-2 py-1">Asset Name</th>
                                     <th className="border px-2 py-1">Brand / Model</th>
@@ -144,9 +144,9 @@ export default function ViewAssignmentModal({
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.data.length > 0 ? (items.data.map((i, idx) => (
+                                {items.data.length > 0 ? (items.data.map((i) => (
                                     <tr key={i.id}>
-                                        <td className="border px-2 py-1">{(items.current_page - 1) * items.per_page + idx + 1}</td>
+                                        <td className="border px-2 py-1">{i.asset_id}</td>
                                         <td className="border px-2 py-1">
                                             {/* <button
                                                 onClick={() => setViewAssetId(i.asset?.id ?? null)}
