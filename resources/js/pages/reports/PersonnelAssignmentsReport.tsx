@@ -496,10 +496,10 @@ export default function PersonnelAssignmentsReport() {
                         </div>
                     </CardHeader>
 
-                    <CardContent className="h-[400px]">
+                    <CardContent className="h-[500px]">
                         {viewMode === 'chart' ? (
                             chartData && chartData.length > 0 ? (
-                                <ChartContainer config={chartConfig} className="mx-auto aspect-[4/3] max-h-[400px]">
+                                <ChartContainer config={chartConfig} className="mx-auto aspect-[16/9] max-h-[500px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={chartData}>
                                         <CartesianGrid vertical={false} />
