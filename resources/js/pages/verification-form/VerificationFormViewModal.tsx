@@ -86,13 +86,13 @@ export default function VerificationFormViewModal({
             open={open}
             onClose={onClose}
             size="xl"
-            contentClassName="relative max-h-[90vh] overflow-y-auto print:overflow-x-hidden bg-white text-black"
+            contentClassName="relative min-h-[60vh] max-h-[60vh] overflow-y-auto print:overflow-x-hidden bg-white text-black"
         >
             <VisuallyHidden>
                 <DialogTitle>Verification Form #{recordNo}</DialogTitle>
             </VisuallyHidden>
 
-            <div className="flex items-start justify-between border-b border-black pb-2">
+            <div className="flex items-start justify-between">
                 <img
                     src="https://www.auf.edu.ph/home/images/mascot/GEN.png"
                     alt="AUF Logo"
@@ -107,7 +107,7 @@ export default function VerificationFormViewModal({
                     <p className="font-semibold text-sm uppercase">
                         Property Management Office
                     </p>
-                    <h2 className="mt-2 text-base font-bold uppercase underline">
+                    <h2 className="mt-2 text-lg font-bold uppercase mt-6">
                         Verification Form
                     </h2>
                 </div>
@@ -133,7 +133,7 @@ export default function VerificationFormViewModal({
                 </p>
             </div>
 
-            <div className="mt-4 border border-black rounded-sm overflow-hidden">
+            <div className="mt-3 border border-black rounded-sm overflow-hidden">
                 <table className="w-full text-xs border-collapse">
                     <thead className="bg-gray-100 border-b border-black">
                         <tr className="text-center font-semibold">
@@ -161,7 +161,7 @@ export default function VerificationFormViewModal({
                                         {formatDate(asset.date_purchased)}
                                     </td>
                                     <td className="border-r border-black px-2 py-1 text-left">
-                                        <div className="font-semibold text-sm">
+                                        <div className="font-semibold text-sm mb-3">
                                             {asset.asset_name}{" "}
 
                                             {asset.serial_no && (
@@ -171,13 +171,13 @@ export default function VerificationFormViewModal({
                                             )}
                                         </div>
                                         {asset.asset_model?.brand || asset.asset_model?.model ? (
-                                            <div className="text-xs">
+                                            <div className="text-xs mb-3">
                                                 {asset.asset_model?.brand} {asset.asset_model?.model}
                                             </div>
                                         ) : null}
 
                                         {verification?.notes && (
-                                            <div className="text-xs italic text-gray-700 mt-1">
+                                            <div className="text-xs italic text-gray-700">
                                                 *{verification.notes}*
                                             </div>
                                         )}
