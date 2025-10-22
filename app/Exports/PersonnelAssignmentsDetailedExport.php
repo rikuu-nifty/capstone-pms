@@ -110,7 +110,16 @@ class PersonnelAssignmentsDetailedExport implements FromView, WithColumnWidths, 
             }
 
             // === Status color mapping (Column G) ===
-            if (str_contains($statusCell, 'INVENTORY')) {
+            if (str_contains($statusCell, 'ACTIVE')) {
+                $sheet->getStyle("G{$row}")->getFont()->getColor()->setARGB('FF16A34A'); // green
+                $sheet->getStyle("G{$row}")->getFont()->setBold(true);
+            } elseif (str_contains($statusCell, 'ARCHIVED')) {
+                $sheet->getStyle("G{$row}")->getFont()->getColor()->setARGB('FFEA580C'); // orange
+                $sheet->getStyle("G{$row}")->getFont()->setBold(true);
+            } elseif (str_contains($statusCell, 'MISSING')) {
+                $sheet->getStyle("G{$row}")->getFont()->getColor()->setARGB('FFDC2626'); // red
+                $sheet->getStyle("G{$row}")->getFont()->setBold(true);
+            } elseif (str_contains($statusCell, 'INVENTORY')) {
                 $sheet->getStyle("G{$row}")->getFont()->getColor()->setARGB('FF16A34A'); // green
                 $sheet->getStyle("G{$row}")->getFont()->setBold(true);
             } elseif (str_contains($statusCell, 'TRANSFER')) {

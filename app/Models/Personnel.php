@@ -487,6 +487,7 @@ class Personnel extends Model
                 'il.id as asset_id',
                 'il.asset_name',
                 'il.serial_no',
+                'il.status as asset_status',
                 'c.name as category',
                 'uod.name as asset_unit_or_department',
                 'ec.code as equipment_code',
@@ -535,10 +536,11 @@ class Personnel extends Model
             $asset = $assets[$row->asset_id] ?? null;
 
             return (object) array_merge((array) $row, [
-                'current_transfer_status'          => $asset?->current_transfer_status,
-                'current_turnover_disposal_status' => $asset?->current_turnover_disposal_status,
-                'current_off_campus_status'        => $asset?->current_off_campus_status,
-                'current_inventory_status'         => $asset?->current_inventory_status,
+                'asset_status'                      => $asset?->status ?? $row->asset_status,
+                'current_transfer_status'           => $asset?->current_transfer_status,
+                'current_turnover_disposal_status'  => $asset?->current_turnover_disposal_status,
+                'current_off_campus_status'         => $asset?->current_off_campus_status,
+                'current_inventory_status'          => $asset?->current_inventory_status,
             ]);
         });
 

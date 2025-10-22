@@ -92,6 +92,9 @@ $grouped = collect($records)->groupBy(fn($r) => $r->asset_unit_or_department ?? 
             <td>
                 @php
                 $statuses = [];
+                if (!empty($r->asset_status)) {
+                $statuses[] = ucwords(str_replace('_', ' ', $r->asset_status));
+                }
                 if ($r->current_inventory_status)
                 $statuses[] = "Inventory: " . ucwords(str_replace('_',' ', $r->current_inventory_status));
                 if ($r->current_transfer_status)
@@ -127,6 +130,9 @@ $grouped = collect($records)->groupBy(fn($r) => $r->asset_unit_or_department ?? 
             <td>
                 @php
                 $statuses = [];
+                if (!empty($r->asset_status)) {
+                $statuses[] = ucwords(str_replace('_', ' ', $r->asset_status));
+                }
                 if ($r->current_inventory_status)
                 $statuses[] = "Inventory: " . ucwords(str_replace('_',' ', $r->current_inventory_status));
                 if ($r->current_transfer_status)

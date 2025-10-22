@@ -81,6 +81,7 @@ type AssetRecordRow = {
     category: string | null;
     equipment_code: string | null;
     serial_no: string | null;
+    asset_status: string | null;
     asset_unit_or_department: string | null;
     personnel_name: string;
     previous_personnel_name: string | null;
