@@ -121,7 +121,8 @@ export default function InventoryListReport() {
         supplier: null as string | null,
         condition: null as string | null,
         brand: null as string | null,
-        report_type: null as string | null, // default safe value
+        report_type: null as string | null,
+        status: null as string | null,
     };
 
     // Filters state (live editing)
@@ -267,6 +268,22 @@ export default function InventoryListReport() {
                                 value={filters.supplier ? { value: filters.supplier, label: filters.supplier } : null}
                                 options={suppliers.map((s) => ({ value: s, label: s }))}
                                 onChange={(opt) => updateFilter('supplier', opt?.value ?? null)}
+                            />
+                        </div>
+
+                        {/* Asset Status */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-black">Asset Status</label>
+                            <Select
+                                className="w-full"
+                                value={filters.status ? { value: filters.status, label: filters.status.charAt(0).toUpperCase() + filters.status.slice(1) } : null}
+                                options={[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'archived', label: 'Archived' },
+                                    { value: 'missing', label: 'Missing' },
+                                ]}
+                                onChange={(opt) => updateFilter('status', opt?.value ?? null)}
+                                placeholder="Select status..."
                             />
                         </div>
                     </div>

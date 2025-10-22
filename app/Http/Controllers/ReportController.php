@@ -64,6 +64,7 @@ class ReportController extends Controller
             ->when($request->filled('cost_min'), fn($q) => $q->where('unit_cost', '>=', $request->input('cost_min')))
             ->when($request->filled('cost_max'), fn($q) => $q->where('unit_cost', '<=', $request->input('cost_max')))
             ->when($request->filled('building_id'), fn($q) => $q->where('building_id', $request->input('building_id')))
+            ->when($request->filled('status'), fn($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('brand'), fn($q) =>
                 $q->whereHas('assetModel', fn($aq) => $aq->where('brand', $request->input('brand')))
         )
@@ -88,8 +89,19 @@ class ReportController extends Controller
 
         // Get filters from request
         $filters = $request->only([
-            'from','to','department_id','category_id','asset_type','supplier',
-            'condition','cost_min','cost_max','building_id','brand','report_type'
+            'from',
+            'to',
+            'department_id',
+            'category_id',
+            'asset_type',
+            'supplier',
+            'condition',
+            'cost_min',
+            'cost_max',
+            'building_id',
+            'brand',
+            'report_type',
+            'status'
         ]);
 
         // Replace IDs with actual names for display
@@ -351,6 +363,9 @@ class ReportController extends Controller
         if ($request->filled('building_id')) {
             $query->where('inventory_lists.building_id', $request->input('building_id'));
         }
+        if ($request->filled('status')) {
+            $query->where('inventory_lists.status', $request->input('status'));
+        }
 
         // Brand filter via joined asset_models
         if ($request->filled('brand')) {
@@ -384,6 +399,7 @@ class ReportController extends Controller
             ->when($request->filled('cost_min'), fn($q) => $q->where('unit_cost', '>=', $request->input('cost_min')))
             ->when($request->filled('cost_max'), fn($q) => $q->where('unit_cost', '<=', $request->input('cost_max')))
             ->when($request->filled('building_id'), fn($q) => $q->where('building_id', $request->input('building_id')))
+            ->when($request->filled('status'), fn($q) => $q->where('status', $request->input('status')))
             ->when($request->filled('brand'), fn($q) =>
                 $q->whereHas('assetModel', fn($aq) => $aq->where('brand', $request->input('brand')))
             )
