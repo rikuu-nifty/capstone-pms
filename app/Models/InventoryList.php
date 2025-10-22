@@ -391,7 +391,8 @@ public function assignments()
 
     /**
      * Helper to check if due and send notifications
-     */protected static function checkAndNotify($asset)
+     */
+    protected static function checkAndNotify($asset)
     {
         if (! $asset->maintenance_due_date) {
             return;

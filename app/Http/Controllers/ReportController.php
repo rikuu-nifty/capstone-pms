@@ -34,11 +34,7 @@ use Illuminate\Support\Collection;
 
 class ReportController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-
-   public function exportExcel(Request $request)
+    public function exportExcel(Request $request)
     {
         $filters = $request->all();
 
@@ -57,7 +53,6 @@ class ReportController extends Controller
 
     public function exportPdf(Request $request)
     {
-        // Build the same filtered query you use for the screen
         $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
             ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
             ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
@@ -74,7 +69,6 @@ class ReportController extends Controller
         )
         ->get();
 
-        // Asset Type mapping
         $assetTypeLabels = [
             'fixed' => 'Fixed',
             'not_fixed' => 'Not Fixed',
@@ -136,9 +130,9 @@ class ReportController extends Controller
             ])
             ->setPaper('a4', 'landscape');
 
-        return $pdf->download($fileName);
+        // return $pdf->download($fileName);
+        return $pdf->stream($fileName);
     }
-
 
     public function index(Request $request)
     {
@@ -366,68 +360,69 @@ class ReportController extends Controller
         // FIX: prevent duplicate counting by using DISTINCT
         $chartData = $query
             ->select('categories.name as label')
-            ->selectRaw('COUNT(DISTINCT inventory_lists.id) as value') // 👈 important fix
+            ->selectRaw('COUNT(DISTINCT inventory_lists.id) as value')
             ->groupBy('categories.id', 'categories.name')
             // ->orderBy('categories.name') Alphabetical Order
             ->orderBy('categories.created_at')
             ->get();
 
          // Asset type label mapping
-    $assetTypeLabels = [
-        'fixed' => 'Fixed',
-        'not_fixed' => 'Not Fixed',
-    ];
+        $assetTypeLabels = [
+            'fixed' => 'Fixed',
+            'not_fixed' => 'Not Fixed',
+        ];
 
-    // Fetch assets with all filters applied
-    $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
-        ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
-        ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
-        ->when($request->filled('department_id'), fn($q) => $q->where('unit_or_department_id', $request->input('department_id')))
-        ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->input('category_id')))
-        ->when($request->filled('asset_type'), fn($q) => $q->where('asset_type', $request->input('asset_type')))
-        ->when($request->filled('supplier'), fn($q) => $q->where('supplier', $request->input('supplier')))
-        ->when($request->filled('condition'), fn($q) => $q->where('condition', $request->input('condition')))
-        ->when($request->filled('cost_min'), fn($q) => $q->where('unit_cost', '>=', $request->input('cost_min')))
-        ->when($request->filled('cost_max'), fn($q) => $q->where('unit_cost', '<=', $request->input('cost_max')))
-        ->when($request->filled('building_id'), fn($q) => $q->where('building_id', $request->input('building_id')))
-        ->when($request->filled('brand'), fn($q) =>
-            $q->whereHas('assetModel', fn($aq) => $aq->where('brand', $request->input('brand')))
-        )
-        ->get();
+        // Fetch assets with all filters applied
+        $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
+            ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
+            ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
+            ->when($request->filled('department_id'), fn($q) => $q->where('unit_or_department_id', $request->input('department_id')))
+            ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->input('category_id')))
+            ->when($request->filled('asset_type'), fn($q) => $q->where('asset_type', $request->input('asset_type')))
+            ->when($request->filled('supplier'), fn($q) => $q->where('supplier', $request->input('supplier')))
+            ->when($request->filled('condition'), fn($q) => $q->where('condition', $request->input('condition')))
+            ->when($request->filled('cost_min'), fn($q) => $q->where('unit_cost', '>=', $request->input('cost_min')))
+            ->when($request->filled('cost_max'), fn($q) => $q->where('unit_cost', '<=', $request->input('cost_max')))
+            ->when($request->filled('building_id'), fn($q) => $q->where('building_id', $request->input('building_id')))
+            ->when($request->filled('brand'), fn($q) =>
+                $q->whereHas('assetModel', fn($aq) => $aq->where('brand', $request->input('brand')))
+            )
+            ->get();
 
-    // Build counts from assets
-    $assetCounts = $assets
-        ->groupBy(fn($a) => $a->category?->id)
-        ->map(fn($group) => $group->count());
+        // Build counts from assets
+        $assetCounts = $assets
+            ->groupBy(fn($a) => $a->category?->id)
+            ->map(fn($group) => $group->count());
 
-    // Ensure all categories are included (even if 0)
-    $chartData = Category::select('id', 'name')
-        ->orderBy('created_at')
-        ->get()
-        ->map(fn($cat) => [
-            'label' => $cat->name,
-            'value' => $assetCounts[$cat->id] ?? 0,
+        // Ensure all categories are included (even if 0)
+        $chartData = Category::select('id', 'name')
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn($cat) => [
+                'label' => $cat->name,
+                'value' => $assetCounts[$cat->id] ?? 0,
+            ]);
+
+        // Map assets for frontend
+        $assets = $assets->map(fn($a) => [
+            'id'             => $a->id,
+            'asset_name'     => $a->asset_name,
+            'brand'          => $a->assetModel?->brand ?? '-',
+            'model'          => $a->assetModel?->model ?? '-',
+            'category'       => $a->category?->name ?? '-',
+            'department'     => $a->unitOrDepartment?->name ?? '-',
+            'building'       => $a->building?->name ?? '-',
+            'room'           => $a->buildingRoom?->room ?? '-',
+            'supplier'       => $a->supplier ?? '-',
+            'status'         => $a->status ?? '-',
+            'asset_type'     => $assetTypeLabels[$a->asset_type] ?? ($a->asset_type ?? '-'),
+            'date_purchased' => $a->date_purchased,
+            'unit_cost'      => $a->unit_cost ?? '-',
+            'memorandum_no'  => $a->memorandum_no ?? '-',
         ]);
 
-    // Map assets for frontend
-    $assets = $assets->map(fn($a) => [
-        'id'             => $a->id,
-        'asset_name'     => $a->asset_name,
-        'brand'          => $a->assetModel?->brand ?? '-',
-        'model'          => $a->assetModel?->model ?? '-',
-        'category'       => $a->category?->name ?? '-',
-        'department'     => $a->unitOrDepartment?->name ?? '-',
-        'building'       => $a->building?->name ?? '-',
-        'room'           => $a->buildingRoom?->room ?? '-',
-        'supplier'       => $a->supplier ?? '-',
-        'asset_type'     => $assetTypeLabels[$a->asset_type] ?? ($a->asset_type ?? '-'),
-        'date_purchased' => $a->date_purchased,
-        'unit_cost'      => $a->unit_cost ?? '-',
-        'memorandum_no'  => $a->memorandum_no ?? '-',
-    ]);
-
-        // define reportType before returning
-    $reportType = $request->input('report_type', 'inventory_list');
+            // define reportType before returning
+        $reportType = $request->input('report_type', 'inventory_list');
 
         return Inertia::render('reports/InventoryListReport', [
             'chartData'   => $chartData,

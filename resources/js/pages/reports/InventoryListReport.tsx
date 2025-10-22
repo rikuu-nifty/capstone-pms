@@ -1,4 +1,4 @@
-import { PickerInput } from '@/components/picker-input'; // ✅ use PickerInput
+import { PickerInput } from '@/components/picker-input'; // use PickerInput
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,9 +27,10 @@ export type Asset = {
     room: string;
     supplier: string;
     asset_type: string;
+    status: string;
     date_purchased: string;
-    unit_cost: number | null; // ✅ now matches backend
-    memorandum_no: string | null; // ✅ now matches backend
+    unit_cost: number | null; 
+    memorandum_no: string | null; 
 };
 
 type InventoryListPageProps = {
@@ -48,7 +49,7 @@ export interface PickerInputProps {
     type: string;
     value: string;
     onChange: (value: string) => void;
-    className?: string; // ✅ add this line
+    className?: string; // add this line
 }
 
 // Breadcrumbs
@@ -57,7 +58,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Asset Inventory List Report', href: '/reports/inventory-list' },
 ];
 
-// ✅ Vibrant & bright HSL colors
+// Vibrant & bright HSL colors
 const BASE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA66CC'];
 
 function generateColor(index: number, total: number): string {
@@ -67,7 +68,7 @@ function generateColor(index: number, total: number): string {
     return `hsl(${hue}, 80%, 60%)`;
 }
 
-// ✅ Custom tooltip with percentage
+// Custom tooltip with percentage
 const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
         const entry = payload[0].payload as ChartData & { total?: number };
@@ -85,7 +86,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     return null;
 };
 
-// ✅ Keep values machine-friendly
+// Keep values machine-friendly
 const reportTypes = [
     { value: 'inventory_list', label: 'Asset Inventory List' },
     { value: 'new_purchases', label: 'Summary of Newly Purchased Equipment' },
@@ -103,13 +104,13 @@ export default function InventoryListReport() {
         assets: initialAssets,
     } = usePage<InventoryListPageProps>().props;
 
-    // ✅ Toggle between chart and table
+    // Toggle between chart and table
     const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
-    // ✅ Local state for assets that updates only on Apply
+    // Local state for assets that updates only on Apply
     const [displayedAssets, setDisplayedAssets] = useState(initialAssets);
 
-    // ✅ Default filters
+    // Default filters
     const defaultFilters = {
         from: null as string | null,
         to: null as string | null,
@@ -120,23 +121,23 @@ export default function InventoryListReport() {
         supplier: null as string | null,
         condition: null as string | null,
         brand: null as string | null,
-        report_type: null as string | null, // ✅ default safe value
+        report_type: null as string | null, // default safe value
     };
 
-    // ✅ Filters state (live editing)
+    // Filters state (live editing)
     const [filters, setFilters] = useState(defaultFilters);
 
-    // ✅ Applied filters (only update on "Apply Filters")
+    // Applied filters (only update on "Apply Filters")
     const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
 
     function updateFilter<K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) {
         setFilters((prev) => ({ ...prev, [key]: value }));
     }
 
-    // ✅ Total assets (no grouping)
+    // Total assets (no grouping)
     const totalAssets = chartData.reduce((acc, curr) => acc + curr.value, 0);
 
-    // ✅ Keep backend order as-is
+    // Keep backend order as-is
     const unsortedChartData = chartData.map((d) => ({ ...d, total: totalAssets }));
 
     return (
@@ -150,7 +151,7 @@ export default function InventoryListReport() {
                     <p className="text-sm text-muted-foreground">Analysis of Assets by Category.</p>
                 </div>
 
-                {/* ✅ Improved & Polished Filter Bar */}
+                {/* Improved & Polished Filter Bar */}
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div>
                         <label className="mb-1 block text-sm font-medium text-black">Report Type</label>
@@ -158,10 +159,10 @@ export default function InventoryListReport() {
                             className="w-full"
                             options={reportTypes}
                             value={
-                                filters.report_type ? reportTypes.find((r) => r.value === filters.report_type) : null // ✅ empty state = placeholder
+                                filters.report_type ? reportTypes.find((r) => r.value === filters.report_type) : null 
                             }
-                            onChange={(opt) => updateFilter('report_type', opt?.value ?? null)} // ✅ no default
-                            placeholder="Select report type..." // ✅ show placeholder when null
+                            onChange={(opt) => updateFilter('report_type', opt?.value ?? null)} // no default
+                            placeholder="Select report type..." // show placeholder when null
                         />
                     </div>
 
@@ -275,20 +276,20 @@ export default function InventoryListReport() {
                         {/* Clear Filters */}
                         <button
                             onClick={() => {
-                                const reset = { ...defaultFilters, report_type: null }; // ✅ force report_type null
+                                const reset = { ...defaultFilters, report_type: null }; // force report_type null
                                 setFilters(reset); // reset live filters
                                 setAppliedFilters(reset); // reset applied filters
 
                                 router.get(route('reports.inventory-list'), reset, {
                                     preserveState: true,
-                                    preserveScroll: true, // ✅ keep current scroll position
+                                    preserveScroll: true, // keep current scroll position
                                     onSuccess: (page) => {
-                                        // ✅ reset table to all assets
+                                        // reset table to all assets
                                         setDisplayedAssets(page.props.assets as Asset[]);
                                     },
                                 });
                             }}
-                            className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            className="cursor-pointer flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <RotateCcw className="h-4 w-4" />
                             Clear Filters
@@ -297,17 +298,17 @@ export default function InventoryListReport() {
                         {/* Apply Filters */}
                         <button
                             onClick={() => {
-                                setAppliedFilters(filters); // ✅ lock filters
+                                setAppliedFilters(filters); // lock filters
                                 router.get(route('reports.inventory-list'), filters, {
                                     preserveState: true,
-                                    preserveScroll: true, // ✅ keep current scroll position
+                                    preserveScroll: true, // keep current scroll position
                                     onSuccess: (page) => {
-                                        // ✅ update displayedAssets only when request completes
+                                        // update displayedAssets only when request completes
                                         setDisplayedAssets(page.props.assets as Asset[]);
                                     },
                                 });
                             }}
-                            className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            className="cursor-pointer flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <Filter className="h-4 w-4" />
                             Apply Filters
@@ -317,7 +318,7 @@ export default function InventoryListReport() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <button
-                                    className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+                                    className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white cursor-pointer"
                                     style={{ backgroundColor: '#155dfc' }}
                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0d47d9')}
                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#155dfc')}
@@ -333,9 +334,9 @@ export default function InventoryListReport() {
                                 <button
                                     onClick={() => {
                                         const url = route('reports.inventory-list.export.pdf', appliedFilters);
-                                        window.open(url, '_blank'); // 👈 open in new tab
+                                        window.open(url, '_blank'); // open in new tab
                                     }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                                    className="cursor-pointer flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
                                     PDF
@@ -345,9 +346,9 @@ export default function InventoryListReport() {
                                 <button
                                     onClick={() => {
                                         const url = route('reports.inventory-list.export.excel', appliedFilters);
-                                        window.open(url, '_blank'); // 👈 open in new tab instead of forcing download
+                                        window.open(url, '_blank'); // open in new tab instead of forcing download
                                     }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                                    className="cursor-pointer flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel
@@ -367,7 +368,7 @@ export default function InventoryListReport() {
                             <div className="inline-flex rounded-md shadow-sm">
                                 <button
                                     onClick={() => setViewMode('chart')}
-                                    className={`border px-4 py-2 text-sm font-medium ${
+                                    className={`cursor-pointer border px-4 py-2 text-sm font-medium ${
                                         viewMode === 'chart'
                                             ? 'border-blue-600 bg-blue-600 text-white'
                                             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -377,7 +378,7 @@ export default function InventoryListReport() {
                                 </button>
                                 <button
                                     onClick={() => setViewMode('table')}
-                                    className={`border-t border-b px-4 py-2 text-sm font-medium ${
+                                    className={`cursor-pointer border-t border-b px-4 py-2 text-sm font-medium ${
                                         viewMode === 'table'
                                             ? 'border-blue-600 bg-blue-600 text-white'
                                             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -397,7 +398,7 @@ export default function InventoryListReport() {
                                 </div>
                             ) : (
                                 <>
-                                    {/* ✅ Chart View */}
+                                    {/* Chart View */}
                                     <ChartContainer
                                         config={{ assets: { label: 'Assets' }, category: { label: 'Category' } }}
                                         className="mx-auto aspect-square max-h-[350px]"
@@ -446,7 +447,7 @@ export default function InventoryListReport() {
                                         </PieChart>
                                     </ChartContainer>
 
-                                    {/* ✅ Manual Legend */}
+                                    {/* Manual Legend */}
                                     <div className="mt--5 flex flex-wrap justify-center gap-4 text-sm">
                                         {unsortedChartData.map((entry, index) => (
                                             <div key={index} className="flex items-center gap-2">
@@ -462,7 +463,7 @@ export default function InventoryListReport() {
                                 </>
                             )
                         ) : (
-                            // ✅ Table View (switch based on report type)
+                            // Table View (switch based on report type)
                             <>
                                 {displayedAssets.length === 0 ? (
                                     <div className="flex h-full w-full flex-col items-center justify-center text-center text-gray-500">

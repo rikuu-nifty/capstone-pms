@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Events\BeforeSheet;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Color;
 use Carbon\Carbon;
 
 class InventoryListReportExport implements FromCollection, WithHeadings, WithStyles, WithEvents, WithColumnWidths
@@ -23,7 +24,7 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
     protected $generatedAt;
     protected $rowCount = 0;
     protected $totalCost = 0;
-    protected $assets; // ✅ store dataset
+    protected $assets;
 
     public function __construct($filters = [])
     {
@@ -45,7 +46,7 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
                 $q->whereHas('assetModel', fn($m) => $m->where('brand', $brand));
             });
 
-        // ✅ store results
+        // store results
         $this->assets = $query->get();
 
         $counter = 1;
@@ -60,6 +61,7 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
                 'Asset Name'      => $asset->asset_name,
                 'Brand / Model'   => ($asset->assetModel->brand ?? '') . ' / ' . ($asset->assetModel->model ?? ''),
                 'Asset Type'      => $asset->asset_type === 'fixed' ? 'Fixed' : ($asset->asset_type === 'not_fixed' ? 'Not Fixed' : $asset->asset_type),
+                'Status'          => ucfirst($asset->status ?? '-'),
                 'Category'        => $asset->category->name ?? '',
                 'Unit/Department' => $asset->unitOrDepartment->name ?? '',
                 'Building/Room'   => trim(($asset->building->name ?? '') . ' / ' . ($asset->buildingRoom->room ?? '')),
@@ -73,7 +75,7 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
 
     public function headings(): array
     {
-        // ✅ Ensure dataset is loaded before building header
+        // Ensure dataset is loaded before building header
         if ($this->assets === null) {
             $this->collection();
         }
@@ -83,11 +85,21 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
             ['Angeles City'],
             ['Property Management Office'],
             ['Generated: ' . $this->generatedAt],
-            ['Asset Inventory List Report ' . $this->getHeaderDateRange($this->assets)], // ✅ now dynamic
+            ['Asset Inventory List Report ' . $this->getHeaderDateRange($this->assets)],
             [], // spacer row
-            ['#', 'MR No.', 'Asset Name', 'Brand / Model', 'Asset Type',
-             'Category', 'Unit / Department', 'Building / Room',
-             'Supplier', 'Date Purchased']
+            [
+                '#', 
+                'MR No.', 
+                'Asset Name', 
+                'Brand / Model', 
+                'Asset Type',
+                'Status',
+                'Category', 
+                'Unit / Department', 
+                'Building / Room',
+                'Supplier', 
+                'Date Purchased'
+            ]
         ];
     }
 
@@ -124,11 +136,11 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
 
     public function styles(Worksheet $sheet)
     {
-        $sheet->mergeCells('A1:J1');
-        $sheet->mergeCells('A2:J2');
-        $sheet->mergeCells('A3:J3');
-        $sheet->mergeCells('A4:J4');
-        $sheet->mergeCells('A5:J5');
+        $sheet->mergeCells('A1:K1');
+        $sheet->mergeCells('A2:K2');
+        $sheet->mergeCells('A3:K3');
+        $sheet->mergeCells('A4:K4');
+        $sheet->mergeCells('A5:K5');
 
         return [
             1 => ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => 'center']],
@@ -142,121 +154,91 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
     public function registerEvents(): array
     {
         return [
-            BeforeSheet::class => function (BeforeSheet $event) {
-                $row = 6;
-
-                $labels = [
-                    'from' => 'From',
-                    'to' => 'To',
-                    'department_id' => 'Unit / Department',
-                    'category_id' => 'Category',
-                    'asset_type' => 'Asset Type',
-                    'building_id' => 'Building',
-                    'supplier' => 'Supplier',
-                    'brand' => 'Brand',
-                    'report_type' => 'Report Type',
-                ];
-
-                if (!empty(array_filter($this->filters))) {
-                    $event->sheet->setCellValue("A{$row}", 'Filters Applied:');
-                    $col = 'B';
-
-                    foreach ($this->filters as $key => $val) {
-                        if (!empty($val) && isset($labels[$key])) {
-                            $label = $labels[$key];
-                            $display = $val;
-
-                            if (in_array($key, ['from', 'to'])) {
-                                $display = Carbon::parse($val)->format('M d, Y');
-                            }
-
-                            if ($key === 'department_id') {
-                                $display = UnitOrDepartment::find($val)?->name ?? $val;
-                            } elseif ($key === 'category_id') {
-                                $display = Category::find($val)?->name ?? $val;
-                            } elseif ($key === 'building_id') {
-                                $display = Building::find($val)?->name ?? $val;
-                            } elseif ($key === 'asset_type') {
-                                $display = $val === 'fixed' ? 'Fixed' : ($val === 'not_fixed' ? 'Not Fixed' : $val);
-                            } elseif ($key === 'report_type') {
-                                $display = $val === 'inventory_list'
-                                    ? 'Asset Inventory List'
-                                    : ($val === 'new_purchases' ? 'Summary of Newly Purchased Equipment' : $val);
-                            }
-
-                            $event->sheet->setCellValue("{$col}{$row}", "{$label}: {$display}");
-                            $col++;
-                        }
-                    }
-                }
-            },
-
             AfterSheet::class => function (AfterSheet $event) {
-                $headerRow = 7;
-                $event->sheet->insertNewRowBefore($headerRow, 1);
+                $sheet = $event->sheet->getDelegate();
 
+                // === Totals row ===
+                $headerRow = 7;
+                $sheet->insertNewRowBefore($headerRow, 1);
                 $totalsRow = $headerRow;
                 $newHeaderRow = $headerRow + 1;
 
-                $event->sheet->mergeCells("A{$totalsRow}:E{$totalsRow}");
-                $event->sheet->mergeCells("F{$totalsRow}:J{$totalsRow}");
+                $sheet->mergeCells("A{$totalsRow}:E{$totalsRow}");
+                $sheet->mergeCells("F{$totalsRow}:K{$totalsRow}");
 
                 $formattedAmount = '₱' . number_format($this->totalCost, 2);
+                $sheet->setCellValue("A{$totalsRow}", "Total Assets: {$this->rowCount}");
+                $sheet->setCellValue("F{$totalsRow}", "Total Amount: {$formattedAmount}");
 
-                $event->sheet->setCellValue("A{$totalsRow}", "Total Assets: {$this->rowCount}");
-                $event->sheet->setCellValue("F{$totalsRow}", "Total Amount: {$formattedAmount}");
-
-                $event->sheet->getStyle("A{$totalsRow}:J{$totalsRow}")->applyFromArray([
+                $sheet->getStyle("A{$totalsRow}:K{$totalsRow}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => ['horizontal' => 'center'],
                     'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'D9E1F2']],
                     'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
+                        'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']],
                     ],
                 ]);
 
-                $event->sheet->getStyle("A{$newHeaderRow}:J{$newHeaderRow}")->applyFromArray([
+                // Header styling
+                $sheet->getStyle("A{$newHeaderRow}:K{$newHeaderRow}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => ['horizontal' => 'center'],
                     'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'D9E1F2']],
                     'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
-                        ],
+                        'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']],
                     ],
                 ]);
 
-                $lastRow = $event->sheet->getHighestRow();
-                $event->sheet->getStyle("A" . ($newHeaderRow+1) . ":J{$lastRow}")->applyFromArray([
-                    'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => '000000'],
+                // === Apply borders + colors ===
+                $startRow = $newHeaderRow + 1;
+                $lastRow = $sheet->getHighestRow();
+
+                for ($row = $startRow; $row <= $lastRow; $row++) {
+                    $statusCell = strtoupper(trim($sheet->getCell("F{$row}")->getValue())); // STATUS column
+
+                    // Color-code statuses
+                    if ($statusCell === 'ACTIVE') {
+                        $sheet->getStyle("F{$row}")->getFont()->getColor()->setARGB('FF15803D');
+                        $sheet->getStyle("F{$row}")->getFont()->setBold(true);
+                    } elseif ($statusCell === 'ARCHIVED') {
+                        $sheet->getStyle("F{$row}")->getFont()->getColor()->setARGB('FFEA580C'); // orange
+                        $sheet->getStyle("F{$row}")->getFont()->setBold(true);
+                    } elseif ($statusCell === 'MISSING') {
+                        $sheet->getStyle("F{$row}")->getFont()->getColor()->setARGB('FFDC2626'); // red
+                        $sheet->getStyle("F{$row}")->getFont()->setBold(true);
+                    } else {
+                        $sheet->getStyle("F{$row}")->getFont()->getColor()->setARGB('FF555555'); // gray
+                    }
+
+                    // Borders and alignment for all rows
+                    $sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+                        'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_THIN,
+                                'color' => ['rgb' => '000000'],
+                            ],
                         ],
-                    ],
-                ]);
-            }
+                    ]);
+                }
+            },
         ];
     }
 
     public function columnWidths(): array
     {
         return [
-            'A' => 16,
+            'A' => 6,
             'B' => 16,
             'C' => 20,
             'D' => 40,
-            'E' => 25,
-            'F' => 25,
-            'G' => 25,
+            'E' => 18,
+            'F' => 16,
+            'G' => 22,
             'H' => 25,
-            'I' => 40,
-            'J' => 18,
+            'I' => 25,
+            'J' => 25,
+            'K' => 18,
         ];
     }
 }

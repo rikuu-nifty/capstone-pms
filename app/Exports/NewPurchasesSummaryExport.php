@@ -25,7 +25,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
     protected $generatedAt;
     protected $rowCount = 0;
     protected $totalCost = 0;
-    protected $assets; // ✅ store dataset
+    protected $assets; // store dataset
 
     public function __construct($filters = [])
     {
@@ -42,7 +42,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
             ->when($this->filters['category_id'] ?? null, fn($q, $id) => $q->where('category_id', $id))
             ->when($this->filters['supplier'] ?? null, fn($q, $supplier) => $q->where('supplier', $supplier));
 
-        // ✅ store dataset
+        // store dataset
         $this->assets = $query->get();
 
         $grouped = $this->assets->groupBy(function ($asset) {
@@ -63,7 +63,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
             $qty   = $group->count();
             $amount = $qty * ($first->unit_cost ?? 0);
 
-            // ✅ Track totals correctly
+            // Track totals correctly
             $this->rowCount += $qty;
             $this->totalCost += $amount;
 
@@ -75,11 +75,13 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                 'Supplier'    => $first->supplier,
                 'Item / Desc' => $first->asset_name
                     . ' (' . ($first->assetModel->brand ?? '') . ' / ' . ($first->assetModel->model ?? '') . ')'
-                    . ($first->description ? ' - ' . $first->description : ''),
+                    . ($first->description ? ' - ' . $first->description : '')
+                ,
                 'Unit / Dept' => $first->unitOrDepartment->name ?? '',
                 'Qty'         => $qty,
                 'Unit Cost'   => $first->unit_cost ?? 0,
                 'Amount'      => $amount,
+                'Status'      => ucfirst($first->status ?? '-'),
             ];
         })->values();
 
@@ -88,7 +90,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
 
     public function headings(): array
     {
-        // ✅ ensure dataset is loaded before building header
+        // ensure dataset is loaded before building header
         if ($this->assets === null) {
             $this->collection();
         }
@@ -98,7 +100,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
             ['Angeles City'],
             ['Property Management Office'],
             ['Generated: ' . $this->generatedAt],
-            ['Summary of Newly Purchased Equipment ' . $this->getHeaderDateRange($this->assets)], // ✅ dynamic range
+            ['Summary of Newly Purchased Equipment ' . $this->getHeaderDateRange($this->assets)], // dynamic range
             [], // spacer row
             [
                 'Date',
@@ -109,6 +111,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                 'Qty',
                 'Unit Cost',
                 'Amount',
+                'Status',
             ],
         ];
     }
@@ -247,7 +250,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                 $sheet->setCellValue("A{$totalsRow}", "Total Assets: {$this->rowCount}");
                 $sheet->setCellValue("E{$totalsRow}", "Total Amount: {$formattedAmount}");
 
-                $sheet->getStyle("A{$totalsRow}:H{$totalsRow}")->applyFromArray([
+                $sheet->getStyle("A{$totalsRow}:I{$totalsRow}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
                     'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'FCE4D6']],
@@ -265,7 +268,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                 ];
                 $sheet->fromArray([$headers], null, "A{$newHeaderRow}");
 
-                $sheet->getStyle("A{$newHeaderRow}:H{$newHeaderRow}")->applyFromArray([
+                $sheet->getStyle("A{$newHeaderRow}:I{$newHeaderRow}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
                     'fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'FCE4D6']],
@@ -278,7 +281,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                 ]);
 
                 $lastRow = $sheet->getHighestRow();
-                $sheet->getStyle("A" . ($newHeaderRow+1) . ":H{$lastRow}")->applyFromArray([
+                $sheet->getStyle("A" . ($newHeaderRow+1) . ":I{$lastRow}")->applyFromArray([
                     'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
                     'borders'   => [
                         'allBorders' => [
@@ -287,6 +290,29 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
                         ],
                     ],
                 ]);
+
+                $lastRow = $sheet->getHighestRow();
+
+                for ($row = $newHeaderRow + 1; $row <= $lastRow; $row++) {
+                    $statusCell = strtoupper(trim((string) $sheet->getCell("I{$row}")->getValue()));
+
+                    switch ($statusCell) {
+                        case 'ACTIVE':
+                            $sheet->getStyle("I{$row}")->getFont()->getColor()->setARGB('FF15803D'); // dark green
+                            break;
+                        case 'ARCHIVED':
+                            $sheet->getStyle("I{$row}")->getFont()->getColor()->setARGB('FFEA580C'); // orange
+                            break;
+                        case 'MISSING':
+                            $sheet->getStyle("I{$row}")->getFont()->getColor()->setARGB('FFDC2626'); // red
+                            break;
+                        default:
+                            $sheet->getStyle("I{$row}")->getFont()->getColor()->setARGB('FF555555'); // gray fallback
+                            break;
+                    }
+
+                    $sheet->getStyle("I{$row}")->getFont()->setBold(true);
+                }
             }
         ];
     }
@@ -311,6 +337,7 @@ class NewPurchasesSummaryExport implements FromCollection, WithHeadings, WithSty
             'F' => 25,
             'G' => 25,
             'H' => 25,
+            'I' => 15,
         ];
     }
 }

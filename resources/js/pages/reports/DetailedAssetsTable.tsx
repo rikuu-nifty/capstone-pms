@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Asset } from './InventoryListReport'; // ✅ reuse same type
+import type { Asset } from './InventoryListReport'; // reuse same type
 
 interface DetailedAssetsTableProps {
     assets: Asset[];
@@ -13,7 +13,7 @@ export default function DetailedAssetsTable({ assets }: DetailedAssetsTableProps
     const startIndex = (currentPage - 1) * rowsPerPage;
     const currentRows = assets.slice(startIndex, startIndex + rowsPerPage);
 
-    // ✅ Empty state (same style as chart)
+    // Empty state (same style as chart)
     if (currentRows.length === 0) {
         return (
             <div className="flex h-full w-full flex-col items-center justify-center text-center text-gray-500">
@@ -24,33 +24,53 @@ export default function DetailedAssetsTable({ assets }: DetailedAssetsTableProps
     }
 
     return (
-        <div className="flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm text-center">
             {/* Table */}
             <div className="flex-1 overflow-y-auto">
                 <table className="w-full border-collapse text-sm">
                     <thead>
                         <tr className="bg-gray-100 text-left text-gray-800">
-                            <th className="px-4 py-3 font-semibold">MR No.</th> {/* ✅ new */}
-                            <th className="px-4 py-3 font-semibold">Asset Name</th>
-                            <th className="px-4 py-3 font-semibold">Brand</th>
-                            <th className="px-4 py-3 font-semibold">Model</th>
-                            <th className="px-4 py-3 font-semibold">Asset Type</th> {/* ✅ new */}
-                            <th className="px-4 py-3 font-semibold">Category</th>
-                            <th className="px-4 py-3 font-semibold">Unit / Department</th>
-                            <th className="px-4 py-3 font-semibold">Building / Room</th>
-                            <th className="px-4 py-3 font-semibold">Supplier</th>
-                            <th className="px-4 py-3 font-semibold">Date Purchased</th>
+                            <th className="px-4 py-3 font-semibold text-center">MR No.</th> 
+                            <th className="px-4 py-3 font-semibold text-center">Asset Name</th>
+                            <th className="px-4 py-3 font-semibold text-center">Brand</th>
+                            <th className="px-4 py-3 font-semibold text-center">Model</th>
+                            <th className="px-4 py-3 font-semibold text-center">Asset Type</th>
+                            <th className="px-4 py-3 font-semibold text-center">Status</th>
+                            <th className="px-4 py-3 font-semibold text-center">Category</th>
+                            <th className="px-4 py-3 font-semibold text-center">Unit / Department</th>
+                            <th className="px-4 py-3 font-semibold text-center">Building / Room</th>
+                            <th className="px-4 py-3 font-semibold text-center">Supplier</th>
+                            <th className="px-4 py-3 font-semibold text-center">Date Purchased</th>
                         </tr>
                     </thead>
                     <tbody>
                         {currentRows.map((asset, idx) => (
                             <tr key={asset.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-t transition hover:bg-gray-100`}>
-                                 <td className="px-4 py-3">{asset.memorandum_no ?? '—'}</td> {/* ✅ MR No. */}
+                                 <td className="px-4 py-3">{asset.memorandum_no ?? '—'}</td> 
                                 <td className="px-4 py-3">{asset.asset_name}</td>
                                 <td className="px-4 py-3">{asset.brand}</td>
                                 <td className="px-4 py-3">{asset.model}</td>
                                 <td className="px-4 py-3">
                                     {asset.asset_type === 'fixed' ? 'Fixed' : asset.asset_type === 'not_fixed' ? 'Not Fixed' : asset.asset_type}
+                                </td>
+                                <td className="px-4 py-3 font-semibold">
+                                    {asset.status ? (
+                                        <span
+                                            className={
+                                                asset.status === 'active'
+                                                    ? 'text-green-600'
+                                                    : asset.status === 'archived'
+                                                    ? 'text-orange-600'
+                                                    : asset.status === 'missing'
+                                                    ? 'text-red-600'
+                                                    : 'text-gray-700'
+                                            }
+                                        >
+                                            {asset.status.charAt(0).toUpperCase() + asset.status.slice(1)}
+                                        </span>
+                                    ) : (
+                                        '—'
+                                    )}
                                 </td>
                                 <td className="px-4 py-3">{asset.category}</td>
                                 <td className="px-4 py-3">{asset.department}</td>
