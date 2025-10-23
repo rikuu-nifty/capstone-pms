@@ -123,7 +123,8 @@ $reportYear = now()->year . '-' . (now()->year + 1);
             <td>{{ $a->assetModel->brand ?? ($a->brand ?? '-') }}</td>
             <td>{{ $a->assetModel->model ?? ($a->model ?? '-') }}</td>
             <td>{{ $a->asset_type ?? '-' }}</td>
-            <td style="color: {{ $statusColor }}; font-weight:bold;">
+            <!-- <td style="color: {{ $statusColor }}; font-weight:bold;"> -->
+            <td style='color: <?php echo $statusColor; ?>; font-weight:bold;'>
                 {{ ucfirst($status ?: '-') }}
             </td>
             <td>{{ $a->category->name ?? '-' }}</td>

@@ -172,7 +172,8 @@ return (object) [
             <td>{{ $g->qty }}</td>
             <td>{{ $g->unit_cost ? '₱' . number_format($g->unit_cost, 2) : '-' }}</td>
             <td>{{ $g->amount ? '₱' . number_format($g->amount, 2) : '-' }}</td>
-            <td style="color: {{ $statusColor }}; font-weight:bold;">
+            <!-- <td style="color: {{ $statusColor }}; font-weight:bold;"> -->
+            <td style='color: <?php echo $statusColor; ?>; font-weight:bold;'>
                 {{ ucfirst($status ?: '-') }}
             </td>
         </tr>
