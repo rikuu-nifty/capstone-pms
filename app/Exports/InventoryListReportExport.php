@@ -34,11 +34,20 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
 
     public function collection()
     {
-        $query = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
+        $query = InventoryList::with([
+            'assetModel.category', 
+            // 'category', 
+            'unitOrDepartment', 
+            'building', 
+            'buildingRoom'
+        ])
             ->when($this->filters['from'] ?? null, fn($q, $from) => $q->whereDate('date_purchased', '>=', $from))
             ->when($this->filters['to'] ?? null, fn($q, $to) => $q->whereDate('date_purchased', '<=', $to))
             ->when($this->filters['department_id'] ?? null, fn($q, $id) => $q->where('unit_or_department_id', $id))
-            ->when($this->filters['category_id'] ?? null, fn($q, $id) => $q->where('category_id', $id))
+            // ->when($this->filters['category_id'] ?? null, fn($q, $id) => $q->where('category_id', $id))
+            ->when($this->filters['category_id'] ?? null, function ($q, $id) {
+                $q->whereHas('assetModel', fn($m) => $m->where('category_id', $id));
+            })
             ->when($this->filters['asset_type'] ?? null, fn($q, $type) => $q->where('asset_type', $type))
             ->when($this->filters['building_id'] ?? null, fn($q, $id) => $q->where('building_id', $id))
             ->when($this->filters['supplier'] ?? null, fn($q, $supplier) => $q->where('supplier', $supplier))
@@ -62,7 +71,8 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
                 'Brand / Model'   => ($asset->assetModel->brand ?? '') . ' / ' . ($asset->assetModel->model ?? ''),
                 'Asset Type'      => $asset->asset_type === 'fixed' ? 'Fixed' : ($asset->asset_type === 'not_fixed' ? 'Not Fixed' : $asset->asset_type),
                 'Status'          => ucfirst($asset->status ?? '-'),
-                'Category'        => $asset->category->name ?? '',
+                // 'Category'        => $asset->category->name ?? '',
+                'Category'        => $asset->assetModel?->category?->name ?? '',
                 'Unit/Department' => $asset->unitOrDepartment->name ?? '',
                 'Building/Room'   => trim(($asset->building->name ?? '') . ' / ' . ($asset->buildingRoom->room ?? '')),
                 'Supplier'        => $asset->supplier,
@@ -212,7 +222,12 @@ class InventoryListReportExport implements FromCollection, WithHeadings, WithSty
 
                     // Borders and alignment for all rows
                     $sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
-                        'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+                        'alignment' => [
+                            'horizontal' => 'center', 
+                            'vertical' => 'center',
+                            'wrapText'     => true,
+                            'shrinkToFit'  => true,
+                        ],
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => Border::BORDER_THIN,

@@ -53,7 +53,13 @@ class ReportController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
+        $assets = InventoryList::with([
+            'assetModel.category', 
+            // 'category', 
+            'unitOrDepartment', 
+            'building', 
+            'buildingRoom'
+        ])
             ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
             ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
             ->when($request->filled('department_id'), fn($q) => $q->where('unit_or_department_id', $request->input('department_id')))
@@ -388,7 +394,13 @@ class ReportController extends Controller
         ];
 
         // Fetch assets with all filters applied
-        $assets = InventoryList::with(['assetModel', 'category', 'unitOrDepartment', 'building', 'buildingRoom'])
+        $assets = InventoryList::with([
+            'assetModel.category', 
+            // 'category', 
+            'unitOrDepartment', 
+            'building', 
+            'buildingRoom'
+        ])
             ->when($request->filled('from'), fn($q) => $q->whereDate('date_purchased', '>=', $request->input('from')))
             ->when($request->filled('to'), fn($q) => $q->whereDate('date_purchased', '<=', $request->input('to')))
             ->when($request->filled('department_id'), fn($q) => $q->where('unit_or_department_id', $request->input('department_id')))
@@ -425,7 +437,8 @@ class ReportController extends Controller
             'asset_name'     => $a->asset_name,
             'brand'          => $a->assetModel?->brand ?? '-',
             'model'          => $a->assetModel?->model ?? '-',
-            'category'       => $a->category?->name ?? '-',
+            // 'category'       => $a->category?->name ?? '-',
+            'category'       => $a->assetModel?->category?->name ?? '-',
             'department'     => $a->unitOrDepartment?->name ?? '-',
             'building'       => $a->building?->name ?? '-',
             'room'           => $a->buildingRoom?->room ?? '-',
