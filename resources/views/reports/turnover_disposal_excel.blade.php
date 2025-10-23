@@ -144,7 +144,7 @@ $totalCost = collect($records)->sum(fn($r) => (float) ($r->unit_cost ?? 0));
 </tr>
 <tr style="background:#e2e8f0; font-weight:bold;">
     <td colspan="10" style="text-align:center; padding:8px; font-size:13px;">
-        SUMMARY
+        OVERALL SUMMARY
     </td>
 </tr>
 <tr>

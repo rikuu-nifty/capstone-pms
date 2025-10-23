@@ -111,6 +111,7 @@ class TurnoverDisposalReportController extends Controller
         $pdf = Pdf::loadView('reports.turnover_disposal_pdf', [
             'records' => $records->items(),
             'filters' => $filters,
+            'donationSummary' => [],
         ])->setPaper('A4', 'landscape')
         ->setOption('isPhpEnabled', true);
 

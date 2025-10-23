@@ -137,6 +137,7 @@ export default function TurnoverDisposalReport() {
         type: null as string | null,
         turnover_category: null as string | null,
     };
+
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
 
@@ -148,6 +149,12 @@ export default function TurnoverDisposalReport() {
             setAppliedFilters((prev) => ({ ...prev, is_donation: null }));
         }
     }, [viewMode]);
+
+    const exportLabel =
+        viewMode === "donations" ? "Donations"
+        : viewMode === "table" ? "General"
+        : "Chart Summary"
+    ;
 
     function updateFilter<K extends keyof typeof filters>(
         key: K,
@@ -498,7 +505,6 @@ export default function TurnoverDisposalReport() {
                             Clear Filters
                         </button>
 
-
                         {/* Apply */}
                         <button
                             onClick={() => {
@@ -538,7 +544,7 @@ export default function TurnoverDisposalReport() {
                                     Export
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent align="end" className="w-44 p-2">
+                            <PopoverContent align="end" className="w-48 p-2">
                                 <p className="px-2 pb-2 text-xs font-medium text-gray-600">
                                     Download as
                                 </p>
@@ -571,7 +577,7 @@ export default function TurnoverDisposalReport() {
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                     >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                    Excel
+                                    Excel ({exportLabel})
                                 </button>
                                 <button
                                     onClick={() => {
@@ -586,7 +592,7 @@ export default function TurnoverDisposalReport() {
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
-                                    PDF
+                                    PDF ({exportLabel})
                                 </button>
                             </PopoverContent>
                         </Popover>
