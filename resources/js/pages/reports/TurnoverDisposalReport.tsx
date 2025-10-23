@@ -151,9 +151,9 @@ export default function TurnoverDisposalReport() {
     }, [viewMode]);
 
     const exportLabel =
-        viewMode === "donations" ? "Donations"
-        : viewMode === "table" ? "General"
-        : "Chart Summary"
+        viewMode === "donations" ? "(Donations)"
+        : viewMode === "table" ? "(General)"
+        : "(General)"
     ;
 
     function updateFilter<K extends keyof typeof filters>(
@@ -541,7 +541,7 @@ export default function TurnoverDisposalReport() {
                                     style={{ backgroundColor: "#155dfc" }}
                                 >
                                     <FileDown className="h-4 w-4" />
-                                    Export
+                                    Export Summary
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-48 p-2">
@@ -577,7 +577,7 @@ export default function TurnoverDisposalReport() {
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                     >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                    Excel ({exportLabel})
+                                    Excel {exportLabel}
                                 </button>
                                 <button
                                     onClick={() => {
@@ -592,7 +592,7 @@ export default function TurnoverDisposalReport() {
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
-                                    PDF ({exportLabel})
+                                    PDF {exportLabel}
                                 </button>
                             </PopoverContent>
                         </Popover>
