@@ -113,9 +113,15 @@ export default function TurnoverDisposalEditModal({
 
         if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
             hasError = true;
-            const errorMessage = 'For Donations, either the External Recipient or the Receiving Office must be filled.';
+            const errorMessage = 'For Donations, either External Recipient or Receiving Office must be filled.';
             setError('external_recipient', errorMessage);
-            // setError('receiving_office_id', errorMessage);
+        }
+    } else {
+        const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+
+        if (isReceivingOfficeEmpty) {
+            hasError = true;
+            setError('receiving_office_id', 'Receiving Office is required when not a donation.');
         }
     }
 
