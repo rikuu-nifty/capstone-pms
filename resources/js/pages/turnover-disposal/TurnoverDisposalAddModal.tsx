@@ -76,20 +76,26 @@ export default function TurnoverDisposalAddModal({
     let hasError = false;
 
     if (data.is_donation) {
-        const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
-        const isReceivingOfficeEmpty = !data.receiving_office_id;
+      // For donations → require at least one field
+      const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
+      const isReceivingOfficeEmpty = !data.receiving_office_id;
 
-        if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
-            hasError = true;
-            const errorMessage = 'For Donations, either the External Recipient or the Receiving Office must be filled.';
-            setError('external_recipient', errorMessage);
-            // setError('receiving_office_id', errorMessage);
-        }
+      if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
+        hasError = true;
+        const errorMessage = 'For Donations, either External Recipient or Receiving Office must be filled.';
+        setError('external_recipient', errorMessage);
+        setError('receiving_office_id', errorMessage);
+      }
+    } else {
+      // For non-donations → receiving office must be filled
+      const isReceivingOfficeEmpty = !data.receiving_office_id;
+      if (isReceivingOfficeEmpty) {
+        hasError = true;
+        setError('receiving_office_id', 'Receiving Office is required when not a donation.');
+      }
     }
 
-    if (hasError) {
-        return;
-    }
+    if (hasError) return;
 
     post('/turnover-disposal', {
       preserveScroll: true,
