@@ -780,20 +780,140 @@ class Personnel extends Model
         ]);
     }
 
+    // public static function reportAssetRowsPaginated(array $filters, int $perPage = 10)
+    // {
+    //     $from = $filters['from'] ?? null;
+    //     $to   = $filters['to'] ?? null;
+
+    //     // Base query (SQL only, no computed accessors)
+    //     $query = DB::table('asset_assignment_items as aai')
+    //         ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
+    //         ->join('personnels as p', 'p.id', '=', 'aa.personnel_id')
+    //         ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
+    //         ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
+    //         ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
+    //         ->leftJoin('equipment_codes as ec', 'ec.id', '=', 'am.equipment_code_id')
+    //         ->leftJoin('unit_or_departments as uod', 'uod.id', '=', 'il.unit_or_department_id')
+    //         ->select([
+    //             'aai.id as assignment_item_id',
+    //             'aai.date_assigned',
+    //             'il.id as asset_id',
+    //             'il.asset_name',
+    //             'il.serial_no',
+    //             'il.status as asset_status',
+    //             'c.name as category',
+    //             'uod.name as asset_unit_or_department',
+    //             'ec.code as equipment_code',
+    //             DB::raw("CONCAT(p.first_name, ' ', IFNULL(CONCAT(LEFT(p.middle_name,1),'. '), ''), p.last_name) as personnel_name"),
+    //             DB::raw("(
+    //                 SELECT CONCAT(p2.first_name, ' ', IFNULL(CONCAT(LEFT(p2.middle_name,1),'. '), ''), p2.last_name)
+    //                 FROM asset_assignment_items aai2
+    //                 JOIN asset_assignments aa2 ON aa2.id = aai2.asset_assignment_id
+    //                 JOIN personnels p2 ON p2.id = aa2.personnel_id
+    //                 WHERE aai2.asset_id = il.id
+    //                 AND aai2.date_assigned < aai.date_assigned
+    //                 ORDER BY aai2.date_assigned DESC
+    //                 LIMIT 1
+    //             ) as previous_personnel_name"),
+    //         ])
+    //         ->whereNull('aai.deleted_at')
+    //         ->whereNull('il.deleted_at')
+    //         ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
+    //         ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+    //         ->when($filters['department_id'] ?? null, fn($q, $dept) 
+    //             => $q->where('il.unit_or_department_id', $dept)
+    //         )
+    //         ->when($filters['personnel_id'] ?? null, fn($q, $personnelId) =>
+    //             $q->where('p.id', $personnelId)
+    //         )
+    //         ->when($filters['status'] ?? null, fn($q, $status) =>
+    //             $q->where('p.status', $status)
+    //         )
+    //         ->when($filters['category_id'] ?? null, function ($q, $categoryId) {
+    //             $q->where('am.category_id', $categoryId);
+    //         })
+    //         ->when($filters['asset_status'] ?? null, function ($q, $assetStatus) {
+    //             if ($assetStatus === 'missing') {
+    //                 $q->where('il.status', '=', 'missing');
+    //             } elseif ($assetStatus === 'active') {
+    //                 $q->where('il.status', '=', 'active');
+    //             } elseif ($assetStatus === 'archived') {
+    //                 $q->where('il.status', '=', 'archived');
+    //             }
+    //         })
+    //         ->orderBy('aai.date_assigned', 'desc');
+
+    //     $paginator = $query->paginate($perPage)->withQueryString();
+
+    //     $assetIds = $paginator->getCollection()->pluck('asset_id')->unique()->values();
+    //     $assets = InventoryList::whereIn('id', $assetIds)->get()->keyBy('id');
+
+    //     $paginator->getCollection()->transform(function ($row) use ($assets) {
+    //         $asset = $assets[$row->asset_id] ?? null;
+
+    //         return (object) array_merge((array) $row, [
+    //             'asset_status'                      => $asset?->status ?? $row->asset_status,
+    //             'current_transfer_status'           => $asset?->current_transfer_status,
+    //             'current_turnover_disposal_status'  => $asset?->current_turnover_disposal_status,
+    //             'current_off_campus_status'         => $asset?->current_off_campus_status,
+    //             'current_inventory_status'          => $asset?->current_inventory_status,
+    //         ]);
+    //     });
+
+    //     return $paginator;
+    // }
+
     public static function reportAssetRowsPaginated(array $filters, int $perPage = 10)
     {
         $from = $filters['from'] ?? null;
         $to   = $filters['to'] ?? null;
 
-        // Base query (SQL only, no computed accessors)
+        $latestAssignments = DB::table('asset_assignment_items as aai2')
+            ->join('asset_assignments as aa2', 'aa2.id', '=', 'aai2.asset_assignment_id')
+            ->select(
+                'aa2.personnel_id',
+                DB::raw('MAX(aai2.date_assigned) as latest_date_assigned')
+            )
+            ->when($from, fn($q) => $q->whereDate('aai2.date_assigned', '>=', $from))
+            ->when($to, fn($q) => $q->whereDate('aai2.date_assigned', '<=', $to))
+            ->groupBy('aa2.personnel_id');
+
         $query = DB::table('asset_assignment_items as aai')
             ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
             ->join('personnels as p', 'p.id', '=', 'aa.personnel_id')
+            ->leftJoinSub($latestAssignments, 'latest_per_personnel', function ($join) {
+                $join->on('p.id', '=', 'latest_per_personnel.personnel_id');
+            })
             ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
             ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
             ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
             ->leftJoin('equipment_codes as ec', 'ec.id', '=', 'am.equipment_code_id')
             ->leftJoin('unit_or_departments as uod', 'uod.id', '=', 'il.unit_or_department_id')
+            ->whereNull('aai.deleted_at')
+            ->whereNull('il.deleted_at')
+            ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
+            ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
+            ->when($filters['department_id'] ?? null, fn($q, $dept)
+                => $q->where('il.unit_or_department_id', $dept)
+            )
+            ->when($filters['personnel_id'] ?? null, fn($q, $personnelId) =>
+                $q->where('p.id', $personnelId)
+            )
+            ->when($filters['status'] ?? null, fn($q, $status) =>
+                $q->where('p.status', $status)
+            )
+            ->when($filters['category_id'] ?? null, fn($q, $categoryId) =>
+                $q->where('am.category_id', $categoryId)
+            )
+            ->when($filters['asset_status'] ?? null, function ($q, $assetStatus) {
+                if ($assetStatus === 'missing') {
+                    $q->where('il.status', '=', 'missing');
+                } elseif ($assetStatus === 'active') {
+                    $q->where('il.status', '=', 'active');
+                } elseif ($assetStatus === 'archived') {
+                    $q->where('il.status', '=', 'archived');
+                }
+            })
             ->select([
                 'aai.id as assignment_item_id',
                 'aai.date_assigned',
@@ -806,54 +926,40 @@ class Personnel extends Model
                 'ec.code as equipment_code',
                 DB::raw("CONCAT(p.first_name, ' ', IFNULL(CONCAT(LEFT(p.middle_name,1),'. '), ''), p.last_name) as personnel_name"),
                 DB::raw("(
-                    SELECT CONCAT(p2.first_name, ' ', IFNULL(CONCAT(LEFT(p2.middle_name,1),'. '), ''), p2.last_name)
-                    FROM asset_assignment_items aai2
-                    JOIN asset_assignments aa2 ON aa2.id = aai2.asset_assignment_id
-                    JOIN personnels p2 ON p2.id = aa2.personnel_id
-                    WHERE aai2.asset_id = il.id
-                    AND aai2.date_assigned < aai.date_assigned
-                    ORDER BY aai2.date_assigned DESC
-                    LIMIT 1
-                ) as previous_personnel_name"),
+                SELECT CONCAT(p2.first_name, ' ', IFNULL(CONCAT(LEFT(p2.middle_name,1),'. '), ''), p2.last_name)
+                FROM asset_assignment_items aai2
+                JOIN asset_assignments aa2 ON aa2.id = aai2.asset_assignment_id
+                JOIN personnels p2 ON p2.id = aa2.personnel_id
+                WHERE aai2.asset_id = il.id
+                AND aai2.date_assigned < aai.date_assigned
+                ORDER BY aai2.date_assigned DESC
+                LIMIT 1
+            ) as previous_personnel_name"),
             ])
-            ->whereNull('aai.deleted_at')
-            ->whereNull('il.deleted_at')
-            ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
-            ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
-            ->when($filters['department_id'] ?? null, fn($q, $dept) 
-                => $q->where('il.unit_or_department_id', $dept)
-            )
-            ->when($filters['personnel_id'] ?? null, fn($q, $personnelId) =>
-                $q->where('p.id', $personnelId)
-            )
-            ->when($filters['category_id'] ?? null, function ($q, $categoryId) {
-                $q->where('am.category_id', $categoryId);
-            })
-            ->when($filters['asset_status'] ?? null, function ($q, $assetStatus) {
-                if ($assetStatus === 'missing') {
-                    $q->where('il.status', '=', 'missing');
-                } elseif ($assetStatus === 'active') {
-                    $q->where('il.status', '=', 'active');
-                } elseif ($assetStatus === 'archived') {
-                    $q->where('il.status', '=', 'archived');
-                }
-            })
-            ->orderBy('aai.date_assigned', 'desc');
+            ->orderByDesc('aai.date_assigned');
 
         $paginator = $query->paginate($perPage)->withQueryString();
 
         $assetIds = $paginator->getCollection()->pluck('asset_id')->unique()->values();
+        // $assets = InventoryList::whereIn('id', $assetIds)->get([
+        //     'id', 
+        //     'status', 
+        //     'current_transfer_status', 
+        //     'current_turnover_disposal_status', 
+        //     'current_off_campus_status', 
+        //     'current_inventory_status'
+        // ])->keyBy('id');
         $assets = InventoryList::whereIn('id', $assetIds)->get()->keyBy('id');
 
         $paginator->getCollection()->transform(function ($row) use ($assets) {
             $asset = $assets[$row->asset_id] ?? null;
 
             return (object) array_merge((array) $row, [
-                'asset_status'                      => $asset?->status ?? $row->asset_status,
-                'current_transfer_status'           => $asset?->current_transfer_status,
-                'current_turnover_disposal_status'  => $asset?->current_turnover_disposal_status,
-                'current_off_campus_status'         => $asset?->current_off_campus_status,
-                'current_inventory_status'          => $asset?->current_inventory_status,
+                'asset_status'                     => $asset?->status ?? $row->asset_status,
+                'current_transfer_status'          => $asset?->current_transfer_status,
+                'current_turnover_disposal_status' => $asset?->current_turnover_disposal_status,
+                'current_off_campus_status'        => $asset?->current_off_campus_status,
+                'current_inventory_status'         => $asset?->current_inventory_status,
             ]);
         });
 
