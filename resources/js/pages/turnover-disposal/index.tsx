@@ -381,7 +381,7 @@ export default function TurnoverDisposalsIndex({
                                                     Yes
                                                 </Badge>
                                                 ) : (
-                                                <Badge variant="outline" className="text-xs px-2 py-1 text-gray-500">
+                                                <Badge variant="outline" className="text-xs px-2 py-1 text-red-500 border border-red-300">
                                                     No
                                                 </Badge>
                                                 )}
