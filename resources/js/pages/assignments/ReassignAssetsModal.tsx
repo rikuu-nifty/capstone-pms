@@ -148,7 +148,7 @@ export default function ReassignAssetsModal({
 
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-            <DialogContent className="flex max-h-[90vh] min-h-[75vh] w-full max-w-[750px] flex-col overflow-hidden p-6 sm:max-w-[850px]">
+            <DialogContent className="flex max-h-[75vh] min-h-[75vh] w-full max-w-[750px] flex-col overflow-hidden p-6 sm:max-w-[850px]">
                 <DialogHeader>
                     <DialogTitle>
                         Reassign Assets 
