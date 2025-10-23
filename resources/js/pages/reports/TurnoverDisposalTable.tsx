@@ -32,7 +32,7 @@ export default function TurnoverDisposalTable({ records, page, total, pageSize, 
                     <TableHeader className="bg-gray-50">
                         <TableRow>
                             <TableHead className="w-[80px] text-center">Record No.</TableHead>
-                            <TableHead className="w-[150px] text-center">Asset Name</TableHead>
+                            <TableHead className="w-[180px] text-center">Asset Name</TableHead>
                             <TableHead className="w-[120px] text-center">Type</TableHead>
                             <TableHead className="w-[120px] text-center">Turnover Category</TableHead>
                             <TableHead className="w-[80px] text-center">For Donation</TableHead>
@@ -40,7 +40,7 @@ export default function TurnoverDisposalTable({ records, page, total, pageSize, 
                             <TableHead className="w-[150px] text-center">Receiving Office</TableHead>
                             <TableHead className="w-[120px] text-center">Status</TableHead>
                             <TableHead className="w-[150px] text-center">Date</TableHead>
-                            <TableHead className="w-[200px] text-center">Remarks</TableHead>
+                            <TableHead className="w-[180px] text-center">Remarks</TableHead>
                         </TableRow>
                     </TableHeader>
 

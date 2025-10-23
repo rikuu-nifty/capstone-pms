@@ -31,7 +31,7 @@ export type RecordRow = {
     asset_name: string;
     category: string;
     td_status: string;
-    asset_status: string;      // per-asset status
+    asset_status: string; 
     document_date: string;
     remarks?: string | null;
 
@@ -136,6 +136,7 @@ export default function TurnoverDisposalReport() {
         category_id: null as number | null,
         type: null as string | null,
         turnover_category: null as string | null,
+        is_donation: null as string | null,
     };
 
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
@@ -143,12 +144,12 @@ export default function TurnoverDisposalReport() {
 
     const [viewMode, setViewMode] = useState<'chart' | 'table' | 'donations'>('chart');
 
-    useEffect(() => {
-        if (viewMode === "donations") {
-            setFilters((prev) => ({ ...prev, is_donation: null })); // Clear the is_donation filter automatically
-            setAppliedFilters((prev) => ({ ...prev, is_donation: null }));
-        }
-    }, [viewMode]);
+    // useEffect(() => {
+    //     if (viewMode === "donations") {
+    //         setFilters((prev) => ({ ...prev, is_donation: null })); // Clear the is_donation filter automatically
+    //         setAppliedFilters((prev) => ({ ...prev, is_donation: null }));
+    //     }
+    // }, [viewMode]);
 
     const exportLabel =
         viewMode === "donations" ? "(Donations)"
@@ -465,13 +466,13 @@ export default function TurnoverDisposalReport() {
                                     : null
                                 }
                                 options={[
-                                { value: "1", label: "Yes" },
-                                { value: "0", label: "No" },
+                                    { value: "1", label: "Yes" },
+                                    { value: "0", label: "No" },
                                 ]}
                                 onChange={(opt) => updateFilter("is_donation", opt?.value ?? null)}
                             />
                         </div>
-                        
+                        <pre>{JSON.stringify(filters.is_donation, null, 2)}</pre>
                     </div>
 
                     {/* Action Buttons */}
@@ -727,7 +728,7 @@ export default function TurnoverDisposalReport() {
                                 />
                             )}
                     </CardContent>
-                    {viewMode === 'chart' && (
+                    {/* {viewMode === 'chart' && (
                         <CardFooter className="flex-col gap-2 pt-4 text-sm">
                             {trendLabel ? (
                                 <div className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}>
@@ -738,6 +739,33 @@ export default function TurnoverDisposalReport() {
                             )}
                             <div className="text-muted-foreground flex items-center gap-2 leading-none">
                                 January – {new Date().toLocaleString("default", { month: "long" })} {new Date().getFullYear()}
+                            </div>
+                        </CardFooter>
+                    )} */}
+                    {viewMode === 'chart' && (
+                        <CardFooter className="flex-col gap-2 text-sm">
+                            {trendLabel ? (
+                                <div
+                                    className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}
+                                >
+                                    {trendLabel} <TrendIcon className="h-4 w-4" />
+                                </div>
+                            ) : (
+                                <div className="text-muted-foreground">
+                                    No trend comparison available between{" "}
+                                    {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleString(
+                                        "default",
+                                        { month: "long" }
+                                    )}{" "}
+                                    and{" "}
+                                    {new Date().toLocaleString("default", { month: "long" })}.
+                                </div>
+                            )}
+
+                            <div className="text-muted-foreground flex items-center gap-2 leading-none">
+                                Data shown from January –{" "}
+                                {new Date().toLocaleString("default", { month: "long" })}{" "}
+                                {new Date().getFullYear()}
                             </div>
                         </CardFooter>
                     )}
