@@ -7,6 +7,9 @@ use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class PersonnelAssignmentsSummaryExport implements FromView, WithColumnWidths, WithStyles
 {
@@ -30,11 +33,12 @@ class PersonnelAssignmentsSummaryExport implements FromView, WithColumnWidths, W
     public function columnWidths(): array
     {
         return [
-            'A' => 18, // Assignment ID
-            'B' => 35, // Personnel-in-Charge
+            'A' => 22, // Assignment ID
+            'B' => 50, // Personnel-in-Charge
             'C' => 22, // Status
             'D' => 18, // Past Assets
             'E' => 18, // Current Assets
+            'F' => 18, // Missing Assets
         ];
     }
 
@@ -42,74 +46,92 @@ class PersonnelAssignmentsSummaryExport implements FromView, WithColumnWidths, W
     {
         $highestRow = $sheet->getHighestRow();
 
-        // === REPORT HEADER ===
-        $sheet->mergeCells('A1:E1');
-        $sheet->getStyle('A1:E1')->getFont()->setBold(true)->setSize(14);
-        $sheet->getStyle('A1:E1')->getAlignment()->setHorizontal('center');
+        $title = trim((string) $sheet->getCell('A1')->getValue());
+        if ($title === '') {
+            $sheet->setCellValue('A1', 'Office of the Administrative Services');
+        }
 
-        // === REPORT DETAILS (Rows 2–3): Equal width + alignment ===
-        $sheet->getStyle('A2:A3')->getFont()->setBold(true);
-        $sheet->getStyle('C2:C3')->getFont()->setBold(true);
-        $sheet->getStyle('A2:E3')->getAlignment()->setHorizontal('left');
-        $sheet->getRowDimension(2)->setRowHeight(20);
-        $sheet->getRowDimension(3)->setRowHeight(20);
+        $sheet->mergeCells('A1:F1');
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1:F1')->getAlignment()->setHorizontal('center');
 
-        // === TABLE HEADER ===
-        $sheet->getStyle('A6:E6')->getFont()->setBold(true);
-        $sheet->getStyle('A6:E6')->getAlignment()->setHorizontal('center');
-        $sheet->getStyle('A6:E6')->getFill()
-            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-            ->getStartColor()->setARGB('FFBFBFBF');
+        $headerRow = null;
+        for ($r = 1; $r <= $highestRow; $r++) {
+            $a = strtoupper(trim((string) $sheet->getCell("A{$r}")->getValue()));
+            if ($a === 'ASSIGNMENT ID') {
+                $headerRow = $r;
+                $sheet->getStyle("A{$r}:F{$r}")->getFont()->setBold(true);
+                $sheet->getStyle("A{$r}:F{$r}")
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                    ->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->getStyle("A{$r}:F{$r}")
+                    ->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFBFBFBF');
+                $sheet->getStyle("A{$r}:F{$r}")
+                    ->getBorders()
+                    ->getBottom()
+                    ->setBorderStyle(Border::BORDER_MEDIUM);
+                break;
+            }
+        }
 
-        // === BODY ROWS ===
-        for ($row = 7; $row <= $highestRow; $row++) {
+        for ($row = 1; $row <= $highestRow; $row++) {
             $value = trim((string) $sheet->getCell("A{$row}")->getValue());
 
-            // Department Header
-            if ($value && stripos($value, 'Unit / Department:') === 0) {
-                $sheet->getStyle("A{$row}:E{$row}")->getFont()->setBold(true);
-                $sheet->getStyle("A{$row}:E{$row}")
-                    ->getAlignment()->setHorizontal('left')->setIndent(1);
-                $sheet->getStyle("A{$row}:E{$row}")->getFill()
-                    ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-                    ->getStartColor()->setARGB('FFEAEAEA');
+            if ($headerRow && $row < $headerRow) {
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getFill()->setFillType(Fill::FILL_NONE);
+                $sheet->getRowDimension($row)->setRowHeight(22);
+                continue;
+            }
 
-                // Subtotal Rows (Total for Department)
+            if ($value && stripos($value, 'Unit / Department:') === 0) {
+                $sheet->getStyle("A{$row}:F{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getAlignment()->setHorizontal('left')->setIndent(1);
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getFill()->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFEAEAEA');
             } elseif ($value && stripos($value, 'Total for') === 0) {
                 $sheet->getStyle("A{$row}:C{$row}")->getFont()->setBold(true);
                 $sheet->getStyle("A{$row}:C{$row}")
                     ->getAlignment()->setHorizontal('right');
-                $sheet->getStyle("D{$row}:E{$row}")
+                $sheet->getStyle("D{$row}:F{$row}")
                     ->getAlignment()->setHorizontal('center');
-                $sheet->getStyle("A{$row}:E{$row}")
-                    ->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getFill()->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()->setARGB('FFF9F9F9');
-                $sheet->getStyle("A{$row}:E{$row}")->getBorders()->getTop()
-                    ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-
-                // Regular Data Rows
-            } else {
-                $sheet->getStyle("A{$row}:E{$row}")
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getBorders()->getTop()
+                    ->setBorderStyle(Border::BORDER_THIN);
+            } elseif ($value && stripos($value, 'Grand Total:') === 0) {
+                $sheet->getStyle("A{$row}:F{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("A{$row}:C{$row}")
+                    ->getAlignment()->setHorizontal('right');
+                $sheet->getStyle("D{$row}:F{$row}")
                     ->getAlignment()->setHorizontal('center');
-
-                // Past Assets (Column D → blue)
-                $sheet->getStyle("D{$row}")->getFont()->getColor()
-                    ->setARGB('FF2563EB');
-
-                // Current Assets (Column E → green)
-                $sheet->getStyle("E{$row}")->getFont()->getColor()
-                    ->setARGB('FF16A34A');
-
-                // Bold numeric asset counts
-                $sheet->getStyle("D{$row}:E{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getFill()->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFE0E7FF');
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getBorders()->getTop()
+                    ->setBorderStyle(Border::BORDER_THICK);
+            } elseif (!$headerRow || $row > $headerRow) {
+                $sheet->getStyle("A{$row}:F{$row}")
+                    ->getAlignment()->setHorizontal('center');
+                $sheet->getStyle("D{$row}")->getFont()->getColor()->setARGB('FF2563EB');
+                $sheet->getStyle("E{$row}")->getFont()->getColor()->setARGB('FF16A34A');
+                $sheet->getStyle("F{$row}")->getFont()->getColor()->setARGB('FFDC2626');
+                $sheet->getStyle("D{$row}:F{$row}")->getFont()->setBold(true);
             }
 
-            $sheet->getRowDimension($row)->setRowHeight(25);
+            $sheet->getRowDimension($row)->setRowHeight(24);
         }
 
-        // === Global Adjustments ===
-        $sheet->getStyle("A1:E{$highestRow}")
-            ->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $sheet->getStyle("A1:F{$highestRow}")
+            ->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
 
         return [];
     }

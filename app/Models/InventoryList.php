@@ -316,6 +316,7 @@ public function assignments()
         $total    = (clone $query)->count();
         $active   = (clone $query)->where('status', 'active')->count();
         $archived = (clone $query)->where('status', 'archived')->count();
+        $missing  = (clone $query)->where('status', 'missing')->count();
         $fixed    = (clone $query)->where('asset_type', 'fixed')->count();
         $notFixed = (clone $query)->where('asset_type', 'not_fixed')->count();
         $valueSum = (clone $query)->sum(DB::raw('quantity * unit_cost'));
@@ -328,6 +329,8 @@ public function assignments()
             'total_inventory_sum' => $valueSum,
             'active_pct' => static::pct($active, $statusDen),
             'archived_pct' => static::pct($archived, $statusDen),
+            'missing_pct' => static::pct($missing, $total),
+            'missing_count' => $missing,
             'fixed_pct' => static::pct($fixed, $typeDen),
             'not_fixed_pct' => static::pct($notFixed, $typeDen),
         ];
@@ -388,7 +391,8 @@ public function assignments()
 
     /**
      * Helper to check if due and send notifications
-     */protected static function checkAndNotify($asset)
+     */
+    protected static function checkAndNotify($asset)
     {
         if (! $asset->maintenance_due_date) {
             return;

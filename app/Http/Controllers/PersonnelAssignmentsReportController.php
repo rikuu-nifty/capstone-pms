@@ -28,6 +28,7 @@ class PersonnelAssignmentsReportController extends Controller
                 'category_id',
                 'from',
                 'to',
+                'asset_status',
             ]),
             fn($v) => !is_null($v) && $v !== ''
         );
@@ -48,6 +49,7 @@ class PersonnelAssignmentsReportController extends Controller
                 'status' => $personnel->status,
                 'current_assets_count' => (int) $personnel->current_assets_count,
                 'past_assets_count' => (int) $personnel->past_assets_count,
+                'missing_assets_count' => (int) ($personnel->missing_assets_count ?? 0),
             ];
         });
 
@@ -57,6 +59,7 @@ class PersonnelAssignmentsReportController extends Controller
             'category' => $r->category,
             'equipment_code' => $r->equipment_code,
             'serial_no' => $r->serial_no,
+            'asset_status' => $r->asset_status,
             'asset_unit_or_department' => $r->asset_unit_or_department,
             'personnel_name' => $r->personnel_name,
             'previous_personnel_name' => $r->previous_personnel_name,
@@ -135,6 +138,7 @@ class PersonnelAssignmentsReportController extends Controller
                 'status'                => Str::title(str_replace('_', ' ', $personnel->status)),
                 'past_assets_count'     => (int) $personnel->past_assets_count,
                 'current_assets_count'  => (int) $personnel->current_assets_count,
+                'missing_assets_count'  => (int) ($personnel->missing_assets_count ?? 0),
             ];
         });
 
@@ -147,9 +151,9 @@ class PersonnelAssignmentsReportController extends Controller
 
         $filename = 'Personnel_Assignments_Report_' . now()->format('Y-m-d') . '.pdf';
 
-        return $pdf->stream($filename);
+        return $pdf->download($filename);
+        // return $pdf->stream($filename);
     }
-
 
     public function exportExcel(Request $request)
     {
@@ -178,6 +182,7 @@ class PersonnelAssignmentsReportController extends Controller
                 'status'               => ucfirst(str_replace('_', ' ', $personnel->status)),
                 'past_assets_count'    => (int) $personnel->past_assets_count,
                 'current_assets_count' => (int) $personnel->current_assets_count,
+                'missing_assets_count' => (int) ($personnel->missing_assets_count ?? 0),
             ];
         });
 
@@ -210,6 +215,7 @@ class PersonnelAssignmentsReportController extends Controller
             'category' => $r->category,
             'equipment_code' => $r->equipment_code,
             'serial_no' => $r->serial_no,
+            'asset_status' => $r->asset_status,
             'asset_unit_or_department' => $r->asset_unit_or_department,
             'personnel_name' => $r->personnel_name,
             'previous_personnel_name' => $r->previous_personnel_name,
@@ -227,7 +233,8 @@ class PersonnelAssignmentsReportController extends Controller
             ->setOption('isPhpEnabled', true);
 
         $filename = 'Personnel_Assignments_Detailed_Report_' . now()->format('Y-m-d') . '.pdf';
-        return $pdf->stream($filename);
+        // return $pdf->stream($filename);
+        return $pdf->download($filename);
     }
 
     public function exportDetailedExcel(Request $request)

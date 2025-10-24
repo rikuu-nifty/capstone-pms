@@ -268,7 +268,7 @@ class OffCampusController extends Controller
                         $newDescription = trim(($asset->description ?? '') . $note);
 
                         $asset->update([
-                            'status'      => 'archived',
+                            'status'      => 'missing',
                             'description' => $newDescription,
                         ]);
                     }
@@ -279,7 +279,7 @@ class OffCampusController extends Controller
 
                 if (!empty($assetIds)) {
                     $assets = InventoryList::whereIn('id', $assetIds)
-                        ->where('status', 'archived')
+                        ->where('status', 'missing')
                         ->get();
 
                     foreach ($assets as $asset) {

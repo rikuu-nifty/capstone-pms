@@ -109,13 +109,19 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
         <td style="font-weight:bold;">Personnel Status:</td>
         <td>{{ $statusLabel }}</td>
     </tr>
+    <tr>
+        <td style="font-weight:bold;">Asset Category:</td>
+        <td>{{ $filters['category_name'] ?? '—' }}</td>
+        <td style="font-weight:bold;">Asset Status:</td>
+        <td>{{ ucfirst($filters['asset_status'] ?? '—') }}</td>
+    </tr>
 </table>
 
 {{-- Main table --}}
 <table class="report">
     <thead>
         <tr class="head-gap">
-            <td colspan="5"></td>
+            <td colspan="6"></td>
         </tr>
         <tr>
             <th style="width:12%;">Assignment ID</th>
@@ -123,6 +129,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
             <th style="width:20%;">Status</th>
             <th style="width:17.5%;">Past Assets</th>
             <th style="width:17.5%;">Current Assets</th>
+            <th style="width:17.5%;">Missing Assets</th>
         </tr>
     </thead>
 
@@ -130,16 +137,18 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
         @php
         $grandPast = 0;
         $grandCurrent = 0;
+        $grandMissing = 0;
         @endphp
 
         @foreach ($grouped as $dept => $rows)
         <tr class="group-dept">
-            <td colspan="5">Unit / Department: {{ $dept }}</td>
+            <td colspan="6">Unit / Department: {{ $dept }}</td>
         </tr>
 
         @php
         $deptPast = 0;
         $deptCurrent = 0;
+        $deptMissing = 0;
         @endphp
 
         @foreach ($rows as $r)
@@ -148,6 +157,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
         $deptCurrent += $r['current_assets_count'];
         $grandPast += $r['past_assets_count'];
         $grandCurrent += $r['current_assets_count'];
+        $grandMissing += $r['missing_assets_count'];
         @endphp
 
         <tr>
@@ -156,21 +166,22 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
             <td>{{ $r['status'] }}</td>
             <td style="color:#2563eb; font-weight:bold;">{{ $r['past_assets_count'] }}</td>
             <td style="color:#16a34a; font-weight:bold;">{{ $r['current_assets_count'] }}</td>
+            <td style="color:#dc2626; font-weight:bold;">{{ $r['missing_assets_count'] }}</td>
         </tr>
         @endforeach
 
         {{-- Subtotal --}}
         <tr class="subtotal-row">
-            <td colspan="2" style="text-align:right;">Total for {{ $dept }}:</td>
-            <td style="text-align:center;">—</td>
+            <td colspan="3" style="text-align:right;">Total for {{ $dept }}:</td>
             <td style="text-align:center;">{{ $deptPast }}</td>
             <td style="text-align:center;">{{ $deptCurrent }}</td>
+            <td style="text-align:center;">{{ $grandMissing }}</td>
         </tr>
         @endforeach
 
         @if($grouped->isEmpty())
         <tr>
-            <td colspan="5" style="text-align:center;">No records found.</td>
+            <td colspan="6" style="text-align:center;">No records found.</td>
         </tr>
         @endif
     </tbody>

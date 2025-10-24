@@ -31,7 +31,7 @@ export type RecordRow = {
     asset_name: string;
     category: string;
     td_status: string;
-    asset_status: string;      // per-asset status
+    asset_status: string; 
     document_date: string;
     remarks?: string | null;
 
@@ -136,18 +136,17 @@ export default function TurnoverDisposalReport() {
         category_id: null as number | null,
         type: null as string | null,
         turnover_category: null as string | null,
+        is_donation: null as string | null,
     };
+
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
 
+    const [exportType, setExportType] = useState<'general' | 'donations'>('general');
+
     const [viewMode, setViewMode] = useState<'chart' | 'table' | 'donations'>('chart');
 
-    useEffect(() => {
-        if (viewMode === "donations") {
-            setFilters((prev) => ({ ...prev, is_donation: null })); // Clear the is_donation filter automatically
-            setAppliedFilters((prev) => ({ ...prev, is_donation: null }));
-        }
-    }, [viewMode]);
+    // const exportLabel = exportType === 'donations' ? '(Donations)' : '(General)';
 
     function updateFilter<K extends keyof typeof filters>(
         key: K,
@@ -248,6 +247,27 @@ export default function TurnoverDisposalReport() {
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         
+                        {/* Export Report Type */}
+                        <div className="lg:col-span-4 md:col-span-3 sm:col-span-2 col-span-1">
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Export Report Type
+                            </label>
+                            <Select
+                                className="w-full cursor-pointer"
+                                isSearchable={false}
+                                value={
+                                    exportType === 'general'
+                                        ? { value: 'general', label: 'General Report' }
+                                        : { value: 'donations', label: 'Donations Report' }
+                                }
+                                options={[
+                                    { value: 'general', label: 'General Report' },
+                                    { value: 'donations', label: 'Donations Report' },
+                                ]}
+                                onChange={(opt) => setExportType(opt?.value as 'general' | 'donations')}
+                            />
+                        </div>
+
                         {/* From */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -458,13 +478,13 @@ export default function TurnoverDisposalReport() {
                                     : null
                                 }
                                 options={[
-                                { value: "1", label: "Yes" },
-                                { value: "0", label: "No" },
+                                    { value: "1", label: "Yes" },
+                                    { value: "0", label: "No" },
                                 ]}
                                 onChange={(opt) => updateFilter("is_donation", opt?.value ?? null)}
                             />
                         </div>
-                        
+                        <pre>{JSON.stringify(filters.is_donation, null, 2)}</pre>
                     </div>
 
                     {/* Action Buttons */}
@@ -497,7 +517,6 @@ export default function TurnoverDisposalReport() {
                             <RotateCcw className="h-4 w-4" />
                             Clear Filters
                         </button>
-
 
                         {/* Apply */}
                         <button
@@ -535,7 +554,7 @@ export default function TurnoverDisposalReport() {
                                     style={{ backgroundColor: "#155dfc" }}
                                 >
                                     <FileDown className="h-4 w-4" />
-                                    Export
+                                    Export Summary
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-44 p-2">
@@ -543,43 +562,26 @@ export default function TurnoverDisposalReport() {
                                     Download as
                                 </p>
                                 <div className="mb-2 border-t" />
-                                {/* <button
-                                    onClick={() => {
-                                        const query = buildQuery(filters)
-                                        window.open(
-                                        route("reports.turnover-disposal.export.excel") +
-                                            "?" +
-                                            query,
-                                        "_blank"
-                                        )
-                                    }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                >
-                                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                                    Excel
-                                </button> */}
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const excelRoute =
-                                        viewMode === "donations"
+                                        const excelRoute = exportType === "donations"
                                             ? route("reports.turnover-disposal.export.donations.excel")
                                             : route("reports.turnover-disposal.export.excel");
 
                                         window.open(`${excelRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                    >
+                                >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel
                                 </button>
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const pdfRoute =
-                                            viewMode === "donations"
-                                                ? route("reports.turnover-disposal.export.donations.pdf")
-                                                : route("reports.turnover-disposal.export.pdf");
+                                        const pdfRoute = exportType === "donations"
+                                            ? route("reports.turnover-disposal.export.donations.pdf")
+                                            : route("reports.turnover-disposal.export.pdf");
 
                                         window.open(`${pdfRoute}?${query}`, "_blank");
                                     }}
@@ -721,7 +723,7 @@ export default function TurnoverDisposalReport() {
                                 />
                             )}
                     </CardContent>
-                    {viewMode === 'chart' && (
+                    {/* {viewMode === 'chart' && (
                         <CardFooter className="flex-col gap-2 pt-4 text-sm">
                             {trendLabel ? (
                                 <div className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}>
@@ -732,6 +734,33 @@ export default function TurnoverDisposalReport() {
                             )}
                             <div className="text-muted-foreground flex items-center gap-2 leading-none">
                                 January – {new Date().toLocaleString("default", { month: "long" })} {new Date().getFullYear()}
+                            </div>
+                        </CardFooter>
+                    )} */}
+                    {viewMode === 'chart' && (
+                        <CardFooter className="flex-col gap-2 text-sm">
+                            {trendLabel ? (
+                                <div
+                                    className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}
+                                >
+                                    {trendLabel} <TrendIcon className="h-4 w-4" />
+                                </div>
+                            ) : (
+                                <div className="text-muted-foreground">
+                                    No trend comparison available between{" "}
+                                    {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleString(
+                                        "default",
+                                        { month: "long" }
+                                    )}{" "}
+                                    and{" "}
+                                    {new Date().toLocaleString("default", { month: "long" })}.
+                                </div>
+                            )}
+
+                            <div className="text-muted-foreground flex items-center gap-2 leading-none">
+                                Data shown from January –{" "}
+                                {new Date().toLocaleString("default", { month: "long" })}{" "}
+                                {new Date().getFullYear()}
                             </div>
                         </CardFooter>
                     )}

@@ -36,6 +36,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { formatEnums } from '@/types/custom-index';
 
 type PersonnelRow = {
     id: number;
@@ -44,6 +45,7 @@ type PersonnelRow = {
     status: string;
     current_assets_count: number;
     past_assets_count: number;
+    missing_assets_count: number;
 };
 
 type PaginationMeta = {
@@ -70,6 +72,7 @@ type ChartRow = {
     name: string;
     current: number;
     past: number;
+    missing: number;
 };
 
 type AssetRecordRow = {
@@ -78,6 +81,7 @@ type AssetRecordRow = {
     category: string | null;
     equipment_code: string | null;
     serial_no: string | null;
+    asset_status: string | null;
     asset_unit_or_department: string | null;
     personnel_name: string;
     previous_personnel_name: string | null;
@@ -129,6 +133,7 @@ export default function PersonnelAssignmentsReport() {
         status: null as string | null,
         personnel_id: null as number | null,
         category_id: null as number | null,
+        asset_status: null as string | null,
     };
 
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
@@ -141,6 +146,8 @@ export default function PersonnelAssignmentsReport() {
     const [total, setTotal] = useState(records.meta.total ?? 0);
     const [pageSize, setPageSize] = useState(records.meta.per_page ?? 10);
     const [displayed, setDisplayed] = useState<PersonnelRow[]>(records.data);
+
+    const [exportType, setExportType] = useState<'summary' | 'detailed'>('summary');
 
     function updateFilter<K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) {
         setFilters((prev) => ({ ...prev, [key]: value }));
@@ -191,6 +198,7 @@ export default function PersonnelAssignmentsReport() {
     const chartConfig: ChartConfig = {
         past: { label: 'Past Assignments', color: 'var(--chart-1)' },
         current: { label: 'Current Assignments', color: 'var(--chart-2)' },
+        missing: { label: 'Missing Assets', color: '#741414ff', },
     };
 
     return (
@@ -209,6 +217,28 @@ export default function PersonnelAssignmentsReport() {
                 {/* Filters */}
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        
+                        {/* Export Report Type */}
+                        <div className="lg:col-span-4 md:col-span-3 sm:col-span-2 col-span-1">
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Export Report Type
+                            </label>
+                            <Select
+                                className="w-full cursor-pointer"
+                                isSearchable={false}
+                                value={
+                                exportType === 'summary'
+                                    ? { value: 'summary', label: 'Summary Report' }
+                                    : { value: 'detailed', label: 'Detailed Report' }
+                                }
+                                options={[
+                                    { value: 'summary', label: 'Summary Report' },
+                                    { value: 'detailed', label: 'Detailed Report' },
+                                ]}
+                                onChange={(opt) => setExportType(opt?.value as 'summary' | 'detailed')}
+                            />
+                        </div>
+
                         {/* From Date */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -290,7 +320,7 @@ export default function PersonnelAssignmentsReport() {
                             />
                         </div>
 
-                        {/* Status */}
+                        {/* Personnel Status */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
                                 Personnel Status
@@ -327,7 +357,6 @@ export default function PersonnelAssignmentsReport() {
                                 className="w-full"
                                 isClearable
                                 placeholder="Select category"
-                                isDisabled={viewMode === 'summary' || viewMode === 'chart'}
                                 value={
                                     filters.category_id
                                         ? {
@@ -342,6 +371,28 @@ export default function PersonnelAssignmentsReport() {
                                     label: c.name,
                                 }))}
                                 onChange={(opt) => updateFilter("category_id", opt?.value ?? null)}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Asset Status
+                            </label>
+                            <Select
+                                className="w-full"
+                                isClearable
+                                placeholder="Select asset status"
+                                value={
+                                    filters.asset_status
+                                        ? { value: filters.asset_status, label: formatEnums(filters.asset_status) }
+                                        : null
+                                }
+                                options={[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'archived', label: 'Archived' },
+                                    { value: 'missing', label: 'Missing' },
+                                ]}
+                                onChange={(opt) => updateFilter('asset_status', opt?.value ?? null)}
                             />
                         </div>
                     </div>
@@ -409,7 +460,7 @@ export default function PersonnelAssignmentsReport() {
                                     style={{ backgroundColor: "#155dfc" }}
                                 >
                                     <FileDown className="h-4 w-4" />
-                                    Export
+                                    Export Summary
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-44 p-2">
@@ -420,10 +471,10 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const excelRoute =
-                                        viewMode === "detailed"
+                                        const excelRoute = exportType === "detailed"
                                             ? route("reports.personnel-assignments.export.detailed.excel")
                                             : route("reports.personnel-assignments.export.excel");
+
                                         window.open(`${excelRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
@@ -434,10 +485,10 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const pdfRoute =
-                                        viewMode === "detailed"
+                                        const pdfRoute = exportType === "detailed"
                                             ? route("reports.personnel-assignments.export.detailed.pdf")
                                             : route("reports.personnel-assignments.export.pdf");
+
                                         window.open(`${pdfRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
@@ -472,7 +523,6 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         setViewMode('summary');
-                                        if (filters.category_id) updateFilter('category_id', null);
                                     }}
                                     className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
                                     viewMode === 'summary'
@@ -496,28 +546,36 @@ export default function PersonnelAssignmentsReport() {
                         </div>
                     </CardHeader>
 
-                    <CardContent className="h-[400px]">
+                    <CardContent className="h-[400px] px-6">
                         {viewMode === 'chart' ? (
                             chartData && chartData.length > 0 ? (
-                                <ChartContainer config={chartConfig} className="mx-auto aspect-[4/3] max-h-[400px]">
+                                <ChartContainer
+                                    config={chartConfig}
+                                    className="w-full aspect-[4/3] max-h-[400px]"
+                                >
                                     <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData}>
-                                        <CartesianGrid vertical={false} />
-                                        <XAxis
-                                        dataKey="name"
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickMargin={8}
-                                        tickFormatter={(v) => (v.length > 12 ? v.slice(0, 12) + '…' : v)}
-                                        />
-                                        <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent indicator="dashed" />}
-                                        />
-                                        <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
-                                        <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
-                                        <ChartLegend content={<ChartLegendContent />} />
-                                    </BarChart>
+                                        <BarChart data={chartData}>
+                                            <CartesianGrid vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickMargin={8}
+                                                tickFormatter={(v) =>
+                                                    v.length > 12 ? v.slice(0, 12) + '…' : v
+                                                }
+                                            />
+                                            <ChartTooltip
+                                                cursor={false}
+                                                content={<ChartTooltipContent indicator="dashed" />}
+                                            />
+                                            <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
+                                            <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
+                                            {/* <Bar dataKey="missing" fill="var(--chart-5)" radius={4} /> */}
+                                            <Bar dataKey="missing" fill={chartConfig.missing.color} radius={4} />
+                                            
+                                            <ChartLegend content={<ChartLegendContent />} />
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 </ChartContainer>
                             ) : (

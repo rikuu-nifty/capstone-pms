@@ -143,10 +143,83 @@ export default function AssignmentsIndex({
                 <div className="flex flex-col gap-2">
                     <div>
                         <h1 className="text-2xl font-semibold">Asset Assignments</h1>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mt-2">
                             Records of assets assigned to personnels.
                         </p>
                     </div>
+
+                    {/* KPIs */}
+                    {totals && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-5 mt-2 mb-2">
+                            {/* Total Assignments */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                                    <ClipboardList className="h-7 w-7 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Total Assignments</div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.total_assignments ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Assignments with No Assets */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
+                                    <UserRoundMinus className="h-7 w-7 text-yellow-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Assignments w/o Assets</div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.assignments_with_no_assets ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Personnels with Assets */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                    <UserCheck2 className="h-7 w-7 text-green-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Personnels w/ Assets</div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.total_personnels_with_assets ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Inactive Personnels */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
+                                    <UserX className="h-7 w-7 text-gray-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Inactive Personnels w/ Assets</div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.total_inactive_personnels_with_assets ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Left University */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                                    <AlertTriangle className="h-7 w-7 text-red-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">
+                                        Assets w/ Former Personnels
+                                    </div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.assets_assigned_to_left_university ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                        
+                        </div>
+                    )}
 
                     {/* Actions Row */}
                     <div className="flex items-center justify-between gap-2">
@@ -209,78 +282,7 @@ export default function AssignmentsIndex({
                     </div>
                 </div>
 
-                {/* KPIs */}
-                {totals && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-                        {/* Total Assignments */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
-                                <ClipboardList className="h-7 w-7 text-indigo-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Assignments</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.total_assignments ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Assignments with No Assets */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
-                                <UserRoundMinus className="h-7 w-7 text-yellow-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Assignments w/o Assets</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.assignments_with_no_assets ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Personnels with Assets */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                                <UserCheck2 className="h-7 w-7 text-green-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Personnels w/ Assets</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.total_personnels_with_assets ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Inactive Personnels */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
-                                <UserX className="h-7 w-7 text-gray-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Inactive Personnels w/ Assets</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.total_inactive_personnels_with_assets ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Left University */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                                <AlertTriangle className="h-7 w-7 text-red-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">
-                                    Assets w/ Former Personnels
-                                </div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.assets_assigned_to_left_university ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-                       
-                    </div>
-                )}
+                
 
                 {/* Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">

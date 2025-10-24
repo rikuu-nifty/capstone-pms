@@ -186,6 +186,19 @@ $grouped = collect($records)->groupBy(fn($r) => $r['asset_unit_or_department'] ?
                 <td style="font-weight:bold;">{{ $r['personnel_name'] ?? '—' }}</td>
                 <td>{{ $r['date_assigned'] ? Carbon::parse($r['date_assigned'])->format('M d, Y') : '—' }}</td>
                 <td style="text-align:center;">
+                    @if($r['asset_status'])
+                    @php
+                    $assetColorClass = match($r['asset_status']) {
+                    'active' => 'text-green',
+                    'archived' => 'text-orange',
+                    'missing' => 'text-red',
+                    default => 'text-gray',
+                    };
+                    @endphp
+                    <div class="{{ $assetColorClass }}">
+                        {{ ucwords(str_replace('_', ' ', $r['asset_status'])) }}
+                    </div>
+                    @endif
                     @if($r['current_inventory_status'])
                     <div class="text-green">Inventory: {{ ucwords(str_replace('_',' ', $r['current_inventory_status'])) }}</div>
                     @endif
@@ -221,6 +234,19 @@ $grouped = collect($records)->groupBy(fn($r) => $r['asset_unit_or_department'] ?
                 <td style="font-weight:bold;">{{ $r['personnel_name'] ?? '—' }}</td>
                 <td>{{ $r['date_assigned'] ? Carbon::parse($r['date_assigned'])->format('M d, Y') : '—' }}</td>
                 <td style="text-align:center;">
+                    @if($r['asset_status'])
+                    @php
+                    $assetColorClass = match($r['asset_status']) {
+                    'active' => 'text-green',
+                    'archived' => 'text-orange',
+                    'missing' => 'text-red',
+                    default => 'text-gray',
+                    };
+                    @endphp
+                    <div class="{{ $assetColorClass }}">
+                        {{ ucwords(str_replace('_', ' ', $r['asset_status'])) }}
+                    </div>
+                    @endif
                     @if($r['current_inventory_status'])
                     <div class="text-green">Inventory: {{ ucwords(str_replace('_',' ', $r['current_inventory_status'])) }}</div>
                     @endif

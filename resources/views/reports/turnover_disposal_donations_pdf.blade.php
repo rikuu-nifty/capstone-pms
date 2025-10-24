@@ -239,7 +239,7 @@ return '₱ ' . number_format((float)$amount, 2, '.', ', ');
         <td colspan="8"></td>
     </tr>
     <tr style="background:#e2e8f0; font-weight:bold; border-top:2px solid #000; border-bottom:2px solid #000;">
-        <td colspan="8" style="text-align:center; padding:8px; font-size:13px;">SUMMARY</td>
+        <td colspan="8" style="text-align:center; padding:8px; font-size:13px;">OVERALL SUMMARY</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
         <td colspan="8" style="text-align:right; padding:8px;">

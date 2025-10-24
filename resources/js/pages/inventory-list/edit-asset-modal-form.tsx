@@ -287,10 +287,11 @@ export const EditAssetModalForm = ({
                             <select
                                 className="w-full rounded-lg border p-2"
                                 value={form.status}
-                                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived')}
+                                onChange={(e) => handleChange('status', e.target.value as 'active' | 'archived' | 'missing' | '')}
                             >
                                 <option value="active">Active</option>
                                 <option value="archived">Archived</option>
+                                <option value="missing">Missing</option>
                             </select>
                         </div>
 

@@ -11,6 +11,7 @@ type AssetRecordRow = {
     equipment_code: string | null;
     serial_no: string | null;
     asset_unit_or_department: string | null;
+    asset_status: string | null;
     personnel_name: string;
     previous_personnel_name: string | null;
     date_assigned: string | null;
@@ -84,6 +85,21 @@ export default function PersonnelAssignmentsDetailedTable({
                                 <TableCell className="font-bold">{r.personnel_name}</TableCell>
                                 <TableCell>{r.date_assigned ? formatDate(r.date_assigned) : '—'}</TableCell>
                                 <TableCell className="whitespace-normal break-words text-center text-sm">
+                                    {r.asset_status && (
+                                        <p
+                                            className={`font-semibold ${
+                                                r.asset_status === 'active'
+                                                    ? 'text-green-600'
+                                                    : r.asset_status === 'archived'
+                                                    ? 'text-orange-600'
+                                                    : r.asset_status === 'missing'
+                                                    ? 'text-red-600'
+                                                    : 'text-gray-800'
+                                            }`}
+                                        >
+                                            {ucwords(formatEnums(r.asset_status))}
+                                        </p>
+                                    )}
                                     {r.current_inventory_status && (
                                         <p className="text-green-700 font-semibold">
                                             Inventory: {ucwords(formatEnums(r.current_inventory_status))}
@@ -104,7 +120,8 @@ export default function PersonnelAssignmentsDetailedTable({
                                             Off Campus: {ucwords(formatEnums(r.current_off_campus_status))}
                                         </p>
                                     )}
-                                    {!r.current_transfer_status &&
+                                    {
+                                        !r.current_transfer_status &&
                                         !r.current_turnover_disposal_status &&
                                         !r.current_off_campus_status &&
                                         !r.current_inventory_status && (

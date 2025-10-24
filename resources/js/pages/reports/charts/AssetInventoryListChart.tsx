@@ -25,7 +25,7 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
 
     const totalAssets = categoryData.reduce((acc, curr) => acc + curr.value, 0);
 
-    // ✅ Group "Others"
+    // Group "Others"
     const MAX_CATEGORIES = 5;
     const sortedData = [...categoryData].sort((a, b) => b.value - a.value);
     let displayedData = sortedData;
@@ -40,7 +40,7 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
         });
     }
 
-    // ✅ Default active index → largest slice
+    // Default active index → largest slice
     const defaultActiveIndex = useMemo(() => {
         if (displayedData.length === 0) return null;
         let maxIdx = 0;
@@ -60,7 +60,7 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
         return <div className="flex h-full items-center justify-center text-sm text-gray-500">No data available</div>;
     }
 
-    // ✅ Custom Tooltip with consistent colors
+    // Custom Tooltip with consistent colors
     const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
         if (active && payload && payload.length > 0) {
             const { label, value } = payload[0].payload as CategoryData;
@@ -121,7 +121,7 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
                 </PieChart>
             </ChartContainer>
 
-            {/* ✅ Legend */}
+            {/* Legend */}
             <div className="mt-3 flex flex-wrap justify-center gap-3">
                 {displayedData.map((d, i) => (
                     <div key={i} className="flex cursor-pointer items-center gap-2" onClick={() => d.label === 'Others' && setShowOthersModal(true)}>
@@ -131,7 +131,7 @@ export function AssetInventoryListChart({ categoryData }: { categoryData: Catego
                 ))}
             </div>
 
-            {/* ✅ Others Categories Modal */}
+            {/* Others Categories Modal */}
             <Dialog open={showOthersModal} onOpenChange={setShowOthersModal}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>

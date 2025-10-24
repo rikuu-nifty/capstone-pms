@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Asset } from './InventoryListReport'; // ✅ reuse same type
+import type { Asset } from './InventoryListReport'; // reuse same type
 
 type GroupedAsset = Asset & {
     qty: number;
@@ -25,13 +25,13 @@ export default function NewPurchasesTable({ assets }: Props) {
                 };
             }
             map[key].qty += 1;
-            map[key].amount += Number(a.unit_cost ?? 0); // ✅ force numeric
+            map[key].amount += Number(a.unit_cost ?? 0); // force numeric
         });
 
         return Object.values(map);
     }, [assets]);
 
-    // ✅ Pagination state
+    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 8;
 
@@ -49,20 +49,21 @@ export default function NewPurchasesTable({ assets }: Props) {
     }
 
     return (
-        <div className="flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm text-center">
             {/* Table */}
             <div className="flex-1 overflow-y-auto">
                 <table className="w-full border-collapse text-sm">
                     <thead>
                         <tr className="bg-gray-100 text-left text-gray-800">
-                            <th className="px-4 py-3 font-semibold">Date</th>
-                            <th className="px-4 py-3 font-semibold">MR No.</th>
-                            <th className="px-4 py-3 font-semibold">Supplier</th>
-                            <th className="px-4 py-3 font-semibold">Item / Description</th>
-                            <th className="px-4 py-3 font-semibold">Unit / Dept</th>
-                            <th className="px-4 py-3 font-semibold">Qty</th>
-                            <th className="px-4 py-3 font-semibold">Unit Cost</th>
-                            <th className="px-4 py-3 font-semibold">Amount</th>
+                            <th className="px-4 py-3 font-semibold text-center">Date</th>
+                            <th className="px-4 py-3 font-semibold text-center">MR No.</th>
+                            <th className="px-4 py-3 font-semibold text-center">Supplier</th>
+                            <th className="px-4 py-3 font-semibold text-center">Item / Description</th>
+                            <th className="px-4 py-3 font-semibold text-center">Unit / Dept</th>
+                            <th className="px-4 py-3 font-semibold text-center">Qty</th>
+                            <th className="px-4 py-3 font-semibold text-center">Unit Cost</th>
+                            <th className="px-4 py-3 font-semibold text-center">Amount</th>
+                            <th className="px-4 py-3 font-semibold text-center">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,6 +98,25 @@ export default function NewPurchasesTable({ assets }: Props) {
                                               maximumFractionDigits: 2,
                                           })}`
                                         : '-'}
+                                </td>
+                                <td className="px-4 py-3 font-semibold">
+                                    {g.status ? (
+                                        <span
+                                            className={
+                                                g.status === 'active'
+                                                    ? 'text-green-600'
+                                                    : g.status === 'archived'
+                                                    ? 'text-orange-600'
+                                                    : g.status === 'missing'
+                                                    ? 'text-red-600'
+                                                    : 'text-gray-700'
+                                            }
+                                        >
+                                            {g.status.charAt(0).toUpperCase() + g.status.slice(1)}
+                                        </span>
+                                    ) : (
+                                        '—'
+                                    )}
                                 </td>
                             </tr>
                         ))}

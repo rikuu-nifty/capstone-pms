@@ -86,7 +86,7 @@ export default function VerificationFormViewModal({
             open={open}
             onClose={onClose}
             size="xl"
-            contentClassName="relative min-h-[60vh] max-h-[60vh] overflow-y-auto print:overflow-x-hidden bg-white text-black"
+            contentClassName="relative min-h-[55vh] max-h-[65vh] overflow-y-auto print:overflow-x-hidden bg-white text-black"
         >
             <VisuallyHidden>
                 <DialogTitle>Verification Form #{recordNo}</DialogTitle>
@@ -112,7 +112,7 @@ export default function VerificationFormViewModal({
                     </h2>
                 </div>
 
-                <div className="text-right text-sm leading-tight font-bold">
+                <div className="text-right text-sm leading-tight font-bold mr-2">
                     <p>VF No. A-014</p>
                 </div>
             </div>
@@ -230,7 +230,7 @@ export default function VerificationFormViewModal({
                 </div>
             </div>
 
-            <div className="mt-6 text-center print:hidden">
+            <div className="sticky bottom-0 left-0 bg-white text-center mt-4 -mb-2print:hidden">
                 <a
                     onClick={onClose}
                     className="mr-2 inline-block cursor-pointer rounded bg-black px-4 py-2 text-sm font-semibold text-white shadow hover:bg-black/70"

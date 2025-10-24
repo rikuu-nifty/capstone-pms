@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { useState, useMemo, useEffect } from 'react';
-import { ClipboardCheck, Clock4, CalendarCheck, RefreshCw } from 'lucide-react';
+import { ClipboardCheck, Clock4, CalendarCheck } from 'lucide-react';
 import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
@@ -14,6 +14,7 @@ import { formatStatusLabel, ucwords } from '@/types/custom-index';
 
 import VerificationFormEditModal from './VerificationFormEditModal';
 import VerificationFormViewModal from './VerificationFormViewModal';
+import VerificationFormFilterDropdown from '@/components/filters/VerificationFormFilterDropdown';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Verification Form', href: '/verification-form' },
@@ -148,6 +149,16 @@ export default function VerificationFormIndex() {
         setSelectedVerification(viewing);
         setShowViewModal(true);
     }, [viewing]);
+
+    const [filters, setFilters] = useState({ status: '', requester: '' });
+
+    const handleApplyFilters = (newFilters: typeof filters) => {
+        setFilters(newFilters);
+    };
+
+    const handleClearFilters = () => {
+        setFilters({ status: '', requester: '' });
+    };
     
     const [rawSearch, setRawSearch] = useState('');
     const search = useDebouncedValue(rawSearch, 200);
@@ -158,13 +169,24 @@ export default function VerificationFormIndex() {
     const [page, setPage] = useState(1);
     const pageSize = 20;
 
+    // const filtered = useMemo(() => {
+    //     const term = search.trim().toLowerCase();
+    //     return turnovers.data.filter((vf) => {
+    //         const haystack = `${vf.id} ${vf.issuing_office?.name ?? ''} ${vf.status ?? ''}`.toLowerCase();
+    //         return !term || haystack.includes(term);
+    //     });
+    // }, [turnovers.data, search]);
+
     const filtered = useMemo(() => {
         const term = search.trim().toLowerCase();
         return turnovers.data.filter((vf) => {
-        const haystack = `${vf.id} ${vf.issuing_office?.name ?? ''} ${vf.status ?? ''}`.toLowerCase();
-        return !term || haystack.includes(term);
+            const haystack = `${vf.id} ${vf.issuing_office?.name ?? ''} ${vf.status ?? ''}`.toLowerCase();
+            const matchesSearch = !term || haystack.includes(term);
+            const matchesStatus = !filters.status || vf.status === filters.status;
+            const matchesRequester = !filters.requester || vf.issuing_office?.name?.toLowerCase() === filters.requester.toLowerCase();
+            return matchesSearch && matchesStatus && matchesRequester;
         });
-    }, [turnovers.data, search]);
+    }, [turnovers.data, search, filters]);
 
     const sorted = useMemo(() => {
         const dir = sortDir === 'asc' ? 1 : -1;
@@ -241,25 +263,47 @@ export default function VerificationFormIndex() {
                             onChange={(e) => setRawSearch(e.target.value)}
                             className="max-w-xs"
                         />
-                            <Button 
-                                variant="outline"
-                                className='cursor-pointer'
-                                onClick={() => setRawSearch('')}
-                            >
+                        {/* <Button 
+                            variant="outline"
+                            className='cursor-pointer'
+                            onClick={() => setRawSearch('')}
+                        >
                             <RefreshCw className="h-4 w-4 mr-1" /> 
                             Clear
-                        </Button>
+                        </Button> */}
                     </div>
 
-                    <SortDropdown<VerificationSortKey>
-                        sortKey={sortKey}
-                        sortDir={sortDir}
-                        options={verificationSortOptions}
-                        onChange={(key, dir) => {
-                            setSortKey(key);
-                            setSortDir(dir);
-                        }}
-                    />
+                    <div className="flex gap-2">
+                        <VerificationFormFilterDropdown
+                            onApply={handleApplyFilters}
+                            onClear={handleClearFilters}
+                            selected_status={filters.status}
+                            selected_requester={filters.requester}
+                            requesterOptions={
+                            turnovers.data
+                                .map((vf) => ({
+                                id: vf.id,
+                                name: vf.issuing_office?.name ?? '',
+                                }))
+                                .filter((r) => r.name)
+                                .reduce((unique, r) => {
+                                if (!unique.some((u) => u.name === r.name)) unique.push(r);
+                                return unique;
+                                }, [] as { id: number; name: string }[])
+                            }
+                        />
+
+                        <SortDropdown<VerificationSortKey>
+                            sortKey={sortKey}
+                            sortDir={sortDir}
+                            options={verificationSortOptions}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
+                        />
+                    </div>
+                    
                 </div>
 
                 {/* Table */}
@@ -339,7 +383,7 @@ export default function VerificationFormIndex() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                                     No verification forms found.
                                 </TableCell>
                             </TableRow>
