@@ -57,8 +57,12 @@ export default function AddAssignmentModal({
             setShowAssetDropdown([true]);
             setSelectedUnit(null);
 
+            const today = new Date();
+            const localDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+            setData('date_assigned', localDate);
+
             setData('assigned_by', currentUserId);
-            setData('date_assigned', new Date().toISOString().split('T')[0]);
+            setData('date_assigned', localDate);
         }
     }, [show, reset, clearErrors, currentUserId, setData]);
 
@@ -86,7 +90,8 @@ export default function AddAssignmentModal({
         };
 
         if (!data.date_assigned) {
-            setData('date_assigned', new Date().toISOString().split('T')[0]);
+            const today = new Date();
+            setData('date_assigned', today.toLocaleDateString('en-CA'));
         }
 
         if (!data.assigned_by) {
