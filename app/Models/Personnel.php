@@ -314,7 +314,14 @@ class Personnel extends Model
                 ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
                 ->whereColumn('aa.personnel_id', 'personnels.id')
                 ->whereNull('aai.deleted_at')
-                ->whereDate('aai.date_assigned', '<', DB::raw('latest_per_personnel.latest_date_assigned')) // use the pre-joined "latest_per_personnel.latest_date_assigned".
+                ->whereDate('aai.date_assigned', '<', DB::raw("(
+                    SELECT MAX(aai2.date_assigned)
+                    FROM asset_assignment_items aai2
+                    JOIN asset_assignments aa2 ON aa2.id = aai2.asset_assignment_id
+                    WHERE aa2.personnel_id = personnels.id
+                    " . ($from ? "AND DATE(aai2.date_assigned) >= '$from'" : '') . "
+                    " . ($to ? "AND DATE(aai2.date_assigned) <= '$to'" : '') . "
+                )"))
                 ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                 ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
                 ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
@@ -518,7 +525,14 @@ class Personnel extends Model
                 ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
                 ->whereColumn('aa.personnel_id', 'personnels.id')
                 ->whereNull('aai.deleted_at')
-                ->whereDate('aai.date_assigned', '<', DB::raw('latest_per_personnel.latest_date_assigned'))
+                ->whereDate('aai.date_assigned', '<', DB::raw("(
+                    SELECT MAX(aai2.date_assigned)
+                    FROM asset_assignment_items aai2
+                    JOIN asset_assignments aa2 ON aa2.id = aai2.asset_assignment_id
+                    WHERE aa2.personnel_id = personnels.id
+                    " . ($from ? "AND DATE(aai2.date_assigned) >= '$from'" : '') . "
+                    " . ($to ? "AND DATE(aai2.date_assigned) <= '$to'" : '') . "
+                )"))
                 ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                 ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
                 ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
@@ -728,7 +742,14 @@ class Personnel extends Model
                 ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
                 ->whereColumn('aa.personnel_id', 'personnels.id')
                 ->whereNull('aai.deleted_at')
-                ->whereDate('aai.date_assigned', '<', DB::raw('latest_per_personnel.latest_date_assigned'))
+                ->whereDate('aai.date_assigned', '<', DB::raw("(
+                    SELECT MAX(aai2.date_assigned)
+                    FROM asset_assignment_items aai2
+                    JOIN asset_assignments aa2 ON aa2.id = aai2.asset_assignment_id
+                    WHERE aa2.personnel_id = personnels.id
+                    " . ($from ? "AND DATE(aai2.date_assigned) >= '$from'" : '') . "
+                    " . ($to ? "AND DATE(aai2.date_assigned) <= '$to'" : '') . "
+                )"))
                 ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
                 ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
                 ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
