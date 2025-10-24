@@ -12,6 +12,8 @@ type Props = {
   selected_status: string;
   selected_type: string;
   selected_issuing_office: string;
+  selected_turnover_category: string;
+  selected_is_donation: string;
 
   unitOrDepartments: UnitOrDepartment[];
   statusOptions?: string[];
@@ -22,10 +24,14 @@ export type TurnoverDisposalFilters = {
     status: string;
     type: string;
     issuing_office_id: string;
+
+    turnover_category: string;
+    is_donation: string;
 };
 
 const DEFAULT_STATUS = ['pending_review', 'approved', 'rejected', 'cancelled', 'completed'];
 const DEFAULT_TYPES = ['turnover', 'disposal'];
+const CATEGORY_OPTIONS = ['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'];
 
 function formatLabel(v: string): string {
   return v.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
@@ -37,6 +43,9 @@ export default function TurnoverDisposalFilterDropdown({
   selected_status,
   selected_type,
   selected_issuing_office,
+  selected_turnover_category,
+  selected_is_donation,
+
   unitOrDepartments,
   statusOptions = DEFAULT_STATUS,
   typeOptions = DEFAULT_TYPES,
@@ -44,12 +53,23 @@ export default function TurnoverDisposalFilterDropdown({
   const [localStatus, setLocalStatus] = useState(selected_status);
   const [localType, setLocalType] = useState(selected_type);
   const [localIssuing, setLocalIssuing] = useState(selected_issuing_office);
+  const [localCategory, setLocalCategory] = useState(selected_turnover_category);
+  const [localDonation, setLocalDonation] = useState(selected_is_donation); 
 
   useEffect(() => {
     setLocalStatus(selected_status);
     setLocalType(selected_type);
     setLocalIssuing(selected_issuing_office);
-  }, [selected_status, selected_type, selected_issuing_office]);
+
+    setLocalCategory(selected_turnover_category);
+    setLocalDonation(selected_is_donation); 
+  }, [
+    selected_status,
+    selected_type,
+    selected_issuing_office,
+    selected_turnover_category,
+    selected_is_donation,
+  ]);
 
   const hasAny = !!selected_status || !!selected_type || !!selected_issuing_office;
 
@@ -104,6 +124,35 @@ export default function TurnoverDisposalFilterDropdown({
             </select>
           </div>
 
+          <div className="grid gap-1">
+            <label className="text-xs font-medium">Turnover Category</label>
+            <select
+              className="border rounded-md p-2 text-sm cursor-pointer"
+              value={localCategory}
+              onChange={(e) => setLocalCategory(e.target.value)}
+            >
+              <option value="">All</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {formatLabel(c)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-1">
+            <label className="text-xs font-medium">For Donation</label>
+            <select
+              className="border rounded-md p-2 text-sm cursor-pointer"
+              value={localDonation}
+              onChange={(e) => setLocalDonation(e.target.value)}
+            >
+              <option value="">All</option>
+              <option value="1">Yes</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+
           <div className="flex gap-2 justify-end pt-1">
             <Button
               variant="destructive"
@@ -112,6 +161,8 @@ export default function TurnoverDisposalFilterDropdown({
                 setLocalStatus('');
                 setLocalType('');
                 setLocalIssuing('');
+                setLocalCategory('');
+                setLocalDonation('');
                 onClear();
               }}
               className="cursor-pointer"
@@ -125,6 +176,9 @@ export default function TurnoverDisposalFilterDropdown({
                 status: localStatus,
                 type: localType,
                 issuing_office_id: localIssuing,
+
+                turnover_category: localCategory,
+                is_donation: localDonation,
               })}
               className="cursor-pointer"
             >

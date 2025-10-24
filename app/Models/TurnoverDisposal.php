@@ -18,19 +18,23 @@ class TurnoverDisposal extends Model
     protected $fillable = [
         'issuing_office_id',
         'type',
+        'turnover_category',
         'receiving_office_id',
+        'external_recipient',
         'description',
         'personnel_in_charge',
         'personnel_id',
         'document_date',
         'status',
         'remarks',
+        'is_donation',
     ];
 
     protected $casts = 
     [
         'document_date' => 'date:Y-m-d',
         'deleted_at'    => 'datetime',
+        'is_donation'   => 'boolean',
     ];
 
     protected $appends = ['noted_by_name', 'noted_by_title'];
@@ -291,6 +295,8 @@ class TurnoverDisposal extends Model
         $this->fill([
             'issuing_office_id'   => $payload['issuing_office_id'],
             'type'                => $payload['type'],
+            'turnover_category'   => $payload['turnover_category'] ?? null,
+
             'receiving_office_id' => $payload['receiving_office_id'],
             'description'         => $payload['description'] ?? null,
             'personnel_in_charge' => $payload['personnel_in_charge'],
@@ -298,6 +304,7 @@ class TurnoverDisposal extends Model
             'document_date'       => $payload['document_date'],
             'status'              => $payload['status'],
             'remarks'             => $payload['remarks'] ?? null,
+            'is_donation'         => $payload['is_donation'] ?? false,
         ])->save();
     }
 
@@ -384,63 +391,58 @@ class TurnoverDisposal extends Model
         return 'Turnover/Disposal -  #' . $this->id;
     }
 
-public function getNotedByNameAttribute(): ?string
-{
-    $fa = $this->relationLoaded('formApproval')
-        ? $this->getRelation('formApproval')
-        : $this->formApproval()->with([
-            'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
-                                   ->whereIn('status',['approved','rejected']) // ✅ include rejected
-                                   ->orderByDesc('acted_at'),
-            'steps.actor:id,name',
-        ])->first();
+    public function getNotedByNameAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval')
+            ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+                    ->whereIn('status',['approved','rejected']) // include rejected
+                    ->orderByDesc('acted_at'),
+                'steps.actor:id,name',
+            ])->first();
 
-    if (!$fa) return null;
+        if (!$fa) return null;
 
-    // Prefer external_noted_by if present
-    $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
-    if ($externalStep) {
-        return $externalStep->external_name ?: null;
+        // Prefer external_noted_by if present
+        $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
+        if ($externalStep) {
+            return $externalStep->external_name ?: null;
+        }
+
+        $internalStep = $fa->steps->firstWhere('code', 'noted_by');
+        if ($internalStep) {
+            return $internalStep->actor->name ?? null;
+        }
+
+        return null;
     }
 
-    $internalStep = $fa->steps->firstWhere('code', 'noted_by');
-    if ($internalStep) {
-        return $internalStep->actor->name ?? null;
+    public function getNotedByTitleAttribute(): ?string
+    {
+        $fa = $this->relationLoaded('formApproval')
+            ? $this->getRelation('formApproval')
+            : $this->formApproval()->with([
+                'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
+                        ->whereIn('status',['approved','rejected']) // include rejected
+                        ->orderByDesc('acted_at'),
+                'steps.actor:id,name',
+            ])->first();
+
+        if (!$fa) return null;
+
+        $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
+        if ($externalStep) {
+            return $externalStep->external_title ?: null;
+        }
+
+        $internalStep = $fa->steps->firstWhere('code', 'noted_by');
+        if ($internalStep) {
+            return 'Dean / Head';
+        }
+
+        return null;
     }
-
-    return null;
-}
-
-public function getNotedByTitleAttribute(): ?string
-{
-    $fa = $this->relationLoaded('formApproval')
-        ? $this->getRelation('formApproval')
-        : $this->formApproval()->with([
-            'steps' => fn($q) => $q->whereIn('code', ['external_noted_by','noted_by'])
-                                   ->whereIn('status',['approved','rejected']) // ✅ include rejected
-                                   ->orderByDesc('acted_at'),
-            'steps.actor:id,name',
-        ])->first();
-
-    if (!$fa) return null;
-
-    $externalStep = $fa->steps->firstWhere('code', 'external_noted_by');
-    if ($externalStep) {
-        return $externalStep->external_title ?: null;
-    }
-
-    $internalStep = $fa->steps->firstWhere('code', 'noted_by');
-    if ($internalStep) {
-        return 'Dean / Head';
-    }
-
-    return null;
-}
-
-
-    /*
-        REPORTS
-    */
 
     public static function filterAndPaginate(array $filters, int $perPage = 10)
     {
@@ -480,7 +482,6 @@ public function getNotedByTitleAttribute(): ?string
                 $q->whereHas('turnoverDisposalAssets.assets.assetModel', fn($qa) => $qa->where('model', 'like', "%{$model}%"));
             });
             
-
         return $query->paginate($perPage)->withQueryString();
     }
 
@@ -496,6 +497,8 @@ public function getNotedByTitleAttribute(): ?string
             ->select([
                 'td.id as turnover_disposal_id',
                 'td.type',
+                'td.turnover_category',
+                'td.is_donation',
                 'td.status as td_status',
                 'td.document_date',
                 'issuing.name as issuing_office',
@@ -515,6 +518,14 @@ public function getNotedByTitleAttribute(): ?string
             ->when($filters['receiving_office_id'] ?? null, fn($q, $receiving) => $q->where('td.receiving_office_id', $receiving))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
             ->when($filters['category_id'] ?? null, fn($q, $cat) => $q->where('c.id', $cat))
+            ->when(
+                $filters['turnover_category'] ?? null,
+                fn($q, $cat) =>
+                $q->where('td.turnover_category', $cat)
+            )
+            ->when(isset($filters['is_donation']) && $filters['is_donation'] !== '', function ($q) use ($filters) {
+                $q->where('td.is_donation', (int) $filters['is_donation']);
+            })
             ->paginate($perPage)
             ->withQueryString();
     }
@@ -532,11 +543,26 @@ public function getNotedByTitleAttribute(): ?string
         ];
     }
 
-    public static function monthlyCompletedTrendData()
+    public static function monthlyCompletedTrendData(array $filters = [])
     {
         return DB::table('turnover_disposals as td')
             ->join('turnover_disposal_assets as tda', 'tda.turnover_disposal_id', '=', 'td.id')
-            ->where('tda.asset_status', '=', 'completed') // ✅ Only completed assets
+            ->leftJoin('inventory_lists as il', 'il.id', '=', 'tda.asset_id')
+            ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
+            ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
+            ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
+            ->leftJoin('unit_or_departments as receiving', 'receiving.id', '=', 'td.receiving_office_id')
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('td.type', $type))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
+            ->when($filters['issuing_office_id'] ?? null, fn($q, $id) => $q->where('td.issuing_office_id', $id))
+            ->when($filters['receiving_office_id'] ?? null, fn($q, $id) => $q->where('td.receiving_office_id', $id))
+            ->when($filters['category_id'] ?? null, fn($q, $cat) => $q->where('c.id', $cat))
+            ->when($filters['turnover_category'] ?? null, fn($q, $cat) => $q->where('td.turnover_category', $cat))
+            ->when(isset($filters['is_donation']) && $filters['is_donation'] !== '', function ($q) use ($filters) {
+                $q->where('td.is_donation', (int) $filters['is_donation']);
+            })
             ->selectRaw("
                 DATE_FORMAT(td.document_date, '%Y-%m') as ym,
                 SUM(CASE WHEN td.type = 'turnover' THEN 1 ELSE 0 END) as turnover,
@@ -566,7 +592,8 @@ public function getNotedByTitleAttribute(): ?string
         if (!$roleId) return null;
 
         $u = User::select('id', 'name') // keep payload minimal
-            ->where('role_id', $roleId)             // no joins/whereHas
+            ->where('role_id', $roleId)
+            ->whereNull('deleted_at')            
             ->first();
 
         return $u?->only(['id', 'name']);            // avoid hidden/serialization surprises
@@ -610,4 +637,47 @@ public function getNotedByTitleAttribute(): ?string
             'cancellation_rate' => $total > 0 ? round(($cancelled / $total) * 100, 1) : 0,
         ];
     }
+
+    public static function donationSummary(array $filters = [])
+    {
+        return DB::table('turnover_disposal_assets as tda')
+            ->join('turnover_disposals as td', 'td.id', '=', 'tda.turnover_disposal_id')
+            ->leftJoin('inventory_lists as il', 'il.id', '=', 'tda.asset_id')
+            ->leftJoin('asset_models as am', 'am.id', '=', 'il.asset_model_id')
+            ->leftJoin('categories as c', 'c.id', '=', 'am.category_id')
+            ->leftJoin('unit_or_departments as issuing', 'issuing.id', '=', 'td.issuing_office_id')
+            ->leftJoin('unit_or_departments as receiving', 'receiving.id', '=', 'td.receiving_office_id')
+            ->select([
+                'td.id as record_id',
+                'td.document_date',
+                'td.turnover_category',
+                'td.remarks as record_remarks',
+                'issuing.name as issuing_office',
+                'receiving.name as receiving_office',
+                'td.external_recipient',
+                'il.id as asset_id',
+                'il.asset_name',
+                'il.serial_no',
+                'il.unit_cost',
+                'c.name as category',
+                'tda.asset_status',
+                'tda.remarks as asset_remarks',
+                'td.is_donation',
+            ])
+            ->where('td.is_donation', 1)
+            ->when($filters['from'] ?? null, fn($q, $from) => $q->whereDate('td.document_date', '>=', $from))
+            ->when($filters['to'] ?? null, fn($q, $to) => $q->whereDate('td.document_date', '<=', $to))
+            ->when($filters['issuing_office_id'] ?? null, fn($q, $issuing) => $q->where('td.issuing_office_id', $issuing))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('td.status', $status))
+            ->orderBy('td.document_date')
+            ->orderBy('issuing.name')
+            ->orderBy('td.id')
+            ->get();
+    }
+
+    public function verificationForm()
+    {
+        return $this->hasOne(VerificationForm::class);
+    }
+
 }

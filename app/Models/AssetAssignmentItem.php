@@ -12,6 +12,12 @@ class AssetAssignmentItem extends Model
     protected $fillable = [
         'asset_assignment_id',
         'asset_id',
+        'date_assigned',
+    ];
+
+    protected $casts = [
+        'date_assigned' => 'date:Y-m-d',
+        'deleted_at'    => 'datetime',
     ];
 
     public function assignment()

@@ -8,6 +8,7 @@ import Select from "react-select";
 import { Filter, RotateCcw, FileDown, FileSpreadsheet, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import TurnoverDisposalTable from "./TurnoverDisposalTable";
+import DonationSummaryTable from "./DonationSummaryTable";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
 import {
@@ -29,11 +30,13 @@ export type RecordRow = {
     serial_no: string;
     asset_name: string;
     category: string;
-    // status: string;      // turnover/disposal status
     td_status: string;
     asset_status: string;      // per-asset status
     document_date: string;
     remarks?: string | null;
+
+    turnover_category?: string | null;
+    is_donation?: boolean | number | null;
 }
 
 type PaginationMeta = {
@@ -74,8 +77,26 @@ type PageProps = {
         receiving_office_id?: number | null;
         category_id?: number | null;
         type?: string | null;
+        turnover_category?: string | null;
+        is_donation?: string | null;   
     };
     chartData: ChartRow[];
+
+    donationSummary: {
+        asset_id: number | null;
+        record_id: number;
+        document_date: string;
+        issuing_office: string | null;
+        receiving_office: string | null;
+        external_recipient: string | null;
+        asset_name: string | null;
+        serial_no: string | null;
+        category: string | null;
+        turnover_category: string | null;
+        unit_cost: number | null;
+        asset_status: string | null;
+        asset_remarks: string | null;
+    }[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -86,8 +107,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function TurnoverDisposalReport() {
     const firstLoadRef = React.useRef(true);
     
-    // const { records, departments, categories, filters: initialFilters, chartData } = usePage<PageProps>().props;
-    const { records, departments, categories, filters: initialFilters, chartData: initialChartData } = usePage<PageProps>().props;
+    const {
+        records,
+        departments,
+        categories,
+        filters: initialFilters,
+        chartData: initialChartData,
+        donationSummary,
+    } = usePage<PageProps>().props;
     const [chartData, setChartData] = useState(initialChartData);
 
     const chartConfig = {
@@ -108,11 +135,19 @@ export default function TurnoverDisposalReport() {
         receiving_office_id: null as number | null,
         category_id: null as number | null,
         type: null as string | null,
+        turnover_category: null as string | null,
     };
     const [filters, setFilters] = useState({ ...defaultFilters, ...initialFilters });
     const [appliedFilters, setAppliedFilters] = useState({ ...defaultFilters, ...initialFilters });
 
-    const [viewMode, setViewMode] = useState<'chart' | 'table'>('table');
+    const [viewMode, setViewMode] = useState<'chart' | 'table' | 'donations'>('chart');
+
+    useEffect(() => {
+        if (viewMode === "donations") {
+            setFilters((prev) => ({ ...prev, is_donation: null })); // Clear the is_donation filter automatically
+            setAppliedFilters((prev) => ({ ...prev, is_donation: null }));
+        }
+    }, [viewMode]);
 
     function updateFilter<K extends keyof typeof filters>(
         key: K,
@@ -139,30 +174,6 @@ export default function TurnoverDisposalReport() {
         return result;
     };
 
-    // // Add this helper
-    // function refreshData(page = 1, filtersOverride?: typeof filters) {
-    //     const finalFilters = filtersOverride ?? filters;
-
-    //     router.get(
-    //         route("reports.turnover-disposal"),
-    //         { ...cleanFilters(finalFilters), page },
-    //         {
-    //         preserveState: true,
-    //         replace: true,
-    //         onSuccess: (pageData) => {
-    //             const paginator = pageData.props.records as Paginator<RecordRow>;
-    //             setDisplayed(paginator.data);
-    //             setTotal(paginator.meta.total ?? 0);
-    //             setPageSize(paginator.meta.per_page ?? 10);
-
-    //             // 🔥 refresh chartData too
-    //             // setChartData(pageData.props.chartData);
-    //             setChartData(pageData.props.chartData as ChartRow[]);
-    //         },
-    //         }
-    //     );
-    // }
-
     // Refetch when page changes
     useEffect(() => {
         if (firstLoadRef.current) {
@@ -172,7 +183,6 @@ export default function TurnoverDisposalReport() {
 
         router.get(
             route('reports.turnover-disposal'),
-            // { ...cleanFilters(filters), page },
             { ...cleanFilters(appliedFilters), page },
             {
                 preserveState: true,
@@ -190,7 +200,7 @@ export default function TurnoverDisposalReport() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page]);
 
-    // 🔢 Compute trend vs last month
+    // Compute trend vs last month
     const currentMonthIndex = new Date().getMonth(); // 0 = January
     const thisMonth = chartData[currentMonthIndex];
     const lastMonth = chartData[currentMonthIndex - 1];
@@ -296,7 +306,7 @@ export default function TurnoverDisposalReport() {
                             <Select
                                 className="w-full"
                                 isClearable
-                                placeholder="Select an asset type"
+                                placeholder="Select status"
                                 value={
                                     filters.status
                                         ? {
@@ -373,10 +383,10 @@ export default function TurnoverDisposalReport() {
                             />
                         </div>
 
-                        {/* Category */}
+                        {/* Asset Category */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Category
+                                Asset Category
                             </label>
                             <Select
                                 className="w-full"
@@ -397,6 +407,64 @@ export default function TurnoverDisposalReport() {
                                 onChange={(opt) => updateFilter("category_id", opt?.value ?? null)}
                             />
                         </div>
+
+                        
+                        {/* Turnover Category */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Turnover Category
+                            </label>
+                            <Select
+                                className="w-full"
+                                isClearable
+                                placeholder="Select a turnover category"
+                                value={
+                                filters.turnover_category
+                                    ? {
+                                        value: filters.turnover_category,
+                                        label: filters.turnover_category
+                                        .replace(/_/g, " ")
+                                        .replace(/\b\w/g, (c) => c.toUpperCase()),
+                                    }
+                                    : null
+                                }
+                                options={[
+                                { value: "sharps", label: "Sharps" },
+                                { value: "breakages", label: "Breakages" },
+                                { value: "chemical", label: "Chemical" },
+                                { value: "hazardous", label: "Hazardous" },
+                                { value: "non_hazardous", label: "Non Hazardous" },
+                                ]}
+                                onChange={(opt) => updateFilter("turnover_category", opt?.value ?? null)}
+                            />
+                        </div>
+
+                        {/* For Donation */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                For Donation
+                            </label>
+                            <Select
+                                className="w-full"
+                                isClearable
+                                isDisabled={viewMode === "donations"}
+                                placeholder="Select donation status"
+                                value={
+                                filters.is_donation !== null && filters.is_donation !== undefined
+                                    ? {
+                                        value: filters.is_donation,
+                                        label: filters.is_donation === "1" ? "Yes" : "No",
+                                    }
+                                    : null
+                                }
+                                options={[
+                                { value: "1", label: "Yes" },
+                                { value: "0", label: "No" },
+                                ]}
+                                onChange={(opt) => updateFilter("is_donation", opt?.value ?? null)}
+                            />
+                        </div>
+                        
                     </div>
 
                     {/* Action Buttons */}
@@ -411,12 +479,15 @@ export default function TurnoverDisposalReport() {
                                     {}, // no filters
                                     {
                                         preserveState: true,
+                                        preserveScroll: true,
                                         replace: true,
                                         onSuccess: (pageData) => {
                                             const paginator = pageData.props.records as Paginator<RecordRow>
                                             setDisplayed(paginator.data)
                                             setTotal(paginator.meta.total ?? 0)
                                             setPageSize(paginator.meta.per_page ?? 10)
+
+                                            setChartData(pageData.props.chartData as ChartRow[]);
                                         },
                                     }
                                 )
@@ -438,12 +509,14 @@ export default function TurnoverDisposalReport() {
                                     { ...cleanFilters(filters), page: 1 },
                                     {
                                         preserveState: true,
+                                        preserveScroll: true,
                                         replace: true,
                                         onSuccess: (pageData) => {
                                             const paginator = pageData.props.records as Paginator<RecordRow>
                                             setDisplayed(paginator.data)
                                             setTotal(paginator.meta.total ?? 0)
                                             setPageSize(paginator.meta.per_page ?? 10)
+                                            setChartData(pageData.props.chartData as ChartRow[])
                                         },
                                     }
                                 )
@@ -470,7 +543,7 @@ export default function TurnoverDisposalReport() {
                                     Download as
                                 </p>
                                 <div className="mb-2 border-t" />
-                                <button
+                                {/* <button
                                     onClick={() => {
                                         const query = buildQuery(filters)
                                         window.open(
@@ -484,16 +557,31 @@ export default function TurnoverDisposalReport() {
                                 >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel
+                                </button> */}
+                                <button
+                                    onClick={() => {
+                                        const query = buildQuery(filters);
+                                        const excelRoute =
+                                        viewMode === "donations"
+                                            ? route("reports.turnover-disposal.export.donations.excel")
+                                            : route("reports.turnover-disposal.export.excel");
+
+                                        window.open(`${excelRoute}?${query}`, "_blank");
+                                    }}
+                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                    >
+                                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                                    Excel
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const query = buildQuery(filters)
-                                        window.open(
-                                        route("reports.turnover-disposal.export.pdf") +
-                                            "?" +
-                                            query,
-                                        "_blank"
-                                        )
+                                        const query = buildQuery(filters);
+                                        const pdfRoute =
+                                            viewMode === "donations"
+                                                ? route("reports.turnover-disposal.export.donations.pdf")
+                                                : route("reports.turnover-disposal.export.pdf");
+
+                                        window.open(`${pdfRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                 >
@@ -510,7 +598,7 @@ export default function TurnoverDisposalReport() {
                     <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                         <CardTitle>Turnover / Disposal Records</CardTitle>
                         <div className="mt-2 flex gap-2 sm:mt-0">
-                            <div className="inline-flex rounded-md shadow-sm">
+                            {/* <div className="inline-flex rounded-md shadow-sm">
                                 <button
                                     onClick={() => {
                                         setViewMode("chart");
@@ -527,7 +615,7 @@ export default function TurnoverDisposalReport() {
                                 <button
                                     onClick={() => {
                                         setViewMode("table");
-                                        // refreshData(page); // 🔄 reload data + chart
+                                        // refreshData(page);
                                     }}
                                     className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
                                         viewMode === 'table'
@@ -536,6 +624,40 @@ export default function TurnoverDisposalReport() {
                                     } rounded-r-md`}
                                 >
                                     Table
+                                </button>
+                            </div> */}
+                            <div className="inline-flex rounded-md shadow-sm">
+                                <button
+                                    onClick={() => setViewMode("chart")}
+                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
+                                    viewMode === 'chart'
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    } rounded-l-md`}
+                                >
+                                    Chart
+                                </button>
+
+                                <button
+                                    onClick={() => setViewMode("table")}
+                                    className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
+                                    viewMode === 'table'
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    General
+                                </button>
+
+                                <button
+                                    onClick={() => setViewMode("donations")}
+                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
+                                    viewMode === 'donations'
+                                        ? 'border-blue-600 bg-blue-600 text-white'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    } rounded-r-md`}
+                                >
+                                    Donations
                                 </button>
                             </div>
                         </div>
@@ -578,7 +700,8 @@ export default function TurnoverDisposalReport() {
                                 </ResponsiveContainer>
                             </ChartContainer>
 
-                        ) : (
+                        // ) : (
+                        ) : viewMode === 'table' ? (
                             <TurnoverDisposalTable
                                 records={displayed}
                                 page={page}
@@ -587,15 +710,22 @@ export default function TurnoverDisposalReport() {
                                 onPageChange={(newPage) => setPage(newPage)}
                                 hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
                             />
-
-
-                        )}
+                            ) : (
+                                <DonationSummaryTable
+                                    donationSummary={donationSummary}
+                                    page={page}
+                                    total={total}
+                                    pageSize={pageSize}
+                                    onPageChange={(newPage) => setPage(newPage)}
+                                    hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
+                                />
+                            )}
                     </CardContent>
                     {viewMode === 'chart' && (
                         <CardFooter className="flex-col gap-2 pt-4 text-sm">
                             {trendLabel ? (
                                 <div className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}>
-                                {trendLabel} <TrendIcon className="h-4 w-4" />
+                                    {trendLabel} <TrendIcon className="h-4 w-4" />
                                 </div>
                             ) : (
                                 <div className="text-muted-foreground">No data to compare</div>

@@ -19,10 +19,10 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
-  RadarChart,         // ✅ add
-  Radar,              // ✅ add
-  PolarGrid,          // ✅ add
-  PolarAngleAxis,     // ✅ add
+  RadarChart,         
+  Radar,              
+  PolarGrid,          
+  PolarAngleAxis,     
   ResponsiveContainer
 } from 'recharts';
 
@@ -52,11 +52,13 @@ type TurnoverDisposalChartData = {
 import { AssetInventoryListChart } from './charts/AssetInventoryListChart'
 import { InventorySchedulingStatusChart } from './charts/InventorySchedulingStatusChart'
 import TransferStatusChart from './charts/TransferStatusChart'
-import OffCampusStatusChart from './charts/OffCampusStatusChart' // ✅ import chart
-// import { ReportCard } from './ReportCard'; // ⚠️ Already imported above
+import OffCampusStatusChart from './charts/OffCampusStatusChart'
+// import { ReportCard } from './ReportCard'; // Already imported above
+
+import PersonnelAssignmentsChart from './charts/PersonnelAssignmentsChart';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-type CategoryDataAlt = { label: string; value: number } // ⚠️ renamed to avoid redeclaration conflict
+type CategoryDataAlt = { label: string; value: number } // renamed to avoid redeclaration conflict
 
 type SchedulingData = { label: string; value: number }
 
@@ -75,13 +77,20 @@ type OffCampusSummary = {
   purposeSummary: Record<string, number>
 }
 
+type ChartRow = {
+  name: string;
+  current: number;
+  past: number;
+}
+
 type ReportsPageProps = InertiaPageProps & {
-  categoryData: CategoryData[]
-  inventorySheetChartData: InventorySheetChartData[]
-  schedulingData: SchedulingData[]
-  transferData: TransferStatusData[]
-  offCampusData: OffCampusSummary
-  turnoverDisposalChartData: TurnoverDisposalChartData[],
+  categoryData: CategoryData[];
+  inventorySheetChartData: InventorySheetChartData[];
+  schedulingData: SchedulingData[];
+  transferData: TransferStatusData[];
+  offCampusData: OffCampusSummary;
+  turnoverDisposalChartData: TurnoverDisposalChartData[];
+  personnelAssignmentsChartData: ChartRow[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Reports', href: '/reports' }]
@@ -275,7 +284,7 @@ export default function ReportsIndex() {
       href: route('reports.transfer'),
       icon: <ArrowRightLeft className="h-5 w-5 text-orange-500" />,
       footer: <span className="text-xs text-muted-foreground">Click "View" to see more details</span>,
-      chart: <TransferStatusChart data={transferData} />, // ✅ only data mode
+      chart: <TransferStatusChart data={transferData} />, // only data mode
     },
     {
       title: 'Turnover/Disposal Report',
@@ -320,7 +329,7 @@ export default function ReportsIndex() {
             </ResponsiveContainer>
           </ChartContainer>
 
-          {/* ✅ Custom legend outside the chart, with explicit spacing */}
+          {/* Custom legend outside the chart, with explicit spacing */}
           <div className="mt-2 flex flex-wrap justify-center gap-4">
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-sm" style={{ background: 'var(--chart-1)' }} />
@@ -352,6 +361,20 @@ export default function ReportsIndex() {
         />
       ),
     },
+    {
+      title: 'Personnel Assignments Report',
+      description: 'View designated personnel and their current/past assigned assets.',
+      href: route('reports.personnel-assignments'),
+      icon: <ClipboardList className="h-5 w-5 text-amber-600" />,
+      footer: (
+        <span className="text-xs text-muted-foreground">
+          Click "View" to open the personnel assignment report
+        </span>
+      ),
+      chart: 
+        <PersonnelAssignmentsChart data={usePage<ReportsPageProps>().props.personnelAssignmentsChartData ?? []} />,
+    },
+
   ]
 
   return (

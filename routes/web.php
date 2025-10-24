@@ -38,6 +38,8 @@
     use App\Http\Controllers\TrashBinController;
     use App\Http\Controllers\Settings\ProfileController;
     use App\Http\Controllers\CalendarController;
+    use App\Http\Controllers\PersonnelAssignmentsReportController;
+    use App\Http\Controllers\VerificationFormController;
 
     Route::get('/', function () {
         if (Auth::check()) {
@@ -153,6 +155,24 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         Route::get('/turnover-disposal', [TurnoverDisposalReportController::class, 'index']) ->name('reports.turnover-disposal');
         Route::get('/turnover-disposal/export/pdf', [TurnoverDisposalReportController::class, 'exportPdf'])->name('reports.turnover-disposal.export.pdf');
         Route::get('/turnover-disposal/export/excel', [TurnoverDisposalReportController::class, 'exportExcel'])->name('reports.turnover-disposal.export.excel');
+
+        Route::get('reports/turnover-disposal/export/donations/pdf', [TurnoverDisposalReportController::class, 'exportDonationPdf'])->name('reports.turnover-disposal.export.donations.pdf');
+        Route::get('/reports/turnover-disposal/export/donations/excel', [TurnoverDisposalReportController::class, 'exportDonationExcel'])
+            ->name('reports.turnover-disposal.export.donations.excel');
+
+        // Asset Assignment Report
+        Route::get('personnel-assignments', [PersonnelAssignmentsReportController::class, 'index'])
+            ->name('reports.personnel-assignments');
+
+        Route::get('/personnel-assignments/export/pdf', [PersonnelAssignmentsReportController::class, 'exportPdf'])
+            ->name('reports.personnel-assignments.export.pdf');
+        Route::get('/personnel-assignments/export/excel', [PersonnelAssignmentsReportController::class, 'exportExcel'])
+            ->name('reports.personnel-assignments.export.excel');
+
+        Route::get('/personnel-assignments/export/detailed/pdf', [PersonnelAssignmentsReportController::class, 'exportDetailedPdf'])
+            ->name('reports.personnel-assignments.export.detailed.pdf');
+        Route::get('/personnel-assignments/export/detailed/excel', [PersonnelAssignmentsReportController::class, 'exportDetailedExcel'])
+            ->name('reports.personnel-assignments.export.detailed.excel');
     });
 
     // Unified Signatories Management
@@ -344,6 +364,18 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         ->middleware('can:delete-turnover-disposal');
     Route::get('/turnover-disposal/{id}/print', [TurnoverDisposalController::class, 'exportPdf'])
         ->name('turnover-disposal.print');
+
+    //  VERIFICATION FORM
+    Route::get('/verification-form', [VerificationFormController::class, 'index'])->name('verification-form.index')
+        ->middleware('can:view-verification-form');
+    Route::get('/verification-form/{id}', [VerificationFormController::class, 'show'])->name('verification-form.show')
+        ->middleware('can:view-verification-form');
+    Route::patch('/verification-form/{id}/verify', [VerificationFormController::class, 'verify'])->name('verification-form.verify')
+        ->middleware('can:verify-verification-form');
+    Route::patch('/verification-form/{id}/reject', [VerificationFormController::class, 'reject'])->name('verification-form.reject')
+        ->middleware('can:verify-verification-form');
+    Route::get('/verification-form/{id}/export-pdf', [VerificationFormController::class, 'exportPdf'])
+        ->name('verification-form.export-pdf');
 
     /// OFF CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {

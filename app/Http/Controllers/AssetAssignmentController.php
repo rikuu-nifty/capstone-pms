@@ -36,12 +36,13 @@ class AssetAssignmentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
-            'assigned_by'       => ['sometimes', Rule::exists('users', 'id')],
-            'date_assigned'     => ['required', 'date'],
-            'remarks'           => ['nullable', 'string'],
-            'selected_assets'   => ['required', 'array', 'min:1'],
-            'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
+            'personnel_id'                      => ['required', Rule::exists('personnels', 'id')],
+            'assigned_by'                       => ['sometimes', Rule::exists('users', 'id')],
+            'date_assigned'                     => ['required', 'date'],
+            'remarks'                           => ['nullable', 'string'],
+            'selected_assets'                   => ['required', 'array', 'min:1'],
+            'selected_assets.*.id'              => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'selected_assets.*.date_assigned'   => ['nullable', 'date'],
         ]);
 
         DB::transaction(function () use ($data, $request) {
@@ -53,10 +54,15 @@ class AssetAssignmentController extends Controller
             ]);
 
             // Attach assets and sync assigned_to
-            foreach ($data['selected_assets'] as $assetId) {
+            foreach ($data['selected_assets'] as $row) {
+                $assetId = data_get($row, 'id');
+                $rawDate = data_get($row, 'date_assigned');
+                $itemDate = $rawDate ?: $data['date_assigned'] ?: now()->toDateString();
+
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
+                    'date_assigned'       => $itemDate,
                 ]);
 
                 InventoryList::where('id', $assetId)->update([
@@ -71,15 +77,18 @@ class AssetAssignmentController extends Controller
     public function update(Request $request, AssetAssignment $assignment)
     {
         $data = $request->validate([
-            'personnel_id'      => ['required', Rule::exists('personnels', 'id')],
-            'date_assigned'     => ['required', 'date'],
-            'assigned_by'       => ['sometimes', Rule::exists('users', 'id')],
-            'remarks'           => ['nullable', 'string'],
-            'selected_assets'   => ['required', 'array', 'min:1'],
-            'selected_assets.*' => ['integer', Rule::exists('inventory_lists', 'id')],
+            'personnel_id'                      => ['required', Rule::exists('personnels', 'id')],
+            'date_assigned'                     => ['required', 'date'],
+            'assigned_by'                       => ['sometimes', Rule::exists('users', 'id')],
+            'remarks'                           => ['nullable', 'string'],
+            'selected_assets'                   => ['required', 'array', 'min:1'],
+            'selected_assets.*.id'              => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+            'selected_assets.*.date_assigned'   => ['nullable', 'date'],
         ]);
 
         DB::transaction(function () use ($assignment, $data, $request) {
+            $recordDate = $data['date_assigned'] ?: now()->toDateString();
+
             $assignment->update([
                 'personnel_id'  => $data['personnel_id'],
                 'date_assigned' => $data['date_assigned'],
@@ -89,10 +98,33 @@ class AssetAssignmentController extends Controller
 
             // Replace items + sync
             $assignment->items()->delete();
-            foreach ($data['selected_assets'] as $assetId) {
+
+            foreach ($data['selected_assets'] as $row) {
+                $assetId = data_get($row, 'id');
+                $rawDate = data_get($row, 'date_assigned');
+                // $itemDate = $rawDate ?: $data['date_assigned'] ?: now()->toDateString();
+
+                // AssetAssignmentItem::create([
+                //     'asset_assignment_id' => $assignment->id,
+                //     'asset_id'            => $assetId,
+                //     'date_assigned'       => $itemDate,
+                // ]);
+
+                // Check if this asset was already linked before (means it's being retained)
+                $existingItem = $assignment->items()->withTrashed()->where('asset_id', $assetId)->first();
+
+                if ($existingItem) {
+                    // Use existing date_assigned if available, or record date as fallback
+                    $itemDate = $rawDate ?: $existingItem->date_assigned ?: $data['date_assigned'] ?: now()->toDateString();
+                } else {
+                    // New asset being added — use manual date or today's date
+                    $itemDate = $rawDate ?: now()->toDateString();
+                }
+
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
+                    'date_assigned'       => $itemDate,
                 ]);
 
                 InventoryList::where('id', $assetId)->update([
@@ -224,6 +256,18 @@ class AssetAssignmentController extends Controller
             }
 
             // Handle reassignment
+            // $newAssignment = AssetAssignment::firstOrCreate(
+            //     ['personnel_id' => $change['new_personnel_id']],
+            //     [
+            //         'assigned_by'   => $request->user()->id,
+            //         'date_assigned' => now()->toDateString(),
+            //         'remarks'       => null,
+            //     ]
+            // );
+
+            // $item->update(['asset_assignment_id' => $newAssignment->id]);
+            // $item->asset->update(['assigned_to' => $newAssignment->personnel_id]);
+
             $newAssignment = AssetAssignment::firstOrCreate(
                 ['personnel_id' => $change['new_personnel_id']],
                 [
@@ -233,7 +277,15 @@ class AssetAssignmentController extends Controller
                 ]
             );
 
-            $item->update(['asset_assignment_id' => $newAssignment->id]);
+            // Soft-delete the old link so it's tracked as "past"
+            $item->delete();
+
+            // Create a new item under the new assignment
+            AssetAssignmentItem::create([
+                'asset_assignment_id' => $newAssignment->id,
+                'asset_id' => $item->asset_id,
+            ]);
+
             $item->asset->update(['assigned_to' => $newAssignment->personnel_id]);
         }
 
@@ -259,8 +311,24 @@ class AssetAssignmentController extends Controller
             $assetIds = AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
                 ->pluck('asset_id');
 
-            AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
-                ->update(['asset_assignment_id' => $newAssignment->id]);
+            // AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
+            //     ->update(['asset_assignment_id' => $newAssignment->id]);
+
+            $items = AssetAssignmentItem::where('asset_assignment_id', $assignment->id)->get();
+
+            foreach ($items as $item) {
+                $item->delete(); // soft-delete the old record
+
+                AssetAssignmentItem::create([
+                    'asset_assignment_id' => $newAssignment->id,
+                    'asset_id' => $item->asset_id,
+                ]);
+            }
+
+            InventoryList::whereIn('id', $assetIds)->update([
+                'assigned_to' => $newAssignment->personnel_id,
+            ]);
+
 
             // Sync assigned_to for all affected assets
             InventoryList::whereIn('id', $assetIds)->update([

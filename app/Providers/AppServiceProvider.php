@@ -60,7 +60,6 @@ use App\Observers\PersonnelObserver;
 use App\Models\Role;
 use App\Observers\RoleObserver;
 
-// Signatories
 use App\Models\InventorySchedulingSignatory;
 use App\Observers\InventorySchedulingSignatoryObserver;
 use App\Models\TransferSignatory;
@@ -69,9 +68,6 @@ use App\Models\TurnoverDisposalSignatory;
 use App\Observers\TurnoverDisposalSignatoryObserver;
 use App\Models\OffCampusSignatory;
 use App\Observers\OffCampusSignatoryObserver;
-
-
-
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -134,7 +130,8 @@ class AppServiceProvider extends ServiceProvider
                     'items' => [],
                     'unread_count' => 0,
                 ];
-            });
-        
-        }
+        });
+
+    }
+
 }

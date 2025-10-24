@@ -16,22 +16,28 @@ return new class extends Migration
 
             $table->unsignedBigInteger('issuing_office_id');
             $table->enum('type', ['turnover', 'disposal']);
-            $table->unsignedBigInteger('receiving_office_id');
-            $table->text('description')->nullable(); // keep to describe reason
-            $table->string('personnel_in_charge')->nullable(); //who the asset was assigned to
+            $table->enum('turnover_category', ['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'])->nullable();
+
+            $table->unsignedBigInteger('receiving_office_id')->nullable();
+            $table->string('external_recipient')->nullable();
+
+            $table->text('description')->nullable();
+            $table->string('personnel_in_charge')->nullable();
 
             $table->unsignedBigInteger('personnel_id');
 
-            $table->date('document_date'); // date written on the signed form
+            $table->date('document_date');
             $table->enum('status', ['pending_review', 'approved', 'rejected', 'cancelled', 'completed']);
             $table->text('remarks')->nullable();
+            $table->boolean('is_donation')->default(false);
+
             $table->foreignId('created_by_id')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreign('issuing_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
-            $table->foreign('receiving_office_id')->references('id')->on('unit_or_departments')->onDelete('cascade');
+            $table->foreign('receiving_office_id')->references('id')->on('unit_or_departments')->nullOnDelete();
             $table->foreign('personnel_id')->references('id')->on('personnels')->onDelete('cascade');
         });
     }

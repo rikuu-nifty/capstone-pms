@@ -46,6 +46,15 @@
             line-height: 1.2;
         }
 
+        header .header-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: right;
+        }
+
         header .header-text h1 {
             margin: 0;
             font-size: 17px;
@@ -166,20 +175,18 @@
             <p class="city">Angeles City</p>
             <p class="office">Office of the Administrative Services</p>
         </div>
+
+        {{-- Optional right-aligned header content --}}
+        @hasSection('header-right')
+        <div class="header-right">
+            @yield('header-right')
+        </div>
+        @endif
     </header>
 
     <main>
         @yield('content')
     </main>
-
-    <!-- <footer>
-        <div class="footer-left">
-            AUF-FORM-AS/PMO-33&nbsp;&nbsp;November 22, 2011&nbsp;&nbsp;Rev. 0
-        </div>
-        <div class="footer-right">
-            {{-- Page number placeholder --}}
-        </div>
-    </footer> -->
 
     <footer>
         @if (!View::hasSection('hide-footer-text'))

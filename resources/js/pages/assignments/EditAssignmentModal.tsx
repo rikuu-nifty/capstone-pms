@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import {
     Dialog,
     DialogContent,
@@ -19,7 +19,6 @@ interface Props {
     onClose: () => void;
     assignment: (AssetAssignment & { items?: AssetAssignmentItem[] }) | null;
     assets: MinimalAsset[];
-    // personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
     available_personnels: { id: number; full_name: string; unit_or_department_id?: number | null }[];
 
     units: { id: number; name: string }[];
@@ -32,13 +31,12 @@ export default function EditAssignmentModal({
     onClose,
     assignment,
     assets,
-    // personnels,
     available_personnels,
     units,
     currentUserId,
     users,
 }: Props) {
-    const { data, setData, put, processing, errors, clearErrors } = useForm<{
+    const { data, setData, processing, errors, clearErrors } = useForm<{
         personnel_id: number | null;
         date_assigned: string;
         remarks: string;
@@ -55,45 +53,44 @@ export default function EditAssignmentModal({
     const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
     const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
 
+    const [itemDates, setItemDates] = useState<Record<number, string>>({});
+    
     useEffect(() => {
-        if (!show || !assignment) return;
+        if (!show) {
+            setData({
+            personnel_id: null,
+            date_assigned: '',
+            remarks: '',
+            selected_assets: [],
+            assigned_by: 0,
+            });
+        }
+    }, [show, setData]);
+
+    useEffect(() => {
+        if (!assignment) return;
 
         const today = new Date().toISOString().split('T')[0];
+        const assignedDate = assignment.date_assigned ?? today;
 
-        const assignedDate = assignment.date_assigned
-            ? new Date(assignment.date_assigned).toISOString().split('T')[0]
-            : today;
+        const map: Record<number, string> = {};
+        (assignment.items ?? []).forEach(i => {
+            if (i.asset_id && i.date_assigned) map[i.asset_id] = i.date_assigned;
+        });
 
+        setItemDates(map);
         setData({
             personnel_id: assignment.personnel_id ?? null,
             date_assigned: assignedDate,
             remarks: assignment.remarks ?? '',
-            selected_assets: assignment.items
-                ? assignment.items.map((i: AssetAssignmentItem) => i.asset_id)
-                : [],
+            selected_assets: assignment.items?.map(i => i.asset_id) ?? [],
             assigned_by: assignment.assigned_by ?? currentUserId,
         });
-
-        if (assignment.personnel?.unit_or_department?.id) {
-            setSelectedUnit(assignment.personnel.unit_or_department.id);
-        } else {
-            setSelectedUnit(null);
-        }
-
+        setSelectedUnit(assignment.personnel?.unit_or_department?.id ?? null);
         clearErrors();
         setShowAssetDropdown([true]);
-    }, [show, assignment, setData, currentUserId, clearErrors]);
+    }, [assignment, setData, clearErrors, currentUserId]);
 
-    // Filter personnels (but always keep current one)
-    // const filteredPersonnels = selectedUnit
-    //     ? personnels.filter(
-    //         (p) =>
-    //         p.unit_or_department_id === selectedUnit ||
-    //         p.id === data.personnel_id
-    //     )
-    //     : personnels;
-
-    // Filter personnels: allow only available_personnels + current personnel
     const basePersonnels = [
     ...available_personnels,
     ...(assignment?.personnel
@@ -104,7 +101,6 @@ export default function EditAssignmentModal({
         }]
         : []),
     ];
-
 
     // Deduplicate by ID
     const uniquePersonnels = basePersonnels.filter(
@@ -132,20 +128,19 @@ export default function EditAssignmentModal({
             !a.is_assigned || currentAssignmentAssetIds.includes(a.id)
         );
 
-    // Filter assets (only those in the selected unit and not already assigned)
-    // const filteredAssets = selectedUnit
-    //     ? assets.filter(
-    //         (a) =>
-    //         a.unit_or_department_id === selectedUnit &&
-    //         !data.selected_assets.includes(a.id)
-    //     )
-    //     : assets.filter((a) => !data.selected_assets.includes(a.id));
-
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!assignment?.id) return;
 
-        put(`/assignments/${assignment.id}`, {
+        const payload = {
+            ...data,
+            selected_assets: data.selected_assets.map((id) => ({
+                id,
+                date_assigned: itemDates[id] ?? '',
+            })),
+        };
+
+        router.put(`/assignments/${assignment.id}`, payload, {
             preserveScroll: true,
             onSuccess: onClose,
         });
@@ -158,7 +153,10 @@ export default function EditAssignmentModal({
                 (open) => !open && onClose()
             }
         >
-            <DialogContent className="flex max-h-[90vh] min-h-[75vh] w-full max-w-[700px] flex-col overflow-hidden p-6 sm:max-w-[800px]">
+            <DialogContent
+                aria-describedby={undefined}
+                className="flex max-h-[90vh] min-h-[75vh] w-full max-w-[700px] flex-col overflow-hidden p-6 sm:max-w-[800px]"
+            >
                 <DialogHeader className="shrink-0">
                     <DialogTitle>Edit Assignment #{assignment?.id ?? ''}</DialogTitle>
                 </DialogHeader>
@@ -263,7 +261,7 @@ export default function EditAssignmentModal({
                         <div className="col-span-2 flex flex-col gap-3">
                             <label className="block font-medium">Assets</label>
 
-                            {data.selected_assets.map((assetId, index) => {
+                            {/* {data.selected_assets.map((assetId, index) => {
                                 const asset = assets.find((a) => a.id === assetId);
                                 return (
                                 asset && (
@@ -286,6 +284,36 @@ export default function EditAssignmentModal({
                                         }}
                                     />
                                 )
+                                );
+                            })} */}
+
+                            {data.selected_assets.map((assetId, index) => {
+                                const asset = assets.find((a) => a.id === assetId);
+                                return (
+                                    asset && (
+                                        <AssignmentAssetItemDetails
+                                            key={assetId}
+                                            asset={asset}
+                                            dateValue={itemDates[assetId] ?? ''}
+                                            onDateChange={(v) => setItemDates((m) => ({ ...m, [assetId]: v }))}
+                                            onRemove={() => {
+                                                const updated = [...data.selected_assets];
+                                                updated.splice(index, 1);
+                                                setData('selected_assets', updated);
+
+                                                setItemDates((m) => {
+                                                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                                    const { [assetId]: _, ...rest } = m;
+                                                    return rest;
+                                                });
+
+                                                const newDropdowns = [...showAssetDropdown];
+                                                newDropdowns.splice(index, 1);
+                                                if (newDropdowns.length === 0) newDropdowns.push(true);
+                                                setShowAssetDropdown(newDropdowns);
+                                            }}
+                                        />
+                                    )
                                 );
                             })}
 

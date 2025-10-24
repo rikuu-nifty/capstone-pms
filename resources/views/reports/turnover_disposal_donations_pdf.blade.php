@@ -154,7 +154,7 @@ return '₱ ' . number_format((float)$amount, 2, '.', ', ');
         </tr>
         <tr>
             <th style="width:60px;">Record No.</th>
-            <th style="width:100px;">Date</th>
+            <th style="width:100px;">Date of Donation</th>
             <th style="width:150px;">Issuing Office</th>
             <th style="width:140px;">Recipient</th>
             <th style="width:150px;">Asset Name</th>

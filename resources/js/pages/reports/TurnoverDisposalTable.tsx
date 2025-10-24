@@ -31,10 +31,11 @@ export default function TurnoverDisposalTable({ records, page, total, pageSize, 
                 <Table>
                     <TableHeader className="bg-gray-50">
                         <TableRow>
-                            <TableHead className="w-[80px] text-center">Code No.</TableHead>
+                            <TableHead className="w-[80px] text-center">Record No.</TableHead>
                             <TableHead className="w-[150px] text-center">Asset Name</TableHead>
-                            <TableHead className="w-[80px] text-center">Record #</TableHead>
                             <TableHead className="w-[120px] text-center">Type</TableHead>
+                            <TableHead className="w-[120px] text-center">Turnover Category</TableHead>
+                            <TableHead className="w-[80px] text-center">For Donation</TableHead>
                             <TableHead className="w-[150px] text-center">Issuing Office</TableHead>
                             <TableHead className="w-[150px] text-center">Receiving Office</TableHead>
                             <TableHead className="w-[120px] text-center">Status</TableHead>
@@ -58,8 +59,15 @@ export default function TurnoverDisposalTable({ records, page, total, pageSize, 
                                         )}
                                     </div>
                                 </TableCell>
-                                <TableCell>{r.turnover_disposal_id}</TableCell>
                                 <TableCell>{ucwords(r.type)}</TableCell>
+                                <TableCell className="whitespace-normal break-words text-center">
+                                    {r.turnover_category ? formatEnums(r.turnover_category) : '—'}
+                                </TableCell>
+                                <TableCell>
+                                    {r.is_donation
+                                        ? <span className="text-green-600 font-medium">Yes</span>
+                                        : <span className="text-red-600 font-medium">No</span>}
+                                </TableCell>
                                 <TableCell>{r.issuing_office}</TableCell>
                                 <TableCell>{r.receiving_office || '—'}</TableCell>
                                 <TableCell>{formatEnums(r.td_status)}</TableCell>

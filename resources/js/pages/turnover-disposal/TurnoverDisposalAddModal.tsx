@@ -20,6 +20,7 @@ interface TurnoverDisposalAddModalProps {
 
 const typeOptions = ['turnover', 'disposal'] as const;
 const statusOptions = ['pending_review', 'approved', 'rejected', 'cancelled', 'completed'] as const;
+const categoryOptions = ['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'] as const;
 
 export default function TurnoverDisposalAddModal({
   show,
@@ -28,15 +29,21 @@ export default function TurnoverDisposalAddModal({
   assets,
   personnels,
 }: TurnoverDisposalAddModalProps) {
-  const { data, setData, post, processing, errors, reset, clearErrors } = useForm<TurnoverDisposalFormData>({
+  const { data, setData, post, processing, errors, reset, clearErrors, setError } = useForm<TurnoverDisposalFormData>({
     issuing_office_id: 0,
     type: 'turnover',
-    receiving_office_id: 0,
+    turnover_category: null,
+
+    receiving_office_id: null, // null not 0 for nullable to be less buggy
+    external_recipient: '',
+
     description: '',
     personnel_in_charge: '',
     document_date: '',
     status: 'pending_review',
     remarks: '',
+    is_donation: false, 
+
     turnover_disposal_assets: [],
 
     personnel_id: null,
@@ -64,6 +71,26 @@ export default function TurnoverDisposalAddModal({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    clearErrors();
+
+    let hasError = false;
+
+    if (data.is_donation) {
+        const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
+        const isReceivingOfficeEmpty = !data.receiving_office_id;
+
+        if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
+            hasError = true;
+            const errorMessage = 'For Donations, either the External Recipient or the Receiving Office must be filled.';
+            setError('external_recipient', errorMessage);
+            // setError('receiving_office_id', errorMessage);
+        }
+    }
+
+    if (hasError) {
+        return;
+    }
+
     post('/turnover-disposal', {
       preserveScroll: true,
       onSuccess: () => {
@@ -117,27 +144,63 @@ export default function TurnoverDisposalAddModal({
         {errors.type && <p className="mt-1 text-xs text-red-500">{errors.type}</p>}
       </div>
 
-      {/* Status */}
+      {/* Turnover Category */}
       <div className="col-span-1">
-        <label className="mb-1 block font-medium">Status</label>
+        <label className="mb-1 block font-medium">Turnover Category</label>
         <select
-          className="w-full rounded-lg border p-2"
-          value={data.status}
+          className="w-full rounded-lg border p-2 cursor-pointer"
+          value={data.turnover_category ?? ''}
           onChange={(e) =>
-            setData('status', e.target.value as (typeof statusOptions)[number])
+            setData(
+              'turnover_category',
+              e.target.value === ''
+                ? null
+                : (e.target.value as (typeof categoryOptions)[number])
+            )
           }
         >
-          {statusOptions.map((status) => (
-            <option
-              key={status}
-              value={status}
-              disabled={status !== 'pending_review'}
-            >
-              {formatEnums(status)}
+          <option value="">Select Category</option>
+          {categoryOptions.map((cat) => (
+            <option key={cat} value={cat}>
+              {formatEnums(cat)}
             </option>
           ))}
         </select>
-        {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+        {errors.turnover_category && (
+          <p className="mt-1 text-xs text-red-500">{errors.turnover_category}</p>
+        )}
+      </div>
+
+      <div className="col-span-2 flex items-center gap-2">
+        <input
+          id="is_donation"
+          type="checkbox"
+          className="cursor-pointer"
+          checked={!!data.is_donation}
+          onChange={(e) => setData('is_donation', e.target.checked)}
+        />
+        <label 
+          htmlFor="is_donation" 
+          className="text-sm font-medium"
+        >
+          For Donation
+        </label>
+      </div>
+
+      {/* External Recipient */}
+      <div className="col-span-2">
+        <label className="mb-1 block font-medium">External Recipient</label>
+        <input
+          type="text"
+          className={`w-full rounded-lg border p-2 ${!data.is_donation ? 'bg-gray-100 text-gray-500' : ''}`}
+          placeholder="Enter recipient name or organization for donation"
+          value={data.external_recipient ?? ''}
+          onChange={(e) => setData('external_recipient', e.target.value)}
+          disabled={!data.is_donation}
+        />
+        {errors.external_recipient && (
+          <p className="mt-1 text-xs text-red-500">{errors.external_recipient}</p>
+        )}
       </div>
 
       {/* Issuing Office */}
@@ -158,7 +221,7 @@ export default function TurnoverDisposalAddModal({
             const id = opt ? opt.value : 0;
             setData('issuing_office_id', id);
             setData('personnel_id', null);
-            setData('turnover_disposal_assets', []); // reset assets when office changes
+            setData('turnover_disposal_assets', []);
             setShowAssetDropdown([true]);
           }}
           options={unitOrDepartments.map((unit) => ({
@@ -171,7 +234,7 @@ export default function TurnoverDisposalAddModal({
           <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
         )}
       </div>
-
+      
       {/* Receiving Office */}
       <div className="col-span-1">
         <label className="mb-1 block font-medium">Receiving Office</label>
@@ -201,6 +264,29 @@ export default function TurnoverDisposalAddModal({
         )}
       </div>
 
+      {/* Status */}
+      <div className="col-span-1">
+        <label className="mb-1 block font-medium">Status</label>
+        <select
+          className="w-full rounded-lg border p-2"
+          value={data.status}
+          onChange={(e) =>
+            setData('status', e.target.value as (typeof statusOptions)[number])
+          }
+        >
+          {statusOptions.map((status) => (
+            <option
+              key={status}
+              value={status}
+              disabled={status !== 'pending_review'}
+            >
+              {formatEnums(status)}
+            </option>
+          ))}
+        </select>
+        {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+      </div>
+      
       {/* Description */}
       <div className="col-span-2">
         <label className="mb-1 block font-medium">Description</label>

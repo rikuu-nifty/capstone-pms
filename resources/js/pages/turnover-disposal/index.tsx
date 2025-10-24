@@ -39,13 +39,13 @@ type TurnoverSortKey = (typeof turnoverSortOptions)[number]['value'];
 type PageProps = TurnoverDisposalPageProps & {
     viewing?: TurnoverDisposals;
     pmoHead?: { id: number; name: string } | null;
-    signatories: Record<string, { name: string; title: string }>; // ✅ add this
+    signatories: Record<string, { name: string; title: string }>;
 };
 
 const formatDateLong = (d?: string | null) => {
     if (!d) return '—';
 
-    // ✅ Handle ranges like "2025-10-08:2025-10-08" or "2025-10-08 00:00:00"
+    // Handle ranges like "2025-10-08:2025-10-08" or "2025-10-08 00:00:00"
     const datePart = d.split(':')[0].trim(); // only take the first part before ':'
     const safeDate = datePart.includes('T') ? datePart : `${datePart}T00:00:00`;
 
@@ -126,16 +126,25 @@ export default function TurnoverDisposalsIndex({
     const [selected_type, setSelected_type] = useState('');
     const [selected_issuing_office, setSelected_issuing_office] = useState('');
 
+    const [selected_turnover_category, setSelected_turnover_category] = useState('');
+    const [selected_is_donation, setSelected_is_donation] = useState('');
+
     const clearFilters = () => {
         setSelected_status('');
         setSelected_type('');
         setSelected_issuing_office('');
+
+        setSelected_turnover_category('');
+        setSelected_is_donation('');
     };
     
     const applyFilters = (f: TurnoverDisposalFilters) => {
         setSelected_status(f.status);
         setSelected_type(f.type);
         setSelected_issuing_office(f.issuing_office_id);
+
+        setSelected_turnover_category(f.turnover_category);
+        setSelected_is_donation(f.is_donation);
     };
 
     const [sortKey, setSortKey] = useState<TurnoverSortKey>('id');
@@ -171,12 +180,16 @@ export default function TurnoverDisposalsIndex({
         const statusValue = (td.status || '').toString().toLowerCase();
         const typeValue = (td.type || '').toString().toLowerCase();
         const issuingCode = td.issuing_office?.code ?? '';
+        const categoryValue = td.turnover_category ?? '';
+        const donationValue = td.is_donation ? '1' : '0';
 
         const matchesStatus = !selected_status || statusValue === selected_status;
         const matchesType = !selected_type || typeValue === selected_type;
         const matchesIssuing = !selected_issuing_office || issuingCode === selected_issuing_office;
+        const matchesCategory = !selected_turnover_category || categoryValue === selected_turnover_category;
+        const matchesDonation = !selected_is_donation || donationValue === selected_is_donation;
 
-        return matchesSearch && matchesStatus && matchesType && matchesIssuing;
+        return matchesSearch && matchesStatus && matchesType && matchesIssuing && matchesCategory && matchesDonation;
         });
     }, [
         turnoverDisposals,
@@ -184,6 +197,8 @@ export default function TurnoverDisposalsIndex({
         selected_status,
         selected_type,
         selected_issuing_office,
+        selected_turnover_category,
+        selected_is_donation,
     ]);
 
     const sortValue = useMemo<Record<TurnoverSortKey, (td: TurnoverDisposals) => number>>(() => (
@@ -308,6 +323,9 @@ export default function TurnoverDisposalsIndex({
                             selected_status={selected_status}
                             selected_type={selected_type}
                             selected_issuing_office={selected_issuing_office}
+                            selected_turnover_category={selected_turnover_category}
+                            selected_is_donation={selected_is_donation}
+
                             unitOrDepartments={unitOrDepartments}
                         />
 
@@ -331,7 +349,10 @@ export default function TurnoverDisposalsIndex({
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Issuing Office Code</TableHead>
                                 <TableHead className="text-center">Type</TableHead>
+                                <TableHead className="text-center">Turnover Category</TableHead>
+                                <TableHead className="text-center">For Donation</TableHead>
                                 <TableHead className="text-center">Receiving Office Code</TableHead>
+                                <TableHead className="text-center">External Recipient</TableHead>
                                 {/* <TableHead className="text-center">Description</TableHead> */}
                                 <TableHead className="text-center">Asset Count</TableHead>
                                 <TableHead className="text-center">Document Date</TableHead>
@@ -349,9 +370,30 @@ export default function TurnoverDisposalsIndex({
                                         </TableCell>
                                         <TableCell>{formatEnums(turnoverDisposals.type)}</TableCell>
                                         <TableCell>
-                                            {(formatEnums(turnoverDisposals.receiving_office?.code).toUpperCase())}
+                                            {turnoverDisposals.turnover_category
+                                                ? formatEnums(turnoverDisposals.turnover_category)
+                                                : '—'}
                                         </TableCell>
-                                        {/* <TableCell>{ turnoverDisposals.description ?? '—'}</TableCell> */}
+                                        <TableCell>
+                                            {turnoverDisposals.is_donation
+                                                ? (
+                                                <Badge variant="success" className="text-xs px-2 py-1 bg-green-100 text-green-700 border border-green-300">
+                                                    Yes
+                                                </Badge>
+                                                ) : (
+                                                <Badge variant="outline" className="text-xs px-2 py-1 text-gray-500">
+                                                    No
+                                                </Badge>
+                                                )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {(formatEnums(turnoverDisposals.receiving_office?.code ?? '—').toUpperCase())}
+                                        </TableCell>
+                                        <TableCell>
+                                            {turnoverDisposals.external_recipient
+                                                ? turnoverDisposals.external_recipient
+                                                : '—'}
+                                        </TableCell>
                                         <TableCell>{ turnoverDisposals.asset_count }</TableCell>
                                         <TableCell>{ formatDateLong(turnoverDisposals.document_date) }</TableCell>
                                         <TableCell>
@@ -419,7 +461,7 @@ export default function TurnoverDisposalsIndex({
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                    <TableCell colSpan={10} className="text-center text-sm text-muted-foreground">
                                         No turnover or disposal records found.
                                     </TableCell>
                                 </TableRow>

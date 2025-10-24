@@ -14,6 +14,7 @@ use App\Models\BuildingRoom;
 use App\Models\UnitOrDepartment;
 use App\Models\Category;
 use App\Exports\TurnoverDisposalReportExport;
+use App\Exports\TurnoverDisposalDonationsExport;
 
 use Carbon\CarbonPeriod;
 
@@ -32,17 +33,19 @@ class TurnoverDisposalReportController extends Controller
                 'issuing_office_id',
                 'receiving_office_id',
                 'category_id',
+                'turnover_category',
+                'is_donation',
             ]),
             fn($value) => !is_null($value) && $value !== ''
         );
 
         $perPage = (int) $request->get('per_page', 10);
 
-        // $paginator = TurnoverDisposal::filterAndPaginate($filters, $perPage);
         $paginator = TurnoverDisposal::filterAndPaginateAssets($filters, $perPage);
         $paginator->appends($filters);
 
-        $rawData = TurnoverDisposal::monthlyCompletedTrendData();
+        // $rawData = TurnoverDisposal::monthlyCompletedTrendData();
+        $rawData = TurnoverDisposal::monthlyCompletedTrendData($filters);
 
         // Generate Jan–Dec for current year
         $year = now()->year;
@@ -56,6 +59,8 @@ class TurnoverDisposalReportController extends Controller
                 'disposal' => (int) ($rawData[$ym]->disposal ?? 0),
             ];
         });
+
+        $donationSummary = TurnoverDisposal::donationSummary($filters);
 
         return Inertia::render('reports/TurnoverDisposalReport', [
             'title'         => 'Turnover/Disposal Report',
@@ -80,6 +85,7 @@ class TurnoverDisposalReportController extends Controller
             'rooms'         => BuildingRoom::select('id', 'room as name', 'building_id')->get(),
             'filters'       => $filters,
             'chartData'     => $chartData,
+            'donationSummary' => $donationSummary,
         ]);
     }
 
@@ -92,7 +98,7 @@ class TurnoverDisposalReportController extends Controller
         $filename  = "Turnover_Disposal_Report-{$timestamp}.xlsx";
 
         return Excel::download(
-            new \App\Exports\TurnoverDisposalReportExport($records->items(), $filters),
+            new TurnoverDisposalReportExport($records->items(), $filters),
             $filename
         );
     }
@@ -108,7 +114,38 @@ class TurnoverDisposalReportController extends Controller
         ])->setPaper('A4', 'landscape')
         ->setOption('isPhpEnabled', true);
 
-        // return $pdf->download('Turnover_Disposal_Report-' . now()->format('Y-m-d') . '.pdf');
+        // return $pdf->download('Turnover_Disposal_Report -' . now()->format('Y-m-d') . '.pdf');
         return $pdf->stream('Turnover_Disposal_Report');
+    }
+
+    public function exportDonationPdf(Request $request)
+    {
+        $filters = $request->all();
+        $donationSummary = TurnoverDisposal::donationSummary($filters);
+
+        $pdf = Pdf::loadView('reports.turnover_disposal_donations_pdf', [
+            'donationSummary' => $donationSummary,
+            'filters' => $filters,
+        ])
+            ->setPaper('A4', 'landscape')
+            ->setOption('isPhpEnabled', true);
+
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        // return $pdf->download("Donation_Summary_Report_{$timestamp}.pdf");
+        return $pdf->stream("Donation_Summary_Report_{$timestamp}.pdf");
+    }
+
+    public function exportDonationExcel(Request $request)
+    {
+        $filters = $request->all();
+        $donationSummary = TurnoverDisposal::donationSummary($filters);
+
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $filename  = "Donation_Summary_Report_{$timestamp}.xlsx";
+
+        return Excel::download(
+            new TurnoverDisposalDonationsExport($donationSummary, $filters),
+            $filename
+        );
     }
 }

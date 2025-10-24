@@ -32,6 +32,10 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     "Calendar": [
         "view-calendar"
     ],
+    "Verification Form": [
+        "view-verification-form",
+        "verify-verification-form",
+    ],
     "Trash Bin": [
         "view-trash-bin",
         "restore-trash-bin",
