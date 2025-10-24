@@ -147,6 +147,8 @@ export default function PersonnelAssignmentsReport() {
     const [pageSize, setPageSize] = useState(records.meta.per_page ?? 10);
     const [displayed, setDisplayed] = useState<PersonnelRow[]>(records.data);
 
+    const [exportType, setExportType] = useState<'summary' | 'detailed'>('summary');
+
     function updateFilter<K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) {
         setFilters((prev) => ({ ...prev, [key]: value }));
     }
@@ -215,6 +217,28 @@ export default function PersonnelAssignmentsReport() {
                 {/* Filters */}
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        
+                        {/* Export Report Type */}
+                        <div className="lg:col-span-4 md:col-span-3 sm:col-span-2 col-span-1">
+                            <label className="mb-1 block text-sm font-medium text-gray-700">
+                                Export Report Type
+                            </label>
+                            <Select
+                                className="w-full cursor-pointer"
+                                isSearchable={false}
+                                value={
+                                exportType === 'summary'
+                                    ? { value: 'summary', label: 'Summary Report' }
+                                    : { value: 'detailed', label: 'Detailed Report' }
+                                }
+                                options={[
+                                    { value: 'summary', label: 'Summary Report' },
+                                    { value: 'detailed', label: 'Detailed Report' },
+                                ]}
+                                onChange={(opt) => setExportType(opt?.value as 'summary' | 'detailed')}
+                            />
+                        </div>
+
                         {/* From Date */}
                         <div>
                             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -436,7 +460,7 @@ export default function PersonnelAssignmentsReport() {
                                     style={{ backgroundColor: "#155dfc" }}
                                 >
                                     <FileDown className="h-4 w-4" />
-                                    Export
+                                    Export Summary
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-44 p-2">
@@ -447,10 +471,10 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const excelRoute =
-                                        viewMode === "detailed"
+                                        const excelRoute = exportType === "detailed"
                                             ? route("reports.personnel-assignments.export.detailed.excel")
                                             : route("reports.personnel-assignments.export.excel");
+
                                         window.open(`${excelRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
@@ -461,10 +485,10 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const pdfRoute =
-                                        viewMode === "detailed"
+                                        const pdfRoute = exportType === "detailed"
                                             ? route("reports.personnel-assignments.export.detailed.pdf")
                                             : route("reports.personnel-assignments.export.pdf");
+
                                         window.open(`${pdfRoute}?${query}`, "_blank");
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"

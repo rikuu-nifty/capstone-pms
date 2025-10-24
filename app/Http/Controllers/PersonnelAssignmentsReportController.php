@@ -233,7 +233,8 @@ class PersonnelAssignmentsReportController extends Controller
             ->setOption('isPhpEnabled', true);
 
         $filename = 'Personnel_Assignments_Detailed_Report_' . now()->format('Y-m-d') . '.pdf';
-        return $pdf->stream($filename);
+        // return $pdf->stream($filename);
+        return $pdf->download($filename);
     }
 
     public function exportDetailedExcel(Request $request)
