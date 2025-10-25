@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, UserCheck2, UserX, AlertTriangle, UserPen, UserRoundMinus } from 'lucide-react';
 import Pagination, { PageInfo } from '@/components/Pagination';
-import { formatDateLong } from '@/types/custom-index';
+// import { formatDateLong } from '@/types/custom-index';
+import { formatDateTimeLong } from '@/types/datetime';
 import type { AssignmentPageProps, AssetAssignment } from '@/types/asset-assignment';
 
 import { Input } from '@/components/ui/input';
@@ -312,7 +313,8 @@ export default function AssignmentsIndex({
                                     </TableCell>
                                     <TableCell>{a.personnel?.unit_or_department?.name ?? '—'}</TableCell>
                                     <TableCell>{a.items_count ?? 0}</TableCell>
-                                    <TableCell>{formatDateLong(a.date_assigned)}</TableCell>
+                                    {/* <TableCell>{formatDateLong(a.date_assigned)}</TableCell> */}
+                                    <TableCell>{formatDateTimeLong(a.date_assigned)}</TableCell>
                                     <TableCell>{a.assigned_by_user?.name ?? '—'}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center items-center gap-2">

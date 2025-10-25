@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Select from 'react-select';
+import { toInputDateTimeLocal, toServerDateTime } from '@/types/datetime';
+
 import AssignmentAssetItemDetails from './AssignmentAssetItemDetails';
 
 import type { AssetAssignment, AssetAssignmentItem, MinimalAsset } from '@/types/asset-assignment';
@@ -70,8 +72,11 @@ export default function EditAssignmentModal({
     useEffect(() => {
         if (!assignment) return;
 
-        const today = new Date().toISOString().split('T')[0];
-        const assignedDate = assignment.date_assigned ?? today;
+        // const today = new Date().toISOString().split('T')[0];
+        // const assignedDate = assignment.date_assigned ?? today;
+        const assignedDate = assignment.date_assigned
+            ? assignment.date_assigned.replace(' ', 'T').slice(0,16)
+            : toInputDateTimeLocal();
 
         const map: Record<number, string> = {};
         (assignment.items ?? []).forEach(i => {
@@ -132,8 +137,17 @@ export default function EditAssignmentModal({
         e.preventDefault();
         if (!assignment?.id) return;
 
+        // const payload = {
+        //     ...data,
+        //     selected_assets: data.selected_assets.map((id) => ({
+        //         id,
+        //         date_assigned: itemDates[id] ?? '',
+        //     })),
+        // };
+
         const payload = {
             ...data,
+            date_assigned: toServerDateTime(data.date_assigned),
             selected_assets: data.selected_assets.map((id) => ({
                 id,
                 date_assigned: itemDates[id] ?? '',
@@ -221,8 +235,14 @@ export default function EditAssignmentModal({
                         {/* Date Assigned */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Date Assigned</label>
-                            <input
+                            {/* <input
                                 type="date"
+                                className="w-full rounded-lg border p-2"
+                                value={data.date_assigned}
+                                onChange={(e) => setData('date_assigned', e.target.value)}
+                            /> */}
+                            <input
+                                type="datetime-local"
                                 className="w-full rounded-lg border p-2"
                                 value={data.date_assigned}
                                 onChange={(e) => setData('date_assigned', e.target.value)}
