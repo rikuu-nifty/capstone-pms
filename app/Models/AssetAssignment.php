@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
-use Carbon\Carbon;
-
 class AssetAssignment extends Model
 {
     use SoftDeletes;
@@ -179,34 +177,5 @@ class AssetAssignment extends Model
                 'asset_id' => $assetId,
             ]);
         }
-    }
-
-    public static function nextSafeEventTime(int $personnelId, ?Carbon $proposed = null): Carbon
-    {
-        $t = $proposed ? (clone $proposed) : now();
-
-        // Find the latest event time (gain or loss) for this personnel
-        $row = DB::table('asset_assignment_items as e')
-            ->join('asset_assignments as a', 'a.id', '=', 'e.asset_assignment_id')
-            ->where('a.personnel_id', $personnelId)
-            ->selectRaw('
-            MAX(e.date_assigned) as last_gain,
-            MAX(e.deleted_at)    as last_del
-        ')
-            ->first();
-
-        $lastGain = $row?->last_gain ? Carbon::parse($row->last_gain) : null;
-        $lastDel  = $row?->last_del  ? Carbon::parse($row->last_del)  : null;
-
-        $last = $lastGain && $lastDel
-            ? ($lastGain->greaterThan($lastDel) ? $lastGain : $lastDel)
-            : ($lastGain ?: $lastDel);
-
-        // If proposed time is not strictly after the last event, nudge by 1 second
-        if ($last && $t->lte($last)) {
-            $t = $last->copy()->addSecond();
-        }
-
-        return $t;
     }
 }
