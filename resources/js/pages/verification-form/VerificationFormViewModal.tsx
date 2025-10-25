@@ -127,7 +127,7 @@ export default function VerificationFormViewModal({
                 </div>
 
                 <div className="text-right text-sm leading-tight font-bold mr-2">
-                    <p>VF No. A-014</p>
+                    <p>VF No. A-{recordNo}</p>
                 </div>
             </div>
 

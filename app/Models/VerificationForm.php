@@ -82,7 +82,7 @@ class VerificationForm extends Model
                     'status'                 => $vf->status,
                     'notes'                  => $vf->notes,
                     'remarks'                => $vf->remarks,
-                    'unit_or_department'     => $vf->unitOrDepartment?->only(['name', 'code']),
+                    'unit_or_department'     => $vf->unitOrDepartment?->only(['id', 'name', 'code']),
                     'requested_by_personnel' => $person ? [
                         'id'    => $person->id,
                         'name'  => $personName,

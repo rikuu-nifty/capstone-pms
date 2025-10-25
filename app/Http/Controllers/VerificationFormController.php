@@ -74,7 +74,7 @@ class VerificationFormController extends Controller
             [
                 'viewing' => [
                     'id'                     => $verification->id,
-                    'unit_or_department'     => $verification->unitOrDepartment?->only(['name', 'code']),
+                    'unit_or_department'     => $verification->unitOrDepartment?->only(['id', 'name', 'code']),
                     'requested_by_personnel' => $verification->requestedByPersonnel ? [
                         'id'    => $verification->requestedByPersonnel->id,
                         'name'  => trim($verification->requestedByPersonnel->first_name . ' ' .
