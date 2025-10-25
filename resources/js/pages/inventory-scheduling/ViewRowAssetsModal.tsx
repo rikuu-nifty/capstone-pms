@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { ucwords } from '@/types/custom-index';
-import axios from 'axios';
+import axios, { AxiosError }  from 'axios';
 import { Button } from '@/components/ui/button';
 
 type AssetWithStatus = {
@@ -33,6 +33,15 @@ type RowAssetsModalProps = {
     unitId?: number | null;
 };
 
+type UiError = {
+  message: string;
+  status?: number;
+  url?: string;
+  method?: string;
+  data?: unknown;
+};
+
+
 function ViewRowAssetModal({ 
     open, 
     onClose, 
@@ -47,46 +56,110 @@ function ViewRowAssetModal({
     const [total, setTotal] = useState(0);
     const pageSize = 10;
 
-    const fetchAssets = useCallback(
-        async (p: number) => {
-            const res = await axios.get(
-                route('schedules.rowAssets', { schedule: scheduleId, row: rowId }),
-                { params: { page: p, per_page: pageSize, type, unit_id: unitId } }
-            );
-            setAssets(res.data.data);
-            setTotal(res.data.total);
-        },
-        [scheduleId, rowId, type, pageSize, unitId]
+
+
+// 2) Narrow unknown → UiError
+function toUiError(e: unknown): UiError {
+  if (axios.isAxiosError(e)) {
+    const ax = e as AxiosError<{ message?: string }>;
+    return {
+      message: ax.response?.data?.message ?? ax.message,
+      status: ax.response?.status,
+      url: ax.config?.url,
+      method: ax.config?.method,
+      data: ax.response?.data,
+    };
+  }
+  if (e instanceof Error) return { message: e.message };
+  return { message: String(e) };
+}
+
+const [lastError, setLastError] = useState<UiError | null>(null);
+
+const fetchAssets = useCallback(async (p: number) => {
+  try {
+    const res = await axios.get(
+      route('schedules.rowAssets', { schedule: scheduleId, row: rowId }),
+      { params: { page: p, per_page: pageSize, type, unit_id: unitId } }
     );
+    setAssets(res.data.data);
+    setTotal(res.data.total);
+    setLastError(null);
+  } catch (e: unknown) {
+    console.error('Failed to load assets', e);
+    setLastError(toUiError(e));
+  }
+}, [scheduleId, rowId, type, pageSize, unitId]);
+
+const updateStatus = async (assetId: number, newStatus: string) => {
+  try {
+    await axios.put(
+      route('schedules.updateAssetStatus', { schedule: scheduleId, asset: assetId }),
+      { inventory_status: newStatus }
+    );
+    fetchAssets(page);
+    setLastError(null);
+  } catch (e: unknown) {
+    console.error('Failed to update asset status', e);
+    setLastError(toUiError(e));
+  }
+};
+
+const bulkUpdateStatus = async (newStatus: string) => {
+  try {
+    await axios.put(
+      route('schedules.bulkUpdateAssetStatus', { schedule: scheduleId, row: rowId }),
+      { inventory_status: newStatus, type, unit_id: unitId }
+    );
+    fetchAssets(page);
+    setLastError(null);
+  } catch (e: unknown) {
+    console.error('Failed to bulk update assets', e);
+    setLastError(toUiError(e));
+  }
+};
+
+    // const fetchAssets = useCallback(
+    //     async (p: number) => {
+    //         const res = await axios.get(
+    //             route('schedules.rowAssets', { schedule: scheduleId, row: rowId }),
+    //             { params: { page: p, per_page: pageSize, type, unit_id: unitId } }
+    //         );
+    //         setAssets(res.data.data);
+    //         setTotal(res.data.total);
+    //     },
+    //     [scheduleId, rowId, type, pageSize, unitId]
+    // );
+
 
     useEffect(() => {
         if (open) fetchAssets(page);
     }, [open, page, fetchAssets]);
 
-    const updateStatus = async (assetId: number, newStatus: string) => {
-        try {
-            await axios.put(
-                route('schedules.updateAssetStatus', { schedule: scheduleId, asset: assetId }),
-                { inventory_status: newStatus }
-            );
-            // refresh after update
-            fetchAssets(page);
-        } catch (err) {
-            console.error('Failed to update asset status', err);
-        }
-    };
+    // const updateStatus = async (assetId: number, newStatus: string) => {
+    //     try {
+    //         await axios.put(
+    //             route('schedules.updateAssetStatus', { schedule: scheduleId, asset: assetId }),
+    //             { inventory_status: newStatus }
+    //         );
+    //         // refresh after update
+    //         fetchAssets(page);
+    //     } catch (err) {
+    //         console.error('Failed to update asset status', err);
+    //     }
+    // };
 
-    const bulkUpdateStatus = async (newStatus: string) => {
-        try {
-            await axios.put(
-                route('schedules.bulkUpdateAssetStatus', { schedule: scheduleId, row: rowId }),
-                { inventory_status: newStatus, type, unit_id: unitId }
-            );
-            fetchAssets(page);
-        } catch (err) {
-            console.error('Failed to bulk update assets', err);
-        }
-    };
+    // const bulkUpdateStatus = async (newStatus: string) => {
+    //     try {
+    //         await axios.put(
+    //             route('schedules.bulkUpdateAssetStatus', { schedule: scheduleId, row: rowId }),
+    //             { inventory_status: newStatus, type, unit_id: unitId }
+    //         );
+    //         fetchAssets(page);
+    //     } catch (err) {
+    //         console.error('Failed to bulk update assets', err);
+    //     }
+    // };
 
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -151,6 +224,16 @@ function ViewRowAssetModal({
                             Set all as Missing
                         </Button>
                     </div>
+
+                    {lastError && (
+  <div className="mb-3 rounded border border-red-300 bg-red-50 p-3 text-xs text-red-900 dark:border-red-800 dark:bg-red-900/20">
+    <strong className="block mb-1">Request Error</strong>
+    <pre className="overflow-auto max-h-48 whitespace-pre-wrap">
+      {JSON.stringify(lastError, null, 2)}
+    </pre>
+  </div>
+)}
+
 
                     {/* Table wrapper */}
                     <div className="w-[320px] sm:w-full mt-4 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">

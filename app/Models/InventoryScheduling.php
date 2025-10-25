@@ -345,12 +345,12 @@ class InventoryScheduling extends Model
         $quarterEnd = $now->copy()->lastOfQuarter();
 
         // Completed this month
-        $completedThisMonth = static::where('scheduling_status', 'completed')
+        $completedThisMonth = static::where('scheduling_status', 'Completed')
             ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
             ->count();
 
         // On-time completion using proper date comparison
-        $onTimeThisMonth = static::where('scheduling_status', 'completed')
+        $onTimeThisMonth = static::where('scheduling_status', 'Completed')
             ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
             ->whereRaw("DATE_FORMAT(actual_date_of_inventory, '%Y-%m') = inventory_schedule")
             ->count();
@@ -363,11 +363,11 @@ class InventoryScheduling extends Model
         $overdueLastMonth = static::whereRaw("
             STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') BETWEEN ? AND ?
         ", [$lastMonthStart, $lastMonthEnd])
-                ->whereIn('scheduling_status', ['pending', 'pending_review', 'overdue'])
+                ->whereIn('scheduling_status', ['Pending', 'Pending_review', 'Overdue'])
                 ->count();
 
         // Pending next 30 days
-        $pendingNext30Days = static::whereIn('scheduling_status', ['pending', 'pending_review'])
+        $pendingNext30Days = static::whereIn('scheduling_status', ['Pending', 'Pending_review'])
             ->whereRaw("
             STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') BETWEEN ? AND ?
         ", [$now, $now->copy()->addDays(30)])
@@ -378,7 +378,7 @@ class InventoryScheduling extends Model
             STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') BETWEEN ? AND ?
         ", [$quarterStart, $quarterEnd])->count();
 
-        $cancelledQuarter = static::where('scheduling_status', 'cancelled')
+        $cancelledQuarter = static::where('scheduling_status', 'Cancelled')
             ->whereRaw("
                 STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d') BETWEEN ? AND ?
             ", [$quarterStart, $quarterEnd])
@@ -389,7 +389,7 @@ class InventoryScheduling extends Model
             : 0;
 
         // Average delay
-        $delays = static::where('scheduling_status', 'completed')
+        $delays = static::where('scheduling_status', 'Completed')
             ->whereBetween('actual_date_of_inventory', [$startOfMonth, $endOfMonth])
             ->selectRaw("DATEDIFF(actual_date_of_inventory, STR_TO_DATE(CONCAT(inventory_schedule, '-01'), '%Y-%m-%d')) as delay")
             ->pluck('delay');
@@ -417,27 +417,25 @@ class InventoryScheduling extends Model
         $scheduled = $counts['scheduled'] ?? 0;
         $notInventoried = $counts['not_inventoried'] ?? 0;
 
-        $newStatus = 'pending';
+        $newStatus = 'Pending';
 
         if ($total === 0) {
-            $newStatus = 'pending';
+            $newStatus = 'Pending';
         } elseif ($completed === $total) {
-            $newStatus = 'completed';
+            $newStatus = 'Completed';
         } elseif ($notInventoried === $total) {
-            // $newStatus = 'not_inventoried';
-            $newStatus = 'cancelled';
+            $newStatus = 'Cancelled';
         } elseif ($scheduled === $total) {
-            // check if past due
-            $ym = $this->inventory_schedule;
+            $ym = $this->inventory_schedule; // check if past due
             if ($ym) {
                 [$y, $m] = explode('-', $ym);
                 $scheduleEnd = Carbon::create($y, $m)->endOfMonth();
-                $newStatus = now()->gt($scheduleEnd) ? 'overdue' : 'pending';
+                $newStatus = now()->gt($scheduleEnd) ? 'Overdue' : 'Pending';
             } else {
-                $newStatus = 'pending';
+                $newStatus = 'Pending';
             }
         } else {
-            $newStatus = 'in_progress';
+            $newStatus = 'In_Progress';
         }
 
         if ($this->scheduling_status !== $newStatus) {
