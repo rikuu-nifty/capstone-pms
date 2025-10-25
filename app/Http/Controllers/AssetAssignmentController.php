@@ -69,7 +69,7 @@ class AssetAssignmentController extends Controller
                     ->exists();
 
                 if ($hadRecentDeletion) {
-                    $itemDate = $itemDate->copy()->addMinutes(2);
+                    $itemDate = $itemDate->copy()->addMinutes(1);
                 }
 
                 AssetAssignmentItem::create([
@@ -290,7 +290,7 @@ class AssetAssignmentController extends Controller
             AssetAssignmentItem::create([
                 'asset_assignment_id' => $newAssignment->id,
                 'asset_id' => $item->asset_id,
-                'date_assigned' => now()->addMinutes(2),
+                'date_assigned' => now()->addMinutes(1),
             ]);
 
             $item->asset->update(['assigned_to' => $newAssignment->personnel_id]);
@@ -325,7 +325,7 @@ class AssetAssignmentController extends Controller
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $newAssignment->id,
                     'asset_id' => $item->asset_id,
-                    'date_assigned' => now()->addMinutes(2),
+                    'date_assigned' => now()->addMinutes(1),
                 ]);
             }
 
