@@ -12,8 +12,8 @@ type Props = {
 export default function AssignmentAssetItemDetails({ 
     asset, 
     onRemove,
-    dateValue = '',
-    onDateChange,
+    // dateValue = '',
+    // onDateChange,
 }: Props) {
     const [open, setOpen] = useState(false);
 
@@ -94,7 +94,7 @@ export default function AssignmentAssetItemDetails({
                             </dd>
                         </div>
 
-                        <div className="col-span-2">
+                        {/* <div className="col-span-2">
                             <label className="mb-1 block font-medium">Asset Date Assigned</label>
                             <input
                                 type="date"
@@ -105,7 +105,7 @@ export default function AssignmentAssetItemDetails({
                             <p className="mt-1 text-xs text-amber-600">
                                 Leave empty to use the assignment’s date
                             </p>
-                        </div>
+                        </div> */}
                     </dl>
                 </div>
             )}
