@@ -47,12 +47,16 @@ class AssetAssignmentController extends Controller
         ]);
 
         DB::transaction(function () use ($data, $request) {
+            $assignedDate = Carbon::parse($data['date_assigned']);
+
             $assignment = AssetAssignment::create([
                 'personnel_id'  => $data['personnel_id'],
                 'assigned_by'   => $data['assigned_by'] ?? $request->user()->id,
                 // 'date_assigned' => $data['date_assigned'] ?: now()->toDateString(),
-                'date_assigned' => Carbon::parse($data['date_assigned']),
+                'date_assigned' => $assignedDate,
                 'remarks'       => $data['remarks'] ?? null,
+                'created_at'    => $assignedDate,
+                'updated_at'    => $assignedDate,
             ]);
 
             // Attach assets and sync assigned_to
@@ -104,11 +108,13 @@ class AssetAssignmentController extends Controller
 
         DB::transaction(function () use ($assignment, $data, $request) {
             // $recordDate = $data['date_assigned'] ?: now()->toDateString();
+            $oldDateAssigned = $assignment->date_assigned;
+            $newDateAssigned = Carbon::parse($data['date_assigned']);
 
             $assignment->update([
                 'personnel_id'  => $data['personnel_id'],
-                // 'date_assigned' => $recordDate,
-                'date_assigned' => Carbon::parse($data['date_assigned']),
+                // 'date_assigned' => Carbon::parse($data['date_assigned']),
+                'date_assigned' => $newDateAssigned,
                 'remarks'       => $data['remarks'] ?? null,
                 'assigned_by'   => $data['assigned_by'] ?? $assignment->assigned_by ?? $request->user()->id,
             ]);
@@ -125,24 +131,42 @@ class AssetAssignmentController extends Controller
                 $assignment->items()->whereIn('asset_id', $toDelete)->delete();
             }
 
+            // Update retained items ONLY if assignment date changed
+            if (!empty($retained) && !$newDateAssigned->equalTo($oldDateAssigned)) {
+                AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
+                    ->whereIn('asset_id', $retained)
+                    ->update([
+                        'date_assigned' => $newDateAssigned,
+                        'created_at'    => $newDateAssigned,
+                        'updated_at'    => now(),
+                    ]);
+            }
+
             // Do nothing to retained — keep their original date_assigned intact
-            foreach ($retained as $assetId) {
-                InventoryList::where('id', $assetId)->update([
-                    'assigned_to' => $assignment->personnel_id,
-                ]);
+            // foreach ($retained as $assetId) {
+            //     InventoryList::where('id', $assetId)->update([
+            //         'assigned_to' => $assignment->personnel_id,
+            //     ]);
+            // }
+            if (!empty($retained)) {
+                InventoryList::whereIn('id', $retained)
+                    ->update(['assigned_to' => $assignment->personnel_id]);
             }
 
             // Create new ones
             foreach ($toAdd as $assetId) {
                 $row = collect($data['selected_assets'])->firstWhere('id', $assetId);
                 $rawDate = data_get($row, 'date_assigned');
-                $itemDate = $rawDate ? Carbon::parse($rawDate) : $assignment->date_assigned;
+                // $itemDate = $rawDate ? Carbon::parse($rawDate) : $assignment->date_assigned;
+                // $itemDate = $rawDate ? Carbon::parse($rawDate) : $newDateAssigned;
+                $itemDate = $rawDate ? Carbon::parse($rawDate) : now();
 
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
-                    // 'date_assigned'       => $rawDate ? now()->parse($rawDate) : now(),
                     'date_assigned'       => $itemDate,
+                    'created_at'          => $itemDate,
+                    'updated_at'          => $itemDate,
                 ]);
 
                 InventoryList::where('id', $assetId)->update([
