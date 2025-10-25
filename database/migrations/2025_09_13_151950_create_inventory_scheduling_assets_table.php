@@ -17,11 +17,7 @@ return new class extends Migration
             $table->foreignId('inventory_scheduling_id')->constrained('inventory_schedulings')->cascadeOnDelete();
             $table->foreignId('inventory_list_id')->constrained('inventory_lists')->cascadeOnDelete();
 
-            $table->enum('inventory_status', [
-                'scheduled',
-                'inventoried',
-                'not_inventoried',
-            ])->default('scheduled');
+            $table->enum('inventory_status', [ 'scheduled', 'inventoried', 'not_inventoried', 'missing' ])->default('scheduled');
 
             $table->text('remarks')->nullable();
             $table->timestamp('inventoried_at')->nullable();

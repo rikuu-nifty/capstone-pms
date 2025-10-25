@@ -141,6 +141,15 @@ function ViewRowAssetModal({
                         >
                             Set all as Not Inventoried
                         </Button>
+
+                        <Button
+                            className="cursor-pointer w-full sm:w-[160px] sm:w-auto bg-amber-600 text-white hover:bg-amber-500 hover:text-white"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => bulkUpdateStatus('missing')}
+                        >
+                            Set all as Missing
+                        </Button>
                     </div>
 
                     {/* Table wrapper */}
@@ -185,6 +194,7 @@ function ViewRowAssetModal({
                                                     <option value="not_inventoried">Not Inventoried</option>
                                                     <option value="scheduled">Scheduled</option>
                                                     <option value="inventoried">Inventoried</option>
+                                                    <option value="missing">Missing</option>
                                                 </select>
                                             </td>
                                         </tr>

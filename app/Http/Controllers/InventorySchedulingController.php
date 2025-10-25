@@ -389,7 +389,7 @@ class InventorySchedulingController extends Controller
     public function updateAssetStatus(Request $request, InventoryScheduling $schedule, $assetId)
     {
         $data = $request->validate([
-            'inventory_status' => ['required', Rule::in(['not_inventoried', 'scheduled', 'inventoried'])],
+            'inventory_status' => ['required', Rule::in(['not_inventoried', 'scheduled', 'inventoried', 'missing'])],
         ]);
 
         // get the pivot record before updating
@@ -401,13 +401,23 @@ class InventorySchedulingController extends Controller
             ->where('inventory_list_id', $assetId)
             ->update(['inventory_status' => $data['inventory_status']]);
 
+        if ($data['inventory_status'] === 'missing') {
+            InventoryList::where('id', $assetId)->update([
+                'status'     => 'missing',
+                'updated_at' => now(),
+            ]);
+        }
+
         // log action with explicit action + subject_type
         $log = AuditTrail::create([
             'auditable_type'        => get_class($schedule),
             'auditable_id'          => $schedule->id,
-            'actor_id'              => auth()->id(),
-            'actor_name'            => auth()->user()?->name,
-            'unit_or_department_id' => auth()->user()?->unit_or_department_id,
+            // 'actor_id'              => auth()->id(),
+            // 'actor_name'            => auth()->user()?->name,
+            // 'unit_or_department_id' => auth()->user()?->unit_or_department_id,
+            'actor_id'              => Auth::id(),
+            'actor_name'            => Auth::user()?->name,
+            'unit_or_department_id' => Auth::user()?->unit_or_department_id,
             'action'                => 'singleAsset_update',
             'subject_type'          => 'InventoryAssetStatus',
             'old_values'            => ['inventory_status' => $oldStatus],
@@ -426,7 +436,7 @@ class InventorySchedulingController extends Controller
     public function bulkUpdateAssetStatus(Request $request, InventoryScheduling $schedule, int $rowId)
     {
         $data = $request->validate([
-            'inventory_status' => ['required', Rule::in(['not_inventoried', 'scheduled', 'inventoried'])],
+            'inventory_status' => ['required', Rule::in(['not_inventoried', 'scheduled', 'inventoried', 'missing'])],
             'type' => ['required', Rule::in(['building_room', 'sub_area'])],
             'unit_id' => ['nullable', 'integer', 'exists:unit_or_departments,id'],
         ]);
@@ -500,7 +510,9 @@ class InventorySchedulingController extends Controller
                 // Map statuses
                 $mappedStatus = $statuses->map(fn($s) => match ($s) {
                     'inventoried' => 'Completed',
-                    'scheduled', 'not_inventoried' => 'Pending',
+                    'scheduled', 
+                    'not_inventoried' => 'Pending',
+                    'missing'          => 'Missing',
                     default => '—',
                 });
 
