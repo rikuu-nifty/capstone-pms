@@ -4,11 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class VerificationForm extends Model
 {
     protected $fillable = [
-        'turnover_disposal_id',
+        'unit_or_department_id',
+        'requested_by_personnel_id',
+        'requested_by_name',
+        'requested_by_title',
+        'requested_by_contact',
+
         'verified_by_id',
         'verified_at',
         'notes',
@@ -20,10 +26,19 @@ class VerificationForm extends Model
         'verified_at' => 'date:Y-m-d',
     ];
 
-    /* Relations */
-    public function turnoverDisposal(): BelongsTo
+    public function verificationAssets(): HasMany
     {
-        return $this->belongsTo(TurnoverDisposal::class);
+        return $this->hasMany(VerificationFormAsset::class);
+    }
+
+    public function unitOrDepartment(): BelongsTo
+    {
+        return $this->belongsTo(UnitOrDepartment::class, 'unit_or_department_id');
+    }
+
+    public function requestedByPersonnel(): BelongsTo
+    {
+        return $this->belongsTo(Personnel::class, 'requested_by_personnel_id');
     }
 
     public function verifiedBy(): BelongsTo
@@ -46,23 +61,40 @@ class VerificationForm extends Model
 
     public static function fetchPaginated(int $perPage = 10)
     {
-        return static::with(['turnoverDisposal.issuingOffice:id,name,code'])
-        ->latest('verified_at')
-        ->paginate($perPage)
-        ->through(function ($vf) {
-            return [
-                'id' => $vf->id,
-                'document_date' => $vf->verified_at ?? $vf->created_at,
-                'verified_at' => $vf->verified_at,
-                'verified_by_id' => $vf->verified_by_id,
-                'status' => $vf->status,
-                'notes' => $vf->notes,
-                'remarks' => $vf->remarks,
-                'issuing_office' => $vf->turnoverDisposal?->issuingOffice?->only(['name', 'code']),
-                'form_approval' => [
-                    'reviewed_at' => $vf->verified_at,
-                ],
-            ];
-        });
+        return static::with([
+            'unitOrDepartment:id,name,code',
+            'requestedByPersonnel:id,first_name,middle_name,last_name,unit_or_department_id,position',
+            'verifiedBy:id,name',
+        ])
+            ->latest('created_at')
+            ->paginate($perPage)
+            ->through(function ($vf) {
+                $person = $vf->requestedByPersonnel;
+                $personName = $person
+                    ? trim($person->first_name . ' ' . ($person->middle_name ? ($person->middle_name . ' ') : '') . $person->last_name)
+                    : null;
+
+                return [
+                    'id'                     => $vf->id,
+                    'created_at'             => $vf->created_at,
+                    'verified_at'            => $vf->verified_at,
+                    'verified_by'            => $vf->verifiedBy?->only(['id', 'name']),
+                    'status'                 => $vf->status,
+                    'notes'                  => $vf->notes,
+                    'remarks'                => $vf->remarks,
+                    'unit_or_department'     => $vf->unitOrDepartment?->only(['name', 'code']),
+                    'requested_by_personnel' => $person ? [
+                        'id'    => $person->id,
+                        'name'  => $personName,
+                        'title' => $person->position,
+                    ] : null,
+                    // snapshots (displayed if personnel is null or as authoritative record)
+                    'requested_by_snapshot'  => [
+                        'name'    => $vf->requested_by_name,
+                        'title'   => $vf->requested_by_title,
+                        'contact' => $vf->requested_by_contact,
+                    ],
+                ];
+            });
     }
 }

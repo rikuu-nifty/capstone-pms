@@ -34,6 +34,9 @@ const PERMISSION_GROUPS: Record<string, string[]> = {
     ],
     "Verification Form": [
         "view-verification-form",
+        "create-verification-form",
+        "update-verification-form",
+        "delete-verification-form",
         "verify-verification-form",
     ],
     "Trash Bin": [

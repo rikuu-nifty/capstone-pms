@@ -40,6 +40,9 @@ class PermissionsTableSeeder extends Seeder
 
             // VERIFICATION FORM
             ['code' => 'view-verification-form', 'name' => 'View Verification Form'],
+            ['code' => 'create-verification-form', 'name' => 'Create Verification Form'],
+            ['code' => 'update-verification-form', 'name' => 'Update Verification Form'],
+            ['code' => 'delete-verification-form', 'name' => 'Delete Verification Form'],
             ['code' => 'verify-verification-form', 'name' => 'Verify Verification Form'],
             
             // OFF CAMPUS

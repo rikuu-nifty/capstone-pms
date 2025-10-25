@@ -18,34 +18,24 @@ type AssetRecord = {
     asset_model?: { brand?: string; model?: string; category?: { name: string } };
 };
 
+type ViewingVerification = {
+    id: number;
+    unit_or_department?: { name?: string; code?: string } | null;
+    requested_by_personnel?: { id: number; name: string; title?: string } | null;
+    requested_by_snapshot?: { name?: string | null; title?: string | null; contact?: string | null } | null;
+    status: string;
+    notes?: string | null;
+    remarks?: string | null;
+    verified_at?: string | null;
+    verified_by?: { id: number; name: string } | null;
+    created_at?: string | null;
+};
+
 interface VerificationFormViewModalProps {
     open: boolean;
     onClose: () => void;
-    turnover: {
-        id: number;
-        document_date: string;
-        type: string;
-        status: string;
-        notes?: string;
-        issuing_office?: { name: string; code: string };
-        receiving_office?: { name: string; code: string };
-        remarks?: string;
-        personnel?: { name: string };
-        turnover_disposal_assets: {
-            id: number;
-            remarks?: string;
-            assets: AssetRecord;
-        }[];
-    };
-    verification?: {
-        id: number;
-        status: string;
-        notes?: string;
-        remarks?: string;
-        verified_at?: string;
-        verified_by?: { id: number; name: string };
-    };
-    pmo_head?: { id: number; name: string } | null;
+    viewing: ViewingVerification;
+    pmoHead?: { id: number; name: string } | null;
 }
 
 const formatDate = (d?: string | null) => {
@@ -62,24 +52,48 @@ const formatDate = (d?: string | null) => {
 export default function VerificationFormViewModal({
     open,
     onClose,
-    turnover,
-    verification,
-    pmo_head,
+    viewing,
+    pmoHead,
 }: VerificationFormViewModalProps) {
-    const assets = turnover.turnover_disposal_assets ?? [];
-    const recordNo = String(turnover.id).padStart(3, "0");
+    const turnover = {
+    id: viewing.id,
+    document_date: viewing.created_at ?? "", // used only in a commented-out line
+    type: "verification",
+    status: viewing.status,
+    issuing_office: viewing.unit_or_department ?? undefined,
+    receiving_office: undefined,
+    remarks: viewing.remarks ?? undefined,
+    personnel: viewing.requested_by_personnel
+      ? { name: viewing.requested_by_personnel.name }
+      : undefined,
+    turnover_disposal_assets: [] as { id: number; remarks?: string; assets: AssetRecord }[],
+  };
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-        if (!open) return;
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [open]);
+  const verification = {
+    id: viewing.id,
+    status: viewing.status,
+    notes: viewing.notes ?? undefined,
+    remarks: viewing.remarks ?? undefined,
+    verified_at: viewing.verified_at ?? undefined,
+    verified_by: viewing.verified_by ?? undefined,
+  };
+
+  const pmo_head = pmoHead; // alias so JSX stays untouched
+
+  const assets = turnover.turnover_disposal_assets ?? [];
+  const recordNo = String(turnover.id).padStart(3, "0");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!open) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
     return (
         <ViewModal
