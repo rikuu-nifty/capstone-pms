@@ -47,11 +47,16 @@ class AssetAssignmentController extends Controller
         ]);
 
         DB::transaction(function () use ($data, $request) {
+            $eventAt = AssetAssignment::nextSafeEventTime(
+                (int) $data['personnel_id'],
+                Carbon::parse($data['date_assigned'])
+            );
+
             $assignment = AssetAssignment::create([
                 'personnel_id'  => $data['personnel_id'],
                 'assigned_by'   => $data['assigned_by'] ?? $request->user()->id,
-                // 'date_assigned' => $data['date_assigned'] ?: now()->toDateString(),
-                'date_assigned' => Carbon::parse($data['date_assigned']),
+                // 'date_assigned' => Carbon::parse($data['date_assigned']),
+                'date_assigned' => $eventAt,
                 'remarks'       => $data['remarks'] ?? null,
             ]);
 
@@ -59,8 +64,8 @@ class AssetAssignmentController extends Controller
             foreach ($data['selected_assets'] as $row) {
                 $assetId = data_get($row, 'id');
                 $rawDate = data_get($row, 'date_assigned');
-                // $itemDate = $rawDate ? now()->parse($rawDate) : now();
-                $itemDate = $rawDate ? Carbon::parse($rawDate) : $assignment->date_assigned;
+                // $itemDate = $rawDate ? Carbon::parse($rawDate) : $assignment->date_assigned;
+                $itemDate = $rawDate ? Carbon::parse($rawDate) : $eventAt;
 
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
@@ -90,12 +95,15 @@ class AssetAssignmentController extends Controller
         ]);
 
         DB::transaction(function () use ($assignment, $data, $request) {
-            // $recordDate = $data['date_assigned'] ?: now()->toDateString();
+            $eventAt = AssetAssignment::nextSafeEventTime(
+                (int) $assignment->personnel_id,
+                Carbon::parse($data['date_assigned'])
+            );
 
             $assignment->update([
                 'personnel_id'  => $data['personnel_id'],
-                // 'date_assigned' => $recordDate,
-                'date_assigned' => Carbon::parse($data['date_assigned']),
+                // 'date_assigned' => Carbon::parse($data['date_assigned']),
+                'date_assigned' => $eventAt,
                 'remarks'       => $data['remarks'] ?? null,
                 'assigned_by'   => $data['assigned_by'] ?? $assignment->assigned_by ?? $request->user()->id,
             ]);
@@ -123,7 +131,8 @@ class AssetAssignmentController extends Controller
             foreach ($toAdd as $assetId) {
                 $row = collect($data['selected_assets'])->firstWhere('id', $assetId);
                 $rawDate = data_get($row, 'date_assigned');
-                $itemDate = $rawDate ? Carbon::parse($rawDate) : $assignment->date_assigned;
+                // $itemDate = $rawDate ? Carbon::parse($rawDate) : $assignment->date_assigned;
+                $itemDate = $rawDate ? Carbon::parse($rawDate) : $eventAt;
 
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
