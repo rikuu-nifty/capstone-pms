@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('personnel_id');
 
             $table->unsignedBigInteger('assigned_by')->nullable(); //nullable just in case of historical imports
-            $table->date('date_assigned');
+            $table->dateTime('date_assigned');
             $table->text('remarks')->nullable();
 
             $table->timestamps();
