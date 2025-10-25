@@ -56,9 +56,9 @@ VF No. {{ $vfNo }}
                 </div>
 
                 @if ($verification->notes)
-                <div style="font-size:11px; font-style:italic;">*{{ $verification->notes }}*</div>
+                <div style="font-size:11px; font-style:italic; margin-top:10px;">*{{ $verification->notes }}*</div>
                 @endif
-                <div style="font-size:11px; font-style:italic; margin-top:4px;">{{ $todayDate }}</div>
+                <div style="font-size:11px; font-style:italic; margin-top:4px; font-weight:700; margin-top:10px;">{{ $todayDate }}</div>
             </td>
             <td style="text-align:center; font-family:DejaVu Sans; padding:4px; font-size:10px; ">
                 {{ $asset?->unit_cost ? '₱ ' . number_format($asset->unit_cost, 2) : '—' }}
@@ -69,9 +69,31 @@ VF No. {{ $vfNo }}
             <td style="text-align:center; padding:4px; font-size:11px; ">
                 {{ $asset?->quantity ?? 1 }}
             </td>
-            <td style="text-align:center; padding:4px; word-wrap:break-word; white-space:normal;">
+            <!-- <td style="text-align:center; padding:4px; word-wrap:break-word; white-space:normal;">
                 {{ $line->remarks ?? $verification->remarks ?? '—' }}
+            </td> -->
+            <td style="text-align:center; padding:4px; word-wrap:break-word; white-space:normal;">
+                @if ($line->remarks || $verification->remarks)
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    {{-- Asset-specific remarks (top) --}}
+                    @if ($line->remarks)
+                    <span style="display:block; font-weight:500;">
+                        {{ ucwords($line->remarks) }}
+                    </span>
+                    @endif
+
+                    {{-- Verification form remarks (bottom) --}}
+                    @if ($verification->remarks)
+                    <span style="display:block; font-style:italic; color:#444; margin-top:4px;">
+                        {{ ucwords($verification->remarks) }}
+                    </span>
+                    @endif
+                </div>
+                @else
+                —
+                @endif
             </td>
+
         </tr>
         @empty
         <tr>

@@ -186,8 +186,22 @@ export default function VerificationFormViewModal({
                                 <td className="border-r border-black px-2 py-1 text-center">
                                     {asset.quantity ?? 1}
                                 </td>
-                                <td className="px-2 py-1 text-center whitespace-pre-line">
+                                {/* <td className="px-2 py-1 text-center whitespace-pre-line">
                                     {ucwords(a.remarks || viewing.remarks || "—")}
+                                </td> */}
+                                <td className="px-2 py-1 text-center whitespace-pre-line">
+                                    {a.remarks || viewing.remarks ? (
+                                        <div className="flex flex-col items-center space-y-3">
+                                        {a.remarks && (
+                                            <span className="block">{ucwords(a.remarks)}</span>
+                                        )}
+                                        {viewing.remarks && (
+                                            <span className="block text-gray-800 italic">{ucwords(viewing.remarks)}</span>
+                                        )}
+                                        </div>
+                                    ) : (
+                                        '—'
+                                    )}
                                 </td>
                             </tr>
                         );
