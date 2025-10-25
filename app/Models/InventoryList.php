@@ -19,6 +19,7 @@ class InventoryList extends Model
     protected $casts = [
         'deleted_at' => 'datetime',
         'maintenance_due_date' => 'date',
+        'date_purchased' => 'date:Y-m-d',
     ];
 
     protected $appends = [

@@ -65,36 +65,41 @@ class VerificationForm extends Model
             'unitOrDepartment:id,name,code',
             'requestedByPersonnel:id,first_name,middle_name,last_name,unit_or_department_id,position',
             'verifiedBy:id,name',
-        ])
-            ->latest('created_at')
-            ->paginate($perPage)
-            ->through(function ($vf) {
-                $person = $vf->requestedByPersonnel;
-                $personName = $person
-                    ? trim($person->first_name . ' ' . ($person->middle_name ? ($person->middle_name . ' ') : '') . $person->last_name)
-                    : null;
 
-                return [
-                    'id'                     => $vf->id,
-                    'created_at'             => $vf->created_at,
-                    'verified_at'            => $vf->verified_at,
-                    'verified_by'            => $vf->verifiedBy?->only(['id', 'name']),
-                    'status'                 => $vf->status,
-                    'notes'                  => $vf->notes,
-                    'remarks'                => $vf->remarks,
-                    'unit_or_department'     => $vf->unitOrDepartment?->only(['id', 'name', 'code']),
-                    'requested_by_personnel' => $person ? [
-                        'id'    => $person->id,
-                        'name'  => $personName,
-                        'title' => $person->position,
-                    ] : null,
-                    // snapshots (displayed if personnel is null or as authoritative record)
-                    'requested_by_snapshot'  => [
-                        'name'    => $vf->requested_by_name,
-                        'title'   => $vf->requested_by_title,
-                        'contact' => $vf->requested_by_contact,
-                    ],
-                ];
-            });
+            'verificationAssets:id,verification_form_id,inventory_list_id,remarks',
+        ])
+        ->latest('created_at')
+        ->paginate($perPage)
+        ->through(function ($vf) {
+            $person = $vf->requestedByPersonnel;
+            $personName = $person
+                ? trim($person->first_name . ' ' . ($person->middle_name ? ($person->middle_name . ' ') : '') . $person->last_name)
+                : null;
+
+            return [
+                'id'                     => $vf->id,
+                'created_at'             => $vf->created_at,
+                'verified_at'            => $vf->verified_at,
+                'verified_by'            => $vf->verifiedBy?->only(['id', 'name']),
+                'status'                 => $vf->status,
+                'notes'                  => $vf->notes,
+                'remarks'                => $vf->remarks,
+                'unit_or_department'     => $vf->unitOrDepartment?->only(['id', 'name', 'code']),
+                'requested_by_personnel' => $person ? [
+                    'id'    => $person->id,
+                    'name'  => $personName,
+                    'title' => $person->position,
+                ] : null,
+                'requested_by_snapshot'  => [
+                    'name'    => $vf->requested_by_name,
+                    'title'   => $vf->requested_by_title,
+                    'contact' => $vf->requested_by_contact,
+                ],
+                'verification_assets' => $vf->verificationAssets->map(fn($va) => [
+                    'inventory_list_id' => $va->inventory_list_id,
+                    'remarks'           => $va->remarks,
+                ])->values(),
+            ];
+        });
     }
 }

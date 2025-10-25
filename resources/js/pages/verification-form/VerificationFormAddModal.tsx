@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Select, { SingleValue } from 'react-select';
 import { useForm } from '@inertiajs/react';
 import AddModal from '@/components/modals/AddModal';
+import AssetVfItem from './AssetVfItem';
 
 type Option = { value: number; label: string };
 
@@ -186,104 +187,68 @@ export default function VerificationFormAddModal({
 
             {/* Assets Covered */}
             <div className="col-span-2 flex flex-col gap-4">
-            <label className="block font-medium">Assets Covered</label>
+                <label className="block font-medium">Assets Covered</label>
 
-            {/* Render picked assets as compact cards with per-asset remarks + remove */}
-            {data.verification_assets.map((line, idx) => {
-                const asset = assets.find(a => a.id === line.inventory_list_id);
-                if (!asset) {
-                return (
-                    <div key={`${line.inventory_list_id}-${idx}`} className="rounded-lg border p-2 text-sm text-red-600">
-                    Asset not found
-                    </div>
-                );
-                }
+                {/* Render picked assets as compact cards with per-asset remarks + remove */}
+                {data.verification_assets.map((line, idx) => {
+                    const asset = assets.find((a) => a.id === line.inventory_list_id);
+                    if (!asset) return null;
 
-                return (
-                <div key={`${line.inventory_list_id}-${idx}`} className="flex flex-col gap-2 rounded-lg border p-2">
-                    <div className="flex items-center justify-between">
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                        <span className="truncate text-base font-semibold text-gray-900">{asset.asset_name}</span>
-                        {asset.serial_no && (
-                            <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                            {asset.serial_no}
-                            </span>
-                        )}
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => {
-                        const next = [...data.verification_assets];
-                        next.splice(idx, 1);
-                        setData('verification_assets', next);
-                        }}
-                        className="text-red-500 text-xs hover:underline cursor-pointer"
-                    >
-                        Remove
-                    </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                    {/* Per-asset remarks only (simple version for VF) */}
-                    <div className="col-span-2">
-                        <label className="mb-1 block font-medium">Remarks</label>
-                        <input
-                        type="text"
-                        className="w-full rounded-md border p-2 text-sm"
-                        value={line.remarks ?? ''}
-                        onChange={(e) => {
-                            const copy = [...data.verification_assets];
-                            copy[idx] = { ...copy[idx], remarks: e.target.value };
-                            setData('verification_assets', copy);
-                        }}
-                        placeholder="Optional notes specific to this asset"
+                    return (
+                        <AssetVfItem
+                            key={`${line.inventory_list_id}-${idx}`}
+                            line={line}
+                            asset={asset}
+                            onRemove={() => {
+                                const next = [...data.verification_assets];
+                                next.splice(idx, 1);
+                                setData('verification_assets', next);
+                            }}
+                            onChange={(next) => {
+                                const copy = [...data.verification_assets];
+                                copy[idx] = next;
+                                setData('verification_assets', copy);
+                            }}
                         />
-                    </div>
-                    </div>
-                </div>
-                );
-            })}
+                    );
+                })}
 
-            {/* Add-asset dropdowns (append another once one is chosen) */}
-            {showAssetDropdown.map(
-                (visible, index) =>
-                visible && (
-                    <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                    <Select<Option, false>
-                        key={`asset-${data.unit_or_department_id}-${index}-${data.verification_assets.length}`}
-                        className="w-full"
-                        isDisabled={!data.unit_or_department_id}
-                        options={filteredAssets.map(a => ({
-                        value: a.id,
-                        label: `${a.serial_no ? a.serial_no + ' – ' : ''}${a.asset_name ?? ''}`,
-                        }))}
-                        placeholder={
-                        data.unit_or_department_id ? 'Select Asset...' : 'Select a Unit/Department first'
-                        }
-                        noOptionsMessage={() =>
-                        data.unit_or_department_id ? 'No Assets Available' : 'Select a Unit/Department first'
-                        }
-                        onChange={(opt: SingleValue<Option>) => {
-                        if (opt && !selectedIds.has(opt.value)) {
-                            addLine(opt.value);
-                            setShowAssetDropdown(prev => {
-                            const updated = [...prev];
-                            updated[index] = false;
-                            return [...updated, true];
-                            });
-                        }
-                        }}
-                    />
-                    </div>
-                )
-            )}
+                {/* Add-asset dropdowns (append another once one is chosen) */}
+                {showAssetDropdown.map((visible, index) => visible && (
+                        <div key={`dropdown-${index}`} className="flex items-center gap-2">
+                            <Select<Option, false>
+                                key={`asset-${data.unit_or_department_id}-${index}-${data.verification_assets.length}`}
+                                className="w-full"
+                                isDisabled={!data.unit_or_department_id}
+                                options={filteredAssets.map(a => ({
+                                    value: a.id,
+                                    label: `${a.serial_no ? a.serial_no + ' – ' : ''}${a.asset_name ?? ''}`,
+                                }))}
+                                placeholder={
+                                    data.unit_or_department_id ? 'Select Asset...' : 'Select a Unit/Department first'
+                                }
+                                noOptionsMessage={() =>
+                                    data.unit_or_department_id ? 'No Assets Available' : 'Select a Unit/Department first'
+                                }
+                                onChange={(opt: SingleValue<Option>) => {
+                                    if (opt && !selectedIds.has(opt.value)) {
+                                        addLine(opt.value);
+                                        setShowAssetDropdown(prev => {
+                                            const updated = [...prev];
+                                            updated[index] = false;
+                                            return [...updated, true];
+                                        });
+                                    }
+                                }}
+                            />
+                        </div>
+                    )
+                )}
 
-            {/* Optional error */}
-            {'verification_assets' in errors && (
-                <p className="mt-1 text-sm text-red-500">{String(errors.verification_assets)}</p>
-            )}
+                {/* Optional error */}
+                {'verification_assets' in errors && (
+                    <p className="mt-1 text-sm text-red-500">{String(errors.verification_assets)}</p>
+                )}
             </div>
 
             {/* Status */}

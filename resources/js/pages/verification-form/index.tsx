@@ -42,7 +42,7 @@ type ViewingVerification = {
     created_at?: string | null;
 };
 
-type VerificationFormRecord = {
+export type VerificationFormRecord = {
     id: number;
     status: string;
     notes?: string | null;
@@ -50,21 +50,27 @@ type VerificationFormRecord = {
     verified_at?: string | null;
     verified_by?: { id: number; name: string } | null;
 
-    unit_or_department?: { name?: string; code?: string } | null;
+    unit_or_department?: { id?: number; name?: string; code?: string } | null;
     requested_by_personnel?: { id: number; name: string; title?: string } | null;
     requested_by_snapshot?: { name?: string | null; title?: string | null; contact?: string | null } | null;
+
+    verification_assets?: Array<{ inventory_list_id: number; remarks?: string }>;
 };
 
-type InventoryLite = {
+export type InventoryLite = {
     id: number;
     unit_or_department_id: number;
     asset_name: string;
     serial_no?: string | null;
+
+    building?: { id: number; name: string } | null;
+    buildingRoom?: { id: number; room: string } | null;
+    subArea?: { id: number; name: string } | null;
 };
 
 type VerificationFormFull = {
     id: number;
-    document_date?: string; // kept optional so your modal doesn’t crash if it reads it
+    document_date?: string;
     type?: string;
     status: string;
     issuing_office?: { name: string; code: string };
@@ -104,7 +110,7 @@ type PageProps = {
         pending_verification: number;
     };
     viewing?: VerificationFormFull;
-    pmo_head?: { id: number; name: string } | null;
+    pmoHead?: { id: number; name: string } | null;
 
     verification?: {
         id: number;
@@ -130,9 +136,7 @@ const formatDateLong = (d?: string | null) => {
 type VerificationAction = 'verify' | 'reject';
 
 export default function VerificationFormIndex() {
-    // const { verifications, totals, unitOrDepartments, personnels } = usePage<PageProps>().props;
-    // const { verifications, totals, unitOrDepartments, personnels, viewing, pmoHead, assets } = usePage<PageProps>().props;
-    const { verifications, totals, unitOrDepartments, personnels, viewing, assets } = usePage<PageProps>().props;
+    const { verifications, totals, unitOrDepartments, personnels, viewing, assets, pmoHead } = usePage<PageProps>().props;
 
     const { auth } = usePage().props as unknown as {
         auth: { permissions: string[] };
@@ -471,6 +475,10 @@ export default function VerificationFormIndex() {
                     setManageId(null);
                 }}
                 verificationId={manageId}
+                unitOrDepartments={unitOrDepartments}
+                personnels={personnels}
+                assets={assets}
+                verifications={verifications}
             />
 
             {selectedVerification && (
@@ -478,7 +486,7 @@ export default function VerificationFormIndex() {
                     open={showViewModal}
                     onClose={closeViewVerification}
                     viewing={selectedVerification}
-                    // pmoHead={pmoHead}
+                    pmoHead={pmoHead}
                 />
             )}
         </AppLayout>

@@ -26,14 +26,17 @@ class VerificationFormController extends Controller
             'unit_cost',
             'supplier',
             'date_purchased',
-            'unit_or_department_id'
+            'unit_or_department_id',
+            'building_id',
+            'building_room_id',
+            'sub_area_id',
         )
-            ->with([
-                'building:id,name',
-                'buildingRoom:id,room',
-                'subArea:id,name',
-            ])
-            ->get();
+        ->with([
+            'building:id,name',
+            'buildingRoom:id,room',
+            'subArea:id,name',
+        ])
+        ->get();
         $unitOrDepartments = UnitOrDepartment::select('id', 'name', 'code')->orderBy('name')->get();
         $personnels = Personnel::activeForAssignments();
         $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
@@ -94,11 +97,10 @@ class VerificationFormController extends Controller
                     'verified_by' => $verification->verifiedBy?->only(['id', 'name']),
                     'created_at'  => $verification->created_at,
 
-                    // Map to your view-modal table’s existing shape
-                    'assets' => $verification->verificationAssets->map(fn($va) => [
+                    'verification_assets' => $verification->verificationAssets->map(fn($va) => [
                         'id'      => $va->id,
                         'remarks' => $va->remarks,
-                        'assets'  => [
+                        'asset'   => [
                             'id'             => $va->inventoryList->id,
                             'asset_name'     => $va->inventoryList->asset_name,
                             'serial_no'      => $va->inventoryList->serial_no,
@@ -307,9 +309,10 @@ class VerificationFormController extends Controller
             'unitOrDepartment',
             'requestedByPersonnel',
             'verifiedBy',
+            'verificationAssets.inventoryList' => function ($q) {
+                $q->select('id', 'asset_name', 'serial_no', 'supplier', 'unit_cost', 'date_purchased');
+            },
         ])->findOrFail($id);
-
-        // If you later add “checked assets” for a verification, eager-load them here.
 
         $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
         $pmoHead = $pmoHeadRoleId
@@ -319,8 +322,11 @@ class VerificationFormController extends Controller
         $pdf = Pdf::loadView('forms.verification-form', [
             'verification' => $verification,
             'pmo_head'     => $pmoHead?->only(['id', 'name']),
-        ])->setPaper('A4', 'portrait');
+            'todayDate'    => now()->format('n/j/Y'),
+        ])
+        ->setPaper('A4', 'portrait');
 
         return $pdf->stream("Verification_Form_{$verification->id}.pdf");
+        // return $pdf->download("Verification_Form_{$verification->id}.pdf");
     }
 }
