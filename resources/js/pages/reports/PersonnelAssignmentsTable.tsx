@@ -12,6 +12,7 @@ type PersonnelRow = {
     current_assets_count: number;
     past_assets_count: number;
     missing_assets_count: number;
+    all_time_assets_count: number;
 };
 
 type Props = {
@@ -50,7 +51,8 @@ export default function PersonnelAssignmentsTable({
                             <TableHead className="text-center w-[300px]">Personnel</TableHead>
                             <TableHead className="text-center w-[300px]">Department</TableHead>
                             <TableHead className="text-center w-[200px]">Status</TableHead>
-                            <TableHead className="text-center w-[200px]">Past Assets</TableHead>
+                            <TableHead className="text-center w-[200px]">All-Time Assets (Unique)</TableHead>
+                            <TableHead className="text-center w-[200px]">Prior Assets</TableHead>
                             <TableHead className="text-center w-[200px]">Current Assets</TableHead>
                             <TableHead className="text-center w-[200px]">Missing Assets</TableHead>
                         </TableRow>
@@ -65,6 +67,9 @@ export default function PersonnelAssignmentsTable({
                                 <TableCell className="font-medium">{p.full_name}</TableCell>
                                 <TableCell>{p.department || '—'}</TableCell>
                                 <TableCell>{formatEnums(p.status)}</TableCell>
+                                <TableCell className="text-amber-600 font-bold">
+                                    {p.all_time_assets_count}
+                                </TableCell>
                                 <TableCell className="text-blue-600 font-bold">
                                     {p.past_assets_count}
                                 </TableCell>

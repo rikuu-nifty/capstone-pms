@@ -47,12 +47,15 @@ class AssetAssignmentController extends Controller
         ]);
 
         DB::transaction(function () use ($data, $request) {
-            $assignedDate = Carbon::parse($data['date_assigned']);
+            // $assignedDate = Carbon::parse($data['date_assigned']);
+            $assignedDate = $data['date_assigned']
+                ? Carbon::parse($data['date_assigned'])->setTimeFromTimeString(now()->toTimeString())
+                : now();
+
 
             $assignment = AssetAssignment::create([
                 'personnel_id'  => $data['personnel_id'],
                 'assigned_by'   => $data['assigned_by'] ?? $request->user()->id,
-                // 'date_assigned' => $data['date_assigned'] ?: now()->toDateString(),
                 'date_assigned' => $assignedDate,
                 'remarks'       => $data['remarks'] ?? null,
                 'created_at'    => $assignedDate,
@@ -73,7 +76,7 @@ class AssetAssignmentController extends Controller
                     ->exists();
 
                 if ($hadRecentDeletion) {
-                    $itemDate = $itemDate->copy()->addMinutes(1);
+                    $itemDate = $itemDate->copy()->addSeconds(2);
                 }
 
                 AssetAssignmentItem::create([
@@ -107,9 +110,11 @@ class AssetAssignmentController extends Controller
         ]);
 
         DB::transaction(function () use ($assignment, $data, $request) {
-            // $recordDate = $data['date_assigned'] ?: now()->toDateString();
             $oldDateAssigned = $assignment->date_assigned;
-            $newDateAssigned = Carbon::parse($data['date_assigned']);
+            // $newDateAssigned = Carbon::parse($data['date_assigned']);
+            $newDateAssigned = $data['date_assigned']
+                ? Carbon::parse($data['date_assigned'])->setTimeFromTimeString(now()->toTimeString())
+                : now();
 
             $assignment->update([
                 'personnel_id'  => $data['personnel_id'],
@@ -314,7 +319,7 @@ class AssetAssignmentController extends Controller
             AssetAssignmentItem::create([
                 'asset_assignment_id' => $newAssignment->id,
                 'asset_id' => $item->asset_id,
-                'date_assigned' => now()->addMinutes(1),
+                'date_assigned' => now()->addSeconds(2),
             ]);
 
             $item->asset->update(['assigned_to' => $newAssignment->personnel_id]);
@@ -349,7 +354,7 @@ class AssetAssignmentController extends Controller
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $newAssignment->id,
                     'asset_id' => $item->asset_id,
-                    'date_assigned' => now()->addMinutes(1),
+                    'date_assigned' => now()->addSeconds(2),
                 ]);
             }
 

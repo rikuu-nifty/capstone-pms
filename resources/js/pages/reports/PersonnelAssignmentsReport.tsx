@@ -34,6 +34,7 @@ import {
     CartesianGrid,
     XAxis,
     ResponsiveContainer,
+    YAxis,
 } from 'recharts';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { formatEnums } from '@/types/custom-index';
@@ -46,6 +47,7 @@ type PersonnelRow = {
     current_assets_count: number;
     past_assets_count: number;
     missing_assets_count: number;
+    all_time_assets_count: number;
 };
 
 type PaginationMeta = {
@@ -196,9 +198,10 @@ export default function PersonnelAssignmentsReport() {
     }, [page]);
 
     const chartConfig: ChartConfig = {
-        past: { label: 'Past Assignments', color: 'var(--chart-1)' },
+        past: { label: 'Prior Assets', color: 'var(--chart-1)' },
         current: { label: 'Current Assignments', color: 'var(--chart-2)' },
         missing: { label: 'Missing Assets', color: '#741414ff', },
+        all_time: { label: 'All-Time Assignments (Unique)', color: 'var(--chart-5)' },
     };
 
     return (
@@ -554,8 +557,19 @@ export default function PersonnelAssignmentsReport() {
                                     className="w-full aspect-[4/3] max-h-[400px]"
                                 >
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartData}>
+                                        <BarChart 
+                                            data={chartData}
+                                            barSize={100}
+                                        >
                                             <CartesianGrid vertical={false} />
+
+                                            <YAxis
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tick={{ fill: '#666', fontSize: 11 }}
+                                                width={30} // give it room so labels don’t overlap bars
+                                            />
+
                                             <XAxis
                                                 dataKey="name"
                                                 tickLine={false}
@@ -569,9 +583,9 @@ export default function PersonnelAssignmentsReport() {
                                                 cursor={false}
                                                 content={<ChartTooltipContent indicator="dashed" />}
                                             />
+                                            <Bar dataKey="all_time" fill="var(--chart-5)" radius={4} />
                                             <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
                                             <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
-                                            {/* <Bar dataKey="missing" fill="var(--chart-5)" radius={4} /> */}
                                             <Bar dataKey="missing" fill={chartConfig.missing.color} radius={4} />
                                             
                                             <ChartLegend content={<ChartLegendContent />} />

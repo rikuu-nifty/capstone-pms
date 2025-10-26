@@ -21,13 +21,13 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
 
 {{-- ================= HEADER ================= --}}
 <tr>
-    <td colspan="6" style="font-weight:bold; text-align:center; font-size:14px; padding:6px;">
+    <td colspan="7" style="font-weight:bold; text-align:center; font-size:14px; padding:6px;">
         Office of the Administrative Services
     </td>
 </tr>
 
 <tr>
-    <td colspan="6"></td>
+    <td colspan="7"></td>
 </tr>
 
 {{-- ===== Report Details ===== --}}
@@ -35,22 +35,22 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
     <td style="font-weight:bold; width:22%;">Date Assigned:</td>
     <td style="width:28%;">{{ $reportPeriod }}</td>
     <td style="font-weight:bold; width:22%;">Date Generated:</td>
-    <td colspan="3" style="width:28%;">{{ now()->format('F d, Y') }}</td>
+    <td colspan="4" style="width:28%;">{{ now()->format('F d, Y') }}</td>
 </tr>
 <tr>
     <td style="font-weight:bold;">Unit / Department:</td>
     <td>{{ $departmentName }}</td>
     <td style="font-weight:bold;">Personnel Status:</td>
-    <td colspan="3">{{ $statusLabel }}</td>
+    <td colspan="4">{{ $statusLabel }}</td>
 </tr>
 <tr>
     <td style="font-weight:bold;">Asset Category:</td>
     <td>{{ $filters['category_name'] ?? '—' }}</td>
     <td style="font-weight:bold;">Asset Status:</td>
-    <td colspan="3">{{ ucfirst($filters['asset_status'] ?? '—') }}</td>
+    <td colspan="4">{{ ucfirst($filters['asset_status'] ?? '—') }}</td>
 </tr>
 <tr>
-    <td colspan="6"></td>
+    <td colspan="7"></td>
 </tr>
 
 {{-- ================= MAIN TABLE ================= --}}
@@ -60,14 +60,16 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
             <th>ASSIGNMENT ID</th>
             <th>PERSONNEL-IN-CHARGE</th>
             <th>STATUS</th>
-            <th>PAST ASSETS</th>
+            <th>ALL-TIME ASSETS</th>
+            <th>PRIOR ASSETS</th>
             <th>CURRENT ASSETS</th>
-            <th>Missing Assets</th>
+            <th>MISSING ASSETS</th>
         </tr>
     </thead>
 
     <tbody>
         @php
+        $grandAllTime = 0;
         $grandPast = 0;
         $grandCurrent = 0;
         $grandMissing = 0;
@@ -76,18 +78,22 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
         @foreach ($grouped as $dept => $rows)
         {{-- Department Header --}}
         <tr>
-            <td colspan="6">Unit / Department: {{ $dept }}</td>
+            <td colspan="7">Unit / Department: {{ $dept }}</td>
         </tr>
 
         @php
+        $deptAllTime = 0;
         $deptPast = 0;
         $deptCurrent = 0;
         @endphp
 
         @foreach ($rows as $r)
         @php
+        $deptAllTime += $r['all_time_assets_count'];
         $deptPast += $r['past_assets_count'];
         $deptCurrent += $r['current_assets_count'];
+
+        $grandAllTime += $r['all_time_assets_count'];
         $grandPast += $r['past_assets_count'];
         $grandCurrent += $r['current_assets_count'];
         $grandMissing += $r['missing_assets_count'];
@@ -96,6 +102,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
             <td>{{ $r['id'] }}</td>
             <td>{{ $r['full_name'] }}</td>
             <td>{{ ucwords(str_replace('_', ' ', strtolower($r['status']))) }}</td>
+            <td>{{ $r['all_time_assets_count'] }}</td>
             <td>{{ $r['past_assets_count'] }}</td>
             <td>{{ $r['current_assets_count'] }}</td>
             <td>{{ $r['missing_assets_count'] }}</td>
@@ -107,6 +114,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
             <td colspan="3" style="text-align:right; font-weight:bold;">
                 Total for {{ $dept }}:
             </td>
+            <td style="text-align:center;">{{ $deptAllTime }}</td>
             <td style="text-align:center;">{{ $deptPast }}</td>
             <td style="text-align:center;">{{ $deptCurrent }}</td>
             <td style="text-align:center;">{{ $grandMissing }}</td>
