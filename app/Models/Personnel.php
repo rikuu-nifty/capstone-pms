@@ -173,8 +173,8 @@ class Personnel extends Model
         $categoryId  = $filters['category_id'] ?? null;
 
         $asOf = $to
-            ? \Illuminate\Support\Carbon::parse($to)->endOfDay()
-            : ($from ? \Illuminate\Support\Carbon::parse($from)->endOfDay() : now());
+            ? Carbon::parse($to)->endOfDay()
+            : ($from ? Carbon::parse($from)->endOfDay() : now());
 
         // keep latestAssignments if you really use it elsewhere; otherwise you can remove it
         $latestAssignments = DB::table('asset_assignment_items as aai2')
@@ -209,26 +209,44 @@ class Personnel extends Model
                 ->selectRaw('COUNT(DISTINCT aai.asset_id)')
         ]);
 
-        // PAST — reuse the same last-event snapshot you have in reportChartData
         $lastEvents = DB::table('asset_assignment_items as e')
             ->join('asset_assignments as a', 'a.id', '=', 'e.asset_assignment_id')
             ->selectRaw("
-            a.personnel_id,
-            MAX(e.deleted_at) AS last_del,
-            MAX(e.date_assigned) AS last_gain,
-            CASE
-                WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
-                    THEN MAX(e.deleted_at)
-                ELSE MAX(e.date_assigned)
-            END AS t_event,
-            CASE
-                WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
-                    THEN 'del'
-                ELSE 'gain'
-            END AS kind
-        ")
+                a.personnel_id,
+                MAX(e.deleted_at) AS last_del,
+                MAX(e.date_assigned) AS last_gain,
+                CASE
+                    WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
+                        THEN MAX(e.deleted_at)
+                    ELSE MAX(e.date_assigned)
+                END AS t_event,
+                CASE
+                    WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
+                        THEN 'del'
+                    ELSE 'gain'
+                END AS kind,
+
+                -- NEW: capture previous event (the last timestamp *before* t_event)
+                (
+                    SELECT MAX(GREATEST(
+                        COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
+                        COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
+                    ))
+                    FROM asset_assignment_items AS e2
+                    INNER JOIN asset_assignments AS a2 ON a2.id = e2.asset_assignment_id
+                    WHERE a2.personnel_id = a.personnel_id
+                    AND GREATEST(
+                            COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
+                            COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
+                        ) < GREATEST(
+                            COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00'),
+                            COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00')
+                        )
+                ) AS prev_event
+            ")
             ->groupBy('a.personnel_id');
 
+        // --- PAST ASSETS COUNT — snapshot just BEFORE the latest change (gain OR loss)
         $query->addSelect([
             'past_assets_count' => DB::table('asset_assignment_items as aai')
                 ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
@@ -239,8 +257,20 @@ class Personnel extends Model
                 ->whereColumn('aa.personnel_id', 'personnels.id')
                 ->whereColumn('le.personnel_id', 'personnels.id')
                 ->whereNotNull('le.t_event')
-                ->whereRaw("IF(le.kind = 'del', aai.date_assigned <= le.t_event, aai.date_assigned < le.t_event)")
+
+                // Snapshot at t_event−ε using kind-aware inequality
+                ->whereRaw("
+                    IF(le.kind = 'del',
+                    aai.date_assigned <= le.t_event,
+                    aai.date_assigned <  le.t_event)
+                ")
+                // Asset must still be active just before that moment
                 ->whereRaw("(aai.deleted_at IS NULL OR aai.deleted_at >= le.t_event)")
+                ->whereColumn('aa.personnel_id', '=', 'le.personnel_id')
+
+                // Optional filters
+                ->when($from, fn($q) => $q->whereDate('aai.date_assigned', '>=', $from))
+                ->when($to, fn($q) => $q->whereDate('aai.date_assigned', '<=', $to))
                 ->when($assetStatus, fn($q) => $q->where('il.status', '=', $assetStatus))
                 ->when($categoryId, function ($q) use ($categoryId) {
                     $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
@@ -278,13 +308,24 @@ class Personnel extends Model
                 ->join('asset_assignments as aa', 'aa.id', '=', 'aai.asset_assignment_id')
                 ->join('inventory_lists as il', 'il.id', '=', 'aai.asset_id')
                 ->whereColumn('aa.personnel_id', 'personnels.id')
-                // Count every assignment that ever happened, even if deleted later
+                // Include only assignments that existed within the [from,to] snapshot window
+                ->when($from, fn($q) => $q->where('aai.date_assigned', '>=', $from))
+                ->when($to, fn($q) => $q->where('aai.date_assigned', '<=', \Illuminate\Support\Carbon::parse($to)->endOfDay()))
+                // Optionally exclude those deleted before window end (keeps ones active during period)
+                ->when($to, fn($q) => $q->where(function ($sub) use ($to) {
+                    $sub->whereNull('aai.deleted_at')
+                        ->orWhere('aai.deleted_at', '>', \Illuminate\Support\Carbon::parse($to)->endOfDay());
+                }))
+                // Apply same status/category filters
                 ->when($assetStatus, fn($q) => $q->where('il.status', $assetStatus))
                 ->when($categoryId, function ($q) use ($categoryId) {
                     $q->whereIn('il.asset_model_id', function ($sub) use ($categoryId) {
-                        $sub->select('id')->from('asset_models')->where('category_id', $categoryId);
+                        $sub->select('id')
+                            ->from('asset_models')
+                            ->where('category_id', $categoryId);
                     });
                 })
+                ->whereNull('il.deleted_at')
                 ->selectRaw('COUNT(DISTINCT aai.asset_id)')
         ]);
 
@@ -384,7 +425,8 @@ class Personnel extends Model
                         )
                 ) AS prev_event
             ")
-            ->groupBy('a.personnel_id');
+            ->groupBy('a.personnel_id')
+        ;
 
         // --- PAST ASSETS COUNT — snapshot just BEFORE the latest change (gain OR loss)
         $query->addSelect([
