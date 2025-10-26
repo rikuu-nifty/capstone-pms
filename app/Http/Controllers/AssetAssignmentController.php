@@ -166,6 +166,16 @@ class AssetAssignmentController extends Controller
                 // $itemDate = $rawDate ? Carbon::parse($rawDate) : $newDateAssigned;
                 $itemDate = $rawDate ? Carbon::parse($rawDate) : now();
 
+                $hadRecentDeletion = DB::table('asset_assignment_items as aai_old')
+                    ->where('aai_old.asset_id', $assetId)
+                    ->whereNotNull('aai_old.deleted_at')
+                    ->where('aai_old.deleted_at', '>=', $itemDate)
+                    ->exists();
+
+                if ($hadRecentDeletion) {
+                    $itemDate = $itemDate->copy()->addSeconds(2);
+                }
+
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
