@@ -14,9 +14,14 @@ return new class extends Migration
         Schema::create('verification_forms', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('turnover_disposal_id')->constrained('turnover_disposals')->cascadeOnDelete();
-            $table->foreignId('verified_by_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('unit_or_department_id')->constrained('unit_or_departments')->restrictOnDelete();
+            $table->foreignId('requested_by_personnel_id')->nullable()->constrained('personnels')->nullOnDelete();
 
+            $table->string('requested_by_name')->nullable();
+            $table->string('requested_by_title')->nullable();
+            $table->string('requested_by_contact')->nullable();
+
+            $table->foreignId('verified_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->date('verified_at')->nullable();
             $table->text('notes')->nullable();
             $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');

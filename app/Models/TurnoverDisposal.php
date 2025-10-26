@@ -718,9 +718,4 @@ class TurnoverDisposal extends Model
             ->get();
     }
 
-    public function verificationForm()
-    {
-        return $this->hasOne(VerificationForm::class);
-    }
-
 }

@@ -12,11 +12,6 @@ class TurnoverDisposalObserver
 
     public function created(TurnoverDisposal $disposal)
     {
-        VerificationForm::firstOrCreate(
-            ['turnover_disposal_id' => $disposal->id],
-            ['status' => 'pending']
-        );
-        
         $this->logAction('create', $disposal, [], $disposal->toArray());
     }
 
@@ -37,22 +32,12 @@ class TurnoverDisposalObserver
 
     public function deleted(TurnoverDisposal $disposal)
     {
-        // Soft delete related VerificationForm (if any)
-        $disposal->verificationForm()?->delete();
-
         $this->logAction('delete', $disposal, $disposal->getOriginal(), []);
     }
 
     // Handle restore events explicitly
     public function restored(TurnoverDisposal $disposal)
     {
-        // Recreate verification form if missing
-        if (!$disposal->verificationForm) {VerificationForm::create([
-                'turnover_disposal_id' => $disposal->id,
-                'status' => 'pending',
-            ]);
-        }
-
         $this->logAction('restore', $disposal, [], $disposal->toArray());
     }
 }

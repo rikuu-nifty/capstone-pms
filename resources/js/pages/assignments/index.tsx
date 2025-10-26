@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, UserCheck2, UserX, AlertTriangle, UserPen, UserRoundMinus } from 'lucide-react';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { formatDateLong } from '@/types/custom-index';
+// import { formatDateTimeLong } from '@/types/datetime';
 import type { AssignmentPageProps, AssetAssignment } from '@/types/asset-assignment';
 
 import { Input } from '@/components/ui/input';
@@ -293,9 +294,9 @@ export default function AssignmentsIndex({
                                 <TableHead className="text-center">Personnel</TableHead>
                                 <TableHead className="text-center">Unit/Department</TableHead>
                                 <TableHead className="text-center">Assets Count</TableHead>
-                                <TableHead className="text-center">Date Assigned</TableHead>
-                                <TableHead className="text-center">Assigned By</TableHead>
+                                {/* <TableHead className="text-center">Date Assigned</TableHead> */}
                                 <TableHead className="text-center">Date Updated</TableHead>
+                                <TableHead className="text-center">Assigned By</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -306,16 +307,17 @@ export default function AssignmentsIndex({
                                 <TableRow key={a.id}>
                                     <TableCell>{a.id}</TableCell>
                                     <TableCell>
-                                    <div className="flex flex-col">
-                                        <span className='font-medium'>{a.personnel?.full_name ?? '—'}</span>
-                                        <span className="text-xs text-muted-foreground">{a.personnel?.position ?? ''}</span>
-                                    </div>
+                                        <div className="flex flex-col">
+                                            <span className='font-medium'>{a.personnel?.full_name ?? '—'}</span>
+                                            <span className="text-xs text-muted-foreground">{a.personnel?.position ?? ''}</span>
+                                        </div>
                                     </TableCell>
                                     <TableCell>{a.personnel?.unit_or_department?.name ?? '—'}</TableCell>
                                     <TableCell>{a.items_count ?? 0}</TableCell>
-                                    <TableCell>{formatDateLong(a.date_assigned)}</TableCell>
+                                    {/* <TableCell>{formatDateLong(a.date_assigned)}</TableCell> */}
+                                    {/* <TableCell>{formatDateTimeLong(a.updated_at)}</TableCell> */}
+                                    <TableCell>{formatDateLong(a.updated_at)}</TableCell>
                                     <TableCell>{a.assigned_by_user?.name ?? '—'}</TableCell>
-                                    <TableCell>{formatDateLong(a.updated_at) ?? '—'}</TableCell>
                                     <TableCell>
                                         <div className="flex justify-center items-center gap-2">
                                             {canReassign && (

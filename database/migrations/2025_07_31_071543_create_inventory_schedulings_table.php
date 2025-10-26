@@ -40,7 +40,6 @@ return new class extends Migration
                   ->on('unit_or_departments')
                   ->onDelete('set null'); // The onDelete('set null') ensures that if a unit is deleted, the value becomes null instead of breaking the reference.
 
-
             $table->unsignedBigInteger('user_id')->nullable();// FK Users_Table
             $table->foreign('user_id')
                   ->references('id')
@@ -66,7 +65,7 @@ return new class extends Migration
             $table->string('verified_by')->nullable();
             $table->string('received_by')->nullable();
                 
-            $table->enum('scheduling_status', ['Pending_Review', 'Pending', 'Completed', 'Overdue', 'Cancelled'])->default('Pending_Review');
+            $table->enum('scheduling_status', ['Pending_Review', 'Pending', 'In_Progress' ,'Completed', 'Overdue', 'Cancelled'])->default('Pending_Review');
             $table->text('description')->nullable();
 
 
