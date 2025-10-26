@@ -568,6 +568,9 @@ export default function PersonnelAssignmentsReport() {
                                                 axisLine={false}
                                                 tick={{ fill: '#666', fontSize: 11 }}
                                                 width={30} // give it room so labels don’t overlap bars
+                                                domain={[0, 'auto']}       // start at 0
+                                                allowDecimals={false}      // no decimal tick values
+                                                tickFormatter={(v) => `${Math.round(v)}`} // extra safety: render as integers
                                             />
 
                                             <XAxis
