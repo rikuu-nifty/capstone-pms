@@ -97,6 +97,115 @@ class AssetAssignmentController extends Controller
         return redirect()->route('assignments.index')->with('success', "Assets assigned successfully.");
     }
 
+    // public function update(Request $request, AssetAssignment $assignment)
+    // {
+    //     $data = $request->validate([
+    //         'personnel_id'                      => ['required', Rule::exists('personnels', 'id')],
+    //         'date_assigned'                     => ['required', 'date'],
+    //         'assigned_by'                       => ['sometimes', Rule::exists('users', 'id')],
+    //         'remarks'                           => ['nullable', 'string'],
+    //         'selected_assets'                   => ['required', 'array', 'min:1'],
+    //         'selected_assets.*.id'              => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
+    //         'selected_assets.*.date_assigned'   => ['nullable', 'date'],
+    //     ]);
+
+    //     DB::transaction(function () use ($assignment, $data, $request) {
+    //         $oldDateAssigned = $assignment->date_assigned;
+    //         // $newDateAssigned = Carbon::parse($data['date_assigned']);
+    //         $newDateAssigned = $data['date_assigned']
+    //             ? Carbon::parse($data['date_assigned'])->setTimeFromTimeString(now()->toTimeString())
+    //             : now();
+
+    //         $assignment->update([
+    //             'personnel_id'  => $data['personnel_id'],
+    //             // 'date_assigned' => Carbon::parse($data['date_assigned']),
+    //             'date_assigned' => $newDateAssigned,
+    //             'remarks'       => $data['remarks'] ?? null,
+    //             'assigned_by'   => $data['assigned_by'] ?? $assignment->assigned_by ?? $request->user()->id,
+    //         ]);
+
+    //         $existingIds = $assignment->items()->pluck('asset_id')->toArray();
+    //         $newIds = collect($data['selected_assets'])->pluck('id')->toArray();
+
+    //         $toDelete = array_diff($existingIds, $newIds);
+    //         $toAdd = array_diff($newIds, $existingIds);
+    //         $retained = array_intersect($existingIds, $newIds);
+
+    //         // Soft delete only removed ones
+    //         if (!empty($toDelete)) {
+    //             $assignment->items()->whereIn('asset_id', $toDelete)->delete();
+    //         }
+
+    //         // FIX: only adjust retained items if the datetime actually changed
+    //         $assignmentDateChanged = !$newDateAssigned->equalTo($oldDateAssigned);
+
+    //         // Update retained items ONLY if assignment date changed
+    //         // if (!empty($retained) && !$newDateAssigned->equalTo($oldDateAssigned)) {
+    //         //     AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
+    //         //         ->whereIn('asset_id', $retained)
+    //         //         ->update([
+    //         //             'date_assigned' => $newDateAssigned,
+    //         //             'created_at'    => $newDateAssigned,
+    //         //             'updated_at'    => now(),
+    //         //         ]);
+    //         // }
+
+    //         if (!empty($retained) && $assignmentDateChanged) {
+    //             AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
+    //                 ->whereIn('asset_id', $retained)
+    //                 ->update([
+    //                     'date_assigned' => $newDateAssigned,
+    //                     // FIX: don’t rewrite created_at; keep original creation time
+    //                     'updated_at'    => now(),
+    //                 ]);
+    //         }
+
+    //         // Do nothing to retained — keep their original date_assigned intact
+    //         // foreach ($retained as $assetId) {
+    //         //     InventoryList::where('id', $assetId)->update([
+    //         //         'assigned_to' => $assignment->personnel_id,
+    //         //     ]);
+    //         // }
+    //         if (!empty($retained)) {
+    //             InventoryList::whereIn('id', $retained)
+    //                 ->update(['assigned_to' => $assignment->personnel_id]);
+    //         }
+
+    //         // Create new ones
+    //         foreach ($toAdd as $assetId) {
+    //             $row = collect($data['selected_assets'])->firstWhere('id', $assetId);
+    //             $rawDate = data_get($row, 'date_assigned');
+    //             // $itemDate = $rawDate ? Carbon::parse($rawDate) : now();
+    //             $itemDate = $rawDate ? Carbon::parse($rawDate) : $newDateAssigned;
+
+
+    //             $hadRecentDeletion = DB::table('asset_assignment_items as aai_old')
+    //                 ->where('aai_old.asset_id', $assetId)
+    //                 ->whereNotNull('aai_old.deleted_at')
+    //                 ->where('aai_old.deleted_at', '>=', $itemDate)
+    //                 ->exists();
+
+    //             if ($hadRecentDeletion) {
+    //                 $itemDate = $itemDate->copy()->addSeconds(2);
+    //             }
+
+    //             AssetAssignmentItem::create([
+    //                 'asset_assignment_id' => $assignment->id,
+    //                 'asset_id'            => $assetId,
+    //                 'date_assigned'       => $itemDate,
+    //                 'created_at'          => $itemDate,
+    //                 'updated_at'          => $itemDate,
+    //             ]);
+
+    //             InventoryList::where('id', $assetId)->update([
+    //                 'assigned_to' => $assignment->personnel_id,
+    //             ]);
+    //         }
+    //     });
+
+    //     return redirect()->route('assignments.index')->with('success', "Assignment updated successfully.");
+    // }
+
     public function update(Request $request, AssetAssignment $assignment)
     {
         $data = $request->validate([
@@ -111,61 +220,79 @@ class AssetAssignmentController extends Controller
 
         DB::transaction(function () use ($assignment, $data, $request) {
             $oldDateAssigned = $assignment->date_assigned;
-            // $newDateAssigned = Carbon::parse($data['date_assigned']);
+
+            // ✅ FIX: preserve or assign a meaningful time component
+            // If user provided only a date, attach the current time to avoid 00:00:00
             $newDateAssigned = $data['date_assigned']
                 ? Carbon::parse($data['date_assigned'])->setTimeFromTimeString(now()->toTimeString())
                 : now();
 
+            // ✅ Update main assignment record
             $assignment->update([
                 'personnel_id'  => $data['personnel_id'],
-                // 'date_assigned' => Carbon::parse($data['date_assigned']),
                 'date_assigned' => $newDateAssigned,
                 'remarks'       => $data['remarks'] ?? null,
                 'assigned_by'   => $data['assigned_by'] ?? $assignment->assigned_by ?? $request->user()->id,
             ]);
 
+            // Current, new, and deleted asset relationships
             $existingIds = $assignment->items()->pluck('asset_id')->toArray();
-            $newIds = collect($data['selected_assets'])->pluck('id')->toArray();
+            $newIds      = collect($data['selected_assets'])->pluck('id')->toArray();
 
             $toDelete = array_diff($existingIds, $newIds);
-            $toAdd = array_diff($newIds, $existingIds);
+            $toAdd    = array_diff($newIds, $existingIds);
             $retained = array_intersect($existingIds, $newIds);
 
-            // Soft delete only removed ones
+            // ✅ Soft delete removed assets
             if (!empty($toDelete)) {
                 $assignment->items()->whereIn('asset_id', $toDelete)->delete();
             }
 
-            // Update retained items ONLY if assignment date changed
-            if (!empty($retained) && !$newDateAssigned->equalTo($oldDateAssigned)) {
+            // ✅ Only update retained items if the date actually changed
+            $assignmentDateChanged = !$newDateAssigned->equalTo($oldDateAssigned);
+            if (!empty($retained) && $assignmentDateChanged) {
                 AssetAssignmentItem::where('asset_assignment_id', $assignment->id)
                     ->whereIn('asset_id', $retained)
                     ->update([
                         'date_assigned' => $newDateAssigned,
-                        'created_at'    => $newDateAssigned,
                         'updated_at'    => now(),
                     ]);
             }
 
-            // Do nothing to retained — keep their original date_assigned intact
-            // foreach ($retained as $assetId) {
-            //     InventoryList::where('id', $assetId)->update([
-            //         'assigned_to' => $assignment->personnel_id,
-            //     ]);
-            // }
+            // ✅ Keep “assigned_to” link correct for retained items
             if (!empty($retained)) {
                 InventoryList::whereIn('id', $retained)
                     ->update(['assigned_to' => $assignment->personnel_id]);
             }
 
-            // Create new ones
-            foreach ($toAdd as $assetId) {
-                $row = collect($data['selected_assets'])->firstWhere('id', $assetId);
-                $rawDate = data_get($row, 'date_assigned');
-                // $itemDate = $rawDate ? Carbon::parse($rawDate) : $assignment->date_assigned;
-                // $itemDate = $rawDate ? Carbon::parse($rawDate) : $newDateAssigned;
-                $itemDate = $rawDate ? Carbon::parse($rawDate) : now();
+            // ✅ Find last event timestamp for this personnel to ensure ordering
+            $lastTs = DB::table('asset_assignment_items as e')
+                ->join('asset_assignments as a', 'a.id', '=', 'e.asset_assignment_id')
+                ->where('a.personnel_id', $assignment->personnel_id)
+                ->selectRaw("
+                GREATEST(
+                    COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00'),
+                    COALESCE(MAX(e.deleted_at),   '0000-00-00 00:00:00')
+                ) as last_ts
+            ")
+                ->value('last_ts');
 
+            $latestEventTs = $lastTs ? Carbon::parse($lastTs) : null;
+
+            // ✅ Create new assets with unique, ordered timestamps
+            foreach ($toAdd as $assetId) {
+                $row     = collect($data['selected_assets'])->firstWhere('id', $assetId);
+                $rawDate = data_get($row, 'date_assigned');
+
+                // Default to assignment's datetime if none provided
+                $itemDate = $rawDate ? Carbon::parse($rawDate) : $newDateAssigned;
+
+                // 🔸 Enforce monotonic ordering: ensure new item is strictly newer
+                if ($latestEventTs && $itemDate <= $latestEventTs) {
+                    $itemDate = $latestEventTs->copy()->addSeconds(2);
+                }
+
+                // 🔸 Avoid overlap if there was a recent deletion
                 $hadRecentDeletion = DB::table('asset_assignment_items as aai_old')
                     ->where('aai_old.asset_id', $assetId)
                     ->whereNotNull('aai_old.deleted_at')
@@ -176,6 +303,7 @@ class AssetAssignmentController extends Controller
                     $itemDate = $itemDate->copy()->addSeconds(2);
                 }
 
+                // ✅ Finally, insert the new assignment item
                 AssetAssignmentItem::create([
                     'asset_assignment_id' => $assignment->id,
                     'asset_id'            => $assetId,
@@ -184,13 +312,19 @@ class AssetAssignmentController extends Controller
                     'updated_at'          => $itemDate,
                 ]);
 
+                // Keep reference updated
                 InventoryList::where('id', $assetId)->update([
                     'assigned_to' => $assignment->personnel_id,
                 ]);
+
+                // Move pointer forward for subsequent additions
+                $latestEventTs = $itemDate;
             }
         });
 
-        return redirect()->route('assignments.index')->with('success', "Assignment updated successfully.");
+        return redirect()
+            ->route('assignments.index')
+            ->with('success', "Assignment updated successfully.");
     }
 
     public function destroy(AssetAssignment $assignment)
