@@ -198,7 +198,7 @@ export default function PersonnelAssignmentsReport() {
     }, [page]);
 
     const chartConfig: ChartConfig = {
-        past: { label: 'Prior Assets', color: 'var(--chart-1)' },
+        past: { label: 'Prior Assets (Previous Update)', color: 'var(--chart-1)' },
         current: { label: 'Current Assignments', color: 'var(--chart-2)' },
         missing: { label: 'Missing Assets', color: '#741414ff', },
         all_time: { label: 'All-Time Assignments (Unique)', color: 'var(--chart-5)' },

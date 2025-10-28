@@ -52,7 +52,7 @@ export default function PersonnelAssignmentsTable({
                             <TableHead className="text-center w-[300px]">Department</TableHead>
                             <TableHead className="text-center w-[200px]">Status</TableHead>
                             <TableHead className="text-center w-[200px]">All-Time Assets (Unique)</TableHead>
-                            <TableHead className="text-center w-[200px]">Prior Assets</TableHead>
+                            <TableHead className="text-center w-[200px]">Prior Assets (Previous Update)</TableHead>
                             <TableHead className="text-center w-[200px]">Current Assets</TableHead>
                             <TableHead className="text-center w-[200px]">Missing Assets</TableHead>
                         </TableRow>
