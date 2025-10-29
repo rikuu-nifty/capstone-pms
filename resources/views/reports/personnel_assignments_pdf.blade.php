@@ -127,7 +127,8 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
             <th style="width:12%;">Assignment ID</th>
             <th style="width:35%;">Personnel-in-Charge</th>
             <th style="width:20%;">Status</th>
-            <th style="width:17.5%;">Past Assets</th>
+            <th style="width:17.5%;">All-Time Assets</th>
+            <th style="width:17.5%;">Prior Assets</th>
             <th style="width:17.5%;">Current Assets</th>
             <th style="width:17.5%;">Missing Assets</th>
         </tr>
@@ -135,6 +136,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
 
     <tbody>
         @php
+        $grandAllTime = 0;
         $grandPast = 0;
         $grandCurrent = 0;
         $grandMissing = 0;
@@ -142,10 +144,11 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
 
         @foreach ($grouped as $dept => $rows)
         <tr class="group-dept">
-            <td colspan="6">Unit / Department: {{ $dept }}</td>
+            <td colspan="7">Unit / Department: {{ $dept }}</td>
         </tr>
 
         @php
+        $deptAllTime = 0;
         $deptPast = 0;
         $deptCurrent = 0;
         $deptMissing = 0;
@@ -153,8 +156,11 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
 
         @foreach ($rows as $r)
         @php
+        $deptAllTime += $r['all_time_assets_count'];
         $deptPast += $r['past_assets_count'];
         $deptCurrent += $r['current_assets_count'];
+
+        $grandAllTime += $r['all_time_assets_count'];
         $grandPast += $r['past_assets_count'];
         $grandCurrent += $r['current_assets_count'];
         $grandMissing += $r['missing_assets_count'];
@@ -164,6 +170,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
             <td>{{ $r['id'] }}</td>
             <td>{{ $r['full_name'] }}</td>
             <td>{{ $r['status'] }}</td>
+            <td style="color:#b45309; font-weight:bold;">{{ $r['missing_assets_count'] }}</td>
             <td style="color:#2563eb; font-weight:bold;">{{ $r['past_assets_count'] }}</td>
             <td style="color:#16a34a; font-weight:bold;">{{ $r['current_assets_count'] }}</td>
             <td style="color:#dc2626; font-weight:bold;">{{ $r['missing_assets_count'] }}</td>
@@ -173,6 +180,7 @@ $grouped = collect($records)->groupBy(fn($r) => $r['department'] ?? 'Unassigned'
         {{-- Subtotal --}}
         <tr class="subtotal-row">
             <td colspan="3" style="text-align:right;">Total for {{ $dept }}:</td>
+            <td style="text-align:center;">{{ $deptAllTime }}</td>
             <td style="text-align:center;">{{ $deptPast }}</td>
             <td style="text-align:center;">{{ $deptCurrent }}</td>
             <td style="text-align:center;">{{ $grandMissing }}</td>

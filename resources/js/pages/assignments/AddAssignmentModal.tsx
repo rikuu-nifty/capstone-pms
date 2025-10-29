@@ -5,7 +5,7 @@ import AddModal from '@/components/modals/AddModal';
 import AssignmentAssetItemDetails from './AssignmentAssetItemDetails';
 import { MinimalAsset } from '@/types/asset-assignment';
 
-import { toInputDateTimeLocal, toServerDateTime } from '@/types/datetime';
+// import { toInputDateTimeLocal, toServerDateTime } from '@/types/datetime';
 
 interface Props {
     show: boolean;
@@ -63,8 +63,10 @@ export default function AddAssignmentModal({
             // const localDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD format
 
             setData('assigned_by', currentUserId);
-            // setData('date_assigned', localDate);
-            setData('date_assigned', toInputDateTimeLocal());
+            // setData('date_assigned', toInputDateTimeLocal());
+
+            const today = new Date();
+            setData('date_assigned', today.toLocaleDateString('en-CA')); // YYYY-MM-DD
         }
     }, [show, reset, clearErrors, currentUserId, setData]);
 
@@ -83,22 +85,23 @@ export default function AddAssignmentModal({
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        const payload = {
+            ...data,
+            selected_assets: data.selected_assets.map((id) => ({
+                id,
+                date_assigned: itemDates[id] ?? '',
+            })),
+        };
+
         // const payload = {
         //     ...data,
-        //     selected_assets: data.selected_assets.map((id): SelectedAssetPayload => ({
+        //     date_assigned: toServerDateTime(data.date_assigned),
+        //     selected_assets: data.selected_assets.map((id) => ({
         //         id,
+        //         // keep your per-item override as-is (date-only) for now
         //         date_assigned: itemDates[id] ?? '',
         //     })),
         // };
-        const payload = {
-  ...data,
-  date_assigned: toServerDateTime(data.date_assigned),
-  selected_assets: data.selected_assets.map((id) => ({
-    id,
-    // keep your per-item override as-is (date-only) for now
-    date_assigned: itemDates[id] ?? '',
-  })),
-};
 
         if (!data.date_assigned) {
             const today = new Date();
@@ -200,24 +203,19 @@ export default function AddAssignmentModal({
             {/* Date Assigned */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Date Assigned</label>
-                {/* <input
+                <input
                     type="date"
                     className="w-full rounded-lg border p-2"
                     value={data.date_assigned}
                     onChange={(e) => setData('date_assigned', e.target.value)}
-                /> */}
+                />
 
-                <input
+                {/* <input
                     type="datetime-local"
                     className="w-full rounded-lg border p-2"
                     value={data.date_assigned}
                     onChange={(e) => setData('date_assigned', e.target.value)}
-                />
-                {/* {!data.date_assigned && (
-                    <p className="mt-1 text-xs text-amber-600 italic">
-                        Leaving this empty will default it to today's date.
-                    </p>
-                )} */}
+                /> */}
                 {errors.date_assigned && <p className="mt-1 text-xs text-red-500">Date assigned was not filled out, defaulting to today's date.</p>}
             </div>
 

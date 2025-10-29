@@ -34,9 +34,10 @@ export default function PersonnelAssignmentsChart({ data }: PersonnelAssignments
     }
 
     const chartConfig = {
-        past: { label: 'Past Assignments', color: 'var(--chart-1)' },
+        past: { label: 'Prior Assets', color: 'var(--chart-1)' },
         current: { label: 'Current Assignments', color: 'var(--chart-2)' },
         missing: { label: 'Missing Assets', color: '#741414ff' },
+        all_time: { label: 'All-Time Assignments', color: 'var(--chart-5)' },
     };
 
     return (
@@ -61,6 +62,7 @@ export default function PersonnelAssignmentsChart({ data }: PersonnelAssignments
                             cursor={false}
                             content={<ChartTooltipContent indicator="dashed" />}
                         />
+                        <Bar dataKey="all_time" fill="var(--chart-5)" radius={4} />
                         <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
                         <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
                         <Bar dataKey="missing" fill={chartConfig.missing.color} radius={4} />

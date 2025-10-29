@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Select from 'react-select';
-import { toInputDateTimeLocal, toServerDateTime } from '@/types/datetime';
+// import { toInputDateTimeLocal, toServerDateTime } from '@/types/datetime';
 
 import AssignmentAssetItemDetails from './AssignmentAssetItemDetails';
 
@@ -72,11 +72,13 @@ export default function EditAssignmentModal({
     useEffect(() => {
         if (!assignment) return;
 
-        // const today = new Date().toISOString().split('T')[0];
-        // const assignedDate = assignment.date_assigned ?? today;
+        // const assignedDate = assignment.date_assigned
+        //     ? assignment.date_assigned.replace(' ', 'T').slice(0,16)
+        //     : toInputDateTimeLocal();
+
         const assignedDate = assignment.date_assigned
-            ? assignment.date_assigned.replace(' ', 'T').slice(0,16)
-            : toInputDateTimeLocal();
+            ? assignment.date_assigned.split(' ')[0] // extract just YYYY-MM-DD
+            : new Date().toLocaleDateString('en-CA'); // today's date
 
         const map: Record<number, string> = {};
         (assignment.items ?? []).forEach(i => {
@@ -145,9 +147,17 @@ export default function EditAssignmentModal({
         //     })),
         // };
 
+        // const payload = {
+        //     ...data,
+        //     date_assigned: toServerDateTime(data.date_assigned),
+        //     selected_assets: data.selected_assets.map((id) => ({
+        //         id,
+        //         date_assigned: itemDates[id] ?? '',
+        //     })),
+        // };
+
         const payload = {
             ...data,
-            date_assigned: toServerDateTime(data.date_assigned),
             selected_assets: data.selected_assets.map((id) => ({
                 id,
                 date_assigned: itemDates[id] ?? '',
@@ -235,18 +245,18 @@ export default function EditAssignmentModal({
                         {/* Date Assigned */}
                         <div className="col-span-1">
                             <label className="mb-1 block font-medium">Date Assigned</label>
-                            {/* <input
+                            <input
                                 type="date"
                                 className="w-full rounded-lg border p-2"
                                 value={data.date_assigned}
                                 onChange={(e) => setData('date_assigned', e.target.value)}
-                            /> */}
-                            <input
+                            />
+                            {/* <input
                                 type="datetime-local"
                                 className="w-full rounded-lg border p-2"
                                 value={data.date_assigned}
                                 onChange={(e) => setData('date_assigned', e.target.value)}
-                            />
+                            /> */}
                             {!assignment?.date_assigned && (
                                 <p className="mt-1 text-xs text-amber-600 italic">
                                     No date was set — defaulted to today.

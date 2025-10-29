@@ -50,6 +50,7 @@ class PersonnelAssignmentsReportController extends Controller
                 'current_assets_count' => (int) $personnel->current_assets_count,
                 'past_assets_count' => (int) $personnel->past_assets_count,
                 'missing_assets_count' => (int) ($personnel->missing_assets_count ?? 0),
+                'all_time_assets_count' => (int) ($personnel->all_time_assets_count ?? 0),
             ];
         });
 
@@ -139,6 +140,7 @@ class PersonnelAssignmentsReportController extends Controller
                 'past_assets_count'     => (int) $personnel->past_assets_count,
                 'current_assets_count'  => (int) $personnel->current_assets_count,
                 'missing_assets_count'  => (int) ($personnel->missing_assets_count ?? 0),
+                'all_time_assets_count' => (int) ($personnel->all_time_assets_count ?? 0),
             ];
         });
 
@@ -151,8 +153,8 @@ class PersonnelAssignmentsReportController extends Controller
 
         $filename = 'Personnel_Assignments_Report_' . now()->format('Y-m-d') . '.pdf';
 
-        return $pdf->download($filename);
-        // return $pdf->stream($filename);
+        // return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 
     public function exportExcel(Request $request)
@@ -180,6 +182,7 @@ class PersonnelAssignmentsReportController extends Controller
                 'full_name'            => $personnel->full_name,
                 'department'           => $personnel->unitOrDepartment?->name ?? '—',
                 'status'               => ucfirst(str_replace('_', ' ', $personnel->status)),
+                'all_time_assets_count' => (int) ($personnel->all_time_assets_count ?? 0),
                 'past_assets_count'    => (int) $personnel->past_assets_count,
                 'current_assets_count' => (int) $personnel->current_assets_count,
                 'missing_assets_count' => (int) ($personnel->missing_assets_count ?? 0),
