@@ -210,41 +210,50 @@ class Personnel extends Model
         ]);
 
         $lastEvents = DB::table('asset_assignment_items as e')
-            ->join('asset_assignments as a', 'a.id', '=', 'e.asset_assignment_id')
-            ->selectRaw("
-                a.personnel_id,
-                MAX(e.deleted_at) AS last_del,
-                MAX(e.date_assigned) AS last_gain,
-                CASE
-                    WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
-                        THEN MAX(e.deleted_at)
-                    ELSE MAX(e.date_assigned)
-                END AS t_event,
-                CASE
-                    WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
-                        THEN 'del'
-                    ELSE 'gain'
-                END AS kind,
+    ->join('asset_assignments as a', 'a.id', '=', 'e.asset_assignment_id')
+    ->selectRaw("
+        a.personnel_id,
+        MAX(e.deleted_at) AS last_del,
+        MAX(e.date_assigned) AS last_gain,
+        MAX(
+            CASE
+                WHEN COALESCE(e.deleted_at, '0000-00-00 00:00:00') >= COALESCE(e.date_assigned, '0000-00-00 00:00:00')
+                    THEN e.deleted_at
+                ELSE e.date_assigned
+            END
+        ) AS t_event,
+        MAX(
+            CASE
+                WHEN COALESCE(e.deleted_at, '0000-00-00 00:00:00') >= COALESCE(e.date_assigned, '0000-00-00 00:00:00')
+                    THEN 'del'
+                ELSE 'gain'
+            END
+        ) AS kind,
 
-                -- NEW: capture previous event (the last timestamp *before* t_event)
-                (
-                    SELECT MAX(GREATEST(
-                        COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
-                        COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
-                    ))
-                    FROM asset_assignment_items AS e2
-                    INNER JOIN asset_assignments AS a2 ON a2.id = e2.asset_assignment_id
-                    WHERE a2.personnel_id = a.personnel_id
-                    AND GREATEST(
-                            COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
-                            COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
-                        ) < GREATEST(
-                            COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00'),
-                            COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00')
-                        )
-                ) AS prev_event
-            ")
-            ->groupBy('a.personnel_id');
+        (
+            SELECT MAX(GREATEST(
+                COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
+                COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
+            ))
+            FROM asset_assignment_items AS e2
+            INNER JOIN asset_assignments AS a2 ON a2.id = e2.asset_assignment_id
+            WHERE a2.personnel_id = a.personnel_id
+              AND GREATEST(
+                    COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
+                    COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
+                ) < (
+                    SELECT GREATEST(
+                        COALESCE(MAX(e3.date_assigned), '0000-00-00 00:00:00'),
+                        COALESCE(MAX(e3.deleted_at), '0000-00-00 00:00:00')
+                    )
+                    FROM asset_assignment_items AS e3
+                    INNER JOIN asset_assignments AS a3 ON a3.id = e3.asset_assignment_id
+                    WHERE a3.personnel_id = a.personnel_id
+                )
+        ) AS prev_event
+    ")
+    ->groupBy('a.personnel_id');
+
 
         // --- PAST ASSETS COUNT — snapshot just BEFORE the latest change (gain OR loss)
         $query->addSelect([
@@ -391,42 +400,50 @@ class Personnel extends Model
         ]);
 
         $lastEvents = DB::table('asset_assignment_items as e')
-            ->join('asset_assignments as a', 'a.id', '=', 'e.asset_assignment_id')
-            ->selectRaw("
-                a.personnel_id,
-                MAX(e.deleted_at) AS last_del,
-                MAX(e.date_assigned) AS last_gain,
-                CASE
-                    WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
-                        THEN MAX(e.deleted_at)
-                    ELSE MAX(e.date_assigned)
-                END AS t_event,
-                CASE
-                    WHEN COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00') >= COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00')
-                        THEN 'del'
-                    ELSE 'gain'
-                END AS kind,
+    ->join('asset_assignments as a', 'a.id', '=', 'e.asset_assignment_id')
+    ->selectRaw("
+        a.personnel_id,
+        MAX(e.deleted_at) AS last_del,
+        MAX(e.date_assigned) AS last_gain,
+        MAX(
+            CASE
+                WHEN COALESCE(e.deleted_at, '0000-00-00 00:00:00') >= COALESCE(e.date_assigned, '0000-00-00 00:00:00')
+                    THEN e.deleted_at
+                ELSE e.date_assigned
+            END
+        ) AS t_event,
+        MAX(
+            CASE
+                WHEN COALESCE(e.deleted_at, '0000-00-00 00:00:00') >= COALESCE(e.date_assigned, '0000-00-00 00:00:00')
+                    THEN 'del'
+                ELSE 'gain'
+            END
+        ) AS kind,
 
-                -- NEW: capture previous event (the last timestamp *before* t_event)
-                (
-                    SELECT MAX(GREATEST(
-                        COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
-                        COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
-                    ))
-                    FROM asset_assignment_items AS e2
-                    INNER JOIN asset_assignments AS a2 ON a2.id = e2.asset_assignment_id
-                    WHERE a2.personnel_id = a.personnel_id
-                    AND GREATEST(
-                            COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
-                            COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
-                        ) < GREATEST(
-                            COALESCE(MAX(e.date_assigned), '0000-00-00 00:00:00'),
-                            COALESCE(MAX(e.deleted_at), '0000-00-00 00:00:00')
-                        )
-                ) AS prev_event
-            ")
-            ->groupBy('a.personnel_id')
-        ;
+        (
+            SELECT MAX(GREATEST(
+                COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
+                COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
+            ))
+            FROM asset_assignment_items AS e2
+            INNER JOIN asset_assignments AS a2 ON a2.id = e2.asset_assignment_id
+            WHERE a2.personnel_id = a.personnel_id
+              AND GREATEST(
+                    COALESCE(e2.date_assigned, '0000-00-00 00:00:00'),
+                    COALESCE(e2.deleted_at, '0000-00-00 00:00:00')
+                ) < (
+                    SELECT GREATEST(
+                        COALESCE(MAX(e3.date_assigned), '0000-00-00 00:00:00'),
+                        COALESCE(MAX(e3.deleted_at), '0000-00-00 00:00:00')
+                    )
+                    FROM asset_assignment_items AS e3
+                    INNER JOIN asset_assignments AS a3 ON a3.id = e3.asset_assignment_id
+                    WHERE a3.personnel_id = a.personnel_id
+                )
+        ) AS prev_event
+    ")
+    ->groupBy('a.personnel_id');
+
 
         // --- PAST ASSETS COUNT — snapshot just BEFORE the latest change (gain OR loss)
         $query->addSelect([
