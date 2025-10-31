@@ -21,6 +21,7 @@ use Database\Seeders\EquipmentCodesTableSeeder;
 use Database\Seeders\InventorySchedulingSignatoriesSeeder;
 use Database\Seeders\TransferSignatoriesSeeder;
 use Database\Seeders\TurnoverDisposalSignatoriesSeeder;
+use Database\Seeders\OffCampusSignatoriesSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -53,6 +54,7 @@ class DatabaseSeeder extends Seeder
             InventorySchedulingSignatoriesSeeder::class,
             TransferSignatoriesSeeder::class,
             TurnoverDisposalSignatoriesSeeder::class,
+            OffCampusSignatoriesSeeder::class,
         ]);
     }
 }
