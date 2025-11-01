@@ -19,78 +19,58 @@ class CheckMaintenanceDue extends Command
         $now = Carbon::now();
         $today = $now->toDateString();
 
-        // ✅ Only get assets that haven't been notified yet
+        // ✅ Only fetch assets that haven't been notified
         $dueTodayAssets = InventoryList::whereDate('maintenance_due_date', $today)
             ->where('maintenance_notified', false)
             ->get();
 
-        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $today)
+        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $now->toDateString())
             ->where('overdue_notified', false)
             ->get();
 
         if ($dueTodayAssets->isEmpty() && $overdueAssets->isEmpty()) {
-            $this->info('✅ No maintenance due or overdue today.');
+            $this->info('No maintenance due or overdue today.');
             return;
         }
 
-        // ✅ Only approved, active PMO Staff & Head (and Superuser for testing)
+        // Only approved, active PMO Staff & Head
         $users = User::without('role')
             ->whereNull('deleted_at')
             ->where('status', 'approved')
             ->whereNotNull('role_id')
-            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser', 'pmo_staff', 'pmo_head']))
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser','pmo_staff','pmo_head']))
             ->with('role:id,code,name')
             ->get();
 
         if ($users->isEmpty()) {
-            $this->warn('⚠️ No active PMO Staff, PMO Head, or Superuser found.');
+            $this->warn('⚠️ No active PMO Staff or PMO Head users found.');
             return;
         }
 
-        // ==========================
-        // 🔔 Send Notifications
-        // ==========================
-        foreach ($users as $user) {
-            $roleCode = strtolower($user->role?->code ?? '');
+        foreach ($dueTodayAssets as $asset) {
+            // 🧠 Double-check guard before sending
+            if ($asset->maintenance_notified) continue;
 
-            // Maintenance due today
-            foreach ($dueTodayAssets as $asset) {
+            foreach ($users as $user) {
                 $user->notify(new MaintenanceDueNotification($asset));
             }
 
-            // Maintenance already overdue
-            foreach ($overdueAssets as $asset) {
+            // 🟢 Mark immediately so next run will skip it
+            $asset->updateQuietly(['maintenance_notified' => true]);
+            $this->info("📨 Notified users for maintenance due asset: {$asset->asset_name}");
+        }
+
+        foreach ($overdueAssets as $asset) {
+            if ($asset->overdue_notified) continue;
+
+            foreach ($users as $user) {
                 $user->notify(new OverdueNotification($asset));
             }
 
-            $this->info("📨 Notified {$user->name} ({$roleCode})");
+            $asset->updateQuietly(['overdue_notified' => true]);
+            $this->info("📨 Notified users for overdue asset: {$asset->asset_name}");
         }
 
-        // ==========================
-        // 🧩 Mark assets as notified
-        // ==========================
-        if ($dueTodayAssets->isNotEmpty()) {
-            foreach ($dueTodayAssets as $asset) {
-                $asset->updateQuietly(['maintenance_notified' => true]);
-            }
-            $this->info("✅ Marked {$dueTodayAssets->count()} due assets as notified.");
-        }
-
-        if ($overdueAssets->isNotEmpty()) {
-            foreach ($overdueAssets as $asset) {
-                $asset->updateQuietly(['overdue_notified' => true]);
-            }
-            $this->info("✅ Marked {$overdueAssets->count()} overdue assets as notified.");
-        }
-
-        // ==========================
-        // 🧾 Summary
-        // ==========================
-        $this->info(
-            "📢 Sent " .
-            $dueTodayAssets->count() . " due and " .
-            $overdueAssets->count() . " overdue notifications to " .
-            $users->count() . " active users."
-        );
+        $this->info("📢 Maintenance notifications processed successfully.");
     }
 }
