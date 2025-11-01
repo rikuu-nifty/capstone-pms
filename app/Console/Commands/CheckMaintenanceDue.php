@@ -19,7 +19,7 @@ class CheckMaintenanceDue extends Command
         $now = Carbon::now();
         $today = $now->toDateString();
 
-        // ✅ Only fetch assets that haven't been notified
+        // ✅ Only fetch assets that haven't been notified yet
         $dueTodayAssets = InventoryList::whereDate('maintenance_due_date', $today)
             ->where('maintenance_notified', false)
             ->get();
@@ -29,16 +29,16 @@ class CheckMaintenanceDue extends Command
             ->get();
 
         if ($dueTodayAssets->isEmpty() && $overdueAssets->isEmpty()) {
-            $this->info('✅ No maintenance due or overdue today.');
+            $this->info('No maintenance due or overdue today.');
             return;
         }
 
-        // ✅ Only approved, active PMO Staff & Head (and Superuser)
+        // ✅ Get all active, approved PMO Staff + Head + Superuser
         $users = User::without('role')
             ->whereNull('deleted_at')
             ->where('status', 'approved')
             ->whereNotNull('role_id')
-            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser', 'pmo_staff', 'pmo_head']))
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser','pmo_staff','pmo_head']))
             ->with('role:id,code,name')
             ->get();
 
@@ -47,38 +47,36 @@ class CheckMaintenanceDue extends Command
             return;
         }
 
-        // ✅ Handle due today assets
+        // ✅ Maintenance due today
         foreach ($dueTodayAssets as $asset) {
-            if ($asset->maintenance_notified) {
-                continue; // already notified
-            }
+            $asset->refresh(); // 🔄 Reload latest DB state
+            if ($asset->maintenance_notified) continue; // ⛔ Skip if already updated by another process
 
+            // 🟢 Mark first to prevent race conditions
+            $asset->forceFill(['maintenance_notified' => true])->saveQuietly();
+
+            // 📤 Notify all users
             foreach ($users as $user) {
                 $user->notify(new MaintenanceDueNotification($asset));
             }
 
-            // ✅ Immediately update in DB
-            $asset->forceFill(['maintenance_notified' => true])->saveQuietly();
-
-            $this->info("📨 Notified users for maintenance due asset: {$asset->asset_name}");
+            $this->info("📨 Sent maintenance due notification for: {$asset->asset_name}");
         }
 
-        // ✅ Handle overdue assets
+        // ✅ Maintenance overdue
         foreach ($overdueAssets as $asset) {
-            if ($asset->overdue_notified) {
-                continue; // already notified
-            }
+            $asset->refresh();
+            if ($asset->overdue_notified) continue;
+
+            $asset->forceFill(['overdue_notified' => true])->saveQuietly();
 
             foreach ($users as $user) {
                 $user->notify(new OverdueNotification($asset));
             }
 
-            // ✅ Immediately update in DB
-            $asset->forceFill(['overdue_notified' => true])->saveQuietly();
-
-            $this->info("📨 Notified users for overdue asset: {$asset->asset_name}");
+            $this->info("📨 Sent overdue notification for: {$asset->asset_name}");
         }
 
-        $this->info("📢 Maintenance notifications processed successfully.");
+        $this->info('✅ Maintenance notifications processed successfully.');
     }
 }
