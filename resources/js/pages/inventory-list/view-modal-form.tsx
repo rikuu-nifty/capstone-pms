@@ -39,7 +39,7 @@ const StatusBadge = ({ status }: { status?: string | null }) => {
 // -------------------- COMPONENT --------------------
 export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () => void }) => {
     // console.log('🧩 Asset Data:', asset);
-    const totalCost = asset.unit_cost && asset.quantity ? Number(asset.unit_cost) * Number(asset.quantity) : null;
+    // const totalCost = asset.unit_cost && asset.quantity ? Number(asset.unit_cost) * Number(asset.quantity) : null;
 
     const InfoCard = ({ label, value }: { label: string; value: string }) => (
         <div className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
@@ -148,12 +148,14 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <CreditCard size={18} /> Financial
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <InfoCard label="Supplier" value={humanize(asset.supplier)} />
                                 <InfoCard label="Quantity" value={humanize(asset.quantity)} />
                                 <InfoCard label="Unit Cost" value={currencyFormat(asset.unit_cost)} />
                                 <InfoCard label="Depreciation Value (per year)" value={currencyFormat(asset.depreciation_value)} /> {/* ✅ new */}
-                                <InfoCard label="Total Cost" value={currencyFormat(totalCost) || '—'} />
-                                <InfoCard label="Supplier" value={humanize(asset.supplier)} />
+                                {/* <InfoCard label="Total Cost" value={currencyFormat(totalCost) || '—'} /> */}
                                 <InfoCard label="Memorandum No." value={humanize(asset.memorandum_no).replace(/,/g, '')} />
+                                <InfoCard label="Date Purchased" value={dateFormat(asset.date_purchased)} />
+                                
                             </div>
                         </div>
 
@@ -192,8 +194,10 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <InfoCard label="Inventory Status" value={humanize(asset.current_inventory_status)} />
                                 <InfoCard label="Turnover/Disposal Status" value={humanize(asset.current_turnover_disposal_status) || '—'} />
                                 <InfoCard label="Off Campus Status" value={humanize(asset.current_off_campus_status) || '—'} />
+                                <div className="sm:col-span-2">
                                 <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
-                                <InfoCard label="Date Purchased" value={dateFormat(asset.date_purchased)} />
+                                </div>
+                            
                             </div>
                         </div>
                     </div>

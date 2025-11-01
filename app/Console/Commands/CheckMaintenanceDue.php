@@ -19,8 +19,14 @@ class CheckMaintenanceDue extends Command
         $now = Carbon::now();
         $today = $now->toDateString();
 
-        $dueTodayAssets = InventoryList::whereDate('maintenance_due_date', $today)->get();
-        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $now->toDateString())->get();
+        // ✅ Only get assets that haven't been notified yet
+        $dueTodayAssets = InventoryList::whereDate('maintenance_due_date', $today)
+            ->where('maintenance_notified', false)
+            ->get();
+
+        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $now->toDateString())
+            ->where('overdue_notified', false)
+            ->get();
 
         if ($dueTodayAssets->isEmpty() && $overdueAssets->isEmpty()) {
             $this->info('No maintenance due or overdue today.');
@@ -44,17 +50,26 @@ class CheckMaintenanceDue extends Command
         foreach ($users as $user) {
             $roleCode = strtolower($user->role?->code ?? '');
 
-            //  Maintenance due today
+            // ✅ Maintenance due today (only if not yet notified)
             foreach ($dueTodayAssets as $asset) {
                 $user->notify(new MaintenanceDueNotification($asset));
             }
 
-            // Maintenance already overdue (before current day)
+            // ✅ Maintenance already overdue (only if not yet notified)
             foreach ($overdueAssets as $asset) {
                 $user->notify(new OverdueNotification($asset));
             }
 
             $this->info("📨 Notified {$user->name} ({$roleCode})");
+        }
+
+        // ✅ Mark these assets as notified so they won't be sent again
+        foreach ($dueTodayAssets as $asset) {
+            $asset->updateQuietly(['maintenance_notified' => true]);
+        }
+
+        foreach ($overdueAssets as $asset) {
+            $asset->updateQuietly(['overdue_notified' => true]);
         }
 
         $this->info(

@@ -26,7 +26,14 @@ type Props = {
     personnels: { id: number; full_name: string; position?: string | null }[]; // new
 };
 
-const safeDate = (val?: string | null) => (val ? new Date(val).toISOString().substring(0, 10) : '');
+const safeDate = (val?: string | null) => {
+    if (!val) return '';
+    const d = new Date(val);
+    // compensate for timezone offset before extracting YYYY-MM-DD
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().substring(0, 10);
+};
+
 
 export const EditAssetModalForm = ({
     onClose,

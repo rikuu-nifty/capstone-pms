@@ -65,6 +65,11 @@ return new class extends Migration
 
             $table->date('date_purchased')->nullable();
             $table->date('maintenance_due_date')->nullable();
+
+            // ✅ NEW: Notification flags to prevent duplicate maintenance emails
+            $table->boolean('maintenance_notified')->default(false);
+            $table->boolean('overdue_notified')->default(false);
+
             $table->string('asset_type');
             $table->integer('quantity');
 
@@ -107,4 +112,3 @@ return new class extends Migration
         Schema::dropIfExists('inventory_lists'); 
     }
 };
-    

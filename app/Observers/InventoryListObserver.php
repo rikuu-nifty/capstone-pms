@@ -21,6 +21,14 @@ class InventoryListObserver
             return;
         }
 
+        // ✅ Reset notification flags if maintenance due date changed
+        if ($inventory->isDirty('maintenance_due_date')) {
+            $inventory->updateQuietly([
+                'maintenance_notified' => false,
+                'overdue_notified' => false,
+            ]);
+        }
+
         $this->logAction(
             'update',
             $inventory,

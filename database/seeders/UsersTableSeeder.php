@@ -79,23 +79,27 @@ class UsersTableSeeder extends Seeder
 
         // 🔹 PMO Staff (assigned to PMO unit by default)
         $staffRole = Role::where('code', 'pmo_staff')->first();
-        for ($i = 1; $i <= 5; $i++) {
-            $user = User::updateOrCreate(
-                ['email' => "user{$i}@example.com"],
-                [
-                    'name' => "Staff User {$i}",
-                    'password' => Hash::make('password'),
-                    'status' => 'approved',
-                    'role_id' => $staffRole?->id,
-                    'unit_or_department_id' => $pmoUnit?->id ?? $defaultUnit?->id,
-                    'email_verified_at' => $now,
-                ]
-            );
-            UserDetail::updateOrCreate(
-                ['user_id' => $user->id],
-                ['first_name' => "User{$i}", 'last_name' => "Lastname{$i}"]
-            );
-        }
+
+        $user = User::updateOrCreate(
+            ['email' => 'user1@example.com'],
+            [
+                'name' => 'Staff User 1',
+                'password' => Hash::make('password'),
+                'status' => 'approved',
+                'role_id' => $staffRole?->id,
+                'unit_or_department_id' => $pmoUnit?->id ?? $defaultUnit?->id,
+                'email_verified_at' => $now,
+            ]
+        );
+
+        UserDetail::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'first_name' => 'User1',
+                'last_name' => 'Lastname1',
+            ]
+        );
+
         // 🔹 Example: assign a Library user to Accounting unit
         $acctRole = Role::where('code', 'viewer')->first(); // e.g., viewer role
         $library = User::updateOrCreate(
