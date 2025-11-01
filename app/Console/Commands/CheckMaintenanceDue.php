@@ -24,21 +24,21 @@ class CheckMaintenanceDue extends Command
             ->where('maintenance_notified', false)
             ->get();
 
-        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $now->toDateString())
+        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $today)
             ->where('overdue_notified', false)
             ->get();
 
         if ($dueTodayAssets->isEmpty() && $overdueAssets->isEmpty()) {
-            $this->info('No maintenance due or overdue today.');
+            $this->info('✅ No maintenance due or overdue today.');
             return;
         }
 
-        // Only approved, active PMO Staff & Head
+        // ✅ Only approved, active PMO Staff & Head (and Superuser)
         $users = User::without('role')
             ->whereNull('deleted_at')
             ->where('status', 'approved')
             ->whereNotNull('role_id')
-            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser','pmo_staff','pmo_head']))
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser', 'pmo_staff', 'pmo_head']))
             ->with('role:id,code,name')
             ->get();
 
@@ -47,27 +47,35 @@ class CheckMaintenanceDue extends Command
             return;
         }
 
+        // ✅ Handle due today assets
         foreach ($dueTodayAssets as $asset) {
-            // 🧠 Double-check guard before sending
-            if ($asset->maintenance_notified) continue;
+            if ($asset->maintenance_notified) {
+                continue; // already notified
+            }
 
             foreach ($users as $user) {
                 $user->notify(new MaintenanceDueNotification($asset));
             }
 
-            // 🟢 Mark immediately so next run will skip it
-            $asset->updateQuietly(['maintenance_notified' => true]);
+            // ✅ Immediately update in DB
+            $asset->forceFill(['maintenance_notified' => true])->saveQuietly();
+
             $this->info("📨 Notified users for maintenance due asset: {$asset->asset_name}");
         }
 
+        // ✅ Handle overdue assets
         foreach ($overdueAssets as $asset) {
-            if ($asset->overdue_notified) continue;
+            if ($asset->overdue_notified) {
+                continue; // already notified
+            }
 
             foreach ($users as $user) {
                 $user->notify(new OverdueNotification($asset));
             }
 
-            $asset->updateQuietly(['overdue_notified' => true]);
+            // ✅ Immediately update in DB
+            $asset->forceFill(['overdue_notified' => true])->saveQuietly();
+
             $this->info("📨 Notified users for overdue asset: {$asset->asset_name}");
         }
 
