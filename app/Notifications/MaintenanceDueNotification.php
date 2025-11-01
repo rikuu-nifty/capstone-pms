@@ -4,8 +4,8 @@ namespace App\Notifications;
 
 use App\Models\InventoryList;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;        
-use Illuminate\Notifications\Messages\MailMessage; 
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 
@@ -18,6 +18,8 @@ class MaintenanceDueNotification extends Notification implements ShouldQueue
     public function __construct(InventoryList $asset)
     {
         $this->asset = $asset;
+        // 🚀 Allow queuing but still dispatch after DB update from command
+        $this->afterCommit = true;
     }
 
     public function via(object $notifiable): array
@@ -56,9 +58,6 @@ class MaintenanceDueNotification extends Notification implements ShouldQueue
             ]);
     }
 
-    /**
-     * Keep in-app (database) notification for the bell icon.
-     */
     public function toArray(object $notifiable): array
     {
         $due = $this->asset->maintenance_due_date
@@ -70,14 +69,14 @@ class MaintenanceDueNotification extends Notification implements ShouldQueue
         $dueStr = $due ? $due->toDateString() : null;
 
         return [
-            'asset_id'            => $this->asset->id,
-            'asset_name'          => $this->asset->asset_name,
+            'asset_id'             => $this->asset->id,
+            'asset_name'           => $this->asset->asset_name,
             'maintenance_due_date' => $dueStr,
-            'title'               => $isOverdue ? 'Maintenance Overdue' : 'Maintenance Due Reminder',
-            'message'             => $isOverdue
+            'title'                => $isOverdue ? 'Maintenance Overdue' : 'Maintenance Due Reminder',
+            'message'              => $isOverdue
                 ? "Maintenance for {$this->asset->asset_name} is OVERDUE (due on {$dueStr})."
                 : "Maintenance for {$this->asset->asset_name} is due on {$dueStr}.",
-            'link'                => route('inventory-list.view', $this->asset->id),
+            'link'                 => route('inventory-list.view', $this->asset->id),
         ];
     }
 }

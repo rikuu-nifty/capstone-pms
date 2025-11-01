@@ -8,7 +8,6 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-
 use App\Models\InventoryScheduling;
 use App\Models\Transfer;
 use App\Models\OffCampus;
@@ -23,15 +22,15 @@ class OverdueNotification extends Notification implements ShouldQueue
     protected string $status;
     protected string $title;
 
-    /**
-     * Accepts either an InventoryScheduling or Transfer record dynamically.
-     */
     public function __construct(object $record)
     {
+        // ✅ Override the trait’s default behavior
+        $this->afterCommit = false;
+
         if ($record instanceof InventoryScheduling) {
             $this->type = 'inventory_scheduling';
             $this->recordId = $record->id;
-            $this->dueDate = $record->inventory_schedule; // YYYY-MM format
+            $this->dueDate = $record->inventory_schedule;
             $this->status = $record->scheduling_status;
             $this->title = "Inventory Scheduling #{$record->id}";
         } elseif ($record instanceof Transfer) {

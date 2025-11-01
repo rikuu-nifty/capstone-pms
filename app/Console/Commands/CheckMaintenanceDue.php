@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use App\Models\InventoryList;
 use App\Models\User;
 use App\Notifications\MaintenanceDueNotification;
@@ -16,30 +17,13 @@ class CheckMaintenanceDue extends Command
 
     public function handle(): void
     {
-        $now = Carbon::now();
-        $today = $now->toDateString();
+        $today = Carbon::today()->toDateString();
 
-        // ✅ Fetch only assets that haven’t been notified yet
-        $dueTodayAssets = InventoryList::whereDate('maintenance_due_date', $today)
-            ->where('maintenance_notified', false)
-            ->get();
-
-        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $today)
-            ->where('overdue_notified', false)
-            ->get();
-
-        if ($dueTodayAssets->isEmpty() && $overdueAssets->isEmpty()) {
-            $this->info('No maintenance due or overdue today.');
-            return;
-        }
-
-        // ✅ Active PMO Staff + Head + Superuser
-        $users = User::without('role')
+        // 🔹 Get all active PMO users
+        $users = User::query()
             ->whereNull('deleted_at')
             ->where('status', 'approved')
-            ->whereNotNull('role_id')
-            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser','pmo_staff','pmo_head']))
-            ->with('role:id,code,name')
+            ->whereHas('role', fn($q) => $q->whereIn('code', ['superuser', 'pmo_head', 'pmo_staff']))
             ->get();
 
         if ($users->isEmpty()) {
@@ -47,34 +31,60 @@ class CheckMaintenanceDue extends Command
             return;
         }
 
-        // ✅ Handle due-today assets
-        foreach ($dueTodayAssets as $asset) {
-            $asset->refresh();                                   // ensure fresh DB state
-            if ($asset->maintenance_notified) continue;          // already processed
+        // ============================================================
+        // ✅ STEP 1: "DUE TODAY" - Update flags, then notify after commit
+        // ============================================================
+        $dueAssets = InventoryList::whereDate('maintenance_due_date', $today)
+            ->where('maintenance_notified', false)
+            ->get();
 
-            $asset->forceFill(['maintenance_notified' => true])  // mark first
-                  ->saveQuietly();
+        if ($dueAssets->isNotEmpty()) {
+            // Update all due assets first inside a transaction
+            DB::transaction(function () use ($dueAssets) {
+                foreach ($dueAssets as $asset) {
+                    $asset->updateQuietly([
+                        'maintenance_notified' => true,
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
 
-            foreach ($users as $user) {                          // then notify
-                $user->notify(new MaintenanceDueNotification($asset));
-            }
-
-            $this->info("📨 Sent maintenance-due notice for: {$asset->asset_name}");
+            // 🔸 Schedule notifications only AFTER commit
+            DB::afterCommit(function () use ($dueAssets, $users) {
+                foreach ($dueAssets as $asset) {
+                    foreach ($users as $user) {
+                        $user->notify(new MaintenanceDueNotification($asset));
+                    }
+                    info("📨 Maintenance due notice sent for: {$asset->asset_name}");
+                }
+            });
         }
 
-        // ✅ Handle overdue assets
-        foreach ($overdueAssets as $asset) {
-            $asset->refresh();
-            if ($asset->overdue_notified) continue;
+        // ============================================================
+        // ✅ STEP 2: "OVERDUE" - Same safe pattern
+        // ============================================================
+        $overdueAssets = InventoryList::where('maintenance_due_date', '<', $today)
+            ->where('overdue_notified', false)
+            ->get();
 
-            $asset->forceFill(['overdue_notified' => true])
-                  ->saveQuietly();
+        if ($overdueAssets->isNotEmpty()) {
+            DB::transaction(function () use ($overdueAssets) {
+                foreach ($overdueAssets as $asset) {
+                    $asset->updateQuietly([
+                        'overdue_notified' => true,
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
 
-            foreach ($users as $user) {
-                $user->notify(new OverdueNotification($asset));
-            }
-
-            $this->info("📨 Sent overdue notice for: {$asset->asset_name}");
+            DB::afterCommit(function () use ($overdueAssets, $users) {
+                foreach ($overdueAssets as $asset) {
+                    foreach ($users as $user) {
+                        $user->notify(new OverdueNotification($asset));
+                    }
+                    info("📨 Overdue notice sent for: {$asset->asset_name}");
+                }
+            });
         }
 
         $this->info('✅ Maintenance notifications processed successfully.');
