@@ -19,7 +19,7 @@ class CheckMaintenanceDue extends Command
         $now = Carbon::now();
         $today = $now->toDateString();
 
-        // ✅ Only fetch assets that haven't been notified yet
+        // ✅ Fetch only assets that haven’t been notified yet
         $dueTodayAssets = InventoryList::whereDate('maintenance_due_date', $today)
             ->where('maintenance_notified', false)
             ->get();
@@ -33,7 +33,7 @@ class CheckMaintenanceDue extends Command
             return;
         }
 
-        // ✅ Get all active, approved PMO Staff + Head + Superuser
+        // ✅ Active PMO Staff + Head + Superuser
         $users = User::without('role')
             ->whereNull('deleted_at')
             ->where('status', 'approved')
@@ -47,34 +47,34 @@ class CheckMaintenanceDue extends Command
             return;
         }
 
-        // ✅ Maintenance due today
+        // ✅ Handle due-today assets
         foreach ($dueTodayAssets as $asset) {
-            $asset->refresh(); // 🔄 Reload latest DB state
-            if ($asset->maintenance_notified) continue; // ⛔ Skip if already updated by another process
+            $asset->refresh();                                   // ensure fresh DB state
+            if ($asset->maintenance_notified) continue;          // already processed
 
-            // 🟢 Mark first to prevent race conditions
-            $asset->forceFill(['maintenance_notified' => true])->saveQuietly();
+            $asset->forceFill(['maintenance_notified' => true])  // mark first
+                  ->saveQuietly();
 
-            // 📤 Notify all users
-            foreach ($users as $user) {
+            foreach ($users as $user) {                          // then notify
                 $user->notify(new MaintenanceDueNotification($asset));
             }
 
-            $this->info("📨 Sent maintenance due notification for: {$asset->asset_name}");
+            $this->info("📨 Sent maintenance-due notice for: {$asset->asset_name}");
         }
 
-        // ✅ Maintenance overdue
+        // ✅ Handle overdue assets
         foreach ($overdueAssets as $asset) {
             $asset->refresh();
             if ($asset->overdue_notified) continue;
 
-            $asset->forceFill(['overdue_notified' => true])->saveQuietly();
+            $asset->forceFill(['overdue_notified' => true])
+                  ->saveQuietly();
 
             foreach ($users as $user) {
                 $user->notify(new OverdueNotification($asset));
             }
 
-            $this->info("📨 Sent overdue notification for: {$asset->asset_name}");
+            $this->info("📨 Sent overdue notice for: {$asset->asset_name}");
         }
 
         $this->info('✅ Maintenance notifications processed successfully.');
