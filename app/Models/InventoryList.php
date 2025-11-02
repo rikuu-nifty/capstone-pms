@@ -371,26 +371,26 @@ public function assignments()
     // Hook into model events for instant notifications
     protected static function booted()
     {
-        // When a new asset is created
-        static::created(function ($asset) {
-            self::checkAndNotify($asset);
-        });
-
-        // When an existing asset is updated
-        // static::updated(function ($asset) {
-        //     if ($asset->isDirty('maintenance_due_date')) {
-        //         self::checkAndNotify($asset);
-        //     }
+        // // When a new asset is created
+        // static::created(function ($asset) {
+        //     self::checkAndNotify($asset);
         // });
 
-        static::updated(function ($asset) {
-            if ($asset->maintenance_due_date && 
-                Carbon::parse($asset->maintenance_due_date)->isToday() || 
-                Carbon::parse($asset->maintenance_due_date)->isPast()
-            ) {
-                self::checkAndNotify($asset, true); // force notify
-            }
-        });
+        // // When an existing asset is updated
+        // // static::updated(function ($asset) {
+        // //     if ($asset->isDirty('maintenance_due_date')) {
+        // //         self::checkAndNotify($asset);
+        // //     }
+        // // });
+
+        // static::updated(function ($asset) {
+        //     if ($asset->maintenance_due_date && 
+        //         Carbon::parse($asset->maintenance_due_date)->isToday() || 
+        //         Carbon::parse($asset->maintenance_due_date)->isPast()
+        //     ) {
+        //         self::checkAndNotify($asset, true); // force notify
+        //     }
+        // });
     }
 
     /**
