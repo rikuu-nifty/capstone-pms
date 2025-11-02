@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\InventoryScheduling;
 use App\Models\Transfer;
 use App\Models\OffCampus;
+use App\Models\InventoryList;
 
 class OverdueNotification extends Notification implements ShouldQueue
 {
@@ -45,6 +46,12 @@ class OverdueNotification extends Notification implements ShouldQueue
             $this->dueDate = $record->return_date;
             $this->status = $record->status;
             $this->title = "Off-Campus #{$record->id}";
+        } elseif ($record instanceof InventoryList) {
+            $this->type = 'maintenance';
+            $this->recordId = $record->id;
+            $this->dueDate = $record->maintenance_due_date;
+            $this->status = $record->status;
+            $this->title = "Asset Maintenance #{$record->id}";
         } else {
             throw new \InvalidArgumentException('Invalid model type for OverdueNotification.');
         }
@@ -77,6 +84,7 @@ class OverdueNotification extends Notification implements ShouldQueue
             'inventory_scheduling' => route('inventory-scheduling.view', $this->recordId),
             'property_transfer'    => route('transfers.view', $this->recordId),
             'off_campus'           => route('off-campus.view', $this->recordId),
+            'maintenance'          => route('inventory-list.view', $this->recordId),
             default                => '#',
         };
 

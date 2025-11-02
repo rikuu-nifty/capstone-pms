@@ -10,6 +10,8 @@ use App\Notifications\MaintenanceDueNotification;
 use App\Notifications\OverdueNotification;
 use Carbon\Carbon;
 
+use Illuminate\Database\Eloquent\Model;
+
 class CheckMaintenanceDue extends Command
 {
     protected $signature = 'maintenance:check-due';
@@ -19,7 +21,7 @@ class CheckMaintenanceDue extends Command
     {
         $today = Carbon::today()->toDateString();
 
-        // 🔹 Get all active PMO users
+        // Get all active PMO users
         $users = User::query()
             ->whereNull('deleted_at')
             ->where('status', 'approved')
@@ -32,8 +34,9 @@ class CheckMaintenanceDue extends Command
         }
 
         // ============================================================
-        // ✅ STEP 1: "DUE TODAY" - Update flags, then notify after commit
+        // STEP 1: "DUE TODAY" - Update flags, then notify after commit
         // ============================================================
+        
         $dueAssets = InventoryList::whereDate('maintenance_due_date', $today)
             ->where('maintenance_notified', false)
             ->get();
@@ -41,15 +44,25 @@ class CheckMaintenanceDue extends Command
         if ($dueAssets->isNotEmpty()) {
             // Update all due assets first inside a transaction
             DB::transaction(function () use ($dueAssets) {
-                foreach ($dueAssets as $asset) {
-                    $asset->updateQuietly([
-                        'maintenance_notified' => true,
+
+                DB::table('inventory_lists')
+                    ->whereIn('id', $dueAssets->pluck('id'))
+                    ->update([
+                        'maintenance_notified' => 1,
                         'updated_at' => now(),
                     ]);
-                }
+
+                // Model::withoutEvents(function () use ($dueAssets) {
+                //     DB::table('inventory_lists')
+                //         ->whereIn('id', $dueAssets->pluck('id'))
+                //         ->update([
+                //             'maintenance_notified' => 1,
+                //             'updated_at' => now(),
+                //         ]);
+                // });
             });
 
-            // 🔸 Schedule notifications only AFTER commit
+            // Schedule notifications only AFTER commit
             DB::afterCommit(function () use ($dueAssets, $users) {
                 foreach ($dueAssets as $asset) {
                     foreach ($users as $user) {
@@ -61,20 +74,33 @@ class CheckMaintenanceDue extends Command
         }
 
         // ============================================================
-        // ✅ STEP 2: "OVERDUE" - Same safe pattern
+        // STEP 2: "OVERDUE" - Same safe pattern
         // ============================================================
         $overdueAssets = InventoryList::where('maintenance_due_date', '<', $today)
             ->where('overdue_notified', false)
             ->get();
 
+        info('Overdue IDs: ' . $overdueAssets->pluck('id')->implode(','));
+
         if ($overdueAssets->isNotEmpty()) {
             DB::transaction(function () use ($overdueAssets) {
-                foreach ($overdueAssets as $asset) {
-                    $asset->updateQuietly([
-                        'overdue_notified' => true,
+                DB::table('inventory_lists')
+                    ->whereIn('id', $overdueAssets->pluck('id'))
+                    ->update([
+                        'overdue_notified' => 1,
+                        'maintenance_notified' => 1,
                         'updated_at' => now(),
                     ]);
-                }
+
+                // Model::withoutEvents(function () use ($overdueAssets) {
+                //     DB::table('inventory_lists')
+                //         ->whereIn('id', $overdueAssets->pluck('id'))
+                //         ->update([
+                //             'overdue_notified' => 1,
+                //             'maintenance_notified' => 1,
+                //             'updated_at' => now(),
+                //         ]);
+                // });
             });
 
             DB::afterCommit(function () use ($overdueAssets, $users) {

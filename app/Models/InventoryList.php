@@ -20,6 +20,9 @@ class InventoryList extends Model
         'deleted_at' => 'datetime',
         'maintenance_due_date' => 'date',
         'date_purchased' => 'date:Y-m-d',
+
+        'maintenance_notified' => 'boolean',
+        'overdue_notified' => 'boolean',
     ];
 
     protected $appends = [
