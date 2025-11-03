@@ -57,6 +57,7 @@
         "concurrently": "^9.0.1",
         "date-fns": "^4.1.0",
         "dayjs": "^1.11.18",
+        "dexie": "^4.2.1",
         "globals": "^15.14.0",
         "input-otp": "^1.4.2",
         "laravel-vite-plugin": "^1.0",
@@ -74,6 +75,8 @@
         "tailwindcss-animate": "^1.0.7",
         "typescript": "^5.7.2",
         "vite": "^6.0",
+        "vite-plugin-pwa": "^1.1.0",
+        "workbox-window": "^7.3.0",
         "ziggy-js": "^2.5.3"
     },
     "optionalDependencies": {
