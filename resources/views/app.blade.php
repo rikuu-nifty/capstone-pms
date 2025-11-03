@@ -56,8 +56,8 @@
     @viteReactRefresh
     @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
 
-    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
-    
+    <link rel="manifest" href="{{ asset('build/manifest.webmanifest') }}">
+
     @inertiaHead
 </head>
 

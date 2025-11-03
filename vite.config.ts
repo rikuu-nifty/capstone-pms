@@ -8,15 +8,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
     plugins: [
-        laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx'],
-            ssr: 'resources/js/ssr.tsx',
-            refresh: true,
-        }),
-        react(),
-        tailwindcss(),
         VitePWA({
+            outDir: 'public',
             registerType: 'autoUpdate',
+            injectRegister: 'auto',
+            manifestFilename: 'manifest.webmanifest',
+            // filename: 'sw.js',
             includeAssets: [
                 'favicon2.ico',
                 'robots.txt',
@@ -25,33 +22,23 @@ export default defineConfig({
                 'pwa-512x512.png',
             ],
             manifest: {
+                id: '/',
                 name: 'Tap & Track',
                 short_name: 'Tap & Track',
                 description: 'Offline NFC Property Management System',
                 theme_color: '#3b56fc',
                 background_color: '#ffffff',
                 display: 'standalone',
-                start_url: 'standalone',
+                start_url: '/',
+                scope: '/',
                 icons: [
-                    {
-                        src: '/pwa-192x192.png',
-                        sizes: '192x192',
-                        type: 'image/png'
-                    },
-                    {
-                        src: '/pwa-512x512.png',
-                        sizes: '512x512',
-                        type: 'image/png'
-                    },
-                    {
-                        src: '/apple-touch-icon2.png',
-                        sizes: '180x180',
-                        type: 'image/png',
-                        purpose: 'any maskable'
-                    }
+                    { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+                    { src: '/apple-touch-icon2.png', sizes: '180x180', type: 'image/png', purpose: 'any maskable' },
                 ],
             },
             workbox: {
+                navigateFallback: '/',
                 runtimeCaching: [
                     {
                         // Cache app pages
@@ -92,6 +79,15 @@ export default defineConfig({
                 ],
             },
         }),
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.tsx'],
+            ssr: 'resources/js/ssr.tsx',
+            refresh: true,
+            buildDirectory: 'build',
+        }),
+        react(),
+        tailwindcss(),
+        
     ],
     
     esbuild: {

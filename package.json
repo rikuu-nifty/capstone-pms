@@ -2,7 +2,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && cp public/build/sw.js public/sw.js",
+        "build": "vite build",
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
         "format": "prettier --write resources/",
@@ -20,7 +20,8 @@
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
-        "typescript-eslint": "^8.23.0"
+        "typescript-eslint": "^8.23.0",
+        "vite-plugin-pwa": "^1.1.0"
     },
     "dependencies": {
         "@fullcalendar/core": "^6.1.19",
@@ -75,7 +76,6 @@
         "tailwindcss-animate": "^1.0.7",
         "typescript": "^5.7.2",
         "vite": "^6.0",
-        "vite-plugin-pwa": "^1.1.0",
         "workbox-window": "^7.3.0",
         "ziggy-js": "^2.5.3"
     },
