@@ -23,7 +23,7 @@ createInertiaApp({
 });
 
 
-// ✅ Global error interceptor for expired session, auth, or server crash
+// Global error interceptor for expired session, auth, or server crash
 router.on('error', (event) => {
     const detail = (event as unknown as { detail?: { response?: { status?: number } } }).detail
     const status = detail?.response?.status
@@ -45,3 +45,26 @@ router.on('error', (event) => {
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+// Register PWA Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        const { Workbox } = await import('workbox-window');
+
+        const wb = new Workbox('/sw.js', { scope: '/' });
+
+        wb.addEventListener('installed', (event) => {
+            if (event.isUpdate) {
+                console.log('🆕 New content available; refreshing...');
+                wb.messageSkipWaiting();
+                wb.addEventListener('controlling', () => {
+                    window.location.reload();
+                });
+            } else {
+                console.log('✅ Tap & Track PWA ready for offline use.');
+            }
+        });
+
+        wb.register();
+    });
+}
