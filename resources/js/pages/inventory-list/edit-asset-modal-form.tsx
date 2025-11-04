@@ -44,7 +44,7 @@ export const EditAssetModalForm = ({
     buildingRooms,
     categories,
     assetModels,
-    personnels, // add this
+    personnels,
 }: Props) => {
     const [form, setForm] = useState<AssetFormData>({
         asset_name: asset.asset_name,
@@ -85,7 +85,7 @@ export const EditAssetModalForm = ({
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [showWebcam, setShowWebcam] = useState(false); // webcam toggle
 
-    // ✅ Detect if user is on a mobile device (type-safe)
+    // Detect if user is on a mobile device (type-safe)
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -93,6 +93,9 @@ export const EditAssetModalForm = ({
 
         setIsMobile(/android|iphone|ipad|ipod/i.test(userAgent));
     }, []);
+
+    // Validation errors from backend
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Filter models based on selected category
     const filteredModels = assetModels.filter((m) => m.category_id === Number(form.category_id));
@@ -176,14 +179,27 @@ export const EditAssetModalForm = ({
         });
 
         // Send multipart/form-data via Inertia
+        // router.post(`/inventory-list/${asset.id}`, formData, {
+        //     forceFormData: true, // ensures file fields are preserved
+        //     onSuccess: () => {
+        //         onClose();
+        //         // refresh notifications if due date was set to today/past
+        //         router.reload({ only: ['notifications'] });
+        //     },
+        //     onError: (errors) => console.error(errors),
+        // });
+
         router.post(`/inventory-list/${asset.id}`, formData, {
             forceFormData: true, // ensures file fields are preserved
             onSuccess: () => {
+                setErrors({}); // clear previous validation errors
                 onClose();
-                // refresh notifications if due date was set to today/past
                 router.reload({ only: ['notifications'] });
             },
-            onError: (errors) => console.error(errors),
+            onError: (validationErrors) => {
+                // store backend validation errors so they can appear under fields
+                setErrors(validationErrors);
+            },
         });
     };
 
@@ -201,6 +217,7 @@ export const EditAssetModalForm = ({
                         <div>
                             <Label>Asset Name</Label>
                             <Input placeholder="Enter Assets" value={form.asset_name} onChange={(e) => handleChange('asset_name', e.target.value)} />
+                            {errors.asset_name && <p className="mt-1 text-xs text-red-500">{errors.asset_name}</p>}
                         </div>
 
                         <div>
@@ -210,6 +227,7 @@ export const EditAssetModalForm = ({
                                 value={form.serial_no}
                                 onChange={(e) => handleChange('serial_no', e.target.value)}
                             />
+                            {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
                         </div>
 
                         <div>
@@ -230,6 +248,7 @@ export const EditAssetModalForm = ({
                                     handleChange('brand', '');
                                 }}
                             />
+                            {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id}</p>}
                         </div>
 
                         <div>
@@ -256,6 +275,7 @@ export const EditAssetModalForm = ({
                                     }
                                 }}
                             />
+                            {errors.asset_model_id && <p className="mt-1 text-xs text-red-500">{errors.asset_model_id}</p>}
                         </div>
 
                         <div>
@@ -274,6 +294,7 @@ export const EditAssetModalForm = ({
                                 value={form.brand ? { value: form.brand, label: form.brand } : null}
                                 onChange={(option) => handleChange('brand', option ? option.value : '')}
                             />
+                            {errors.brand && <p className="mt-1 text-xs text-red-500">{errors.brand}</p>}
                         </div>
 
                         <div>
@@ -287,6 +308,7 @@ export const EditAssetModalForm = ({
                                 <option value="fixed">Fixed</option>
                                 <option value="not_fixed">Not Fixed</option>
                             </select>
+                            {errors.asset_type && <p className="mt-1 text-xs text-red-500">{errors.asset_type}</p>}
                         </div>
 
                         <div>
@@ -300,6 +322,7 @@ export const EditAssetModalForm = ({
                                 <option value="archived">Archived</option>
                                 <option value="missing">Missing</option>
                             </select>
+                            {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                         </div>
 
                         {/* Asset Image */}
@@ -432,6 +455,7 @@ export const EditAssetModalForm = ({
                                 }
                                 onChange={(option) => handleChange('unit_or_department_id', option ? option.value : '')}
                             />
+                            {errors.unit_or_department_id && <p className="mt-1 text-xs text-red-500">{errors.unit_or_department_id}</p>}
                         </div>
 
                         {/* Building */}
@@ -458,6 +482,7 @@ export const EditAssetModalForm = ({
                                     handleChange('sub_area_id', '');
                                 }}
                             />
+                            {errors.building_id && <p className="mt-1 text-xs text-red-500">{errors.building_id}</p>}
                         </div>
 
                         {/* Room */}
@@ -500,6 +525,7 @@ export const EditAssetModalForm = ({
                                 }
                                 onChange={(option) => handleChange('sub_area_id', option ? option.value : null)}
                             />
+                            {errors.sub_area_id && <p className="mt-1 text-xs text-red-500">{errors.sub_area_id}</p>}
                         </div>
 
                         {/* Assigned To */}
@@ -536,12 +562,14 @@ export const EditAssetModalForm = ({
                                 value={form.memorandum_no}
                                 onChange={(e) => handleChange('memorandum_no', Number(e.target.value))}
                             />
+                            {errors.memorandum_no && <p className="mt-1 text-xs text-red-500">{errors.memorandum_no}</p>}
                         </div>
 
                         {/* Supplier */}
                         <div>
                             <Label>Supplier</Label>
                             <Input placeholder="Enter Suppliers" value={form.supplier} onChange={(e) => handleChange('supplier', e.target.value)} />
+                            {errors.supplier && <p className="mt-1 text-xs text-red-500">{errors.supplier}</p>}
                         </div>
 
                         {/* Unit Cost */}
@@ -560,6 +588,7 @@ export const EditAssetModalForm = ({
                                     handleChange('depreciation_value', depreciation);
                                 }}
                             />
+                            {errors.unit_cost && <p className="mt-1 text-xs text-red-500">{errors.unit_cost}</p>}
                         </div>
 
                         {/* Depreciation Value */}
@@ -577,12 +606,14 @@ export const EditAssetModalForm = ({
                         <div>
                             <Label>Date Purchased</Label>
                             <PickerInput type="date" value={form.date_purchased} onChange={(v) => handleChange('date_purchased', v)} />
+                            {errors.date_purchased && <p className="mt-1 text-xs text-red-500">{errors.date_purchased}</p>}
                         </div>
 
                         {/* Maintenance Due Date */}
                         <div>
                             <Label>Maintenance Due Date</Label>
                             <PickerInput type="date" value={form.maintenance_due_date} onChange={(v) => handleChange('maintenance_due_date', v)} />
+                            {errors.maintenance_due_date && <p className="mt-1 text-xs text-red-500">{errors.maintenance_due_date}</p>}
                         </div>
 
                         <div className="col-span-2">
@@ -610,6 +641,7 @@ export const EditAssetModalForm = ({
                                 value={form.description}
                                 onChange={(e) => handleChange('description', e.target.value)}
                             />
+                            {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
                         </div>
                         <div className="col-span-2 border-t"></div>
                     </div>
