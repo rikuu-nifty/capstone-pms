@@ -125,6 +125,38 @@ class InventorySchedulingController extends Controller
             'designated_employee'       => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
+        $targetMonth = $data['inventory_schedule'];
+
+        // Common query base
+        $query = InventoryScheduling::query()
+            ->where('inventory_schedule', $targetMonth)
+            ->whereNotIn('scheduling_status', ['Cancelled', 'Completed']); // only active/in-progress schedules
+
+        if ($data['scope_type'] === 'unit') {
+            $query->whereHas('units', function ($q) use ($data) {
+                $q->whereIn('unit_or_departments.id', $data['unit_ids'] ?? []);
+            });
+        } else {
+            // Building scope
+            $query->where(function ($sub) use ($data) {
+                $sub->whereHas('buildings', function ($q) use ($data) {
+                    $q->whereIn('buildings.id', $data['building_ids'] ?? []);
+                })
+                    ->orWhereHas('rooms', function ($q) use ($data) {
+                        $q->whereIn('building_rooms.id', $data['room_ids'] ?? []);
+                    });
+            });
+        }
+
+        $exists = $query->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'inventory_schedule' => 'A schedule already exists for the same month and scope. 
+                 must complete or cancel the existing one before updating to this schedule month.'
+            ]);
+        }
+
         // Create schedule
         $schedule = DB::transaction(function () use ($data) {
             $schedule = InventoryScheduling::create([
@@ -287,6 +319,39 @@ class InventorySchedulingController extends Controller
         ]);
 
         $data = array_map(fn($v) => $v === '' ? null : $v, $data);
+
+        $targetMonth = $data['inventory_schedule'];
+
+        // Common query base
+        $query = InventoryScheduling::query()
+            ->where('inventory_schedule', $targetMonth)
+            ->whereNotIn('scheduling_status', ['Cancelled', 'Completed'])
+            ->where('id', '!=', $inventoryScheduling->id); // exclude the current record
+
+        if ($data['scope_type'] === 'unit') {
+            $query->whereHas('units', function ($q) use ($data) {
+                $q->whereIn('unit_or_departments.id', $data['unit_ids'] ?? []);
+            });
+        } else {
+            // Building scope
+            $query->where(function ($sub) use ($data) {
+                $sub->whereHas('buildings', function ($q) use ($data) {
+                    $q->whereIn('buildings.id', $data['building_ids'] ?? []);
+                })
+                    ->orWhereHas('rooms', function ($q) use ($data) {
+                        $q->whereIn('building_rooms.id', $data['room_ids'] ?? []);
+                    });
+            });
+        }
+
+        $exists = $query->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'inventory_schedule' => 'A schedule already exists for the same month and scope. 
+                 must complete or cancel the existing one before updating to this schedule month.'
+            ]);
+        }
 
         DB::transaction(function () use ($inventoryScheduling, $data) {
             if (strtolower($data['scheduling_status']) === 'pending_review') {
