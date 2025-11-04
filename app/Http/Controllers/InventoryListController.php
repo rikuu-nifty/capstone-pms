@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Requests\InventoryListAddNewAssetFormRequest;
+use App\Http\Requests\InventoryListUpdateAssetFormRequest;
 use Inertia\Inertia;
 
 use App\Models\AssetModel;
@@ -22,6 +23,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+
+use Illuminate\Validation\Rule;
 
 use App\Traits\LogsAuditTrail;
 
@@ -407,31 +410,34 @@ class InventoryListController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, InventoryList $inventoryList): RedirectResponse
+    // public function update(Request $request, InventoryList $inventoryList): RedirectResponse
+    public function update(InventoryListUpdateAssetFormRequest $request, InventoryList $inventoryList): RedirectResponse
     {
-        $data = $request->validate([
-            'asset_name' => 'nullable|string|max:255',
-            'supplier' => 'nullable|string|max:255',
-            'serial_no' => 'nullable|string|max:255',
-            'unit_cost' => 'nullable|numeric|min:0',
-            'quantity' => 'nullable|integer|min:1',
-            'asset_type' => 'nullable|string|max:255',
-            'category_id' => 'nullable|integer|exists:categories,id',
-            'brand' => 'nullable|string|max:255',
-            'memorandum_no' => 'nullable|numeric|min:0',
-            'description' => 'nullable|string|max:1000',
-            'date_purchased' => 'nullable|date',
-            'maintenance_due_date' => 'nullable|date',
-            'depreciation_value' => 'nullable|numeric|min:0',
-            'assigned_to' => 'nullable|integer|exists:personnels,id',
-            'asset_model_id' => 'nullable|integer',
-            'building_id' => 'nullable|exists:buildings,id',
-            'building_room_id' => 'nullable|exists:building_rooms,id',
-            'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
-            'status' => 'nullable|string|in:active,archived,missing',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'sub_area_id' => 'nullable|exists:sub_areas,id',
-        ]);
+        $data = $request->validated();
+
+        // $data = $request->validate([
+        //     'asset_name' => ['nullable','string','max:255', Rule::unique('inventory_lists', 'asset_name')->ignore($inventoryList->id)],
+        //     'supplier' => 'nullable|string|max:255',
+        //     'serial_no' => 'nullable|string|max:255',
+        //     'unit_cost' => 'nullable|numeric|min:0',
+        //     'quantity' => 'nullable|integer|min:1',
+        //     'asset_type' => 'nullable|string|max:255',
+        //     'category_id' => 'nullable|integer|exists:categories,id',
+        //     'brand' => 'nullable|string|max:255',
+        //     'memorandum_no' => 'nullable|numeric|min:0',
+        //     'description' => 'nullable|string|max:1000',
+        //     'date_purchased' => 'nullable|date',
+        //     'maintenance_due_date' => 'nullable|date',
+        //     'depreciation_value' => 'nullable|numeric|min:0',
+        //     'assigned_to' => 'nullable|integer|exists:personnels,id',
+        //     'asset_model_id' => 'nullable|integer',
+        //     'building_id' => 'nullable|exists:buildings,id',
+        //     'building_room_id' => 'nullable|exists:building_rooms,id',
+        //     'unit_or_department_id' => 'nullable|exists:unit_or_departments,id',
+        //     'status' => 'nullable|string|in:active,archived,missing',
+        //     'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        //     'sub_area_id' => 'nullable|exists:sub_areas,id',
+        // ]);
 
         // Normalize nullables
         $data['sub_area_id'] = $data['sub_area_id'] ?? null;

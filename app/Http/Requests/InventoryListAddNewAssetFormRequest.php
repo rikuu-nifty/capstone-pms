@@ -30,7 +30,7 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'category_id'          => 'required|integer|exists:categories,id',
             'date_purchased'       => 'required|date',
             'asset_type'           => 'required|in:fixed,not_fixed',
-            'asset_name'           => 'required|string|max:255',
+            'asset_name'           => 'required|string|max:255|unique:inventory_lists,asset_name',
             'brand'                => 'required|string|max:255',
             'quantity'             => 'required|integer|min:1|max:1000',
             'supplier'             => 'required|string|max:255',
@@ -75,22 +75,22 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
         return [
 
             // ✅ Asset Category
-'category_id.required' => 'Please select the asset category.',
-'category_id.integer'  => 'The asset category must be a valid number.',
-'category_id.exists'   => 'The selected asset category does not exist.',
+            'category_id.required' => 'Please select the asset category.',
+            'category_id.integer'  => 'The asset category must be a valid number.',
+            'category_id.exists'   => 'The selected asset category does not exist.',
 
 
-// ✅ Serial Number
-'serial_no.required' => 'Please provide the serial number of the asset.',
-'serial_no.string'   => 'The serial number must be a valid string.',
-'serial_no.max'      => 'The serial number may not be greater than 255 characters.',
+            // ✅ Serial Number
+            'serial_no.required' => 'Please provide the serial number of the asset.',
+            'serial_no.string'   => 'The serial number must be a valid string.',
+            'serial_no.max'      => 'The serial number may not be greater than 255 characters.',
 
 
-// ✅ Unit Cost
-'unit_cost.required' => 'Please provide the unit cost of the asset.',
-'unit_cost.numeric'  => 'The unit cost must be a valid number.',
-'unit_cost.min'      => 'The unit cost must be at least 0.',
-'unit_cost.max'      => 'The unit cost may not exceed 999,999.99.',
+            // ✅ Unit Cost
+            'unit_cost.required' => 'Please provide the unit cost of the asset.',
+            'unit_cost.numeric'  => 'The unit cost must be a valid number.',
+            'unit_cost.min'      => 'The unit cost must be at least 0.',
+            'unit_cost.max'      => 'The unit cost may not exceed 999,999.99.',
             // 'building_id.required' => 'Please select a building.',
             'asset_model_id.required' => 'Please specify the model of the asset.',
 
@@ -113,6 +113,7 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'asset_name.required' => 'Please provide the asset name.',                      // REQUIRED
             'asset_name.string' => 'The asset name must be a valid string.',
             'asset_name.max' => 'The asset name may not be greater than 255 characters.',
+            'asset_name.unique' => 'An asset with this name already exists. Please use a different name.',
 
             'brand.required' => 'Please provide the brand of the asset.',                   // REQUIRED
             'brand.string' => 'The brand must be a valid string.',

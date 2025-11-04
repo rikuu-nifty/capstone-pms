@@ -21,7 +21,7 @@ return new class extends Migration
                   ->on('asset_models')
                   ->onDelete('cascade');   // ->onDelete('set null'); 
 
-            $table->string('asset_name');
+            $table->string('asset_name')->unique();
             $table->string('image_path')->nullable();
             $table->text('description')->nullable();
             $table->enum('status', ['active', 'archived', 'missing'])->default('archived');
@@ -103,10 +103,12 @@ return new class extends Migration
             $table->dropForeign(['unit_or_department_id']);    
             $table->dropForeign(['building_id']);              
             $table->dropForeign(['building_room_id']);         
-            // $table->dropForeign(['sub_area_id']);              // ✅ NEW
-            $table->dropForeign(['assigned_to']);              // ✅ make sure to drop too
+            // $table->dropForeign(['sub_area_id']);
+            $table->dropForeign(['assigned_to']);
             $table->dropForeign(['deleted_by_id']);            
             $table->dropIndex('inventory_lists_assetmodel_deleted_idx');
+
+            $table->dropUnique(['asset_name']);
         });
 
         Schema::dropIfExists('inventory_lists'); 
