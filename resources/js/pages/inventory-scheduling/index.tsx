@@ -410,6 +410,7 @@ export default function InventorySchedulingIndex({
         post('/inventory-scheduling', {
             onSuccess: () => {
                 reset();
+                clearErrors();
                 setShowAddScheduleInventory(false);
             },
         });
@@ -729,6 +730,7 @@ export default function InventorySchedulingIndex({
                     className={`fixed inset-0 bg-black/40 transition-opacity duration-300 ${showAddScheduleInventory ? 'opacity-100' : 'opacity-0'}`}
                     onClick={() => {
                         reset();
+                        clearErrors();
                         setShowAddScheduleInventory(false);
                     }}
                 />
@@ -1388,6 +1390,7 @@ export default function InventorySchedulingIndex({
                             className="cursor-pointer"
                             onClick={() => {
                                 reset();
+                                clearErrors();
                                 setShowAddScheduleInventory(false);
                             }}
                         >
