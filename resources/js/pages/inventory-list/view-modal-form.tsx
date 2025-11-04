@@ -55,7 +55,12 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
             onOpenChange={(open) => {
                 if (!open) {
                     onClose();
-                    history.back(); // go back when modal closes
+                    // history.back(); // go back when modal closes
+
+                    // Instead of forcing reload, just go back to previous page/state
+                    if (window.history.state?.url?.includes('inventory-list/view')) {
+                        history.back();
+                    }
                 }
             }}
         >
