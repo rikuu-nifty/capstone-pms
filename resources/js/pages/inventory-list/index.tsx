@@ -611,10 +611,11 @@ export default function InventoryListIndex({
                     <div className="flex flex-col gap-2">
                         <Input
                             type="text"
-                            placeholder="Search by asset name..."
+                            placeholder="Search by name, type, location, unit/department..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="max-w-xs"
+                            // className="max-w-xs"
+                            className="w-[350px]"
                         />
 
                         {/* Active filter chips */}
