@@ -133,8 +133,65 @@ export default function PersonnelsIndex({
                             List of university personnel who may be assigned assets.
                         </p>
                     </div>
+                    
+                    {/* KPIs */}
+                    {totals && (
+                        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-4">
+                            {/* Total */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                                    <Users className="h-7 w-7 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Total Personnels</div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.total_personnels ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
 
-                    <div className="flex items-center justify-between gap-2">
+                            {/* Active */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                    <UserCheck2 className="h-7 w-7 text-green-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Active Personnels</div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.active_personnels ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Inactive */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
+                                    <Users className="h-7 w-7 text-gray-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Inactive Personnels</div>
+                                    <div className="text-3xl font-bold">
+                                        {Number(totals.inactive_personnels ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Left University */}
+                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
+                                    <AlertTriangle className="h-7 w-7 text-red-600" />
+                                </div>
+                                <div>
+                                    <div className="text-sm text-muted-foreground">Left University</div>
+                                    <div className="text-3xl font-bold">
+                                    {Number(totals.former_personnels ?? 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="mt-2 flex items-center justify-between gap-2">
                         {/* Search */}
                         <Input
                             type="text"
@@ -199,62 +256,7 @@ export default function PersonnelsIndex({
                     </div>
                 </div>
 
-                {/* KPIs */}
-                {totals && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        {/* Total */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
-                                <Users className="h-7 w-7 text-indigo-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Personnels</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.total_personnels ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Active */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                                <UserCheck2 className="h-7 w-7 text-green-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Active Personnels</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.active_personnels ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Inactive */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
-                                <Users className="h-7 w-7 text-gray-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Inactive Personnels</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.inactive_personnels ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Left University */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                                <AlertTriangle className="h-7 w-7 text-red-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Left University</div>
-                                <div className="text-3xl font-bold">
-                                {Number(totals.former_personnels ?? 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                
 
                 {/* Table */}
                 <div className="rounded-lg-lg overflow-x-auto border">
