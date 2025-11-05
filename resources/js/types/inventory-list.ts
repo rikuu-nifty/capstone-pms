@@ -28,4 +28,6 @@ export type InventoryList = {
     building?: { id: number; name: string };
     building_room?: { id: number; room: string };
     sub_area?: { id: number; name: string };
+
+    assigned_to?: number | null;
 }

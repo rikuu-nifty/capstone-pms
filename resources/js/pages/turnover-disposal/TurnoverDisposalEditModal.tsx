@@ -96,10 +96,22 @@ export default function TurnoverDisposalEditModal({
     [data.turnover_disposal_assets]
   );
 
+  // const filteredAssets = useMemo<InventoryList[]>(() => {
+  //   if (!data.issuing_office_id) return [];
+  //   return assets.filter((a) => a.unit_or_department_id === data.issuing_office_id && !selectedIds.has(a.id));
+  // }, [assets, data.issuing_office_id, selectedIds]);
+
   const filteredAssets = useMemo<InventoryList[]>(() => {
-    if (!data.issuing_office_id) return [];
-    return assets.filter((a) => a.unit_or_department_id === data.issuing_office_id && !selectedIds.has(a.id));
-  }, [assets, data.issuing_office_id, selectedIds]);
+  if (!data.issuing_office_id) return [];
+
+  return assets.filter((a) => {
+      const matchesOffice = a.unit_or_department_id === data.issuing_office_id;
+      const notSelected = !selectedIds.has(a.id);
+      const matchesPersonnel = !data.personnel_id || a.assigned_to === data.personnel_id;
+
+      return matchesOffice && notSelected && matchesPersonnel;
+    });
+  }, [assets, data.issuing_office_id, data.personnel_id, selectedIds]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -240,7 +252,7 @@ export default function TurnoverDisposalEditModal({
       </div>
 
       {/* Issuing Office */}
-      {/* <div className="col-span-1">
+      <div className="col-span-1">
         <label className="mb-1 block font-medium">Issuing Office</label>
         <Select
           className="w-full text-sm"
@@ -269,10 +281,10 @@ export default function TurnoverDisposalEditModal({
         {errors.issuing_office_id && (
           <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
         )}
-      </div> */}
+      </div>
 
       {/* Issuing Office (exclude PMO) */}
-      <div className="col-span-1">
+      {/* <div className="col-span-1">
         <label className="mb-1 block font-medium">Issuing Office</label>
         <Select
           className="w-full text-sm"
@@ -312,7 +324,7 @@ export default function TurnoverDisposalEditModal({
         {errors.issuing_office_id && (
           <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
         )}
-      </div>
+      </div> */}
 
       {/* Receiving Office */}
       {/* <div className="col-span-1">
@@ -415,7 +427,13 @@ export default function TurnoverDisposalEditModal({
               ? { value: data.personnel_id!, label: personnels.find(p => p.id === data.personnel_id)!.full_name }
               : null
           }
-          onChange={(opt) => setData('personnel_id', opt?.value ?? null)}
+          // onChange={(opt) => setData('personnel_id', opt?.value ?? null)}
+          onChange={(opt) => {
+            const id = opt?.value ?? null;
+            setData('personnel_id', id);
+            setData('turnover_disposal_assets', []); // reset asset list
+            setShowAssetDropdown([true]); // reset dropdown
+          }}
         />
         {errors.personnel_id && <p className="mt-1 text-xs text-red-500">{errors.personnel_id}</p>}
       </div>
@@ -480,10 +498,23 @@ export default function TurnoverDisposalEditModal({
                 <Select<Option, false>
                   key={`asset-${data.issuing_office_id}-${index}-${data.turnover_disposal_assets.length}`}
                   className="w-full text-sm"
-                  isDisabled={!data.issuing_office_id}
+                  // isDisabled={!data.issuing_office_id}
+                  isDisabled={!data.issuing_office_id || !data.personnel_id}
+
                   options={filteredAssets.map((a) => ({ value: a.id, label: `${a.serial_no} – ${a.asset_name ?? ''}` }))}
-                  placeholder={data.issuing_office_id ? 'Add an asset...' : 'Select an Issuing Office first'}
-                  noOptionsMessage={() => (data.issuing_office_id ? 'No available assets' : 'Select an Issuing Office first')}
+                  // placeholder={data.issuing_office_id ? 'Add an asset...' : 'Select an Issuing Office first'}
+                  placeholder={ !data.issuing_office_id ? 'Select an Issuing Office first' : !data.personnel_id
+                      ? 'Select Personnel in Charge first'
+                      : 'Add an asset...'
+                  }
+
+                  // noOptionsMessage={() => (data.issuing_office_id ? 'No available assets' : 'Select an Issuing Office first')}
+
+                  noOptionsMessage={() => !data.issuing_office_id ? 'Select an Issuing Office first' : !data.personnel_id
+                      ? 'Select Personnel in Charge first'
+                      : 'No available assets'
+                  }
+                  
                   onChange={(opt: SingleValue<Option>) => {
                     if (opt && !selectedIds.has(opt.value)) {
                       addLine(opt.value);
