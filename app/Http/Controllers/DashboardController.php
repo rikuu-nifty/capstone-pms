@@ -186,11 +186,8 @@ class DashboardController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        $user->loadMissing('unitOrDepartment'); // Ensure the relation is loaded (important for view-own-unit users)
 
-        // Ensure the relation is loaded (important for view-own-unit users)
-        $user->loadMissing('unitOrDepartment');
-
-        // Determine permission scope using your existing hasPermission() method
         $canViewAll = $user->hasPermission('view-inventory-list');
         $canViewOwn = $user->hasPermission('view-own-unit-inventory-list');
         $unitId = $user->unit_or_department_id;
@@ -200,6 +197,31 @@ class DashboardController extends Controller
         $transferQuery = Transfer::query();
         $turnoverQuery = TurnoverDisposal::query();
         $offCampusQuery = OffCampus::query();
+
+        /**
+         * Restrict scope according to permissions
+         */
+        if ($canViewOwn && !$canViewAll && $unitId) {
+            // View only their own unit
+            $inventoryQuery->where('unit_or_department_id', $unitId);
+
+            $transferQuery->where(function ($q) use ($unitId) {
+                $q->where('current_organization', $unitId)
+                    ->orWhere('receiving_organization', $unitId);
+            });
+
+            $turnoverQuery->where(function ($q) use ($unitId) {
+                $q->where('issuing_office_id', $unitId)
+                    ->orWhere('receiving_office_id', $unitId);
+            });
+
+            $offCampusQuery->where('college_or_unit_id', $unitId);
+        } elseif (!$canViewAll && !$canViewOwn) {
+            $inventoryQuery->whereRaw('0=1');
+            $transferQuery->whereRaw('0=1');
+            $turnoverQuery->whereRaw('0=1');
+            $offCampusQuery->whereRaw('0=1');
+        }
 
         $unitId = $user->unit_or_department_id ?: null;
 
@@ -242,13 +264,13 @@ class DashboardController extends Controller
         $buildings = Building::withCount(['inventoryLists as inventory_lists_count' => function ($q) use ($canViewAll, $unitId) {
             if (!$canViewAll && $unitId) {
                 $q->where('unit_or_department_id', $unitId);
-            }
-        }])
+            }}])
             ->get(['id', 'name'])
             ->map(fn($b) => [
                 'location' => $b->name,
                 'assets'   => $b->inventory_lists_count,
-            ]);
+            ])
+        ;
 
         // 🏬 Assets by Department
         $departments = InventoryList::select(

@@ -47,9 +47,19 @@ export default function Dashboard() {
     auth: {
       user: {
         name: string;
+        unit_or_department_id?: number | null
+        permissions?: string[]
       };
+      permissions?: string[];
+      unit_or_department_id?: number | null;
     };
   };
+
+  const hasUnit = !!auth.unit_or_department_id;
+  const permissions = (auth.permissions as string[]) ?? [];
+  const canViewAll = permissions.includes('view-inventory-list');
+  const canViewOwn = permissions.includes('view-own-unit-inventory-list');
+  const canSeeStatsAndCharts = canViewAll || (canViewOwn && hasUnit);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -60,86 +70,93 @@ export default function Dashboard() {
           Welcome back, <span className="text-blue-600">{auth.user?.name ?? 'User'}</span>!
         </h1>
 
-        {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-5">
-          <KpiCard
-            title="Total Assets"
-            value={stats.totalAssets}
-            color="text-blue-500"
-            icon={<Boxes className="h-6 w-6" />}
-
-          />
-          <KpiCard
-            title="Active Transfers"
-            value={stats.activeTransfers}
-            color="text-purple-500"
-            icon={<ArrowRightLeft className="h-6 w-6" />}
-
-          />
-          <KpiCard
-            title="Pending Turnover Requests"
-            value={stats.pendingRequests}
-            color="text-amber-500"
-            icon={<Clock className="h-6 w-6" />}
-
-          />
-          <KpiCard
-            title="Transfers Completed This Month"
-            value={stats.completedThisMonth}
-            color="text-green-500"
-            icon={<CheckCircle2 className="h-6 w-6" />}
-
-          />
-          <KpiCard
-            title="Off-Campus Assets"
-            value={stats.offCampusAssets}
-            color="text-red-500"
-            icon={<Building className="h-6 w-6" />}
-
-          />
-        </div>
-        
-        {/* Charts Row: Line Chart + Donut Chart */}
-        {/* {canViewReports && ( */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="col-span-2">
-              <AssetsOverTimeChart data={assetsOverTime} />
-            </div>
-            <CategoryDonutChart categories={categories} assetTrend={assetTrend} />
+        {/* If user cannot see stats or charts */}
+        {!canSeeStatsAndCharts ? (
+          <div className="mt-10 text-center text-neutral-500 text-lg">
+            You don’t have permission to view dashboard statistics or charts.
           </div>
-        {/* )} */}
+        ) : (
+          <>
+            {/* KPI Cards */}
+            <div className="grid gap-4 md:grid-cols-5">
+              <KpiCard
+                title="Total Assets"
+                value={stats.totalAssets}
+                color="text-blue-500"
+                icon={<Boxes className="h-6 w-6" />}
 
-        {/* Charts Row 2 */}
-        <div className="grid gap-4 md:grid-cols-1">
-          <AssetsByLocationBarChart
-            datasets={{ buildings, departments, rooms }}
-            title="Assets Distribution"
-            description="Distribution of assets across Buildings, Departments, and Rooms"
-          />
-        </div>
+              />
+              <KpiCard
+                title="Active Transfers"
+                value={stats.activeTransfers}
+                color="text-purple-500"
+                icon={<ArrowRightLeft className="h-6 w-6" />}
 
-        {/* Recent Activity */}
-        {/* <div className="relative min-h-[40vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
-          <h2 className="mb-2 text-lg font-semibold text-neutral-800 dark:text-neutral-100">
-            Recent Activity
-          </h2>
-          <ul className="space-y-2">
-            {recentTransfers.length === 0 && (
-              <li className="text-sm text-neutral-500">No recent transfers.</li>
-            )}
-            {recentTransfers.map((t) => (
-              <li
-                key={t.id}
-                className="border-b border-neutral-200 pb-2 dark:border-neutral-700"
-              >
-                Transfer #{t.id} – {t.status}{' '}
-                <span className="text-xs text-neutral-500">
-                  ({new Date(t.created_at).toLocaleDateString()})
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div> */}
+              />
+              <KpiCard
+                title="Pending Turnover Requests"
+                value={stats.pendingRequests}
+                color="text-amber-500"
+                icon={<Clock className="h-6 w-6" />}
+
+              />
+              <KpiCard
+                title="Transfers Completed This Month"
+                value={stats.completedThisMonth}
+                color="text-green-500"
+                icon={<CheckCircle2 className="h-6 w-6" />}
+
+              />
+              <KpiCard
+                title="Off-Campus Assets"
+                value={stats.offCampusAssets}
+                color="text-red-500"
+                icon={<Building className="h-6 w-6" />}
+
+              />
+            </div>
+            
+            {/* Charts Row: Line Chart + Donut Chart */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="col-span-2">
+                  <AssetsOverTimeChart data={assetsOverTime} />
+                </div>
+                <CategoryDonutChart categories={categories} assetTrend={assetTrend} />
+              </div>
+
+            {/* Charts Row 2 */}
+            <div className="grid gap-4 md:grid-cols-1">
+              <AssetsByLocationBarChart
+                datasets={{ buildings, departments, rooms }}
+                title="Assets Distribution"
+                description="Distribution of assets across Buildings, Departments, and Rooms"
+              />
+            </div>
+
+            {/* Recent Activity */}
+            {/* <div className="relative min-h-[40vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+              <h2 className="mb-2 text-lg font-semibold text-neutral-800 dark:text-neutral-100">
+                Recent Activity
+              </h2>
+              <ul className="space-y-2">
+                {recentTransfers.length === 0 && (
+                  <li className="text-sm text-neutral-500">No recent transfers.</li>
+                )}
+                {recentTransfers.map((t) => (
+                  <li
+                    key={t.id}
+                    className="border-b border-neutral-200 pb-2 dark:border-neutral-700"
+                  >
+                    Transfer #{t.id} – {t.status}{' '}
+                    <span className="text-xs text-neutral-500">
+                      ({new Date(t.created_at).toLocaleDateString()})
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div> */}
+          </>
+        )}
       </div>
     </AppLayout>
   );
