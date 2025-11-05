@@ -261,6 +261,7 @@ export default function InventorySchedulingIndex({
     const [selected_status, setSelectedStatus] = useState('');
     const [selected_inventory_month, setSelectedInventoryMonth] = useState('');
     const [selected_actual_date, setSelectedActualDate] = useState('');
+    const [selectedDesignatedEmployee, setSelectedDesignatedEmployee] = useState('');
 
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 10;
@@ -275,7 +276,7 @@ export default function InventorySchedulingIndex({
         setViewModalVisible(true);
     }, [props.viewing]);
 
-    const applyFilters = (f: { status: string; inventory_month: string; actual_date: string }) => {
+    const applyFilters = (f: { status: string; inventory_month: string; actual_date: string; designated_employee: string }) => {
         setSelectedStatus(f.status);
         setSelectedInventoryMonth(f.inventory_month);
         setSelectedActualDate(f.actual_date);
@@ -285,6 +286,7 @@ export default function InventorySchedulingIndex({
         setSelectedStatus('');
         setSelectedInventoryMonth('');
         setSelectedActualDate('');
+        setSelectedDesignatedEmployee('');
     };
 
     const closeView = () => {
@@ -451,7 +453,9 @@ export default function InventorySchedulingIndex({
         const matchesMonth = !selected_inventory_month || item.inventory_schedule?.startsWith(selected_inventory_month); // YYYY-MM
         const matchesActualDate = !selected_actual_date || item.actual_date_of_inventory === selected_actual_date;// YYYY-MM-DD
 
-        return matchesSearch && matchesStatus && matchesMonth && matchesActualDate;
+        const matchesDesignatedEmployee = !selectedDesignatedEmployee || (item.designated_employee?.name?.toLowerCase().includes(selectedDesignatedEmployee.toLowerCase()));
+
+        return matchesSearch && matchesStatus && matchesMonth && matchesActualDate && matchesDesignatedEmployee;
     });
 
     const schedulingStatusMap: Record<string, VariantProps<typeof badgeVariants>['variant']> = {
@@ -554,6 +558,8 @@ export default function InventorySchedulingIndex({
                             selected_status={selected_status}
                             selected_inventory_month={selected_inventory_month}
                             selected_actual_date={selected_actual_date}
+                            selected_designated_employee={selectedDesignatedEmployee}
+                            employees={users}
                         />
 
                         {canCreate && (
