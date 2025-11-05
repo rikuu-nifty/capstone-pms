@@ -75,11 +75,11 @@ class OffCampusController extends Controller
     {
         $data = $request->validate([
             'requester_name'      => ['required','string','max:255'],
-            'college_or_unit_id'  => ['nullable','exists:unit_or_departments,id'],
+            'college_or_unit_id'  => ['required','exists:unit_or_departments,id'],
             'purpose'             => ['required','string'],
             'date_issued'         => ['required','date'],
             'status'             => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled', 'missing'])],
-            'return_date'         => ['nullable','date','after_or_equal:date_issued'],
+            'return_date'         => ['required','date','after_or_equal:date_issued'],
             'quantity'            => ['required','integer','min:1'],
             'units'               => ['required','string','max:50'],
             // 'asset_id'            => ['nullable','exists:inventory_lists,id'],
@@ -206,11 +206,11 @@ class OffCampusController extends Controller
     {
         $data = $request->validate([
             'requester_name'      => ['required','string','max:255'],
-            'college_or_unit_id'  => ['nullable','exists:unit_or_departments,id'],
+            'college_or_unit_id'  => ['required','exists:unit_or_departments,id'],
             'purpose'             => ['required','string'],
             'date_issued'         => ['required','date'],
             'status'              => ['nullable', Rule::in(['pending_review', 'pending_return', 'returned', 'overdue', 'cancelled', 'missing'])],
-            'return_date'         => ['nullable','date','after_or_equal:date_issued'],
+            'return_date'         => ['required','date','after_or_equal:date_issued'],
             'quantity'            => ['required','integer','min:1'],
 
             'units'               => ['required','string','max:50'],

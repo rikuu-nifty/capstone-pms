@@ -51,7 +51,7 @@ type Props = {
 const UNITS = ['pcs', 'set', 'unit', 'pair', 'dozen', 'box', 'pack', 'roll', 'bundle', 'ream', 'kg', 'g', 'lb', 'ton', 'L', 'ml', 'gal'];
 
 export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [], assets = [], assetModels = [], units }: Props) {
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         requester_name: '',
         college_or_unit_id: '' as number | '',
         purpose: '',
@@ -70,13 +70,14 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
         selected_assets: [] as { asset_id: number; asset_model_id?: number | null }[],
     });
 
-    // 1) Shared close handler (memoized so we can safely use in effects)
     const handleClose = useCallback(() => {
-        reset(); // clears all form fields back to initial state
-        onClose(); // closes the modal
-    }, [reset, onClose]);
+        reset();
+        clearErrors();
+        setQuantityError(null);
+        onClose();
+    }, [reset, onClose, clearErrors]);
 
-    // 2) Close on ESC key just like Cancel/outside
+    // Close on ESC key just like Cancel/outside
     useEffect(() => {
         if (!show) return;
         const onKeyDown = (e: KeyboardEvent) => {
@@ -96,6 +97,10 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data.asset_id, assets]);
+
+    useEffect(() => {
+        setQuantityError(null);
+    }, [data.quantity, data.selected_assets.length]);
 
     const handleAssetsChange = (assetsSelected: AssetOption[]) => {
         const maxSelectable = Number(data.quantity) || 0;
@@ -166,7 +171,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
         post('/off-campus', {
             preserveScroll: true,
             onSuccess: () => {
-                // on success we also reset + close (same behavior)
+                setQuantityError(null);
                 handleClose();
             },
         });
@@ -266,7 +271,6 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                 }}
                                 isClearable
                             />
-
                             {errors.college_or_unit_id && <p className="mt-1 text-xs text-red-500">{errors.college_or_unit_id}</p>}
                         </div>
 
@@ -363,7 +367,16 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                             <Select<AssetOption, true>
                                 isMulti
                                 options={assetOptions}
-                                placeholder="Select one or more assets..."
+                                // placeholder="Select one or more assets..."
+
+                                placeholder={ !data.college_or_unit_id && (!data.quantity || Number(data.quantity) <= 0)
+                                    ? 'Please select a Unit/Dept/Lab and enter the quantity first.'
+                                    : !data.college_or_unit_id
+                                    ? 'Please select a Unit/Dept/Lab first.'
+                                    : !data.quantity || Number(data.quantity) <= 0
+                                    ? 'Please enter the quantity first.'
+                                    : 'Select one or more assets...'
+                                }
                                 className="text-sm"
                                 isClearable
                                 isOptionDisabled={isOptionDisabled}
@@ -374,21 +387,29 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                     const limited = maxSelectable ? picked.slice(0, maxSelectable) : picked;
                                     handleAssetsChange(limited);
                                 }}
-                                // ✅ disable if no department OR invalid quantity
                                 isDisabled={!data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0}
                             />
+                            {/* {quantityError && <p className="mt-1 text-xs text-red-500">{quantityError}</p>}
 
-                            {/* 🔴 Inline error (only after save attempt) */}
-                            {quantityError && <p className="mt-1 text-xs text-red-500">{quantityError}</p>}
+                            {data.college_or_unit_id && data.quantity && Number(data.quantity) > 0 && maxSelectable > 0 ? (
+                                <p className="mt-1 text-xs text-red-500">
+                                {data.selected_assets.length >= maxSelectable
+                                    ? 'You have reached your limit based on your chosen quantity.'
+                                    : `You can select up to ${maxSelectable} asset${
+                                        maxSelectable > 1 ? 's' : ''
+                                    }.`}
+                                </p>
+                            ) : null} */}
 
-                            {/* Helper / limit message */}
-                            {!data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0 ? (
-                                <p className="mt-1 text-xs text-muted-foreground">Please select a Unit/Dept/Lab and enter the quantity first.</p>
-                            ) : maxSelectable > 0 ? (
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {data.selected_assets.length >= maxSelectable
-                                        ? 'You have reached your limit based on your chosen quantity.'
-                                        : `You can select up to ${maxSelectable} asset${maxSelectable > 1 ? 's' : ''}.`}
+                            {errors.selected_assets ? (
+                                <p className="mt-1 text-xs text-red-500">{String(errors.selected_assets)}</p>
+                            ) : quantityError ? (
+                                <p className="mt-1 text-xs text-red-500">{quantityError}</p>
+                            ) : data.selected_assets.length >= maxSelectable &&
+                                maxSelectable > 0 ? (
+                                // ⚠ Only show this when user hits max selection
+                                <p className="mt-1 text-xs text-red-500">
+                                You have reached your limit based on your chosen quantity.
                                 </p>
                             ) : null}
                         </div>

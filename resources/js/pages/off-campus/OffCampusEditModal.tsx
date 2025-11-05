@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from '@inertiajs/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 // import Select, { type MultiValue } from 'react-select';
 import Select from 'react-select';
 
@@ -91,9 +91,6 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
     //     });
     // }, [assets, assetModels]);
 
-    // Initialize selected_assets:
-    // - Prefer offCampus.assets[] (child rows) if present
-    // - Else fall back to legacy header asset_id/asset_model_id
     const initialSelected = ((): { asset_id: number; asset_model_id?: number | null }[] => {
         let selected: { asset_id: number; asset_model_id?: number | null }[] = [];
 
@@ -103,7 +100,6 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
             selected = [{ asset_id: offCampus.asset_id, asset_model_id: offCampus.asset_model_id ?? null }];
         }
 
-        // ✅ Trim down to quantity limit
         const max = Number(offCampus.quantity) || 0;
         return max > 0 ? selected.slice(0, max) : selected;
     })();
@@ -123,7 +119,6 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
         checked_by: offCampus.checked_by ?? '',
         comments: offCampus.comments ?? '',
 
-        // legacy header (kept for compatibility; we’ll mirror first selection)
         asset_id: (offCampus.asset_id ?? '') as number | '',
         asset_model_id: (offCampus.asset_model_id ?? '') as number | '',
 
@@ -131,8 +126,9 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
         selected_assets: initialSelected as { asset_id: number; asset_model_id?: number | null }[],
     });
 
+    const [quantityError, setQuantityError] = useState<string | null>(null);
+
     const assetOptions: AssetOption[] = useMemo(() => {
-        // ✅ Only keep assets that belong to the selected unit/department
         const filtered = data.college_or_unit_id
             ? assets.filter((a) => a.unit_or_department_id === Number(data.college_or_unit_id))
             : assets;
@@ -185,6 +181,10 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
         });
     }, [setData, offCampus]);
 
+    useEffect(() => {
+        setQuantityError(null);
+    }, [data.quantity, data.selected_assets.length]);
+
     // limit for multi-select equals header quantity
     const maxSelectable = Number(data.quantity) || 0;
 
@@ -230,9 +230,22 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (Number(data.quantity) > 0 && data.selected_assets.length !== Number(data.quantity)) {
+            setQuantityError(
+                `You set the quantity to ${data.quantity}, but selected ${data.selected_assets.length}. They must match before saving.`
+            );
+            return;
+        }
+
+        setQuantityError(null);
+
         put(`/off-campus/${offCampus.id}`, {
             preserveScroll: true,
-            onSuccess: () => onClose(),
+            onSuccess: () => {
+                setQuantityError(null);
+                onClose();
+            },
         });
     };
 
@@ -473,55 +486,44 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                         </div>
 
                         {/* Assets Covered */}
-                        {/* Assets Covered */}
-<div className="col-span-2">
-  <Label>Assets Covered</Label>
-  <Select<AssetOption, true>
-    isMulti
-    options={assetOptions}
-    placeholder="Select one or more assets..."
-    className="text-sm"
-    isClearable
-    isOptionDisabled={isOptionDisabled}
-    closeMenuOnSelect={false}
-    value={selectedValue}
-    onChange={(selected) => {
-      const arr = (selected ?? []) as AssetOption[];
-      handleAssetsChange(arr);
-    }}
-    // ✅ Disable if no unit/department OR invalid quantity
-    isDisabled={
-      !data.college_or_unit_id ||
-      !data.quantity ||
-      Number(data.quantity) <= 0
-    }
-  />
+                        <div className="col-span-2">
+                            <Label>Assets Covered</Label>
+                            <Select<AssetOption, true>
+                                isMulti
+                                options={assetOptions}
+                                placeholder="Select one or more assets..."
+                                className="text-sm"
+                                isClearable
+                                isOptionDisabled={isOptionDisabled}
+                                closeMenuOnSelect={false}
+                                value={selectedValue}
+                                onChange={(selected) => {
+                                    const arr = (selected ?? []) as AssetOption[];
+                                    handleAssetsChange(arr);
+                                }}
+                                isDisabled={
+                                    !data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0
+                                }
+                            />
 
-  {/* Helper message if disabled */}
-  {!data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0 ? (
-    <p className="mt-1 text-xs text-muted-foreground">
-      Please select a Unit/Dept/Lab and enter the quantity first.
-    </p>
-  ) : null}
+                            {/* Helper message if disabled */}
+                            {!data.college_or_unit_id || !data.quantity || Number(data.quantity) <= 0 ? (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                Please select a Unit/Dept/Lab and enter the quantity first.
+                                </p>
+                            ) : null}
 
-  {/* Validation error */}
-  {errors.selected_assets && (
-    <p className="mt-1 text-xs text-red-500">
-      {String(errors.selected_assets)}
-    </p>
-  )}
-
-  {/* Limit guidance */}
-  {maxSelectable > 0 ? (
-    <p className="mt-1 text-xs text-muted-foreground">
-      {data.selected_assets.length >= maxSelectable
-        ? "You have reached your limit based on your chosen quantity."
-        : `You can select up to ${maxSelectable} asset${
-            maxSelectable > 1 ? "s" : ""
-          }.`}
-    </p>
-  ) : null}
-</div>
+                            {/* Validation error */}
+                            {errors.selected_assets ? (
+                            <p className="mt-1 text-xs text-red-500">{String(errors.selected_assets)}</p>
+                            ) : quantityError ? (
+                            <p className="mt-1 text-xs text-red-500">{quantityError}</p>
+                            ) : data.selected_assets.length >= maxSelectable && maxSelectable > 0 ? (
+                            <p className="mt-1 text-xs text-red-500">
+                                You have reached your limit based on your chosen quantity.
+                            </p>
+                            ) : null}
+                        </div>
 
 
                         {/* Remarks */}
