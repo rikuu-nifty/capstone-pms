@@ -406,104 +406,6 @@ export default function TransferAddModal({
                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
             
-            {/* Selected Assets */}
-            {/* <div className="col-span-2 flex flex-col gap-4">
-                <label className="block font-medium">Assets to Transfer</label>
-
-                {data.selected_assets.map((assetId, index) => {
-                    const selectedAsset = assets.find((a) => a.id === assetId);
-
-                    return (
-                        <div key={index} className="flex items-center gap-2">
-                            <span className="text-sm text-blue-800">
-                                {selectedAsset
-                                    ? ` ${selectedAsset.asset_name} (${selectedAsset.serial_no})`
-                                    : 'Asset not found'}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const updated = [...data.selected_assets];
-                                    updated.splice(index, 1);
-                                    setData('selected_assets', updated);
-
-                                    setShowAssetDropdown((prev) => {
-                                        const newState = [...prev];
-                                        newState.splice(index, 1);
-                                        return newState;
-                                    });
-                                }}
-                                className="text-red-500 text-xs hover:underline cursor-pointer"
-                            >
-                                Remove
-                            </button>
-                            
-                        </div>
-                    );
-                })}
-
-                {showAssetDropdown.map((visible, index) => (
-                    visible && (
-                        <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                            <Select
-                                className="w-full"
-                                options={assets
-                                    .filter((asset) => {
-                                        const matchesBuilding = data.current_building_id
-                                            ? asset.building_id === data.current_building_id
-                                            : true;
-
-                                        const matchesRoom = data.current_building_room
-                                            ? asset.building_room_id === data.current_building_room
-                                            : true;
-
-                                        const matchesUnit = data.current_organization
-                                            ? asset.unit_or_department_id === data.current_organization
-                                            : true;
-
-                                        return (
-                                            matchesBuilding &&
-                                            matchesRoom &&
-                                            matchesUnit &&
-                                            !data.selected_assets.includes(asset.id)
-                                        );
-                                    })
-                                    .map((asset) => ({
-                                    value: asset.id,
-                                    label: `${asset.serial_no} – ${asset.asset_name ?? ''}`,
-                                    }))
-                                }
-                                placeholder={
-                                    data.current_building_id && data.current_building_room && data.current_organization
-                                    ? "Select Asset(s) for Transfer..."
-                                    : "Select Current Building, Room, and Unit/Dept/Lab first"
-                                }
-                                isDisabled={
-                                    !data.current_building_id || 
-                                    !data.current_building_room ||
-                                    !data.current_organization
-                                }
-                                onChange={(selectedOption) => {
-                                    if (selectedOption && !data.selected_assets.includes(selectedOption.value)) {
-                                    setData('selected_assets', [...data.selected_assets, selectedOption.value]);
-
-                                    setShowAssetDropdown((prev) => {
-                                        const updated = [...prev];
-                                        updated[index] = false;
-                                        return [...updated, true];
-                                    });
-                                    }
-                                }}
-                            />
-                        </div>
-                    )
-                ))}
-                
-                {errors.selected_assets && (
-                    <p className="mt-1 text-sm text-red-500">{errors.selected_assets}</p>
-                )}
-            </div> */}
-
             {/* Assets to Transfer */}
             <div className="col-span-2 flex flex-col gap-4">
                 <label className="block font-medium">Assets to Transfer</label>
@@ -605,8 +507,7 @@ export default function TransferAddModal({
                         </div>
                     ),
                 )}
-
-                {errors.transfer_assets && <p className="mt-1 text-sm text-red-500">{String(errors.transfer_assets)}</p>}
+                {errors.transfer_assets && <p className="text-xs text-red-500">{String(errors.transfer_assets)}</p>}
             </div>
 
             {/* Received By */}

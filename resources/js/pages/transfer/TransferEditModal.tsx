@@ -738,8 +738,7 @@ export default function TransferEditModal({
                         </div>
                     ),
                 )}
-
-                {errors.transfer_assets && <p className="mt-1 text-sm text-red-500">{String(errors.transfer_assets)}</p>}
+                {errors.transfer_assets && <p className="text-xs text-red-500">{String(errors.transfer_assets)}</p>}
             </div>
 
             {/* Received By */}

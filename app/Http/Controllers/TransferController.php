@@ -151,7 +151,36 @@ class TransferController extends Controller
             // 'transfer_assets.*.remarks'               => 'nullable|string',
         ]);
 
-        // these are only used by the UI for filtering; not persisted on Transfer
+        // Prevent duplicate transfers for same assets/buildings/units
+        $assetIds = collect($validated['transfer_assets'])->pluck('asset_id')->unique();
+
+        $duplicateExists = Transfer::query()
+            ->whereNull('deleted_at') // not soft-deleted
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->whereHas('transferAssets', function ($q) use ($assetIds) {
+                $q->whereIn('asset_id', $assetIds);
+            })
+            ->where(function ($q) use ($validated) {
+                // same current or receiving scope
+                $q->where(function ($inner) use ($validated) {
+                    $inner->where('current_building_room', $validated['current_building_room'])
+                        ->where('current_organization', $validated['current_organization']);
+                })
+                    ->orWhere(function ($inner) use ($validated) {
+                        $inner->where('receiving_building_room', $validated['receiving_building_room'])
+                            ->where('receiving_organization', $validated['receiving_organization']);
+                    });
+            })
+            ->exists();
+
+        if ($duplicateExists) {
+            return back()->withErrors([
+                'transfer_assets' => 'A transfer record already exists for one or more selected assets in the same building/unit. 
+                Please complete or cancel the existing transfer before creating a new one.'
+            ]);
+        }
+
+        // only used by the UI for filtering; not persisted on Transfer
         unset($validated['current_building_id'], $validated['receiving_building_id']);
 
         $pivotRows = $validated['transfer_assets'];
@@ -360,6 +389,35 @@ class TransferController extends Controller
         if ($transfer->formApproval && $transfer->formApproval->status !== 'approved') {
             // keep existing status from DB
             $validated['status'] = $transfer->status;
+        }
+
+        // Prevent duplicate transfers for same assets/buildings/units on update
+        $assetIds = collect($validated['transfer_assets'])->pluck('asset_id')->unique();
+
+        $duplicateExists = Transfer::query()
+            ->where('id', '!=', $transfer->id)
+            ->whereNull('deleted_at')
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->whereHas('transferAssets', function ($q) use ($assetIds) {
+                $q->whereIn('asset_id', $assetIds);
+            })
+            ->where(function ($q) use ($validated) {
+                $q->where(function ($inner) use ($validated) {
+                    $inner->where('current_building_room', $validated['current_building_room'])
+                        ->where('current_organization', $validated['current_organization']);
+                })
+                    ->orWhere(function ($inner) use ($validated) {
+                        $inner->where('receiving_building_room', $validated['receiving_building_room'])
+                            ->where('receiving_organization', $validated['receiving_organization']);
+                    });
+            })
+            ->exists();
+
+        if ($duplicateExists) {
+            return back()->withErrors([
+                'transfer_assets' => 'A transfer already exists for one or more of these assets in this building/unit. 
+                You must complete or cancel the existing one before updating.'
+            ]);
         }
 
         DB::transaction(function () use ($transfer, $validated) {
