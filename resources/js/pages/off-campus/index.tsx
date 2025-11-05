@@ -362,7 +362,7 @@ export default function OffCampusIndex({
                     <div className="flex items-center gap-2 w-full sm:w-96">
                     <Input
                         type="text"
-                        placeholder="Search requester, unit, item, serial, brand/model…"
+                        placeholder="Search requester name, quantity and college/unit…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="max-w-xs"
