@@ -567,10 +567,14 @@ export default function TransferEditModal({
                         setData('designated_employee', selected ? Number(selected.value) : 0);
                     }}
                     options={users
-                    .filter((u) => u.role?.code !== 'superuser' && u.role?.code !== 'vp_admin')
-                    .map((u) => ({
-                        value: u.id,
-                        label: `${u.name} (${formatEnums(u.role?.code ?? '—').toUpperCase()})`,
+                        .filter(
+                            (u) =>
+                                u.role?.code?.toLowerCase() === 'pmo_head' ||
+                                u.role?.code?.toLowerCase() === 'pmo_staff'
+                        )
+                        .map((u) => ({
+                            value: u.id,
+                            label: `${u.name} (${formatEnums(u.role?.code ?? '—').toUpperCase()})`,
                     }))}
                     placeholder="Select Employee..."
                 />
