@@ -179,24 +179,29 @@ export default function VerificationFormAddModal({
                     }
                     // onChange={(opt) => setData('requested_by_personnel_id', opt?.value ?? null)}
                     onChange={(opt) => {
-    const selectedId = opt?.value ?? null;
-    setData('requested_by_personnel_id', selectedId);
+                        const selectedId = opt?.value ?? null;
+                        setData('requested_by_personnel_id', selectedId);
 
-    if (selectedId) {
-        const p = personnels.find(p => p.id === selectedId);
-        if (p) {
-            setData('requested_by_name', p.full_name);
-            setData('requested_by_title', p.position ?? 'Staff');
-        }
-    } else {
-        setData('requested_by_name', '');
-        setData('requested_by_title', '');
-    }
-}}
+                        setData('verification_assets', []);
+                        setShowAssetDropdown([true]);
+
+                        if (selectedId) {
+                            const p = personnels.find(p => p.id === selectedId);
+                            if (p) {
+                                setData('requested_by_name', p.full_name);
+                                setData('requested_by_title', p.position ?? 'Staff');
+                            }
+                        } else {
+                            setData('requested_by_name', '');
+                            setData('requested_by_title', '');
+                        }
+                    }}
                     isClearable
                 />
-                    {errors.requested_by_personnel_id && (
-                        <p className="mt-1 text-xs text-red-500">{String(errors.requested_by_personnel_id)}</p>
+                    {(errors.requested_by_personnel_id || errors.requested_by_name) && (
+                        <p className="mt-1 text-xs text-red-500">
+                            {String(errors.requested_by_personnel_id || errors.requested_by_name)}
+                        </p>
                     )}
             </div>
 
@@ -215,7 +220,13 @@ export default function VerificationFormAddModal({
                     placeholder="Optional"
                     disabled={!!data.requested_by_personnel_id}
                 />
+                {(errors.requested_by_personnel_id || errors.requested_by_name) && (
+                    <p className="mt-1 text-xs text-red-500">
+                        {String(errors.requested_by_personnel_id || errors.requested_by_name)}
+                    </p>
+                )}
             </div>
+
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Requester Title </label>
                 <input
@@ -300,10 +311,9 @@ export default function VerificationFormAddModal({
                         </div>
                     )
                 )}
-
                 {/* Optional error */}
                 {'verification_assets' in errors && (
-                    <p className="mt-1 text-sm text-red-500">{String(errors.verification_assets)}</p>
+                    <p className="text-xs text-red-500">{String(errors.verification_assets)}</p>
                 )}
             </div>
 

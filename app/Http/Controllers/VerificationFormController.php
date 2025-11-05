@@ -120,8 +120,9 @@ class VerificationFormController extends Controller
     {
         $validated = $request->validate([
             'unit_or_department_id'     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'requested_by_personnel_id' => ['nullable', 'integer', Rule::exists('personnels', 'id')],
-            'requested_by_name'         => ['nullable', 'string', 'max:255'],
+
+            'requested_by_personnel_id' => [ 'nullable', 'integer', Rule::exists('personnels', 'id'), 'required_without:requested_by_name'],
+            'requested_by_name' => [ 'nullable', 'string', 'max:255', 'required_without:requested_by_personnel_id'],
             'requested_by_title'        => ['nullable', 'string', 'max:255'],
             'requested_by_contact'      => ['nullable', 'string', 'max:255'],
 
@@ -129,9 +130,14 @@ class VerificationFormController extends Controller
             'status'  => ['required', Rule::in(['pending', 'verified', 'rejected'])],
             'remarks' => ['nullable', 'string'],
 
-            'verification_assets'                        => ['array'],
-            'verification_assets.*.inventory_list_id'    => ['required', 'integer', 'exists:inventory_lists,id'],
-            'verification_assets.*.remarks'              => ['nullable', 'string', 'max:1000'],
+            'verification_assets'                       => ['required', 'array', 'min:1'],
+            'verification_assets.*.inventory_list_id'   => ['required', 'integer', 'exists:inventory_lists,id'],
+            'verification_assets.*.remarks'             => ['nullable', 'string', 'max:1000'],
+        ], [
+            'requested_by_personnel_id.required_without' => 'You must fill up either Personnel in Charge or Requester Name.',
+            'requested_by_name.required_without'         => 'Requester Name or Personnel must be provided.',
+            'verification_assets.required'               => 'At least one asset must be selected.',
+            'verification_assets.min'                    => 'At least one asset must be selected.',
         ]);
 
         // If a personnel is chosen, ensure they belong to the office
@@ -194,8 +200,8 @@ class VerificationFormController extends Controller
 
         $validated = $request->validate([
             'unit_or_department_id'     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'requested_by_personnel_id' => ['nullable', 'integer', Rule::exists('personnels', 'id')],
-            'requested_by_name'         => ['nullable', 'string', 'max:255'],
+            'requested_by_personnel_id' => [ 'nullable', 'integer', Rule::exists('personnels', 'id'), 'required_without:requested_by_name'],
+            'requested_by_name' => [ 'nullable', 'string', 'max:255', 'required_without:requested_by_personnel_id'],
             'requested_by_title'        => ['nullable', 'string', 'max:255'],
             'requested_by_contact'      => ['nullable', 'string', 'max:255'],
 
@@ -203,9 +209,9 @@ class VerificationFormController extends Controller
             'status'  => ['required', Rule::in(['pending', 'verified', 'rejected'])],
             'remarks' => ['nullable', 'string'],
 
-            'verification_assets'                        => ['array'],
-            'verification_assets.*.inventory_list_id'    => ['required', 'integer', 'exists:inventory_lists,id'],
-            'verification_assets.*.remarks'              => ['nullable', 'string', 'max:1000'],
+            'verification_assets'                       => ['required', 'array', 'min:1'],
+            'verification_assets.*.inventory_list_id'   => ['required', 'integer', 'exists:inventory_lists,id'],
+            'verification_assets.*.remarks'             => ['nullable', 'string', 'max:1000'],
         ]);
 
         if (!empty($validated['requested_by_personnel_id'])) {
