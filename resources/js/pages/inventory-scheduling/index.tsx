@@ -426,25 +426,30 @@ export default function InventorySchedulingIndex({
     // );
 
     const filtered = schedules.filter((item) => {
+
+        const formattedMonth = item.inventory_schedule
+            ? new Date(`${item.inventory_schedule}-01T00:00:00`).toLocaleString('en-US', {
+                month: 'long',
+                year: 'numeric',
+            })
+            : '';
+
         const haystack = `
             ${item.id}
+            ${item.building?.name ?? ''}
+            ${item.unit_or_department?.name ?? ''}
             ${item.checked_by ?? ''}
             ${item.verified_by ?? ''}
             ${item.scheduling_status ?? ''}
+            ${formattedMonth}
+            ${item.inventory_schedule ?? ''} 
         `.toLowerCase();
 
         const matchesSearch = !search || haystack.includes(search.toLowerCase());
         const matchesStatus = !selected_status || item.scheduling_status === selected_status;
-
-        // compare YYYY-MM with inventory_schedule
-        const matchesMonth =
-            !selected_inventory_month ||
-            item.inventory_schedule?.startsWith(selected_inventory_month);
-
-        // compare YYYY-MM-DD with actual_date_of_inventory
-        const matchesActualDate =
-            !selected_actual_date ||
-            item.actual_date_of_inventory === selected_actual_date;
+        
+        const matchesMonth = !selected_inventory_month || item.inventory_schedule?.startsWith(selected_inventory_month); // YYYY-MM
+        const matchesActualDate = !selected_actual_date || item.actual_date_of_inventory === selected_actual_date;// YYYY-MM-DD
 
         return matchesSearch && matchesStatus && matchesMonth && matchesActualDate;
     });
