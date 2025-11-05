@@ -531,7 +531,7 @@ export default function TurnoverDisposalEditModal({
         )}
 
         {errors.turnover_disposal_assets && (
-          <p className="mt-1 text-sm text-red-500">{String(errors.turnover_disposal_assets)}</p>
+          <p className="text-xs text-red-500">{String(errors.turnover_disposal_assets)}</p>
         )}
       </div>
 

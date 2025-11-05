@@ -125,6 +125,24 @@ class TurnoverDisposalController extends Controller
         $lines = $validated['turnover_disposal_assets'];
         unset($validated['turnover_disposal_assets']);
 
+        // Prevent duplicate active turnover/disposal forms for same assets
+        $assetIds = collect($lines)->pluck('asset_id')->unique();
+
+        $duplicateExists = TurnoverDisposal::query()
+            ->whereNull('deleted_at')
+            ->whereNotIn('status', ['rejected', 'cancelled', 'completed']) // active only
+            ->whereHas('turnoverDisposalAssets', function ($q) use ($assetIds) {
+                $q->whereIn('asset_id', $assetIds);
+            })
+            ->exists();
+
+        if ($duplicateExists) {
+            return back()->withErrors([
+                'turnover_disposal_assets' => 'One or more selected assets already belong to an active turnover/disposal record. 
+        Please complete, cancel, or reject the existing record before creating a new one.'
+            ]);
+        }
+
         $record = TurnoverDisposal::createWithLines($validated, $lines);
         $recordType = ucfirst($record->type);
 
@@ -170,6 +188,24 @@ class TurnoverDisposalController extends Controller
 
         $lines = $validated['turnover_disposal_assets'];
         unset($validated['turnover_disposal_assets']);
+
+        $assetIds = collect($lines)->pluck('asset_id')->unique();
+
+        $duplicateExists = TurnoverDisposal::query()
+            ->where('id', '!=', $turnoverDisposal->id)
+            ->whereNull('deleted_at')
+            ->whereNotIn('status', ['rejected', 'cancelled', 'completed'])
+            ->whereHas('turnoverDisposalAssets', function ($q) use ($assetIds) {
+                $q->whereIn('asset_id', $assetIds);
+            })
+            ->exists();
+
+        if ($duplicateExists) {
+            return back()->withErrors([
+                'turnover_disposal_assets' => 'One or more selected assets already belong to another active turnover/disposal record. 
+        Please complete, cancel, or reject the existing record before updating this one.'
+            ]);
+        }
 
         $record = $turnoverDisposal->updateWithLines($validated, $lines);
 
