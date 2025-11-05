@@ -372,7 +372,7 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         ->middleware('can:create-verification-form');
     Route::get('/verification-form/{id}', [VerificationFormController::class, 'show'])->name('verification-form.show')
         ->middleware('can:view-verification-form');
-    Route::patch('/verification-form/{id}', [VerificationFormController::class, 'update'])->name('verification-form.update')
+    Route::put('/verification-form/{id}', [VerificationFormController::class, 'update'])->name('verification-form.update')
         ->middleware('can:update-verification-form');
     Route::delete('/verification-form/{id}', [VerificationFormController::class, 'destroy'])->name('verification-form.destroy')
         ->middleware('can:delete-verification-form');
