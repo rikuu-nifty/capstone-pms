@@ -8,7 +8,12 @@ import { VerificationFormRecord } from './index';
 type Option = { value: number; label: string };
 
 type UnitLite = { id: number; name: string };
-type PersonnelLite = { id: number; unit_or_department_id: number; full_name: string };
+type PersonnelLite = { 
+    id: number; 
+    unit_or_department_id: number; 
+    full_name: string;
+    position?: string | null;
+};
 
 export type InventoryLite = {
     id: number;
@@ -182,26 +187,41 @@ export default function VerificationFormManageModal({
 
         {/* Requester (Personnel) */}
         <div className="col-span-1">
-            <label className="mb-1 block font-medium">Requester (Personnel)</label>
+            <label className="mb-1 block font-medium">Requester / Personnel in Charge</label>
             <Select<Option, false>
-            className="w-full text-sm"
-            placeholder={data.unit_or_department_id ? 'Select Personnel (Optional)' : 'Select Unit first'}
-            isDisabled={!data.unit_or_department_id}
-            options={personOptions}
-            value={
-                data.requested_by_personnel_id
-                ? {
-                    value: data.requested_by_personnel_id,
-                    label:
-                        personnels.find((p) => p.id === data.requested_by_personnel_id)?.full_name ?? '',
+                className="w-full text-sm"
+                placeholder={data.unit_or_department_id ? 'Select Personnel (Optional)' : 'Select Unit first'}
+                isDisabled={!data.unit_or_department_id}
+                options={personOptions}
+                value={
+                    data.requested_by_personnel_id
+                    ? {
+                        value: data.requested_by_personnel_id,
+                        label:
+                            personnels.find((p) => p.id === data.requested_by_personnel_id)?.full_name ?? '',
+                        }
+                    : null
+                }
+                // onChange={(opt) => setData('requested_by_personnel_id', opt?.value ?? null)}
+                onChange={(opt) => {
+                    const selectedId = opt?.value ?? null;
+                    setData('requested_by_personnel_id', selectedId);
+
+                    if (selectedId) {
+                        const p = personnels.find(p => p.id === selectedId);
+                        if (p) {
+                            setData('requested_by_name', p.full_name);
+                            setData('requested_by_title', p.position ?? 'Staff');
+                        }
+                    } else {
+                        setData('requested_by_name', '');
+                        setData('requested_by_title', '');
                     }
-                : null
-            }
-            onChange={(opt) => setData('requested_by_personnel_id', opt?.value ?? null)}
-            isClearable
+                }}
+                isClearable
             />
             {errors.requested_by_personnel_id && (
-            <p className="mt-1 text-xs text-red-500">{String(errors.requested_by_personnel_id)}</p>
+                <p className="mt-1 text-xs text-red-500">{String(errors.requested_by_personnel_id)}</p>
             )}
         </div>
 
@@ -209,19 +229,31 @@ export default function VerificationFormManageModal({
         <div className="col-span-1">
             <label className="mb-1 block font-medium">Requester Name</label>
             <input
-            className="w-full rounded-lg border p-2"
-            value={data.requested_by_name}
-            onChange={(e) => setData('requested_by_name', e.target.value)}
-            placeholder="Optional"
+                // className="w-full rounded-lg border p-2"
+                className={`w-full rounded-lg border p-2 transition-colors ${
+                    data.requested_by_personnel_id
+                        ? 'bg-gray-100 text-gray-600 cursor-default'
+                        : 'bg-white'
+                }`}
+                value={data.requested_by_name}
+                onChange={(e) => setData('requested_by_name', e.target.value)}
+                placeholder="Optional"
+                disabled={!!data.requested_by_personnel_id}
             />
         </div>
         <div className="col-span-1">
             <label className="mb-1 block font-medium">Requester Title</label>
             <input
-            className="w-full rounded-lg border p-2"
-            value={data.requested_by_title}
-            onChange={(e) => setData('requested_by_title', e.target.value)}
-            placeholder="e.g., Staff"
+                // className="w-full rounded-lg border p-2"
+                className={`w-full rounded-lg border p-2 transition-colors ${
+                    data.requested_by_personnel_id
+                        ? 'bg-gray-100 text-gray-600 cursor-default'
+                        : 'bg-white'
+                }`}
+                value={data.requested_by_title}
+                onChange={(e) => setData('requested_by_title', e.target.value)}
+                placeholder="e.g., Staff"
+                disabled={!!data.requested_by_personnel_id}
             />
         </div>
 

@@ -30,6 +30,7 @@ class VerificationFormController extends Controller
             'building_id',
             'building_room_id',
             'sub_area_id',
+            'assigned_to',
         )
         ->with([
             'building:id,name',

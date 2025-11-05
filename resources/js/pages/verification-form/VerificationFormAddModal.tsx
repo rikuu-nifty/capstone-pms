@@ -7,7 +7,12 @@ import AssetVfItem from './AssetVfItem';
 type Option = { value: number; label: string };
 
 type UnitLite = { id: number; name: string };
-type PersonnelLite = { id: number; unit_or_department_id: number; full_name: string };
+type PersonnelLite = { 
+    id: number; 
+    unit_or_department_id: number; 
+    full_name: string;
+    position?: string | null;
+};
 
 type InventoryLite = {
     id: number;
@@ -172,7 +177,22 @@ export default function VerificationFormAddModal({
                         ? { value: data.requested_by_personnel_id, label: personnels.find((p) => p.id === data.requested_by_personnel_id)?.full_name ?? '' }
                         : null
                     }
-                    onChange={(opt) => setData('requested_by_personnel_id', opt?.value ?? null)}
+                    // onChange={(opt) => setData('requested_by_personnel_id', opt?.value ?? null)}
+                    onChange={(opt) => {
+    const selectedId = opt?.value ?? null;
+    setData('requested_by_personnel_id', selectedId);
+
+    if (selectedId) {
+        const p = personnels.find(p => p.id === selectedId);
+        if (p) {
+            setData('requested_by_name', p.full_name);
+            setData('requested_by_title', p.position ?? 'Staff');
+        }
+    } else {
+        setData('requested_by_name', '');
+        setData('requested_by_title', '');
+    }
+}}
                     isClearable
                 />
                     {errors.requested_by_personnel_id && (
@@ -184,19 +204,31 @@ export default function VerificationFormAddModal({
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Requester Name </label>
                 <input
-                    className="w-full rounded-lg border p-2"
+                    // className="w-full rounded-lg border p-2"
+                    className={`w-full rounded-lg border p-2 transition-colors ${
+                        data.requested_by_personnel_id
+                            ? 'bg-gray-100 text-gray-600 cursor-default'
+                            : 'bg-white'
+                    }`}
                     value={data.requested_by_name}
                     onChange={(e) => setData('requested_by_name', e.target.value)}
                     placeholder="Optional"
+                    disabled={!!data.requested_by_personnel_id}
                 />
             </div>
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Requester Title </label>
                 <input
-                    className="w-full rounded-lg border p-2"
+                    // className="w-full rounded-lg border p-2"
+                    className={`w-full rounded-lg border p-2 transition-colors ${
+                        data.requested_by_personnel_id
+                            ? 'bg-gray-100 text-gray-600 cursor-default'
+                            : 'bg-white'
+                    }`}
                     value={data.requested_by_title}
                     onChange={(e) => setData('requested_by_title', e.target.value)}
                     placeholder="e.g., Staff"
+                    disabled={!!data.requested_by_personnel_id}
                 />
             </div>
             {/* <div className="col-span-1">
