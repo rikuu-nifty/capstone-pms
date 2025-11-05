@@ -214,14 +214,30 @@ class BuildingController extends Controller
     public function update(Request $request, Building $building)
     {
         $validated = $request->validate([
-            'name'                => 'required|string|max:255',
-            'code'                => 'nullable|string|max:50',
+            'name'                => ['required', 'string', 'max:255', Rule::unique('buildings')->whereNull('deleted_at')->ignore($building->id)],
+            'code'                => ['required', 'string', 'max:50', Rule::unique('buildings')->whereNull('deleted_at')->ignore($building->id)],
+
             'description'         => 'nullable|string|max:1000',
+
             'selected_rooms'      => 'array',
             'selected_rooms.*'    => 'integer|exists:building_rooms,id',
-            'rooms'               => 'array',
-            'rooms.*.room'        => 'required_with:rooms|string|max:255',
-            'rooms.*.description' => 'nullable|string|max:1000',
+
+            'rooms'               => ['sometimes', 'array'],
+            'rooms.*.room'        => ['required', 'string', 'max:128',
+                'distinct:strict', // Prevent duplicates in same submission
+                Rule::unique('building_rooms')->where(fn($q) => $q
+                    ->where('building_id', $building->id)
+                    ->whereNull('deleted_at')
+                ),
+            ],
+            'rooms.*.description' => ['nullable', 'string'],
+        ], [
+            'name.unique' => 'A building with this name already exists.',
+            'code.unique' => 'A building with this code already exists.',
+
+            'rooms.*.room.required' => 'Room name is required.',
+            'rooms.*.room.distinct' => 'Duplicate room names are not allowed in this building.',
+            'rooms.*.room.unique'   => 'This room name already exists in this building.',
         ]);
 
         DB::transaction(function () use ($validated, $building) {

@@ -78,6 +78,77 @@ export default function EditBuildingModal({
         e.preventDefault();
         if (!building?.id) return;
 
+        const newErrors: Record<string, string> = {};
+
+        if (!data.name.trim()) newErrors.name = "Building name is required.";
+        if (!data.code.trim()) newErrors.code = "Building code is required.";
+
+        const nameExists = allRooms
+            .some((r) => r.building?.name?.trim().toLowerCase() === data.name.trim().toLowerCase() && r.building_id !== building.id);
+
+        const codeExists = allRooms
+            .some((r) => r.building?.code?.trim().toLowerCase() === data.code.trim().toLowerCase() && r.building_id !== building.id);
+
+        if (nameExists) newErrors.name = "A building with this name already exists.";
+        if (codeExists) newErrors.code = "A building with this code already exists.";
+
+        if (data.addRoomsNow && data.rooms && data.rooms.length > 0) {
+            const seen = new Set<string>();
+
+            data.rooms.forEach((room, idx) => {
+                const roomName = room.room.trim().toLowerCase();
+
+                // 🧱 1. Empty field check
+                if (!roomName) {
+                newErrors[`rooms.${idx}.room`] = "Room name is required.";
+                return;
+                }
+
+                // 🧩 2. Duplicate in same submission
+                if (seen.has(roomName)) {
+                newErrors[`rooms.${idx}.room`] = "Duplicate room names are not allowed in the same building.";
+                return;
+                }
+                seen.add(roomName);
+
+                // 🧩 3. Check if the same room already exists in this building
+                const roomExists = allRooms.some(
+                (r) =>
+                    r.building_id === building?.id &&
+                    r.room.trim().toLowerCase() === roomName
+                );
+
+                if (roomExists) {
+                newErrors[`rooms.${idx}.room`] = "This room name already exists in this building.";
+                }
+            });
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        // const payload: BuildingFormData & {
+        //     selected_rooms: number[];
+        //     rooms?: { room: string; description?: string | null }[];
+        // } = {
+        //     name: (data.name ?? "").trim(),
+        //     code: (data.code ?? "").trim().toUpperCase(),
+        //     description: (data.description ?? "").trim() || null,
+        //     selected_rooms: data.selected_rooms,
+        //     ...(data.addRoomsNow
+        //     ? {
+        //         rooms: (data.rooms ?? [])
+        //         .map((r) => ({
+        //             room: (r.room ?? "").trim(),
+        //             description: (r.description ?? "")?.trim() || null,
+        //         }))
+        //         .filter((r) => r.room.length > 0),
+        //     }
+        //     : {}),
+        // };
+
         const payload: BuildingFormData & {
             selected_rooms: number[];
             rooms?: { room: string; description?: string | null }[];
@@ -89,16 +160,17 @@ export default function EditBuildingModal({
             ...(data.addRoomsNow
             ? {
                 rooms: (data.rooms ?? [])
-                .map((r) => ({
+                    .map((r) => ({
                     room: (r.room ?? "").trim(),
                     description: (r.description ?? "")?.trim() || null,
-                }))
-                .filter((r) => r.room.length > 0),
-            }
+                    }))
+                    .filter((r) => r.room.length > 0),
+                }
             : {}),
         };
 
         setProcessing(true);
+
         router.put(`/buildings/${building.id}`, payload, {
             preserveScroll: true,
             onSuccess: () => {
@@ -128,10 +200,9 @@ export default function EditBuildingModal({
                     type="text"
                     placeholder="Enter building name"
                     value={data.name}
-                    onChange={(e) =>
-                    setData((prev) => ({ ...prev, name: e.target.value.slice(0, NAME_MAX) }))
+                        onChange={(e) =>
+                        setData((prev) => ({ ...prev, name: e.target.value.slice(0, NAME_MAX) }))
                     }
-                    required
                 />
                 {errors.name && (
                     <p className="mt-1 text-xs text-red-500">{errors.name.toString()}</p>
@@ -150,7 +221,6 @@ export default function EditBuildingModal({
                     }))
                     }
                     placeholder="e.g., MB, AUF-MB"
-                    required
                 />
                 {errors.code && (
                     <p className="mt-1 text-xs text-red-500">{errors.code.toString()}</p>
@@ -166,15 +236,15 @@ export default function EditBuildingModal({
                     placeholder="Enter description"
                     value={data.description ?? ""}
                     onChange={(e) =>
-                    setData((prev) => ({
-                        ...prev,
-                        description: e.target.value.slice(0, DESC_MAX),
-                    }))
+                        setData((prev) => ({
+                            ...prev,
+                            description: e.target.value.slice(0, DESC_MAX),
+                        }))
                     }
                 />
                 {errors.description && (
                     <p className="mt-1 text-xs text-red-500">
-                    {errors.description.toString()}
+                        {errors.description.toString()}
                     </p>
                 )}
             </div>
@@ -216,9 +286,9 @@ export default function EditBuildingModal({
                         );
                     })
                     ) : (
-                    <p className="text-xs text-gray-500 italic">
-                        No rooms linked yet.
-                    </p>
+                        <p className="text-xs text-gray-500 italic">
+                            No rooms linked yet.
+                        </p>
                     )}
                 </div>
 
@@ -259,11 +329,16 @@ export default function EditBuildingModal({
                                         placeholder="e.g., 101, AVR, Lab A"
                                         value={r.room}
                                         onChange={(e) => {
-                                        const copy = [...(data.rooms ?? [])];
-                                        copy[idx] = { ...copy[idx], room: e.target.value };
-                                        setData((prev) => ({ ...prev, rooms: copy }));
+                                            const copy = [...(data.rooms ?? [])];
+                                            copy[idx] = { ...copy[idx], room: e.target.value };
+                                            setData((prev) => ({ ...prev, rooms: copy }));
                                         }}
                                     />
+                                    {errors[`rooms.${idx}.room`] && (
+                                        <p className="mt-1 text-xs text-red-500">
+                                            {errors[`rooms.${idx}.room`] as unknown as string}
+                                        </p>
+                                    )}
                                     </div>
 
                                     <div className="md:col-span-3">

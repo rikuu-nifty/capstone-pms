@@ -47,19 +47,13 @@ class StoreBuildingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            // Unique considering soft deletes (matches our composite unique index)
-            'code' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('buildings')->whereNull('deleted_at'),
-            ],
+            'name' => ['required', 'string', 'max:255', Rule::unique('buildings')->whereNull('deleted_at')],
+            'code' => ['required', 'string', 'max:50', Rule::unique('buildings')->whereNull('deleted_at')],
             'description' => ['nullable', 'string'],
 
             // Optional array of rooms
             'rooms' => ['sometimes', 'array'],
-            'rooms.*.room' => ['required', 'string', 'max:128', 'distinct:strict'], // Block duplicate room names **in the same submit**
+            'rooms.*.room' => ['required', 'string', 'max:128', 'distinct:strict'], // No duplicates in the same submission
             'rooms.*.description' => ['nullable', 'string'],
         ];
     }
@@ -67,7 +61,8 @@ class StoreBuildingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'rooms.*.room.distinct' => 'Duplicate room names are not allowed in one submission.',
+            'rooms.*.room.required' => 'Each room must have a name.',
+            'rooms.*.room.distinct' => 'Duplicate room names are not allowed in the same building.',
         ];
     }
 }
