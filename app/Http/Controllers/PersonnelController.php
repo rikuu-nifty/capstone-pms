@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Personnel;
 use App\Models\UnitOrDepartment;
+use App\Models\User;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -70,6 +71,11 @@ class PersonnelController extends Controller
             return Personnel::create($data);
         });
 
+        // Sync department if linked to a user
+        if (!empty($data['user_id']) && !empty($personnel->unit_or_department_id)) {
+            User::where('id', $data['user_id'])->update(['unit_or_department_id' => $personnel->unit_or_department_id]);
+        }
+
         return redirect()->route('personnels.index')->with('success', "Personnel {$personnel->full_name} added successfully.");
     }
 
@@ -98,6 +104,12 @@ class PersonnelController extends Controller
 
         DB::transaction(function () use ($personnel, $data) {
             $personnel->update($data);
+
+            // $personnel->refresh();
+
+            if (!empty($data['user_id']) && !empty($personnel->unit_or_department_id)) {
+                User::where('id', $data['user_id'])->update(['unit_or_department_id' => $personnel->unit_or_department_id]);
+            }
         });
 
         return redirect()->route('personnels.index')->with('success', "Personnel {$personnel->fresh()->full_name} updated successfully.");
