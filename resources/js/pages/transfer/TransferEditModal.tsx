@@ -402,6 +402,9 @@ export default function TransferEditModal({
                 {errors.current_organization && <p className="mt-1 text-xs text-red-500">{errors.current_organization}</p>}
             </div>
 
+            {/* Divider */}
+            <div className="col-span-2 border-t" />
+
             {/* Receiving Unit/Department */}
             <div className="col-span-1">
                 <label className="mb-1 block font-medium">Receiving Unit/Dept/Lab</label>
@@ -479,6 +482,9 @@ export default function TransferEditModal({
                 />
                 {errors.receiving_building_room && <p className="mt-1 text-xs text-red-500">{errors.receiving_building_room}</p>}
             </div>
+
+            {/* Divider */}
+            <div className="col-span-2 border-t" />
 
             {/* Scheduled Date */}
             <div className="col-span-1">
@@ -638,6 +644,9 @@ export default function TransferEditModal({
                 )}
             </div>
 
+            {/* Divider */}
+            <div className="col-span-2 border-t" />
+            
             {/* Selected Assets */}
             <div className="col-span-2 flex flex-col gap-4">
                 <label className="block font-medium">Assets to Transfer</label>

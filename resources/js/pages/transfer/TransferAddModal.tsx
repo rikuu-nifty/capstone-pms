@@ -218,31 +218,8 @@ export default function TransferAddModal({
                 {errors.current_organization && <p className="mt-1 text-xs text-red-500">{errors.current_organization}</p>}
             </div>
 
-            {/* Receiving Unit/Department */}
-            <div className="col-span-1">
-                <label className="mb-1 block font-medium">Receiving Unit/Dept/Lab</label>
-                <Select
-                    className="w-full"
-                    isClearable
-                    value={
-                        data.receiving_organization
-                        ? {
-                            value: data.receiving_organization,
-                            label: unitOrDepartments.find((u) => u.id === data.receiving_organization)?.name,
-                            }
-                        : null
-                    }
-                    onChange={(selected) =>
-                        setData('receiving_organization', selected ? Number(selected.value) : 0)
-                    }
-                    options={unitOrDepartments.map((u) => ({
-                        value: u.id,
-                        label: `${u.name}`,
-                    }))}
-                    placeholder="Select Unit/Dept..."
-                />
-                {errors.receiving_organization && <p className="mt-1 text-xs text-red-500">{errors.receiving_organization}</p>}
-            </div>
+            {/* Divider */}
+            <div className="col-span-2 border-t" />
 
             {/* Receiving Building */}
             <div className="col-span-1">
@@ -303,6 +280,35 @@ export default function TransferAddModal({
                     <p className="mt-1 text-xs text-red-500">{errors.receiving_building_room}</p>
                 )}
             </div>
+
+            {/* Receiving Unit/Department */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Receiving Unit/Dept/Lab</label>
+                <Select
+                    className="w-full"
+                    isClearable
+                    value={
+                        data.receiving_organization
+                        ? {
+                            value: data.receiving_organization,
+                            label: unitOrDepartments.find((u) => u.id === data.receiving_organization)?.name,
+                            }
+                        : null
+                    }
+                    onChange={(selected) =>
+                        setData('receiving_organization', selected ? Number(selected.value) : 0)
+                    }
+                    options={unitOrDepartments.map((u) => ({
+                        value: u.id,
+                        label: `${u.name}`,
+                    }))}
+                    placeholder="Select Unit/Dept..."
+                />
+                {errors.receiving_organization && <p className="mt-1 text-xs text-red-500">{errors.receiving_organization}</p>}
+            </div>
+            
+            {/* Divider */}
+            <div className="col-span-2 border-t" />
 
             {/* Scheduled Date */}
             <div className="col-span-1">
@@ -405,6 +411,9 @@ export default function TransferAddModal({
 
                 {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
             </div>
+
+            {/* Divider */}
+            <div className="col-span-2 border-t" />
             
             {/* Assets to Transfer */}
             <div className="col-span-2 flex flex-col gap-4">
