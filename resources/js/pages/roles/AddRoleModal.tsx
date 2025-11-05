@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Permission } from "@/types/custom-index";
 // import { useState } from "react";
+import { Button } from '@/components/ui/button';
 
 type Props = {
     show: boolean;
@@ -93,8 +94,37 @@ export default function AddRoleModal({ show, onClose, permissions }: Props) {
 
             {/* Permissions */}
             <div className="col-span-2 space-y-3 max-h-[520px] overflow-y-auto rounded-lg border bg-muted/10 p-4 mt-4">
-                <Label className="font-bold text-lg block mb-2">Assign View Permissions</Label>
+                <div className="flex items-center justify-between mb-2">
+                    <Label className="font-bold text-lg block mb-2">Assign View Permissions</Label>
 
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={() =>
+                                setData("permissions",
+                                permissions
+                                    .filter((perm) => perm.code.startsWith("view-"))
+                                    .map((perm) => perm.id)
+                                )
+                            }
+                            className="cursor-pointer whitespace-nowrap"
+                        >
+                            Select All
+                        </Button>
+
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setData("permissions", [])}
+                            className="cursor-pointer whitespace-nowrap"
+                        >
+                            Clear All
+                        </Button>
+                    </div>
+                </div>
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {permissions
                         .filter((perm) => perm.code.startsWith("view-"))
