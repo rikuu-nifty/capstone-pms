@@ -11,8 +11,8 @@ class UnitOrDepartmentsTableSeeder extends Seeder
     public function run(): void
     {
         $units = [
-            ['name' => 'Accounting Office', 'unit_head' => 'John Doe'],
-            ['name' => 'IT Department', 'unit_head' => 'Jane Smith'],
+            ['name' => 'Property Management Office', 'unit_head' => 'Maricel Capitulo'],
+            ['name' => 'Accounting Office', 'unit_head' => 'Jane Smith'],
             ['name' => 'Registrar', 'unit_head' => 'Mary Johnson'],
             ['name' => 'Library', 'unit_head' => 'Carlos Reyes'],
             ['name' => 'Facilities', 'unit_head' => 'Anna Lopez'],
