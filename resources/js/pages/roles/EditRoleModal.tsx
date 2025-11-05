@@ -112,7 +112,7 @@ export default function EditRoleModal({ show, onClose, role, permissions }: Prop
                     {/* Permissions */}
                     <div className="col-span-2 space-y-3 max-h-[320px] overflow-y-auto rounded-lg border bg-muted/10 p-4 mt-4">
                         <div className="flex items-center justify-between mb-2">
-                            <Label className="font-medium">Assign View Permissions</Label>
+                            <Label className="font-bold text-lg">Assign View Permissions</Label>
 
                             <div className="flex items-center gap-2">
                                 <Button
