@@ -423,7 +423,8 @@ export default function UserApprovals() {
                                                                     { preserveScroll: true }
                                                                 )
                                                             }
-                                                            disabled={u.status === 'denied'}
+                                                            // disabled={u.status === 'denied'}
+                                                            disabled={u.status === 'denied' || u.status === 'approved'}
                                                         >
                                                             Reject
                                                         </Button>
