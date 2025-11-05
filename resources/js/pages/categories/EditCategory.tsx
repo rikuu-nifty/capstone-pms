@@ -70,7 +70,7 @@ export default function EditCategoryModal({
                     placeholder="e.g., Computers"
                     value={data.name}
                     onChange={(e) => setData('name', e.target.value)}
-                    required
+                    // required
                 />
                 {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
             </div>
