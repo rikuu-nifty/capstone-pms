@@ -246,6 +246,8 @@ public function assignments()
         }
 
         $td = $latest->turnoverDisposal;
+        $status = ucfirst(str_replace('_', ' ', $td->status));
+        $type = ucfirst($td->type ?? '');
 
         if ($td->status === 'completed') {
             return $td->type === 'turnover'
@@ -253,7 +255,12 @@ public function assignments()
                 : ($td->type === 'disposal' ? 'Disposed' : 'Completed');
         }
 
-        return ucfirst(str_replace('_', ' ', $td->status));
+        // Combine type and status for display
+        if ($type && $status) {
+            return "{$status} for {$type}";
+        }
+
+        return $status ?: null;
     }
 
     public function getCurrentOffCampusStatusAttribute(): ?string

@@ -193,11 +193,11 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 <ShieldCheck size={18} /> Status
                             </h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                {/* ✅ Now pulling transfer.status via relation */}
                                 {/* <InfoCard label="Transfer Status" value={humanize(asset.transfer?.status)} /> */}
                                 <InfoCard label="Transfer Status" value={humanize(asset.current_transfer_status)} />
                                 <InfoCard label="Inventory Status" value={humanize(asset.current_inventory_status)} />
-                                <InfoCard label="Turnover/Disposal Status" value={humanize(asset.current_turnover_disposal_status) || '—'} />
+                                {/* <InfoCard label="Turnover/Disposal Status" value={humanize(asset.current_turnover_disposal_status) || '—'} /> */}
+                                <InfoCard label="Turnover/Disposal Status" value={asset.current_turnover_disposal_status || '—'} />
                                 <InfoCard label="Off Campus Status" value={humanize(asset.current_off_campus_status) || '—'} />
                                 <div className="sm:col-span-2">
                                 <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
