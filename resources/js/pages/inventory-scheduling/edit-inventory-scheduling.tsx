@@ -738,10 +738,10 @@ export const EditInventorySchedulingModal = ({
                             <Input value={data.verified_by} onChange={(e) => setData('verified_by', e.target.value)} />
                         </div>
 
-                        <div>
+                        {/* <div>
                             <label className="mb-1 block font-medium">Received By</label>
                             <Input value={data.received_by} onChange={(e) => setData('received_by', e.target.value)} />
-                        </div>
+                        </div> */}
 
                         <div className="col-span-2">
                             <label className="mb-1 block font-medium">Description</label>
