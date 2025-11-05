@@ -240,7 +240,7 @@ export default function TurnoverDisposalEditModal({
       </div>
 
       {/* Issuing Office */}
-      <div className="col-span-1">
+      {/* <div className="col-span-1">
         <label className="mb-1 block font-medium">Issuing Office</label>
         <Select
           className="w-full text-sm"
@@ -269,10 +269,53 @@ export default function TurnoverDisposalEditModal({
         {errors.issuing_office_id && (
           <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
         )}
+      </div> */}
+
+      {/* Issuing Office (exclude PMO) */}
+      <div className="col-span-1">
+        <label className="mb-1 block font-medium">Issuing Office</label>
+        <Select
+          className="w-full text-sm"
+          isClearable
+          value={
+            unitOrDepartments
+              .filter((unit) => {
+                const code = (unit.code || '').trim().toLowerCase();
+                const name = (unit.name || '').trim().toLowerCase();
+                return code !== 'pmo' && !name.includes('property management office');
+              })
+              .map((unit) => ({
+                value: unit.id,
+                label: `${unit.name}`,
+              }))
+              .find((opt) => opt.value === data.issuing_office_id) ?? null
+          }
+          onChange={(opt) => {
+            const id = opt ? opt.value : 0;
+            setData('issuing_office_id', id);
+            setData('personnel_id', null);
+            setData('turnover_disposal_assets', []);
+            setShowAssetDropdown([true]);
+          }}
+          options={unitOrDepartments
+            .filter((unit) => {
+              const code = (unit.code || '').trim().toLowerCase();
+              const name = (unit.name || '').trim().toLowerCase();
+              return code !== 'pmo' && !name.includes('property management office');
+            })
+            .map((unit) => ({
+              value: unit.id,
+              label: `${unit.name}`,
+            }))}
+          placeholder="Select Unit/Dept/Lab"
+        />
+        {errors.issuing_office_id && (
+          <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
+        )}
       </div>
 
       {/* Receiving Office */}
-      <div className="col-span-1">
+      {/* <div className="col-span-1">
         <label className="mb-1 block font-medium">Receiving Office</label>
         <Select
           className="w-full text-sm"
@@ -298,6 +341,30 @@ export default function TurnoverDisposalEditModal({
         {errors.receiving_office_id && (
           <p className="mt-1 text-xs text-red-500">{errors.receiving_office_id}</p>
         )}
+      </div> */}
+
+      {/* Receiving Office (fixed to PMO) */}
+      <div className="col-span-1">
+        <label className="mb-1 block font-medium">Receiving Office</label>
+        <div className="p-1 text-lg font-bold text-blue-700">
+          {(() => {
+            const pmoUnit = unitOrDepartments.find((u) => {
+              const code = (u.code || '').trim().toLowerCase();
+              const name = (u.name || '').trim().toLowerCase();
+              return code === 'pmo' || name.includes('property management office');
+            });
+
+            if (pmoUnit) {
+              // Ensure receiving_office_id is always set
+              if (data.receiving_office_id !== pmoUnit.id) {
+                setData('receiving_office_id', pmoUnit.id);
+              }
+              return pmoUnit.name;
+            }
+
+            return 'Property Management Office';
+          })()}
+        </div>
       </div>
 
       {/* Status */}
