@@ -13,19 +13,36 @@ use Illuminate\Support\Facades\DB;
 class PersonnelController extends Controller
 {
 
-    private function indexProps(): array
+    private function indexProps(?Personnel $personnel = null): array
     {
+        $users = $personnel ? Personnel::availableUsers()
+            ->merge($personnel->user ? [$personnel->user] : [])
+            ->unique('id')
+            ->values()
+            : Personnel::availableUsers()
+        ;
+            
         return [
             'personnels'    => Personnel::listForIndex(),
-            'users'         => Personnel::usersForDropdown(),
+            // 'users'         => Personnel::usersForDropdown(),
+            'users'         => $users,
             'units'         => UnitOrDepartment::listLite(),
             'totals'        => Personnel::totals(),
         ];
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return Inertia::render('personnels/index', $this->indexProps());
+        // Optional: detect if a specific personnel ID was pre-fetched via Inertia props
+        $editingId = $request->input('editing_id');
+
+        $personnel = $editingId
+            ? Personnel::with('user')->find($editingId)
+            : null;
+
+        return Inertia::render('personnels/index', $this->indexProps($personnel));
+        
+        // return Inertia::render('personnels/index', $this->indexProps());
     }
 
     /**

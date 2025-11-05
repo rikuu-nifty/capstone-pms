@@ -7,6 +7,7 @@ export type Personnel = {
 
     user_id?: number | null;
     user_name?: string | null;
+    user_email?: string | null;
 
     position?: string | null;
     unit_or_department_id?: number | null;

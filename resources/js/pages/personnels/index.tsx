@@ -371,7 +371,17 @@ export default function PersonnelsIndex({
             {selected && (
                 <EditPersonnelModal
                     show={showEdit}
-                    users={users}
+                    // users={users}
+                    users={[
+                    ...users,
+                    ...(selected.user_id
+                        ? [{
+                            id: selected.user_id,
+                            name: selected.user_name ?? 'Unknown User', // fallback string ensures type safety
+                            email: selected.user_email ?? '-',
+                        }]
+                        : []),
+                    ]}
                     units={units} 
                     onClose={() => {
                         setShowEdit(false);

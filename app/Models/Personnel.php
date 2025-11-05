@@ -75,6 +75,8 @@ class Personnel extends Model
                 'unit_or_department_id' => $p->unit_or_department_id,
                 'unit_or_department' => $p->unitOrDepartment?->name,
                 'user_id' => $p->user_id,
+                'user_email' => $p->user?->email,
+
                 'user_name' => $p->user?->name,
                 'assignments_count' => $p->assignments->count(),
                 'assigned_assets' => $p->assignments->flatMap(

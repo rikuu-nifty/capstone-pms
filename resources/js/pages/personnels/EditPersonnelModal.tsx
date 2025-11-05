@@ -91,6 +91,7 @@ export default function EditPersonnelModal({
             title={`Edit Personnel #${record?.id ?? ''}`}
             onSubmit={handleSubmit}
             processing={processing}
+            contentClassName="h-[75vh] overflow-y-auto"
         >
             {/* First Name */}
             <div className="col-span-1">
@@ -218,7 +219,8 @@ export default function EditPersonnelModal({
 
             <WarningModal
                 show={showWarning}
-                onClose={() => setShowWarning(false)}
+                onCancel={() => setShowWarning(false)}
+                onConfirm={() => setShowWarning(false)}
                 title="Cannot Change Unit/Department"
                 message="This personnel has assigned assets. Please reassign or unassign them first before moving them to another unit/department."
                 details={record?.assigned_assets?.map((a: { id: number | null; name: string }) => a.name) ?? []}
