@@ -235,7 +235,15 @@ class VerificationFormController extends Controller
             }
         }
 
-        if ($verification->status !== 'verified' && $validated['status'] === 'verified') {
+        // if ($verification->status !== 'verified' && $validated['status'] === 'verified') {
+        //     $validated['verified_by_id'] = Auth::id();
+        //     $validated['verified_at']    = now()->toDateString();
+        // }
+
+        if ($validated['status'] === 'pending') {
+            $validated['verified_by_id'] = null;
+            $validated['verified_at']    = null;
+        } else {
             $validated['verified_by_id'] = Auth::id();
             $validated['verified_at']    = now()->toDateString();
         }
