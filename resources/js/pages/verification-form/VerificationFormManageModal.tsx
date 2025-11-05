@@ -18,6 +18,12 @@ export type InventoryLite = {
     building?: { id: number; name: string } | null;
     buildingRoom?: { id: number; room: string } | null;
     subArea?: { id: number; name: string } | null;
+
+    latest_assignment?: {
+        assignment?: {
+            personnel_id?: number | null;
+        } | null;
+    } | null;
 };
 
 interface Props {
@@ -92,12 +98,29 @@ export default function VerificationFormManageModal({
         [data.verification_assets],
     );
 
+    // const filteredAssets = useMemo(() => {
+    //     if (!data.unit_or_department_id) return [] as InventoryLite[];
+    //     return assets.filter(
+    //     (a) => a.unit_or_department_id === data.unit_or_department_id && !selectedIds.has(a.id),
+    //     );
+    // }, [assets, data.unit_or_department_id, selectedIds]);
+
     const filteredAssets = useMemo(() => {
         if (!data.unit_or_department_id) return [] as InventoryLite[];
-        return assets.filter(
-        (a) => a.unit_or_department_id === data.unit_or_department_id && !selectedIds.has(a.id),
-        );
-    }, [assets, data.unit_or_department_id, selectedIds]);
+
+        return assets.filter(a => {
+            const matchesUnit = a.unit_or_department_id === data.unit_or_department_id;
+
+            const assetPersonnelId = a.latest_assignment?.assignment?.personnel_id ?? null;
+            const matchesPersonnel =
+                data.requested_by_personnel_id
+                    ? assetPersonnelId === data.requested_by_personnel_id
+                    : true;
+
+            const notSelected = !selectedIds.has(a.id);
+            return matchesUnit && matchesPersonnel && notSelected;
+        });
+    }, [assets, data.unit_or_department_id, data.requested_by_personnel_id, selectedIds]);
 
     const addLine = (inventory_list_id: number) => {
         const next = { inventory_list_id, remarks: '' };
