@@ -201,6 +201,7 @@ export default function UnitOrDepartmentsIndex({
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Code</TableHead>
                                 <TableHead className="text-center">Name</TableHead>
+                                <TableHead className="text-center">Unit Head</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
                                 <TableHead className="text-center">Asset Count</TableHead>
                                 <TableHead className="text-center">Actions</TableHead>
@@ -217,6 +218,7 @@ export default function UnitOrDepartmentsIndex({
                                     <TableCell>{u.id}</TableCell>
                                     <TableCell className="font-medium">{(u.code ?? '—').toUpperCase()}</TableCell>
                                     <TableCell>{u.name ?? '—'}</TableCell>
+                                    <TableCell>{u.unit_head ?? '—'}</TableCell>
                                     <TableCell
                                         className={`max-w-[250px] whitespace-normal break-words text-center${
                                             u.description && u.description !== '-' ? 'text-justify' : 'text-center'
