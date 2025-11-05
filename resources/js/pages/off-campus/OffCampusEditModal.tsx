@@ -525,7 +525,6 @@ export default function OffCampusEditModal({ offCampus, onClose, unitOrDepartmen
                             ) : null}
                         </div>
 
-
                         {/* Remarks */}
                         <div>
                             <Label>Remarks</Label>
