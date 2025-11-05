@@ -92,6 +92,11 @@ export const EditInventorySchedulingModal = ({
     const handleSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
+        if (!data.designated_employee) {
+            setError('designated_employee', 'The designated personnel field is required.');
+            return;
+        }
+
         const cleanRoomIds = (data.room_ids ?? []).filter((id) => !!id);
 
         if (data.scope_type === 'unit') {

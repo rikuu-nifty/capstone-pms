@@ -122,7 +122,7 @@ class InventorySchedulingController extends Controller
             'received_by'               => ['nullable', 'string'],
             'scheduling_status'         => ['required', 'string'],
             'description'               => ['nullable', 'string'],
-            'designated_employee'       => ['nullable', 'integer', 'exists:users,id'],
+            'designated_employee'       => ['required', 'integer', 'exists:users,id'],
         ]);
 
         $targetMonth = $data['inventory_schedule'];
@@ -307,7 +307,7 @@ class InventorySchedulingController extends Controller
             'building_room_id'      => ['nullable','integer','exists:building_rooms,id'],
             'unit_or_department_id' => ['nullable','integer','exists:unit_or_departments,id'],
             'user_id'               => ['nullable','integer','exists:users,id'],
-            'designated_employee'   => ['nullable','integer','exists:users,id'],
+            'designated_employee'   => ['required','integer','exists:users,id'],
             'assigned_by'           => ['nullable','integer','exists:users,id'],
             'inventory_schedule'    => ['required','string'],
             'actual_date_of_inventory' => ['nullable','date'],

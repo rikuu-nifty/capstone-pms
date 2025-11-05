@@ -356,6 +356,11 @@ export default function InventorySchedulingIndex({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!data.designated_employee) {
+            setError('designated_employee', 'The designated personnel field is required.');
+            return;
+        }
+
         const cleanRoomIds = (data.room_ids ?? []).filter((id) => !!id);
 
         if (data.scope_type === 'unit') {
