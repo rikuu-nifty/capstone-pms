@@ -209,11 +209,13 @@ export default function ApprovalsIndex() {
                     ))}
                 </div>
 
-              
-
                 {/* Search */}
                 <div className="mb-3 w-80">
-                    <Input placeholder="search for the date, title, or requester" value={search} onChange={(e) => onSearch(e.target.value)} />
+                    <Input
+                        placeholder="Search for the form title or requester..." 
+                        value={search} 
+                        onChange={(e) => onSearch(e.target.value)} 
+                    />
                 </div>
 
                 {/* Table */}
