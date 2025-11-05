@@ -39,6 +39,10 @@ class FormApprovalController extends Controller
             'approvable',
             'steps' => fn ($q) => $q->where('status', 'pending')->orderBy('step_order'),
         ])
+        ->whereNull('deleted_at') // skip soft-deleted FormApprovals
+        ->whereHas('approvable', function ($q) {
+            $q->whereNull('deleted_at');
+        })
         ->when($tab === 'pending',  fn ($q) => $q->where('status', 'pending_review'))
         ->when($tab === 'approved', fn ($q) => $q->where('status', 'approved'))
         ->when($tab === 'rejected', fn ($q) => $q->where('status', 'rejected'))
