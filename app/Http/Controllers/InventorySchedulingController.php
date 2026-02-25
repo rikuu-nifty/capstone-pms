@@ -199,7 +199,7 @@ class InventorySchedulingController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(InventoryScheduling $inventory_scheduling)
+    public function show(Request $request, InventoryScheduling $inventory_scheduling)
     {
         $schedules = InventoryScheduling::with([
             'building',
@@ -282,6 +282,8 @@ class InventorySchedulingController extends Controller
             'assets'            => $viewing->assets,       // pass assets to frontend
             'signatories'       => $signatories,  // now provided
             'isFullyApproved'   => $isFullyApproved, // pass flag to frontend
+
+            'from'              => $request->query('from'), // ✅ ADD THIS (so frontend knows where to go back)
 
             // 'auth'              => ['user' => auth()->user()], // FIX: include auth like in index()
         ]);

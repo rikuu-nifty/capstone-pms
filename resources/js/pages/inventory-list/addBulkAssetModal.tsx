@@ -30,7 +30,7 @@ export function AddBulkAssetModalForm({
     subAreas,
     personnels, // ✅ add this
 }: Props) {
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+    const { data, setData, post, processing, errors, reset, clearErrors, setError } = useForm({
         building_id: '',
         unit_or_department_id: '',
         building_room_id: '',
@@ -289,11 +289,22 @@ export function AddBulkAssetModalForm({
                                         <input
                                             ref={fileInputRef}
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/jpeg,image/png,image/gif"
                                             onChange={(e) => {
-                                                if (e.target.files?.[0]) {
-                                                    setData('image', e.target.files[0]);
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+
+                                                const allowed = ['image/jpeg', 'image/png', 'image/gif']; // jpg = image/jpeg
+
+                                                if (!allowed.includes(file.type)) {
+                                                    setError('image', 'Only JPEG, PNG, JPG, or GIF images are allowed.');
+                                                    setData('image', null);
+                                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                                    return;
                                                 }
+
+                                                clearErrors('image'); // ✅ remove previous image error
+                                                setData('image', file);
                                             }}
                                             className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                         />
@@ -303,6 +314,7 @@ export function AddBulkAssetModalForm({
                                             Use Camera
                                         </Button>
                                     </div>
+                                    {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
 
                                     {/* Preview */}
                                     {data.image && (
@@ -390,15 +402,15 @@ export function AddBulkAssetModalForm({
                                         const newQty = Number(data.quantity);
 
                                         if (checked && (!newQty || newQty <= 0)) {
-                                            // Set the frontend validation message inside errors
-                                            errors.quantity = 'Please enter a quantity greater than 0 before enabling multiple serial numbers.';
+                                            // ✅ use setError so UI re-renders
+                                            setError('quantity', 'Please enter a quantity greater than 0 before enabling multiple serial numbers.');
                                             setEnableMultipleSerials(false);
                                             setData('serial_numbers', []);
                                             return;
                                         }
 
-                                        // Clear error once valid
-                                        if (errors.quantity) delete errors.quantity;
+                                        // ✅ clear qty error if valid
+                                        setError('quantity', '');
 
                                         setEnableMultipleSerials(checked);
 
@@ -416,10 +428,8 @@ export function AddBulkAssetModalForm({
                                 <span>Enable multiple serial numbers</span>
                             </div>
 
-                            {/* Show the same red text if validation triggered */}
-                            {/* {errors.quantity && (
-                                <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>
-                            )} */}
+                            {/* ✅ Show qty error */}
+                            {/* {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity}</p>} */}
                         </div>
 
                         {/* Serial Number (required if not using bulk serials) */}
@@ -430,9 +440,15 @@ export function AddBulkAssetModalForm({
                                     type="text"
                                     className="w-full rounded-lg border p-2"
                                     value={data.serial_numbers[0] || ''}
-                                    onChange={(e) => setData('serial_numbers', [e.target.value])}
+                                    onChange={(e) => {
+                                        setData('serial_numbers', [e.target.value]);
+
+                                        // ✅ optional: clear serial_numbers error once user starts typing
+                                        if (errors.serial_numbers) setError('serial_numbers', '');
+                                    }}
                                 />
-                                {errors.serial_no && <p className="mt-1 text-xs text-red-500">{errors.serial_no}</p>}
+                                {/* ✅ correct key */}
+                                {errors.serial_numbers && <p className="mt-1 text-xs text-red-500">{errors.serial_numbers}</p>}
                             </div>
                         )}
 
@@ -450,9 +466,13 @@ export function AddBulkAssetModalForm({
                                             const copy = [...data.serial_numbers];
                                             copy[i] = e.target.value;
                                             setData('serial_numbers', copy);
+
+                                            // ✅ optional: clear serial_numbers error once user edits
+                                            if (errors.serial_numbers) setError('serial_numbers', '');
                                         }}
                                     />
                                 ))}
+
                                 {errors.serial_numbers && <p className="mt-1 text-xs text-red-500">{errors.serial_numbers}</p>}
                             </div>
                         )}
@@ -678,7 +698,7 @@ export function AddBulkAssetModalForm({
                             <Button type="button" variant="secondary" onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={processing}>    
+                            <Button type="submit" disabled={processing}>
                                 Add Bulk Assets
                             </Button>
                         </div>

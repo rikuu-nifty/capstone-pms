@@ -299,6 +299,9 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
 
 
     // INVENTORY LIST
+    Route::get('/inventory-list/memorandum-receipts/{memo_no}/export-pdf', [InventoryListController::class, 'exportMemorandumReceiptPdf'])
+    ->name('inventory-list.memorandum-receipts.export-pdf')
+    ->middleware('can:view-inventory-list');
     Route::get('/inventory-list', [InventoryListController::class, 'index'])
         ->name('inventory-list.index')
         ->middleware('can:view-inventory-list');

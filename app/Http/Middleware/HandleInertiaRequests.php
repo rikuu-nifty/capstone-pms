@@ -101,6 +101,23 @@ class HandleInertiaRequests extends Middleware
                 'pending_user_count' => fn () => \App\Models\User::where('status', 'pending')->count(),
             ],
 
+            // ---------- NOTIFICATIONS (HEADER DROPDOWN) ----------
+            'notifications' => fn () => $user ? [
+                'items' => $user->notifications()
+                    ->where('status', '!=', 'archived')
+                    ->latest()
+                    ->take(8)
+                    ->get(['id', 'data', 'read_at', 'status', 'created_at']),
+
+                'unread_count' => $user->notifications()
+                    ->where('status', 'unread')
+                    ->count(),
+            ] : [
+                'items' => [],
+                'unread_count' => 0,
+            ],
+
+
             // ---------- FLASH MESSAGES ----------
             'flash' => [
                 'unauthorized' => fn() => $request->session()->has('unauthorized')
@@ -110,6 +127,8 @@ class HandleInertiaRequests extends Middleware
                     ]
                     : null,
             ],
+
+
         ];
     }
 }

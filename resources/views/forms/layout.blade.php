@@ -173,7 +173,8 @@
         <div class="header-text">
             <h1>ANGELES UNIVERSITY FOUNDATION</h1>
             <p class="city">Angeles City</p>
-            <p class="office">Office of the Administrative Services</p>
+            {{-- <p class="office">Office of the Administrative Services</p> --}}
+            <p class="office">@yield('office-name', 'Office of the Administrative Services')</p>
         </div>
 
         {{-- Optional right-aligned header content --}}

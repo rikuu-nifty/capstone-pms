@@ -199,7 +199,8 @@ export const ViewAssetModal = ({ asset, onClose }: { asset: Asset; onClose: () =
                                 {/* <InfoCard label="Turnover/Disposal Status" value={humanize(asset.current_turnover_disposal_status) || '—'} /> */}
                                 <InfoCard label="Turnover/Disposal Status" value={asset.current_turnover_disposal_status || '—'} />
                                 <InfoCard label="Off Campus Status" value={humanize(asset.current_off_campus_status) || '—'} />
-                                <div className="sm:col-span-2">
+                                <InfoCard label="Maintenance Due Date" value={dateFormat(asset.maintenance_due_date)} />
+                                <div className="sm:col-span-1">
                                 <InfoCard label="Status" value={asset.status === 'active' ? 'Active' : 'Archived'} />
                                 </div>
                             

@@ -24,7 +24,7 @@ class NotificationController extends Controller
         }
 
         return Inertia::render('notifications/index', [
-            'notifications' => $query->latest()->paginate(10),
+            'notifications_page' => $query->latest()->paginate(10),
             'filter' => $filter,
             'counts' => [
                 'all' => $user->notifications()->count(),
@@ -118,13 +118,22 @@ class NotificationController extends Controller
      * Dismiss from dropdown (same as archive)
      */
     public function dismiss(Request $request, string $id)
-    {
-        $notification = $request->user()->notifications()->findOrFail($id);
+{
+    $notification = $request->user()->notifications()->findOrFail($id);
 
-        $notification->update(['status' => 'archived']);
+    $notification->update(['status' => 'archived']);
 
-        return redirect()->route('notifications.index', [
-            'filter' => $request->query('filter', 'all'),
-        ]);
-    }
+    return back();
+}
+
+    // public function dismiss(Request $request, string $id)
+    // {
+    //     $notification = $request->user()->notifications()->findOrFail($id);
+
+    //     $notification->update(['status' => 'archived']);
+
+    //     return redirect()->route('notifications.index', [
+    //         'filter' => $request->query('filter', 'all'),
+    //     ]);
+    // }
 }

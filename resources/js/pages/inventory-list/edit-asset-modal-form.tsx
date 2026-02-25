@@ -34,7 +34,6 @@ const safeDate = (val?: string | null) => {
     return d.toISOString().substring(0, 10);
 };
 
-
 export const EditAssetModalForm = ({
     onClose,
     asset,
@@ -373,12 +372,32 @@ export const EditAssetModalForm = ({
                                                 <input
                                                     ref={fileInputRef}
                                                     type="file"
-                                                    accept="image/*"
-                                                    capture="environment" // ✅ automatically opens rear camera on mobile
+                                                    accept="image/jpeg,image/png,image/gif"
+                                                    capture="environment"
                                                     onChange={(e) => {
-                                                        if (e.target.files?.[0]) {
-                                                            handleChange('image', e.target.files[0]);
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+
+                                                        const allowed = ['image/jpeg', 'image/png', 'image/gif']; // jpg = image/jpeg
+                                                        if (!allowed.includes(file.type)) {
+                                                            setErrors((prev) => ({
+                                                                ...prev,
+                                                                image: 'Only JPEG, PNG, JPG, or GIF images are allowed.',
+                                                            }));
+
+                                                            handleChange('image', null);
+                                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                                            return;
                                                         }
+
+                                                        // clear previous image error if user picks a valid one
+                                                        setErrors((prev) => {
+                                                            const next = { ...prev };
+                                                            delete next.image;
+                                                            return next;
+                                                        });
+
+                                                        handleChange('image', file);
                                                     }}
                                                     className="block w-full max-w-xs cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                                 />
@@ -390,6 +409,7 @@ export const EditAssetModalForm = ({
                                                     </Button>
                                                 )}
                                             </div>
+                                            {errors.image && <p className="mt-2 text-xs text-red-500">{errors.image}</p>}
 
                                             {form.image && (
                                                 <div className="mt-4 flex flex-col items-center gap-3">

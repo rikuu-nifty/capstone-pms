@@ -39,6 +39,8 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             // ✅ Single mode: serial_no is required; Bulk mode: can be nullable
             // 'serial_no'     => 'required|string|max:255',
             'serial_no' => 'required_if:mode,single|nullable|string|max:255',
+            
+
 
             // 🔹 Bulk mode
             'serial_numbers'       => $mode === 'bulk' ? 'required|array|min:1' : 'nullable|array',
@@ -137,6 +139,7 @@ class InventoryListAddNewAssetFormRequest extends FormRequest
             'serial_no.string' => 'The serial number must be a valid string.',
             'serial_no.max' => 'The serial number may not be greater than 255 characters.',
 
+            'serial_no.required_if' => 'Please provide the serial number of the asset.',
             'serial_numbers.array' => 'The serial numbers must be provided as an array.',
             'serial_numbers.*.string' => 'Each serial number must be a valid string.',
             'serial_numbers.*.max' => 'Each serial number may not be greater than 255 characters.',

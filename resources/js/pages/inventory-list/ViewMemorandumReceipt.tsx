@@ -29,6 +29,9 @@ type Props = {
     onClose: () => void;
     assets: AssetForReceipt[]; // ✅ array of assets
     memo_no: string | number; // ✅ shared memo number
+    currentUser?: { id: number; name: string | null }; // ✅ optional
+    // ✅ ADD THIS HERE
+    mrNotedByName?: string | null; // ✅ name only
 };
 
 const peso = (v: number | string | undefined) => {
@@ -40,8 +43,9 @@ const peso = (v: number | string | undefined) => {
     }
 };
 
-export function ViewMemorandumReceiptModal({ open, onClose, assets, memo_no }: Props) {
+export function ViewMemorandumReceiptModal({ open, onClose, assets, memo_no, currentUser, mrNotedByName }: Props) {
     if (!assets || assets.length === 0) return null;
+    const preparedByName = currentUser?.name?.trim() || '—';
 
     // Aggregate totals
     const totalQty = assets.reduce((sum, a) => sum + Number(a.quantity || 0), 0);
@@ -61,7 +65,11 @@ export function ViewMemorandumReceiptModal({ open, onClose, assets, memo_no }: P
 
     const campusHeaderLeft = (
         <div className="flex items-center gap-3">
-            <img src="https://www.auf.edu.ph/images/auf-logo.png" alt="AUF" className="h-14 w-14 object-contain" />
+            <img
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP7IP2qidS4P1DWqWZ-TVs0fENzITwas0s4w&s"
+                alt="AUF"
+                className="h-14 w-14 object-contain"
+            />
             <div className="leading-tight">
                 <div className="font-semibold">ANGELES UNIVERSITY FOUNDATION</div>
                 <div className="text-sm">Angeles City</div>
@@ -170,6 +178,11 @@ export function ViewMemorandumReceiptModal({ open, onClose, assets, memo_no }: P
                     <div>
                         <div className="h-[1.25rem] w-[160px] border-b border-black" />
                         <div className="mt-1 text-xs">Prepared by:</div>
+
+                        {/* ✅ Name of logged-in user */}
+                        <div className="text-sm font-semibold">{preparedByName}</div>
+
+                        {/* ✅ Role */}
                         <div className="text-sm font-medium">Property Clerk</div>
                     </div>
                     <div>
@@ -198,6 +211,11 @@ export function ViewMemorandumReceiptModal({ open, onClose, assets, memo_no }: P
                     <div>
                         <div className="h-[1.25rem] w-[160px] border-b border-black" />
                         <div className="mt-1 text-xs">Noted by:</div>
+
+                        {/* ✅ Name from signatories */}
+                        <div className="text-sm font-semibold">{mrNotedByName?.trim() || '—'}</div>
+
+                        {/* ✅ Fixed title */}
                         <div className="text-sm font-medium">PMO Head</div>
                     </div>
                     <div>
@@ -207,17 +225,21 @@ export function ViewMemorandumReceiptModal({ open, onClose, assets, memo_no }: P
                 </div>
             </div>
 
-            <div className="mt-8 text-center print:hidden">
-                <a onClick={onClose} className="mr-2 inline-block cursor-pointer rounded bg-black px-4 py-2 font-semibold text-white">
+            <div className="mt-8 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4 print:hidden">
+                <Button variant="primary" onClick={onClose} className="w-full cursor-pointer px-3 py-2 text-xs font-bold sm:w-auto sm:text-sm">
                     ← Back to Inventory List
-                </a>
-                <Button onClick={() => window.print()} className="cursor-pointer">
+                </Button>
+
+                <Button
+                    onClick={() => window.open(`/inventory-list/memorandum-receipts/${memoNo}/export-pdf`, '_blank')}
+                    className="inline-block w-full cursor-pointer rounded bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50 sm:w-auto sm:text-sm"
+                >
                     🖨️ Print Form
                 </Button>
             </div>
 
             <div className="text-[10px] leading-tight text-gray-600 print:text-[10px]">
-                AUF-FORM-AS/PMO
+                AUF-FORM-AS/PMO-41
                 <br />
                 Oct.01, 2014 • Rev.0
             </div>

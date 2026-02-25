@@ -206,6 +206,17 @@ export default function InventorySchedulingIndex({
     users: User[];
 }) {
     const { props } = usePage<PagePropsWithViewing>();
+    const { from } = usePage().props as { from?: string };
+
+    const handleExit = () => {
+  if (from === 'notifications') {
+    router.get(route('notifications.index'), {}, { preserveScroll: true });
+  } else {
+    router.get(route('inventory-scheduling.index'), {}, { preserveScroll: true });
+  }
+};
+
+    
     const { signatories, totals } = props; // extract signatories
     const currentUser = props.auth.user;
 
@@ -720,24 +731,20 @@ export default function InventorySchedulingIndex({
                 />
             )}
 
-            {viewModalVisible && selectedSchedule && (
-                <ViewScheduleModal
-                    schedule={selectedSchedule}
-                    assets={assets ?? []} // pass assets safely
-                    // onClose={closeView}
-                    signatories={signatories}
-                    onClose={() => {
-                        closeView();
-                        setTimeout(() => {
-                            router.visit(route('inventory-scheduling.index'), {
-                                replace: true,
-                                preserveScroll: true,
-                                preserveState: false,
-                            });
-                        }, 200);
-                    }}
-                />
-            )}
+        {viewModalVisible && selectedSchedule && (
+  <ViewScheduleModal
+    schedule={selectedSchedule}
+    assets={assets ?? []}
+    signatories={signatories}
+    onClose={() => {
+      closeView(); // closes the modal
+      setTimeout(() => {
+        handleExit(); // decides where to go (notifications OR inventory scheduling)
+      }, 200);
+    }}
+  />
+)}
+
 
             {/* Side Panel Modal with Slide Effect (Schedule Inventory) */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddScheduleInventory ? 'visible' : 'invisible'}`}>

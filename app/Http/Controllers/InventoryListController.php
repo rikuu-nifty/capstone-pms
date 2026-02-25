@@ -6,6 +6,7 @@ use App\Http\Requests\InventoryListUpdateAssetFormRequest;
 use Inertia\Inertia;
 
 use App\Models\AssetModel;
+use App\Models\InventorySchedulingSignatory;
 use App\Models\UnitOrDepartment;
 use App\Models\Building;
 use App\Models\BuildingRoom;
@@ -24,9 +25,14 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+
 use Illuminate\Validation\Rule;
 
 use App\Traits\LogsAuditTrail;
+
+
 
 class InventoryListController extends Controller
 {
@@ -51,17 +57,70 @@ class InventoryListController extends Controller
         ]);
     }
 
+    // public function showMemorandumReceipt(InventoryList $inventoryList)
+    // {
+    //     $assets = InventoryList::with(['assetModel', 'unitOrDepartment', 'building', 'buildingRoom'])
+    //         ->where('memorandum_no', $inventoryList->memorandum_no)
+    //         ->get();
+
+    //     return Inertia::render('inventory-list/ViewMemorandumReceipt', [
+    //         'assets' => $assets,
+    //         'memo_no' => $inventoryList->memorandum_no,
+    //     ]);
+    // }
+
     public function showMemorandumReceipt(InventoryList $inventoryList)
+{
+    $assets = InventoryList::with(['assetModel', 'unitOrDepartment', 'building', 'buildingRoom'])
+        ->where('memorandum_no', $inventoryList->memorandum_no)
+        ->get();
+
+    return Inertia::render('inventory-list/ViewMemorandumReceipt', [
+        'assets' => $assets,
+        'memo_no' => $inventoryList->memorandum_no,
+
+        // ✅ add this
+        'currentUser' => [
+            'id' => auth()->id(),
+            'name' => auth()->user()?->name,
+        ],
+    ]);
+}
+    public function exportMemorandumReceiptPdf($memo_no)
     {
-        $assets = InventoryList::with(['assetModel', 'unitOrDepartment', 'building', 'buildingRoom'])
-            ->where('memorandum_no', $inventoryList->memorandum_no)
+        $memo_no = trim((string) $memo_no);
+
+        $assets = InventoryList::with([
+                'assetModel',
+                'unitOrDepartment',
+                'building',
+                'buildingRoom.building',
+            ])
+            ->where('memorandum_no', $memo_no)
+            ->orderBy('id', 'asc')
             ->get();
 
-        return Inertia::render('inventory-list/ViewMemorandumReceipt', [
+        abort_if($assets->isEmpty(), 404);
+        // ✅ Prepared by = logged-in user (name column in users table)
+        $preparedByName = auth()->user()?->name;
+
+        // ✅ Noted by = from signatories (role_key = noted_by)
+        $notedByName = InventorySchedulingSignatory::where('role_key', 'noted_by')
+            ->whereNull('deleted_at')
+            ->value('name');
+
+
+        $pdf = Pdf::loadView('forms.memorandum_receipt', [
             'assets' => $assets,
-            'memo_no' => $inventoryList->memorandum_no,
-        ]);
+            'memo_no' => $memo_no,
+            'preparedByName' => $preparedByName,
+            'notedByName' => $notedByName,
+        ])->setPaper('A4', 'landscape');
+
+        // return $pdf->download("memorandum-receipt-{$memo_no}.pdf");
+        return $pdf->download("memorandum-receipt-{$memo_no}.pdf");
     }
+
 
     public function index(Request $request)
     {
@@ -100,6 +159,9 @@ class InventoryListController extends Controller
             [
                 'show_view_modal' => true,
                 'viewing_asset'   => $inventory_list,
+
+                 // ✅ ADD THIS (so frontend knows where to go back)
+                'from' => $request->query('from'), // e.g. "notifications"
             ]
         ));
     }
@@ -173,6 +235,11 @@ class InventoryListController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
+    // ✅ DEFINE THIS FIRST
+    $mrNotedByName = InventorySchedulingSignatory::where('role_key', 'noted_by')
+        ->whereNull('deleted_at')
+        ->value('name'); // name only
+
         $query = InventoryList::with([
             'assetModel.category',
             'category',
@@ -212,6 +279,13 @@ class InventoryListController extends Controller
             // 'kpis'           => InventoryList::kpis(),
            'personnels'        => Personnel::activeForAssignments(), // view-all-inventory-list ill include id, full_name, position
             'kpis'              => InventoryList::kpis($user),
+            'mrNotedByName' => $mrNotedByName,
+
+        // ✅ ADD THIS
+            'currentUser' => [
+                'id' => $user?->id,
+                'name' => $user?->name,
+            ],
         ];
     }
 

@@ -623,8 +623,11 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                 <p className="font-bold text-gray-700 uppercase">
                                     {schedule.prepared_by?.name ?? '—'}
                                 </p>
-                                <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                {/* <p className="text-[11px] sm:text-xs text-gray-500 italic">
                                     {schedule.prepared_by?.role?.name ?? 'Property Clerk'}
+                                </p> */}
+                                 <p className="text-[11px] sm:text-xs text-gray-500 italic">
+                                    Property Clerk
                                 </p>
                             </div>
                             <div className="text-center">

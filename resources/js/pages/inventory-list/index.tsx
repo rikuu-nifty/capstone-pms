@@ -10,7 +10,7 @@ import { EditAssetModalForm } from '@/pages/inventory-list/edit-asset-modal-form
 import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Banknote, Boxes, Eye, FolderArchive, Pencil, Pin, PlusCircle, Trash2, X, AlertTriangleIcon} from 'lucide-react';
+import { AlertTriangleIcon, Banknote, Boxes, Eye, FolderArchive, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
@@ -19,10 +19,10 @@ import { ChooseViewModal } from './chooseViewModal';
 import { ViewMemorandumReceiptModal } from './ViewMemorandumReceipt';
 // import { WebcamCaptureModal } from './WebcamCaptureModal';
 import AssetFilterDropdown from '@/components/filters/AssetFilterDropdown';
-import { SubArea, ucwords, UnitOrDepartment } from '@/types/custom-index';
-import { WebcamCapture } from './WebcamCapture';
-import type { Personnel } from '@/types/personnel';
 import SortDropdown from '@/components/filters/SortDropdown';
+import { SubArea, ucwords, UnitOrDepartment } from '@/types/custom-index';
+import type { Personnel } from '@/types/personnel';
+import { WebcamCapture } from './WebcamCapture';
 
 import Select from 'react-select';
 
@@ -34,9 +34,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const inventorySortOptions = [
-  { value: 'id', label: 'Record ID' },
-  { value: 'asset_name', label: 'Asset Name' },
-  { value: 'date_purchased', label: 'Date Purchased' },
+    { value: 'id', label: 'Record ID' },
+    { value: 'asset_name', label: 'Asset Name' },
+    { value: 'date_purchased', label: 'Date Purchased' },
 ] as const;
 
 type InventorySortKey = (typeof inventorySortOptions)[number]['value'];
@@ -113,8 +113,8 @@ export type Asset = {
     depreciation_value?: number | string | null; // NEW
     date_purchased: string;
     quantity: number;
-    assigned_to?: number | null;   // FK now (personnel.id)
-    personnel?: Personnel | null;  // relation for easier display
+    assigned_to?: number | null; // FK now (personnel.id)
+    personnel?: Personnel | null; // relation for easier display
 
     // Changed: transfer relation instead of transfer_status
     transfer?: Transfer | null;
@@ -139,7 +139,8 @@ export type AssetFormData = {
     asset_model_id: number | string; // can be number or string
     asset_name: string;
     description: string;
-    status: 'active' | 'archived' |'missing' |  '';
+    status: 'active' | 'archived' | 'missing' | '';
+    mode?: 'single' | 'bulk';
     unit_or_department_id: number | string;
     building_id: number | string;
     building_room_id: number | string;
@@ -173,7 +174,7 @@ type KPIs = {
 
 export default function InventoryListIndex({
     assets = [],
-    personnels = [],   // add here
+    personnels = [], // add here
     assetModels = [],
     buildings = [],
     buildingRooms = [],
@@ -196,7 +197,7 @@ export default function InventoryListIndex({
     subAreas = [],
 }: {
     assets: Asset[];
-    personnels: Personnel[];   // add to type
+    personnels: Personnel[]; // add to type
     assetModels: AssetModel[];
     buildings: Building[];
     buildingRooms: BuildingRoom[];
@@ -210,6 +211,8 @@ export default function InventoryListIndex({
     subAreas: SubArea[];
 }) {
     const { data, setData, post, processing, errors, reset, clearErrors, transform } = useForm<AssetFormData>({
+        mode: 'single', // ✅ add this
+
         building_id: '',
         unit_or_department_id: '',
         building_room_id: '',
@@ -234,6 +237,13 @@ export default function InventoryListIndex({
         assigned_to: '',
     });
 
+    const { currentUser } = usePage().props as unknown as {
+        currentUser?: { id: number; name: string | null };
+    };
+
+    const { mrNotedByName } = usePage().props as { mrNotedByName?: string | null };
+
+
     const { auth } = usePage().props as unknown as {
         auth: {
             permissions: string[];
@@ -247,6 +257,14 @@ export default function InventoryListIndex({
         };
     };
 
+    const { from } = usePage().props as { from?: string };
+    const handleExit = () => {
+  if (from === 'notifications') {
+    router.get(route('notifications.index'));
+  } else {
+    router.get(route('inventory-list.index'));
+  }
+};
     const [sortKey, setSortKey] = useState<InventorySortKey>('id');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -286,35 +304,35 @@ export default function InventoryListIndex({
         // No category selected → no brands
         if (!data.category_id) return [];
 
-            // If a model is selected, show only brands tied to that model within the category
-            if (data.asset_model_id) {
-                const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
+        // If a model is selected, show only brands tied to that model within the category
+        if (data.asset_model_id) {
+            const selectedModel = assetModels.find((m) => m.id === Number(data.asset_model_id));
 
-                if (selectedModel) {
-                    return Array.from(
-                        new Map(
-                            assetModels
-                                .filter(
-                                    (m) =>
-                                        m.category_id === selectedModel.category_id &&
-                                        m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
-                                        m.brand &&
-                                        m.brand.trim() !== '',
-                                )
-                                .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
-                        ).values(),
-                    );
-                }
+            if (selectedModel) {
+                return Array.from(
+                    new Map(
+                        assetModels
+                            .filter(
+                                (m) =>
+                                    m.category_id === selectedModel.category_id &&
+                                    m.model.toLowerCase().trim() === selectedModel.model.toLowerCase().trim() &&
+                                    m.brand &&
+                                    m.brand.trim() !== '',
+                            )
+                            .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+                    ).values(),
+                );
             }
+        }
 
-            // Otherwise, return all brands under the category
-            return Array.from(
-                new Map(
-                    assetModels
-                        .filter((m) => m.category_id === Number(data.category_id) && m.brand && m.brand.trim() !== '')
-                        .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
-                ).values(),
-            );
+        // Otherwise, return all brands under the category
+        return Array.from(
+            new Map(
+                assetModels
+                    .filter((m) => m.category_id === Number(data.category_id) && m.brand && m.brand.trim() !== '')
+                    .map((m) => [m.brand.trim().toLowerCase(), m.brand.charAt(0).toUpperCase() + m.brand.slice(1).toLowerCase()]),
+            ).values(),
+        );
     }, [data.category_id, data.asset_model_id, assetModels]);
 
     // Check if there is only one unique brand for this category
@@ -365,9 +383,7 @@ export default function InventoryListIndex({
     }, [show_view_modal]);
 
     const openView = (id: number) => {
-        const routeName = canViewAll
-            ? 'inventory-list.view'
-            : 'inventory-list.own.view';
+        const routeName = canViewAll ? 'inventory-list.view' : 'inventory-list.own.view';
 
         router.get(
             route(routeName, id),
@@ -380,14 +396,14 @@ export default function InventoryListIndex({
         );
     };
 
-    const closeView = () => {
-        setIsViewOpen(false);
-        router.visit(route('inventory-list.index'), {
-            replace: true, // keeps history clean
-            preserveScroll: true,
-            preserveState: true,
-        });
-    };
+    // const closeView = () => {
+    //     setIsViewOpen(false);
+    //     router.visit(route('inventory-list.index'), {
+    //         replace: true, // keeps history clean
+    //         preserveScroll: true,
+    //         preserveState: true,
+    //     });
+    // };
 
     const [chooseViewVisible, setChooseViewVisible] = useState(false);
 
@@ -423,6 +439,20 @@ export default function InventoryListIndex({
         });
     };
 
+    const closeAddAsset = () => {
+    setShowAddAsset(false);
+
+    // clear image from inertia form state
+    setData('image', null);
+
+    // clear the actual file input (so filename resets)
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    // optional: clear errors too
+    clearErrors();
+};
+
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -444,7 +474,7 @@ export default function InventoryListIndex({
             onSuccess: () => {
                 reset();
                 setShowAddAsset(false);
-                router.reload({ only: ['assets','notifications'] });
+                router.reload({ only: ['assets', 'notifications'] });
             },
         });
         console.log('Form Submitted', data);
@@ -461,6 +491,7 @@ export default function InventoryListIndex({
         const keyword = search.toLowerCase();
 
         const matchesSearch =
+            String(item.id).includes(keyword) || // ✅ ID search
             item.asset_name?.toLowerCase().includes(keyword) ||
             item.supplier?.toLowerCase().includes(keyword) ||
             item.asset_type?.toLowerCase().includes(keyword) ||
@@ -470,6 +501,8 @@ export default function InventoryListIndex({
             item.quantity?.toString().includes(keyword) ||
             item.building?.name?.toLowerCase().includes(keyword) ||
             item.unit_or_department?.name?.toLowerCase().includes(keyword) ||
+            item.asset_model?.model?.toLowerCase().includes(keyword) ||
+            item.asset_model?.brand?.toLowerCase().includes(keyword) || // ✅ brand
             item.status?.toLowerCase().includes(keyword);
 
         // then add your filter checks
@@ -526,41 +559,41 @@ export default function InventoryListIndex({
                     // <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                         {/* Total Assets */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 shrink-0">
+                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-yellow-100">
                                 <Boxes className="h-6 w-6 text-yellow-600" />
                             </div>
-                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
-                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Total Assets</div>
-                                <div className="text-lg sm:text-base md:text-xl font-semibold leading-snug break-words">{formatNumber(kpis.total_assets)}</div>
+                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
+                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Total Assets</div>
+                                <div className="text-lg leading-snug font-semibold break-words sm:text-base md:text-xl">
+                                    {formatNumber(kpis.total_assets)}
+                                </div>
                             </div>
                         </div>
 
                         {/* Active vs Archived */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 shrink-0">
+                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
                                 <FolderArchive className="h-6 w-6 text-emerald-600" />
                             </div>
-                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
-                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Active vs Archived</div>
-                                <div className="text-lg sm:text-base md:text-xl font-semibold leading-snug break-words">
+                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
+                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Active vs Archived</div>
+                                <div className="text-lg leading-snug font-semibold break-words sm:text-base md:text-xl">
                                     {kpis.active_pct}% vs {kpis.archived_pct}%
                                 </div>
                             </div>
                         </div>
 
                         {/* Missing Assets */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 shrink-0">
+                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100">
                                 <AlertTriangleIcon className="h-6 w-6 text-red-600" />
                             </div>
-                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
-                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">
-                                    Missing Assets
-                                </div>
+                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
+                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Missing Assets</div>
                                 <div className="text-2xl font-semibold text-red-700">
-                                    {kpis.missing_pct}% 
-                                    <span className="ml-1 text-sm text-muted-foreground font-medium">
+                                    {kpis.missing_pct}%
+                                    <span className="ml-1 text-sm font-medium text-muted-foreground">
                                         • {kpis.missing_count.toLocaleString()} missing
                                     </span>
                                 </div>
@@ -568,12 +601,12 @@ export default function InventoryListIndex({
                         </div>
 
                         {/* Fixed vs Not Fixed */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 shrink-0">
+                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
                                 <Pin className="h-6 w-6 text-indigo-600" />
                             </div>
-                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
-                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Fixed vs Not Fixed</div>
+                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
+                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Fixed vs Not Fixed</div>
                                 <div className="text-2xl font-semibold">
                                     {kpis.fixed_pct}% vs {kpis.not_fixed_pct}%
                                 </div>
@@ -581,12 +614,12 @@ export default function InventoryListIndex({
                         </div>
 
                         {/* Total Inventory Value */}
-                        <div className="flex items-center gap-3 rounded-2xl border p-4 min-w-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 shrink-0">
+                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-100">
                                 <Banknote className="h-6 w-6 text-orange-600" />
                             </div>
-                            <div className="flex flex-col min-w-0 break-words whitespace-normal">
-                                <div className="text-sm text-muted-foreground leading-tight sm:text-xs md:text-sm">Total Inventory Value</div>
+                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
+                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Total Inventory Value</div>
                                 <div className="text-2xl font-semibold">{formatPeso(kpis.total_inventory_sum)}</div>
                             </div>
                         </div>
@@ -622,14 +655,14 @@ export default function InventoryListIndex({
                         <div className="flex flex-wrap gap-2 pt-1">
                             {selectedStatus && (
                                 <Badge variant="darkOutline" className="flex items-center gap-1">
-                                    Status: {selectedStatus === 'active'
-                                    ? 'Active'
-                                    : selectedStatus === 'archived'
-                                    ? 'Archived'
-                                    : selectedStatus === 'missing'
-                                    ? 'Missing'
-                                    : selectedStatus}
-
+                                    Status:{' '}
+                                    {selectedStatus === 'active'
+                                        ? 'Active'
+                                        : selectedStatus === 'archived'
+                                          ? 'Archived'
+                                          : selectedStatus === 'missing'
+                                            ? 'Missing'
+                                            : selectedStatus}
                                     <button onClick={() => setSelectedStatus('')} className="ml-1 hover:text-red-600">
                                         <X className="h-4 w-4" />
                                     </button>
@@ -765,35 +798,27 @@ export default function InventoryListIndex({
                                         {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
                                     </TableCell>
                                     <TableCell>
-                                        {item.room_building && item.building_room ? (
+                                        {item.building ? (
                                             <>
-                                                {item.room_building.name} ({item.building_room.room})
-                                                {/* {item.sub_area?.name ? ` – ${item.sub_area.name}` : ''} */}
+                                                {item.building.name}
+                                                {item.building_room?.room ? ` (${item.building_room.room})` : ''}
                                             </>
                                         ) : (
                                             '—'
                                         )}
                                     </TableCell>
+
                                     <TableCell>{item.unit_or_department?.code ? String(item.unit_or_department.code).toUpperCase() : '—'}</TableCell>
                                     <TableCell className="text-center">
-                                        {item.status === 'active' && (
-                                            <Badge className="bg-green-100 text-green-800 border-green-300">Active</Badge>
-                                        )}
-                                        {item.status === 'archived' && (
-                                            <Badge className="bg-gray-100 text-gray-800 border-gray-300">Archived</Badge>
-                                        )}
-                                        {item.status === 'missing' && (
-                                            <Badge className="bg-red-100 text-red-700 border-red-300">Missing</Badge>
-                                        )}
+                                        {item.status === 'active' && <Badge className="border-green-300 bg-green-100 text-green-800">Active</Badge>}
+                                        {item.status === 'archived' && <Badge className="border-gray-300 bg-gray-100 text-gray-800">Archived</Badge>}
+                                        {item.status === 'missing' && <Badge className="border-red-300 bg-red-100 text-red-700">Missing</Badge>}
                                     </TableCell>
                                     <TableCell>
                                         <button
                                             onClick={() => {
                                                 // const url = route('inventory-list.view', item.id);
-                                                const url = route(
-                                                    canViewAll ? 'inventory-list.view' : 'inventory-list.own.view',
-                                                    item.id
-                                                );
+                                                const url = route(canViewAll ? 'inventory-list.view' : 'inventory-list.own.view', item.id);
 
                                                 navigator.clipboard.writeText(url).then(() => {
                                                     toast.success('Link copied!', {
@@ -903,7 +928,7 @@ export default function InventoryListIndex({
                     assetModels={assetModels}
                     uniqueBrands={[...new Set(assetModels.map((m) => m.brand))]}
                     subAreas={subAreas}
-                    personnels={personnels}   // pass here
+                    personnels={personnels} // pass here
                 />
             )}
 
@@ -955,7 +980,7 @@ export default function InventoryListIndex({
                 />
             )}
 
-            {isViewOpen && viewing_asset && <ViewAssetModal asset={viewing_asset} onClose={closeView} />}
+            {isViewOpen && viewing_asset && <ViewAssetModal asset={viewing_asset} onClose={handleExit} />}
 
             {receiptModalVisible && receiptAssets.length > 0 && (
                 <ViewMemorandumReceiptModal
@@ -967,6 +992,8 @@ export default function InventoryListIndex({
                     }}
                     assets={receiptAssets} // now an array
                     memo_no={receiptMemoNo} // shared memo number
+                    currentUser={currentUser}
+                    mrNotedByName={mrNotedByName} // ✅ ADD THIS
                 />
             )}
 
@@ -997,8 +1024,8 @@ export default function InventoryListIndex({
                     categories={categories}
                     assetModels={assetModels}
                     subAreas={subAreas}
-                    personnels={personnels}   // add this
-                    />
+                    personnels={personnels} // add this
+                />
             )}
 
             {/* Webcam modal
@@ -1012,7 +1039,7 @@ export default function InventoryListIndex({
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddAsset ? 'visible' : 'invisible'}`}>
                 <div
                     className={`fixed inset-0 bg-black/40 transition-opacity duration-300 ${showAddAsset ? 'opacity-100' : 'opacity-0'}`}
-                    onClick={() => setShowAddAsset(false)}
+                    onClick={closeAddAsset}
                 ></div>
 
                 {/* Slide-In Panel */}
@@ -1025,7 +1052,7 @@ export default function InventoryListIndex({
                     {/* Header */}
                     <div className="mb-4 flex items-center justify-between p-6">
                         <h2 className="text-xl font-semibold">Add New Asset</h2>
-                        <button onClick={() => setShowAddAsset(false)} className="cursor-pointer text-2xl font-medium">
+                        <button onClick={closeAddAsset} className="cursor-pointer text-2xl font-medium">
                             &times;
                         </button>
                     </div>
@@ -1179,12 +1206,24 @@ export default function InventoryListIndex({
                                             <input
                                                 ref={fileInputRef}
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/jpeg,image/png,image/gif"
                                                 capture="environment"
                                                 onChange={(e) => {
-                                                    if (e.target.files?.[0]) {
-                                                        setData('image', e.target.files[0]);
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+
+                                                    const allowed = ['image/jpeg', 'image/png', 'image/gif']; // jpg = image/jpeg
+                                                    if (!allowed.includes(file.type)) {
+                                                        toast.error('Invalid image file', {
+                                                            description: 'Please upload a JPEG, PNG, JPG, or GIF (max 5MB).',
+                                                        });
+
+                                                        setData('image', null);
+                                                        if (fileInputRef.current) fileInputRef.current.value = '';
+                                                        return;
                                                     }
+
+                                                    setData('image', file);
                                                 }}
                                                 className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                             />
@@ -1194,6 +1233,7 @@ export default function InventoryListIndex({
                                                 Use Camera
                                             </Button>
                                         </div>
+                                        {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
 
                                         {/* Preview */}
                                         {data.image && (
@@ -1445,9 +1485,7 @@ export default function InventoryListIndex({
                             <div className="col-span-2 flex justify-end gap-2 border-t border-muted pt-4">
                                 <Button
                                     variant="secondary"
-                                    onClick={() => {
-                                        setShowAddAsset(false);
-                                    }}
+                                    onClick={closeAddAsset}
                                     className="cursor-pointer"
                                 >
                                     Cancel
