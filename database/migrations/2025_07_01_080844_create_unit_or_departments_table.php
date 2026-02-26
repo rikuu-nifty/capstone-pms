@@ -17,7 +17,7 @@ return new class extends Migration
             // $table->unsignedBigInteger('inventory_schedule_id'); // Will add FK later
 
             $table->string('name', 255);
-            $table->string('code', 20);
+            $table->string('code', 50)->unique;
             $table->text('description')->nullable();
             $table->string('unit_head', 255);
 
