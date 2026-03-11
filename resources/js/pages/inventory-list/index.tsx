@@ -257,13 +257,25 @@ export default function InventoryListIndex({
         };
     };
 
-    const { from } = usePage().props as { from?: string };
-    const handleExit = () => {
-  if (from === 'notifications') {
-    router.get(route('notifications.index'));
-  } else {
-    router.get(route('inventory-list.index'));
-  }
+const { from } = usePage().props as { from?: string };
+
+const handleExit = () => {
+    if (from === 'notifications') {
+        router.get(route('notifications.index'));
+        return;
+    }
+
+    if (canViewAll) {
+        router.get(route('inventory-list.index'));
+        return;
+    }
+
+    if (canViewOwn) {
+        router.get(route('inventory-list.own'));
+        return;
+    }
+
+    router.get(route('dashboard'));
 };
     const [sortKey, setSortKey] = useState<InventorySortKey>('id');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
