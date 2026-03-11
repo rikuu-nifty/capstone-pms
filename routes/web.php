@@ -369,22 +369,35 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
         ->name('turnover-disposal.print');
 
     //  VERIFICATION FORM
-    Route::get('/verification-form', [VerificationFormController::class, 'index'])->name('verification-form.index')
-        ->middleware('can:view-verification-form');
-    Route::post('/verification-form', [VerificationFormController::class, 'store'])->name('verification-form.store')
-        ->middleware('can:create-verification-form');
-    Route::get('/verification-form/{id}', [VerificationFormController::class, 'show'])->name('verification-form.show')
-        ->middleware('can:view-verification-form');
-    Route::put('/verification-form/{id}', [VerificationFormController::class, 'update'])->name('verification-form.update')
-        ->middleware('can:update-verification-form');
-    Route::delete('/verification-form/{id}', [VerificationFormController::class, 'destroy'])->name('verification-form.destroy')
-        ->middleware('can:delete-verification-form');
-    Route::patch('/verification-form/{id}/verify', [VerificationFormController::class, 'verify'])->name('verification-form.verify')
-        ->middleware('can:verify-verification-form');
-    Route::patch('/verification-form/{id}/reject', [VerificationFormController::class, 'reject'])->name('verification-form.reject')
-        ->middleware('can:verify-verification-form');
-    Route::get('/verification-form/{id}/export-pdf', [VerificationFormController::class, 'exportPdf'])->name('verification-form.export-pdf')
-        ->middleware('can:view-verification-form');
+   Route::get('/verification-form', [VerificationFormController::class, 'index'])->name('verification-form.index')
+    ->middleware('can:view-verification-form');
+
+Route::post('/verification-form', [VerificationFormController::class, 'store'])->name('verification-form.store')
+    ->middleware('can:create-verification-form');
+
+Route::get('/verification-form/{verification}', [VerificationFormController::class, 'show'])->name('verification-form.show')
+    ->middleware('can:view-verification-form');
+
+Route::put('/verification-form/{verification}', [VerificationFormController::class, 'update'])->name('verification-form.update')
+    ->middleware('can:update-verification-form');
+
+Route::delete('/verification-form/{verification}', [VerificationFormController::class, 'destroy'])->name('verification-form.destroy')
+    ->middleware('can:delete-verification-form');
+
+Route::patch('/verification-form/{id}/verify', [VerificationFormController::class, 'verify'])->name('verification-form.verify')
+    ->middleware('can:verify-verification-form');
+
+Route::patch('/verification-form/{id}/reject', [VerificationFormController::class, 'reject'])->name('verification-form.reject')
+    ->middleware('can:verify-verification-form');
+
+Route::get('/verification-form/{id}/export-pdf', [VerificationFormController::class, 'exportPdf'])->name('verification-form.export-pdf')
+    ->middleware('can:view-verification-form');
+
+Route::patch('/verification-form/{id}/restore', [VerificationFormController::class, 'restore'])->name('verification-form.restore')
+    ->middleware('can:restore-verification-form');
+
+Route::delete('/verification-form/{id}/force-delete', [VerificationFormController::class, 'forceDelete'])->name('verification-form.force-delete')
+    ->middleware('can:force-delete-verification-form');
 
     /// OFF CAMPUS
     Route::prefix('off-campus')->name('off-campus.')->group(function () {

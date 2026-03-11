@@ -50,6 +50,19 @@ interface TrashRecord {
     name?: string;
     code?: string;
     title?: string;
+    status?: string;
+    requested_by_name?: string;
+    requested_by_title?: string;
+    requested_by_contact?: string;
+    verified_at?: string;
+
+    unit_or_department?: { name?: string; code?: string };
+    requested_by_personnel?: {
+        first_name?: string;
+        middle_name?: string;
+        last_name?: string;
+        name?: string;
+    };
 
     // Added for Signatories and module identification
     module_type?: string;
@@ -71,6 +84,7 @@ type TrashBinProps = {
     transfers: PaginatedData<TrashRecord>;
     turnover_disposals: PaginatedData<TrashRecord>;
     off_campuses: PaginatedData<TrashRecord>;
+    verification_forms: PaginatedData<TrashRecord>;
 
     // Assets
     asset_models: PaginatedData<TrashRecord>;
@@ -118,7 +132,6 @@ type TrashBinProps = {
         status?: string | number;
 
         signatory_type?: string | number;
-
     };
 
     totals: {
@@ -130,6 +143,7 @@ type TrashBinProps = {
             disposals: number;
             off_campus_official: number;
             off_campus_repair: number;
+            verification_forms: number;
         };
         assets: {
             categories: number;
@@ -211,6 +225,7 @@ const groups = {
         { key: 'transfers', label: 'Property Transfers' },
         { key: 'turnover_disposals', label: 'Turnover/Disposals' },
         { key: 'off_campuses', label: 'Off-Campuses' },
+        { key: 'verification_forms', label: 'Verification Forms' },
     ],
     assets: [
         { key: 'categories', label: 'Categories' },
@@ -223,7 +238,6 @@ const groups = {
         { key: 'buildings', label: 'Buildings' },
         { key: 'building_rooms', label: 'Rooms' },
         { key: 'personnels', label: 'Personnels' },
-        
     ],
     usermgmt: [
         { key: 'users', label: 'Users' },
@@ -251,10 +265,10 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         const [year, month] = row.inventory_schedule.split('-');
         const date = new Date(Number(year), Number(month) - 1);
         const monthName = date.toLocaleString('en-US', { month: 'long' });
-        
+
         return (
             <>
-            Inventory Scheduling for <strong>{monthName}, {year}</strong>
+                Inventory Scheduling for <strong>{monthName}, {year}</strong>
             </>
         );
     }
@@ -264,11 +278,9 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
 
         const fromUnit = transfer.current_organization?.name ?? '';
         const fromBuilding = transfer.current_building_room?.building?.code ?? '';
-        // const fromRoom = transfer.current_building_room?.name ?? '';
 
         const toUnit = transfer.receiving_organization?.name ?? '';
         const toBuilding = transfer.receiving_building_room?.building?.code ?? '';
-        // const toRoom = transfer.receiving_building_room?.name ?? '';
 
         let scheduled = 'unscheduled';
         if (transfer.scheduled_date) {
@@ -284,7 +296,7 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
 
         return (
             <>
-                Transfer from <strong>{fromUnit}</strong> ({formatEnums(fromBuilding)}) to{" "}
+                Transfer from <strong>{fromUnit}</strong> ({formatEnums(fromBuilding)}) to{' '}
                 <strong>{toUnit}</strong> ({formatEnums(toBuilding)}) scheduled for <strong>{scheduled}</strong>
             </>
         );
@@ -297,7 +309,6 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
             issuing_office?: { name: string };
         };
 
-        // const typeLabel = td.type ? (td.type).toUpperCase() : 'Turnover/Disposal';
         const typeLabel = td.type ?? 'Turnover/Disposal';
         const personnelName = td.personnel?.full_name ?? 'Unknown Personnel';
         const issuingOffice = td.issuing_office?.name ?? 'Unknown Office';
@@ -316,13 +327,50 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
             college_or_unit?: { name: string };
         };
 
-        const requester = (oc.requester_name) ?? 'Unknown Requester';
+        const requester = oc.requester_name ?? 'Unknown Requester';
         const college = oc.college_or_unit?.name ?? 'Unknown Unit';
         const reason = oc.remarks ?? 'unspecified reason';
 
         return (
             <>
                 Off Campus request by <strong>{ucwords(requester)}</strong> from <strong>{college}</strong> for <strong>{formatEnums(reason)}</strong>
+            </>
+        );
+    }
+
+    if (tab === 'verification_forms') {
+        const vf = row as TrashRecord & {
+            status?: string;
+            requested_by_name?: string;
+            unit_or_department?: { name?: string; code?: string };
+            requested_by_personnel?: {
+                first_name?: string;
+                middle_name?: string;
+                last_name?: string;
+                name?: string;
+            };
+        };
+
+const personnelName =
+    (
+        vf.requested_by_personnel?.name ??
+        [
+            vf.requested_by_personnel?.first_name,
+            vf.requested_by_personnel?.middle_name,
+            vf.requested_by_personnel?.last_name,
+        ]
+            .filter(Boolean)
+            .join(' ')
+    ) ||
+    vf.requested_by_name ||
+    'Unknown Requester';
+
+        const unitName = vf.unit_or_department?.name ?? 'Unknown Unit';
+        const status = vf.status ? formatEnums(vf.status) : 'Unknown Status';
+
+        return (
+            <>
+                Verification Form for <strong>{personnelName}</strong> from <strong>{unitName}</strong> [{status}]
             </>
         );
     }
@@ -439,7 +487,7 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
 
     if (tab === 'users') {
         const user = row as TrashRecord & {
-            name?: string; // username
+            name?: string;
             role?: { name?: string };
             unit_or_department?: { name?: string };
         };
@@ -498,7 +546,6 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
         );
     }
 
-    // Fallback for other modules: pick first available field
     return (
         row.asset_name ||
         row.inventory_schedule ||
@@ -518,8 +565,6 @@ export default function TrashBinIndex(props: TrashBinProps) {
     const canRestore = auth?.permissions?.includes('restore-trash-bin');
     const canPermanentDelete = auth?.permissions?.includes('permanent-delete-trash-bin');
 
-    // const currentRole: string = auth?.user?.role?.code ?? '';
-    
     const [activeGroup, setActiveGroup] = useState<keyof typeof groups>('forms');
     const [activeTab, setActiveTab] = useState<string>(groups.forms[0].key);
 
@@ -560,7 +605,6 @@ export default function TrashBinIndex(props: TrashBinProps) {
         Object.entries(filters).forEach(([key, value]) => {
             if (value === '' || value === null || value === undefined) return;
 
-            // Skip default values to keep the URL clean
             if (key === 'sort' && value === 'id') return;
             if (key === 'dir' && value === 'desc') return;
             if (key === 'date_filter' && value === 'all') return;
@@ -569,7 +613,6 @@ export default function TrashBinIndex(props: TrashBinProps) {
             cleaned[key] = value;
         });
 
-        // Always keep tab so reload maintains active module
         if (filters.tab) cleaned.tab = String(filters.tab);
 
         return cleaned;
@@ -584,6 +627,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         transfers: props.transfers,
         turnover_disposals: props.turnover_disposals,
         off_campuses: props.off_campuses,
+        verification_forms: props.verification_forms,
 
         // Assets
         asset_models: props.asset_models,
@@ -611,6 +655,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         transfers: 'transfer',
         turnover_disposals: 'turnover-disposal',
         off_campuses: 'off-campus',
+        verification_forms: 'verification-form',
         asset_models: 'asset-model',
         categories: 'category',
         assignments: 'assignment',
@@ -625,21 +670,19 @@ export default function TrashBinIndex(props: TrashBinProps) {
         signatories: 'signatory',
     };
 
-const handleRestore = (type: string, id: number, row?: TrashRecord) => {
-    const mappedType = restoreMap[type as keyof typeof restoreMap];
-    if (!mappedType) return;
+    const handleRestore = (type: string, id: number, row?: TrashRecord) => {
+        const mappedType = restoreMap[type as keyof typeof restoreMap];
+        if (!mappedType) return;
 
-    // Explicitly type payload as RequestPayload
-    const payload: RequestPayload =
-        mappedType === "signatory" && row?.module_type
-        ? { module_type: row.module_type }
-        : {};
+        const payload: RequestPayload =
+            mappedType === 'signatory' && row?.module_type
+                ? { module_type: row.module_type }
+                : {};
 
-    router.post(`/trash-bin/restore/${mappedType}/${id}`, payload, {
-        preserveScroll: true,
-    });
-};
-
+        router.post(`/trash-bin/restore/${mappedType}/${id}`, payload, {
+            preserveScroll: true,
+        });
+    };
 
     const formatLabel = (key: string) => {
         const words = key.replace(/_/g, ' ').split(' ');
@@ -675,7 +718,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Trash Bin" />
-        
+
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
                 <div>
@@ -693,7 +736,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                             onClick={() => {
                                 resetFilters();
                                 setActiveGroup(g as keyof typeof groups);
-                                setActiveTab(groups[g as keyof typeof groups][0].key); // reset to first tab in group
+                                setActiveTab(groups[g as keyof typeof groups][0].key);
                             }}
                         >
                             {g === 'forms' && 'Forms'}
@@ -709,124 +752,137 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                     <div
                         className={`grid gap-3 
                             grid-cols-1 sm:grid-cols-2 
-                            ${activeGroup === 'forms' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}
+                            ${activeGroup === 'forms' ? 'lg:grid-cols-6' : 'lg:grid-cols-4'}
                         `}
                     >
                         {activeGroup === 'forms' && (
-                        <>
-                            {/* Inventory Lists */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
-                                    <Inbox className="h-7 w-7 text-sky-600" />
-                                </div>
-                                <div>
-                                    <div className="text-sm text-muted-foreground">Assets (Inventory Lists)</div>
-                                    <div className="text-3xl font-bold">{totals.forms.inventory_lists}</div>
-                                </div>
-                            </div>
-
-                            {/* Inventory Scheduling */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                                    <Calendar className="h-7 w-7 text-blue-600" />
-                                </div>
-                                <div>
-                                    <div className="text-sm text-muted-foreground">Inventory Scheduling</div>
-                                    <div className="text-3xl font-bold">{totals.forms.inventory_schedulings}</div>
-                                </div>
-                            </div>
-
-                            {/* Transfers */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-                                    <Truck className="h-7 w-7 text-orange-600" />
-                                </div>
-                                <div>
-                                    <div className="text-sm text-muted-foreground">Property Transfers</div>
-                                    <div className="text-3xl font-bold">{totals.forms.transfers}</div>
-                                </div>
-                            </div>
-
-                            {/* Turnovers / Disposals */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                                    <Archive className="h-7 w-7 text-green-600" />
-                                </div>
-                                <div>
-                                    <div className="text-sm text-muted-foreground">Turnover/Disposals</div>
-                                    <div className="text-base font-semibold">
-                                        <span className='text-blue-600'>Turnovers:</span> <span className="font-bold text-blue-600">{totals.forms.turnovers}</span> | 
-                                        <span className='text-red-600'> Disposals:</span> <span className="font-bold text-red-600">{totals.forms.disposals}</span>
+                            <>
+                                {/* Inventory Lists */}
+                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
+                                        <Inbox className="h-7 w-7 text-sky-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Assets (Inventory Lists)</div>
+                                        <div className="text-3xl font-bold">{totals.forms.inventory_lists}</div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Off Campus */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
-                                    <Globe className="h-7 w-7 text-purple-600" />
-                                </div>
-                                <div>
-                                    <div className="text-sm text-muted-foreground">Off-Campus Requests</div>
-                                    <div className="text-base font-semibold">
-                                        <span className='text-blue-600'>Official Use: </span><span className="font-bold text-blue-600">{totals.forms.off_campus_official}</span> | 
-                                        <span className='text-red-600'> Repair: </span><span className="font-bold text-red-600">{totals.forms.off_campus_repair}</span>
+                                {/* Inventory Scheduling */}
+                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                                        <Calendar className="h-7 w-7 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Inventory Scheduling</div>
+                                        <div className="text-3xl font-bold">{totals.forms.inventory_schedulings}</div>
                                     </div>
                                 </div>
-                            </div>
-                        </>
+
+                                {/* Transfers */}
+                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                                        <Truck className="h-7 w-7 text-orange-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Property Transfers</div>
+                                        <div className="text-3xl font-bold">{totals.forms.transfers}</div>
+                                    </div>
+                                </div>
+
+                                {/* Turnovers / Disposals */}
+                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+                                        <Archive className="h-7 w-7 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Turnover/Disposals</div>
+                                        <div className="text-base font-semibold">
+                                            <span className="text-blue-600">Turnovers:</span>{' '}
+                                            <span className="font-bold text-blue-600">{totals.forms.turnovers}</span> |
+                                            <span className="text-red-600"> Disposals:</span>{' '}
+                                            <span className="font-bold text-red-600">{totals.forms.disposals}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Off Campus */}
+                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                                        <Globe className="h-7 w-7 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Off-Campus Requests</div>
+                                        <div className="text-base font-semibold">
+                                            <span className="text-blue-600">Official Use: </span>
+                                            <span className="font-bold text-blue-600">{totals.forms.off_campus_official}</span> |
+                                            <span className="text-red-600"> Repair: </span>
+                                            <span className="font-bold text-red-600">{totals.forms.off_campus_repair}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Verification Forms */}
+                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
+                                        <Archive className="h-7 w-7 text-indigo-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Verification Forms</div>
+                                        <div className="text-3xl font-bold">{totals.forms.verification_forms}</div>
+                                    </div>
+                                </div>
+                            </>
                         )}
 
                         {activeGroup === 'assets' && (
-                        <>
-                            {Object.entries(totals.assets).map(([key, value], index) => {
-                                const iconConfig = [
-                                    { Icon: Database, bg: 'bg-amber-100', color: 'text-amber-600' },
-                                    { Icon: Archive, bg: 'bg-teal-100', color: 'text-teal-600' },
-                                    { Icon: Inbox, bg: 'bg-indigo-100', color: 'text-indigo-600' },
-                                    { Icon: Truck, bg: 'bg-rose-100', color: 'text-rose-600' },
-                                ][index];
-                                const { Icon, bg, color } = iconConfig || {};
-                                return (
-                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
-                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
-                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                            <>
+                                {Object.entries(totals.assets).map(([key, value], index) => {
+                                    const iconConfig = [
+                                        { Icon: Database, bg: 'bg-amber-100', color: 'text-amber-600' },
+                                        { Icon: Archive, bg: 'bg-teal-100', color: 'text-teal-600' },
+                                        { Icon: Inbox, bg: 'bg-indigo-100', color: 'text-indigo-600' },
+                                        { Icon: Truck, bg: 'bg-rose-100', color: 'text-rose-600' },
+                                    ][index];
+                                    const { Icon, bg, color } = iconConfig || {};
+                                    return (
+                                        <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
+                                            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
+                                                {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
+                                                <div className="text-3xl font-bold">{value as number}</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            {/* <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div> */}
-                                            <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
-                                            <div className="text-3xl font-bold">{value as number}</div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </>
+                                    );
+                                })}
+                            </>
                         )}
 
                         {activeGroup === 'institutional' && (
-                        <>
-                            {Object.entries(totals.institutional).map(([key, value], index) => {
-                                const iconConfig = [
-                                    { Icon: Building, bg: 'bg-cyan-100', color: 'text-cyan-600' }, 
-                                    { Icon: Archive, bg: 'bg-lime-100', color: 'text-lime-600' },
-                                    { Icon: Database, bg: 'bg-violet-100', color: 'text-violet-600' },
-                                    { Icon: Users, bg: 'bg-pink-100', color: 'text-pink-600' },
-                                ][index];
-                                const { Icon, bg, color } = iconConfig || {};
-                                return (
-                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
-                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
-                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                            <>
+                                {Object.entries(totals.institutional).map(([key, value], index) => {
+                                    const iconConfig = [
+                                        { Icon: Building, bg: 'bg-cyan-100', color: 'text-cyan-600' },
+                                        { Icon: Archive, bg: 'bg-lime-100', color: 'text-lime-600' },
+                                        { Icon: Database, bg: 'bg-violet-100', color: 'text-violet-600' },
+                                        { Icon: Users, bg: 'bg-pink-100', color: 'text-pink-600' },
+                                    ][index];
+                                    const { Icon, bg, color } = iconConfig || {};
+                                    return (
+                                        <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
+                                            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
+                                                {Icon && <Icon className={`h-7 w-7 ${color}`} />}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
+                                                <div className="text-3xl font-bold">{value as number}</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            {/* <div className="text-sm text-muted-foreground">{ucwords(key.replace('_', ' '))}</div> */}
-                                            <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
-                                            <div className="text-3xl font-bold">{value as number}</div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </>
+                                    );
+                                })}
+                            </>
                         )}
 
                         {activeGroup === 'usermgmt' && (
@@ -885,9 +941,10 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                                     <>
                                         {Object.entries(totals.usermgmt)
                                             .filter(([key]) => {
-                                                if (key.startsWith('form_approvals')) return false; // hide form approval KPIs
+                                                if (key.startsWith('form_approvals')) return false;
                                                 if (activeTab === 'signatories' && (key === 'users' || key === 'roles')) return false;
-                                                if ((activeTab === 'users' || activeTab === 'roles') &&
+                                                if (
+                                                    (activeTab === 'users' || activeTab === 'roles') &&
                                                     ['inventory_signatories', 'transfer_signatories', 'turnover_disposal_signatories', 'off_campus_signatories'].includes(key)
                                                 ) return false;
                                                 return true;
@@ -943,417 +1000,446 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
 
                     <div className="flex items-center gap-2">
                         {/* Asset Models */}
-                        {activeTab === "asset_models" && (
+                        {activeTab === 'asset_models' && (
                             <TrashFilterDropdown
                                 title="Category"
                                 fields={[
                                     {
-                                        key: "category_id",
-                                        label: "Category",
-                                        type: "select",
+                                        key: 'category_id',
+                                        label: 'Category',
+                                        type: 'select',
                                         options: props.filterSources.asset_model_categories.map((c) => ({
                                             label: c.name,
                                             value: c.id,
                                         })),
-                                        value: localFilters.category_id ?? "",
+                                        value: localFilters.category_id ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, category_id: val })),
                                     },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
-                                    const cleared = { ...localFilters, category_id: "" };
+                                    const cleared = { ...localFilters, category_id: '' };
                                     setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}
 
                         {/* Inventory Schedulings */}
-                        {activeTab === "inventory_schedulings" && (
+                        {activeTab === 'inventory_schedulings' && (
                             <TrashFilterDropdown
                                 title="Filters"
                                 fields={[
                                     {
-                                        key: "month",
-                                        label: "Month",
-                                        type: "select",
+                                        key: 'month',
+                                        label: 'Month',
+                                        type: 'select',
                                         options: [
-                                            { label: "January", value: "01" },
-                                            { label: "February", value: "02" },
-                                            { label: "March", value: "03" },
-                                            { label: "April", value: "04" },
-                                            { label: "May", value: "05" },
-                                            { label: "June", value: "06" },
-                                            { label: "July", value: "07" },
-                                            { label: "August", value: "08" },
-                                            { label: "September", value: "09" },
-                                            { label: "October", value: "10" },
-                                            { label: "November", value: "11" },
-                                            { label: "December", value: "12" },
+                                            { label: 'January', value: '01' },
+                                            { label: 'February', value: '02' },
+                                            { label: 'March', value: '03' },
+                                            { label: 'April', value: '04' },
+                                            { label: 'May', value: '05' },
+                                            { label: 'June', value: '06' },
+                                            { label: 'July', value: '07' },
+                                            { label: 'August', value: '08' },
+                                            { label: 'September', value: '09' },
+                                            { label: 'October', value: '10' },
+                                            { label: 'November', value: '11' },
+                                            { label: 'December', value: '12' },
                                         ],
-                                        value: localFilters.month ?? "",
+                                        value: localFilters.month ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, month: val })),
                                     },
-                                    // NEW STATUS FILTER
                                     {
-                                        key: "status",
-                                        label: "Status",
-                                        type: "select",
+                                        key: 'status',
+                                        label: 'Status',
+                                        type: 'select',
                                         options: [
-                                            { label: "Pending Review", value: "Pending_Review" },
-                                            { label: "Pending", value: "Pending" },
-                                            { label: "Completed", value: "Completed" },
-                                            { label: "Overdue", value: "Overdue" },
-                                            { label: "Cancelled", value: "Cancelled" },
+                                            { label: 'Pending Review', value: 'Pending_Review' },
+                                            { label: 'Pending', value: 'Pending' },
+                                            { label: 'Completed', value: 'Completed' },
+                                            { label: 'Overdue', value: 'Overdue' },
+                                            { label: 'Cancelled', value: 'Cancelled' },
                                         ],
-                                        value: localFilters.status ?? "",
+                                        value: localFilters.status ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, status: val })),
                                     },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
-                                    const cleared = { ...localFilters, month: "", status: "" };
+                                    const cleared = { ...localFilters, month: '', status: '' };
                                     setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}
 
                         {/* Transfers */}
-                        {activeTab === "transfers" && (
+                        {activeTab === 'transfers' && (
                             <TrashFilterDropdown
                                 title="Filters"
                                 fields={[
                                     {
-                                        key: "current_org_id",
-                                        label: "Current Organization",
-                                        type: "select",
+                                        key: 'current_org_id',
+                                        label: 'Current Organization',
+                                        type: 'select',
                                         options: props.filterSources.units.map((u) => ({ label: u.name, value: u.id })),
-                                        value: localFilters.current_org_id ?? "",
+                                        value: localFilters.current_org_id ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, current_org_id: val })),
                                     },
                                     {
-                                        key: "receiving_org_id",
-                                        label: "Receiving Organization",
-                                        type: "select",
+                                        key: 'receiving_org_id',
+                                        label: 'Receiving Organization',
+                                        type: 'select',
                                         options: props.filterSources.units.map((u) => ({ label: u.name, value: u.id })),
-                                        value: localFilters.receiving_org_id ?? "",
+                                        value: localFilters.receiving_org_id ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, receiving_org_id: val })),
                                     },
                                     {
-                                        key: "current_building_id",
-                                        label: "Current Building",
-                                        type: "select",
+                                        key: 'current_building_id',
+                                        label: 'Current Building',
+                                        type: 'select',
                                         options: props.filterSources.buildings.map((b) => ({ label: b.name, value: b.id })),
-                                        value: localFilters.current_building_id ?? "",
+                                        value: localFilters.current_building_id ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, current_building_id: val })),
                                     },
                                     {
-                                        key: "receiving_building_id",
-                                        label: "Receiving Building",
-                                        type: "select",
+                                        key: 'receiving_building_id',
+                                        label: 'Receiving Building',
+                                        type: 'select',
                                         options: props.filterSources.buildings.map((b) => ({ label: b.name, value: b.id })),
-                                        value: localFilters.receiving_building_id ?? "",
+                                        value: localFilters.receiving_building_id ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, receiving_building_id: val })),
                                     },
                                     {
-                                        key: "scheduled_date",
-                                        label: "Scheduled Date",
-                                        type: "date",
-                                        value: localFilters.scheduled_date ?? "",
+                                        key: 'scheduled_date',
+                                        label: 'Scheduled Date',
+                                        type: 'date',
+                                        value: localFilters.scheduled_date ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, scheduled_date: val })),
                                     },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
                                     const cleared = {
                                         ...localFilters,
-                                        current_org_id: "",
-                                        receiving_org_id: "",
-                                        current_building_id: "",
-                                        receiving_building_id: "",
-                                        scheduled_date: "",
+                                        current_org_id: '',
+                                        receiving_org_id: '',
+                                        current_building_id: '',
+                                        receiving_building_id: '',
+                                        scheduled_date: '',
                                     };
                                     setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}
 
                         {/* Off-Campuses */}
-                        {activeTab === "off_campuses" && (
+                        {activeTab === 'off_campuses' && (
                             <TrashFilterDropdown
                                 title="Purpose"
                                 fields={[
                                     {
-                                        key: "purpose",
-                                        label: "Purpose",
-                                        type: "select",
+                                        key: 'purpose',
+                                        label: 'Purpose',
+                                        type: 'select',
                                         options: [
-                                            { label: "Official Use", value: "official_use" },
-                                            { label: "Repair", value: "repair" },
+                                            { label: 'Official Use', value: 'official_use' },
+                                            { label: 'Repair', value: 'repair' },
                                         ],
-                                        value: localFilters.purpose ?? "",
+                                        value: localFilters.purpose ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, purpose: val })),
                                     },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
-                                    const cleared = { ...localFilters, purpose: "" };
+                                    const cleared = { ...localFilters, purpose: '' };
                                     setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}
 
                         {/* Turnover / Disposals */}
-                        {activeTab === "turnover_disposals" && (
+                        {activeTab === 'turnover_disposals' && (
                             <TrashFilterDropdown
                                 title="Filters"
                                 fields={[
                                     {
-                                        key: "type",
-                                        label: "Type",
-                                        type: "select",
+                                        key: 'type',
+                                        label: 'Type',
+                                        type: 'select',
                                         options: [
-                                            { label: "Turnover", value: "turnover" },
-                                            { label: "Disposal", value: "disposal" },
+                                            { label: 'Turnover', value: 'turnover' },
+                                            { label: 'Disposal', value: 'disposal' },
                                         ],
-                                        value: localFilters.type ?? "",
+                                        value: localFilters.type ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, type: val })),
                                     },
                                     {
-                                        key: "issuing_office_id",
-                                        label: "Issuing Office",
-                                        type: "select",
+                                        key: 'issuing_office_id',
+                                        label: 'Issuing Office',
+                                        type: 'select',
                                         options: props.filterSources.units.map((u) => ({ label: u.name, value: u.id })),
-                                        value: localFilters.issuing_office_id ?? "",
+                                        value: localFilters.issuing_office_id ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, issuing_office_id: val })),
                                     },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
-                                    const cleared = { ...localFilters, type: "", issuing_office_id: "" };
+                                    const cleared = { ...localFilters, type: '', issuing_office_id: '' };
                                     setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}
 
-                        {/* Categories */}
-                        {activeTab === "categories" && (
+                        {/* Verification Forms */}
+                        {activeTab === 'verification_forms' && (
                             <TrashFilterDropdown
-                                title="Category"
+                                title="Status"
                                 fields={[
                                     {
-                                        key: "name",
-                                        label: "Category",
-                                        type: "select",
-                                        options: props.filterSources.categories.map((c) => ({
-                                            label: c.name,
-                                            value: c.name,
-                                        })),
-                                        value: localFilters.name ?? "",
-                                        onChange: (val) => setLocalFilters((p) => ({ ...p, name: val })),
-                                    },
-                                ]}
-                                onApply={(updated) => {
-                                    const merged = { ...localFilters, ...updated };
-                                    setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
-                                }}
-                                onClear={() => {
-                                    const cleared = { ...localFilters, name: "" };
-                                    setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
-                                }}
-                            />
-                        )}
-
-                        {/* Equipment Codes */}
-                        {activeTab === "equipment_codes" && (
-                            <TrashFilterDropdown
-                                title="Category"
-                                fields={[
-                                    {
-                                        key: "category_id",
-                                        label: "Category",
-                                        type: "select",
-                                        options: props.filterSources.equipment_categories.map((c) => ({
-                                            label: c.name,
-                                            value: c.id,
-                                        })),
-                                        value: localFilters.category_id ?? "",
-                                        onChange: (val) => setLocalFilters((p) => ({ ...p, category_id: val })),
-                                    },
-                                ]}
-                                onApply={(updated) => {
-                                    const merged = { ...localFilters, ...updated };
-                                    setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
-                                }}
-                                onClear={() => {
-                                    const cleared = { ...localFilters, category_id: "" };
-                                    setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
-                                }}
-                            />
-                        )}
-
-                        {/* Building Rooms */}
-                        {activeTab === "building_rooms" && (
-                            <TrashFilterDropdown
-                                title="Building"
-                                fields={[
-                                    {
-                                        key: "building_id",
-                                        label: "Building",
-                                        type: "select",
-                                        options: props.filterSources.buildings.map((b) => ({
-                                            label: b.name,
-                                            value: b.id,
-                                        })),
-                                        value: localFilters.building_id ?? "",
-                                        onChange: (val) => setLocalFilters((p) => ({ ...p, building_id: val })),
-                                    },
-                                ]}
-                                onApply={(updated) => {
-                                    const merged = { ...localFilters, ...updated };
-                                    setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
-                                }}
-                                onClear={() => {
-                                    const cleared = { ...localFilters, building_id: "" };
-                                    setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
-                                }}
-                            />
-                        )}
-
-                        {/* Personnels */}
-                        {activeTab === "personnels" && (
-                            <TrashFilterDropdown
-                                title="Unit/Department"
-                                fields={[
-                                    {
-                                        key: "unit_id",
-                                        label: "Unit/Department",
-                                        type: "select",
-                                        options: props.filterSources.units.map((u) => ({
-                                            label: u.name,
-                                            value: u.id,
-                                        })),
-                                        value: localFilters.unit_id ?? "",
-                                        onChange: (val) => setLocalFilters((p) => ({ ...p, unit_id: val })),
-                                    },
-                                ]}
-                                onApply={(updated) => {
-                                    const merged = { ...localFilters, ...updated };
-                                    setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
-                                }}
-                                onClear={() => {
-                                    const cleared = { ...localFilters, unit_id: "" };
-                                    setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared }, { preserveState: true });
-                                }}
-                            />
-                        )}
-
-                        {/* Form Approvals */}
-                        {activeTab === "form_approvals" && (
-                            <TrashFilterDropdown
-                                title="Filters"
-                                fields={[
-                                    {
-                                        key: "approvable_type",
-                                        label: "Form Type",
-                                        type: "select",
+                                        key: 'status',
+                                        label: 'Status',
+                                        type: 'select',
                                         options: [
-                                            { label: "Inventory Scheduling", value: "App\\Models\\InventoryScheduling" },
-                                            { label: "Property Transfer", value: "App\\Models\\Transfer" },
-                                            { label: "Turnover/Disposal", value: "App\\Models\\TurnoverDisposal" },
-                                            { label: "Off-Campus", value: "App\\Models\\OffCampus" },
+                                            { label: 'Pending', value: 'pending' },
+                                            { label: 'Verified', value: 'verified' },
+                                            { label: 'Rejected', value: 'rejected' },
                                         ],
-                                        value: localFilters.approvable_type ?? "",
-                                        onChange: (val) => setLocalFilters((p) => ({ ...p, approvable_type: val })),
-                                    },
-                                    // NEW STATUS FILTER
-                                    {
-                                        key: "status",
-                                        label: "Status",
-                                        type: "select",
-                                        options: [
-                                            { label: "Pending Review", value: "pending_review" },
-                                            { label: "Approved", value: "approved" },
-                                            { label: "Rejected", value: "rejected" },
-                                            { label: "Cancelled", value: "cancelled" },
-                                        ],
-                                        value: localFilters.status ?? "",
+                                        value: localFilters.status ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, status: val })),
                                     },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
-                                    const cleared = { ...localFilters, approvable_type: "", status: "" };
+                                    const cleared = { ...localFilters, status: '' };
                                     setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                }}
+                            />
+                        )}
+
+                        {/* Categories */}
+                        {activeTab === 'categories' && (
+                            <TrashFilterDropdown
+                                title="Category"
+                                fields={[
+                                    {
+                                        key: 'name',
+                                        label: 'Category',
+                                        type: 'select',
+                                        options: props.filterSources.categories.map((c) => ({
+                                            label: c.name,
+                                            value: c.name,
+                                        })),
+                                        value: localFilters.name ?? '',
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, name: val })),
+                                    },
+                                ]}
+                                onApply={(updated) => {
+                                    const merged = { ...localFilters, ...updated };
+                                    setLocalFilters(merged);
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                }}
+                                onClear={() => {
+                                    const cleared = { ...localFilters, name: '' };
+                                    setLocalFilters(cleared);
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                }}
+                            />
+                        )}
+
+                        {/* Equipment Codes */}
+                        {activeTab === 'equipment_codes' && (
+                            <TrashFilterDropdown
+                                title="Category"
+                                fields={[
+                                    {
+                                        key: 'category_id',
+                                        label: 'Category',
+                                        type: 'select',
+                                        options: props.filterSources.equipment_categories.map((c) => ({
+                                            label: c.name,
+                                            value: c.id,
+                                        })),
+                                        value: localFilters.category_id ?? '',
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, category_id: val })),
+                                    },
+                                ]}
+                                onApply={(updated) => {
+                                    const merged = { ...localFilters, ...updated };
+                                    setLocalFilters(merged);
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                }}
+                                onClear={() => {
+                                    const cleared = { ...localFilters, category_id: '' };
+                                    setLocalFilters(cleared);
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                }}
+                            />
+                        )}
+
+                        {/* Building Rooms */}
+                        {activeTab === 'building_rooms' && (
+                            <TrashFilterDropdown
+                                title="Building"
+                                fields={[
+                                    {
+                                        key: 'building_id',
+                                        label: 'Building',
+                                        type: 'select',
+                                        options: props.filterSources.buildings.map((b) => ({
+                                            label: b.name,
+                                            value: b.id,
+                                        })),
+                                        value: localFilters.building_id ?? '',
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, building_id: val })),
+                                    },
+                                ]}
+                                onApply={(updated) => {
+                                    const merged = { ...localFilters, ...updated };
+                                    setLocalFilters(merged);
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                }}
+                                onClear={() => {
+                                    const cleared = { ...localFilters, building_id: '' };
+                                    setLocalFilters(cleared);
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                }}
+                            />
+                        )}
+
+                        {/* Personnels */}
+                        {activeTab === 'personnels' && (
+                            <TrashFilterDropdown
+                                title="Unit/Department"
+                                fields={[
+                                    {
+                                        key: 'unit_id',
+                                        label: 'Unit/Department',
+                                        type: 'select',
+                                        options: props.filterSources.units.map((u) => ({
+                                            label: u.name,
+                                            value: u.id,
+                                        })),
+                                        value: localFilters.unit_id ?? '',
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, unit_id: val })),
+                                    },
+                                ]}
+                                onApply={(updated) => {
+                                    const merged = { ...localFilters, ...updated };
+                                    setLocalFilters(merged);
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                }}
+                                onClear={() => {
+                                    const cleared = { ...localFilters, unit_id: '' };
+                                    setLocalFilters(cleared);
+                                    router.get('/trash-bin', { ...props.filters, ...cleared }, { preserveState: true });
+                                }}
+                            />
+                        )}
+
+                        {/* Form Approvals */}
+                        {activeTab === 'form_approvals' && (
+                            <TrashFilterDropdown
+                                title="Filters"
+                                fields={[
+                                    {
+                                        key: 'approvable_type',
+                                        label: 'Form Type',
+                                        type: 'select',
+                                        options: [
+                                            { label: 'Inventory Scheduling', value: 'App\\Models\\InventoryScheduling' },
+                                            { label: 'Property Transfer', value: 'App\\Models\\Transfer' },
+                                            { label: 'Turnover/Disposal', value: 'App\\Models\\TurnoverDisposal' },
+                                            { label: 'Off-Campus', value: 'App\\Models\\OffCampus' },
+                                        ],
+                                        value: localFilters.approvable_type ?? '',
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, approvable_type: val })),
+                                    },
+                                    {
+                                        key: 'status',
+                                        label: 'Status',
+                                        type: 'select',
+                                        options: [
+                                            { label: 'Pending Review', value: 'pending_review' },
+                                            { label: 'Approved', value: 'approved' },
+                                            { label: 'Rejected', value: 'rejected' },
+                                            { label: 'Cancelled', value: 'cancelled' },
+                                        ],
+                                        value: localFilters.status ?? '',
+                                        onChange: (val) => setLocalFilters((p) => ({ ...p, status: val })),
+                                    },
+                                ]}
+                                onApply={(updated) => {
+                                    const merged = { ...localFilters, ...updated };
+                                    setLocalFilters(merged);
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                }}
+                                onClear={() => {
+                                    const cleared = { ...localFilters, approvable_type: '', status: '' };
+                                    setLocalFilters(cleared);
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}
 
                         {/* Signatories */}
-                        {activeTab === "signatories" && (
+                        {activeTab === 'signatories' && (
                             <TrashFilterDropdown
                                 title="Module Type"
                                 fields={[
                                     {
-                                        key: "signatory_type",
-                                        label: "Module Type",
-                                        type: "select",
+                                        key: 'signatory_type',
+                                        label: 'Module Type',
+                                        type: 'select',
                                         options: [
-                                            { label: "Inventory Scheduling", value: "Inventory Scheduling" },
-                                            { label: "Property Transfer", value: "Property Transfer" },
-                                            { label: "Turnover/Disposal", value: "Turnover/Disposal" },
-                                            { label: "Off-Campus", value: "Off-Campus" },
+                                            { label: 'Inventory Scheduling', value: 'Inventory Scheduling' },
+                                            { label: 'Property Transfer', value: 'Property Transfer' },
+                                            { label: 'Turnover/Disposal', value: 'Turnover/Disposal' },
+                                            { label: 'Off-Campus', value: 'Off-Campus' },
                                         ],
-                                        value: localFilters.signatory_type ?? "",
+                                        value: localFilters.signatory_type ?? '',
                                         onChange: (val) => setLocalFilters((p) => ({ ...p, signatory_type: val })),
                                     },
                                 ]}
                                 onApply={(updated) => {
                                     const merged = { ...localFilters, ...updated };
                                     setLocalFilters(merged);
-                                    router.get("/trash-bin", cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
+                                    router.get('/trash-bin', cleanFilters({ ...props.filters, ...merged, tab: activeTab }), { preserveState: true });
                                 }}
                                 onClear={() => {
-                                    const cleared = { ...localFilters, signatory_type: "" };
+                                    const cleared = { ...localFilters, signatory_type: '' };
                                     setLocalFilters(cleared);
-                                    router.get("/trash-bin", { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
+                                    router.get('/trash-bin', { ...props.filters, ...cleared, tab: activeTab }, { preserveState: true });
                                 }}
                             />
                         )}
@@ -1362,16 +1448,16 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                             sortKey={sortKey}
                             sortDir={sortDir}
                             options={[
-                                { value: "id", label: "ID" },
-                                { value: "deleted_at", label: "Deleted Date" },
-                                { value: "name", label: "Record Name" },
-                                { value: "code", label: "Code" },
+                                { value: 'id', label: 'ID' },
+                                { value: 'deleted_at', label: 'Deleted Date' },
+                                { value: 'name', label: 'Record Name' },
+                                { value: 'code', label: 'Code' },
                             ]}
                             onChange={(key, dir) => {
                                 setSortKey(key);
                                 setSortDir(dir);
                                 router.get(
-                                    "/trash-bin",
+                                    '/trash-bin',
                                     { ...props.filters, ...localFilters, search, sort: key, dir, tab: activeTab },
                                     { preserveState: true }
                                 );
@@ -1379,7 +1465,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                         />
                     </div>
                 </div>
-                
+
                 <div className="flex gap-1 border-b">
                     {groups[activeGroup].map((m) => (
                         <button
@@ -1390,10 +1476,10 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                             }}
                             className={`cursor-pointer
                                 px-4 py-2 text-sm font-medium transition-colors border-b-2 rounded-t-md ${
-                                activeTab === m.key
-                                ? 'text-blue-800 border-blue-600 bg-blue-100/60'
-                                : 'text-primary border-transparent hover:border-blue-400 hover:bg-blue-50/60'
-                            }`}
+                                    activeTab === m.key
+                                        ? 'text-blue-800 border-blue-600 bg-blue-100/60'
+                                        : 'text-primary border-transparent hover:border-blue-400 hover:bg-blue-50/60'
+                                }`}
                         >
                             {m.label}
                         </button>
@@ -1414,39 +1500,34 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                         <TableBody className="text-center">
                             {activeData?.data?.length ? (
                                 activeData.data.map((row: TrashRecord) => (
-                                <TableRow key={row.id}>
-                                    <TableCell className="max-w-[80px]">{row.id}</TableCell>
-                                    <TableCell className="max-w-[400px] whitespace-normal break-words">{formatRecordName(row, activeTab)}</TableCell>
-                                    <TableCell className="max-w-[180px]">{formatDateTime(row.deleted_at)}</TableCell>
-                                    <TableCell className="max-w-[150px]">
-                                        <div className="flex justify-center gap-2">
-                                            
-                                            <Button 
-                                                onClick={() => handleRestore(activeTab, row.id, row)}
-                                                className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                disabled={!canRestore}
-                                            >
-                                                Restore
-                                            </Button>
+                                    <TableRow key={row.id}>
+                                        <TableCell className="max-w-[80px]">{row.id}</TableCell>
+                                        <TableCell className="max-w-[400px] whitespace-normal break-words">{formatRecordName(row, activeTab)}</TableCell>
+                                        <TableCell className="max-w-[180px]">{formatDateTime(row.deleted_at)}</TableCell>
+                                        <TableCell className="max-w-[150px]">
+                                            <div className="flex justify-center gap-2">
+                                                <Button
+                                                    onClick={() => handleRestore(activeTab, row.id, row)}
+                                                    className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    disabled={!canRestore}
+                                                >
+                                                    Restore
+                                                </Button>
 
-                                            <Button
-                                                // className={`cursor-pointer ${["superuser", "pmo_head"].includes(currentRole) ? '' : 'bg-gray-600 opacity-50 cursor-not-allowed'}`}
-                                                className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                variant="destructive"
-                                                // disabled={!["superuser", "pmo_head"].includes(currentRole)}
-                                                disabled={!canPermanentDelete}
-                                                onClick={() => {
-                                                    // if (!["superuser", "pmo_head"].includes(currentRole)) return;
-                                                    setSelectedDeleteId(row.id);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                            >
-                                                Permanent Delete
-                                            </Button>
-
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
+                                                <Button
+                                                    className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    variant="destructive"
+                                                    disabled={!canPermanentDelete}
+                                                    onClick={() => {
+                                                        setSelectedDeleteId(row.id);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                >
+                                                    Permanent Delete
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
@@ -1472,8 +1553,7 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                             page={activeData.current_page}
                             total={activeData.total}
                             pageSize={activeData.per_page}
-                            onPageChange={(p) => router.get('/trash-bin', { ...props.filters, page: p }, { preserveState: true })
-                        }
+                            onPageChange={(p) => router.get('/trash-bin', { ...props.filters, page: p }, { preserveState: true })}
                         />
                     </div>
                 )}
@@ -1485,8 +1565,8 @@ const handleRestore = (type: string, id: number, row?: TrashRecord) => {
                 onConfirm={() => {
                     if (!selectedDeleteId) return;
                     router.delete(`/trash-bin/permanent-delete/${restoreMap[activeTab]}/${selectedDeleteId}`, {
-                    preserveScroll: true,
-                    onSuccess: () => setShowDeleteModal(false),
+                        preserveScroll: true,
+                        onSuccess: () => setShowDeleteModal(false),
                     });
                 }}
                 title="Confirm Permanent Deletion"

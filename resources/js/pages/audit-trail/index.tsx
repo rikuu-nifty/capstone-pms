@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronsLeft, ChevronsRight, Download, Search } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 import { useState } from 'react';
 import FiltersPopover, { AuditLogFilters } from './FiltersPopover';
 import { type BreadcrumbItem } from '@/types';
@@ -200,9 +200,9 @@ export default function AuditTrailIndex() {
                                 applySearch(newFilters);
                             }}
                         />
-                        <Button variant="outline">
+                        {/* <Button variant="outline">
                             <Download className="mr-2 h-4 w-4" /> Export
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
 

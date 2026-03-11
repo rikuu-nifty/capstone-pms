@@ -14,6 +14,7 @@ use App\Models\InventoryScheduling;
 use App\Models\Transfer;
 use App\Models\TurnoverDisposal;
 use App\Models\OffCampus;
+use App\Models\VerificationForm;
 
 use App\Models\AssetModel;
 use App\Models\Category;
@@ -64,7 +65,8 @@ class TrashBinController extends Controller
                     ])
                 )
                 ->when($filter === 'last_year', fn($q) => $q->whereYear('deleted_at', now()->subYear()->year))
-                ->when($filter === 'custom' && $request->filled(['start', 'end']),
+                ->when(
+                    $filter === 'custom' && $request->filled(['start', 'end']),
                     fn($q) => $q->whereBetween('deleted_at', [$request->start, $request->end])
                 )
                 ->when($search, function ($q) use ($module, $search) {
@@ -78,11 +80,11 @@ class TrashBinController extends Controller
                                 ->where('asset_name', 'like', $like)
                                 ->orWhere('serial_no', 'like', $like)
                                 ->orWhere('description', 'like', $like),
+
                             'inventory_schedulings' => $query->where(function ($query) use ($search) {
                                 $like = '%' . $search . '%';
                                 $query->where('inventory_schedule', 'like', $like);
 
-                                // Optional: allow month name search
                                 $monthMap = [
                                     'january' => '01',
                                     'february' => '02',
@@ -103,6 +105,7 @@ class TrashBinController extends Controller
                                     $query->orWhere('inventory_schedule', 'like', '%-' . $monthMap[$lowerSearch]);
                                 }
                             }),
+
                             'transfers' => $query->where(function ($sub) use ($like) {
                                 $sub->where('id', 'like', $like)
                                     ->orWhereHas('currentOrganization', fn($q) =>
@@ -111,7 +114,6 @@ class TrashBinController extends Controller
                                     ->orWhereHas('receivingOrganization', fn($q) =>
                                         $q->where('name', 'like', $like)
                                     )
-                                    // Related buildings and rooms
                                     ->orWhereHas('currentBuildingRoom.building', fn($q) =>
                                         $q->where('name', 'like', $like)
                                             ->orWhere('code', 'like', $like)
@@ -126,29 +128,53 @@ class TrashBinController extends Controller
                                     ->orWhereHas('receivingBuildingRoom', fn($q) =>
                                         $q->where('room', 'like', $like)
                                     );
-                                }),
+                            }),
+
                             'turnover_disposals' => $query
                                 ->where('type', 'like', $like)
                                 ->orWhereHas('personnel', fn($p) =>
                                     $p->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", [$like])
                                 )
                                 ->orWhereHas('issuingOffice', fn($o) => $o->where('name', 'like', $like)),
+
                             'off_campuses' => $query->where(function ($sub) use ($like, $enumLike) {
                                 $sub
-                                    ->where('requester_name', 'like', $like) // if user enters "official_use"
-                                    ->orWhere('remarks', 'like', $like) // if user typed "official use"
+                                    ->where('requester_name', 'like', $like)
+                                    ->orWhere('remarks', 'like', $like)
                                     ->orWhere('remarks', 'like', $enumLike)
                                     ->orWhereHas('collegeOrUnit', fn($q) =>
                                         $q->where('name', 'like', $like)
                                     );
                             }),
 
+                            'verification_forms' => $query->where(function ($sub) use ($like, $enumLike) {
+                                $sub->where('requested_by_name', 'like', $like)
+                                    ->orWhere('requested_by_title', 'like', $like)
+                                    ->orWhere('requested_by_contact', 'like', $like)
+                                    ->orWhere('notes', 'like', $like)
+                                    ->orWhere('remarks', 'like', $like)
+                                    ->orWhere('status', 'like', $enumLike)
+                                    ->orWhereHas('unitOrDepartment', fn($q) =>
+                                        $q->where('name', 'like', $like)
+                                            ->orWhere('code', 'like', $like)
+                                    )
+                                    ->orWhereHas('requestedByPersonnel', fn($q) =>
+                                        $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", [$like])
+                                            ->orWhere('first_name', 'like', $like)
+                                            ->orWhere('middle_name', 'like', $like)
+                                            ->orWhere('last_name', 'like', $like)
+                                    );
+                            }),
+
                             'categories' => $query->where('name', 'like', $like),
+
                             'asset_models' => $query
                                 ->where('brand', 'like', $like)
                                 ->orWhere('model', 'like', $like),
+
                             'equipment_codes' => $query
                                 ->where('code', 'like', $like),
+
                             'assignments' => $query->where(function ($query) use ($search) {
                                 $like = '%' . $search . '%';
                                 $monthMap = [
@@ -179,6 +205,7 @@ class TrashBinController extends Controller
 
                             'buildings' => $query->where('name', 'like', $like)
                                 ->orWhere('code', 'like', $like),
+
                             'building_rooms' => $query->where(function ($query) use ($search) {
                                 $like = '%' . $search . '%';
                                 $query->where('room', 'like', $like)
@@ -186,6 +213,7 @@ class TrashBinController extends Controller
                                         $b->where('name', 'like', $like)->orWhere('code', 'like', $like)
                                     );
                             }),
+
                             'personnels' => $query->where(function ($query) use ($search) {
                                 $like = '%' . $search . '%';
                                 $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", [$like])
@@ -200,11 +228,13 @@ class TrashBinController extends Controller
 
                             'users' => $query->where('name', 'like', $like)
                                 ->orWhere('email', 'like', $like),
+
                             'roles' => $query->where(function ($query) use ($search) {
                                 $like = '%' . $search . '%';
                                 $query->where('name', 'like', $like)
                                     ->orWhere('code', 'like', $like);
                             }),
+
                             'form_approvals' => $query->where(function ($sub) use ($like, $enumLike) {
                                 $sub->where('form_title', 'like', $like)
                                     ->orWhere('status', 'like', $enumLike)
@@ -213,11 +243,11 @@ class TrashBinController extends Controller
                                     );
                             }),
 
-                        default => $query->where('id', 'like', $like),
+                            default => $query->where('id', 'like', $like),
                         };
                     });
                 })
-                
+
                 ->when($module === 'inventory_schedulings' && $request->filled('month'), function ($q) use ($request) {
                     $month = $request->input('month');
                     $q->where('inventory_schedule', 'like', '%-' . $month);
@@ -272,36 +302,34 @@ class TrashBinController extends Controller
                 ->when($module === 'form_approvals' && $request->filled('approvable_type'), function ($q) use ($request) {
                     $q->where('approvable_type', $request->input('approvable_type'));
                 })
-                // Inventory Scheduling — filter by scheduling_status
+
                 ->when($module === 'inventory_schedulings' && $request->filled('status'), function ($q) use ($request) {
                     $q->where('scheduling_status', $request->input('status'));
                 })
-                // Transfers — filter by transfer status
                 ->when($module === 'transfers' && $request->filled('status'), function ($q) use ($request) {
                     $q->where('status', $request->input('status'));
                 })
-                // Turnover/Disposal — filter by status
                 ->when($module === 'turnover_disposals' && $request->filled('status'), function ($q) use ($request) {
                     $q->where('status', $request->input('status'));
                 })
-                // Off-Campuses — filter by status
                 ->when($module === 'off_campuses' && $request->filled('status'), function ($q) use ($request) {
                     $q->where('status', $request->input('status'));
                 })
-                // Form Approvals — filter by varchar status
+                ->when($module === 'verification_forms' && $request->filled('status'), function ($q) use ($request) {
+                    $q->where('status', $request->input('status'));
+                })
                 ->when($module === 'form_approvals' && $request->filled('status'), function ($q) use ($request) {
                     $q->where('status', 'like', $request->input('status'));
                 })
 
-
                 ->when($sortKey, function ($q) use ($sortKey, $sortDir, $module) {
-                    // define allowed sort columns per module
                     $sortable = match ($module) {
                         'inventory_lists'       => ['id', 'asset_name', 'deleted_at'],
                         'inventory_schedulings' => ['id', 'inventory_schedule', 'deleted_at'],
                         'transfers'             => ['id', 'deleted_at'],
                         'turnover_disposals'    => ['id', 'type', 'deleted_at'],
                         'off_campuses'          => ['id', 'requester_name', 'deleted_at'],
+                        'verification_forms'    => ['id', 'status', 'verified_at', 'deleted_at'],
                         'categories'            => ['id', 'name', 'deleted_at'],
                         'equipment_codes'       => ['id', 'code', 'deleted_at'],
                         'asset_models'          => ['id', 'model', 'brand', 'deleted_at'],
@@ -314,7 +342,6 @@ class TrashBinController extends Controller
                         default                 => ['id', 'deleted_at'],
                     };
 
-                    // if user’s chosen sort key doesn’t exist in table, fallback to `id`
                     $column = in_array($sortKey, $sortable, true) ? $sortKey : 'id';
                     $q->orderBy($column, $sortDir);
                 });
@@ -327,8 +354,9 @@ class TrashBinController extends Controller
                 'transfers'             => Transfer::onlyTrashed()->count(),
                 'turnovers'             => TurnoverDisposal::onlyTrashed()->where('type', 'turnover')->count(),
                 'disposals'             => TurnoverDisposal::onlyTrashed()->where('type', 'disposal')->count(),
-                'off_campus_official' => OffCampus::onlyTrashed()->where('remarks', 'official_use')->count(),
-                'off_campus_repair'   => OffCampus::onlyTrashed()->where('remarks', 'repair')->count(),
+                'off_campus_official'   => OffCampus::onlyTrashed()->where('remarks', 'official_use')->count(),
+                'off_campus_repair'     => OffCampus::onlyTrashed()->where('remarks', 'repair')->count(),
+                'verification_forms'    => VerificationForm::onlyTrashed()->count(),
             ],
             'assets' => [
                 'categories'      => Category::onlyTrashed()->count(),
@@ -385,7 +413,7 @@ class TrashBinController extends Controller
 
         foreach ($signatorySets as $module => $query) {
             if ($selectedType && $selectedType !== $module) {
-                continue; // skip other module types
+                continue;
             }
 
             if ($search) {
@@ -397,9 +425,7 @@ class TrashBinController extends Controller
                         ->orWhere('title', 'like', $like)
                         ->orWhere('role_key', 'like', $like);
 
-                    // Allow searching by module type name as well
                     if (Str::contains(strtolower($module), $lowerSearch)) {
-                        // Dummy condition to include matches by module name
                         $q->orWhereRaw('1 = 1');
                     }
                 });
@@ -410,7 +436,6 @@ class TrashBinController extends Controller
         }
 
         $allSignatories = $allSignatories->sortByDesc('deleted_at')->values();
-
 
         $page = LengthAwarePaginator::resolveCurrentPage();
         $paged = $allSignatories->forPage($page, $perPage)->values();
@@ -427,8 +452,10 @@ class TrashBinController extends Controller
             // Forms group
             'inventory_lists' => $applyFilters(InventoryList::onlyTrashed(), 'inventory_lists')
                 ->paginate($perPage)->withQueryString(),
+
             'inventory_schedulings' => $applyFilters(InventoryScheduling::onlyTrashed(), 'inventory_schedulings')
                 ->paginate($perPage)->withQueryString(),
+
             'transfers' => $applyFilters(
                 Transfer::onlyTrashed()
                     ->with([
@@ -445,6 +472,7 @@ class TrashBinController extends Controller
                     ]),
                 'transfers'
             )->paginate($perPage)->withQueryString(),
+
             'turnover_disposals' => $applyFilters(
                 TurnoverDisposal::onlyTrashed()
                     ->with([
@@ -453,27 +481,40 @@ class TrashBinController extends Controller
                     ]),
                 'turnover_disposals'
             )->paginate($perPage)->withQueryString(),
+
             'off_campuses' => $applyFilters(
                 OffCampus::onlyTrashed()->with(['collegeOrUnit:id,name']),
                 'off_campuses'
             )->paginate($perPage)->withQueryString(),
 
+            'verification_forms' => $applyFilters(
+                VerificationForm::onlyTrashed()->with([
+                    'unitOrDepartment:id,name,code',
+                    'requestedByPersonnel:id,first_name,middle_name,last_name',
+                ]),
+                'verification_forms'
+            )->paginate($perPage)->withQueryString(),
+
             // Assets group
             'asset_models' => $applyFilters(AssetModel::onlyTrashed(), 'asset_models')
                 ->paginate($perPage)->withQueryString(),
+
             'categories' => $applyFilters(Category::onlyTrashed(), 'categories')
                 ->paginate($perPage)->withQueryString(),
+
             'assignments' => $applyFilters(
                 AssetAssignment::onlyTrashed()
                     ->with(['personnel:id,first_name,middle_name,last_name']),
                 'assignments'
             )->paginate($perPage)->withQueryString(),
+
             'equipment_codes' => $applyFilters(EquipmentCode::onlyTrashed(), 'equipment_codes')
                 ->paginate($perPage)->withQueryString(),
 
             // Institutional Setup
             'buildings' => $applyFilters(Building::onlyTrashed(), 'buildings')
                 ->paginate($perPage)->withQueryString(),
+
             'building_rooms' => $applyFilters(
                 BuildingRoom::onlyTrashed()
                     ->with(['building' => function ($q) {
@@ -481,11 +522,13 @@ class TrashBinController extends Controller
                     }]),
                 'building_rooms'
             )->paginate($perPage)->withQueryString(),
+
             'personnels' => $applyFilters(
                 Personnel::onlyTrashed()
                     ->with(['unitOrDepartment:id,name']),
                 'personnels'
             )->paginate($perPage)->withQueryString(),
+
             'unit_or_departments' => $applyFilters(UnitOrDepartment::onlyTrashed(), 'unit_or_departments')
                 ->paginate($perPage)->withQueryString(),
 
@@ -497,19 +540,22 @@ class TrashBinController extends Controller
                 ]),
                 'users'
             )->paginate($perPage)->withQueryString(),
+
             'roles' => $applyFilters(Role::onlyTrashed(), 'roles')
                 ->paginate($perPage)->withQueryString(),
-            'form_approvals' => $applyFilters(FormApproval::onlyTrashed()
-                ->with(['requestedBy:id,name'])
-                ->select('*', DB::raw("
-                    CASE approvable_type
-                        WHEN 'App\\\\Models\\\\InventoryScheduling' THEN 'Inventory Scheduling'
-                        WHEN 'App\\\\Models\\\\Transfer' THEN 'Property Transfer'
-                        WHEN 'App\\\\Models\\\\TurnoverDisposal' THEN 'Turnover/Disposal'
-                        WHEN 'App\\\\Models\\\\OffCampus' THEN 'Off-Campus'
-                        ELSE approvable_type
-                    END as approvable_type_label
-                ")),
+
+            'form_approvals' => $applyFilters(
+                FormApproval::onlyTrashed()
+                    ->with(['requestedBy:id,name'])
+                    ->select('*', DB::raw("
+                        CASE approvable_type
+                            WHEN 'App\\\\Models\\\\InventoryScheduling' THEN 'Inventory Scheduling'
+                            WHEN 'App\\\\Models\\\\Transfer' THEN 'Property Transfer'
+                            WHEN 'App\\\\Models\\\\TurnoverDisposal' THEN 'Turnover/Disposal'
+                            WHEN 'App\\\\Models\\\\OffCampus' THEN 'Off-Campus'
+                            ELSE approvable_type
+                        END as approvable_type_label
+                    ")),
                 'form_approvals'
             )->paginate($perPage)->withQueryString(),
 
@@ -522,22 +568,22 @@ class TrashBinController extends Controller
                 'sort'        => $sortKey,
                 'dir'         => $sortDir,
 
-                'month'               => $request->input('month'),
-                'purpose'             => $request->input('purpose'),
-                'type'                => $request->input('type'),
-                'name'                => $request->input('name'),
-                'category_id'         => $request->input('category_id'),
-                'building_id'         => $request->input('building_id'),
-                'unit_id'             => $request->input('unit_id'),
-                'current_org_id'      => $request->input('current_org_id'),
-                'receiving_org_id'    => $request->input('receiving_org_id'),
-                'current_building_id' => $request->input('current_building_id'),
+                'month'                 => $request->input('month'),
+                'purpose'               => $request->input('purpose'),
+                'type'                  => $request->input('type'),
+                'name'                  => $request->input('name'),
+                'category_id'           => $request->input('category_id'),
+                'building_id'           => $request->input('building_id'),
+                'unit_id'               => $request->input('unit_id'),
+                'current_org_id'        => $request->input('current_org_id'),
+                'receiving_org_id'      => $request->input('receiving_org_id'),
+                'current_building_id'   => $request->input('current_building_id'),
                 'receiving_building_id' => $request->input('receiving_building_id'),
-                'scheduled_date'      => $request->input('scheduled_date'),
-                'issuing_office_id'   => $request->input('issuing_office_id'),
+                'scheduled_date'        => $request->input('scheduled_date'),
+                'issuing_office_id'     => $request->input('issuing_office_id'),
 
                 'approvable_type' => $request->input('approvable_type'),
-                'status'              => $request->input('status'),
+                'status'          => $request->input('status'),
 
                 'signatory_type' => $request->input('signatory_type'),
             ],
@@ -566,7 +612,6 @@ class TrashBinController extends Controller
                 $signatory = $modelClass::withTrashed()->find($id);
 
                 if ($signatory) {
-                    // ✅ Only restore; observer will handle the audit log
                     $signatory->restore();
 
                     return back()->with('success', "{$moduleType} signatory restored successfully.");
@@ -575,7 +620,6 @@ class TrashBinController extends Controller
                 return back()->with('error', "{$moduleType} signatory not found or already active.");
             }
 
-            // ✅ Fallback multi-check logic
             $signatory = collect([
                 \App\Models\InventorySchedulingSignatory::class,
                 \App\Models\TransferSignatory::class,
@@ -587,41 +631,42 @@ class TrashBinController extends Controller
                 ->first();
 
             if ($signatory) {
-                $signatory->restore(); // observer logs automatically
+                $signatory->restore();
                 return back()->with('success', 'Signatory restored successfully.');
             }
 
             return back()->with('error', 'Signatory not found.');
         }
 
-        // ✅ Default restore logic for all other modules
         $model = $this->resolveModel($type)::withTrashed()->findOrFail($id);
-        $model->restore(); // observer logs automatically
+        $model->restore();
 
         return back()->with('success', ucfirst($type) . ' restored successfully.');
     }
 
-   private function resolveModel(string $type): string
+    private function resolveModel(string $type): string
     {
         return match ($type) {
-            'inventory-list', 'inventory-lists'     => InventoryList::class,
+            'inventory-list', 'inventory-lists'         => InventoryList::class,
             'inventory-schedule', 'inventory-schedules' => InventoryScheduling::class,
-            'transfer', 'transfers'                 => Transfer::class,
-            'turnover-disposal', 'turnover-disposals'  => TurnoverDisposal::class,
-            'off-campus', 'off-campuses'            => OffCampus::class,
+            'transfer', 'transfers'                     => Transfer::class,
+            'turnover-disposal', 'turnover-disposals'   => TurnoverDisposal::class,
+            'off-campus', 'off-campuses'                => OffCampus::class,
+            'verification-form', 'verification-forms'   => VerificationForm::class,
 
-            'asset-model', 'asset-models'           => AssetModel::class,
-            'category', 'categories'                => Category::class,
-            'assignment', 'assignments'             => AssetAssignment::class,
-            'equipment-code', 'equipment-codes'     => EquipmentCode::class,
+            'asset-model', 'asset-models'               => AssetModel::class,
+            'category', 'categories'                    => Category::class,
+            'assignment', 'assignments'                 => AssetAssignment::class,
+            'equipment-code', 'equipment-codes'         => EquipmentCode::class,
 
-            'building', 'buildings'                 => Building::class,
-            'building-room', 'building-rooms'       => BuildingRoom::class,
-            'personnel', 'personnels'               => Personnel::class,
+            'building', 'buildings'                     => Building::class,
+            'building-room', 'building-rooms'           => BuildingRoom::class,
+            'personnel', 'personnels'                   => Personnel::class,
             'unit-or-department', 'unit-or-departments' => UnitOrDepartment::class,
 
-            'user', 'users'                         => User::class,
-            'role', 'roles'                         => Role::class,
+            'user', 'users'                             => User::class,
+            'role', 'roles'                             => Role::class,
+            'form-approval', 'form-approvals'           => FormApproval::class,
 
             default => abort(404, "Unknown type: $type"),
         };
@@ -631,7 +676,6 @@ class TrashBinController extends Controller
     {
         $user = Auth::user();
 
-        // Allow only superuser or pmo_head
         if (!in_array(optional($user->role)->code, ['superuser', 'pmo_head'])) {
             abort(403, 'Unauthorized.');
         }
@@ -658,7 +702,6 @@ class TrashBinController extends Controller
         $modelClass = $this->resolveModel($type);
         $record = $modelClass::withTrashed()->findOrFail($id);
 
-        // Permanent delete
         $record->forceDelete();
 
         return back()->with('success', ucfirst($type) . ' permanently deleted.');

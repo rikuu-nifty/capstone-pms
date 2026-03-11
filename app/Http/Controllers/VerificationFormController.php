@@ -38,6 +38,7 @@ class VerificationFormController extends Controller
             'subArea:id,name',
         ])
         ->get();
+
         $unitOrDepartments = UnitOrDepartment::select('id', 'name', 'code')->orderBy('name')->get();
         $personnels = Personnel::activeForAssignments();
         $pmoHeadRoleId = Role::where('code', 'pmo_head')->value('id');
@@ -62,67 +63,69 @@ class VerificationFormController extends Controller
         return Inertia::render('verification-form/index', $this->indexProps());
     }
 
-    public function show(int $id)
-    {
-        $verification = VerificationForm::with([
-            'unitOrDepartment',
-            'requestedByPersonnel',
-            'verifiedBy',
-            'verificationAssets.inventoryList' => function ($q) {
-                $q->select('id', 'asset_name', 'serial_no', 'supplier', 'unit_cost', 'date_purchased');
-            },
-        ])->findOrFail($id);
+    public function show(VerificationForm $verification)
+{
+    $verification->load([
+        'unitOrDepartment',
+        'requestedByPersonnel',
+        'verifiedBy',
+        'verificationAssets.inventoryList' => function ($q) {
+            $q->select('id', 'asset_name', 'serial_no', 'supplier', 'unit_cost', 'date_purchased');
+        },
+    ]);
 
-        return Inertia::render('verification-form/index', array_merge(
-            $this->indexProps(),
-            [
-                'viewing' => [
-                    'id'                     => $verification->id,
-                    'unit_or_department'     => $verification->unitOrDepartment?->only(['id', 'name', 'code']),
-                    'requested_by_personnel' => $verification->requestedByPersonnel ? [
-                        'id'    => $verification->requestedByPersonnel->id,
-                        'name'  => trim($verification->requestedByPersonnel->first_name . ' ' .
-                            ($verification->requestedByPersonnel->middle_name ? ($verification->requestedByPersonnel->middle_name . ' ') : '') .
-                            $verification->requestedByPersonnel->last_name),
-                        'title' => $verification->requestedByPersonnel->position,
-                    ] : null,
-                    'requested_by_snapshot'  => [
-                        'name'    => $verification->requested_by_name,
-                        'title'   => $verification->requested_by_title,
-                        'contact' => $verification->requested_by_contact,
-                    ],
-                    'status'      => $verification->status,
-                    'notes'       => $verification->notes,
-                    'remarks'     => $verification->remarks,
-                    'verified_at' => $verification->verified_at,
-                    'verified_by' => $verification->verifiedBy?->only(['id', 'name']),
-                    'created_at'  => $verification->created_at,
-
-                    'verification_assets' => $verification->verificationAssets->map(fn($va) => [
-                        'id'      => $va->id,
-                        'remarks' => $va->remarks,
-                        'asset'   => [
-                            'id'             => $va->inventoryList->id,
-                            'asset_name'     => $va->inventoryList->asset_name,
-                            'serial_no'      => $va->inventoryList->serial_no,
-                            'supplier'       => $va->inventoryList->supplier,
-                            'unit_cost'      => $va->inventoryList->unit_cost,
-                            'date_purchased' => optional($va->inventoryList->date_purchased)->format('Y-m-d'),
-                            'quantity'       => 1,
-                        ],
-                    ])->values(),
+    return Inertia::render('verification-form/index', array_merge(
+        $this->indexProps(),
+        [
+            'viewing' => [
+                'id'                     => $verification->id,
+                'unit_or_department'     => $verification->unitOrDepartment?->only(['id', 'name', 'code']),
+                'requested_by_personnel' => $verification->requestedByPersonnel ? [
+                    'id'    => $verification->requestedByPersonnel->id,
+                    'name'  => trim(
+                        $verification->requestedByPersonnel->first_name . ' ' .
+                        ($verification->requestedByPersonnel->middle_name ? ($verification->requestedByPersonnel->middle_name . ' ') : '') .
+                        $verification->requestedByPersonnel->last_name
+                    ),
+                    'title' => $verification->requestedByPersonnel->position,
+                ] : null,
+                'requested_by_snapshot'  => [
+                    'name'    => $verification->requested_by_name,
+                    'title'   => $verification->requested_by_title,
+                    'contact' => $verification->requested_by_contact,
                 ],
+                'status'      => $verification->status,
+                'notes'       => $verification->notes,
+                'remarks'     => $verification->remarks,
+                'verified_at' => $verification->verified_at,
+                'verified_by' => $verification->verifiedBy?->only(['id', 'name']),
+                'created_at'  => $verification->created_at,
+
+                'verification_assets' => $verification->verificationAssets->map(fn($va) => [
+                    'id'      => $va->id,
+                    'remarks' => $va->remarks,
+                    'asset'   => [
+                        'id'             => $va->inventoryList->id,
+                        'asset_name'     => $va->inventoryList->asset_name,
+                        'serial_no'      => $va->inventoryList->serial_no,
+                        'supplier'       => $va->inventoryList->supplier,
+                        'unit_cost'      => $va->inventoryList->unit_cost,
+                        'date_purchased' => optional($va->inventoryList->date_purchased)->format('Y-m-d'),
+                        'quantity'       => 1,
+                    ],
+                ])->values(),
             ],
-        ));
-    }
+        ],
+    ));
+}
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'unit_or_department_id'     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
 
-            'requested_by_personnel_id' => [ 'nullable', 'integer', Rule::exists('personnels', 'id'), 'required_without:requested_by_name'],
-            'requested_by_name' => [ 'nullable', 'string', 'max:255', 'required_without:requested_by_personnel_id'],
+            'requested_by_personnel_id' => ['nullable', 'integer', Rule::exists('personnels', 'id'), 'required_without:requested_by_name'],
+            'requested_by_name'         => ['nullable', 'string', 'max:255', 'required_without:requested_by_personnel_id'],
             'requested_by_title'        => ['nullable', 'string', 'max:255'],
             'requested_by_contact'      => ['nullable', 'string', 'max:255'],
 
@@ -130,9 +133,9 @@ class VerificationFormController extends Controller
             'status'  => ['required', Rule::in(['pending', 'verified', 'rejected'])],
             'remarks' => ['nullable', 'string'],
 
-            'verification_assets'                       => ['required', 'array', 'min:1'],
-            'verification_assets.*.inventory_list_id'   => ['required', 'integer', 'exists:inventory_lists,id'],
-            'verification_assets.*.remarks'             => ['nullable', 'string', 'max:1000'],
+            'verification_assets'                     => ['required', 'array', 'min:1'],
+            'verification_assets.*.inventory_list_id' => ['required', 'integer', 'exists:inventory_lists,id'],
+            'verification_assets.*.remarks'           => ['nullable', 'string', 'max:1000'],
         ], [
             'requested_by_personnel_id.required_without' => 'You must fill up either Personnel in Charge or Requester Name.',
             'requested_by_name.required_without'         => 'Requester Name or Personnel must be provided.',
@@ -158,7 +161,7 @@ class VerificationFormController extends Controller
 
             if ($p) {
                 $full = trim($p->first_name . ' ' . ($p->middle_name ? ($p->middle_name . ' ') : '') . $p->last_name);
-                $validated['requested_by_name']  = $validated['requested_by_name']  ?: $full;
+                $validated['requested_by_name']  = $validated['requested_by_name'] ?: $full;
                 $validated['requested_by_title'] = $validated['requested_by_title'] ?: ($p->position ?: 'Staff');
             }
         }
@@ -183,25 +186,27 @@ class VerificationFormController extends Controller
                         ->withErrors(['verification_assets' => 'One or more assets do not belong to the selected Unit/Department.'])
                         ->withInput();
                 }
+
                 $rows[] = [
                     'inventory_list_id' => $row['inventory_list_id'],
                     'remarks'           => $row['remarks'] ?? null,
                 ];
             }
+
             $form->verificationAssets()->createMany($rows);
         }
 
         return back()->with('success', "Verification Form #{$form->id} created.");
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, VerificationForm $verification)
     {
-        $verification = VerificationForm::findOrFail($id);
+    
 
         $validated = $request->validate([
             'unit_or_department_id'     => ['required', 'integer', Rule::exists('unit_or_departments', 'id')],
-            'requested_by_personnel_id' => [ 'nullable', 'integer', Rule::exists('personnels', 'id'), 'required_without:requested_by_name'],
-            'requested_by_name' => [ 'nullable', 'string', 'max:255', 'required_without:requested_by_personnel_id'],
+            'requested_by_personnel_id' => ['nullable', 'integer', Rule::exists('personnels', 'id'), 'required_without:requested_by_name'],
+            'requested_by_name'         => ['nullable', 'string', 'max:255', 'required_without:requested_by_personnel_id'],
             'requested_by_title'        => ['nullable', 'string', 'max:255'],
             'requested_by_contact'      => ['nullable', 'string', 'max:255'],
 
@@ -209,9 +214,9 @@ class VerificationFormController extends Controller
             'status'  => ['required', Rule::in(['pending', 'verified', 'rejected'])],
             'remarks' => ['nullable', 'string'],
 
-            'verification_assets'                       => ['required', 'array', 'min:1'],
-            'verification_assets.*.inventory_list_id'   => ['required', 'integer', 'exists:inventory_lists,id'],
-            'verification_assets.*.remarks'             => ['nullable', 'string', 'max:1000'],
+            'verification_assets'                     => ['required', 'array', 'min:1'],
+            'verification_assets.*.inventory_list_id' => ['required', 'integer', 'exists:inventory_lists,id'],
+            'verification_assets.*.remarks'           => ['nullable', 'string', 'max:1000'],
         ]);
 
         if (!empty($validated['requested_by_personnel_id'])) {
@@ -230,7 +235,7 @@ class VerificationFormController extends Controller
 
             if ($p) {
                 $full = trim($p->first_name . ' ' . ($p->middle_name ? ($p->middle_name . ' ') : '') . $p->last_name);
-                $validated['requested_by_name']  = $validated['requested_by_name']  ?: $full;
+                $validated['requested_by_name']  = $validated['requested_by_name'] ?: $full;
                 $validated['requested_by_title'] = $validated['requested_by_title'] ?: ($p->position ?: 'Staff');
             }
         }
@@ -260,6 +265,7 @@ class VerificationFormController extends Controller
                     ->withErrors(['verification_assets' => 'One or more assets do not belong to the selected Unit/Department.'])
                     ->withInput();
             }
+
             $rows[] = [
                 'inventory_list_id' => $row['inventory_list_id'],
                 'remarks'           => $row['remarks'] ?? null,
@@ -274,13 +280,30 @@ class VerificationFormController extends Controller
         return back()->with('success', "Verification Form #{$verification->id} updated.");
     }
 
-    public function destroy(int $id)
+    public function destroy(VerificationForm $verification)
     {
-        $verification = VerificationForm::findOrFail($id);
         $verification->delete();
 
         return redirect()->route('verification-form.index')
             ->with('success', 'Verification Form deleted successfully.');
+    }
+
+    public function restore(int $id)
+    {
+        $verification = VerificationForm::withTrashed()->findOrFail($id);
+        $verification->restore();
+
+        return redirect()->route('verification-form.index')
+            ->with('success', 'Verification Form restored successfully.');
+    }
+
+    public function forceDelete(int $id)
+    {
+        $verification = VerificationForm::withTrashed()->findOrFail($id);
+        $verification->forceDelete();
+
+        return redirect()->route('verification-form.index')
+            ->with('success', 'Verification Form permanently deleted successfully.');
     }
 
     public function verify(Request $request, int $id)
@@ -341,7 +364,7 @@ class VerificationFormController extends Controller
         ])
         ->setPaper('A4', 'portrait');
 
-        return $pdf->stream("Verification_Form_{$verification->id}.pdf");
+        return $pdf->download("Verification_Form_{$verification->id}.pdf");
         // return $pdf->download("Verification_Form_{$verification->id}.pdf");
     }
 }

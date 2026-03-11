@@ -60,6 +60,9 @@ use App\Observers\PersonnelObserver;
 use App\Models\Role;
 use App\Observers\RoleObserver;
 
+use App\Models\VerificationForm;
+use App\Observers\VerificationFormObserver;
+
 use App\Models\InventorySchedulingSignatory;
 use App\Observers\InventorySchedulingSignatoryObserver;
 use App\Models\TransferSignatory;
@@ -101,6 +104,7 @@ class AppServiceProvider extends ServiceProvider
         EquipmentCode::observe(EquipmentCodeObserver::class);
         Personnel::observe(PersonnelObserver::class);
         Role::observe(RoleObserver::class);
+        VerificationForm::observe(VerificationFormObserver::class);
 
 
         InventorySchedulingSignatory::observe(InventorySchedulingSignatoryObserver::class);

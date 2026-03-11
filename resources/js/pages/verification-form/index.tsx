@@ -1,26 +1,34 @@
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head, usePage, Link } from '@inertiajs/react';
-import { useState, useMemo, useEffect } from 'react';
-import { ClipboardCheck, Clock4, CalendarCheck, PlusCircle  } from 'lucide-react';
 import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
 import { formatStatusLabel, ucwords } from '@/types/custom-index';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { CalendarCheck, CircleX, ClipboardCheck, Clock4, EllipsisVertical, Eye, Pencil, PlusCircle, ShieldCheck, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import VerificationFormDeleteModal from './VerificationFormDeleteModal';
 
-import VerificationFormAddModal from './VerificationFormAddModal';
-import VerificationFormManageModal from './VerificationFormManageModal';
-import VerificationFormEditModal from './VerificationFormEditModal';
-import VerificationFormViewModal from './VerificationFormViewModal';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
 import VerificationFormFilterDropdown from '@/components/filters/VerificationFormFilterDropdown';
+import VerificationFormAddModal from './VerificationFormAddModal';
+import VerificationFormEditModal from './VerificationFormEditModal';
+import VerificationFormManageModal from './VerificationFormManageModal';
+import VerificationFormViewModal from './VerificationFormViewModal';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Verification Form', href: '/verification-form' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Verification Form', href: '/verification-form' }];
 
 const verificationSortOptions = [
     { value: 'id', label: 'VF Number' },
@@ -84,12 +92,12 @@ type VerificationFormFull = {
     }[];
     form_approval?: {
         steps: {
-        id: number;
-        label: string;
-        status: string;
-        actor?: { name: string };
-        external_name?: string;
-        external_title?: string;
+            id: number;
+            label: string;
+            status: string;
+            actor?: { name: string };
+            external_name?: string;
+            external_title?: string;
         }[];
     };
 };
@@ -151,12 +159,16 @@ export default function VerificationFormIndex() {
     const [showManageModal, setShowManageModal] = useState(false);
     const [manageId, setManageId] = useState<number | null>(null);
 
+    const [selectedVerificationForDelete, setSelectedVerificationForDelete] = useState<VerificationFormRecord | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedVerificationId, setSelectedVerificationId] = useState<number | null>(null);
 
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedVerification, setSelectedVerification] = useState<ViewingVerification | null>(null);
     const [actionMode, setActionMode] = useState<VerificationAction>('verify');
+
+    const [openActionId, setOpenActionId] = useState<number | null>(null);
 
     const openEditModal = (id: number) => {
         setSelectedVerificationId(id);
@@ -173,7 +185,7 @@ export default function VerificationFormIndex() {
         setSelectedVerification(null);
 
         if (/\/verification-form\/\d+$/.test(window.location.pathname)) {
-        history.back();
+            history.back();
         }
     };
 
@@ -203,21 +215,18 @@ export default function VerificationFormIndex() {
         const term = search.trim().toLowerCase();
 
         return verifications.data.filter((vf) => {
-        const unitName = vf.unit_or_department?.name ?? '';
-        const reqName = vf.requested_by_personnel?.name ?? vf.requested_by_snapshot?.name ?? '';
-        const haystack = `${vf.id} ${unitName} ${reqName} ${vf.status ?? ''}`.toLowerCase();
+            const unitName = vf.unit_or_department?.name ?? '';
+            const reqName = vf.requested_by_personnel?.name ?? vf.requested_by_snapshot?.name ?? '';
+            const haystack = `${vf.id} ${unitName} ${reqName} ${vf.status ?? ''}`.toLowerCase();
 
-        const matchesSearch = !term || haystack.includes(term);
-        const matchesStatus = !filters.status || vf.status === filters.status;
+            const matchesSearch = !term || haystack.includes(term);
+            const matchesStatus = !filters.status || vf.status === filters.status;
 
-        // requester filter matches either unit name or requester name
-        const filterTerm = filters.requester.trim().toLowerCase();
-        const matchesRequester =
-            !filterTerm ||
-            unitName.toLowerCase() === filterTerm ||
-            reqName.toLowerCase() === filterTerm;
+            // requester filter matches either unit name or requester name
+            const filterTerm = filters.requester.trim().toLowerCase();
+            const matchesRequester = !filterTerm || unitName.toLowerCase() === filterTerm || reqName.toLowerCase() === filterTerm;
 
-        return matchesSearch && matchesStatus && matchesRequester;
+            return matchesSearch && matchesStatus && matchesRequester;
         });
     }, [verifications.data, search, filters]);
 
@@ -225,11 +234,8 @@ export default function VerificationFormIndex() {
     const sorted = useMemo(() => {
         const dir = sortDir === 'asc' ? 1 : -1;
         return [...filtered].sort((a, b) => {
-        const getValue = (vf: VerificationFormRecord) =>
-            sortKey === 'verified_at'
-            ? Date.parse(vf.verified_at ?? '') || 0
-            : Number(vf.id) || 0;
-        return (getValue(a) - getValue(b)) * dir;
+            const getValue = (vf: VerificationFormRecord) => (sortKey === 'verified_at' ? Date.parse(vf.verified_at ?? '') || 0 : Number(vf.id) || 0);
+            return (getValue(a) - getValue(b)) * dir;
         });
     }, [filtered, sortKey, sortDir]);
 
@@ -241,15 +247,15 @@ export default function VerificationFormIndex() {
         const opts: { id: number; name: string }[] = [];
 
         verifications.data.forEach((vf) => {
-        const unitName = vf.unit_or_department?.name;
-        const reqName = vf.requested_by_personnel?.name || vf.requested_by_snapshot?.name;
+            const unitName = vf.unit_or_department?.name;
+            const reqName = vf.requested_by_personnel?.name || vf.requested_by_snapshot?.name;
 
-        if (unitName && !opts.some((o) => o.name === unitName)) {
-            opts.push({ id: vf.id, name: unitName });
-        }
-        if (reqName && !opts.some((o) => o.name === reqName)) {
-            opts.push({ id: vf.id, name: reqName });
-        }
+            if (unitName && !opts.some((o) => o.name === unitName)) {
+                opts.push({ id: vf.id, name: unitName });
+            }
+            if (reqName && !opts.some((o) => o.name === reqName)) {
+                opts.push({ id: vf.id, name: reqName });
+            }
         });
 
         return opts;
@@ -271,7 +277,7 @@ export default function VerificationFormIndex() {
                 {/* KPI Cards */}
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
                                 <CalendarCheck className="h-7 w-7 text-blue-600" />
                             </div>
@@ -281,7 +287,7 @@ export default function VerificationFormIndex() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                 <ClipboardCheck className="h-7 w-7 text-green-600" />
                             </div>
@@ -291,7 +297,7 @@ export default function VerificationFormIndex() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
                                 <Clock4 className="h-7 w-7 text-yellow-600" />
                             </div>
@@ -305,7 +311,7 @@ export default function VerificationFormIndex() {
 
                 {/* Search + Sort */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 w-96">
+                    <div className="flex w-96 items-center gap-2">
                         <Input
                             type="text"
                             placeholder="Search by form no., unit, requester, or status..."
@@ -335,10 +341,7 @@ export default function VerificationFormIndex() {
                         />
 
                         {canCreate && (
-                            <Button
-                                className="cursor-pointer"
-                                onClick={() => setShowAddModal(true)}
-                            >
+                            <Button className="cursor-pointer" onClick={() => setShowAddModal(true)}>
                                 <PlusCircle className="mr-1 h-4 w-4" />
                                 Add Verification Form
                             </Button>
@@ -347,7 +350,7 @@ export default function VerificationFormIndex() {
                 </div>
 
                 {/* Table */}
-                <div className="rounded-lg overflow-x-auto border">
+                <div className="overflow-x-auto rounded-lg border">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted text-foreground">
@@ -362,79 +365,132 @@ export default function VerificationFormIndex() {
                             </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">
-                            {pageItems.length > 0 ? (pageItems.map((vf) => {
-                                const unitName = vf.unit_or_department?.name ?? '—';
-                                const requesterName = vf.requested_by_personnel?.name || vf.requested_by_snapshot?.name || '—';
+                            {pageItems.length > 0 ? (
+                                pageItems.map((vf) => {
+                                    const unitName = vf.unit_or_department?.name ?? '—';
+                                    const requesterName = vf.requested_by_personnel?.name || vf.requested_by_snapshot?.name || '—';
 
-                                return (
-                                    <TableRow key={vf.id}>
-                                        <TableCell>VF-{vf.id.toString().padStart(3, '0')}</TableCell>
-                                        <TableCell>{unitName}</TableCell>
-                                        <TableCell className="whitespace-pre-wrap break-words">{requesterName}</TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant={
-                                                    vf.status === 'pending'
-                                                    ? 'Pending'
-                                                    : vf.status === 'verified'
-                                                    ? 'Completed'
-                                                    : vf.status === 'rejected'
-                                                    ? 'Cancelled'
-                                                    : 'secondary'
-                                                }
-                                                className="capitalize"
-                                            >
-                                                {formatStatusLabel(vf.status)}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>{formatDateLong(vf.verified_at)}</TableCell>
-                                        <TableCell className="whitespace-pre-wrap break-words">{ucwords(vf.notes ?? '—')}</TableCell>
-                                        <TableCell className="whitespace-pre-wrap break-words">{ucwords(vf.remarks ?? '—')}</TableCell>
-                                        <TableCell className="flex justify-center gap-2">
-                                            <Button
-                                                asChild
-                                                className="cursor-pointer"
-                                                variant={canView ? 'default' : 'outline'}
-                                                disabled={!canView}
-                                            >
-                                                <Link href={`/verification-form/${vf.id}`} preserveScroll>
-                                                    View
-                                                </Link>
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setManageId(vf.id);
-                                                    setShowManageModal(true);
-                                                }}
-                                            >
-                                                Edit
-                                            </Button>
-                                            <Button
-                                                variant="success"
-                                                className="font-semibold cursor-pointer disabled:bg-gray-600"
-                                                disabled={vf.status !== 'pending' || !canVerify}
-                                                onClick={() => openEditModal(vf.id)}
-                                            >
-                                                Verify
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                className="font-semibold cursor-pointer disabled:bg-gray-600"
-                                                disabled={vf.status !== 'pending' || !canVerify}
-                                                onClick={() => {
-                                                    setSelectedVerificationId(vf.id);
-                                                    setActionMode('reject');
-                                                    setShowEditModal(true);
-                                                }}
-                                            >
-                                                Reject
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })
+                                    return (
+                                        <TableRow key={vf.id}>
+                                            <TableCell>VF-{vf.id.toString().padStart(3, '0')}</TableCell>
+                                            <TableCell>{unitName}</TableCell>
+                                            <TableCell className="break-words whitespace-pre-wrap">{requesterName}</TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={
+                                                        vf.status === 'pending'
+                                                            ? 'Pending'
+                                                            : vf.status === 'verified'
+                                                              ? 'Completed'
+                                                              : vf.status === 'rejected'
+                                                                ? 'Cancelled'
+                                                                : 'secondary'
+                                                    }
+                                                    className="capitalize"
+                                                >
+                                                    {formatStatusLabel(vf.status)}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{formatDateLong(vf.verified_at)}</TableCell>
+                                            <TableCell className="break-words whitespace-pre-wrap">{ucwords(vf.notes ?? '—')}</TableCell>
+                                            <TableCell className="break-words whitespace-pre-wrap">{ucwords(vf.remarks ?? '—')}</TableCell>
+                                            <TableCell className="text-center">
+                                                <DropdownMenu
+                                                    modal={false}
+                                                    open={openActionId === vf.id}
+                                                    onOpenChange={(open) => setOpenActionId(open ? vf.id : null)}
+                                                >
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 rounded-full border border-transparent transition hover:border-border hover:bg-muted"
+                                                        >
+                                                            <EllipsisVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+
+                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl border bg-white p-2 shadow-lg">
+                                                        <DropdownMenuLabel className="px-2 py-1 text-xs font-medium text-muted-foreground">
+                                                            Actions
+                                                        </DropdownMenuLabel>
+
+                                                        <DropdownMenuSeparator />
+
+                                                        <DropdownMenuItem asChild disabled={!canView} className="cursor-pointer rounded-md">
+                                                            <Link
+                                                                href={`/verification-form/${vf.id}`}
+                                                                preserveScroll
+                                                                onClick={() => setOpenActionId(null)}
+                                                                className="flex items-center gap-2"
+                                                            >
+                                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                                                <span>View</span>
+                                                            </Link>
+                                                        </DropdownMenuItem>
+
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer rounded-md"
+                                                            onClick={() => {
+                                                                setOpenActionId(null);
+                                                                setManageId(vf.id);
+                                                                setShowManageModal(true);
+                                                            }}
+                                                        >
+                                                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                                                            <span>Edit</span>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer rounded-md text-red-600 focus:text-red-600"
+                                                            onSelect={(e) => {
+                                                                e.preventDefault();
+                                                                console.log('Delete menu clicked:', vf.id);
+
+                                                                setOpenActionId(null);
+                                                                setSelectedVerificationForDelete(vf);
+
+                                                                setTimeout(() => {
+                                                                    setShowDeleteModal(true);
+                                                                }, 0);
+                                                            }}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                                            <span>Delete</span>
+                                                        </DropdownMenuItem>
+
+                                                        <DropdownMenuSeparator />
+
+                                                        <DropdownMenuItem
+                                                            disabled={vf.status !== 'pending' || !canVerify}
+                                                            className="cursor-pointer rounded-md text-green-600 focus:text-green-600"
+                                                            onClick={() => {
+                                                                setOpenActionId(null);
+                                                                openEditModal(vf.id);
+                                                            }}
+                                                        >
+                                                            <ShieldCheck className="h-4 w-4 text-green-600" />
+                                                            <span>Verify</span>
+                                                        </DropdownMenuItem>
+
+                                                        <DropdownMenuItem
+                                                            disabled={vf.status !== 'pending' || !canVerify}
+                                                            className="cursor-pointer rounded-md text-red-600 focus:text-red-600"
+                                                            onClick={() => {
+                                                                setOpenActionId(null);
+                                                                setSelectedVerificationId(vf.id);
+                                                                setActionMode('reject');
+                                                                setShowEditModal(true);
+                                                            }}
+                                                        >
+                                                            <CircleX className="h-4 w-4 text-red-500" />
+                                                            <span>Reject</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
@@ -461,12 +517,7 @@ export default function VerificationFormIndex() {
                 assets={assets}
             />
 
-            <VerificationFormEditModal
-                show={showEditModal}
-                onClose={closeEditModal}
-                verificationId={selectedVerificationId}
-                mode={actionMode}
-            />
+            <VerificationFormEditModal show={showEditModal} onClose={closeEditModal} verificationId={selectedVerificationId} mode={actionMode} />
 
             <VerificationFormManageModal
                 show={showManageModal}
@@ -480,14 +531,27 @@ export default function VerificationFormIndex() {
                 assets={assets}
                 verifications={verifications}
             />
+            {showDeleteModal && selectedVerificationForDelete && (
+                <VerificationFormDeleteModal
+                    verification={selectedVerificationForDelete}
+                    onClose={() => {
+                        setShowDeleteModal(false);
+                        setSelectedVerificationForDelete(null);
+                    }}
+                    onDelete={(id) => {
+                        router.delete(route('verification-form.destroy', id), {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDeleteModal(false);
+                                setSelectedVerificationForDelete(null);
+                            },
+                        });
+                    }}
+                />
+            )}
 
             {selectedVerification && (
-                <VerificationFormViewModal
-                    open={showViewModal}
-                    onClose={closeViewVerification}
-                    viewing={selectedVerification}
-                    pmoHead={pmoHead}
-                />
+                <VerificationFormViewModal open={showViewModal} onClose={closeViewVerification} viewing={selectedVerification} pmoHead={pmoHead} />
             )}
         </AppLayout>
     );

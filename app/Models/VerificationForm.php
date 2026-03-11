@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class VerificationForm extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'unit_or_department_id',
         'requested_by_personnel_id',
