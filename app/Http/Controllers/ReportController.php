@@ -148,8 +148,8 @@ class ReportController extends Controller
             ])
             ->setPaper('a4', 'landscape');
 
-        // return $pdf->download($fileName);
-        return $pdf->stream($fileName);
+        return $pdf->download($fileName);
+        // return $pdf->stream($fileName);
     }
 
     public function index(Request $request)

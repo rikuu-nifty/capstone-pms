@@ -62,17 +62,18 @@ export default function TurnoverDisposalEditModal({
   useEffect(() => {
     if (!show) return;
 
-     console.log('📅 turnoverDisposal.document_date =', turnoverDisposal.document_date);
+    console.log('📅 turnoverDisposal.document_date =', turnoverDisposal.document_date);
     setData((prev) => ({
       ...prev,
       issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
       type: turnoverDisposal.type,
       turnover_category: turnoverDisposal.turnover_category ?? null,
-      
+
       receiving_office_id: turnoverDisposal.receiving_office_id ?? null,
+      external_recipient: turnoverDisposal.external_recipient ?? '',
+
       description: turnoverDisposal.description ?? '',
       personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
-      // document_date: formatForInputDate(turnoverDisposal.document_date) ?? '',
       document_date: formatForPrefillDate(turnoverDisposal.document_date) ?? '',
       status: turnoverDisposal.status,
       remarks: turnoverDisposal.remarks ?? '',
@@ -96,15 +97,10 @@ export default function TurnoverDisposalEditModal({
     [data.turnover_disposal_assets]
   );
 
-  // const filteredAssets = useMemo<InventoryList[]>(() => {
-  //   if (!data.issuing_office_id) return [];
-  //   return assets.filter((a) => a.unit_or_department_id === data.issuing_office_id && !selectedIds.has(a.id));
-  // }, [assets, data.issuing_office_id, selectedIds]);
-
   const filteredAssets = useMemo<InventoryList[]>(() => {
-  if (!data.issuing_office_id) return [];
+    if (!data.issuing_office_id) return [];
 
-  return assets.filter((a) => {
+    return assets.filter((a) => {
       const matchesOffice = a.unit_or_department_id === data.issuing_office_id;
       const notSelected = !selectedIds.has(a.id);
       const matchesPersonnel = !data.personnel_id || a.assigned_to === data.personnel_id;
@@ -120,27 +116,26 @@ export default function TurnoverDisposalEditModal({
     let hasError = false;
 
     if (data.is_donation) {
-        const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
-        const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+      const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
+      const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
 
-        if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
-            hasError = true;
-            const errorMessage = 'For Donations, either External Recipient or Receiving Office must be filled.';
-            setError('external_recipient', errorMessage);
-            setError('receiving_office_id', errorMessage);
-        }
+      if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
+        hasError = true;
+        const errorMessage = 'For Donations, either External Recipient or Receiving Office must be filled.';
+        setError('external_recipient', errorMessage);
+        setError('receiving_office_id', errorMessage);
+      }
     } else {
-        const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+      const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
 
-        if (isReceivingOfficeEmpty) {
-            hasError = true;
-            setError('receiving_office_id', 'Receiving Office is required when not a donation.');
-        }
+      if (isReceivingOfficeEmpty) {
+        hasError = true;
+        setError('receiving_office_id', 'Receiving Office is required when not a donation.');
+      }
     }
 
     if (hasError) {
-        // Stop the form submission if validation failed
-        return;
+      return;
     }
 
     put(`/turnover-disposal/${turnoverDisposal.id}`, {
@@ -367,7 +362,6 @@ export default function TurnoverDisposalEditModal({
             });
 
             if (pmoUnit) {
-              // Ensure receiving_office_id is always set
               if (data.receiving_office_id !== pmoUnit.id) {
                 setData('receiving_office_id', pmoUnit.id);
               }
@@ -427,17 +421,15 @@ export default function TurnoverDisposalEditModal({
               ? { value: data.personnel_id!, label: personnels.find(p => p.id === data.personnel_id)!.full_name }
               : null
           }
-          // onChange={(opt) => setData('personnel_id', opt?.value ?? null)}
           onChange={(opt) => {
             const id = opt?.value ?? null;
             setData('personnel_id', id);
-            setData('turnover_disposal_assets', []); // reset asset list
-            setShowAssetDropdown([true]); // reset dropdown
+            setData('turnover_disposal_assets', []);
+            setShowAssetDropdown([true]);
           }}
         />
         {errors.personnel_id && <p className="mt-1 text-xs text-red-500">{errors.personnel_id}</p>}
       </div>
-
 
       {/* Document Date */}
       <div className="col-span-1">
@@ -490,7 +482,6 @@ export default function TurnoverDisposalEditModal({
           )}
         </div>
 
-        {/* Add dropdown(s) */}
         {showAssetDropdown.map(
           (visible, index) =>
             visible && (
@@ -498,23 +489,17 @@ export default function TurnoverDisposalEditModal({
                 <Select<Option, false>
                   key={`asset-${data.issuing_office_id}-${index}-${data.turnover_disposal_assets.length}`}
                   className="w-full text-sm"
-                  // isDisabled={!data.issuing_office_id}
                   isDisabled={!data.issuing_office_id || !data.personnel_id}
-
                   options={filteredAssets.map((a) => ({ value: a.id, label: `${a.serial_no} – ${a.asset_name ?? ''}` }))}
-                  // placeholder={data.issuing_office_id ? 'Add an asset...' : 'Select an Issuing Office first'}
-                  placeholder={ !data.issuing_office_id ? 'Select an Issuing Office first' : !data.personnel_id
+                  placeholder={
+                    !data.issuing_office_id ? 'Select an Issuing Office first' : !data.personnel_id
                       ? 'Select Personnel in Charge first'
                       : 'Add an asset...'
                   }
-
-                  // noOptionsMessage={() => (data.issuing_office_id ? 'No available assets' : 'Select an Issuing Office first')}
-
                   noOptionsMessage={() => !data.issuing_office_id ? 'Select an Issuing Office first' : !data.personnel_id
                       ? 'Select Personnel in Charge first'
                       : 'No available assets'
                   }
-                  
                   onChange={(opt: SingleValue<Option>) => {
                     if (opt && !selectedIds.has(opt.value)) {
                       addLine(opt.value);

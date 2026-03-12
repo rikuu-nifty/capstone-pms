@@ -647,6 +647,21 @@ const filteredData: ChartData[] = React.useMemo(() => {
                   Download as
                 </p>
                 <div className="mb-2 border-t" />
+                   <button
+                  onClick={() => {
+                    const query = buildQuery(filters);
+                    window.open(
+                      route('reports.inventory-sheet.export.pdf') +
+                        '?' +
+                        query,
+                      '_blank'
+                    );
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                >
+                  <FileText className="h-4 w-4 text-red-600" />
+                  PDF
+                </button>
                 <button
                   onClick={() => {
                     const query = buildQuery(filters);
@@ -663,21 +678,7 @@ const filteredData: ChartData[] = React.useMemo(() => {
                   Excel
                 </button>
 
-                <button
-                  onClick={() => {
-                    const query = buildQuery(filters);
-                    window.open(
-                      route('reports.inventory-sheet.export.pdf') +
-                        '?' +
-                        query,
-                      '_blank'
-                    );
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                >
-                  <FileText className="h-4 w-4 text-red-600" />
-                  PDF
-                </button>
+             
               </PopoverContent>
             </Popover>
           </div>

@@ -290,16 +290,18 @@ class TurnoverDisposal extends Model
         }
     }
 
-    public function updateDetails(array $payload): void
+   public function updateDetails(array $payload): void
     {
         $this->fill([
             'issuing_office_id'   => $payload['issuing_office_id'],
             'type'                => $payload['type'],
             'turnover_category'   => $payload['turnover_category'] ?? null,
 
-            'receiving_office_id' => $payload['receiving_office_id'],
+            'receiving_office_id' => $payload['receiving_office_id'] ?? null,
+            'external_recipient'  => $payload['external_recipient'] ?? null,
+
             'description'         => $payload['description'] ?? null,
-            'personnel_in_charge' => $payload['personnel_in_charge'],
+            'personnel_in_charge' => $payload['personnel_in_charge'] ?? null,
             'personnel_id'        => $payload['personnel_id'],
             'document_date'       => $payload['document_date'],
             'status'              => $payload['status'],

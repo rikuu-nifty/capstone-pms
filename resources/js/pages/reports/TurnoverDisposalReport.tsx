@@ -484,7 +484,7 @@ export default function TurnoverDisposalReport() {
                                 onChange={(opt) => updateFilter("is_donation", opt?.value ?? null)}
                             />
                         </div>
-                        <pre>{JSON.stringify(filters.is_donation, null, 2)}</pre>
+                       
                     </div>
 
                     {/* Action Buttons */}
@@ -562,6 +562,20 @@ export default function TurnoverDisposalReport() {
                                     Download as
                                 </p>
                                 <div className="mb-2 border-t" />
+                                                                <button
+                                    onClick={() => {
+                                        const query = buildQuery(filters);
+                                        const pdfRoute = exportType === "donations"
+                                            ? route("reports.turnover-disposal.export.donations.pdf")
+                                            : route("reports.turnover-disposal.export.pdf");
+
+                                        window.open(`${pdfRoute}?${query}`, "_blank");
+                                    }}
+                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                >
+                                    <FileText className="h-4 w-4 text-red-600" />
+                                    PDF
+                                </button>
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
@@ -576,20 +590,7 @@ export default function TurnoverDisposalReport() {
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        const query = buildQuery(filters);
-                                        const pdfRoute = exportType === "donations"
-                                            ? route("reports.turnover-disposal.export.donations.pdf")
-                                            : route("reports.turnover-disposal.export.pdf");
 
-                                        window.open(`${pdfRoute}?${query}`, "_blank");
-                                    }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                >
-                                    <FileText className="h-4 w-4 text-red-600" />
-                                    PDF
-                                </button>
                             </PopoverContent>
                         </Popover>
                     </div>

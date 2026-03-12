@@ -115,8 +115,8 @@ class TurnoverDisposalReportController extends Controller
         ])->setPaper('A4', 'landscape')
         ->setOption('isPhpEnabled', true);
 
-        // return $pdf->download('Turnover_Disposal_Report -' . now()->format('Y-m-d') . '.pdf');
-        return $pdf->stream('Turnover_Disposal_Report');
+        return $pdf->download('Turnover_Disposal_Report -' . now()->format('Y-m-d') . '.pdf');
+        // return $pdf->stream('Turnover_Disposal_Report');
     }
 
     public function exportDonationPdf(Request $request)
@@ -132,8 +132,8 @@ class TurnoverDisposalReportController extends Controller
             ->setOption('isPhpEnabled', true);
 
         $timestamp = now()->format('Y-m-d_H-i-s');
-        // return $pdf->download("Donation_Summary_Report_{$timestamp}.pdf");
-        return $pdf->stream("Donation_Summary_Report_{$timestamp}.pdf");
+        return $pdf->download("Donation_Summary_Report_{$timestamp}.pdf");
+        // return $pdf->stream("Donation_Summary_Report_{$timestamp}.pdf");
     }
 
     public function exportDonationExcel(Request $request)
