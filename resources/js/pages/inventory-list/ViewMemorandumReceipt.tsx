@@ -234,7 +234,7 @@ export function ViewMemorandumReceiptModal({ open, onClose, assets, memo_no, cur
                     onClick={() => window.open(`/inventory-list/memorandum-receipts/${memoNo}/export-pdf`, '_blank')}
                     className="inline-block w-full cursor-pointer rounded bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50 sm:w-auto sm:text-sm"
                 >
-                    🖨️ Print Form
+                    Print Form
                 </Button>
             </div>
 

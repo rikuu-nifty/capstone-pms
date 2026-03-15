@@ -253,7 +253,7 @@ export default function VerificationFormViewModal({
             }
             className="inline-block cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50"
             >
-            🖨️ Print Verification Form
+            Print Verification Form
             </Button>
         </div>
         </ViewModal>

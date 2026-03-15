@@ -35,16 +35,23 @@ class TurnoverDisposalController extends Controller
         $unitOrDepartments = UnitOrDepartment::all();
         $personnels = Personnel::activeForAssignments();
 
-        $turnoverDisposals = TurnoverDisposal::with([
-            'turnoverDisposalAssets.assets.assetModel.category',
-            'issuingOffice',
-            'receivingOffice',
-            'turnoverDisposalAssets.assets.building',
-            'turnoverDisposalAssets.assets.buildingRoom',
-            'turnoverDisposalAssets.assets.subArea',
-            'turnoverDisposalAssets.assets.assetModel.equipmentCode',
-        ])
-        ->withCount('turnoverDisposalAssets as asset_count')
+      $turnoverDisposals = TurnoverDisposal::with([
+        'turnoverDisposalAssets.assets.assetModel.category',
+        'issuingOffice',
+        'receivingOffice',
+        'turnoverDisposalAssets.assets.building',
+        'turnoverDisposalAssets.assets.buildingRoom',
+        'turnoverDisposalAssets.assets.subArea',
+        'turnoverDisposalAssets.assets.assetModel.equipmentCode',
+
+        'formApproval',
+        'formApproval.steps' => fn($q) => $q
+            ->whereIn('code', ['prepared_by', 'external_noted_by', 'noted_by'])
+            ->whereIn('status', ['pending', 'approved', 'rejected', 'skipped'])
+            ->orderBy('step_order'),
+        'formApproval.steps.actor:id,name',
+    ])
+            ->withCount('turnoverDisposalAssets as asset_count')
         ->latest()
         ->get();
 
@@ -173,7 +180,6 @@ class TurnoverDisposalController extends Controller
             'turnover_disposal_assets'              => ['required', 'array', 'min:1'],
             'turnover_disposal_assets.*.asset_id'   => ['required', 'integer', Rule::exists('inventory_lists', 'id')],
             'turnover_disposal_assets.*.remarks'    => ['nullable', 'string'],
-
         ]);
 
         if (
@@ -184,6 +190,28 @@ class TurnoverDisposalController extends Controller
             return back()
                 ->withErrors(['external_recipient' => 'Please specify either a receiving office or an external recipient for this donation.'])
                 ->withInput();
+        }
+
+        $turnoverDisposal->load('formApproval');
+
+        $canEditFinalStatus = $turnoverDisposal->formApproval?->status === 'approved';
+
+        if (!$canEditFinalStatus) {
+            if (($validated['status'] ?? null) !== $turnoverDisposal->status) {
+                return back()
+                    ->withErrors([
+                        'status' => 'Status cannot be changed until both Dean/Head and PMO Head approvals are completed.'
+                    ])
+                    ->withInput();
+            }
+        } else {
+            if (!in_array($validated['status'], ['completed', 'cancelled'], true)) {
+                return back()
+                    ->withErrors([
+                        'status' => 'Once all approvals are completed, only Completed or Cancelled can be selected.'
+                    ])
+                    ->withInput();
+            }
         }
 
         $lines = $validated['turnover_disposal_assets'];
@@ -203,7 +231,7 @@ class TurnoverDisposalController extends Controller
         if ($duplicateExists) {
             return back()->withErrors([
                 'turnover_disposal_assets' => 'One or more selected assets already belong to another active turnover/disposal record. 
-        Please complete, cancel, or reject the existing record before updating this one.'
+    Please complete, cancel, or reject the existing record before updating this one.'
             ]);
         }
 
@@ -221,7 +249,8 @@ class TurnoverDisposalController extends Controller
             'turnoverDisposalAssets.assets.building',
             'turnoverDisposalAssets.assets.buildingRoom',
             'turnoverDisposalAssets.assets.subArea',
-           'formApproval.steps' => fn($q) =>
+            'formApproval',
+            'formApproval.steps' => fn($q) =>
                 $q->whereIn('code', ['external_noted_by','noted_by'])
                 ->whereIn('status', ['pending', 'approved', 'rejected'])
                 ->orderByDesc('acted_at'),

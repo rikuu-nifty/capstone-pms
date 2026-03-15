@@ -1,536 +1,494 @@
-import React, { useMemo, useEffect, useState } from 'react';
-import Select, { SingleValue } from 'react-select';
 import { useForm } from '@inertiajs/react';
+import React, { useEffect, useMemo, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
+import Select, { SingleValue } from 'react-select';
 
 import EditModal from '@/components/modals/EditModal';
-import { UnitOrDepartment, InventoryList, formatEnums, formatForPrefillDate, Personnel } from '@/types/custom-index';
+import { formatEnums, formatForPrefillDate, InventoryList, Personnel, UnitOrDepartment } from '@/types/custom-index';
 import { TurnoverDisposalFormData, TurnoverDisposals } from '@/types/turnover-disposal';
-import type { TurnoverDisposalAssetInput, TdaStatus } from '@/types/turnover-disposal-assets';
+import type { TdaStatus, TurnoverDisposalAssetInput } from '@/types/turnover-disposal-assets';
 import AssetTdaItem from './AssetTdaItem';
 
 type Option = { value: number; label: string };
 
 interface TurnoverDisposalEditModalProps {
-  show: boolean;
-  onClose: () => void;
-  turnoverDisposal: TurnoverDisposals;
-  unitOrDepartments: UnitOrDepartment[];
-  assets: InventoryList[];
-  personnels: Personnel[];
+    show: boolean;
+    onClose: () => void;
+    turnoverDisposal: TurnoverDisposals;
+    unitOrDepartments: UnitOrDepartment[];
+    assets: InventoryList[];
+    personnels: Personnel[];
 }
 
 const typeOptions = ['turnover', 'disposal'] as const;
-const statusOptions = ['pending_review', 'approved', 'rejected', 'cancelled', 'completed'] as const;
 const categoryOptions = ['sharps', 'breakages', 'chemical', 'hazardous', 'non_hazardous'] as const;
+const finalStatusOptions = ['cancelled', 'completed'] as const;
 
 export default function TurnoverDisposalEditModal({
-  show,
-  onClose,
-  turnoverDisposal,
-  unitOrDepartments,
-  assets,
-  personnels,
+    show,
+    onClose,
+    turnoverDisposal,
+    unitOrDepartments,
+    assets,
+    personnels,
 }: TurnoverDisposalEditModalProps) {
-  const { data, setData, put, processing, errors, clearErrors, setError } = useForm<TurnoverDisposalFormData>({
-    issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
-    type: turnoverDisposal.type,
-    turnover_category: turnoverDisposal.turnover_category ?? null,
+    const { data, setData, put, processing, errors, clearErrors, setError } = useForm<TurnoverDisposalFormData>({
+        issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
+        type: turnoverDisposal.type,
+        turnover_category: turnoverDisposal.turnover_category ?? null,
 
-    receiving_office_id: turnoverDisposal.receiving_office_id ?? null,
-    external_recipient: turnoverDisposal.external_recipient ?? '',
+        receiving_office_id: turnoverDisposal.receiving_office_id ?? null,
+        external_recipient: turnoverDisposal.external_recipient ?? '',
 
-    description: turnoverDisposal.description ?? '',
-    personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
-    document_date: turnoverDisposal.document_date ?? '',
-    status: turnoverDisposal.status,
-    remarks: turnoverDisposal.remarks ?? '',
-    is_donation: turnoverDisposal.is_donation ?? false,
+        description: turnoverDisposal.description ?? '',
+        personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
+        document_date: turnoverDisposal.document_date ?? '',
+        status: turnoverDisposal.status,
+        remarks: turnoverDisposal.remarks ?? '',
+        is_donation: turnoverDisposal.is_donation ?? false,
 
-    turnover_disposal_assets: (turnoverDisposal.turnover_disposal_assets ?? []).map<TurnoverDisposalAssetInput>((li) => ({
-      asset_id: li.asset_id,
-      asset_status: li.asset_status as TdaStatus,
-      date_finalized: li.date_finalized ?? null,
-      remarks: li.remarks ?? '',
-    })),
+        turnover_disposal_assets: (turnoverDisposal.turnover_disposal_assets ?? []).map<TurnoverDisposalAssetInput>((li) => ({
+            asset_id: li.asset_id,
+            asset_status: li.asset_status as TdaStatus,
+            date_finalized: li.date_finalized ?? null,
+            remarks: li.remarks ?? '',
+        })),
 
-    personnel_id: turnoverDisposal.personnel_id ?? null,
-  });
-
-  const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
-
-  useEffect(() => {
-    if (!show) return;
-
-    console.log('📅 turnoverDisposal.document_date =', turnoverDisposal.document_date);
-    setData((prev) => ({
-      ...prev,
-      issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
-      type: turnoverDisposal.type,
-      turnover_category: turnoverDisposal.turnover_category ?? null,
-
-      receiving_office_id: turnoverDisposal.receiving_office_id ?? null,
-      external_recipient: turnoverDisposal.external_recipient ?? '',
-
-      description: turnoverDisposal.description ?? '',
-      personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
-      document_date: formatForPrefillDate(turnoverDisposal.document_date) ?? '',
-      status: turnoverDisposal.status,
-      remarks: turnoverDisposal.remarks ?? '',
-      is_donation: turnoverDisposal.is_donation ?? false,
-
-      turnover_disposal_assets: (turnoverDisposal.turnover_disposal_assets ?? []).map<TurnoverDisposalAssetInput>((li) => ({
-        asset_id: li.asset_id,
-        asset_status: li.asset_status as TdaStatus,
-        date_finalized: li.date_finalized ?? null,
-        remarks: li.remarks ?? '',
-      })),
-
-      personnel_id: turnoverDisposal.personnel_id ?? null,
-    }));
-    clearErrors();
-    setShowAssetDropdown([true]);
-  }, [show, clearErrors, setData, turnoverDisposal]);
-
-  const selectedIds = useMemo(
-    () => new Set<number>(data.turnover_disposal_assets.map((li) => li.asset_id)),
-    [data.turnover_disposal_assets]
-  );
-
-  const filteredAssets = useMemo<InventoryList[]>(() => {
-    if (!data.issuing_office_id) return [];
-
-    return assets.filter((a) => {
-      const matchesOffice = a.unit_or_department_id === data.issuing_office_id;
-      const notSelected = !selectedIds.has(a.id);
-      const matchesPersonnel = !data.personnel_id || a.assigned_to === data.personnel_id;
-
-      return matchesOffice && notSelected && matchesPersonnel;
+        personnel_id: turnoverDisposal.personnel_id ?? null,
     });
-  }, [assets, data.issuing_office_id, data.personnel_id, selectedIds]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    clearErrors();
+    const [showAssetDropdown, setShowAssetDropdown] = useState<boolean[]>([true]);
 
-    let hasError = false;
+    useEffect(() => {
+        if (!show) return;
 
-    if (data.is_donation) {
-      const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
-      const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+        console.log('📅 turnoverDisposal.document_date =', turnoverDisposal.document_date);
+        setData((prev) => ({
+            ...prev,
+            issuing_office_id: turnoverDisposal.issuing_office_id ?? 0,
+            type: turnoverDisposal.type,
+            turnover_category: turnoverDisposal.turnover_category ?? null,
 
-      if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
-        hasError = true;
-        const errorMessage = 'For Donations, either External Recipient or Receiving Office must be filled.';
-        setError('external_recipient', errorMessage);
-        setError('receiving_office_id', errorMessage);
-      }
-    } else {
-      const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+            receiving_office_id: turnoverDisposal.receiving_office_id ?? null,
+            external_recipient: turnoverDisposal.external_recipient ?? '',
 
-      if (isReceivingOfficeEmpty) {
-        hasError = true;
-        setError('receiving_office_id', 'Receiving Office is required when not a donation.');
-      }
-    }
+            description: turnoverDisposal.description ?? '',
+            personnel_in_charge: turnoverDisposal.personnel_in_charge ?? '',
+            document_date: formatForPrefillDate(turnoverDisposal.document_date) ?? '',
+            status: turnoverDisposal.status,
+            remarks: turnoverDisposal.remarks ?? '',
+            is_donation: turnoverDisposal.is_donation ?? false,
 
-    if (hasError) {
-      return;
-    }
+            turnover_disposal_assets: (turnoverDisposal.turnover_disposal_assets ?? []).map<TurnoverDisposalAssetInput>((li) => ({
+                asset_id: li.asset_id,
+                asset_status: li.asset_status as TdaStatus,
+                date_finalized: li.date_finalized ?? null,
+                remarks: li.remarks ?? '',
+            })),
 
-    put(`/turnover-disposal/${turnoverDisposal.id}`, {
-      preserveScroll: true,
-      onSuccess: () => {
+            personnel_id: turnoverDisposal.personnel_id ?? null,
+        }));
         clearErrors();
         setShowAssetDropdown([true]);
-        onClose();
-      },
-    });
-  };
+    }, [show, clearErrors, setData, turnoverDisposal]);
 
-  const addLine = (asset_id: number) => {
-    const next: TurnoverDisposalAssetInput = {
-      asset_id,
-      asset_status: 'pending',
-      date_finalized: null,
-      remarks: '',
-    };
-    setData('turnover_disposal_assets', [...data.turnover_disposal_assets, next]);
-  };
+    const selectedIds = useMemo(() => new Set<number>(data.turnover_disposal_assets.map((li) => li.asset_id)), [data.turnover_disposal_assets]);
 
-  const handleClose = () => {
-    onClose();
-    clearErrors();
-    setShowAssetDropdown([true]);
-  };
+    const filteredAssets = useMemo<InventoryList[]>(() => {
+        if (!data.issuing_office_id) return [];
 
-  return (
-    <EditModal
-      show={show}
-      onClose={handleClose}
-      title={`Edit ${formatEnums(turnoverDisposal.type)} Record #${turnoverDisposal.id}`}
-      onSubmit={handleSubmit}
-      processing={processing}
-    >
-      {/* Type */}
-      <div className="col-span-1">
-        <label className="mb-1 block font-medium">Type</label>
-        <select
-          className="w-full rounded-lg border p-2"
-          value={data.type}
-          onChange={(e) => setData('type', e.target.value as (typeof typeOptions)[number])}
-        >
-          <option value="">Select Record Type</option>
-          {typeOptions.map((type) => (
-            <option key={type} value={type}>
-              {formatEnums(type)}
-            </option>
-          ))}
-        </select>
-        {errors.type && <p className="mt-1 text-xs text-red-500">{errors.type}</p>}
-      </div>
+        return assets.filter((a) => {
+            const matchesOffice = a.unit_or_department_id === data.issuing_office_id;
+            const notSelected = !selectedIds.has(a.id);
+            const matchesPersonnel = !data.personnel_id || a.assigned_to === data.personnel_id;
 
-      {/* Turnover Category */}
-      <div className="col-span-1">
-        <label className="mb-1 block font-medium">Turnover Category</label>
-        <select
-          className="w-full rounded-lg border p-2"
-          value={data.turnover_category ?? ''}
-          onChange={(e) =>
-            setData(
-              'turnover_category',
-              (e.target.value === '' ? null : e.target.value as (typeof categoryOptions)[number])
-            )
-          }
-        >
-          <option value="">Select Category</option>
-          {categoryOptions.map((cat) => (
-            <option key={cat} value={cat}>
-              {formatEnums(cat)}
-            </option>
-          ))}
-        </select>
-        {errors.turnover_category && <p className="mt-1 text-xs text-red-500">{errors.turnover_category}</p>}
-      </div>
+            return matchesOffice && notSelected && matchesPersonnel;
+        });
+    }, [assets, data.issuing_office_id, data.personnel_id, selectedIds]);
 
-      {/* Donation Checkbox */}
-      <div className="col-span-2 flex items-center gap-2">
-        <input
-          id="is_donation"
-          type="checkbox"
-          className="cursor-pointer"
-          checked={!!data.is_donation}
-          onChange={(e) => setData('is_donation', e.target.checked)}
-        />
-        <label 
-          htmlFor="is_donation" 
-          className="text-sm font-medium"
-        >
-          For Donation
-        </label>
-      </div>
-
-      {/* External Recipient */}
-      <div className="col-span-2">
-        <label className="mb-1 block font-medium">External Recipient</label>
-        <input
-          type="text"
-          className={`w-full rounded-lg border p-2 ${!data.is_donation ? 'bg-gray-100 text-gray-500' : ''}`}
-          placeholder="Enter recipient name or organization for donation"
-          value={data.external_recipient ?? ''}
-          onChange={(e) => setData('external_recipient', e.target.value)}
-          disabled={!data.is_donation}
-        />
-        {errors.external_recipient && (
-          <p className="mt-1 text-xs text-red-500">{errors.external_recipient}</p>
-        )}
-      </div>
-
-      {/* Issuing Office */}
-      <div className="col-span-1">
-        <label className="mb-1 block font-medium">Issuing Office</label>
-        <Select
-          className="w-full text-sm"
-          isClearable
-          value={
-            unitOrDepartments
-              .map((unit) => ({
-                value: unit.id,
-                label: `${unit.name}`,
-              }))
-              .find((opt) => opt.value === data.issuing_office_id) ?? null
-          }
-          onChange={(opt) => {
-            const id = opt ? opt.value : 0;
-            setData('issuing_office_id', id);
-            setData('personnel_id', null);
-            setData('turnover_disposal_assets', []);
-            setShowAssetDropdown([true]);
-          }}
-          options={unitOrDepartments.map((unit) => ({
-            value: unit.id,
-            label: `${unit.name}`,
-          }))}
-          placeholder="Select Unit/Dept/Lab"
-        />
-        {errors.issuing_office_id && (
-          <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
-        )}
-      </div>
-
-      {/* Issuing Office (exclude PMO) */}
-      {/* <div className="col-span-1">
-        <label className="mb-1 block font-medium">Issuing Office</label>
-        <Select
-          className="w-full text-sm"
-          isClearable
-          value={
-            unitOrDepartments
-              .filter((unit) => {
-                const code = (unit.code || '').trim().toLowerCase();
-                const name = (unit.name || '').trim().toLowerCase();
-                return code !== 'pmo' && !name.includes('property management office');
-              })
-              .map((unit) => ({
-                value: unit.id,
-                label: `${unit.name}`,
-              }))
-              .find((opt) => opt.value === data.issuing_office_id) ?? null
-          }
-          onChange={(opt) => {
-            const id = opt ? opt.value : 0;
-            setData('issuing_office_id', id);
-            setData('personnel_id', null);
-            setData('turnover_disposal_assets', []);
-            setShowAssetDropdown([true]);
-          }}
-          options={unitOrDepartments
-            .filter((unit) => {
-              const code = (unit.code || '').trim().toLowerCase();
-              const name = (unit.name || '').trim().toLowerCase();
-              return code !== 'pmo' && !name.includes('property management office');
-            })
-            .map((unit) => ({
-              value: unit.id,
-              label: `${unit.name}`,
-            }))}
-          placeholder="Select Unit/Dept/Lab"
-        />
-        {errors.issuing_office_id && (
-          <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>
-        )}
-      </div> */}
-
-      {/* Receiving Office */}
-      {/* <div className="col-span-1">
-        <label className="mb-1 block font-medium">Receiving Office</label>
-        <Select
-          className="w-full text-sm"
-          isClearable
-          value={
-            unitOrDepartments
-              .map((unit) => ({
-                value: unit.id,
-                label: `${unit.name}`,
-              }))
-              .find((opt) => opt.value === data.receiving_office_id) ?? null
-          }
-          onChange={(opt) => {
-            const id = opt ? opt.value : null;
-            setData('receiving_office_id', id);
-          }}
-          options={unitOrDepartments.map((unit) => ({
-            value: unit.id,
-            label: `${unit.name}`,
-          }))}
-          placeholder="Select Unit/Dept/Lab"
-        />
-        {errors.receiving_office_id && (
-          <p className="mt-1 text-xs text-red-500">{errors.receiving_office_id}</p>
-        )}
-      </div> */}
-
-      {/* Receiving Office (fixed to PMO) */}
-      <div className="col-span-1">
-        <label className="mb-1 block font-medium">Receiving Office</label>
-        <div className="p-1 text-lg font-bold text-blue-700">
-          {(() => {
-            const pmoUnit = unitOrDepartments.find((u) => {
-              const code = (u.code || '').trim().toLowerCase();
-              const name = (u.name || '').trim().toLowerCase();
-              return code === 'pmo' || name.includes('property management office');
-            });
-
-            if (pmoUnit) {
-              if (data.receiving_office_id !== pmoUnit.id) {
-                setData('receiving_office_id', pmoUnit.id);
-              }
-              return pmoUnit.name;
+    const formApprovalStatus =
+        (
+            turnoverDisposal as TurnoverDisposals & {
+                form_approval?: { status?: string | null } | null;
             }
+        ).form_approval?.status ?? null;
 
-            return 'Property Management Office';
-          })()}
-        </div>
-      </div>
+    const canEditFinalStatus = formApprovalStatus === 'approved';
 
-      {/* Status */}
-      <div className="col-span-1">
-        <label className="mb-1 block font-medium">Status</label>
-        <select
-          className="w-full rounded-lg border p-2"
-          value={data.status}
-          onChange={(e) => setData('status', e.target.value as (typeof statusOptions)[number])}
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        clearErrors();
+
+        let hasError = false;
+
+        if (data.is_donation) {
+            const isExternalRecipientEmpty = !data.external_recipient || data.external_recipient.trim() === '';
+            const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+
+            if (isExternalRecipientEmpty && isReceivingOfficeEmpty) {
+                hasError = true;
+                const errorMessage = 'For Donations, either External Recipient or Receiving Office must be filled.';
+                setError('external_recipient', errorMessage);
+                setError('receiving_office_id', errorMessage);
+            }
+        } else {
+            const isReceivingOfficeEmpty = !data.receiving_office_id || data.receiving_office_id === 0;
+
+            if (isReceivingOfficeEmpty) {
+                hasError = true;
+                setError('receiving_office_id', 'Receiving Office is required when not a donation.');
+            }
+        }
+
+        if (!canEditFinalStatus) {
+            if (data.status !== turnoverDisposal.status) {
+                hasError = true;
+                setError('status', 'Status cannot be changed until Dean/Head and PMO Head approvals are both approved.');
+            }
+        } else {
+            if (!finalStatusOptions.includes(data.status as (typeof finalStatusOptions)[number])) {
+                hasError = true;
+                setError('status', 'Once approvals are completed, only Completed or Cancelled can be selected.');
+            }
+        }
+
+        if (hasError) {
+            return;
+        }
+
+        put(`/turnover-disposal/${turnoverDisposal.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                clearErrors();
+                setShowAssetDropdown([true]);
+                onClose();
+            },
+        });
+    };
+
+    const addLine = (asset_id: number) => {
+        const next: TurnoverDisposalAssetInput = {
+            asset_id,
+            asset_status: 'pending',
+            date_finalized: null,
+            remarks: '',
+        };
+        setData('turnover_disposal_assets', [...data.turnover_disposal_assets, next]);
+    };
+
+    const handleClose = () => {
+        onClose();
+        clearErrors();
+        setShowAssetDropdown([true]);
+    };
+
+    return (
+        <EditModal
+            show={show}
+            onClose={handleClose}
+            title={`Edit ${formatEnums(turnoverDisposal.type)} Record #${turnoverDisposal.id}`}
+            onSubmit={handleSubmit}
+            processing={processing}
         >
-          <option value="">Select Status</option>
-          {statusOptions.map((s) => (
-            <option key={s} value={s}>
-              {formatEnums(s)}
-            </option>
-          ))}
-        </select>
-        {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
-      </div>
-      
-      {/* Description */}
-      <div className="col-span-2">
-        <label className="mb-1 block font-medium">Description</label>
-        <textarea
-          placeholder="Enter description (e.g., reason for turnover or disposal)"
-          rows={3}
-          className="w-full resize-none rounded-lg border p-2"
-          value={data.description ?? ''}
-          onChange={(e) => setData('description', e.target.value)}
-        />
-        {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
-      </div>
+            {/* Type */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Type</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.type}
+                    onChange={(e) => setData('type', e.target.value as (typeof typeOptions)[number])}
+                >
+                    <option value="">Select Record Type</option>
+                    {typeOptions.map((type) => (
+                        <option key={type} value={type}>
+                            {formatEnums(type)}
+                        </option>
+                    ))}
+                </select>
+                {errors.type && <p className="mt-1 text-xs text-red-500">{errors.type}</p>}
+            </div>
 
-      {/* PIC */}
-      <div className="col-span-1">
-        <label className="mb-1 block font-medium">Personnel in Charge</label>
-        <Select
-          className="w-full"
-          isClearable
-          isDisabled={!data.issuing_office_id}
-          options={personnels
-            .filter(p => p.unit_or_department_id === data.issuing_office_id)
-            .map(p => ({ value: p.id, label: p.full_name }))
-          }
-          placeholder={data.issuing_office_id ? "Select Personnel..." : "Select an Issuing Office first"}
-          value={
-            personnels.find(p => p.id === data.personnel_id)
-              ? { value: data.personnel_id!, label: personnels.find(p => p.id === data.personnel_id)!.full_name }
-              : null
-          }
-          onChange={(opt) => {
-            const id = opt?.value ?? null;
-            setData('personnel_id', id);
-            setData('turnover_disposal_assets', []);
-            setShowAssetDropdown([true]);
-          }}
-        />
-        {errors.personnel_id && <p className="mt-1 text-xs text-red-500">{errors.personnel_id}</p>}
-      </div>
-
-      {/* Document Date */}
-      <div className="col-span-1">
-        <label className="mb-1 block font-medium">Document Date</label>
-        <input
-          type="date"
-          className="w-full rounded-lg border p-2 uppercase"
-          value={data.document_date}
-          onChange={(e) => setData('document_date', e.target.value)}
-        />
-        {errors.document_date && <p className="mt-1 text-xs text-red-500">{errors.document_date}</p>}
-      </div>
-
-      {/* Assets (cards) */}
-      <div className="col-span-2 flex flex-col gap-3">
-        <label className="block font-medium text-gray-800">Assets Covered</label>
-
-        <div className="flex flex-col gap-3">
-          {data.turnover_disposal_assets.length > 0 ? (
-            data.turnover_disposal_assets.map((line, index) => {
-              const asset = assets.find((a) => a.id === line.asset_id);
-              if (!asset) {
-                return (
-                  <div key={`${line.asset_id}-${index}`} className="rounded-lg border p-2 text-sm text-red-600">
-                    Asset not found
-                  </div>
-                );
-              }
-              return (
-                <AssetTdaItem
-                  key={`${line.asset_id}-${index}`}
-                  line={line}
-                  asset={asset}
-                  parentStatus={data.status}
-                  onRemove={() => {
-                    const next = [...data.turnover_disposal_assets];
-                    next.splice(index, 1);
-                    setData('turnover_disposal_assets', next);
-                  }}
-                  onChange={(next) => {
-                    const copy = [...data.turnover_disposal_assets];
-                    copy[index] = next;
-                    setData('turnover_disposal_assets', copy);
-                  }}
-                />
-              );
-            })
-          ) : (
-            <p className="text-xs text-red-500">No assets linked yet.</p>
-          )}
-        </div>
-
-        {showAssetDropdown.map(
-          (visible, index) =>
-            visible && (
-              <div key={`dropdown-${index}`} className="flex items-center gap-2">
-                <Select<Option, false>
-                  key={`asset-${data.issuing_office_id}-${index}-${data.turnover_disposal_assets.length}`}
-                  className="w-full text-sm"
-                  isDisabled={!data.issuing_office_id || !data.personnel_id}
-                  options={filteredAssets.map((a) => ({ value: a.id, label: `${a.serial_no} – ${a.asset_name ?? ''}` }))}
-                  placeholder={
-                    !data.issuing_office_id ? 'Select an Issuing Office first' : !data.personnel_id
-                      ? 'Select Personnel in Charge first'
-                      : 'Add an asset...'
-                  }
-                  noOptionsMessage={() => !data.issuing_office_id ? 'Select an Issuing Office first' : !data.personnel_id
-                      ? 'Select Personnel in Charge first'
-                      : 'No available assets'
-                  }
-                  onChange={(opt: SingleValue<Option>) => {
-                    if (opt && !selectedIds.has(opt.value)) {
-                      addLine(opt.value);
-                      setShowAssetDropdown((prev) => {
-                        const updated = [...prev];
-                        updated[index] = false;
-                        return [...updated, true];
-                      });
+            {/* Turnover Category */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Turnover Category</label>
+                <select
+                    className="w-full rounded-lg border p-2"
+                    value={data.turnover_category ?? ''}
+                    onChange={(e) =>
+                        setData('turnover_category', e.target.value === '' ? null : (e.target.value as (typeof categoryOptions)[number]))
                     }
-                  }}
+                >
+                    <option value="">Select Category</option>
+                    {categoryOptions.map((cat) => (
+                        <option key={cat} value={cat}>
+                            {formatEnums(cat)}
+                        </option>
+                    ))}
+                </select>
+                {errors.turnover_category && <p className="mt-1 text-xs text-red-500">{errors.turnover_category}</p>}
+            </div>
+
+            {/* Donation Checkbox */}
+            <div className="col-span-2 flex items-center gap-2">
+                <input
+                    id="is_donation"
+                    type="checkbox"
+                    className="cursor-pointer"
+                    checked={!!data.is_donation}
+                    onChange={(e) => setData('is_donation', e.target.checked)}
                 />
-              </div>
-            )
-        )}
+                <label htmlFor="is_donation" className="text-sm font-medium">
+                    For Donation
+                </label>
+            </div>
 
-        {errors.turnover_disposal_assets && (
-          <p className="text-xs text-red-500">{String(errors.turnover_disposal_assets)}</p>
-        )}
-      </div>
+            {/* External Recipient */}
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">External Recipient</label>
+                <input
+                    type="text"
+                    className={`w-full rounded-lg border p-2 ${!data.is_donation ? 'bg-gray-100 text-gray-500' : ''}`}
+                    placeholder="Enter recipient name or organization for donation"
+                    value={data.external_recipient ?? ''}
+                    onChange={(e) => setData('external_recipient', e.target.value)}
+                    disabled={!data.is_donation}
+                />
+                {errors.external_recipient && <p className="mt-1 text-xs text-red-500">{errors.external_recipient}</p>}
+            </div>
 
-      {/* Remarks */}
-      <div className="col-span-2">
-        <label className="mb-1 block font-medium">Remarks</label>
-        <textarea
-          rows={3}
-          className="w-full resize-none rounded-lg border p-2"
-          value={data.remarks ?? ''}
-          onChange={(e) => setData('remarks', e.target.value)}
-        />
-        {errors.remarks && <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>}
-      </div>
-    </EditModal>
-  );
+            {/* Issuing Office */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Issuing Office</label>
+                <Select
+                    className="w-full text-sm"
+                    isClearable
+                    value={
+                        unitOrDepartments
+                            .map((unit) => ({
+                                value: unit.id,
+                                label: `${unit.name}`,
+                            }))
+                            .find((opt) => opt.value === data.issuing_office_id) ?? null
+                    }
+                    onChange={(opt) => {
+                        const id = opt ? opt.value : 0;
+                        setData('issuing_office_id', id);
+                        setData('personnel_id', null);
+                        setData('turnover_disposal_assets', []);
+                        setShowAssetDropdown([true]);
+                    }}
+                    options={unitOrDepartments.map((unit) => ({
+                        value: unit.id,
+                        label: `${unit.name}`,
+                    }))}
+                    placeholder="Select Unit/Dept/Lab"
+                />
+                {errors.issuing_office_id && <p className="mt-1 text-xs text-red-500">{errors.issuing_office_id}</p>}
+            </div>
+
+            {/* Receiving Office (fixed to PMO) */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Receiving Office</label>
+                <div className="p-1 text-lg font-bold text-blue-700">
+                    {(() => {
+                        const pmoUnit = unitOrDepartments.find((u) => {
+                            const code = (u.code || '').trim().toLowerCase();
+                            const name = (u.name || '').trim().toLowerCase();
+                            return code === 'pmo' || name.includes('property management office');
+                        });
+
+                        if (pmoUnit) {
+                            if (data.receiving_office_id !== pmoUnit.id) {
+                                setData('receiving_office_id', pmoUnit.id);
+                            }
+                            return pmoUnit.name;
+                        }
+
+                        return 'Property Management Office';
+                    })()}
+                </div>
+            </div>
+
+            {/* Status */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Status</label>
+
+                <select
+                    className={`w-full rounded-lg border p-2 ${!canEditFinalStatus ? 'cursor-not-allowed bg-gray-100 text-gray-500' : ''}`}
+                    value={data.status}
+                    onChange={(e) => setData('status', e.target.value as 'cancelled' | 'completed')}
+                    disabled={!canEditFinalStatus}
+                >
+                    {!canEditFinalStatus ? (
+                        <option value={data.status}>{formatEnums(data.status)}</option>
+                    ) : (
+                        <>
+                            {/* Show Approved as default but not selectable */}
+                            {data.status === 'approved' && (
+                                <option value="approved" disabled>
+                                    Approved
+                                </option>
+                            )}
+
+                            {/* Only allow final statuses */}
+                            {finalStatusOptions.map((s) => (
+                                <option key={s} value={s}>
+                                    {formatEnums(s)}
+                                </option>
+                            ))}
+                        </>
+                    )}
+                </select>
+
+                {!canEditFinalStatus && (
+                    <p className="mt-1 text-xs text-muted-foreground">Status will only become active after the form approval is completed.</p>
+                )}
+
+                {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+            </div>
+
+            {/* Description */}
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">Description</label>
+                <textarea
+                    placeholder="Enter description (e.g., reason for turnover or disposal)"
+                    rows={3}
+                    className="w-full resize-none rounded-lg border p-2"
+                    value={data.description ?? ''}
+                    onChange={(e) => setData('description', e.target.value)}
+                />
+                {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
+            </div>
+
+            {/* PIC */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Personnel in Charge</label>
+                <Select
+                    className="w-full"
+                    isClearable
+                    isDisabled={!data.issuing_office_id}
+                    options={personnels
+                        .filter((p) => p.unit_or_department_id === data.issuing_office_id)
+                        .map((p) => ({ value: p.id, label: p.full_name }))}
+                    placeholder={data.issuing_office_id ? 'Select Personnel...' : 'Select an Issuing Office first'}
+                    value={
+                        personnels.find((p) => p.id === data.personnel_id)
+                            ? { value: data.personnel_id!, label: personnels.find((p) => p.id === data.personnel_id)!.full_name }
+                            : null
+                    }
+                    onChange={(opt) => {
+                        const id = opt?.value ?? null;
+                        setData('personnel_id', id);
+                        setData('turnover_disposal_assets', []);
+                        setShowAssetDropdown([true]);
+                    }}
+                />
+                {errors.personnel_id && <p className="mt-1 text-xs text-red-500">{errors.personnel_id}</p>}
+            </div>
+
+            {/* Document Date */}
+            <div className="col-span-1">
+                <label className="mb-1 block font-medium">Document Date</label>
+                <input
+                    type="date"
+                    className="w-full rounded-lg border p-2 uppercase"
+                    value={data.document_date}
+                    onChange={(e) => setData('document_date', e.target.value)}
+                />
+                {errors.document_date && <p className="mt-1 text-xs text-red-500">{errors.document_date}</p>}
+            </div>
+
+            {/* Assets (cards) */}
+            <div className="col-span-2 flex flex-col gap-3">
+                <label className="block font-medium text-gray-800">Assets Covered</label>
+
+                <div className="flex flex-col gap-3">
+                    {data.turnover_disposal_assets.length > 0 ? (
+                        data.turnover_disposal_assets.map((line, index) => {
+                            const asset = assets.find((a) => a.id === line.asset_id);
+                            if (!asset) {
+                                return (
+                                    <div key={`${line.asset_id}-${index}`} className="rounded-lg border p-2 text-sm text-red-600">
+                                        Asset not found
+                                    </div>
+                                );
+                            }
+                            return (
+                                <AssetTdaItem
+                                    key={`${line.asset_id}-${index}`}
+                                    line={line}
+                                    asset={asset}
+                                    parentStatus={data.status}
+                                    onRemove={() => {
+                                        const next = [...data.turnover_disposal_assets];
+                                        next.splice(index, 1);
+                                        setData('turnover_disposal_assets', next);
+                                    }}
+                                    onChange={(next) => {
+                                        const copy = [...data.turnover_disposal_assets];
+                                        copy[index] = next;
+                                        setData('turnover_disposal_assets', copy);
+                                    }}
+                                />
+                            );
+                        })
+                    ) : (
+                        <p className="text-xs text-red-500">No assets linked yet.</p>
+                    )}
+                </div>
+
+                {showAssetDropdown.map(
+                    (visible, index) =>
+                        visible && (
+                            <div key={`dropdown-${index}`} className="flex items-center gap-2">
+                                <Select<Option, false>
+                                    key={`asset-${data.issuing_office_id}-${index}-${data.turnover_disposal_assets.length}`}
+                                    className="w-full text-sm"
+                                    isDisabled={!data.issuing_office_id || !data.personnel_id}
+                                    options={filteredAssets.map((a) => ({ value: a.id, label: `${a.serial_no} – ${a.asset_name ?? ''}` }))}
+                                    placeholder={
+                                        !data.issuing_office_id
+                                            ? 'Select an Issuing Office first'
+                                            : !data.personnel_id
+                                              ? 'Select Personnel in Charge first'
+                                              : 'Add an asset...'
+                                    }
+                                    noOptionsMessage={() =>
+                                        !data.issuing_office_id
+                                            ? 'Select an Issuing Office first'
+                                            : !data.personnel_id
+                                              ? 'Select Personnel in Charge first'
+                                              : 'No available assets'
+                                    }
+                                    onChange={(opt: SingleValue<Option>) => {
+                                        if (opt && !selectedIds.has(opt.value)) {
+                                            addLine(opt.value);
+                                            setShowAssetDropdown((prev) => {
+                                                const updated = [...prev];
+                                                updated[index] = false;
+                                                return [...updated, true];
+                                            });
+                                        }
+                                    }}
+                                />
+                            </div>
+                        ),
+                )}
+
+                {errors.turnover_disposal_assets && <p className="text-xs text-red-500">{String(errors.turnover_disposal_assets)}</p>}
+            </div>
+
+            {/* Remarks */}
+            <div className="col-span-2">
+                <label className="mb-1 block font-medium">Remarks</label>
+                <textarea
+                    rows={3}
+                    className="w-full resize-none rounded-lg border p-2"
+                    value={data.remarks ?? ''}
+                    onChange={(e) => setData('remarks', e.target.value)}
+                />
+                {errors.remarks && <p className="mt-1 text-xs text-red-500">{errors.remarks}</p>}
+            </div>
+        </EditModal>
+    );
 }

@@ -7,7 +7,7 @@ export type TurnoverDisposals = {
     type: 'turnover' | 'disposal';
     turnover_category?: 'sharps' | 'breakages' | 'chemical' | 'hazardous' | 'non_hazardous' | null;
 
-    receiving_office_id: number | null; // now nullable
+    receiving_office_id: number | null;
     external_recipient?: string | null;
 
     description: string | null;
@@ -27,12 +27,33 @@ export type TurnoverDisposals = {
         date_finalized?: string | null;
         remarks?: string | null;
     })[];
-        assetAssignment?: AssetAssignment[];
+    assetAssignment?: AssetAssignment[];
 
     noted_by_name?: string | null;
     noted_by_title?: string | null;
 
     personnel?: Personnel;
+
+    formApproval?: {
+        id: number;
+        status: 'pending_review' | 'approved' | 'rejected';
+        steps?: {
+            id: number;
+            code: string;
+            label: string;
+            status: 'pending' | 'approved' | 'rejected' | 'skipped';
+            is_external: boolean;
+            external_name?: string | null;
+            external_title?: string | null;
+            notes?: string | null;
+            acted_at?: string | null;
+            actor_user_id?: number | null;
+            actor?: {
+                id: number;
+                name: string;
+            } | null;
+        }[];
+    } | null;
 };
 
 export type TurnoverDisposalFormData = {
@@ -40,7 +61,7 @@ export type TurnoverDisposalFormData = {
     type: 'turnover' | 'disposal';
     turnover_category?: 'sharps' | 'breakages' | 'chemical' | 'hazardous' | 'non_hazardous' | null;
 
-    receiving_office_id: number | null; // now nullable
+    receiving_office_id: number | null;
     external_recipient?: string | null;
 
     description: string | null;
@@ -61,7 +82,7 @@ export function labelLineStatus(
 ) {
     const map = {
         turnover: { pending: 'Pending Turnover', completed: 'Turned Over', cancelled: 'Cancelled' },
-        disposal: { pending: 'Pending Disposal', completed: 'Disposed',    cancelled: 'Cancelled' },
+        disposal: { pending: 'Pending Disposal', completed: 'Disposed', cancelled: 'Cancelled' },
     } as const;
     return map[recordType][status];
 }
@@ -74,4 +95,3 @@ export type TurnoverDisposalTotals = {
     disposal_percentage_all: number;
     cancellation_rate: number;
 };
-

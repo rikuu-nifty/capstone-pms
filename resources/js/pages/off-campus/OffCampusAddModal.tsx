@@ -429,7 +429,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                         </div>
 
                         {/* Approved / Issued / Checked */}
-                        <div className="col-span-1">
+                        {/* <div className="col-span-1">
                             <label className="mb-1 block font-medium">Approved By (Dean/Head)</label>
                             <Input
                                 placeholder="e.g., Dr. Maria Santos"
@@ -437,7 +437,7 @@ export default function OffCampusAddModal({ show, onClose, unitOrDepartments = [
                                 onChange={(e) => setData('approved_by', e.target.value)}
                             />
                             {errors.approved_by && <p className="mt-1 text-xs text-red-500">{errors.approved_by}</p>}
-                        </div>
+                        </div> */}
 
                         {/* <div className="col-span-1">
                             <label className="mb-1 block font-medium">Issued By (PMO Staff)</label>

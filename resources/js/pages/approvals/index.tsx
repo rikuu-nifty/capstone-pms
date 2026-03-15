@@ -13,7 +13,7 @@ import { useState } from 'react';
 
 import ApproveConfirmationModal from '@/components/modals/ApproveConfirmationModal';
 import RejectConfirmationModal from '@/components/modals/RejectConfirmationModal';
-import ResetConfirmationModal from '@/components/modals/ResetFormApprovalModal';
+// import ResetConfirmationModal from '@/components/modals/ResetFormApprovalModal';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import { ucwords } from '@/types/custom-index';
 
@@ -81,7 +81,7 @@ export default function ApprovalsIndex() {
     const userPermissions = props.auth?.permissions || [];
 
     const canDeleteApprovals = userPermissions.includes('delete-form-approvals');
-    const canApproveApprovals = userPermissions.includes('approve-form-approvals');
+    // const canApproveApprovals = userPermissions.includes('approve-form-approvals');
 
     const [search, setSearch] = useState(props.q ?? '');
 
@@ -92,7 +92,7 @@ export default function ApprovalsIndex() {
 
     const [showApprove, setShowApprove] = useState(false);
     const [showReject, setShowReject] = useState(false);
-    const [showReset, setShowReset] = useState(false);
+    // const [showReset, setShowReset] = useState(false);
     const [showDelete, setShowDelete] = useState(false);
     const [toDelete, setToDelete] = useState<number | null>(null);
 
@@ -189,7 +189,7 @@ export default function ApprovalsIndex() {
             <Head title="Form Approval" />
 
             <div className="p-4">
-                  {/* Header */}
+                {/* Header */}
                 <div className="mb-4">
                     <h1 className="text-xl font-semibold">Form Approval</h1>
                     <p className="text-sm text-muted-foreground">
@@ -212,9 +212,9 @@ export default function ApprovalsIndex() {
                 {/* Search */}
                 <div className="mb-3 w-80">
                     <Input
-                        placeholder="Search for the form title or requester..." 
-                        value={search} 
-                        onChange={(e) => onSearch(e.target.value)} 
+                        placeholder="Search for the form title or requester..."
+                        value={search}
+                        onChange={(e) => onSearch(e.target.value)}
                     />
                 </div>
 
@@ -264,8 +264,8 @@ export default function ApprovalsIndex() {
                                             <StatusPill s={a.status} />
                                         </TableCell>
                                         {/* <TableCell className="text-center"> */}
-                                            {/* {Number(a.can_approve) ? 'true' : 'false'} */}
-                                            {/* {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
+                                        {/* {Number(a.can_approve) ? 'true' : 'false'} */}
+                                        {/* {a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
                                                 <div className="leading-tight">
                                                     <span className="font-medium">{a.current_step_actor}</span>
                                                 </div>
@@ -276,17 +276,17 @@ export default function ApprovalsIndex() {
                                         {props.tab !== 'approved' && (
                                             <TableCell className="text-center">
                                                 {props.tab === 'rejected' ? (
-                                                a.review_notes ? (
-                                                    <div className="leading-tight text-red-600">{ucwords(a.review_notes)}</div>
+                                                    a.review_notes ? (
+                                                        <div className="leading-tight text-red-600">{ucwords(a.review_notes)}</div>
+                                                    ) : (
+                                                        '—'
+                                                    )
+                                                ) : a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
+                                                    <div className="leading-tight">
+                                                        <span className="font-medium">{a.current_step_actor}</span>
+                                                    </div>
                                                 ) : (
                                                     '—'
-                                                )
-                                                ) : a.status === 'pending_review' && a.current_step_label && a.current_step_actor ? (
-                                                <div className="leading-tight">
-                                                    <span className="font-medium">{a.current_step_actor}</span>
-                                                </div>
-                                                ) : (
-                                                '—'
                                                 )}
                                             </TableCell>
                                         )}
@@ -298,7 +298,7 @@ export default function ApprovalsIndex() {
                                                         View
                                                     </Link>
                                                 </Button>
-                                                
+
                                                 <Button
                                                     variant="destructive"
                                                     className="cursor-pointer"
@@ -315,25 +315,25 @@ export default function ApprovalsIndex() {
                                                 {a.status === 'pending_review' ? (
                                                     a.current_step_is_external ? (
                                                         <>
-                                                        <Button
-                                                            // variant="blue"
-                                                            // size="icon"
-                                                            title={a.current_step_label ?? 'Record External Approval'}
-                                                            className="cursor-pointer"
-                                                            onClick={() => openExternalModal(a)}
-                                                        >
-                                                            {/* <FileSignature className="h-4 w-4" /> */}
-                                                            Approve
-                                                        </Button>
-                                                        <Button
-                                                            variant="destructive"
-                                                            className="cursor-pointer"
-                                                            title={`Reject as ${a.current_step_actor}`}
-                                                            disabled={!a.can_approve}
-                                                            onClick={() => openReject(a)}
-                                                        >
-                                                            Reject
-                                                        </Button>
+                                                            <Button
+                                                                // variant="blue"
+                                                                // size="icon"
+                                                                title={a.current_step_label ?? 'Record External Approval'}
+                                                                className="cursor-pointer"
+                                                                onClick={() => openExternalModal(a)}
+                                                            >
+                                                                {/* <FileSignature className="h-4 w-4" /> */}
+                                                                Approve
+                                                            </Button>
+                                                            <Button
+                                                                variant="destructive"
+                                                                className="cursor-pointer"
+                                                                title={`Reject as ${a.current_step_actor}`}
+                                                                disabled={!a.can_approve}
+                                                                onClick={() => openReject(a)}
+                                                            >
+                                                                Reject
+                                                            </Button>
                                                         </>
                                                     ) : (
                                                         <>
@@ -362,19 +362,20 @@ export default function ApprovalsIndex() {
                                                         </>
                                                     )
                                                 ) : (
-                                                    <Button
-                                                        variant="primary"
-                                                        title="Move back to Pending Review"
-                                                        className={`cursor-pointer ${!canApproveApprovals ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                        disabled={!canApproveApprovals}
-                                                        onClick={() => {
-                                                            if (!canApproveApprovals) return;
-                                                            setSelectedApprovalId(a.id);
-                                                            setShowReset(true);
-                                                        }}
-                                                        >
-                                                        Reset
-                                                    </Button>
+                                                    // <Button
+                                                    //     variant="primary"
+                                                    //     title="Move back to Pending Review"
+                                                    //     className={`cursor-pointer ${!canApproveApprovals ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    //     disabled={!canApproveApprovals}
+                                                    //     onClick={() => {
+                                                    //         if (!canApproveApprovals) return;
+                                                    //         setSelectedApprovalId(a.id);
+                                                    //         setShowReset(true);
+                                                    //     }}
+                                                    // >
+                                                    //     Reset
+                                                    // </Button>
+                                                    <></>
                                                 )}
                                             </div>
                                         </TableCell>
@@ -470,7 +471,7 @@ export default function ApprovalsIndex() {
                 // requireNotes // ← uncomment if rejecting must include a reason
             />
 
-            <ResetConfirmationModal
+            {/* <ResetConfirmationModal
                 show={showReset}
                 onCancel={() => setShowReset(false)}
                 onConfirm={() => {
@@ -485,7 +486,7 @@ export default function ApprovalsIndex() {
                         },
                     );
                 }}
-            />
+            /> */}
 
             <DeleteConfirmationModal
                 show={showDelete}

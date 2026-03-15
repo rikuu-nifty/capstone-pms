@@ -689,7 +689,7 @@ export const ViewScheduleModal = ({ schedule, onClose, signatories }: Props) => 
                                         hover:bg-blue-500 focus-visible:ring focus-visible:ring-blue-500/50
                                     "
                                 >
-                                    🖨️ Print Form
+                                    Print Form
                                 </Button>
                             )}
                         </div>
