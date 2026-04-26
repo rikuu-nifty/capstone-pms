@@ -28,6 +28,7 @@ class TurnoverDisposal extends Model
         'status',
         'remarks',
         'is_donation',
+        'signatories_snapshot',
     ];
 
     protected $casts = 
@@ -35,6 +36,7 @@ class TurnoverDisposal extends Model
         'document_date' => 'date:Y-m-d',
         'deleted_at'    => 'datetime',
         'is_donation'   => 'boolean',
+        'signatories_snapshot' => 'array',
     ];
 
     protected $appends = ['noted_by_name', 'noted_by_title'];

@@ -8,9 +8,9 @@ use App\Models\UnitOrDepartment;
 use App\Models\Building;
 use App\Models\BuildingRoom;
 use App\Models\User;
-use App\Models\InventorySchedulingSignatory;
 use App\Models\InventoryList;
 use App\Models\AuditTrail;
+use App\Support\SignatorySnapshot;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -79,7 +79,7 @@ class InventorySchedulingController extends Controller
         });
 
         // also load signatories for the page
-        $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::live('inventory_scheduling');
 
         // if (request()->inertia()) {
         //     Inertia::version(md5(now())); // ensures Inertia sees this as a new version every time
@@ -169,6 +169,7 @@ class InventorySchedulingController extends Controller
                 'scheduling_status'       => $data['scheduling_status'],
                 'description'             => $data['description'] ?? null,
                 'designated_employee'     => $data['designated_employee'] ?? null,
+                'signatories_snapshot'    => SignatorySnapshot::capture('inventory_scheduling'),
 
                 // 👇 Reflect first selected values in main table
                 'building_id'             => $data['building_ids'][0] ?? null,
@@ -259,7 +260,7 @@ class InventorySchedulingController extends Controller
             ->get();
 
         // also load signatories
-        $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::forForm($viewing->signatories_snapshot, 'inventory_scheduling');
 
         // If frontend explicitly asks for JSON, return raw data (for refresh)
         if (request()->wantsJson()) {
@@ -635,7 +636,7 @@ class InventorySchedulingController extends Controller
             }
         }
 
-        $signatories = InventorySchedulingSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::forForm($schedule->signatories_snapshot, 'inventory_scheduling');
 
         $pdf = Pdf::loadView('forms.inventory_scheduling_form_pdf', [
             'schedule' => $schedule,

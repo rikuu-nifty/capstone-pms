@@ -18,7 +18,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Personnel;
 
-use App\Models\TurnoverDisposalSignatory;
+use App\Support\SignatorySnapshot;
 
 class TurnoverDisposalController extends Controller
 {
@@ -70,7 +70,7 @@ class TurnoverDisposalController extends Controller
             'subArea:id,name,building_room_id',
         ])->get();
 
-        $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::live('turnover_disposal');
 
         return [
             'turnoverDisposals'      => $turnoverDisposals,
@@ -131,6 +131,7 @@ class TurnoverDisposalController extends Controller
 
         $lines = $validated['turnover_disposal_assets'];
         unset($validated['turnover_disposal_assets']);
+        $validated['signatories_snapshot'] = SignatorySnapshot::capture('turnover_disposal');
 
         // Prevent duplicate active turnover/disposal forms for same assets
         $assetIds = collect($lines)->pluck('asset_id')->unique();
@@ -267,7 +268,10 @@ class TurnoverDisposalController extends Controller
 
         return Inertia::render('turnover-disposal/index', array_merge(
             $this->indexProps(),                 
-            ['viewing' => $turnoverDisposal],
+            [
+                'viewing' => $turnoverDisposal,
+                'signatories' => SignatorySnapshot::forForm($turnoverDisposal->signatories_snapshot, 'turnover_disposal'),
+            ],
         ));
     }
 
@@ -320,13 +324,13 @@ class TurnoverDisposalController extends Controller
         })->filter();
 
         // Load DB signatories
-        $signatories = TurnoverDisposalSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::forForm($turnoverDisposal->signatories_snapshot, 'turnover_disposal');
 
         // Inject "Head / Unit" dynamically (if not in DB)
-        $signatories['head_unit'] = [
+        $signatories->put('head_unit', [
             'name'  => $turnoverDisposal->issuingOffice->unit_head ?? '—',
             'title' => 'Head / Unit',
-        ];
+        ]);
 
         $pdf = Pdf::loadView('forms.turnover_disposal_form_pdf', [
             'turnoverDisposal' => $turnoverDisposal,

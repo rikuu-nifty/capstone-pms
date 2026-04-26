@@ -15,7 +15,7 @@ use App\Models\InventoryList;
 use App\Models\UnitOrDepartment;
 use App\Models\User;
 use App\Models\SubArea;
-use App\Models\TransferSignatory;
+use App\Support\SignatorySnapshot;
 
 class TransferController extends Controller
 {
@@ -53,7 +53,7 @@ class TransferController extends Controller
         $subAreas = SubArea::all();
 
         // Fetch official transfer signatories (keyed by role_key)
-        $signatories = TransferSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::live('property_transfer');
 
         return Inertia::render('transfer/index', [
             'transfers' => $transfers->map(function ($transfer) {
@@ -185,6 +185,7 @@ class TransferController extends Controller
 
         $pivotRows = $validated['transfer_assets'];
         unset($validated['transfer_assets']);
+        $validated['signatories_snapshot'] = SignatorySnapshot::capture('property_transfer');
 
         $transfer = DB::transaction(function () use ($validated, $pivotRows) {
             /** @var \App\Models\Transfer $transfer */
@@ -311,7 +312,7 @@ class TransferController extends Controller
         })($viewingModel);
 
         // Fetch official transfer signatories (keyed by role_key)
-        $signatories = \App\Models\TransferSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::forForm($viewingModel->signatories_snapshot, 'property_transfer');
 
         return Inertia::render('transfer/index', [
             'transfers'        => $transfers->map(function ($transfer) {
@@ -670,7 +671,7 @@ class TransferController extends Controller
         $assets = $transfer->transferAssets()
             ->with(['asset.assetModel.equipmentCode', 'toSubArea'])
             ->get();
-        $signatories = TransferSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::forForm($transfer->signatories_snapshot, 'property_transfer');
 
         $pdf = Pdf::loadView('forms.property_transfer_form_pdf', [
             'transfer' => $transfer,

@@ -27,6 +27,7 @@ class Transfer extends Model
         'received_by',
         'status',
         'remarks',
+        'signatories_snapshot',
         // ✅ ensure official signatory fields can be mass assigned if needed
         'approved_by_name',
         'approved_by_role',
@@ -37,6 +38,7 @@ class Transfer extends Model
         'deleted_at' => 'datetime',
         'scheduled_date' => 'date:Y-m-d',
         'actual_transfer_date' => 'date:Y-m-d',
+        'signatories_snapshot' => 'array',
     ];
 
     protected $appends = [
@@ -130,11 +132,14 @@ class Transfer extends Model
     
     public function getApprovedByNameAttribute(): ?string
     {
-        // ✅ Prefer official signatory record first
-        $signatory = \App\Models\TransferSignatory::where('role_key', 'approved_by')->first();
+        // Prefer the saved form snapshot so historical forms do not change.
+        $signatory = $this->signatories_snapshot['approved_by'] ?? null;
         if ($signatory) {
-            return $signatory->name;
+            return is_array($signatory) ? ($signatory['name'] ?? null) : ($signatory->name ?? null);
         }
+
+        $signatory = \App\Models\TransferSignatory::where('role_key', 'approved_by')->first();
+        if ($signatory) return $signatory->name;
 
         // fallback to formApproval system
         $fa = $this->relationLoaded('formApproval')
@@ -166,11 +171,14 @@ class Transfer extends Model
 
     public function getApprovedByRoleAttribute(): ?string
     {
-        // ✅ Prefer official signatory record first
-        $signatory = \App\Models\TransferSignatory::where('role_key', 'approved_by')->first();
+        // Prefer the saved form snapshot so historical forms do not change.
+        $signatory = $this->signatories_snapshot['approved_by'] ?? null;
         if ($signatory) {
-            return $signatory->title;
+            return is_array($signatory) ? ($signatory['title'] ?? null) : ($signatory->title ?? null);
         }
+
+        $signatory = \App\Models\TransferSignatory::where('role_key', 'approved_by')->first();
+        if ($signatory) return $signatory->title;
 
         // fallback to formApproval system
         $fa = $this->relationLoaded('formApproval')

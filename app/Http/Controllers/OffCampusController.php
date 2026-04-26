@@ -10,6 +10,7 @@ use App\Models\UnitOrDepartment;
 use App\Models\User;
 use App\Models\InventoryList;
 use App\Models\OffCampusSignatory;
+use App\Support\SignatorySnapshot;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 
@@ -52,7 +53,7 @@ class OffCampusController extends Controller
             'assets'             => InventoryList::select('id','asset_model_id','asset_name','serial_no','unit_or_department_id')->orderBy('asset_name')->get(),
             'assetModels'        => AssetModel::select('id','brand','model')->orderBy('brand')->orderBy('model')->get(),
             'users'              => User::select('id','name')->orderBy('name')->get(),
-            'signatories'        => OffCampusSignatory::all()->keyBy('role_key'),
+            'signatories'        => SignatorySnapshot::live('off_campus'),
 
             'totals'            => OffCampus::dashboardTotals(),
         ]);
@@ -98,6 +99,7 @@ class OffCampusController extends Controller
         ]);
 
         $data['status'] = $data['status'] ?? 'pending_review';
+        $data['signatories_snapshot'] = SignatorySnapshot::capture('off_campus');
 
         DB::transaction(function () use ($data) {
             $offCampus = OffCampus::create(collect($data)->except('selected_assets')->toArray());
@@ -141,7 +143,7 @@ class OffCampusController extends Controller
             ->where('status', 'approved')
             ->first();
 
-        $signatories = OffCampusSignatory::all()->keyBy('role_key');
+        $signatories = SignatorySnapshot::forForm($viewing->signatories_snapshot, 'off_campus');
 
         return Inertia::render('off-campus/index', [
             'offCampuses'       => $offCampuses,
@@ -354,6 +356,8 @@ class OffCampusController extends Controller
             'name'  => $pmoHead?->name ?? '—',
             'title' => 'Head, PMO',
         ];
+
+        $signatories = SignatorySnapshot::forForm($offCampus->signatories_snapshot, 'off_campus');
 
         $pdf = Pdf::loadView('forms.off_campus_form_pdf', [
             'offCampus' => $offCampus,

@@ -45,7 +45,7 @@
         if (Auth::check()) {
             return redirect()->route('dashboard'); // change to your actual dashboard route
         }
-        return redirect()->route('login'); // send guests to login
+        return Inertia::render('welcome');
     })->name('home');
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])

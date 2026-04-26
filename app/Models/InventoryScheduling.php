@@ -16,6 +16,7 @@ class InventoryScheduling extends Model
 
     protected $casts = [
         'deleted_at' => 'datetime',
+        'signatories_snapshot' => 'array',
     ];
 
     protected $fillable = [
@@ -33,6 +34,7 @@ class InventoryScheduling extends Model
         'received_by',
         'scheduling_status',
         'description',
+        'signatories_snapshot',
     ];
 
     public function approvals()

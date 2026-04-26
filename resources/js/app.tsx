@@ -9,7 +9,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const version = import.meta.env.VITE_APP_VERSION || Date.now().toString();
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => (title === appName ? appName : `${title} - ${appName}`),
     resolve: (name) => resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
@@ -22,26 +22,25 @@ createInertiaApp({
     version: () => version,
 });
 
-
 // ✅ Global error interceptor for expired session, auth, or server crash
 router.on('error', (event) => {
-    const detail = (event as unknown as { detail?: { response?: { status?: number } } }).detail
-    const status = detail?.response?.status
+    const detail = (event as unknown as { detail?: { response?: { status?: number } } }).detail;
+    const status = detail?.response?.status;
 
     if ([401, 419, 440, 500].includes(status ?? 0)) {
-        console.error(`Server/Auth error (${status}) — forcing logout...`)
+        console.error(`Server/Auth error (${status}) — forcing logout...`);
 
         // Clear any stored session data
-        localStorage.clear()
-        sessionStorage.clear()
+        localStorage.clear();
+        sessionStorage.clear();
 
         // Optionally show a quick message
-        alert('Your session has expired. You will be redirected to login.')
+        alert('Your session has expired. You will be redirected to login.');
 
         // Redirect to Laravel's logout (which also invalidates session server-side)
-        window.location.href = route('force.logout')
+        window.location.href = route('force.logout');
     }
-})
+});
 
 // This will set light / dark mode on load...
 initializeTheme();
