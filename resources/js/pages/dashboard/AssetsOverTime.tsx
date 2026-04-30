@@ -1,158 +1,78 @@
-"use client"
+'use client';
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
-import { TrendingUp } from "lucide-react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
-
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-
-
-// ✅ Props from backend
 type ChartPoint = {
-  month: string
-  added: number
-  disposed: number
-  transfers: number
-  cumulative: number
-}
-
+    month: string;
+    added: number;
+    disposed: number;
+    transfers: number;
+    cumulative: number;
+};
 
 type Props = {
-  data: ChartPoint[]
-}
+    data: ChartPoint[];
+};
 
-
-// ✅ Define chart config with real colors
 const chartConfig = {
-  added: {
-    label: "New Assets",
-    color: "#3B82F6", // blue
-  },
-  disposed: {
-    label: "Disposed Assets",
-    color: "#EF4444", // red
-  },
-  transfers: {
-    label: "Transfers",
-    color: "#F59E0B", // amber/orange
-  },
-  cumulative: {
-    label: "Total Active Assets",
-    color: "#10B981", // green
-  },
-} satisfies ChartConfig
-
+    cumulative: {
+        label: 'Active total',
+        color: '#059669',
+    },
+    added: {
+        label: 'New assets',
+        color: '#2563eb',
+    },
+    transfers: {
+        label: 'Transfers',
+        color: '#d97706',
+    },
+    disposed: {
+        label: 'Disposed',
+        color: '#dc2626',
+    },
+} satisfies ChartConfig;
 
 export default function AssetsOverTimeChart({ data }: Props) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Assets Over Time</CardTitle>
-        <CardDescription>
-          Monthly additions, disposals, transfers, and cumulative totals
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <AreaChart
-            accessibilityLayer
-            data={data}
-            margin={{ left: 12, right: 12 }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <YAxis tickLine={false} axisLine={false} />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+    return (
+        <Card className="h-full">
+            <CardHeader>
+                <CardTitle>Assets Over Time</CardTitle>
+                <CardDescription>Six-month view of additions, disposals, transfers, and active inventory.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="h-[330px] w-full">
+                    <AreaChart accessibilityLayer data={data} margin={{ left: -10, right: 12, top: 8, bottom: 8 }}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                        <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} tickFormatter={(value) => value.slice(0, 3)} />
+                        <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={42} />
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+                        <ChartLegend content={<ChartLegendContent />} />
 
+                        <defs>
+                            {Object.entries(chartConfig).map(([key, item]) => (
+                                <linearGradient key={key} id={`fill-${key}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={item.color} stopOpacity={0.45} />
+                                    <stop offset="95%" stopColor={item.color} stopOpacity={0.04} />
+                                </linearGradient>
+                            ))}
+                        </defs>
 
-            {/* Gradient defs for each color */}
-            <defs>
-              <linearGradient id="fillAdded" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartConfig.added.color} stopOpacity={0.7} />
-                <stop offset="95%" stopColor={chartConfig.added.color} stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="fillDisposed" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartConfig.disposed.color} stopOpacity={0.7} />
-                <stop offset="95%" stopColor={chartConfig.disposed.color} stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="fillTransfers" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartConfig.transfers.color} stopOpacity={0.7} />
-                <stop offset="95%" stopColor={chartConfig.transfers.color} stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={chartConfig.cumulative.color} stopOpacity={0.7} />
-                <stop offset="95%" stopColor={chartConfig.cumulative.color} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-
-
-            {/* Areas */}
-            <Area
-              dataKey="added"
-              type="monotone"
-              stroke={chartConfig.added.color}
-              fill="url(#fillAdded)"
-              strokeWidth={2}
-            />
-            <Area
-              dataKey="disposed"
-              type="monotone"
-              stroke={chartConfig.disposed.color}
-              fill="url(#fillDisposed)"
-              strokeWidth={2}
-            />
-            <Area
-              dataKey="transfers"
-              type="monotone"
-              stroke={chartConfig.transfers.color}
-              fill="url(#fillTransfers)"
-              strokeWidth={2}
-            />
-            <Area
-              dataKey="cumulative"
-              type="monotone"
-              stroke={chartConfig.cumulative.color}
-              fill="url(#fillCumulative)"
-              strokeWidth={3} // slightly thicker
-            />
-          </AreaChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 leading-none font-medium">
-              Overall asset pool trending up <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="text-muted-foreground flex items-center gap-2 leading-none">
-              Showing trends for the last 6 months
-            </div>
-          </div>
-        </div>
-      </CardFooter>
-    </Card>
-  )
+                        <Area
+                            dataKey="cumulative"
+                            type="monotone"
+                            stroke={chartConfig.cumulative.color}
+                            fill="url(#fill-cumulative)"
+                            strokeWidth={3}
+                        />
+                        <Area dataKey="added" type="monotone" stroke={chartConfig.added.color} fill="url(#fill-added)" strokeWidth={2} />
+                        <Area dataKey="transfers" type="monotone" stroke={chartConfig.transfers.color} fill="url(#fill-transfers)" strokeWidth={2} />
+                        <Area dataKey="disposed" type="monotone" stroke={chartConfig.disposed.color} fill="url(#fill-disposed)" strokeWidth={2} />
+                    </AreaChart>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+    );
 }
-
-
-

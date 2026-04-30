@@ -18,84 +18,82 @@ type Props = {
     description: string;
 };
 
+const chartConfig: ChartConfig = {
+    assets: { label: 'Assets' },
+};
+
+const keyLabel: Record<keyof Props['datasets'], string> = {
+    buildings: 'Buildings',
+    departments: 'Departments',
+    rooms: 'Rooms',
+};
+
 export default function AssetsByLocationBarChart({ datasets, title, description }: Props) {
     const [activeKey, setActiveKey] = React.useState<keyof typeof datasets>('buildings');
-    const activeData = datasets[activeKey];
-
-    const chartConfig: ChartConfig = {
-        assets: { label: 'Assets' },
-    };
-
-    const totalLocations = activeData.length;
-    // const totalAssets = React.useMemo(() => activeData.reduce((acc, curr) => acc + curr.assets, 0), [activeData]);
-
-    const keyLabel: Record<keyof typeof datasets, string> = {
-        buildings: 'Buildings',
-        departments: 'Departments',
-        rooms: 'Rooms',
-    };
+    const activeData = React.useMemo(() => [...datasets[activeKey]].sort((a, b) => b.assets - a.assets).slice(0, 12), [activeKey, datasets]);
+    const totalLocations = datasets[activeKey].length;
+    const totalAssets = datasets[activeKey].reduce((acc, item) => acc + item.assets, 0);
 
     return (
-        <Card className="border border-gray-200 shadow-sm">
-            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Card className="h-full">
+            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+                    <CardTitle>{title}</CardTitle>
                     <CardDescription>{description}</CardDescription>
-
-                    <div className="mt-2 space-y-0.5 text-sm text-muted-foreground">
-                        <p>
-                            Total {keyLabel[activeKey]}: <span className="font-bold text-foreground">{totalLocations.toLocaleString()}</span>
-                        </p>
-                        {/* <p>
-                            Assets across {keyLabel[activeKey]}: <span className="font-medium text-foreground">{totalAssets.toLocaleString()}</span>
-                        </p> */}
+                    <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
+                        <span className="rounded-md border px-2 py-1">
+                            {totalLocations.toLocaleString()} {keyLabel[activeKey].toLowerCase()}
+                        </span>
+                        <span className="rounded-md border px-2 py-1">{totalAssets.toLocaleString()} assets</span>
                     </div>
                 </div>
 
-                <div className="flex w-full justify-end sm:w-auto">
-                    <Select value={activeKey} onValueChange={(val) => setActiveKey(val as keyof typeof datasets)}>
-                        <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="Select dataset" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="buildings">Buildings</SelectItem>
-                            <SelectItem value="departments">Departments</SelectItem>
-                            <SelectItem value="rooms">Rooms</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                <Select value={activeKey} onValueChange={(value) => setActiveKey(value as keyof typeof datasets)}>
+                    <SelectTrigger className="w-full sm:w-[190px]">
+                        <SelectValue placeholder="Select dataset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="buildings">Buildings</SelectItem>
+                        <SelectItem value="departments">Departments</SelectItem>
+                        <SelectItem value="rooms">Rooms</SelectItem>
+                    </SelectContent>
+                </Select>
             </CardHeader>
 
             <CardContent>
-                <ChartContainer config={chartConfig} className="aspect-auto h-[350px] w-full">
-                    <BarChart data={activeData} margin={{ left: 20, right: 20, top: 10, bottom: 40 }} barSize={40} barGap={20}>
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis
-                            dataKey="location"
-                            tickLine={true}
-                            axisLine={true}
-                            tickMargin={10}
-                            interval={0}
-                            angle={activeData.length > 6 ? -30 : 0}
-                            textAnchor={activeData.length > 6 ? 'end' : 'middle'}
-                            tickFormatter={(val) => (val.length > 10 ? val.slice(0, 10) + '…' : val)}
-                        />
-                        <YAxis allowDecimals={false} />
-                        <ChartTooltip
-                            content={<ChartTooltipContent className="w-[160px]" nameKey="assets" labelFormatter={(value) => `Location: ${value}`} />}
-                        />
-
-                        <Bar dataKey="assets" radius={[8, 8, 0, 0]}>
-                            {activeData.map((_, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={`hsl(${(210 + index * 137.508) % 360}, 70%, 55%)`}
-                                    className="transition-opacity hover:opacity-80"
-                                />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ChartContainer>
+                {activeData.length === 0 ? (
+                    <div className="flex h-[360px] items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+                        No location data available.
+                    </div>
+                ) : (
+                    <ChartContainer config={chartConfig} className="h-[360px] w-full">
+                        <BarChart data={activeData} layout="vertical" margin={{ left: 10, right: 24, top: 8, bottom: 8 }} barSize={22}>
+                            <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                            <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                            <YAxis
+                                dataKey="location"
+                                type="category"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                width={130}
+                                tickFormatter={(value) => (value.length > 18 ? `${value.slice(0, 18)}...` : value)}
+                            />
+                            <ChartTooltip
+                                content={<ChartTooltipContent className="w-[180px]" nameKey="assets" labelFormatter={(value) => value} />}
+                            />
+                            <Bar dataKey="assets" radius={[0, 7, 7, 0]}>
+                                {activeData.map((_, index) => (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={`hsl(${(205 + index * 31) % 360}, 70%, 48%)`}
+                                        className="transition-opacity hover:opacity-80"
+                                    />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ChartContainer>
+                )}
             </CardContent>
         </Card>
     );

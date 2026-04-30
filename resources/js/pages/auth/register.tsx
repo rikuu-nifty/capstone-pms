@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Check, LoaderCircle, LockKeyhole, ShieldCheck, X } from 'lucide-react';
+import { Check, Eye, EyeOff, LoaderCircle, LockKeyhole, ShieldCheck, X } from 'lucide-react';
 import { FormEventHandler, useMemo, useState } from 'react';
 
 import InputError from '@/components/input-error';
@@ -25,9 +25,7 @@ function PasswordRule({ valid, text }: RuleProps) {
     return (
         <div
             className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm transition-all ${
-                valid
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                    : 'border-red-200 bg-red-50 text-red-600'
+                valid ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600'
             }`}
         >
             <div
@@ -51,6 +49,8 @@ export default function Register() {
     });
 
     const [showPasswordRules, setShowPasswordRules] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
     const passwordChecks = useMemo(
         () => ({
@@ -64,14 +64,9 @@ export default function Register() {
     );
 
     const allPasswordChecksPassed =
-        passwordChecks.minLength &&
-        passwordChecks.lowercase &&
-        passwordChecks.uppercase &&
-        passwordChecks.number &&
-        passwordChecks.symbol;
+        passwordChecks.minLength && passwordChecks.lowercase && passwordChecks.uppercase && passwordChecks.number && passwordChecks.symbol;
 
-    const passwordsMatch =
-        data.password_confirmation.length > 0 && data.password === data.password_confirmation;
+    const passwordsMatch = data.password_confirmation.length > 0 && data.password === data.password_confirmation;
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -109,10 +104,7 @@ export default function Register() {
                             placeholder="Username"
                             className="h-12 rounded-xl border-gray-200 shadow-sm transition focus-visible:ring-2 focus-visible:ring-blue-500"
                         />
-                        <InputError
-                            message={errors.name || (/\s/.test(data.name) ? 'Username cannot contain spaces.' : '')}
-                            className="mt-1"
-                        />
+                        <InputError message={errors.name || (/\s/.test(data.name) ? 'Username cannot contain spaces.' : '')} className="mt-1" />
                     </div>
 
                     <div className="grid gap-2">
@@ -134,18 +126,33 @@ export default function Register() {
 
                     <div className="grid gap-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            required
-                            tabIndex={3}
-                            autoComplete="new-password"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            disabled={processing}
-                            placeholder="Password"
-                            className="h-12 rounded-xl border-gray-200 shadow-sm transition focus-visible:ring-2 focus-visible:ring-blue-500"
-                        />
+                        <div className="relative">
+                            <Input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                required
+                                tabIndex={3}
+                                autoComplete="new-password"
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                disabled={processing}
+                                placeholder="Password"
+                                className="h-12 rounded-xl border-gray-200 pr-12 shadow-sm transition focus-visible:ring-2 focus-visible:ring-blue-500"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowPassword((visible) => !visible)}
+                                disabled={processing}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                aria-pressed={showPassword}
+                                tabIndex={4}
+                            >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                        </div>
 
                         {(showPasswordRules || !!errors.password) && (
                             <div className="mt-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -167,11 +174,7 @@ export default function Register() {
                                         <LockKeyhole className="h-3.5 w-3.5" />
                                         <span>
                                             Status:{' '}
-                                            <span
-                                                className={`font-semibold ${
-                                                    allPasswordChecksPassed ? 'text-emerald-600' : 'text-red-500'
-                                                }`}
-                                            >
+                                            <span className={`font-semibold ${allPasswordChecksPassed ? 'text-emerald-600' : 'text-red-500'}`}>
                                                 {allPasswordChecksPassed ? 'Strong enough to submit' : 'Incomplete'}
                                             </span>
                                         </span>
@@ -185,32 +188,41 @@ export default function Register() {
 
                     <div className="grid gap-2">
                         <Label htmlFor="password_confirmation">Confirm password</Label>
-                        <Input
-                            id="password_confirmation"
-                            type="password"
-                            required
-                            tabIndex={4}
-                            autoComplete="new-password"
-                            value={data.password_confirmation}
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
-                            disabled={processing}
-                            placeholder="Confirm password"
-                            className="h-12 rounded-xl border-gray-200 shadow-sm transition focus-visible:ring-2 focus-visible:ring-blue-500"
-                        />
+                        <div className="relative">
+                            <Input
+                                id="password_confirmation"
+                                type={showPasswordConfirmation ? 'text' : 'password'}
+                                required
+                                tabIndex={5}
+                                autoComplete="new-password"
+                                value={data.password_confirmation}
+                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                disabled={processing}
+                                placeholder="Confirm password"
+                                className="h-12 rounded-xl border-gray-200 pr-12 shadow-sm transition focus-visible:ring-2 focus-visible:ring-blue-500"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowPasswordConfirmation((visible) => !visible)}
+                                disabled={processing}
+                                aria-label={showPasswordConfirmation ? 'Hide password confirmation' : 'Show password confirmation'}
+                                aria-pressed={showPasswordConfirmation}
+                                tabIndex={6}
+                            >
+                                {showPasswordConfirmation ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                        </div>
 
                         {data.password_confirmation.length > 0 && (
                             <div
                                 className={`mt-1 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium ${
-                                    passwordsMatch
-                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                        : 'border-red-200 bg-red-50 text-red-600'
+                                    passwordsMatch ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600'
                                 }`}
                             >
-                                {passwordsMatch ? (
-                                    <Check className="h-4 w-4" />
-                                ) : (
-                                    <X className="h-4 w-4" />
-                                )}
+                                {passwordsMatch ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                 {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
                             </div>
                         )}
@@ -221,7 +233,7 @@ export default function Register() {
                     <Button
                         type="submit"
                         className="mt-2 h-12 w-full cursor-pointer rounded-xl bg-blue-600 text-base font-semibold shadow-md transition hover:bg-blue-700"
-                        tabIndex={5}
+                        tabIndex={7}
                         disabled={processing}
                     >
                         {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
@@ -231,7 +243,7 @@ export default function Register() {
 
                 <div className="text-center text-sm text-muted-foreground">
                     Already have an account?{' '}
-                    <TextLink href={route('login')} tabIndex={6}>
+                    <TextLink href={route('login')} tabIndex={8}>
                         Log in
                     </TextLink>
                 </div>

@@ -1,106 +1,299 @@
-import { Head } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
-import { useEffect, useRef, useState } from 'react';
 import type { BreadcrumbItem } from '@/types';
+import type { EventClickArg } from '@fullcalendar/core';
 import { Calendar as FullCalendar } from '@fullcalendar/core';
+import '@fullcalendar/daygrid';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
-import '@fullcalendar/daygrid';
-import '@fullcalendar/timegrid';
 import '@fullcalendar/list';
-import type { EventClickArg } from '@fullcalendar/core';
-import {
-    Calendar,
-    Truck,
-    ClipboardList,
-    FileText,
-    Archive,
-    Filter,
-    X,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import listPlugin from '@fullcalendar/list';
+import '@fullcalendar/timegrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import { Head } from '@inertiajs/react';
+import { Archive, CalendarCheck2, CalendarClock, CalendarDays, ClipboardList, FileText, Filter, Search, Truck, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import '../../css/calendar-overrides.css';
 
-interface CalendarProps {
-    events: {
-        id: string;
-        title: string;
-        start: string;
-        end?: string;
-        color: string;
-        url?: string;
-        type: string;
-        status: string;
-    }[];
+interface CalendarEvent {
+    id: string;
+    title: string;
+    start: string;
+    end?: string;
+    color: string;
+    url?: string;
+    type: string;
+    status: string;
+    allDay?: boolean;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Calendar', href: '/calendar' },
-];
+interface CalendarProps {
+    events: CalendarEvent[];
+}
+
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Calendar', href: '/calendar' }];
 
 const MODULES = [
-    { label: 'Inventory Scheduling', icon: Calendar },
-    { label: 'Property Transfer', icon: Truck },
-    { label: 'Off-Campus Issued', icon: ClipboardList },
-    { label: 'Off-Campus Return', icon: ClipboardList },
-    { label: 'Turnover/Disposal', icon: Archive },
-    { label: 'Form Approval', icon: FileText },
+    {
+        label: 'Inventory Scheduling',
+        icon: CalendarDays,
+        color: '#2563eb',
+        tone: 'bg-blue-50 text-blue-700 border-blue-100',
+    },
+    {
+        label: 'Property Transfer',
+        icon: Truck,
+        color: '#16a34a',
+        tone: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    },
+    {
+        label: 'Off-Campus Issued',
+        icon: ClipboardList,
+        color: '#f59e0b',
+        tone: 'bg-amber-50 text-amber-700 border-amber-100',
+    },
+    {
+        label: 'Off-Campus Return',
+        icon: CalendarClock,
+        color: '#eab308',
+        tone: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+    },
+    {
+        label: 'Turnover/Disposal',
+        icon: Archive,
+        color: '#9333ea',
+        tone: 'bg-violet-50 text-violet-700 border-violet-100',
+    },
+    {
+        label: 'Form Approval',
+        icon: FileText,
+        color: '#dc2626',
+        tone: 'bg-rose-50 text-rose-700 border-rose-100',
+    },
 ];
+
+const COMPLETED_STATUS = ['approved', 'completed', 'done', 'returned', 'cancelled', 'canceled'];
+
+function moduleFor(type: string) {
+    return MODULES.find((module) => module.label === type) ?? MODULES[0];
+}
+
+function stripHtml(value: string) {
+    return value
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function escapeHtml(value: string) {
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function parseDate(value?: string) {
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function startOfDay(date: Date) {
+    const copy = new Date(date);
+    copy.setHours(0, 0, 0, 0);
+    return copy;
+}
+
+function isSameDay(a: Date, b: Date) {
+    return startOfDay(a).getTime() === startOfDay(b).getTime();
+}
+
+function isWithinDays(date: Date, from: Date, days: number) {
+    const start = startOfDay(from).getTime();
+    const end = start + days * 24 * 60 * 60 * 1000;
+    const target = startOfDay(date).getTime();
+    return target >= start && target <= end;
+}
+
+function isOpenStatus(status: string) {
+    const normalized = status.toLowerCase();
+    return !COMPLETED_STATUS.some((item) => normalized.includes(item));
+}
+
+function formatDate(value?: string) {
+    const date = parseDate(value);
+    if (!date) return 'No date set';
+
+    return new Intl.DateTimeFormat('en', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    }).format(date);
+}
+
+function formatStatus(status: string) {
+    return status
+        .split(/[\s_-]+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}
+
+function statusTone(status: string) {
+    const normalized = status.toLowerCase();
+
+    if (normalized.includes('approved') || normalized.includes('completed') || normalized.includes('returned')) {
+        return 'border-emerald-100 bg-emerald-50 text-emerald-700';
+    }
+
+    if (normalized.includes('pending') || normalized.includes('scheduled')) {
+        return 'border-amber-100 bg-amber-50 text-amber-700';
+    }
+
+    if (normalized.includes('cancel') || normalized.includes('reject') || normalized.includes('overdue')) {
+        return 'border-rose-100 bg-rose-50 text-rose-700';
+    }
+
+    return 'border-slate-200 bg-slate-50 text-slate-600';
+}
 
 export default function CalendarPage({ events }: CalendarProps) {
     const calendarRef = useRef<HTMLDivElement>(null);
-    const [activeModules, setActiveModules] = useState<string[]>(MODULES.map(m => m.label));
+    const [activeModules, setActiveModules] = useState<string[]>(MODULES.map((module) => module.label));
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const eventCounts = useMemo(() => {
+        return MODULES.reduce<Record<string, number>>((counts, module) => {
+            counts[module.label] = events.filter((event) => event.type === module.label).length;
+            return counts;
+        }, {});
+    }, [events]);
+
+    const normalizedEvents = useMemo(() => {
+        const query = searchTerm.trim().toLowerCase();
+
+        return events
+            .map((event) => ({
+                ...event,
+                plainTitle: stripHtml(event.title),
+            }))
+            .filter((event) => {
+                const matchesModule = activeModules.includes(event.type);
+                const matchesSearch =
+                    !query ||
+                    event.plainTitle.toLowerCase().includes(query) ||
+                    event.type.toLowerCase().includes(query) ||
+                    event.status.toLowerCase().includes(query);
+
+                return matchesModule && matchesSearch;
+            });
+    }, [activeModules, events, searchTerm]);
+
+    const today = useMemo(() => new Date(), []);
+
+    const metrics = useMemo(() => {
+        const todayCount = events.filter((event) => {
+            const date = parseDate(event.start);
+            return date ? isSameDay(date, today) : false;
+        }).length;
+
+        const weekCount = events.filter((event) => {
+            const date = parseDate(event.start);
+            return date ? isWithinDays(date, today, 7) : false;
+        }).length;
+
+        const openCount = events.filter((event) => isOpenStatus(event.status)).length;
+
+        return {
+            total: events.length,
+            today: todayCount,
+            week: weekCount,
+            open: openCount,
+        };
+    }, [events, today]);
+
+    const upcomingEvents = useMemo(() => {
+        const todayStart = startOfDay(today).getTime();
+
+        return normalizedEvents
+            .filter((event) => {
+                const date = parseDate(event.start);
+                return date ? startOfDay(date).getTime() >= todayStart : false;
+            })
+            .sort((a, b) => {
+                const first = parseDate(a.start)?.getTime() ?? 0;
+                const second = parseDate(b.start)?.getTime() ?? 0;
+                return first - second;
+            })
+            .slice(0, 6);
+    }, [normalizedEvents, today]);
+
+    const busiestModule = useMemo(() => {
+        return MODULES.reduce(
+            (current, module) => {
+                const count = eventCounts[module.label] ?? 0;
+                return count > current.count ? { label: module.label, count } : current;
+            },
+            { label: 'No module yet', count: 0 },
+        );
+    }, [eventCounts]);
+
+    const calendarEvents = useMemo(() => {
+        return normalizedEvents.map((event) => {
+            const module = moduleFor(event.type);
+
+            return {
+                ...event,
+                title: event.plainTitle,
+                color: module.color,
+                borderColor: module.color,
+                backgroundColor: module.color,
+                extendedProps: {
+                    type: event.type,
+                    status: event.status,
+                    url: event.url,
+                },
+            };
+        });
+    }, [normalizedEvents]);
 
     useEffect(() => {
         if (!calendarRef.current) return;
 
-        // Extend HTMLDivElement to hold a reference to the calendar
         type CalendarElement = HTMLDivElement & { _calendarInstance?: FullCalendar };
         const calendarEl = calendarRef.current as CalendarElement;
-
-        // Remember current view and date if an instance already exists
         const existingCalendar = calendarEl._calendarInstance;
         const currentView = existingCalendar?.view?.type || 'dayGridMonth';
         const currentDate = existingCalendar?.getDate?.() || new Date();
 
-        // Destroy old instance before creating a new one
         if (existingCalendar) {
             existingCalendar.destroy();
         }
-
-        const filtered = events.filter(e => activeModules.includes(e.type));
 
         const calendar = new FullCalendar(calendarEl, {
             plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                // right: 'dayGridMonth,timeGridWeek,listWeek',
-                right: 'dayGridMonth,listWeek',
+                right: 'dayGridMonth,timeGridWeek,listWeek',
             },
             buttonText: {
                 today: 'Today',
                 month: 'Month',
                 week: 'Week',
-                list: 'Week List',
+                list: 'Agenda',
             },
-            initialView: currentView, // Preserve view
-            initialDate: currentDate, // Preserve date
+            initialView: currentView,
+            initialDate: currentDate,
             navLinks: true,
-            events: filtered,
+            events: calendarEvents,
             height: 'auto',
             eventDisplay: 'block',
             eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: true },
-            dayMaxEventRows: 5,
+            dayMaxEventRows: 4,
             moreLinkText: 'more',
-
-            // slotMinTime: '-01:00:00',
             slotMinTime: '08:00:00',
             slotMaxTime: '17:01:00',
-            scrollTime: '06:00:00',
+            scrollTime: '08:00:00',
             scrollTimeReset: false,
             expandRows: true,
             slotLabelInterval: '1:00',
@@ -115,12 +308,19 @@ export default function CalendarPage({ events }: CalendarProps) {
                 timeGridWeek: { displayEventTime: false },
                 timeGridDay: { displayEventTime: false },
             },
+            eventContent: (arg) => {
+                const type = String(arg.event.extendedProps.type ?? '');
+                const status = String(arg.event.extendedProps.status ?? '');
 
-            eventDidMount: (info) => {
-                const titleEl = info.el.querySelector('.fc-event-title');
-                if (titleEl) titleEl.innerHTML = info.event.title;
+                return {
+                    html: `
+                        <div class="tt-event">
+                            <span class="tt-event-title">${escapeHtml(arg.event.title)}</span>
+                            <span class="tt-event-meta">${escapeHtml(type)}${status ? ` - ${escapeHtml(formatStatus(status))}` : ''}</span>
+                        </div>
+                    `,
+                };
             },
-            eventContent: (arg) => ({ html: arg.event.title }),
             eventClick: (info: EventClickArg) => {
                 info.jsEvent.preventDefault();
                 if (info.event.url) window.open(info.event.url, '_blank');
@@ -136,144 +336,240 @@ export default function CalendarPage({ events }: CalendarProps) {
                 listLabels.forEach((label) => {
                     if (label.textContent?.trim().toLowerCase() === 'all-day') {
                         label.textContent = 'All Day';
-                        // (label as HTMLElement).style.fontWeight = '600';
                     }
                 });
             },
         });
 
-        // Save the new instance reference for reuse
         calendarEl._calendarInstance = calendar;
-
         calendar.render();
 
         return () => calendar.destroy();
-    }, [events, activeModules]);
+    }, [calendarEvents]);
 
+    const showAllModules = () => setActiveModules(MODULES.map((module) => module.label));
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Calendar" />
 
-            <div className="p-6 space-y-4">
-                {/* Shared Header */}
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        Calendar Overview
-                    </h1>
+            <div className="flex flex-col gap-5 p-4 md:p-6">
+                <section>
+                    <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                        <div className="max-w-3xl">
+                            <h1 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl dark:text-white">Calendar Overview</h1>
+                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                Monitor inventory schedules, transfers, off-campus returns, turnover activity, and approvals in one operational view.
+                            </p>
+                        </div>
 
-                    {/* Floating Toggle — mobile only */}
-                    <Button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        variant="outline"
-                        size="icon"
-                        className="lg:hidden bg-white dark:bg-neutral-800 shadow-sm border"
-                    >
-                        <Filter className="h-5 w-5 text-blue-600" />
-                    </Button>
-                </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button onClick={() => setSidebarOpen((open) => !open)} variant="outline" className="gap-2 xl:hidden">
+                                {sidebarOpen ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+                                Filters
+                            </Button>
+                        </div>
+                    </div>
+                </section>
 
-                {/* Main container with equal-height calendar + sidebar */}
-                <div className="flex flex-col lg:flex-row gap-6 min-h-[80vh] max-h-[80vh]">
-                    {/* Calendar Area */}
-                    <div className="flex-1 flex flex-col overflow-hidden">
+                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <SummaryCard
+                        icon={CalendarDays}
+                        label="All Schedules"
+                        value={metrics.total}
+                        detail="Total calendar records from all modules."
+                        colorClass="bg-blue-50 text-blue-700 border-blue-100"
+                    />
+                    <SummaryCard
+                        icon={CalendarCheck2}
+                        label="Today"
+                        value={metrics.today}
+                        detail="Schedules with a date set for today."
+                        colorClass="bg-emerald-50 text-emerald-700 border-emerald-100"
+                    />
+                    <SummaryCard
+                        icon={CalendarClock}
+                        label="Next 7 Days"
+                        value={metrics.week}
+                        detail="Upcoming schedules due within one week."
+                        colorClass="bg-amber-50 text-amber-700 border-amber-100"
+                    />
+                    <SummaryCard
+                        icon={Filter}
+                        label="Needs Action"
+                        value={metrics.open}
+                        detail="Schedules not yet completed, approved, returned, or cancelled."
+                        colorClass="bg-rose-50 text-rose-700 border-rose-100"
+                    />
+                </section>
+
+                <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Operations Calendar</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    {normalizedEvents.length} visible item{normalizedEvents.length === 1 ? '' : 's'} based on your filters.
+                                </p>
+                            </div>
+                        </div>
+
                         <div
                             ref={calendarRef}
-                            className="flex-1 overflow-y-auto bg-white dark:bg-neutral-900 rounded-xl shadow p-4 border border-gray-200 dark:border-neutral-700"
-                            style={{
-                                maxHeight: 'calc(100vh - 10rem)', // adjust based on header height
-                                scrollbarGutter: 'stable',
-                            }}
+                            className="tap-track-calendar min-h-[680px] overflow-hidden rounded-xl border border-slate-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950"
                         />
                     </div>
 
-                    {/* Sidebar */}
-                    <div
-                        className={`fixed lg:relative top-0 right-0 h-full lg:h-auto lg:w-75 w-64 z-50 bg-white dark:bg-neutral-900 border-l border-gray-200 dark:border-neutral-800 shadow-lg transition-transform duration-300 ${
-                            sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
-                        } flex flex-col self-stretch`}
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-neutral-800">
-                            <h2 className="font-semibold text-gray-900 dark:text-gray-100 text-lg flex items-center gap-2">
-                                <Filter className="h-4 w-4" />
-                                Filters
-                            </h2>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setSidebarOpen(false)}
-                                className="lg:hidden"
-                            >
-                                <X className="h-5 w-5" />
-                            </Button>
-                        </div>
+                    <aside className={`${sidebarOpen ? 'grid' : 'hidden xl:grid'} content-start gap-4`}>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-base font-semibold text-slate-950 dark:text-white">Filters</h2>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Find the schedule you need fast.</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="xl:hidden" onClick={() => setSidebarOpen(false)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
 
-                        {/* Filter List */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                            {MODULES.map(({ label, icon: Icon }) => {
-                                const active = activeModules.includes(label);
+                            <div className="relative mb-4">
+                                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <Input
+                                    value={searchTerm}
+                                    onChange={(event) => setSearchTerm(event.target.value)}
+                                    placeholder="Search title, type, or status"
+                                    className="h-10 rounded-lg border-slate-200 pl-9"
+                                />
+                            </div>
 
-                                const colorMap: Record<string, string> = {
-                                    'Inventory Scheduling': '#3d5ea5ff',
-                                    'Property Transfer': '#16a34a',
-                                    'Off-Campus Issued': '#f59e0b',
-                                    'Off-Campus Return': '#eab308',
-                                    'Turnover/Disposal': '#9333ea',
-                                    'Form Approval': '#dc2626',
-                                };
+                            <div className="mb-3 flex gap-2">
+                                <Button variant="outline" size="sm" onClick={showAllModules} className="h-8 flex-1">
+                                    All
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => setActiveModules([])} className="h-8 flex-1">
+                                    None
+                                </Button>
+                            </div>
 
-                                const bgColor = colorMap[label];
-                                const textColor = active ? 'text-white' : 'text-gray-800 dark:text-gray-200';
-                                const hoverColor = active ? '' : 'hover:opacity-90';
+                            <div className="space-y-2">
+                                {MODULES.map(({ label, icon: Icon, color, tone }) => {
+                                    const active = activeModules.includes(label);
 
-                                return (
-                                <button
-                                    key={label}
-                                    onClick={() =>
-                                        setActiveModules(prev =>
-                                            prev.includes(label)
-                                            ? prev.filter(m => m !== label)
-                                            : [...prev, label]
-                                        )
-                                    }
-                                    className={`
-                                        flex items-center gap-2 w-full rounded-md px-3 py-2 font-medium transition-all duration-200
-                                        border border-transparent cursor-pointer ${textColor} ${hoverColor}
-                                        ${active
-                                            ? ''
-                                            : 'border-gray-600 dark:border-neutral-700 bg-transparent'}
-                                    `}
-                                    style={{
-                                        backgroundColor: active ? bgColor : 'transparent',
-                                    }}
-                                >
-                                    <Icon
-                                        className="h-4 w-4 shrink-0"
-                                        style={{ color: active ? 'white' : bgColor }}
-                                    />
-                                    <span>{label}</span>
-                                </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* Legend */}
-                        <div className="border-t border-gray-200 dark:border-neutral-800 p-4">
-                            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                Legend
-                            </h3>
-                            <div className="space-y-2 text-sm">
-                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 rounded"></span> Inventory Scheduling</span>
-                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-green-600 rounded"></span> Property Transfer</span>
-                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-yellow-500 rounded"></span> Off-Campus</span>
-                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-purple-600 rounded"></span> Turnover / Disposal</span>
-                                <span className="flex items-center gap-2"><span className="w-3 h-3 bg-red-600 rounded"></span> Form Approval</span>
+                                    return (
+                                        <button
+                                            key={label}
+                                            onClick={() =>
+                                                setActiveModules((current) =>
+                                                    current.includes(label) ? current.filter((module) => module !== label) : [...current, label],
+                                                )
+                                            }
+                                            className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${
+                                                active
+                                                    ? tone
+                                                    : 'border-slate-200 bg-white text-slate-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            <span className="flex min-w-0 items-center gap-3">
+                                                <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/70">
+                                                    <Icon className="h-4 w-4" style={{ color }} />
+                                                </span>
+                                                <span className="truncate text-sm font-medium">{label}</span>
+                                            </span>
+                                            <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                                                {eventCounts[label] ?? 0}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
-                    </div>
-                </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="mb-4">
+                                <h2 className="text-base font-semibold text-slate-950 dark:text-white">Upcoming</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Next scheduled items from active filters.</p>
+                            </div>
+
+                            {upcomingEvents.length > 0 ? (
+                                <div className="space-y-3">
+                                    {upcomingEvents.map((event) => {
+                                        const module = moduleFor(event.type);
+                                        const Icon = module.icon;
+
+                                        return (
+                                            <button
+                                                key={event.id}
+                                                onClick={() => event.url && window.open(event.url, '_blank')}
+                                                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-950"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span
+                                                        className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg"
+                                                        style={{ backgroundColor: `${module.color}18` }}
+                                                    >
+                                                        <Icon className="h-4 w-4" style={{ color: module.color }} />
+                                                    </span>
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="line-clamp-2 text-sm font-semibold text-slate-900 dark:text-white">
+                                                            {event.plainTitle}
+                                                        </span>
+                                                        <span className="mt-2 flex flex-wrap items-center gap-2">
+                                                            <span className="text-xs text-slate-500">{formatDate(event.start)}</span>
+                                                            <span
+                                                                className={`rounded-full border px-2 py-0.5 text-xs font-medium ${statusTone(event.status)}`}
+                                                            >
+                                                                {event.status ? formatStatus(event.status) : 'No Status'}
+                                                            </span>
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center dark:border-neutral-700 dark:bg-neutral-950">
+                                    <CalendarClock className="mx-auto h-8 w-8 text-slate-400" />
+                                    <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">No upcoming items found</p>
+                                    <p className="mt-1 text-xs text-slate-500">Try showing all modules or clearing your search.</p>
+                                    <Button variant="outline" size="sm" onClick={showAllModules} className="mt-3">
+                                        Reset filters
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </aside>
+                </section>
             </div>
         </AppLayout>
+    );
+}
+
+function SummaryCard({
+    icon: Icon,
+    label,
+    value,
+    detail,
+    colorClass,
+}: {
+    icon: typeof CalendarDays;
+    label: string;
+    value: number;
+    detail: string;
+    colorClass: string;
+}) {
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+                    <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">{value}</p>
+                </div>
+                <span className={`grid h-10 w-10 place-items-center rounded-xl border ${colorClass}`}>
+                    <Icon className="h-5 w-5" />
+                </span>
+            </div>
+            <p className="mt-4 border-t border-slate-100 pt-3 text-sm text-slate-500 dark:border-neutral-800 dark:text-slate-400">{detail}</p>
+        </div>
     );
 }

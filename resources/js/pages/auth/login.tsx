@@ -1,6 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { FormEventHandler, useState } from 'react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -27,6 +27,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     const { url } = usePage();
     const searchParams = new URLSearchParams(url.split('?')[1]);
     const redirectParam = searchParams.get('redirect') ?? '';
+    const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         email: '',
@@ -68,18 +69,33 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <div className="flex items-center">
                             <Label htmlFor="password">Password</Label>
                         </div>
-                        <Input
-                            id="password"
-                            type="password"
-                            required
-                            tabIndex={2}
-                            autoComplete="current-password"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Password"
-                        />
+                        <div className="relative">
+                            <Input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                required
+                                tabIndex={2}
+                                autoComplete="current-password"
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                placeholder="Password"
+                                className="pr-10"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                onClick={() => setShowPassword((visible) => !visible)}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                aria-pressed={showPassword}
+                                tabIndex={3}
+                            >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                        </div>
                         {canResetPassword && (
-                            <TextLink href={route('password.request')} className="ml-auto text-sm text-blue-600 hover:text-blue-800" tabIndex={5}>
+                            <TextLink href={route('password.request')} className="ml-auto text-sm text-blue-600 hover:text-blue-800" tabIndex={6}>
                                 Forgot password?
                             </TextLink>
                         )}
@@ -93,12 +109,17 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             name="remember"
                             checked={data.remember}
                             onClick={() => setData('remember', !data.remember)}
-                            tabIndex={3}
+                            tabIndex={4}
                         />
                         <Label htmlFor="remember">Remember me</Label>
                     </div>
 
-                    <Button type="submit" className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700 cursor-pointer" tabIndex={4} disabled={processing}>
+                    <Button
+                        type="submit"
+                        className="mt-4 w-full cursor-pointer bg-blue-600 text-white hover:bg-blue-700"
+                        tabIndex={5}
+                        disabled={processing}
+                    >
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
@@ -106,7 +127,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                 <div className="text-center text-sm text-muted-foreground">
                     Don't have an account?{' '}
-                    <TextLink href={route('register')} tabIndex={5}>
+                    <TextLink href={route('register')} tabIndex={7}>
                         Sign up
                     </TextLink>
                 </div>

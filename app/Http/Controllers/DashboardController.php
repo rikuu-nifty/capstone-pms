@@ -245,7 +245,7 @@ class DashboardController extends Controller
         // 🧮 KPI cards
         $stats = [
             'totalAssets'        => $inventoryQuery->count(),
-            'activeTransfers'    => $transferQuery->where('status', 'in_progress')->count(),
+            'activeTransfers'    => (clone $transferQuery)->where('status', 'in_progress')->count(),
             'pendingRequests'    => (clone $turnoverQuery)
                 ->where('type', 'turnover')
                 ->whereIn('status', ['pending_review', 'approved'])
@@ -369,11 +369,23 @@ class DashboardController extends Controller
         });
 
         // 📊 % Trend
-        $thisMonth = (clone $inventoryQuery)->whereMonth('created_at', now()->month)->count();
-        $lastMonth = (clone $inventoryQuery)->whereMonth('created_at', now()->subMonth()->month)->count();
+        $thisMonth = (clone $inventoryQuery)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $lastMonthDate = now()->subMonth();
+        $lastMonth = (clone $inventoryQuery)
+            ->whereMonth('created_at', $lastMonthDate->month)
+            ->whereYear('created_at', $lastMonthDate->year)
+            ->count();
         $assetTrend = $lastMonth > 0
             ? (($thisMonth - $lastMonth) / $lastMonth) * 100
             : ($thisMonth > 0 ? 100 : 0);
+
+        $recentTransfers = (clone $transferQuery)
+            ->latest()
+            ->take(5)
+            ->get(['id', 'status', 'created_at']);
 
         return Inertia::render('dashboard/index', [
             'stats'          => $stats,
@@ -383,6 +395,7 @@ class DashboardController extends Controller
             'rooms'          => $rooms,
             'departments'    => $departments,
             'assetsOverTime' => $assetsOverTime,
+            'recentTransfers'=> $recentTransfers,
         ]);
     }
 }
