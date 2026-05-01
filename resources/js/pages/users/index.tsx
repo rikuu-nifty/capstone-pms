@@ -1,21 +1,23 @@
-import { Head, router, usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Badge } from "@/components/ui/badge";
 import { Input } from '@/components/ui/input';
-import { Users, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/app-layout';
+import { formatDateTime, formatFullName, formatNumber, QueryParams, Role, UnitOrDepartment, User } from '@/types/custom-index';
+import { Head, router, usePage } from '@inertiajs/react';
+import { CheckCircle2, Clock, Users, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { formatDateTime, Role, User, QueryParams, formatNumber, formatFullName, UnitOrDepartment } from '@/types/custom-index';
 
-import RoleAssignmentModal from '@/components/modals/RoleAssignmentModal';
-import ViewUserModal from '@/components/modals/ViewUserModal';
+import UserRoleFilterDropdown from '@/components/filters/UserRoleFilterDropdown';
 import UserStatusFilterDropdown, { type UserStatus } from '@/components/filters/UserStatusFilterDropdown';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
-import UserRoleFilterDropdown from '@/components/filters/UserRoleFilterDropdown';
+import RoleAssignmentModal from '@/components/modals/RoleAssignmentModal';
+import ViewUserModal from '@/components/modals/ViewUserModal';
 
 import Pagination, { PageInfo } from '@/components/Pagination';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
 
 export type LinkItem = { url: string | null; label: string; active: boolean };
 
@@ -47,13 +49,9 @@ export default function UserApprovals() {
     const currentTab = props.tab ?? 'approvals';
 
     const currentFilter: UserStatus =
-        props.filter === 'pending' ||
-        props.filter === 'approved' ||
-        props.filter === 'denied'
-        ? (props.filter as UserStatus)
-        : '';
+        props.filter === 'pending' || props.filter === 'approved' || props.filter === 'denied' ? (props.filter as UserStatus) : '';
 
-    const currentRoleFilter = props.filter_role ? Number(props.filter_role) : "";
+    const currentRoleFilter = props.filter_role ? Number(props.filter_role) : '';
 
     const [showRoleModal, setShowRoleModal] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -71,41 +69,31 @@ export default function UserApprovals() {
 
     const filteredUsers = useMemo(() => {
         return props.users.data.filter((u) => {
-            const haystack = `${u.name ?? ""} ${u.email ?? ""} ${
-                u.detail ? `${u.detail.first_name} ${u.detail.middle_name ?? ""} ${u.detail.last_name}` : ""
+            const haystack = `${u.name ?? ''} ${u.email ?? ''} ${
+                u.detail ? `${u.detail.first_name} ${u.detail.middle_name ?? ''} ${u.detail.last_name}` : ''
             }`.toLowerCase();
             return !search || haystack.includes(search);
-            });
+        });
     }, [props.users.data, search]);
 
     const go = (params: QueryParams = {}) =>
-        router.get(
-            route('users.index'),
-            { tab: currentTab, ...params },
-            { preserveState: true, preserveScroll: true, replace: true }
-        );
+        router.get(route('users.index'), { tab: currentTab, ...params }, { preserveState: true, preserveScroll: true, replace: true });
 
     const changeTab = (key: 'system' | 'approvals') =>
-        router.get(
-            route('users.index'),
-            { tab: key, q: search || undefined },
-            { preserveState: true, preserveScroll: true, replace: true }
-        );
+        router.get(route('users.index'), { tab: key, q: search || undefined }, { preserveState: true, preserveScroll: true, replace: true });
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Users', href: '/users' }]}>
             <Head title="Users" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex w-full flex-col gap-2">
                     <div>
                         <h1 className="text-2xl font-semibold">Users</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Manage system users and approve new user registrations.
-                        </p>
+                        <p className="text-sm text-muted-foreground">Manage system users and approve new user registrations.</p>
                     </div>
 
-                    <div className="flex items-center justify-between w-full gap-2">
+                    <div className="flex w-full items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                             <Input
                                 type="text"
@@ -115,42 +103,42 @@ export default function UserApprovals() {
                                 className="w-64"
                             />
 
-                            {currentTab === "system" && (
+                            {currentTab === 'system' && (
                                 <UserRoleFilterDropdown
                                     roles={props.roles}
                                     selectedRoleId={currentRoleFilter}
                                     onApply={(roleId) =>
                                         router.get(
-                                        route("users.index"),
-                                        { tab: currentTab, q: search || undefined, filter_role: roleId || undefined },
-                                        { preserveState: true, preserveScroll: true, replace: true }
+                                            route('users.index'),
+                                            { tab: currentTab, q: search || undefined, filter_role: roleId || undefined },
+                                            { preserveState: true, preserveScroll: true, replace: true },
                                         )
                                     }
                                     onClear={() =>
                                         router.get(
-                                            route("users.index"),
-                                            { tab: currentTab, q: search || undefined, filter_role: "" },
-                                            { preserveState: true, preserveScroll: true, replace: true }
+                                            route('users.index'),
+                                            { tab: currentTab, q: search || undefined, filter_role: '' },
+                                            { preserveState: true, preserveScroll: true, replace: true, onSuccess: notifyFiltersCleared },
                                         )
                                     }
                                 />
                             )}
 
-                            {currentTab === "approvals" && (
+                            {currentTab === 'approvals' && (
                                 <UserStatusFilterDropdown
                                     selected_status={currentFilter}
                                     onApply={(status) =>
                                         router.get(
-                                            route("users.index"),
+                                            route('users.index'),
                                             { tab: currentTab, q: search || undefined, filter: status },
-                                            { preserveState: true, preserveScroll: true, replace: true }
+                                            { preserveState: true, preserveScroll: true, replace: true },
                                         )
                                     }
                                     onClear={() =>
                                         router.get(
-                                            route("users.index"),
-                                            { tab: currentTab, q: search || undefined, filter: "" },
-                                            { preserveState: true, preserveScroll: true, replace: true }
+                                            route('users.index'),
+                                            { tab: currentTab, q: search || undefined, filter: '' },
+                                            { preserveState: true, preserveScroll: true, replace: true, onSuccess: notifyFiltersCleared },
                                         )
                                     }
                                 />
@@ -162,54 +150,74 @@ export default function UserApprovals() {
                 {/* KPI Cards */}
                 {props.totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <MetricKpiCard
+                            icon={Users}
+                            label="Total Users"
+                            value={formatNumber(props.totals.users)}
+                            detail="Registered user accounts"
+                            tone="blue"
+                        />
+                        <MetricKpiCard
+                            icon={CheckCircle2}
+                            label="Approved"
+                            value={formatNumber(props.totals.approved)}
+                            detail="Approved user accounts"
+                            tone="green"
+                        />
+                        <MetricKpiCard
+                            icon={Clock}
+                            label="Pending"
+                            value={formatNumber(props.totals.pending)}
+                            detail="Users awaiting approval"
+                            tone="yellow"
+                        />
+                        <MetricKpiCard
+                            icon={XCircle}
+                            label="Rejected"
+                            value={formatNumber(props.totals.denied)}
+                            detail="Denied user requests"
+                            tone="red"
+                        />
+                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
                                 <Users className="h-7 w-7 text-blue-600" />
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Total Users</div>
-                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
-                                    {formatNumber(props.totals.users)}
-                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">{formatNumber(props.totals.users)}</div>
                             </div>
                         </div>
 
                         {/* Approved */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                 <CheckCircle2 className="h-7 w-7 text-green-600" />
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Approved</div>
-                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
-                                    {formatNumber(props.totals.approved)}
-                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">{formatNumber(props.totals.approved)}</div>
                             </div>
                         </div>
 
                         {/* Pending */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
                                 <Clock className="h-7 w-7 text-yellow-600" />
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Pending</div>
-                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
-                                    {formatNumber(props.totals.pending)}
-                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">{formatNumber(props.totals.pending)}</div>
                             </div>
                         </div>
 
                         {/* Rejected */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
                                 <XCircle className="h-7 w-7 text-red-600" />
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Rejected</div>
-                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
-                                    {formatNumber(props.totals.denied)}
-                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-3xl font-bold">{formatNumber(props.totals.denied)}</div>
                             </div>
                         </div>
                     </div>
@@ -220,9 +228,9 @@ export default function UserApprovals() {
                     <button
                         onClick={() => changeTab('system')}
                         className={`cursor-pointer pb-2 text-sm ${
-                        currentTab === 'system'
-                            ? 'font-semibold text-foreground border-b-2 border-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
+                            currentTab === 'system'
+                                ? 'border-b-2 border-foreground font-semibold text-foreground'
+                                : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         System Users
@@ -230,26 +238,24 @@ export default function UserApprovals() {
                     <button
                         onClick={() => changeTab('approvals')}
                         className={`cursor-pointer pb-2 text-sm ${
-                        currentTab === 'approvals'
-                            ? 'font-semibold text-foreground border-b-2 border-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
+                            currentTab === 'approvals'
+                                ? 'border-b-2 border-foreground font-semibold text-foreground'
+                                : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         User Approvals
                         {props.totals?.pending > 0 && (
-                            <span className="ml-1 rounded-full bg-red-600 text-white text-xs font-medium px-2 py-0.5">
-                                {props.totals.pending}
-                            </span>
+                            <span className="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs font-medium text-white">{props.totals.pending}</span>
                         )}
                     </button>
                 </div>
 
                 {/* System Users Tab */}
                 {currentTab === 'system' && (
-                    <div className="rounded-lg overflow-x-auto border">
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-muted/40">
+                                <TableRow>
                                     <TableHead className="text-center">Full Name</TableHead>
                                     <TableHead className="text-center">Email</TableHead>
                                     <TableHead className="text-center">Unit / Department</TableHead>
@@ -263,84 +269,74 @@ export default function UserApprovals() {
                                 {filteredUsers.length > 0 ? (
                                     filteredUsers.map((u) => (
                                         <TableRow key={u.id} className="text-center">
-                                        <TableCell>
-                                            {u.detail
-                                            ? formatFullName(
-                                                u.detail.first_name,
-                                                u.detail.middle_name ?? "",
-                                                u.detail.last_name
-                                                )
-                                            : u.name}
-                                        </TableCell>
-                                        <TableCell>{u.email}</TableCell>
-                                        <TableCell className="font-medium">
-                                            {u.unit_or_department?.name ?? "—"}
-                                        </TableCell>
+                                            <TableCell>
+                                                {u.detail
+                                                    ? formatFullName(u.detail.first_name, u.detail.middle_name ?? '', u.detail.last_name)
+                                                    : u.name}
+                                            </TableCell>
+                                            <TableCell>{u.email}</TableCell>
+                                            <TableCell className="font-medium">{u.unit_or_department?.name ?? '—'}</TableCell>
 
-                                        <TableCell>
-                                            {u.role ? (
-                                            <Badge
-                                                variant={
-                                                u.role.code === "superuser"
-                                                    ? "superuser"
-                                                    : u.role.code === "vp_admin"
-                                                    ? "vp_admin"
-                                                    : u.role.code === "pmo_head"
-                                                    ? "pmo_head"
-                                                    : u.role.code === "pmo_staff"
-                                                    ? "pmo_staff"
-                                                    : "outline"
-                                                }
-                                                className="text-xs"
-                                            >
-                                                {u.role.name}
-                                            </Badge>
-                                            ) : (
-                                            "—"
-                                            )}
-                                        </TableCell>
+                                            <TableCell>
+                                                {u.role ? (
+                                                    <Badge
+                                                        variant={
+                                                            u.role.code === 'superuser'
+                                                                ? 'superuser'
+                                                                : u.role.code === 'vp_admin'
+                                                                  ? 'vp_admin'
+                                                                  : u.role.code === 'pmo_head'
+                                                                    ? 'pmo_head'
+                                                                    : u.role.code === 'pmo_staff'
+                                                                      ? 'pmo_staff'
+                                                                      : 'outline'
+                                                        }
+                                                        className="text-xs"
+                                                    >
+                                                        {u.role.name}
+                                                    </Badge>
+                                                ) : (
+                                                    '—'
+                                                )}
+                                            </TableCell>
 
-                                        <TableCell>
-                                            {u.approved_at ? formatDateTime(u.approved_at) : "—"}
-                                        </TableCell>
+                                            <TableCell>{u.approved_at ? formatDateTime(u.approved_at) : '—'}</TableCell>
 
-                                        <TableCell>
-                                            {u.updated_at ? formatDateTime(u.updated_at) : "N/A"}
-                                        </TableCell>
+                                            <TableCell>{u.updated_at ? formatDateTime(u.updated_at) : 'N/A'}</TableCell>
 
-                                        <TableCell>
-                                            <div className="flex justify-center gap-2">
-                                            <Button
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                setSelectedUser(u);
-                                                setShowViewUser(true);
-                                                }}
-                                            >
-                                                View
-                                            </Button>
-                                            {u.can_delete && u.role?.code !== "superuser" && u.role?.code !== "vp_admin" && u.role?.code !== "pmo_head" && (
-                                                <Button
-                                                    variant="destructive"
-                                                    className="cursor-pointer"
-                                                    onClick={() => {
-                                                        setSelectedUser(u);
-                                                        setShowDelete(true);
-                                                    }}
-                                                >
-                                                    Delete
-                                                </Button>
-                                            )}
-                                            </div>
-                                        </TableCell>
+                                            <TableCell>
+                                                <div className="flex justify-center gap-2">
+                                                    <Button
+                                                        className="cursor-pointer"
+                                                        onClick={() => {
+                                                            setSelectedUser(u);
+                                                            setShowViewUser(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                    {u.can_delete &&
+                                                        u.role?.code !== 'superuser' &&
+                                                        u.role?.code !== 'vp_admin' &&
+                                                        u.role?.code !== 'pmo_head' && (
+                                                            <Button
+                                                                variant="destructive"
+                                                                className="cursor-pointer"
+                                                                onClick={() => {
+                                                                    setSelectedUser(u);
+                                                                    setShowDelete(true);
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        )}
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell
-                                            colSpan={6}
-                                            className="text-center text-sm text-muted-foreground py-8"
-                                        >   
+                                        <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                                             No users found.
                                         </TableCell>
                                     </TableRow>
@@ -352,10 +348,10 @@ export default function UserApprovals() {
 
                 {/* User Approvals Tab */}
                 {currentTab === 'approvals' && (
-                    <div className="rounded-lg overflow-x-auto border">
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-muted/40">
+                                <TableRow>
                                     <TableHead className="text-center">Username</TableHead>
                                     <TableHead className="text-center">Email</TableHead>
                                     <TableHead className="text-center">Email Verified</TableHead>
@@ -371,30 +367,28 @@ export default function UserApprovals() {
                                             <TableCell>{u.name}</TableCell>
                                             <TableCell>{u.email}</TableCell>
                                             <TableCell>{u.email_verified_at ? 'Yes' : 'No'}</TableCell>
+                                            <TableCell>{u.created_at ? formatDateTime(u.created_at) : '—'}</TableCell>
                                             <TableCell>
-                                                {u.created_at ? formatDateTime(u.created_at) : '—'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {u.status === "approved" && <Badge variant="success">Approved</Badge>}
-                                                {u.status === "pending" && <Badge variant="warning">Pending</Badge>}
-                                                {u.status === "denied" && <Badge variant="destructive">Rejected</Badge>}
+                                                {u.status === 'approved' && <Badge variant="success">Approved</Badge>}
+                                                {u.status === 'pending' && <Badge variant="warning">Pending</Badge>}
+                                                {u.status === 'denied' && <Badge variant="destructive">Rejected</Badge>}
                                             </TableCell>
 
                                             <TableCell>
                                                 <div className="flex justify-center gap-2">
-                                                {!["superuser", "vp_admin", "pmo_head"].includes(u.role?.code ?? "") && (
-                                                    <Button
-                                                        className="cursor-pointer"
-                                                        onClick={() => {
-                                                            setSelectedUserId(u.id);
-                                                            setShowRoleModal(true);
-                                                        }}
-                                                        disabled={u.status === "approved"}
-                                                    >
-                                                        Approve
-                                                    </Button>
-                                                )}
-                                                {/* {u.role?.code !== "superuser" && (
+                                                    {!['superuser', 'vp_admin', 'pmo_head'].includes(u.role?.code ?? '') && (
+                                                        <Button
+                                                            className="cursor-pointer"
+                                                            onClick={() => {
+                                                                setSelectedUserId(u.id);
+                                                                setShowRoleModal(true);
+                                                            }}
+                                                            disabled={u.status === 'approved'}
+                                                        >
+                                                            Approve
+                                                        </Button>
+                                                    )}
+                                                    {/* {u.role?.code !== "superuser" && (
                                                     <Button
                                                         variant="destructive"
                                                         className="cursor-pointer"
@@ -410,32 +404,28 @@ export default function UserApprovals() {
                                                         Reject
                                                     </Button>
                                                 )} */}
-                                                {["superuser", "vp_admin", "pmo_head"].includes(u.role?.code ?? "") ? (
-                                                    <Badge variant="outline" className="text-base cursor-default">Protected</Badge>
+                                                    {['superuser', 'vp_admin', 'pmo_head'].includes(u.role?.code ?? '') ? (
+                                                        <Badge variant="outline" className="cursor-default text-base">
+                                                            Protected
+                                                        </Badge>
                                                     ) : (
                                                         <Button
                                                             variant="destructive"
                                                             className="cursor-pointer"
-                                                            onClick={() =>
-                                                                router.post(
-                                                                    route('users.deny', u.id),
-                                                                    {},
-                                                                    { preserveScroll: true }
-                                                                )
-                                                            }
+                                                            onClick={() => router.post(route('users.deny', u.id), {}, { preserveScroll: true })}
                                                             // disabled={u.status === 'denied'}
                                                             disabled={u.status === 'denied' || u.status === 'approved'}
                                                         >
                                                             Reject
                                                         </Button>
-                                                )}
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                                        <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                                             No users found.
                                         </TableCell>
                                     </TableRow>
@@ -447,12 +437,7 @@ export default function UserApprovals() {
 
                 {props.users.data.length > 0 && (
                     <div className="flex items-center justify-between">
-                        <PageInfo
-                            page={props.users.current_page ?? 1}
-                            total={filteredUsers.length}
-                            pageSize={10}
-                            label="users"
-                        />
+                        <PageInfo page={props.users.current_page ?? 1} total={filteredUsers.length} pageSize={10} label="users" />
                         <Pagination
                             page={props.users.current_page ?? 1}
                             total={filteredUsers.length}
@@ -484,22 +469,20 @@ export default function UserApprovals() {
                         show={showDelete}
                         onCancel={() => setShowDelete(false)}
                         onConfirm={() => {
-                            router.delete(route("users.destroy", selectedUser.id), {
+                            router.delete(route('users.destroy', selectedUser.id), {
                                 preserveScroll: true,
                                 onSuccess: () => setShowDelete(false),
                             });
                         }}
                         title="Delete User"
                         message={
-                        <>
-                            Are you sure you want to delete the user{" "}
-                            <strong>
-                            {selectedUser.detail
-                                ? `${selectedUser.detail.first_name} ${selectedUser.detail.last_name}`
-                                : selectedUser.name}
-                            </strong>
-                            ?
-                        </>
+                            <>
+                                Are you sure you want to delete the user{' '}
+                                <strong>
+                                    {selectedUser.detail ? `${selectedUser.detail.first_name} ${selectedUser.detail.last_name}` : selectedUser.name}
+                                </strong>
+                                ?
+                            </>
                         }
                     />
                 )}

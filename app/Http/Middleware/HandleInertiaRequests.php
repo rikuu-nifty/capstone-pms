@@ -119,8 +119,38 @@ class HandleInertiaRequests extends Middleware
 
 
             // ---------- FLASH MESSAGES ----------
-            'flash' => [
-                'unauthorized' => fn() => $request->session()->has('unauthorized')
+            'flash' => fn () => [
+                'success' => $request->session()->has('success')
+                    ? [
+                        'message' => $request->session()->get('success'),
+                        'time'    => now()->timestamp,
+                    ]
+                    : null,
+                'error' => $request->session()->has('error')
+                    ? [
+                        'message' => $request->session()->get('error'),
+                        'time'    => now()->timestamp,
+                    ]
+                    : null,
+                'warning' => $request->session()->has('warning')
+                    ? [
+                        'message' => $request->session()->get('warning'),
+                        'time'    => now()->timestamp,
+                    ]
+                    : null,
+                'info' => $request->session()->has('info')
+                    ? [
+                        'message' => $request->session()->get('info'),
+                        'time'    => now()->timestamp,
+                    ]
+                    : null,
+                'status' => $request->session()->has('status')
+                    ? [
+                        'message' => $request->session()->get('status'),
+                        'time'    => now()->timestamp,
+                    ]
+                    : null,
+                'unauthorized' => $request->session()->has('unauthorized')
                     ? [
                         'message' => $request->session()->get('unauthorized'),
                         'time'    => now()->timestamp,

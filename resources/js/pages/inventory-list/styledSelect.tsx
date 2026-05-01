@@ -6,24 +6,32 @@ type Option = { value: number; label: string }
 export const StyledSelect: StylesConfig<Option, false> = {
   control: (base) => ({
     ...base,
+    backgroundColor: 'var(--background)',
+    borderColor: 'var(--border)',
     borderRadius: '0.5rem',
+    color: 'var(--foreground)',
     padding: '2px',
   }),
   singleValue: (base) => ({
     ...base,
-    color: 'black',
+    color: 'var(--foreground)',
   }),
   input: (base) => ({
     ...base,
-    color: 'black',
+    color: 'var(--foreground)',
   }),
   placeholder: (base) => ({
     ...base,
-    color: 'black',
+    color: 'var(--muted-foreground)',
   }),
   option: (base, state) => ({
     ...base,
-    color: 'black',
-    backgroundColor: state.isFocused ? '#f3f4f6' : 'white',
+    color: state.isSelected ? 'var(--accent-foreground)' : 'var(--popover-foreground)',
+    backgroundColor: state.isFocused || state.isSelected ? 'var(--accent)' : 'var(--popover)',
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: 'var(--popover)',
+    color: 'var(--popover-foreground)',
   }),
 }

@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-const version = import.meta.env.VITE_APP_VERSION || Date.now().toString();
 
 createInertiaApp({
     title: (title) => (title === appName ? appName : `${title} - ${appName}`),
@@ -19,7 +18,6 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
-    version: () => version,
 });
 
 // ✅ Global error interceptor for expired session, auth, or server crash

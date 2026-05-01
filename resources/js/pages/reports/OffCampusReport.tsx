@@ -1,10 +1,12 @@
 import { PickerInput } from '@/components/picker-input';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AppLayout from '@/layouts/app-layout';
+import { notifyExportReady, notifyFiltersCleared } from '@/lib/toast-feedback';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ClipboardList, FileDown, FileSpreadsheet, FileText, Filter, RotateCcw, XCircle, AlertTriangle, TrendingUp } from 'lucide-react';
+import { AlertTriangle, ClipboardList, FileDown, FileSpreadsheet, FileText, Filter, RotateCcw, TrendingUp, XCircle } from 'lucide-react';
 import { useState } from 'react';
 // Keep react-select for filters
 import ReactSelect from 'react-select';
@@ -96,41 +98,40 @@ export default function OffCampusReport() {
         {
             label: 'Total Requests',
             value: summary.total ?? 0,
-            color: 'text-primary',
-            icon: <TrendingUp className="h-5 w-5 text-primary" />,
+            icon: TrendingUp,
+            tone: 'blue',
         },
         {
             label: 'Returned',
             value: summary.returned ?? 0,
-            color: 'text-green-600',
-            icon: <FileText className="h-6 w-6 text-green-600" />,
+            icon: FileText,
+            tone: 'green',
         },
         {
             label: 'Pending Return',
             value: summary.pending_return ?? 0,
-            color: 'text-blue-600',
-            icon: <FileDown className="h-6 w-6 text-blue-600" />,
+            icon: FileDown,
+            tone: 'sky',
         },
         {
             label: 'Pending Review',
             value: summary.pending_review ?? 0,
-            color: 'text-amber-500',
-            icon: <ClipboardList className="h-6 w-6 text-amber-500" />,
+            icon: ClipboardList,
+            tone: 'amber',
         },
         {
             label: 'Cancelled',
             value: summary.cancelled ?? 0,
-            color: 'text-red-600',
-            icon: <XCircle className="h-5 w-5 text-red-600" />,
+            icon: XCircle,
+            tone: 'red',
         },
         {
             label: 'Overdue',
             value: summary.overdue ?? 0,
-            color: 'text-[#800000]',
-            icon: <AlertTriangle className="h-5 w-5 text-[#800000]" />,
+            icon: AlertTriangle,
+            tone: 'rose',
         },
-       
-    ];
+    ] as const;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -144,19 +145,15 @@ export default function OffCampusReport() {
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
-                    {summaryCards.map((card, idx) => (
-                        <div
-                            key={idx}
-                            className="flex transform flex-col justify-between rounded-2xl border bg-gradient-to-br from-white to-gray-50 p-5 shadow-sm transition hover:scale-105 hover:border-gray-200 hover:shadow-lg"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
-                                    <p className={`text-3xl font-extrabold tracking-tight ${card.color}`}>{card.value.toLocaleString()}</p>
-                                </div>
-                                <div className={`text-2xl ${card.color}`}>{card.icon}</div>
-                            </div>
-                        </div>
+                    {summaryCards.map((card) => (
+                        <MetricKpiCard
+                            key={card.label}
+                            icon={card.icon}
+                            label={card.label}
+                            value={card.value.toLocaleString()}
+                            detail="Report summary"
+                            tone={card.tone}
+                        />
                     ))}
                 </div>
 
@@ -223,7 +220,11 @@ export default function OffCampusReport() {
                                 const reset = { ...defaultFilters };
                                 setFilters(reset);
                                 setAppliedFilters(reset);
-                                router.get(route('reports.off-campus'), reset, { preserveState: true, preserveScroll: true });
+                                router.get(route('reports.off-campus'), reset, {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    onSuccess: notifyFiltersCleared,
+                                });
                             }}
                             className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
@@ -255,14 +256,20 @@ export default function OffCampusReport() {
                                 <p className="px-2 pb-2 text-xs font-medium text-gray-600">Download as</p>
                                 <div className="mb-2 border-t"></div>
                                 <button
-                                    onClick={() => window.open(route('reports.off-campus.export.pdf', appliedFilters))}
+                                    onClick={() => {
+                                        window.open(route('reports.off-campus.export.pdf', appliedFilters));
+                                        notifyExportReady('PDF');
+                                    }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
                                     PDF
                                 </button>
                                 <button
-                                    onClick={() => window.open(route('reports.off-campus.export.excel', appliedFilters))}
+                                    onClick={() => {
+                                        window.open(route('reports.off-campus.export.excel', appliedFilters));
+                                        notifyExportReady('Excel');
+                                    }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />

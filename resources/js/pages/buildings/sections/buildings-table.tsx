@@ -21,14 +21,14 @@ type Props = {
     canDelete: boolean;
 };
 
-export default function BuildingsTable({ 
-    buildings, 
-    sortKey, 
-    sortDir, 
-    search, 
-    selectedBuildingId, 
-    onSelect, 
-    onEdit, 
+export default function BuildingsTable({
+    buildings,
+    sortKey,
+    sortDir,
+    search,
+    selectedBuildingId,
+    onSelect,
+    onEdit,
     onDelete,
     canUpdate,
     canDelete,
@@ -73,10 +73,10 @@ export default function BuildingsTable({
 
     return (
         <>
-            <div className="rounded-lg-lg overflow-x-auto border">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-muted text-foreground">
+                        <TableRow>
                             <TableHead className="text-center">ID</TableHead>
                             <TableHead className="text-center">Building Code</TableHead>
                             <TableHead className="text-center">Name</TableHead>
@@ -97,7 +97,7 @@ export default function BuildingsTable({
                                     className={`cursor-pointer ${selectedBuildingId === Number(b.id) ? 'bg-muted/50' : ''}`}
                                 >
                                     <TableCell>{b.id}</TableCell>
-                                    <TableCell className="font-medium">{(b.code).toUpperCase()}</TableCell>
+                                    <TableCell className="font-medium">{b.code.toUpperCase()}</TableCell>
                                     <TableCell>{b.name}</TableCell>
                                     {/* <TableCell className="max-w-[250px] text-center break-words whitespace-normal">{b.description ?? '—'}</TableCell> */}
                                     <TableCell>{b.building_rooms_count ?? 0}</TableCell>
@@ -140,11 +140,13 @@ export default function BuildingsTable({
                                                 className="cursor-pointer"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                <Link 
+                                                <Link
                                                     href={
-                                                        canViewAll ? route('buildings.view', b.id) : canViewOwn
-                                                            ? route('buildings.own.view', b.id)
-                                                            : '#'
+                                                        canViewAll
+                                                            ? route('buildings.view', b.id)
+                                                            : canViewOwn
+                                                              ? route('buildings.own.view', b.id)
+                                                              : '#'
                                                     }
                                                     preserveScroll
                                                 >

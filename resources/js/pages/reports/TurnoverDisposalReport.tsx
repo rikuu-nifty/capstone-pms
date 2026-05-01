@@ -1,24 +1,18 @@
-import React, { useState, useEffect } from "react";
-import AppLayout from "@/layouts/app-layout";
-import { type BreadcrumbItem } from "@/types";
-import { Head, router, usePage } from "@inertiajs/react";
-import { route } from "ziggy-js";
-import { PickerInput } from "@/components/picker-input";
-import Select from "react-select";
-import { Filter, RotateCcw, FileDown, FileSpreadsheet, FileText, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import TurnoverDisposalTable from "./TurnoverDisposalTable";
-import DonationSummaryTable from "./DonationSummaryTable";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer } from "recharts";
-import {
-    ChartConfig,
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-    ChartLegend,
-    ChartLegendContent,
-} from "@/components/ui/chart";
+import { PickerInput } from '@/components/picker-input';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import AppLayout from '@/layouts/app-layout';
+import { notifyExportReady, notifyFiltersCleared, notifyNoRecordsFound } from '@/lib/toast-feedback';
+import { type BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
+import { FileDown, FileSpreadsheet, FileText, Filter, Minus, RotateCcw, TrendingDown, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import Select from 'react-select';
+import { PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer } from 'recharts';
+import { route } from 'ziggy-js';
+import DonationSummaryTable from './DonationSummaryTable';
+import TurnoverDisposalTable from './TurnoverDisposalTable';
 
 export type RecordRow = {
     // id: number;
@@ -31,13 +25,13 @@ export type RecordRow = {
     asset_name: string;
     category: string;
     td_status: string;
-    asset_status: string; 
+    asset_status: string;
     document_date: string;
     remarks?: string | null;
 
     turnover_category?: string | null;
     is_donation?: boolean | number | null;
-}
+};
 
 type PaginationMeta = {
     current_page: number;
@@ -47,7 +41,7 @@ type PaginationMeta = {
     per_page: number;
     to: number | null;
     total: number;
-}
+};
 
 type Paginator<T> = {
     data: T[];
@@ -57,13 +51,13 @@ type Paginator<T> = {
         label: string;
         active: boolean;
     }[];
-}
+};
 
 type ChartRow = {
-    month: string
-    turnover: number
-    disposal: number
-}
+    month: string;
+    turnover: number;
+    disposal: number;
+};
 
 type PageProps = {
     records: Paginator<RecordRow>;
@@ -78,7 +72,7 @@ type PageProps = {
         category_id?: number | null;
         type?: string | null;
         turnover_category?: string | null;
-        is_donation?: string | null;   
+        is_donation?: string | null;
     };
     chartData: ChartRow[];
 
@@ -97,29 +91,22 @@ type PageProps = {
         asset_status: string | null;
         asset_remarks: string | null;
     }[];
-}
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Reports", href: "/reports" },
-    { title: "Turnover/Disposal Report", href: "/reports/turnover-disposal" },
-]
+    { title: 'Reports', href: '/reports' },
+    { title: 'Turnover/Disposal Report', href: '/reports/turnover-disposal' },
+];
 
 export default function TurnoverDisposalReport() {
     const firstLoadRef = React.useRef(true);
-    
-    const {
-        records,
-        departments,
-        categories,
-        filters: initialFilters,
-        chartData: initialChartData,
-        donationSummary,
-    } = usePage<PageProps>().props;
+
+    const { records, departments, categories, filters: initialFilters, chartData: initialChartData, donationSummary } = usePage<PageProps>().props;
     const [chartData, setChartData] = useState(initialChartData);
 
     const chartConfig = {
-        turnover: { label: "Turnover", color: "var(--chart-1)" },
-        disposal: { label: "Disposal", color: "var(--chart-2)" },
+        turnover: { label: 'Turnover', color: 'var(--chart-1)' },
+        disposal: { label: 'Disposal', color: 'var(--chart-2)' },
     } satisfies ChartConfig;
 
     const [page, setPage] = useState(records.meta.current_page ?? 1);
@@ -148,30 +135,27 @@ export default function TurnoverDisposalReport() {
 
     // const exportLabel = exportType === 'donations' ? '(Donations)' : '(General)';
 
-    function updateFilter<K extends keyof typeof filters>(
-        key: K,
-        value: (typeof filters)[K]
-    ) {
-        setFilters((prev) => ({ ...prev, [key]: value }))
-    };
+    function updateFilter<K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) {
+        setFilters((prev) => ({ ...prev, [key]: value }));
+    }
 
     function buildQuery(filtersObj: typeof defaultFilters): string {
-        const params: Record<string, string> = {}
+        const params: Record<string, string> = {};
         Object.entries(filtersObj).forEach(([key, value]) => {
             if (value !== null && value !== undefined) {
                 params[key] = String(value);
             }
-        })
+        });
         return new URLSearchParams(params).toString();
-    };
+    }
 
     function cleanFilters(obj: typeof filters) {
-        const result: Record<string, string | number> = {}
+        const result: Record<string, string | number> = {};
         Object.entries(obj).forEach(([k, v]) => {
             if (v !== null && v !== undefined && v !== '') result[k] = String(v);
-        })
+        });
         return result;
-    };
+    }
 
     // Refetch when page changes
     useEffect(() => {
@@ -187,15 +171,15 @@ export default function TurnoverDisposalReport() {
                 preserveState: true,
                 replace: true,
                 onSuccess: (pageData) => {
-                    const paginator = pageData.props.records as Paginator<RecordRow>
+                    const paginator = pageData.props.records as Paginator<RecordRow>;
                     setDisplayed(paginator.data);
                     setTotal(paginator.meta.total ?? 0);
                     setPageSize(paginator.meta.per_page ?? 10);
 
                     setChartData(pageData.props.chartData as ChartRow[]);
                 },
-            }
-        )
+            },
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page]);
 
@@ -206,7 +190,7 @@ export default function TurnoverDisposalReport() {
 
     let trendLabel: string | null = null;
     let TrendIcon: React.ElementType = Minus;
-    let trendColor = "text-muted-foreground";
+    let trendColor = 'text-muted-foreground';
 
     if (thisMonth && lastMonth) {
         const thisTotal = (thisMonth.turnover ?? 0) + (thisMonth.disposal ?? 0);
@@ -216,16 +200,16 @@ export default function TurnoverDisposalReport() {
             const change = ((thisTotal - lastTotal) / lastTotal) * 100;
 
             if (change > 0) {
-            trendLabel = `Completed turnovers/disposals increased by ${change.toFixed(1)}% this month`;
-            TrendIcon = TrendingUp;
-            trendColor = "text-green-600";
+                trendLabel = `Completed turnovers/disposals increased by ${change.toFixed(1)}% this month`;
+                TrendIcon = TrendingUp;
+                trendColor = 'text-green-600';
             } else if (change < 0) {
-            trendLabel = `Completed turnovers/disposals decreased by ${Math.abs(change).toFixed(1)}% this month`;
-            TrendIcon = TrendingDown;
-            trendColor = "text-red-600";
+                trendLabel = `Completed turnovers/disposals decreased by ${Math.abs(change).toFixed(1)}% this month`;
+                TrendIcon = TrendingDown;
+                trendColor = 'text-red-600';
             } else {
-            trendLabel = "No change in completed turnovers/disposals this month";
-            TrendIcon = Minus;
+                trendLabel = 'No change in completed turnovers/disposals this month';
+                TrendIcon = Minus;
             }
         }
     }
@@ -238,20 +222,15 @@ export default function TurnoverDisposalReport() {
                 {/* Header */}
                 <div>
                     <h1 className="text-2xl font-semibold">Turnover/Disposal Report</h1>
-                    <p className="text-sm text-muted-foreground">
-                        View detailed records of turnovers and disposals.
-                    </p>
+                    <p className="text-sm text-muted-foreground">View detailed records of turnovers and disposals.</p>
                 </div>
 
                 {/* Filters */}
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        
                         {/* Export Report Type */}
-                        <div className="lg:col-span-4 md:col-span-3 sm:col-span-2 col-span-1">
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Export Report Type
-                            </label>
+                        <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Export Report Type</label>
                             <Select
                                 className="w-full cursor-pointer"
                                 isSearchable={false}
@@ -270,59 +249,41 @@ export default function TurnoverDisposalReport() {
 
                         {/* From */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                From
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">From</label>
                             <PickerInput
                                 type="date"
-                                value={filters.from ?? ""}
-                                onChange={(v) =>
-                                    updateFilter("from", v && v.trim() !== "" ? v : null)
-                                }
+                                value={filters.from ?? ''}
+                                onChange={(v) => updateFilter('from', v && v.trim() !== '' ? v : null)}
                             />
                         </div>
 
                         {/* To */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                To
-                            </label>
-                            <PickerInput
-                                type="date"
-                                value={filters.to ?? ""}
-                                onChange={(v) =>
-                                    updateFilter("to", v && v.trim() !== "" ? v : null)
-                                }
-                            />
+                            <label className="mb-1 block text-sm font-medium text-gray-700">To</label>
+                            <PickerInput type="date" value={filters.to ?? ''} onChange={(v) => updateFilter('to', v && v.trim() !== '' ? v : null)} />
                         </div>
 
                         {/* Type */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Type
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Type</label>
                             <Select
                                 className="w-full"
                                 isClearable
                                 placeholder="Select type"
                                 value={
-                                    filters.type
-                                        ? { value: filters.type, label: filters.type.charAt(0).toUpperCase() + filters.type.slice(1) }
-                                        : null
+                                    filters.type ? { value: filters.type, label: filters.type.charAt(0).toUpperCase() + filters.type.slice(1) } : null
                                 }
                                 options={[
-                                    { value: "turnover", label: "Turnover" },
-                                    { value: "disposal", label: "Disposal" },
+                                    { value: 'turnover', label: 'Turnover' },
+                                    { value: 'disposal', label: 'Disposal' },
                                 ]}
-                                onChange={(opt) => updateFilter("type", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('type', opt?.value ?? null)}
                             />
                         </div>
-                        
+
                         {/* Status */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Status
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Status</label>
                             <Select
                                 className="w-full"
                                 isClearable
@@ -330,170 +291,149 @@ export default function TurnoverDisposalReport() {
                                 value={
                                     filters.status
                                         ? {
-                                            value: filters.status,
-                                            label: filters.status
-                                            .replace("_", " ")
-                                            .replace(/\b\w/g, (c) => c.toUpperCase()),
-                                        }
+                                              value: filters.status,
+                                              label: filters.status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+                                          }
                                         : null
-                                    }
-                                    options={[
-                                        { value: "pending_review", label: "Pending Review" },
-                                        { value: "approved", label: "Approved" },
-                                        { value: "rejected", label: "Rejected" },
-                                        { value: "cancelled", label: "Cancelled" },
-                                        { value: "completed", label: "Completed" },
-                                    ]
                                 }
-                                onChange={(opt) => updateFilter("status", opt?.value ?? null)}
+                                options={[
+                                    { value: 'pending_review', label: 'Pending Review' },
+                                    { value: 'approved', label: 'Approved' },
+                                    { value: 'rejected', label: 'Rejected' },
+                                    { value: 'cancelled', label: 'Cancelled' },
+                                    { value: 'completed', label: 'Completed' },
+                                ]}
+                                onChange={(opt) => updateFilter('status', opt?.value ?? null)}
                             />
                         </div>
 
                         {/* Issuing Office */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Issuing Office
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Issuing Office</label>
                             <Select
                                 className="w-full"
                                 isClearable
                                 placeholder="Select an issuing unit/office"
                                 value={
-                                filters.issuing_office_id
-                                    ? {
-                                        value: filters.issuing_office_id,
-                                        label: departments.find((d) => d.id === filters.issuing_office_id)?.name || "",
-                                    }
-                                    : null
+                                    filters.issuing_office_id
+                                        ? {
+                                              value: filters.issuing_office_id,
+                                              label: departments.find((d) => d.id === filters.issuing_office_id)?.name || '',
+                                          }
+                                        : null
                                 }
                                 options={departments.map((d) => ({
                                     value: d.id,
                                     label: d.name,
                                 }))}
-                                onChange={(opt) =>
-                                    updateFilter("issuing_office_id", opt?.value ?? null)
-                                }
+                                onChange={(opt) => updateFilter('issuing_office_id', opt?.value ?? null)}
                             />
                         </div>
 
                         {/* Receiving Office */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Receiving Office
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Receiving Office</label>
                             <Select
                                 className="w-full"
                                 isClearable
                                 placeholder="Select a receiving unit/office"
                                 value={
-                                filters.receiving_office_id
-                                    ? {
-                                        value: filters.receiving_office_id,
-                                        label: departments.find((d) => d.id === filters.receiving_office_id)?.name || "",
-                                    }
-                                    : null
+                                    filters.receiving_office_id
+                                        ? {
+                                              value: filters.receiving_office_id,
+                                              label: departments.find((d) => d.id === filters.receiving_office_id)?.name || '',
+                                          }
+                                        : null
                                 }
                                 options={departments.map((d) => ({
                                     value: d.id,
                                     label: d.name,
                                 }))}
-                                onChange={(opt) =>
-                                    updateFilter("receiving_office_id", opt?.value ?? null)
-                                }
+                                onChange={(opt) => updateFilter('receiving_office_id', opt?.value ?? null)}
                             />
                         </div>
 
                         {/* Asset Category */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Asset Category
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Asset Category</label>
                             <Select
                                 className="w-full"
                                 isClearable
                                 placeholder="Select a category"
                                 value={
-                                filters.category_id
-                                    ? {
-                                        value: filters.category_id,
-                                        label: categories.find((c: { id: number; name: string }) => c.id === filters.category_id)?.name || "",
-                                    }
-                                    : null
+                                    filters.category_id
+                                        ? {
+                                              value: filters.category_id,
+                                              label: categories.find((c: { id: number; name: string }) => c.id === filters.category_id)?.name || '',
+                                          }
+                                        : null
                                 }
                                 options={categories.map((c: { id: number; name: string }) => ({
-                                value: c.id,
-                                label: c.name,
+                                    value: c.id,
+                                    label: c.name,
                                 }))}
-                                onChange={(opt) => updateFilter("category_id", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('category_id', opt?.value ?? null)}
                             />
                         </div>
 
-                        
                         {/* Turnover Category */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Turnover Category
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Turnover Category</label>
                             <Select
                                 className="w-full"
                                 isClearable
                                 placeholder="Select a turnover category"
                                 value={
-                                filters.turnover_category
-                                    ? {
-                                        value: filters.turnover_category,
-                                        label: filters.turnover_category
-                                        .replace(/_/g, " ")
-                                        .replace(/\b\w/g, (c) => c.toUpperCase()),
-                                    }
-                                    : null
+                                    filters.turnover_category
+                                        ? {
+                                              value: filters.turnover_category,
+                                              label: filters.turnover_category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+                                          }
+                                        : null
                                 }
                                 options={[
-                                { value: "sharps", label: "Sharps" },
-                                { value: "breakages", label: "Breakages" },
-                                { value: "chemical", label: "Chemical" },
-                                { value: "hazardous", label: "Hazardous" },
-                                { value: "non_hazardous", label: "Non Hazardous" },
+                                    { value: 'sharps', label: 'Sharps' },
+                                    { value: 'breakages', label: 'Breakages' },
+                                    { value: 'chemical', label: 'Chemical' },
+                                    { value: 'hazardous', label: 'Hazardous' },
+                                    { value: 'non_hazardous', label: 'Non Hazardous' },
                                 ]}
-                                onChange={(opt) => updateFilter("turnover_category", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('turnover_category', opt?.value ?? null)}
                             />
                         </div>
 
                         {/* For Donation */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                For Donation
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">For Donation</label>
                             <Select
                                 className="w-full"
                                 isClearable
-                                isDisabled={viewMode === "donations"}
+                                isDisabled={viewMode === 'donations'}
                                 placeholder="Select donation status"
                                 value={
-                                filters.is_donation !== null && filters.is_donation !== undefined
-                                    ? {
-                                        value: filters.is_donation,
-                                        label: filters.is_donation === "1" ? "Yes" : "No",
-                                    }
-                                    : null
+                                    filters.is_donation !== null && filters.is_donation !== undefined
+                                        ? {
+                                              value: filters.is_donation,
+                                              label: filters.is_donation === '1' ? 'Yes' : 'No',
+                                          }
+                                        : null
                                 }
                                 options={[
-                                    { value: "1", label: "Yes" },
-                                    { value: "0", label: "No" },
+                                    { value: '1', label: 'Yes' },
+                                    { value: '0', label: 'No' },
                                 ]}
-                                onChange={(opt) => updateFilter("is_donation", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('is_donation', opt?.value ?? null)}
                             />
                         </div>
-                       
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap justify-end gap-3 border-t pt-4">
                         <button
                             onClick={() => {
-                                setFilters(defaultFilters)
-                                setAppliedFilters(defaultFilters)
-                                setPage(1)
+                                setFilters(defaultFilters);
+                                setAppliedFilters(defaultFilters);
+                                setPage(1);
                                 router.get(
                                     route('reports.turnover-disposal'),
                                     {}, // no filters
@@ -502,17 +442,18 @@ export default function TurnoverDisposalReport() {
                                         preserveScroll: true,
                                         replace: true,
                                         onSuccess: (pageData) => {
-                                            const paginator = pageData.props.records as Paginator<RecordRow>
-                                            setDisplayed(paginator.data)
-                                            setTotal(paginator.meta.total ?? 0)
-                                            setPageSize(paginator.meta.per_page ?? 10)
+                                            const paginator = pageData.props.records as Paginator<RecordRow>;
+                                            setDisplayed(paginator.data);
+                                            setTotal(paginator.meta.total ?? 0);
+                                            setPageSize(paginator.meta.per_page ?? 10);
 
                                             setChartData(pageData.props.chartData as ChartRow[]);
+                                            notifyFiltersCleared();
                                         },
-                                    }
-                                )
+                                    },
+                                );
                             }}
-                            className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
+                            className="flex cursor-pointer items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <RotateCcw className="h-4 w-4" />
                             Clear Filters
@@ -521,8 +462,8 @@ export default function TurnoverDisposalReport() {
                         {/* Apply */}
                         <button
                             onClick={() => {
-                                setPage(1)
-                                setAppliedFilters(filters)
+                                setPage(1);
+                                setAppliedFilters(filters);
                                 router.get(
                                     route('reports.turnover-disposal'),
                                     { ...cleanFilters(filters), page: 1 },
@@ -531,16 +472,17 @@ export default function TurnoverDisposalReport() {
                                         preserveScroll: true,
                                         replace: true,
                                         onSuccess: (pageData) => {
-                                            const paginator = pageData.props.records as Paginator<RecordRow>
-                                            setDisplayed(paginator.data)
-                                            setTotal(paginator.meta.total ?? 0)
-                                            setPageSize(paginator.meta.per_page ?? 10)
-                                            setChartData(pageData.props.chartData as ChartRow[])
+                                            const paginator = pageData.props.records as Paginator<RecordRow>;
+                                            setDisplayed(paginator.data);
+                                            setTotal(paginator.meta.total ?? 0);
+                                            setPageSize(paginator.meta.per_page ?? 10);
+                                            setChartData(pageData.props.chartData as ChartRow[]);
+                                            if (paginator.data.length === 0) notifyNoRecordsFound();
                                         },
-                                    }
-                                )
+                                    },
+                                );
                             }}
-                            className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
+                            className="flex cursor-pointer items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <Filter className="h-4 w-4" />
                             Apply Filters
@@ -550,28 +492,28 @@ export default function TurnoverDisposalReport() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <button
-                                    className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white cursor-pointer"
-                                    style={{ backgroundColor: "#155dfc" }}
+                                    className="flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+                                    style={{ backgroundColor: '#155dfc' }}
                                 >
                                     <FileDown className="h-4 w-4" />
                                     Export Summary
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-44 p-2">
-                                <p className="px-2 pb-2 text-xs font-medium text-gray-600">
-                                    Download as
-                                </p>
+                                <p className="px-2 pb-2 text-xs font-medium text-gray-600">Download as</p>
                                 <div className="mb-2 border-t" />
-                                                                <button
+                                <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const pdfRoute = exportType === "donations"
-                                            ? route("reports.turnover-disposal.export.donations.pdf")
-                                            : route("reports.turnover-disposal.export.pdf");
+                                        const pdfRoute =
+                                            exportType === 'donations'
+                                                ? route('reports.turnover-disposal.export.donations.pdf')
+                                                : route('reports.turnover-disposal.export.pdf');
 
-                                        window.open(`${pdfRoute}?${query}`, "_blank");
+                                        window.open(`${pdfRoute}?${query}`, '_blank');
+                                        notifyExportReady('PDF');
                                     }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
                                     PDF
@@ -579,25 +521,26 @@ export default function TurnoverDisposalReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const excelRoute = exportType === "donations"
-                                            ? route("reports.turnover-disposal.export.donations.excel")
-                                            : route("reports.turnover-disposal.export.excel");
+                                        const excelRoute =
+                                            exportType === 'donations'
+                                                ? route('reports.turnover-disposal.export.donations.excel')
+                                                : route('reports.turnover-disposal.export.excel');
 
-                                        window.open(`${excelRoute}?${query}`, "_blank");
+                                        window.open(`${excelRoute}?${query}`, '_blank');
+                                        notifyExportReady('Excel');
                                     }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel
                                 </button>
-
                             </PopoverContent>
                         </Popover>
                     </div>
                 </div>
 
                 {/* Chart + Table Card */}
-                <Card className="rounded-2xl shadow-md">                
+                <Card className="rounded-2xl shadow-md">
                     <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                         <CardTitle>Turnover / Disposal Records</CardTitle>
                         <div className="mt-2 flex gap-2 sm:mt-0">
@@ -631,33 +574,33 @@ export default function TurnoverDisposalReport() {
                             </div> */}
                             <div className="inline-flex rounded-md shadow-sm">
                                 <button
-                                    onClick={() => setViewMode("chart")}
-                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
-                                    viewMode === 'chart'
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    onClick={() => setViewMode('chart')}
+                                    className={`cursor-pointer border px-4 py-2 text-sm font-medium ${
+                                        viewMode === 'chart'
+                                            ? 'border-blue-600 bg-blue-600 text-white'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                     } rounded-l-md`}
                                 >
                                     Chart
                                 </button>
 
                                 <button
-                                    onClick={() => setViewMode("table")}
-                                    className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
-                                    viewMode === 'table'
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    onClick={() => setViewMode('table')}
+                                    className={`cursor-pointer border-t border-b px-4 py-2 text-sm font-medium ${
+                                        viewMode === 'table'
+                                            ? 'border-blue-600 bg-blue-600 text-white'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                     }`}
                                 >
                                     General
                                 </button>
 
                                 <button
-                                    onClick={() => setViewMode("donations")}
-                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
-                                    viewMode === 'donations'
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    onClick={() => setViewMode('donations')}
+                                    className={`cursor-pointer border px-4 py-2 text-sm font-medium ${
+                                        viewMode === 'donations'
+                                            ? 'border-blue-600 bg-blue-600 text-white'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                     } rounded-r-md`}
                                 >
                                     Donations
@@ -668,10 +611,7 @@ export default function TurnoverDisposalReport() {
 
                     <CardContent className="h-96">
                         {viewMode === 'chart' ? (
-                            <ChartContainer
-                                config={chartConfig}
-                                className="mx-auto aspect-square max-h-[380px]"
-                            >
+                            <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[380px]">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <RadarChart
                                         data={chartData}
@@ -681,7 +621,7 @@ export default function TurnoverDisposalReport() {
                                         <PolarAngleAxis dataKey="month" />
                                         <PolarGrid />
                                         {/* <PolarRadiusAxis /> */}
-                                        
+
                                         <Radar
                                             name="Disposal"
                                             dataKey="disposal"
@@ -689,7 +629,7 @@ export default function TurnoverDisposalReport() {
                                             fill={chartConfig.disposal.color}
                                             fillOpacity={0.5}
                                         />
-                                        
+
                                         <Radar
                                             name="Turnover"
                                             dataKey="turnover"
@@ -702,9 +642,8 @@ export default function TurnoverDisposalReport() {
                                     </RadarChart>
                                 </ResponsiveContainer>
                             </ChartContainer>
-
-                        // ) : (
-                        ) : viewMode === 'table' ? (
+                        ) : // ) : (
+                        viewMode === 'table' ? (
                             <TurnoverDisposalTable
                                 records={displayed}
                                 page={page}
@@ -713,16 +652,16 @@ export default function TurnoverDisposalReport() {
                                 onPageChange={(newPage) => setPage(newPage)}
                                 hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
                             />
-                            ) : (
-                                <DonationSummaryTable
-                                    donationSummary={donationSummary}
-                                    page={page}
-                                    total={total}
-                                    pageSize={pageSize}
-                                    onPageChange={(newPage) => setPage(newPage)}
-                                    hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
-                                />
-                            )}
+                        ) : (
+                            <DonationSummaryTable
+                                donationSummary={donationSummary}
+                                page={page}
+                                total={total}
+                                pageSize={pageSize}
+                                onPageChange={(newPage) => setPage(newPage)}
+                                hasActiveFilters={Object.keys(cleanFilters(appliedFilters)).length > 0}
+                            />
+                        )}
                     </CardContent>
                     {/* {viewMode === 'chart' && (
                         <CardFooter className="flex-col gap-2 pt-4 text-sm">
@@ -741,33 +680,24 @@ export default function TurnoverDisposalReport() {
                     {viewMode === 'chart' && (
                         <CardFooter className="flex-col gap-2 text-sm">
                             {trendLabel ? (
-                                <div
-                                    className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}
-                                >
+                                <div className={`flex items-center gap-2 leading-none font-medium ${trendColor}`}>
                                     {trendLabel} <TrendIcon className="h-4 w-4" />
                                 </div>
                             ) : (
                                 <div className="text-muted-foreground">
-                                    No trend comparison available between{" "}
-                                    {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleString(
-                                        "default",
-                                        { month: "long" }
-                                    )}{" "}
-                                    and{" "}
-                                    {new Date().toLocaleString("default", { month: "long" })}.
+                                    No trend comparison available between{' '}
+                                    {new Date(new Date().setMonth(new Date().getMonth() - 1)).toLocaleString('default', { month: 'long' })} and{' '}
+                                    {new Date().toLocaleString('default', { month: 'long' })}.
                                 </div>
                             )}
 
-                            <div className="text-muted-foreground flex items-center gap-2 leading-none">
-                                Data shown from January –{" "}
-                                {new Date().toLocaleString("default", { month: "long" })}{" "}
-                                {new Date().getFullYear()}
+                            <div className="flex items-center gap-2 leading-none text-muted-foreground">
+                                Data shown from January – {new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}
                             </div>
                         </CardFooter>
                     )}
                 </Card>
             </div>
         </AppLayout>
-        
-    )
+    );
 }

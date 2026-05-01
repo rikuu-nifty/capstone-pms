@@ -1,7 +1,9 @@
 import { PickerInput } from '@/components/picker-input';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AppLayout from '@/layouts/app-layout';
+import { notifyExportReady, notifyFiltersCleared, notifyNoRecordsFound } from '@/lib/toast-feedback';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
@@ -110,13 +112,13 @@ export default function InventorySchedulingReport() {
     ];
 
     const summaryCards = [
-        { label: 'Total Schedules', value: summary.total, color: 'text-primary', icon: <TrendingUp className="h-5 w-5 text-primary" /> },
-        { label: 'Completed', value: summary.completed, color: 'text-green-600', icon: <CalendarCheck2 className="h-5 w-5 text-green-600" /> },
-        { label: 'Pending', value: summary.pending, color: 'text-blue-600', icon: <Clock className="h-5 w-5 text-blue-600" /> },
-        { label: 'Pending Review', value: summary.pending_review, color: 'text-amber-500', icon: <ClipboardList className="h-6 w-6" /> },
-        { label: 'Cancelled', value: summary.cancelled, color: 'text-red-600', icon: <XCircle className="h-5 w-5 text-red-600" /> },
-        { label: 'Overdue', value: summary.overdue, color: 'text-[#800000]', icon: <AlertTriangle className="h-5 w-5 text-[#800000]" /> },
-    ];
+        { label: 'Total Schedules', value: summary.total, icon: TrendingUp, tone: 'blue' },
+        { label: 'Completed', value: summary.completed, icon: CalendarCheck2, tone: 'green' },
+        { label: 'Pending', value: summary.pending, icon: Clock, tone: 'sky' },
+        { label: 'Pending Review', value: summary.pending_review, icon: ClipboardList, tone: 'amber' },
+        { label: 'Cancelled', value: summary.cancelled, icon: XCircle, tone: 'red' },
+        { label: 'Overdue', value: summary.overdue, icon: AlertTriangle, tone: 'rose' },
+    ] as const;
     const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
     return (
@@ -131,19 +133,15 @@ export default function InventorySchedulingReport() {
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-                    {summaryCards.map((card, idx) => (
-                        <div
-                            key={idx}
-                            className="flex transform flex-col justify-between rounded-2xl border bg-gradient-to-br from-white to-gray-50 p-5 shadow-sm transition hover:scale-105 hover:border-gray-200 hover:shadow-lg"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
-                                    <p className={`text-3xl font-extrabold tracking-tight ${card.color}`}>{card.value.toLocaleString()}</p>
-                                </div>
-                                <div className={`text-2xl ${card.color}`}>{card.icon}</div>
-                            </div>
-                        </div>
+                    {summaryCards.map((card) => (
+                        <MetricKpiCard
+                            key={card.label}
+                            icon={card.icon}
+                            label={card.label}
+                            value={card.value.toLocaleString()}
+                            detail="Report summary"
+                            tone={card.tone}
+                        />
                     ))}
                 </div>
 
@@ -251,6 +249,7 @@ export default function InventorySchedulingReport() {
                                     preserveScroll: true, // ✅ keep current scroll position
                                     onSuccess: (page) => {
                                         setDisplayedSchedules(page.props.schedules as ScheduleRow[]);
+                                        notifyFiltersCleared();
                                     },
                                 });
                             }}
@@ -268,7 +267,9 @@ export default function InventorySchedulingReport() {
                                     preserveState: true,
                                     preserveScroll: true, // ✅ keep current scroll position
                                     onSuccess: (page) => {
-                                        setDisplayedSchedules(page.props.schedules as ScheduleRow[]);
+                                        const nextSchedules = page.props.schedules as ScheduleRow[];
+                                        setDisplayedSchedules(nextSchedules);
+                                        if (nextSchedules.length === 0) notifyNoRecordsFound();
                                     },
                                 });
                             }}
@@ -298,6 +299,7 @@ export default function InventorySchedulingReport() {
                                     onClick={() => {
                                         const url = route('reports.inventory-scheduling.export.pdf', appliedFilters);
                                         window.open(url, '_blank');
+                                        notifyExportReady('PDF');
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
@@ -308,6 +310,7 @@ export default function InventorySchedulingReport() {
                                     onClick={() => {
                                         const url = route('reports.inventory-scheduling.export.excel', appliedFilters);
                                         window.open(url, '_blank');
+                                        notifyExportReady('Excel');
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >

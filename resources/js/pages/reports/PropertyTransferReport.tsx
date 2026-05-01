@@ -1,10 +1,12 @@
 import { PickerInput } from '@/components/picker-input';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AppLayout from '@/layouts/app-layout';
+import { notifyExportReady, notifyFiltersCleared } from '@/lib/toast-feedback';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowRightLeft, Calendar, ClipboardList, FileDown, FileSpreadsheet, FileText, Filter, RotateCcw, Trash2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ArrowRightLeft, Calendar, ClipboardList, FileDown, FileSpreadsheet, FileText, Filter, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import Select from 'react-select';
 import TransferStatusChart from './charts/TransferStatusChart';
@@ -121,20 +123,14 @@ export default function PropertyTransferReport() {
 
     // ✅ Build summary cards AFTER we have summary
     const summaryCards = [
-        { label: 'Total Transfers', value: summary.total, color: 'text-primary', icon: <ArrowRightLeft className="h-5 w-5 text-primary" /> },
-        { label: 'Completed', value: summary.completed, color: 'text-green-600', icon: <FileText className="h-5 w-5 text-green-600" /> },
-        { label: 'Upcoming', value: summary.upcoming ?? 0, color: 'text-blue-600', icon: <Calendar className="h-5 w-5 text-blue-600" /> },
-        {
-            label: 'Pending Review',
-            value: summary.pending_review ?? 0,
-            color: 'text-amber-500',
-            icon: <ClipboardList className="h-6 w-6 text-amber-500" />,
-        },
-        
-        { label: 'In Progress', value: summary.in_progress ?? 0, color: 'text-purple-600', icon: <FileDown className="h-5 w-5 text-purple-600" /> },
-        { label: 'Overdue', value: summary.overdue ?? 0, color: 'text-[#800000]', icon: <AlertTriangle className="h-5 w-5 text-[#800000]" />,},
-        { label: 'Cancelled', value: summary.cancelled, color: 'text-gray-600', icon: <Trash2 className="h-5 w-5 text-gray-600" /> },
-    ];
+        { label: 'Total Transfers', value: summary.total, icon: ArrowRightLeft, tone: 'blue' },
+        { label: 'Completed', value: summary.completed, icon: FileText, tone: 'green' },
+        { label: 'Upcoming', value: summary.upcoming ?? 0, icon: Calendar, tone: 'sky' },
+        { label: 'Pending Review', value: summary.pending_review ?? 0, icon: ClipboardList, tone: 'amber' },
+        { label: 'In Progress', value: summary.in_progress ?? 0, icon: FileDown, tone: 'purple' },
+        { label: 'Overdue', value: summary.overdue ?? 0, icon: AlertTriangle, tone: 'rose' },
+        { label: 'Cancelled', value: summary.cancelled, icon: Trash2, tone: 'slate' },
+    ] as const;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -148,19 +144,15 @@ export default function PropertyTransferReport() {
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
-                    {summaryCards.map((card, idx) => (
-                        <div
-                            key={idx}
-                            className="flex transform flex-col justify-between rounded-2xl border bg-gradient-to-br from-white to-gray-50 p-5 shadow-sm transition hover:scale-105 hover:border-gray-200 hover:shadow-lg"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
-                                    <p className={`text-3xl font-extrabold tracking-tight ${card.color}`}>{card.value.toLocaleString()}</p>
-                                </div>
-                                <div className={`text-2xl ${card.color}`}>{card.icon}</div>
-                            </div>
-                        </div>
+                    {summaryCards.map((card) => (
+                        <MetricKpiCard
+                            key={card.label}
+                            icon={card.icon}
+                            label={card.label}
+                            value={card.value.toLocaleString()}
+                            detail="Report summary"
+                            tone={card.tone}
+                        />
                     ))}
                 </div>
 
@@ -258,6 +250,7 @@ export default function PropertyTransferReport() {
                                 router.get(route('reports.transfer'), reset, {
                                     preserveState: true,
                                     preserveScroll: true,
+                                    onSuccess: notifyFiltersCleared,
                                 });
                             }}
                             className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
@@ -301,6 +294,7 @@ export default function PropertyTransferReport() {
                                     onClick={() => {
                                         const url = route('reports.transfer.export.pdf', appliedFilters);
                                         window.open(url, '_blank');
+                                        notifyExportReady('PDF');
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
@@ -311,6 +305,7 @@ export default function PropertyTransferReport() {
                                     onClick={() => {
                                         const url = route('reports.transfer.export.excel', appliedFilters);
                                         window.open(url, '_blank');
+                                        notifyExportReady('Excel');
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >

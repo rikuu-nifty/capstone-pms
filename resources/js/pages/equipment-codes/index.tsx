@@ -1,39 +1,38 @@
+import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useMemo, useState } from 'react';
-import { Head, usePage, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
-import { Eye, Pencil, PlusCircle, Trash2, ListChecks, Tag } from 'lucide-react';
-import type { BreadcrumbItem } from '@/types';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import AppLayout from '@/layouts/app-layout';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
+import type { BreadcrumbItem } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Eye, ListChecks, Pencil, PlusCircle, Tag, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import type { EquipmentCodesPageProps, EquipmentCodeWithModels } from '@/types/equipment-code';
-import { formatNumber, Category } from '@/types/custom-index';
 import Pagination, { PageInfo } from '@/components/Pagination';
+import { Category, formatNumber } from '@/types/custom-index';
+import type { EquipmentCodesPageProps, EquipmentCodeWithModels } from '@/types/equipment-code';
 
+import EquipmentCodeFilterDropdown from '@/components/filters/EquipmentCodeFilterDropdown';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import AddEquipmentCodeModal from './AddEquipmentCode';
 import EditEquipmentCodeModal from './EditEquipmentCode';
-import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
-import EquipmentCodeFilterDropdown from '@/components/filters/EquipmentCodeFilterDropdown';
 import ViewEquipmentCodeModal from './ViewEquipmentCode';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Equipment Codes', href: '/equipment-codes' },
-]
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Equipment Codes', href: '/equipment-codes' }];
 
 const sortOptions = [
     { value: 'id', label: 'ID' },
     { value: 'code', label: 'Code No.' },
     { value: 'description', label: 'Description' },
     { value: 'asset_models_count', label: 'Total Models' },
-] as const
+] as const;
 
-type SortKey = (typeof sortOptions)[number]['value']
+type SortKey = (typeof sortOptions)[number]['value'];
 
 export default function EquipmentCodesIndex({ equipment_codes, totals }: EquipmentCodesPageProps) {
-
     const { auth } = usePage().props as unknown as {
         auth: {
             permissions: string[];
@@ -47,20 +46,20 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
     const [showView, setShowView] = useState(false);
     const [viewing, setViewing] = useState<EquipmentCodeWithModels | null>(null);
 
-    const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('')
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
 
-    const [showAdd, setShowAdd] = useState(false)
-    const [showEdit, setShowEdit] = useState(false)
-    const [selected, setSelected] = useState<EquipmentCodeWithModels | null>(null)
+    const [showAdd, setShowAdd] = useState(false);
+    const [showEdit, setShowEdit] = useState(false);
+    const [selected, setSelected] = useState<EquipmentCodeWithModels | null>(null);
 
-    const [showDelete, setShowDelete] = useState(false)
-    const [toDelete, setToDelete] = useState<EquipmentCodeWithModels | null>(null)
+    const [showDelete, setShowDelete] = useState(false);
+    const [toDelete, setToDelete] = useState<EquipmentCodeWithModels | null>(null);
 
-    const [rawSearch, setRawSearch] = useState('')
-    const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase()
+    const [rawSearch, setRawSearch] = useState('');
+    const search = useDebouncedValue(rawSearch, 200).trim().toLowerCase();
 
-    const [sortKey, setSortKey] = useState<SortKey>('id')
-    const [sortDir, setSortDir] = useState<SortDir>('asc')
+    const [sortKey, setSortKey] = useState<SortKey>('id');
+    const [sortDir, setSortDir] = useState<SortDir>('asc');
 
     // const [page, setPage] = useState(1)
     // const PAGE_SIZE = 5
@@ -82,11 +81,11 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
         return [...filtered].sort((a, b) => {
             if (sortKey === 'code' || sortKey === 'description') {
                 const d = (a[sortKey] ?? '').localeCompare(b[sortKey] ?? '');
-                return (d !== 0 ? d : (a.id - b.id)) * dir;
+                return (d !== 0 ? d : a.id - b.id) * dir;
             }
             if (sortKey === 'asset_models_count') {
                 const d = (a.asset_models_count ?? 0) - (b.asset_models_count ?? 0);
-                return (d !== 0 ? d : (a.id - b.id)) * dir;
+                return (d !== 0 ? d : a.id - b.id) * dir;
             }
             return (a.id - b.id) * dir;
         });
@@ -103,65 +102,45 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
 
             <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-semibold">Equipment Codes</h1>
-                <p className="text-sm text-muted-foreground">List of official PMO equipment codes.</p>
+                    <h1 className="text-2xl font-semibold">Equipment Codes</h1>
+                    <p className="text-sm text-muted-foreground">List of official PMO equipment codes.</p>
                 </div>
 
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        {/* Total Codes */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
-                                <Tag className="h-7 w-7 text-sky-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Codes</div>
-                                <div className="text-3xl font-bold">{formatNumber(totals.total_codes)}</div>
-                            </div>
-                        </div>
-
-                        {/* Unused Codes */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                                <Trash2 className="h-7 w-7 text-red-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Unused Codes</div>
-                                <div className="text-3xl font-bold">{formatNumber(totals.unused_codes)}</div>
-                            </div>
-                        </div>
-
-                        {/* Used vs Unused % */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                                <Tag className="h-7 w-7 text-blue-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Models Assignment</div>
-                                <div className="text-lg font-semibold">
-                                    <span className="text-green-600">{totals.used_percentage}% Assigned</span>
-                                    <span className="text-muted-foreground"> / </span>
-                                    <span className="text-red-600">{totals.unused_percentage}% Unassigned</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Average Models per Code */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
-                                <ListChecks className="h-7 w-7 text-purple-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Average Models per Code</div>
-                                <div className="text-3xl font-bold">{totals.avg_models_per_code}</div>
-                            </div>
-                        </div>
-
+                        <MetricKpiCard
+                            icon={Tag}
+                            label="Total Codes"
+                            value={formatNumber(totals.total_codes)}
+                            detail="Registered equipment codes"
+                            tone="sky"
+                        />
+                        <MetricKpiCard
+                            icon={Trash2}
+                            label="Unused Codes"
+                            value={formatNumber(totals.unused_codes)}
+                            detail="Codes not assigned to models"
+                            tone="red"
+                        />
+                        <MetricKpiCard
+                            icon={Tag}
+                            label="Models Assignment"
+                            value={`${totals.used_percentage}% / ${totals.unused_percentage}%`}
+                            detail="Assigned vs unassigned codes"
+                            tone="blue"
+                        />
+                        <MetricKpiCard
+                            icon={ListChecks}
+                            label="Average Models per Code"
+                            value={totals.avg_models_per_code}
+                            detail="Average model links per code"
+                            tone="purple"
+                        />
                     </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 w-96">
+                    <div className="flex w-96 items-center gap-2">
                         <Input
                             type="text"
                             placeholder="Search by code number or description..."
@@ -176,13 +155,19 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                             sortKey={sortKey}
                             sortDir={sortDir}
                             options={sortOptions}
-                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir) }}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
                         />
                         <EquipmentCodeFilterDropdown
                             categories={usePage<{ categories: Category[] }>().props.categories ?? []}
                             selectedCategoryId={selectedCategoryId}
                             onApply={({ categoryId }) => setSelectedCategoryId(categoryId)}
-                            onClear={() => setSelectedCategoryId('')}
+                            onClear={() => {
+                                setSelectedCategoryId('');
+                                notifyFiltersCleared();
+                            }}
                         />
 
                         {canCreate && (
@@ -193,10 +178,10 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                     </div>
                 </div>
 
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 <TableHead className="text-center">Code</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
                                 <TableHead className="text-center">Category</TableHead>
@@ -206,61 +191,69 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                             </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">
-                            {page_items.length > 0 ? page_items.map((c) => (
-                                <TableRow key={c.id} className="cursor-pointer">
-                                    <TableCell className="font-medium">{(c.code).toUpperCase()}</TableCell>
-                                    <TableCell 
-                                        className={`max-w-[150px] whitespace-normal break-words ${
-                                            c.description && c.description !== '-' 
-                                            ? 'text-center' 
-                                            : 'text-justify'
-                                        }`}
-                                    >
-                                        {c.description ?? '—'}
-                                    </TableCell>
-                                    <TableCell className="max-w-[150px] min-w-[150px] whitespace-normal break-words">{c.category_name ?? '—'}</TableCell>
-                                    <TableCell>{c.asset_models_count ?? 0}</TableCell>
-                                    <TableCell>{c.assets_count ?? 0}</TableCell>
-                                    <TableCell>
-                                        <div className="flex justify-center items-center gap-2">
-                                            {canEdit && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => { setSelected(c); setShowEdit(true) }}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                            {page_items.length > 0 ? (
+                                page_items.map((c) => (
+                                    <TableRow key={c.id} className="cursor-pointer">
+                                        <TableCell className="font-medium">{c.code.toUpperCase()}</TableCell>
+                                        <TableCell
+                                            className={`max-w-[150px] break-words whitespace-normal ${
+                                                c.description && c.description !== '-' ? 'text-center' : 'text-justify'
+                                            }`}
+                                        >
+                                            {c.description ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="max-w-[150px] min-w-[150px] break-words whitespace-normal">
+                                            {c.category_name ?? '—'}
+                                        </TableCell>
+                                        <TableCell>{c.asset_models_count ?? 0}</TableCell>
+                                        <TableCell>{c.assets_count ?? 0}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {canEdit && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setSelected(c);
+                                                            setShowEdit(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
 
-                                            {canDelete && (
+                                                {canDelete && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setToDelete(c);
+                                                            setShowDelete(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
+
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => { setToDelete(c); setShowDelete(true) }}
+                                                    asChild
                                                     className="cursor-pointer"
+                                                    onClick={() => {
+                                                        setViewing(c);
+                                                        setShowView(true);
+                                                    }}
                                                 >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Button>
-                                            )}
-                                            
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                asChild
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setViewing(c);
-                                                    setShowView(true);
-                                                }}
-                                            >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )) : (
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                                         No equipment codes found.
@@ -282,9 +275,7 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                         page={equipment_codes.current_page}
                         total={equipment_codes.total}
                         pageSize={equipment_codes.per_page}
-                        onPageChange={(p) =>
-                            router.get(route('equipment-codes.index'), { page: p }, { preserveScroll: true })
-                        }
+                        onPageChange={(p) => router.get(route('equipment-codes.index'), { page: p }, { preserveScroll: true })}
                     />
                 </div>
 
@@ -293,13 +284,13 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                     onCancel={() => setShowDelete(false)}
                     onConfirm={() => {
                         if (toDelete) {
-                        router.delete(`/equipment-codes/${toDelete.id}`, {
-                            preserveScroll: true,
-                            onSuccess: () => {
-                            setShowDelete(false)
-                            setToDelete(null)
-                            },
-                        })
+                            router.delete(`/equipment-codes/${toDelete.id}`, {
+                                preserveScroll: true,
+                                onSuccess: () => {
+                                    setShowDelete(false);
+                                    setToDelete(null);
+                                },
+                            });
                         }
                     }}
                 />
@@ -309,7 +300,10 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                 {selected && (
                     <EditEquipmentCodeModal
                         show={showEdit}
-                        onClose={() => { setShowEdit(false); setSelected(null) }}
+                        onClose={() => {
+                            setShowEdit(false);
+                            setSelected(null);
+                        }}
                         equipmentCode={selected}
                     />
                 )}
@@ -318,14 +312,13 @@ export default function EquipmentCodesIndex({ equipment_codes, totals }: Equipme
                     <ViewEquipmentCodeModal
                         open={showView}
                         onClose={() => {
-                        setShowView(false);
-                        setViewing(null);
+                            setShowView(false);
+                            setViewing(null);
                         }}
                         equipmentCode={viewing}
                     />
                 )}
-
             </div>
         </AppLayout>
-    )
+    );
 }

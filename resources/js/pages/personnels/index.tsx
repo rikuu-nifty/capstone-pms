@@ -1,32 +1,31 @@
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
 import AppLayout from '@/layouts/app-layout';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useState, useMemo, useEffect } from 'react';
-import useDebouncedValue from '@/hooks/useDebouncedValue';
+import { useEffect, useMemo, useState } from 'react';
 
-import { Eye, Pencil, PlusCircle, Trash2, Users, UserCheck2, Check, X, AlertTriangle } from 'lucide-react';
-import type { VariantProps } from "class-variance-authority";
-import { Badge } from '@/components/ui/badge';
-import { badgeVariants } from "@/components/ui/badge";
+import { Badge, badgeVariants } from '@/components/ui/badge';
+import type { VariantProps } from 'class-variance-authority';
+import { AlertTriangle, Check, Eye, Pencil, PlusCircle, Trash2, UserCheck2, Users, X } from 'lucide-react';
 
 import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
 
+import PersonnelFilterDropdown from '@/components/filters/PersonnelFilterDropdown';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import AddPersonnelModal from './AddPersonnelModal';
 import EditPersonnelModal from './EditPersonnelModal';
-import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
-import PersonnelFilterDropdown from '@/components/filters/PersonnelFilterDropdown';
 import ViewPersonnelModal from './ViewPersonnelModal';
 
-import type { Personnel, PersonnelPageProps } from '@/types/personnel';
 import { ucwords } from '@/types/custom-index';
+import type { Personnel, PersonnelPageProps } from '@/types/personnel';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Personnels', href: '/personnels' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Personnels', href: '/personnels' }];
 
 const sortOptions = [
     { value: 'id', label: 'ID' },
@@ -38,14 +37,9 @@ const sortOptions = [
 
 type SortKey = (typeof sortOptions)[number]['value'];
 
-type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
-export default function PersonnelsIndex({
-    personnels = [],
-    users = [],
-    units = [],
-    totals,
-}: PersonnelPageProps) {
+export default function PersonnelsIndex({ personnels = [], users = [], units = [], totals }: PersonnelPageProps) {
     const { auth } = usePage().props as unknown as {
         auth: {
             permissions: string[];
@@ -76,15 +70,11 @@ export default function PersonnelsIndex({
     const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
     const [selectedUnitId, setSelectedUnitId] = useState<number | ''>('');
     const [selectedStatus, setSelectedStatus] = useState('');
-    
 
-    const statusMap: Record<
-        "active" | "inactive" | "left_university",
-        { label: string; variant: BadgeVariant }
-    > = {
-        active: { label: "Active", variant: "personnel_active" },
-        inactive: { label: "Inactive", variant: "personnel_inactive" },
-        left_university: { label: "Left University", variant: "personnel_left" },
+    const statusMap: Record<'active' | 'inactive' | 'left_university', { label: string; variant: BadgeVariant }> = {
+        active: { label: 'Active', variant: 'personnel_active' },
+        inactive: { label: 'Inactive', variant: 'personnel_inactive' },
+        left_university: { label: 'Left University', variant: 'personnel_left' },
     };
 
     useEffect(() => {
@@ -93,7 +83,8 @@ export default function PersonnelsIndex({
 
     const filtered = useMemo(() => {
         return personnels.filter((p) => {
-            const haystack = `${p.id} ${p.full_name ?? ''} ${p.last_name ?? ''} ${p.position ?? ''} ${p.unit_or_department ?? ''} ${p.status ?? ''}`.toLowerCase();
+            const haystack =
+                `${p.id} ${p.full_name ?? ''} ${p.last_name ?? ''} ${p.position ?? ''} ${p.unit_or_department ?? ''} ${p.status ?? ''}`.toLowerCase();
             const matchesSearch = !search || haystack.includes(search);
 
             const matchesUnit = !selectedUnitId || p.unit_or_department_id === selectedUnitId;
@@ -129,63 +120,81 @@ export default function PersonnelsIndex({
                 <div className="flex flex-col gap-2">
                     <div>
                         <h1 className="text-2xl font-semibold">Personnels in Charge</h1>
-                        <p className="text-sm text-muted-foreground">
-                            List of university personnel who may be assigned assets.
-                        </p>
+                        <p className="text-sm text-muted-foreground">List of university personnel who may be assigned assets.</p>
                     </div>
-                    
+
                     {/* KPIs */}
                     {totals && (
                         <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-4">
+                            <MetricKpiCard
+                                icon={Users}
+                                label="Total Personnels"
+                                value={Number(totals.total_personnels ?? 0).toLocaleString()}
+                                detail="Registered personnel records"
+                                tone="indigo"
+                            />
+                            <MetricKpiCard
+                                icon={UserCheck2}
+                                label="Active Personnels"
+                                value={Number(totals.active_personnels ?? 0).toLocaleString()}
+                                detail="Currently active personnel"
+                                tone="green"
+                            />
+                            <MetricKpiCard
+                                icon={Users}
+                                label="Inactive Personnels"
+                                value={Number(totals.inactive_personnels ?? 0).toLocaleString()}
+                                detail="Inactive personnel records"
+                                tone="slate"
+                            />
+                            <MetricKpiCard
+                                icon={AlertTriangle}
+                                label="Left University"
+                                value={Number(totals.former_personnels ?? 0).toLocaleString()}
+                                detail="Former personnel records"
+                                tone="red"
+                            />
                             {/* Total */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
                                     <Users className="h-7 w-7 text-indigo-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm text-muted-foreground">Total Personnels</div>
-                                    <div className="text-3xl font-bold">
-                                        {Number(totals.total_personnels ?? 0).toLocaleString()}
-                                    </div>
+                                    <div className="text-3xl font-bold">{Number(totals.total_personnels ?? 0).toLocaleString()}</div>
                                 </div>
                             </div>
 
                             {/* Active */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                     <UserCheck2 className="h-7 w-7 text-green-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm text-muted-foreground">Active Personnels</div>
-                                    <div className="text-3xl font-bold">
-                                        {Number(totals.active_personnels ?? 0).toLocaleString()}
-                                    </div>
+                                    <div className="text-3xl font-bold">{Number(totals.active_personnels ?? 0).toLocaleString()}</div>
                                 </div>
                             </div>
 
                             {/* Inactive */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
                                     <Users className="h-7 w-7 text-gray-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm text-muted-foreground">Inactive Personnels</div>
-                                    <div className="text-3xl font-bold">
-                                        {Number(totals.inactive_personnels ?? 0).toLocaleString()}
-                                    </div>
+                                    <div className="text-3xl font-bold">{Number(totals.inactive_personnels ?? 0).toLocaleString()}</div>
                                 </div>
                             </div>
 
                             {/* Left University */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
                                     <AlertTriangle className="h-7 w-7 text-red-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm text-muted-foreground">Left University</div>
-                                    <div className="text-3xl font-bold">
-                                    {Number(totals.former_personnels ?? 0).toLocaleString()}
-                                    </div>
+                                    <div className="text-3xl font-bold">{Number(totals.former_personnels ?? 0).toLocaleString()}</div>
                                 </div>
                             </div>
                         </div>
@@ -213,11 +222,7 @@ export default function PersonnelsIndex({
                                 }}
                             />
 
-                            {(rawSearch.trim() !== '' ||
-                                selectedUnitId !== '' ||
-                                selectedStatus !== '' ||
-                                sortKey !== 'id' ||
-                                sortDir !== 'asc') && (
+                            {(rawSearch.trim() !== '' || selectedUnitId !== '' || selectedStatus !== '' || sortKey !== 'id' || sortDir !== 'asc') && (
                                 <Button
                                     variant="destructive"
                                     className="cursor-pointer"
@@ -244,6 +249,7 @@ export default function PersonnelsIndex({
                                 onClear={() => {
                                     setSelectedUnitId('');
                                     setSelectedStatus('');
+                                    notifyFiltersCleared();
                                 }}
                             />
 
@@ -256,13 +262,11 @@ export default function PersonnelsIndex({
                     </div>
                 </div>
 
-                
-
                 {/* Table */}
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 {/* <TableHead className="text-center">ID</TableHead> */}
                                 <TableHead className="text-center">Full Name</TableHead>
                                 <TableHead className="text-center">Position</TableHead>
@@ -274,77 +278,78 @@ export default function PersonnelsIndex({
                         </TableHeader>
 
                         <TableBody className="text-center">
-                            {page_items.length > 0 ? page_items.map((p) => (
-                                <TableRow
-                                    key={p.id}
-                                    onClick={() => setSelectedRowId(Number(p.id))}
-                                    className={`cursor-default ${selectedRowId === Number(p.id) ? 'bg-muted/50' : ''}`}
-                                >
-                                    {/* <TableCell>{p.id}</TableCell> */}
-                                    <TableCell className="font-medium">{ucwords(p.full_name) ?? '—'}</TableCell>
-                                    <TableCell>{p.position ?? '—'}</TableCell>
-                                    <TableCell>{p.unit_or_department ?? '—'}</TableCell>
-                                    <TableCell className="text-center">
-                                        {p.user_id ? (
-                                            <Check className="h-5 w-5 text-green-600 mx-auto" />
-                                        ) : (
-                                            <X className="h-5 w-5 text-red-500 mx-auto" />
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {statusMap[p.status] && (
-                                            <Badge variant={statusMap[p.status].variant} className="text-xs">
-                                                {statusMap[p.status].label}
-                                            </Badge>
-                                        )}
-                                    </TableCell>
+                            {page_items.length > 0 ? (
+                                page_items.map((p) => (
+                                    <TableRow
+                                        key={p.id}
+                                        onClick={() => setSelectedRowId(Number(p.id))}
+                                        className={`cursor-default ${selectedRowId === Number(p.id) ? 'bg-muted/50' : ''}`}
+                                    >
+                                        {/* <TableCell>{p.id}</TableCell> */}
+                                        <TableCell className="font-medium">{ucwords(p.full_name) ?? '—'}</TableCell>
+                                        <TableCell>{p.position ?? '—'}</TableCell>
+                                        <TableCell>{p.unit_or_department ?? '—'}</TableCell>
+                                        <TableCell className="text-center">
+                                            {p.user_id ? (
+                                                <Check className="mx-auto h-5 w-5 text-green-600" />
+                                            ) : (
+                                                <X className="mx-auto h-5 w-5 text-red-500" />
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {statusMap[p.status] && (
+                                                <Badge variant={statusMap[p.status].variant} className="text-xs">
+                                                    {statusMap[p.status].label}
+                                                </Badge>
+                                            )}
+                                        </TableCell>
 
-                                    <TableCell className="h-full">
-                                        <div className="flex justify-center items-center gap-2 h-full">
-                                            {canEdit && (
+                                        <TableCell className="h-full">
+                                            <div className="flex h-full items-center justify-center gap-2">
+                                                {canEdit && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="cursor-pointer"
+                                                        onClick={() => {
+                                                            setSelected(p);
+                                                            setShowEdit(true);
+                                                        }}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+
+                                                {canDelete && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setToDelete(p);
+                                                            setShowDelete(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
+
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="cursor-pointer"
                                                     onClick={() => {
                                                         setSelected(p);
-                                                        setShowEdit(true);
+                                                        setShowView(true);
                                                     }}
                                                 >
-                                                    <Pencil className="h-4 w-4" />
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Button>
-                                            )}
-
-                                            {canDelete && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setToDelete(p);
-                                                        setShowDelete(true);
-                                                    }}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            )}
-
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setSelected(p);
-                                                    setShowView(true);
-                                                }}
-                                            >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )) : (
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                                         No personnels found.
@@ -361,28 +366,25 @@ export default function PersonnelsIndex({
                 </div>
             </div>
 
-            <AddPersonnelModal
-                show={showAdd}
-                users={users}
-                units={units} 
-                onClose={() => setShowAdd(false)}
-            />
+            <AddPersonnelModal show={showAdd} users={users} units={units} onClose={() => setShowAdd(false)} />
 
             {selected && (
                 <EditPersonnelModal
                     show={showEdit}
                     // users={users}
                     users={[
-                    ...users,
-                    ...(selected.user_id
-                        ? [{
-                            id: selected.user_id,
-                            name: selected.user_name ?? 'Unknown User', // fallback string ensures type safety
-                            email: selected.user_email ?? '-',
-                        }]
-                        : []),
+                        ...users,
+                        ...(selected.user_id
+                            ? [
+                                  {
+                                      id: selected.user_id,
+                                      name: selected.user_name ?? 'Unknown User', // fallback string ensures type safety
+                                      email: selected.user_email ?? '-',
+                                  },
+                              ]
+                            : []),
                     ]}
-                    units={units} 
+                    units={units}
                     onClose={() => {
                         setShowEdit(false);
                         setSelected(null);

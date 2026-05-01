@@ -12,9 +12,40 @@
     /* padding: 5mm; */
 }
 
-/* Success toast check icon pastel green */
+.toaster [data-sonner-toast] {
+    border-radius: 0.75rem;
+    border-width: 1px;
+    box-shadow:
+        0 12px 30px -16px rgb(15 23 42 / 0.45),
+        0 2px 8px -4px rgb(15 23 42 / 0.18);
+}
+
+.toaster [data-sonner-toast] [data-title] {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+}
+
+.toaster [data-sonner-toast] [data-description] {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+    opacity: 0.9;
+}
+
 .toaster [data-sonner-toast][data-type='success'] [data-icon] svg {
-    color: #01df52; /* pastel green */
+    color: var(--toast-success-text);
+}
+
+.toaster [data-sonner-toast][data-type='error'] [data-icon] svg {
+    color: var(--toast-error-text);
+}
+
+.toaster [data-sonner-toast][data-type='warning'] [data-icon] svg {
+    color: var(--toast-warning-text);
+}
+
+.toaster [data-sonner-toast][data-type='info'] [data-icon] svg {
+    color: var(--toast-info-text);
 }
 
 @media print {
@@ -149,6 +180,7 @@
 }
 
 :root {
+    color-scheme: light;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -182,41 +214,72 @@
     --sidebar-accent-foreground: #1e3999;
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
+    --toast-success-bg: #ecfdf5;
+    --toast-success-text: #065f46;
+    --toast-success-border: #6ee7b7;
+    --toast-warning-bg: #fffbeb;
+    --toast-warning-text: #92400e;
+    --toast-warning-border: #fcd34d;
+    --toast-error-bg: #fef2f2;
+    --toast-error-text: #991b1b;
+    --toast-error-border: #fca5a5;
+    --toast-info-bg: #eff6ff;
+    --toast-info-text: #1e3a8a;
+    --toast-info-border: #93c5fd;
+    --toast-normal-bg: #f9fafb;
+    --toast-normal-text: #111827;
+    --toast-normal-border: #e5e7eb;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
+    color-scheme: dark;
+    --background: oklch(0.17 0 0);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
+    --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
+    --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.985 0 0);
     --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
+    --secondary: oklch(0.285 0 0);
     --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
+    --muted: oklch(0.285 0 0);
+    --muted-foreground: oklch(0.72 0 0);
+    --accent: oklch(0.285 0 0);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
+    --border: oklch(0.32 0 0);
+    --input: oklch(0.32 0 0);
     --ring: oklch(0.439 0 0);
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
     --chart-4: oklch(0.627 0.265 303.9);
     --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
+    --sidebar: oklch(0.19 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-primary-foreground: oklch(0.205 0 0);
+    --sidebar-accent: oklch(0.285 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
+    --sidebar-border: oklch(0.32 0 0);
     --sidebar-ring: oklch(0.439 0 0);
+    --toast-success-bg: oklch(0.23 0.06 155);
+    --toast-success-text: oklch(0.9 0.08 155);
+    --toast-success-border: oklch(0.42 0.11 155);
+    --toast-warning-bg: oklch(0.24 0.055 75);
+    --toast-warning-text: oklch(0.9 0.1 85);
+    --toast-warning-border: oklch(0.47 0.12 75);
+    --toast-error-bg: oklch(0.23 0.06 25);
+    --toast-error-text: oklch(0.9 0.08 25);
+    --toast-error-border: oklch(0.45 0.13 25);
+    --toast-info-bg: oklch(0.24 0.06 250);
+    --toast-info-text: oklch(0.9 0.08 250);
+    --toast-info-border: oklch(0.48 0.12 250);
+    --toast-normal-bg: var(--popover);
+    --toast-normal-text: var(--popover-foreground);
+    --toast-normal-border: var(--border);
 }
 
 @layer base {
@@ -226,6 +289,211 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    .dark .bg-white:not([class*='dark:bg-']),
+    .dark .bg-gray-50:not([class*='dark:bg-']),
+    .dark .bg-slate-50:not([class*='dark:bg-']) {
+        background-color: var(--card);
+    }
+
+    .dark .bg-gray-100:not([class*='dark:bg-']),
+    .dark .bg-slate-100:not([class*='dark:bg-']) {
+        background-color: var(--muted);
+    }
+
+    .dark .border-gray-200:not([class*='dark:border-']),
+    .dark .border-gray-300:not([class*='dark:border-']),
+    .dark .border-slate-200:not([class*='dark:border-']),
+    .dark .border-slate-300:not([class*='dark:border-']) {
+        border-color: var(--border);
+    }
+
+    .dark .divide-y > :not(:last-child),
+    .dark .divide-gray-200 > :not(:last-child),
+    .dark .divide-slate-200 > :not(:last-child) {
+        border-color: var(--border);
+    }
+
+    .dark .text-gray-900:not([class*='dark:text-']),
+    .dark .text-gray-800:not([class*='dark:text-']),
+    .dark .text-slate-950:not([class*='dark:text-']),
+    .dark .text-slate-900:not([class*='dark:text-']),
+    .dark .text-slate-800:not([class*='dark:text-']) {
+        color: var(--foreground);
+    }
+
+    .dark .text-gray-700:not([class*='dark:text-']),
+    .dark .text-gray-600:not([class*='dark:text-']),
+    .dark .text-gray-500:not([class*='dark:text-']),
+    .dark .text-slate-700:not([class*='dark:text-']),
+    .dark .text-slate-600:not([class*='dark:text-']),
+    .dark .text-slate-500:not([class*='dark:text-']) {
+        color: var(--muted-foreground);
+    }
+
+    .dark .text-black:not([class*='dark:text-']) {
+        color: var(--foreground);
+    }
+
+    .dark .hover\:bg-gray-50:hover:not([class*='dark:hover:bg-']),
+    .dark .hover\:bg-gray-100:hover:not([class*='dark:hover:bg-']),
+    .dark .hover\:bg-slate-50:hover:not([class*='dark:hover:bg-']),
+    .dark .hover\:bg-slate-100:hover:not([class*='dark:hover:bg-']) {
+        background-color: var(--accent);
+    }
+
+    .dark .react-select__control {
+        background-color: var(--background);
+        border-color: var(--border);
+        color: var(--foreground);
+    }
+
+    .dark .react-select__menu,
+    .dark .react-select__menu-list {
+        background-color: var(--popover);
+        color: var(--popover-foreground);
+    }
+
+    .dark .react-select__single-value,
+    .dark .react-select__input-container,
+    .dark .react-select__placeholder {
+        color: var(--foreground);
+    }
+
+    .dark .react-select__option {
+        background-color: var(--popover);
+        color: var(--popover-foreground);
+    }
+
+    .dark .react-select__option--is-focused,
+    .dark .react-select__option--is-selected {
+        background-color: var(--accent);
+        color: var(--accent-foreground);
+    }
+
+    .dark input:not([type='checkbox']):not([type='radio']):not([class*='dark:bg-']),
+    .dark select:not([class*='dark:bg-']),
+    .dark textarea:not([class*='dark:bg-']) {
+        background-color: var(--background);
+        border-color: var(--border);
+        color: var(--foreground);
+    }
+
+    .dark input::placeholder,
+    .dark textarea::placeholder {
+        color: var(--muted-foreground);
+    }
+
+    .dark option {
+        background-color: var(--popover);
+        color: var(--popover-foreground);
+    }
+
+    .dark [class$='-control'],
+    .dark [class*='-control '] {
+        background-color: var(--background) !important;
+        border-color: var(--border) !important;
+        color: var(--foreground) !important;
+        box-shadow: none !important;
+    }
+
+    .dark [class$='-control']:hover,
+    .dark [class*='-control ']:hover {
+        border-color: var(--ring) !important;
+    }
+
+    .dark [class$='-menu'],
+    .dark [class*='-menu '] {
+        background-color: var(--popover) !important;
+        color: var(--popover-foreground) !important;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+
+    .dark [class$='-menuList'],
+    .dark [class*='-menuList '] {
+        background-color: var(--popover) !important;
+        color: var(--popover-foreground) !important;
+    }
+
+    .dark [class$='-option'],
+    .dark [class*='-option '] {
+        background-color: var(--popover) !important;
+        color: var(--popover-foreground) !important;
+    }
+
+    .dark [class$='-option']:hover,
+    .dark [class*='-option ']:hover {
+        background-color: var(--accent) !important;
+        color: var(--accent-foreground) !important;
+    }
+
+    .dark [class$='-singleValue'],
+    .dark [class*='-singleValue '],
+    .dark [class$='-input'],
+    .dark [class*='-input '],
+    .dark [class$='-placeholder'],
+    .dark [class*='-placeholder '] {
+        color: var(--foreground) !important;
+    }
+
+    .dark [class$='-multiValue'],
+    .dark [class*='-multiValue '] {
+        background-color: var(--muted) !important;
+        color: var(--foreground) !important;
+    }
+
+    .dark [class$='-multiValueLabel'],
+    .dark [class*='-multiValueLabel '] {
+        color: var(--foreground) !important;
+    }
+
+    .dark [class$='-indicatorSeparator'],
+    .dark [class*='-indicatorSeparator '] {
+        background-color: var(--border) !important;
+    }
+
+    .dark .react-datepicker {
+        background-color: var(--popover);
+        border-color: var(--border);
+        color: var(--popover-foreground);
+    }
+
+    .dark .react-datepicker__header {
+        background-color: var(--muted);
+        border-color: var(--border);
+    }
+
+    .dark .react-datepicker__current-month,
+    .dark .react-datepicker-time__header,
+    .dark .react-datepicker-year-header,
+    .dark .react-datepicker__day-name,
+    .dark .react-datepicker__day,
+    .dark .react-datepicker__time-name {
+        color: var(--foreground);
+    }
+
+    .dark .react-datepicker__day:hover,
+    .dark .react-datepicker__month-text:hover,
+    .dark .react-datepicker__quarter-text:hover,
+    .dark .react-datepicker__year-text:hover {
+        background-color: var(--accent);
+    }
+
+    .dark .react-datepicker__day--disabled,
+    .dark .react-datepicker__month-text--disabled,
+    .dark .react-datepicker__quarter-text--disabled,
+    .dark .react-datepicker__year-text--disabled {
+        color: var(--muted-foreground);
+    }
+
+    .dark .react-datepicker__day--selected,
+    .dark .react-datepicker__day--keyboard-selected {
+        background-color: var(--primary);
+        color: var(--primary-foreground);
     }
 }
 

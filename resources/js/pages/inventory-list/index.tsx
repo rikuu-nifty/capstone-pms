@@ -5,12 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
+import { notifyFiltersCleared, notifyImageUploaded } from '@/lib/toast-feedback';
 import { EditAssetModalForm } from '@/pages/inventory-list/edit-asset-modal-form';
 import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AlertTriangleIcon, Banknote, Boxes, Eye, FolderArchive, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
+import { AlertTriangleIcon, Banknote, Boxes, Copy, Eye, FolderArchive, ImageIcon, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
@@ -243,7 +245,6 @@ export default function InventoryListIndex({
 
     const { mrNotedByName } = usePage().props as { mrNotedByName?: string | null };
 
-
     const { auth } = usePage().props as unknown as {
         auth: {
             permissions: string[];
@@ -257,26 +258,26 @@ export default function InventoryListIndex({
         };
     };
 
-const { from } = usePage().props as { from?: string };
+    const { from } = usePage().props as { from?: string };
 
-const handleExit = () => {
-    if (from === 'notifications') {
-        router.get(route('notifications.index'));
-        return;
-    }
+    const handleExit = () => {
+        if (from === 'notifications') {
+            router.get(route('notifications.index'));
+            return;
+        }
 
-    if (canViewAll) {
-        router.get(route('inventory-list.index'));
-        return;
-    }
+        if (canViewAll) {
+            router.get(route('inventory-list.index'));
+            return;
+        }
 
-    if (canViewOwn) {
-        router.get(route('inventory-list.own'));
-        return;
-    }
+        if (canViewOwn) {
+            router.get(route('inventory-list.own'));
+            return;
+        }
 
-    router.get(route('dashboard'));
-};
+        router.get(route('dashboard'));
+    };
     const [sortKey, setSortKey] = useState<InventorySortKey>('id');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -451,19 +452,36 @@ const handleExit = () => {
         });
     };
 
+    const getAssetImageSrc = (imagePath?: string | null) => {
+        if (!imagePath) return null;
+        return imagePath.startsWith('http')
+            ? imagePath
+            : `https://${import.meta.env.VITE_AWS_BUCKET}.s3.${import.meta.env.VITE_AWS_DEFAULT_REGION}.amazonaws.com/${imagePath}`;
+    };
+
+    const getAssetTypeLabel = (assetType?: string | null) => {
+        if (assetType === 'fixed') return 'Fixed';
+        if (assetType === 'not_fixed') return 'Not Fixed';
+        return '-';
+    };
+
+    const getLocationLabel = (item: Asset) => {
+        if (!item.building) return '-';
+        return `${item.building.name}${item.building_room?.room ? ` (${item.building_room.room})` : ''}`;
+    };
+
     const closeAddAsset = () => {
-    setShowAddAsset(false);
+        setShowAddAsset(false);
 
-    // clear image from inertia form state
-    setData('image', null);
+        // clear image from inertia form state
+        setData('image', null);
 
-    // clear the actual file input (so filename resets)
-    if (fileInputRef.current) fileInputRef.current.value = '';
+        // clear the actual file input (so filename resets)
+        if (fileInputRef.current) fileInputRef.current.value = '';
 
-    // optional: clear errors too
-    clearErrors();
-};
-
+        // optional: clear errors too
+        clearErrors();
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -568,72 +586,92 @@ const handleExit = () => {
                 </div>
 
                 {kpis && (
-                    // <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
                         {/* Total Assets */}
-                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-yellow-100">
-                                <Boxes className="h-6 w-6 text-yellow-600" />
-                            </div>
-                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
-                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Total Assets</div>
-                                <div className="text-lg leading-snug font-semibold break-words sm:text-base md:text-xl">
-                                    {formatNumber(kpis.total_assets)}
+                        <div className="relative flex min-h-[150px] min-w-0 flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow-500 to-transparent" />
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex min-w-0 flex-col break-words whitespace-normal">
+                                    <div className="max-w-[12rem] text-sm leading-5 font-medium text-muted-foreground">Total Assets</div>
+                                    <div className="text-3xl font-semibold tracking-tight text-yellow-700 dark:text-yellow-300">
+                                        {formatNumber(kpis.total_assets)}
+                                    </div>
+                                </div>
+                                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-yellow-50 text-yellow-600 ring-1 ring-yellow-100 dark:bg-yellow-950/40 dark:text-yellow-300 dark:ring-yellow-900/60">
+                                    <Boxes className="h-5 w-5" strokeWidth={2.2} />
                                 </div>
                             </div>
+                            <p className="mt-5 border-t pt-3 text-xs leading-5 text-muted-foreground">Tracked university assets</p>
                         </div>
 
                         {/* Active vs Archived */}
-                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
-                                <FolderArchive className="h-6 w-6 text-emerald-600" />
-                            </div>
-                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
-                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Active vs Archived</div>
-                                <div className="text-lg leading-snug font-semibold break-words sm:text-base md:text-xl">
-                                    {kpis.active_pct}% vs {kpis.archived_pct}%
+                        <div className="relative flex min-h-[150px] min-w-0 flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-transparent" />
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex min-w-0 flex-col break-words whitespace-normal">
+                                    <div className="max-w-[12rem] text-sm leading-5 font-medium text-muted-foreground">Active vs Archived</div>
+                                    <div className="text-3xl font-semibold tracking-tight text-emerald-700 dark:text-emerald-300">
+                                        {kpis.active_pct}% vs {kpis.archived_pct}%
+                                    </div>
+                                </div>
+                                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900/60">
+                                    <FolderArchive className="h-5 w-5" strokeWidth={2.2} />
                                 </div>
                             </div>
+                            <p className="mt-5 border-t pt-3 text-xs leading-5 text-muted-foreground">Current asset availability split</p>
                         </div>
 
                         {/* Missing Assets */}
-                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100">
-                                <AlertTriangleIcon className="h-6 w-6 text-red-600" />
-                            </div>
-                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
-                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Missing Assets</div>
-                                <div className="text-2xl font-semibold text-red-700">
-                                    {kpis.missing_pct}%
-                                    <span className="ml-1 text-sm font-medium text-muted-foreground">
-                                        • {kpis.missing_count.toLocaleString()} missing
-                                    </span>
+                        <div className="relative flex min-h-[150px] min-w-0 flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 to-transparent" />
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="order-2 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rose-50 text-rose-600 ring-1 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900/60">
+                                    <AlertTriangleIcon className="h-5 w-5" strokeWidth={2.2} />
+                                </div>
+                                <div className="order-1 flex min-w-0 flex-col break-words whitespace-normal">
+                                    <div className="max-w-[12rem] text-sm leading-5 font-medium text-muted-foreground">Missing Assets</div>
+                                    <div className="text-3xl font-semibold tracking-tight text-rose-700 dark:text-rose-300">
+                                        {kpis.missing_pct}%<span className="hidden">• {kpis.missing_count.toLocaleString()} missing</span>
+                                    </div>
                                 </div>
                             </div>
+                            <p className="mt-5 border-t pt-3 text-xs leading-5 text-muted-foreground">
+                                {kpis.missing_count.toLocaleString()} missing asset{kpis.missing_count === 1 ? '' : 's'}
+                            </p>
                         </div>
 
                         {/* Fixed vs Not Fixed */}
-                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
-                                <Pin className="h-6 w-6 text-indigo-600" />
-                            </div>
-                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
-                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Fixed vs Not Fixed</div>
-                                <div className="text-2xl font-semibold">
-                                    {kpis.fixed_pct}% vs {kpis.not_fixed_pct}%
+                        <div className="relative flex min-h-[150px] min-w-0 flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 to-transparent" />
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="order-2 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:ring-indigo-900/60">
+                                    <Pin className="h-5 w-5" strokeWidth={2.2} />
+                                </div>
+                                <div className="order-1 flex min-w-0 flex-col break-words whitespace-normal">
+                                    <div className="max-w-[12rem] text-sm leading-5 font-medium text-muted-foreground">Fixed vs Not Fixed</div>
+                                    <div className="text-3xl font-semibold tracking-tight text-indigo-700 dark:text-indigo-300">
+                                        {kpis.fixed_pct}% vs {kpis.not_fixed_pct}%
+                                    </div>
                                 </div>
                             </div>
+                            <p className="mt-5 border-t pt-3 text-xs leading-5 text-muted-foreground">Tagged fixed asset ratio</p>
                         </div>
 
                         {/* Total Inventory Value */}
-                        <div className="flex min-w-0 items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-100">
-                                <Banknote className="h-6 w-6 text-orange-600" />
+                        <div className="relative flex min-h-[150px] min-w-0 flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-500 to-transparent" />
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="order-2 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-orange-50 text-orange-600 ring-1 ring-orange-100 dark:bg-orange-950/40 dark:text-orange-300 dark:ring-orange-900/60">
+                                    <Banknote className="h-5 w-5" strokeWidth={2.2} />
+                                </div>
+                                <div className="order-1 flex min-w-0 flex-col break-words whitespace-normal">
+                                    <div className="max-w-[12rem] text-sm leading-5 font-medium text-muted-foreground">Total Inventory Value</div>
+                                    <div className="text-3xl font-semibold tracking-tight text-orange-700 dark:text-orange-300">
+                                        {formatPeso(kpis.total_inventory_sum)}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex min-w-0 flex-col break-words whitespace-normal">
-                                <div className="text-sm leading-tight text-muted-foreground sm:text-xs md:text-sm">Total Inventory Value</div>
-                                <div className="text-2xl font-semibold">{formatPeso(kpis.total_inventory_sum)}</div>
-                            </div>
+                            <p className="mt-5 border-t pt-3 text-xs leading-5 text-muted-foreground">Recorded acquisition value</p>
                         </div>
                     </div>
                 )}
@@ -708,6 +746,7 @@ const handleExit = () => {
                                         setSelectedStatus('');
                                         setSelectedCategoryId('');
                                         if (canViewAll) setSelectedUnitId('');
+                                        notifyFiltersCleared();
                                     }}
                                     className="cursor-pointer"
                                 >
@@ -744,6 +783,7 @@ const handleExit = () => {
                                 setSelectedCategoryId('');
                                 setSelectedUnitId('');
                                 setSelectedStatus('');
+                                notifyFiltersCleared();
                             }}
                         />
                         {canCreate && ( // only show if user has create permission
@@ -761,162 +801,228 @@ const handleExit = () => {
                     </div>
                 </div>
 
-                <div className="rounded-lg-lg overflow-x-auto border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
-                                <TableHead className="text-center">ID</TableHead>
-                                <TableHead className="text-center">Asset Name</TableHead>
-                                <TableHead className="text-center">Asset Image</TableHead>
-                                <TableHead className="text-center">Brand</TableHead>
-                                <TableHead className="text-center">Date Purchased</TableHead>
-                                <TableHead className="text-center">Asset Type</TableHead>
-                                {/* <TableHead className="text-center">Quantity</TableHead> */}
-                                <TableHead className="text-center">Location</TableHead>
-                                <TableHead className="text-center">Unit/Department</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">NFC Link</TableHead>
-                                <TableHead className="text-center">Action</TableHead>
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
+                    <Table className="min-w-[1180px]">
+                        <TableHeader className="sticky top-0 z-10">
+                            <TableRow className="border-b border-neutral-200 bg-neutral-100 text-sm tracking-wide text-neutral-800 uppercase hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-900">
+                                <TableHead className="w-[72px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">ID</TableHead>
+                                <TableHead className="min-w-[220px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Asset
+                                </TableHead>
+                                <TableHead className="w-[120px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Image
+                                </TableHead>
+                                <TableHead className="min-w-[140px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Brand
+                                </TableHead>
+                                <TableHead className="min-w-[160px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Purchased
+                                </TableHead>
+                                <TableHead className="w-[130px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">Type</TableHead>
+                                <TableHead className="min-w-[190px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Location
+                                </TableHead>
+                                <TableHead className="min-w-[210px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Unit/Department
+                                </TableHead>
+                                <TableHead className="w-[120px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Status
+                                </TableHead>
+                                <TableHead className="w-[140px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    NFC Link
+                                </TableHead>
+                                <TableHead className="w-[132px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
 
-                        <TableBody className="text-center">
-                            {paginatedData.map((item) => (
-                                <TableRow key={item.id}>
-                                    <TableCell>{item.id}</TableCell>
-                                    <TableCell>{ucwords(item.asset_name)}</TableCell>
-                                    <TableCell>
-                                        {item.image_path ? (
-                                            <img
-                                                src={
-                                                    item.image_path.startsWith('http')
-                                                        ? item.image_path
-                                                        : `https://${import.meta.env.VITE_AWS_BUCKET}.s3.${import.meta.env.VITE_AWS_DEFAULT_REGION}.amazonaws.com/${item.image_path}`
-                                                }
-                                                alt={item.asset_name}
-                                                className="mx-auto max-h-24 w-auto rounded object-cover"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = '/images/placeholder.png'; // optional fallback image
-                                                }}
-                                            />
-                                        ) : (
-                                            'No Image Uploaded'
-                                        )}
-                                    </TableCell>
-
-                                    <TableCell>{ucwords(item.asset_model?.brand ?? '—')}</TableCell>
-                                    <TableCell>{formatDate(item.date_purchased)}</TableCell>
-                                    <TableCell>
-                                        {item.asset_type === 'fixed' ? 'Fixed' : item.asset_type === 'not_fixed' ? 'Not Fixed' : '—'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {item.building ? (
-                                            <>
-                                                {item.building.name}
-                                                {item.building_room?.room ? ` (${item.building_room.room})` : ''}
-                                            </>
-                                        ) : (
-                                            '—'
-                                        )}
-                                    </TableCell>
-
-                                    <TableCell>{item.unit_or_department?.code ? String(item.unit_or_department.code).toUpperCase() : '—'}</TableCell>
-                                    <TableCell className="text-center">
-                                        {item.status === 'active' && <Badge className="border-green-300 bg-green-100 text-green-800">Active</Badge>}
-                                        {item.status === 'archived' && <Badge className="border-gray-300 bg-gray-100 text-gray-800">Archived</Badge>}
-                                        {item.status === 'missing' && <Badge className="border-red-300 bg-red-100 text-red-700">Missing</Badge>}
-                                    </TableCell>
-                                    <TableCell>
-                                        <button
-                                            onClick={() => {
-                                                // const url = route('inventory-list.view', item.id);
-                                                const url = route(canViewAll ? 'inventory-list.view' : 'inventory-list.own.view', item.id);
-
-                                                navigator.clipboard.writeText(url).then(() => {
-                                                    toast.success('Link copied!', {
-                                                        description: 'The viewing link has been copied to your clipboard.',
-                                                    });
-                                                });
-                                            }}
-                                            className="cursor-pointer text-sm text-blue-600 underline hover:text-blue-800"
-                                        >
-                                            Get Viewing Link
-                                        </button>
-                                    </TableCell>
-                                    {/* <TableCell className="text-center">
-                                        <div className="flex justify-center gap-2">
-                                            <Button
-                                                onClick={() => {
-                                                const url = route('asset-summary.show', item.id);
-                                                window.open(url, '_blank');
-                                                }}
-                                                    className="cursor-pointer"
-                                                    // size="sm"
-                                            >
-                                                View
-                                            </Button>
-                                            
-                                            <Button
-                                                onClick={() => {
-                                                const url = route('asset-summary.show', item.id);
-                                                    navigator.clipboard.writeText(url).then(() => {
-                                                        toast.success('Link copied!', {
-                                                        description: 'The viewing link has been copied to your clipboard.',
-                                                        });
-                                                    });
-                                                }}
-                                                className="cursor-pointer"
-                                                variant="primary"
-                                                // size="sm"
-                                            >
-                                                Copy
-                                            </Button>
+                        <TableBody>
+                            {paginatedData.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={11} className="h-48 text-center">
+                                        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-muted-foreground">
+                                            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
+                                                <Boxes className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-foreground">No assets found</p>
+                                                <p className="text-sm">Try adjusting your search, sort, or filter settings.</p>
+                                            </div>
                                         </div>
-                                    </TableCell> */}
-
-                                    <TableCell className="text-center">
-                                        {canEdit && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setSelectedAsset(item);
-                                                    setEditModalVisible(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        )}
-
-                                        {canDelete && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="cursor-pointer"
-                                                onClick={() => {
-                                                    setSelectedAsset(item);
-                                                    setDeleteModalVisible(true);
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        )}
-
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                                setSelectedAsset(item); // set the current asset
-                                                setChooseViewVisible(true); // open ChooseViewModal
-                                            }}
-                                        >
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )}
+                            {paginatedData.map((item) => {
+                                const assetImageSrc = getAssetImageSrc(item.image_path);
+                                const locationLabel = getLocationLabel(item);
+                                return (
+                                    <TableRow
+                                        key={item.id}
+                                        className="group border-b border-slate-100 bg-white transition-colors hover:bg-blue-50/40 dark:bg-slate-950 dark:hover:bg-blue-950/20"
+                                    >
+                                        <TableCell className="px-4 py-4 text-left align-middle font-mono text-xs text-muted-foreground">
+                                            #{item.id}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle">
+                                            <div className="flex min-w-0 flex-col gap-1">
+                                                <span className="max-w-[240px] truncate font-semibold text-foreground">
+                                                    {ucwords(item.asset_name)}
+                                                </span>
+                                                <span className="max-w-[240px] truncate text-xs text-muted-foreground">
+                                                    {item.asset_model?.model ? ucwords(item.asset_model.model) : 'No model specified'}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 align-middle">
+                                            {assetImageSrc ? (
+                                                <div className="mx-auto h-16 w-16 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                                                    <img
+                                                        src={assetImageSrc}
+                                                        alt={item.asset_name}
+                                                        className="h-full w-full object-contain p-1"
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = '/images/placeholder.png';
+                                                        }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg border border-dashed border-slate-200 bg-white text-slate-400">
+                                                    <ImageIcon className="h-5 w-5" strokeWidth={1.8} />
+                                                </div>
+                                            )}
+                                        </TableCell>
+
+                                        <TableCell className="px-4 py-4 text-left align-middle">
+                                            <span className="block max-w-[150px] truncate font-medium">
+                                                {ucwords(item.asset_model?.brand ?? '-')}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle text-sm text-muted-foreground">
+                                            {formatDate(item.date_purchased) || '-'}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle">
+                                            <Badge variant="outline" className="bg-background font-medium">
+                                                {getAssetTypeLabel(item.asset_type)}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle">
+                                            <span className="block max-w-[220px] truncate text-sm" title={locationLabel}>
+                                                {locationLabel}
+                                            </span>
+                                        </TableCell>
+
+                                        <TableCell className="px-4 py-4 text-left align-middle">
+                                            <span
+                                                className="block max-w-[230px] truncate text-xs font-semibold tracking-wide text-slate-700 dark:text-slate-200"
+                                                title={item.unit_or_department?.name ?? item.unit_or_department?.code ?? '-'}
+                                            >
+                                                {item.unit_or_department?.code ? String(item.unit_or_department.code).toUpperCase() : '-'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
+                                            {item.status === 'active' && (
+                                                <Badge className="border-green-300 bg-green-100 text-green-800">Active</Badge>
+                                            )}
+                                            {item.status === 'archived' && (
+                                                <Badge className="border-gray-300 bg-gray-100 text-gray-800">Archived</Badge>
+                                            )}
+                                            {item.status === 'missing' && <Badge className="border-red-300 bg-red-100 text-red-700">Missing</Badge>}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    // const url = route('inventory-list.view', item.id);
+                                                    const url = route(canViewAll ? 'inventory-list.view' : 'inventory-list.own.view', item.id);
+
+                                                    navigator.clipboard
+                                                        .writeText(url)
+                                                        .then(() => {
+                                                            toast.success('NFC link copied', {
+                                                                description: 'The viewing link has been copied to your clipboard.',
+                                                            });
+                                                        })
+                                                        .catch(() => {
+                                                            toast.error('Copy failed', {
+                                                                description: 'Your browser could not copy the link. Please try again.',
+                                                            });
+                                                        });
+                                                }}
+                                                className="h-8 cursor-pointer gap-1.5 px-2.5 text-xs text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                                            >
+                                                <Copy className="h-3.5 w-3.5" />
+                                                Copy
+                                            </Button>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
+                                            <TooltipProvider delayDuration={120}>
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    {canEdit && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    aria-label="Edit asset"
+                                                                    className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                                                                    onClick={() => {
+                                                                        setSelectedAsset(item);
+                                                                        setEditModalVisible(true);
+                                                                    }}
+                                                                >
+                                                                    <Pencil className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Edit</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+
+                                                    {canDelete && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    aria-label="Delete asset"
+                                                                    className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-red-200 hover:bg-red-50"
+                                                                    onClick={() => {
+                                                                        setSelectedAsset(item);
+                                                                        setDeleteModalVisible(true);
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Delete</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                aria-label="View asset"
+                                                                className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm"
+                                                                onClick={() => {
+                                                                    setSelectedAsset(item); // set the current asset
+                                                                    setChooseViewVisible(true); // open ChooseViewModal
+                                                                }}
+                                                            >
+                                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>View</TooltipContent>
+                                                    </Tooltip>
+                                                </div>
+                                            </TooltipProvider>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                     <div className="flex items-center justify-between p-3">
@@ -1236,6 +1342,7 @@ const handleExit = () => {
                                                     }
 
                                                     setData('image', file);
+                                                    notifyImageUploaded();
                                                 }}
                                                 className="block w-full cursor-pointer rounded-lg border p-2 text-sm text-gray-500 file:mr-3 file:rounded-md file:border-0 file:bg-blue-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-200"
                                             />
@@ -1495,11 +1602,7 @@ const handleExit = () => {
                             {/* Buttons Footer inside the form */}
 
                             <div className="col-span-2 flex justify-end gap-2 border-t border-muted pt-4">
-                                <Button
-                                    variant="secondary"
-                                    onClick={closeAddAsset}
-                                    className="cursor-pointer"
-                                >
+                                <Button variant="secondary" onClick={closeAddAsset} className="cursor-pointer">
                                     Cancel
                                 </Button>
                                 <Button type="submit" className="cursor-pointer" disabled={processing}>

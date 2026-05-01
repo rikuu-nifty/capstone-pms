@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
 import type { BreadcrumbItem } from '@/types';
 import type { EventClickArg } from '@fullcalendar/core';
 import { Calendar as FullCalendar } from '@fullcalendar/core';
@@ -12,7 +13,19 @@ import listPlugin from '@fullcalendar/list';
 import '@fullcalendar/timegrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { Head } from '@inertiajs/react';
-import { Archive, CalendarCheck2, CalendarClock, CalendarDays, ClipboardList, FileText, Filter, Search, Truck, X } from 'lucide-react';
+import {
+    Archive,
+    CalendarCheck2,
+    CalendarClock,
+    CalendarDays,
+    ClipboardList,
+    FileText,
+    Filter,
+    Search,
+    Truck,
+    X,
+    type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import '../../css/calendar-overrides.css';
 
@@ -227,16 +240,6 @@ export default function CalendarPage({ events }: CalendarProps) {
             .slice(0, 6);
     }, [normalizedEvents, today]);
 
-    const busiestModule = useMemo(() => {
-        return MODULES.reduce(
-            (current, module) => {
-                const count = eventCounts[module.label] ?? 0;
-                return count > current.count ? { label: module.label, count } : current;
-            },
-            { label: 'No module yet', count: 0 },
-        );
-    }, [eventCounts]);
-
     const calendarEvents = useMemo(() => {
         return normalizedEvents.map((event) => {
             const module = moduleFor(event.type);
@@ -347,7 +350,10 @@ export default function CalendarPage({ events }: CalendarProps) {
         return () => calendar.destroy();
     }, [calendarEvents]);
 
-    const showAllModules = () => setActiveModules(MODULES.map((module) => module.label));
+    const showAllModules = () => {
+        setActiveModules(MODULES.map((module) => module.label));
+        notifyFiltersCleared();
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -378,28 +384,28 @@ export default function CalendarPage({ events }: CalendarProps) {
                         label="All Schedules"
                         value={metrics.total}
                         detail="Total calendar records from all modules."
-                        colorClass="bg-blue-50 text-blue-700 border-blue-100"
+                        tone="blue"
                     />
                     <SummaryCard
                         icon={CalendarCheck2}
                         label="Today"
                         value={metrics.today}
                         detail="Schedules with a date set for today."
-                        colorClass="bg-emerald-50 text-emerald-700 border-emerald-100"
+                        tone="emerald"
                     />
                     <SummaryCard
                         icon={CalendarClock}
                         label="Next 7 Days"
                         value={metrics.week}
                         detail="Upcoming schedules due within one week."
-                        colorClass="bg-amber-50 text-amber-700 border-amber-100"
+                        tone="amber"
                     />
                     <SummaryCard
                         icon={Filter}
                         label="Needs Action"
                         value={metrics.open}
                         detail="Schedules not yet completed, approved, returned, or cancelled."
-                        colorClass="bg-rose-50 text-rose-700 border-rose-100"
+                        tone="rose"
                     />
                 </section>
 
@@ -545,31 +551,60 @@ export default function CalendarPage({ events }: CalendarProps) {
     );
 }
 
+const summaryToneClasses = {
+    blue: {
+        icon: 'bg-blue-50 text-blue-600 ring-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-900/60',
+        value: 'text-blue-700 dark:text-blue-300',
+        accent: 'from-blue-500',
+    },
+    emerald: {
+        icon: 'bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-900/60',
+        value: 'text-emerald-700 dark:text-emerald-300',
+        accent: 'from-emerald-500',
+    },
+    amber: {
+        icon: 'bg-amber-50 text-amber-600 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/60',
+        value: 'text-amber-700 dark:text-amber-300',
+        accent: 'from-amber-500',
+    },
+    rose: {
+        icon: 'bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900/60',
+        value: 'text-rose-700 dark:text-rose-300',
+        accent: 'from-rose-500',
+    },
+};
+
 function SummaryCard({
     icon: Icon,
     label,
     value,
     detail,
-    colorClass,
+    tone,
 }: {
-    icon: typeof CalendarDays;
+    icon: LucideIcon;
     label: string;
     value: number;
     detail: string;
-    colorClass: string;
+    tone: keyof typeof summaryToneClasses;
 }) {
+    const classes = summaryToneClasses[tone];
+
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
-            <div className="flex items-start justify-between gap-3">
-                <div>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
-                    <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">{value}</p>
+        <div className="relative flex min-h-[150px] flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${classes.accent} to-transparent`} />
+
+            <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 space-y-2">
+                    <p className="max-w-[12rem] text-sm leading-5 font-medium text-muted-foreground">{label}</p>
+                    <p className={`text-3xl font-semibold tracking-tight ${classes.value}`}>{value.toLocaleString()}</p>
                 </div>
-                <span className={`grid h-10 w-10 place-items-center rounded-xl border ${colorClass}`}>
-                    <Icon className="h-5 w-5" />
+
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ring-1 ${classes.icon}`}>
+                    <Icon className="h-5 w-5" strokeWidth={2.2} />
                 </span>
             </div>
-            <p className="mt-4 border-t border-slate-100 pt-3 text-sm text-slate-500 dark:border-neutral-800 dark:text-slate-400">{detail}</p>
+
+            <p className="mt-5 border-t pt-3 text-xs leading-5 text-muted-foreground">{detail}</p>
         </div>
     );
 }

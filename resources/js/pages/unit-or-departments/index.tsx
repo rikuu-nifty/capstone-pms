@@ -1,26 +1,25 @@
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState, useMemo, useEffect } from 'react';
-import { Eye, Pencil, PlusCircle, Trash2, Building2, Boxes } from 'lucide-react';
-import useDebouncedValue from '@/hooks/useDebouncedValue';
+import { Boxes, Building2, Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
-import Pagination, { PageInfo } from '@/components/Pagination';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import Pagination, { PageInfo } from '@/components/Pagination';
 
 import AddUnitOrDepartmentModal from './AddUnitOrDepartmentModal';
 import EditUnitOrDepartmentModal from './EditUnitOrDepartmentModal';
 import ViewUnitOrDepartmentModal from './ViewUnitOrDepartmentModal';
 
-import type { UnitOrDepartment, UnitDeptPageProps } from '@/types/unit-or-department';
+import type { UnitDeptPageProps, UnitOrDepartment } from '@/types/unit-or-department';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Units / Departments', href: '/unit-or-departments' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Units / Departments', href: '/unit-or-departments' }];
 
 const sortOptions = [
     { value: 'id', label: 'ID' },
@@ -31,11 +30,7 @@ const sortOptions = [
 
 type SortKey = (typeof sortOptions)[number]['value'];
 
-export default function UnitOrDepartmentsIndex({
-    unit_or_departments = [],
-    totals,
-}: UnitDeptPageProps) {
-    
+export default function UnitOrDepartmentsIndex({ unit_or_departments = [], totals }: UnitDeptPageProps) {
     const { props } = usePage<UnitDeptPageProps>();
     const viewing = props.viewing;
 
@@ -90,27 +85,24 @@ export default function UnitOrDepartmentsIndex({
 
     const filtered = useMemo(() => {
         return unit_or_departments.filter((u) => {
-        const haystack = `${u.id} ${u.code ?? ''} ${u.name ?? ''} ${u.unit_head ?? ''}`.toLowerCase();
-        return !search || haystack.includes(search);
+            const haystack = `${u.id} ${u.code ?? ''} ${u.name ?? ''} ${u.unit_head ?? ''}`.toLowerCase();
+            return !search || haystack.includes(search);
         });
     }, [unit_or_departments, search]);
 
-    const numberKey = (u: UnitOrDepartment, k: SortKey) =>
-        k === 'id' ? Number(u.id) || 0
-        : k === 'assets_count' ? Number(u.assets_count ?? 0)
-        : 0;
+    const numberKey = (u: UnitOrDepartment, k: SortKey) => (k === 'id' ? Number(u.id) || 0 : k === 'assets_count' ? Number(u.assets_count ?? 0) : 0);
 
     const sorted = useMemo(() => {
         const dir = sortDir === 'asc' ? 1 : -1;
         return [...filtered].sort((a, b) => {
-        if (sortKey === 'name' || sortKey === 'code') {
-            const da = (a[sortKey] ?? '').toString();
-            const db = (b[sortKey] ?? '').toString();
-            const d = da.localeCompare(db);
+            if (sortKey === 'name' || sortKey === 'code') {
+                const da = (a[sortKey] ?? '').toString();
+                const db = (b[sortKey] ?? '').toString();
+                const d = da.localeCompare(db);
+                return (d !== 0 ? d : Number(a.id) - Number(b.id)) * dir;
+            }
+            const d = numberKey(a, sortKey) - numberKey(b, sortKey);
             return (d !== 0 ? d : Number(a.id) - Number(b.id)) * dir;
-        }
-        const d = numberKey(a, sortKey) - numberKey(b, sortKey);
-        return (d !== 0 ? d : Number(a.id) - Number(b.id)) * dir;
         });
     }, [filtered, sortKey, sortDir]);
 
@@ -126,11 +118,9 @@ export default function UnitOrDepartmentsIndex({
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
                         <h1 className="text-2xl font-semibold">Units / Departments</h1>
-                        <p className="text-sm text-muted-foreground">
-                            List of organizational units and departments.
-                        </p>
+                        <p className="text-sm text-muted-foreground">List of organizational units and departments.</p>
 
-                        <div className="flex items-center gap-2 w-96">
+                        <div className="flex w-96 items-center gap-2">
                             <Input
                                 type="text"
                                 placeholder="Search by id, unit/lab/dept, or code..."
@@ -163,41 +153,50 @@ export default function UnitOrDepartmentsIndex({
                 {/* KPIs */}
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <MetricKpiCard
+                            icon={Building2}
+                            label="Total Units / Departments"
+                            value={Number(totals.total_units ?? 0).toLocaleString()}
+                            detail="Registered units and departments"
+                            tone="indigo"
+                        />
+                        <MetricKpiCard
+                            icon={Boxes}
+                            label="Total Assets (across all)"
+                            value={Number(totals.total_assets ?? 0).toLocaleString()}
+                            detail="Assets assigned across units"
+                            tone="green"
+                        />
                         {/* Total Units / Departments */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
                                 {/* You can swap this icon if you prefer something else */}
                                 <Building2 className="h-7 w-7 text-indigo-600" />
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Total Units / Departments</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.total_units ?? 0).toLocaleString()}
-                                </div>
+                                <div className="text-3xl font-bold">{Number(totals.total_units ?? 0).toLocaleString()}</div>
                             </div>
                         </div>
 
                         {/* Total Assets */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                 <Boxes className="h-7 w-7 text-green-600" />
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Total Assets (across all)</div>
-                                <div className="text-3xl font-bold">
-                                    {Number(totals.total_assets ?? 0).toLocaleString()}
-                                </div>
+                                <div className="text-3xl font-bold">{Number(totals.total_assets ?? 0).toLocaleString()}</div>
                             </div>
                         </div>
                     </div>
                 )}
 
-
                 {/* Table */}
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Code</TableHead>
                                 <TableHead className="text-center">Name</TableHead>
@@ -209,63 +208,65 @@ export default function UnitOrDepartmentsIndex({
                         </TableHeader>
 
                         <TableBody className="text-center">
-                            {page_items.length > 0 ? page_items.map((u) => (
-                                <TableRow
-                                    key={u.id}
-                                    onClick={() => setSelectedRowId(Number(u.id))}
-                                    className={`cursor-pointer ${selectedRowId === Number(u.id) ? 'bg-muted/50' : ''}`}
-                                >
-                                    <TableCell>{u.id}</TableCell>
-                                    <TableCell className="font-medium">{(u.code ?? '—').toUpperCase()}</TableCell>
-                                    <TableCell>{u.name ?? '—'}</TableCell>
-                                    <TableCell>{u.unit_head ?? '—'}</TableCell>
-                                    <TableCell
-                                        className={`max-w-[250px] whitespace-normal break-words text-center${
-                                            u.description && u.description !== '-' ? 'text-justify' : 'text-center'
-                                        }`}
+                            {page_items.length > 0 ? (
+                                page_items.map((u) => (
+                                    <TableRow
+                                        key={u.id}
+                                        onClick={() => setSelectedRowId(Number(u.id))}
+                                        className={`cursor-pointer ${selectedRowId === Number(u.id) ? 'bg-muted/50' : ''}`}
                                     >
-                                        {u.description ?? '—'}
-                                    </TableCell>
-                                    <TableCell>{u.assets_count ?? 0}</TableCell>
-                                    <TableCell className="h-full">
-                                        <div className="flex justify-center items-center gap-2 h-full">
-                                            {canEdit && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="cursor-pointer"
-                                                    onClick={() => {
-                                                        setSelected(u);
-                                                        setShowEdit(true);
-                                                    }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                                        <TableCell>{u.id}</TableCell>
+                                        <TableCell className="font-medium">{(u.code ?? '—').toUpperCase()}</TableCell>
+                                        <TableCell>{u.name ?? '—'}</TableCell>
+                                        <TableCell>{u.unit_head ?? '—'}</TableCell>
+                                        <TableCell
+                                            className={`max-w-[250px] break-words whitespace-normal text-center${
+                                                u.description && u.description !== '-' ? 'text-justify' : 'text-center'
+                                            }`}
+                                        >
+                                            {u.description ?? '—'}
+                                        </TableCell>
+                                        <TableCell>{u.assets_count ?? 0}</TableCell>
+                                        <TableCell className="h-full">
+                                            <div className="flex h-full items-center justify-center gap-2">
+                                                {canEdit && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="cursor-pointer"
+                                                        onClick={() => {
+                                                            setSelected(u);
+                                                            setShowEdit(true);
+                                                        }}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
 
-                                            {canDelete && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                    setToDelete(u);
-                                                    setShowDelete(true);
-                                                    }}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            )}
+                                                {canDelete && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setToDelete(u);
+                                                            setShowDelete(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
 
-                                            <Button variant="ghost" size="icon" asChild className="cursor-pointer">
-                                                <Link href={`/unit-or-departments/view/${u.id}`} preserveScroll>
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )) : (
+                                                <Button variant="ghost" size="icon" asChild className="cursor-pointer">
+                                                    <Link href={`/unit-or-departments/view/${u.id}`} preserveScroll>
+                                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                                         No units or departments found.
@@ -282,10 +283,7 @@ export default function UnitOrDepartmentsIndex({
                 </div>
             </div>
 
-            <AddUnitOrDepartmentModal
-                show={showAdd}
-                onClose={() => setShowAdd(false)}
-            />
+            <AddUnitOrDepartmentModal show={showAdd} onClose={() => setShowAdd(false)} />
 
             {selected && (
                 <EditUnitOrDepartmentModal
@@ -316,13 +314,7 @@ export default function UnitOrDepartmentsIndex({
                 }}
             />
 
-            {viewRecord && (
-                <ViewUnitOrDepartmentModal
-                    open={showView}
-                    onClose={closeView}
-                    record={viewRecord}
-                />
-            )}
+            {viewRecord && <ViewUnitOrDepartmentModal open={showView} onClose={closeView} record={viewRecord} />}
         </AppLayout>
     );
 }

@@ -1,21 +1,21 @@
-import { PageProps } from '@inertiajs/core';
-import { useState, useEffect } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
-import Pagination, { PageInfo } from '@/components/Pagination';
-import { formatDateTime, formatEnums, ucwords } from '@/types/custom-index';
-import { Inbox, Calendar, Truck, Archive, Globe, Database, Building, Users } from 'lucide-react';
-import SortDropdown from '@/components/filters/SortDropdown';
-import { Input } from '@/components/ui/input';
 import type { SortDir } from '@/components/filters/SortDropdown';
+import SortDropdown from '@/components/filters/SortDropdown';
 import TrashFilterDropdown from '@/components/filters/TrashFilterDropdown';
+import Pagination, { PageInfo } from '@/components/Pagination';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { type RequestPayload } from '@inertiajs/core';
+import { formatDateTime, formatEnums, ucwords } from '@/types/custom-index';
+import { PageProps, type RequestPayload } from '@inertiajs/core';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Archive, Building, Calendar, Database, Globe, Inbox, Truck, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import useDebouncedValue from '@/hooks/useDebouncedValue';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -268,7 +268,10 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
 
         return (
             <>
-                Inventory Scheduling for <strong>{monthName}, {year}</strong>
+                Inventory Scheduling for{' '}
+                <strong>
+                    {monthName}, {year}
+                </strong>
             </>
         );
     }
@@ -296,8 +299,8 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
 
         return (
             <>
-                Transfer from <strong>{fromUnit}</strong> ({formatEnums(fromBuilding)}) to{' '}
-                <strong>{toUnit}</strong> ({formatEnums(toBuilding)}) scheduled for <strong>{scheduled}</strong>
+                Transfer from <strong>{fromUnit}</strong> ({formatEnums(fromBuilding)}) to <strong>{toUnit}</strong> ({formatEnums(toBuilding)})
+                scheduled for <strong>{scheduled}</strong>
             </>
         );
     }
@@ -351,19 +354,13 @@ const formatRecordName = (row: TrashRecord, tab: string) => {
             };
         };
 
-const personnelName =
-    (
-        vf.requested_by_personnel?.name ??
-        [
-            vf.requested_by_personnel?.first_name,
-            vf.requested_by_personnel?.middle_name,
-            vf.requested_by_personnel?.last_name,
-        ]
-            .filter(Boolean)
-            .join(' ')
-    ) ||
-    vf.requested_by_name ||
-    'Unknown Requester';
+        const personnelName =
+            (vf.requested_by_personnel?.name ??
+                [vf.requested_by_personnel?.first_name, vf.requested_by_personnel?.middle_name, vf.requested_by_personnel?.last_name]
+                    .filter(Boolean)
+                    .join(' ')) ||
+            vf.requested_by_name ||
+            'Unknown Requester';
 
         const unitName = vf.unit_or_department?.name ?? 'Unknown Unit';
         const status = vf.status ? formatEnums(vf.status) : 'Unknown Status';
@@ -393,11 +390,7 @@ const personnelName =
 
         const categoryName = cat.name ?? 'Unknown Category';
 
-        return (
-            <>
-                {categoryName}
-            </>
-        );
+        return <>{categoryName}</>;
     }
 
     if (tab === 'assignments') {
@@ -499,7 +492,12 @@ const personnelName =
         return (
             <>
                 <strong>{username}</strong> [{role}]
-                {unit && <> of <strong>{unit}</strong></>}
+                {unit && (
+                    <>
+                        {' '}
+                        of <strong>{unit}</strong>
+                    </>
+                )}
             </>
         );
     }
@@ -547,15 +545,7 @@ const personnelName =
     }
 
     return (
-        row.asset_name ||
-        row.inventory_schedule ||
-        row.remarks ||
-        row.description ||
-        row.requester_name ||
-        row.name ||
-        row.code ||
-        row.title ||
-        '—'
+        row.asset_name || row.inventory_schedule || row.remarks || row.description || row.requester_name || row.name || row.code || row.title || '—'
     );
 };
 
@@ -597,9 +587,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         });
     };
 
-    const cleanFilters = (
-        filters: Record<string, string | number | boolean | null | undefined>
-    ): Record<string, string | number | boolean> => {
+    const cleanFilters = (filters: Record<string, string | number | boolean | null | undefined>): Record<string, string | number | boolean> => {
         const cleaned: Record<string, string | number | boolean> = {};
 
         Object.entries(filters).forEach(([key, value]) => {
@@ -674,10 +662,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
         const mappedType = restoreMap[type as keyof typeof restoreMap];
         if (!mappedType) return;
 
-        const payload: RequestPayload =
-            mappedType === 'signatory' && row?.module_type
-                ? { module_type: row.module_type }
-                : {};
+        const payload: RequestPayload = mappedType === 'signatory' && row?.module_type ? { module_type: row.module_type } : {};
 
         router.post(`/trash-bin/restore/${mappedType}/${id}`, payload, {
             preserveScroll: true,
@@ -686,7 +671,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
 
     const formatLabel = (key: string) => {
         const words = key.replace(/_/g, ' ').split(' ');
-        const capitalized = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const capitalized = words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         return `${capitalized} records`;
     };
 
@@ -704,7 +689,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                 dir: sortDir,
                 tab: activeTab,
             }),
-            { preserveState: true }
+            { preserveState: true },
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search]);
@@ -749,16 +734,65 @@ export default function TrashBinIndex(props: TrashBinProps) {
 
                 {/* KPIs Section */}
                 {totals && (
-                    <div
-                        className={`grid gap-3 
-                            grid-cols-1 sm:grid-cols-2 
-                            ${activeGroup === 'forms' ? 'lg:grid-cols-6' : 'lg:grid-cols-4'}
-                        `}
-                    >
+                    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${activeGroup === 'forms' ? 'lg:grid-cols-6' : 'lg:grid-cols-4'} `}>
                         {activeGroup === 'forms' && (
                             <>
+                                <MetricKpiCard
+                                    icon={Inbox}
+                                    label="Assets (Inventory Lists)"
+                                    value={totals.forms.inventory_lists}
+                                    detail="Deleted inventory records"
+                                    tone="sky"
+                                />
+                                <MetricKpiCard
+                                    icon={Calendar}
+                                    label="Inventory Scheduling"
+                                    value={totals.forms.inventory_schedulings}
+                                    detail="Deleted schedule records"
+                                    tone="blue"
+                                />
+                                <MetricKpiCard
+                                    icon={Truck}
+                                    label="Property Transfers"
+                                    value={totals.forms.transfers}
+                                    detail="Deleted transfer records"
+                                    tone="orange"
+                                />
+                                <MetricKpiCard
+                                    icon={Archive}
+                                    label="Turnover/Disposals"
+                                    value={
+                                        <>
+                                            {totals.forms.turnovers}
+                                            <span className="text-muted-foreground"> / </span>
+                                            {totals.forms.disposals}
+                                        </>
+                                    }
+                                    detail="Turnovers / disposals"
+                                    tone="green"
+                                />
+                                <MetricKpiCard
+                                    icon={Globe}
+                                    label="Off-Campus Requests"
+                                    value={
+                                        <>
+                                            {totals.forms.off_campus_official}
+                                            <span className="text-muted-foreground"> / </span>
+                                            {totals.forms.off_campus_repair}
+                                        </>
+                                    }
+                                    detail="Official use / repair"
+                                    tone="purple"
+                                />
+                                <MetricKpiCard
+                                    icon={Archive}
+                                    label="Verification Forms"
+                                    value={totals.forms.verification_forms}
+                                    detail="Deleted verification records"
+                                    tone="indigo"
+                                />
                                 {/* Inventory Lists */}
-                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
                                         <Inbox className="h-7 w-7 text-sky-600" />
                                     </div>
@@ -769,7 +803,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 </div>
 
                                 {/* Inventory Scheduling */}
-                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
                                         <Calendar className="h-7 w-7 text-blue-600" />
                                     </div>
@@ -780,7 +814,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 </div>
 
                                 {/* Transfers */}
-                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
                                         <Truck className="h-7 w-7 text-orange-600" />
                                     </div>
@@ -791,7 +825,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 </div>
 
                                 {/* Turnovers / Disposals */}
-                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                         <Archive className="h-7 w-7 text-green-600" />
                                     </div>
@@ -807,7 +841,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 </div>
 
                                 {/* Off Campus */}
-                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
                                         <Globe className="h-7 w-7 text-purple-600" />
                                     </div>
@@ -823,7 +857,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 </div>
 
                                 {/* Verification Forms */}
-                                <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
                                         <Archive className="h-7 w-7 text-indigo-600" />
                                     </div>
@@ -839,22 +873,21 @@ export default function TrashBinIndex(props: TrashBinProps) {
                             <>
                                 {Object.entries(totals.assets).map(([key, value], index) => {
                                     const iconConfig = [
-                                        { Icon: Database, bg: 'bg-amber-100', color: 'text-amber-600' },
-                                        { Icon: Archive, bg: 'bg-teal-100', color: 'text-teal-600' },
-                                        { Icon: Inbox, bg: 'bg-indigo-100', color: 'text-indigo-600' },
-                                        { Icon: Truck, bg: 'bg-rose-100', color: 'text-rose-600' },
-                                    ][index];
-                                    const { Icon, bg, color } = iconConfig || {};
+                                        { Icon: Database, tone: 'amber' },
+                                        { Icon: Archive, tone: 'teal' },
+                                        { Icon: Inbox, tone: 'indigo' },
+                                        { Icon: Truck, tone: 'rose' },
+                                    ] as const;
+                                    const { Icon, tone } = iconConfig[index] ?? iconConfig[0];
                                     return (
-                                        <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
-                                            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
-                                                {Icon && <Icon className={`h-7 w-7 ${color}`} />}
-                                            </div>
-                                            <div>
-                                                <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
-                                                <div className="text-3xl font-bold">{value as number}</div>
-                                            </div>
-                                        </div>
+                                        <MetricKpiCard
+                                            key={key}
+                                            icon={Icon}
+                                            label={formatEnums(key)}
+                                            value={value as number}
+                                            detail="Deleted asset records"
+                                            tone={tone}
+                                        />
                                     );
                                 })}
                             </>
@@ -864,22 +897,21 @@ export default function TrashBinIndex(props: TrashBinProps) {
                             <>
                                 {Object.entries(totals.institutional).map(([key, value], index) => {
                                     const iconConfig = [
-                                        { Icon: Building, bg: 'bg-cyan-100', color: 'text-cyan-600' },
-                                        { Icon: Archive, bg: 'bg-lime-100', color: 'text-lime-600' },
-                                        { Icon: Database, bg: 'bg-violet-100', color: 'text-violet-600' },
-                                        { Icon: Users, bg: 'bg-pink-100', color: 'text-pink-600' },
-                                    ][index];
-                                    const { Icon, bg, color } = iconConfig || {};
+                                        { Icon: Building, tone: 'sky' },
+                                        { Icon: Archive, tone: 'green' },
+                                        { Icon: Database, tone: 'violet' },
+                                        { Icon: Users, tone: 'rose' },
+                                    ] as const;
+                                    const { Icon, tone } = iconConfig[index] ?? iconConfig[0];
                                     return (
-                                        <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
-                                            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
-                                                {Icon && <Icon className={`h-7 w-7 ${color}`} />}
-                                            </div>
-                                            <div>
-                                                <div className="text-sm text-muted-foreground">{formatEnums(key)}</div>
-                                                <div className="text-3xl font-bold">{value as number}</div>
-                                            </div>
-                                        </div>
+                                        <MetricKpiCard
+                                            key={key}
+                                            icon={Icon}
+                                            label={formatEnums(key)}
+                                            value={value as number}
+                                            detail="Deleted setup records"
+                                            tone={tone}
+                                        />
                                     );
                                 })}
                             </>
@@ -890,8 +922,36 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 {/* FORM APPROVALS KPIs — only show when activeTab === 'form_approvals' */}
                                 {activeTab === 'form_approvals' && (
                                     <>
+                                        <MetricKpiCard
+                                            icon={Calendar}
+                                            label="Inventory Scheduling Approvals"
+                                            value={totals.usermgmt.form_approvals_inventory_sched}
+                                            detail="Deleted approval records"
+                                            tone="blue"
+                                        />
+                                        <MetricKpiCard
+                                            icon={Truck}
+                                            label="Property Transfer Approvals"
+                                            value={totals.usermgmt.form_approvals_transfer}
+                                            detail="Deleted approval records"
+                                            tone="orange"
+                                        />
+                                        <MetricKpiCard
+                                            icon={Archive}
+                                            label="Turnover/Disposal Approvals"
+                                            value={totals.usermgmt.form_approvals_turnover}
+                                            detail="Deleted approval records"
+                                            tone="green"
+                                        />
+                                        <MetricKpiCard
+                                            icon={Globe}
+                                            label="Off-Campus Approvals"
+                                            value={totals.usermgmt.form_approvals_offcampus}
+                                            detail="Deleted approval records"
+                                            tone="purple"
+                                        />
                                         {/* Inventory Scheduling Approvals */}
-                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
                                                 <Calendar className="h-7 w-7 text-blue-600" />
                                             </div>
@@ -902,7 +962,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                         </div>
 
                                         {/* Property Transfer Approvals */}
-                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
                                                 <Truck className="h-7 w-7 text-orange-600" />
                                             </div>
@@ -913,7 +973,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                         </div>
 
                                         {/* Turnover/Disposal Approvals */}
-                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                                 <Archive className="h-7 w-7 text-green-600" />
                                             </div>
@@ -924,7 +984,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                         </div>
 
                                         {/* Off-Campus Approvals */}
-                                        <div className="rounded-2xl border p-4 flex items-center gap-3">
+                                        <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
                                                 <Globe className="h-7 w-7 text-purple-600" />
                                             </div>
@@ -945,39 +1005,42 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                                 if (activeTab === 'signatories' && (key === 'users' || key === 'roles')) return false;
                                                 if (
                                                     (activeTab === 'users' || activeTab === 'roles') &&
-                                                    ['inventory_signatories', 'transfer_signatories', 'turnover_disposal_signatories', 'off_campus_signatories'].includes(key)
-                                                ) return false;
+                                                    [
+                                                        'inventory_signatories',
+                                                        'transfer_signatories',
+                                                        'turnover_disposal_signatories',
+                                                        'off_campus_signatories',
+                                                    ].includes(key)
+                                                )
+                                                    return false;
                                                 return true;
                                             })
                                             .map(([key, value], index) => {
                                                 const iconConfig = [
-                                                    { Icon: Users, bg: 'bg-blue-100', color: 'text-blue-600' },
-                                                    { Icon: Archive, bg: 'bg-emerald-100', color: 'text-emerald-600' },
-                                                    { Icon: Globe, bg: 'bg-orange-100', color: 'text-orange-600' },
-                                                    { Icon: Globe, bg: 'bg-purple-100', color: 'text-purple-600' },
-                                                    { Icon: Globe, bg: 'bg-pink-100', color: 'text-pink-600' },
-                                                    { Icon: Globe, bg: 'bg-indigo-100', color: 'text-indigo-600' },
-                                                ][index];
-                                                const { Icon, bg, color } = iconConfig || {};
+                                                    { Icon: Users, tone: 'blue' },
+                                                    { Icon: Archive, tone: 'emerald' },
+                                                    { Icon: Globe, tone: 'orange' },
+                                                    { Icon: Globe, tone: 'purple' },
+                                                    { Icon: Globe, tone: 'rose' },
+                                                    { Icon: Globe, tone: 'indigo' },
+                                                ] as const;
+                                                const { Icon, tone } = iconConfig[index] ?? iconConfig[0];
                                                 return (
-                                                    <div key={key} className="rounded-2xl border p-4 flex items-center gap-3">
-                                                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${bg}`}>
-                                                            {Icon && <Icon className={`h-7 w-7 ${color}`} />}
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-sm text-muted-foreground">
-                                                                {(() => {
-                                                                    let label = key.replace(/_/g, ' ');
-                                                                    if (key === 'inventory_signatories') label = 'Inventory Scheduling Signatories';
-                                                                    if (key === 'transfer_signatories') label = 'Property Transfer Signatories';
-                                                                    if (key === 'turnover_disposal_signatories') label = 'Turnover/Disposal Signatories';
-                                                                    if (key === 'off_campus_signatories') label = 'Off-Campus Signatories';
-                                                                    return ucwords(label);
-                                                                })()}
-                                                            </div>
-                                                            <div className="text-3xl font-bold">{value as number}</div>
-                                                        </div>
-                                                    </div>
+                                                    <MetricKpiCard
+                                                        key={key}
+                                                        icon={Icon}
+                                                        label={(() => {
+                                                            let label = key.replace(/_/g, ' ');
+                                                            if (key === 'inventory_signatories') label = 'Inventory Scheduling Signatories';
+                                                            if (key === 'transfer_signatories') label = 'Property Transfer Signatories';
+                                                            if (key === 'turnover_disposal_signatories') label = 'Turnover/Disposal Signatories';
+                                                            if (key === 'off_campus_signatories') label = 'Off-Campus Signatories';
+                                                            return ucwords(label);
+                                                        })()}
+                                                        value={value as number}
+                                                        detail="Deleted user management records"
+                                                        tone={tone}
+                                                    />
                                                 );
                                             })}
                                     </>
@@ -987,7 +1050,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                     </div>
                 )}
 
-                <div className="flex items-center justify-between w-full">
+                <div className="flex w-full items-center justify-between">
                     {/* LEFT: Search Bar */}
                     <div className="flex items-center gap-2">
                         <Input
@@ -1459,7 +1522,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 router.get(
                                     '/trash-bin',
                                     { ...props.filters, ...localFilters, search, sort: key, dir, tab: activeTab },
-                                    { preserveState: true }
+                                    { preserveState: true },
                                 );
                             }}
                         />
@@ -1474,12 +1537,11 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 resetFilters();
                                 setActiveTab(m.key);
                             }}
-                            className={`cursor-pointer
-                                px-4 py-2 text-sm font-medium transition-colors border-b-2 rounded-t-md ${
-                                    activeTab === m.key
-                                        ? 'text-blue-800 border-blue-600 bg-blue-100/60'
-                                        : 'text-primary border-transparent hover:border-blue-400 hover:bg-blue-50/60'
-                                }`}
+                            className={`cursor-pointer rounded-t-md border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+                                activeTab === m.key
+                                    ? 'border-blue-600 bg-blue-100/60 text-blue-800'
+                                    : 'border-transparent text-primary hover:border-blue-400 hover:bg-blue-50/60'
+                            }`}
                         >
                             {m.label}
                         </button>
@@ -1487,14 +1549,14 @@ export default function TrashBinIndex(props: TrashBinProps) {
                 </div>
 
                 {/* Active Module Table */}
-                <div className="rounded-lg border overflow-x-auto">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted/40">
-                                <TableHead className="text-center w-[80px]">Record ID</TableHead>
-                                <TableHead className="text-center w-[400px]">Record Name</TableHead>
-                                <TableHead className="text-center w-[180px]">Date Deleted</TableHead>
-                                <TableHead className="text-center w-[120px]">Actions</TableHead>
+                            <TableRow>
+                                <TableHead className="w-[80px] text-center">Record ID</TableHead>
+                                <TableHead className="w-[400px] text-center">Record Name</TableHead>
+                                <TableHead className="w-[180px] text-center">Date Deleted</TableHead>
+                                <TableHead className="w-[120px] text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody className="text-center">
@@ -1502,20 +1564,22 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 activeData.data.map((row: TrashRecord) => (
                                     <TableRow key={row.id}>
                                         <TableCell className="max-w-[80px]">{row.id}</TableCell>
-                                        <TableCell className="max-w-[400px] whitespace-normal break-words">{formatRecordName(row, activeTab)}</TableCell>
+                                        <TableCell className="max-w-[400px] break-words whitespace-normal">
+                                            {formatRecordName(row, activeTab)}
+                                        </TableCell>
                                         <TableCell className="max-w-[180px]">{formatDateTime(row.deleted_at)}</TableCell>
                                         <TableCell className="max-w-[150px]">
                                             <div className="flex justify-center gap-2">
                                                 <Button
                                                     onClick={() => handleRestore(activeTab, row.id, row)}
-                                                    className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-600 disabled:opacity-50"
                                                     disabled={!canRestore}
                                                 >
                                                     Restore
                                                 </Button>
 
                                                 <Button
-                                                    className="cursor-pointer disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-600 disabled:opacity-50"
                                                     variant="destructive"
                                                     disabled={!canPermanentDelete}
                                                     onClick={() => {
@@ -1542,7 +1606,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
 
                 {/* Pagination */}
                 {activeData && (
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <PageInfo
                             page={activeData.current_page}
                             total={activeData.total}

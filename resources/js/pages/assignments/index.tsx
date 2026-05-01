@@ -1,34 +1,34 @@
-import { useState, useEffect } from 'react';
-import { Head, router, Link, usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
+import Pagination, { PageInfo } from '@/components/Pagination';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, UserCheck2, UserX, AlertTriangle, UserPen, UserRoundMinus } from 'lucide-react';
-import Pagination, { PageInfo } from '@/components/Pagination';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
 import { formatDateLong } from '@/types/custom-index';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { AlertTriangle, ClipboardList, Eye, Pencil, PlusCircle, Trash2, UserCheck2, UserPen, UserRoundMinus, UserX } from 'lucide-react';
+import { useEffect, useState } from 'react';
 // import { formatDateTimeLong } from '@/types/datetime';
-import type { AssignmentPageProps, AssetAssignment } from '@/types/asset-assignment';
+import type { AssetAssignment, AssignmentPageProps } from '@/types/asset-assignment';
 
 import { Input } from '@/components/ui/input';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
 
-import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
 import PersonnelFilterDropdown from '@/components/filters/PersonnelFilterDropdown';
+import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
 
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import AddAssignmentModal from './AddAssignmentModal';
 import EditAssignmentModal from './EditAssignmentModal';
-import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
-import ViewAssignmentModal from './ViewAssignmentModal';
 import ReassignAssetsModal from './ReassignAssetsModal';
+import ViewAssignmentModal from './ViewAssignmentModal';
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Assignments', href: '/assignments' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Assignments', href: '/assignments' }];
 
-export default function AssignmentsIndex({ 
-    assignments, 
-    totals, 
+export default function AssignmentsIndex({
+    assignments,
+    totals,
     personnels,
     units,
     assets,
@@ -127,14 +127,7 @@ export default function AssignmentsIndex({
         }
     };
 
-    const hasFilters =
-        rawSearch.trim() !== '' ||
-        selectedUnitId !== '' ||
-        selectedStatus !== '' ||
-        sortKey !== 'date_assigned' ||
-        sortDir !== 'desc'
-    ;
-
+    const hasFilters = rawSearch.trim() !== '' || selectedUnitId !== '' || selectedStatus !== '' || sortKey !== 'date_assigned' || sortDir !== 'desc';
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Asset Assignments" />
@@ -144,55 +137,82 @@ export default function AssignmentsIndex({
                 <div className="flex flex-col gap-2">
                     <div>
                         <h1 className="text-2xl font-semibold">Asset Assignments</h1>
-                        <p className="text-sm text-muted-foreground mt-2">
-                            Records of assets assigned to personnels.
-                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">Records of assets assigned to personnels.</p>
                     </div>
 
                     {/* KPIs */}
                     {totals && (
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-5 mt-2 mb-2">
+                        <div className="mt-2 mb-2 grid grid-cols-1 gap-3 sm:grid-cols-5">
+                            <MetricKpiCard
+                                icon={ClipboardList}
+                                label="Total Assignments"
+                                value={Number(totals.total_assignments ?? 0).toLocaleString()}
+                                detail="Personnel assignment records"
+                                tone="indigo"
+                            />
+                            <MetricKpiCard
+                                icon={UserRoundMinus}
+                                label="Assignments w/o Assets"
+                                value={Number(totals.assignments_with_no_assets ?? 0).toLocaleString()}
+                                detail="Assignments without assets"
+                                tone="yellow"
+                            />
+                            <MetricKpiCard
+                                icon={UserCheck2}
+                                label="Personnels w/ Assets"
+                                value={Number(totals.total_personnels_with_assets ?? 0).toLocaleString()}
+                                detail="Personnel holding assets"
+                                tone="green"
+                            />
+                            <MetricKpiCard
+                                icon={UserX}
+                                label="Inactive Personnels w/ Assets"
+                                value={Number(totals.total_inactive_personnels_with_assets ?? 0).toLocaleString()}
+                                detail="Inactive holders with assets"
+                                tone="slate"
+                            />
+                            <MetricKpiCard
+                                icon={AlertTriangle}
+                                label="Assets w/ Former Personnels"
+                                value={Number(totals.assets_assigned_to_left_university ?? 0).toLocaleString()}
+                                detail="Assets assigned to former personnel"
+                                tone="red"
+                            />
                             {/* Total Assignments */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
                                     <ClipboardList className="h-7 w-7 text-indigo-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm text-muted-foreground">Total Assignments</div>
-                                    <div className="text-3xl font-bold">
-                                        {Number(totals.total_assignments ?? 0).toLocaleString()}
-                                    </div>
+                                    <div className="text-3xl font-bold">{Number(totals.total_assignments ?? 0).toLocaleString()}</div>
                                 </div>
                             </div>
 
                             {/* Assignments with No Assets */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
                                     <UserRoundMinus className="h-7 w-7 text-yellow-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm text-muted-foreground">Assignments w/o Assets</div>
-                                    <div className="text-3xl font-bold">
-                                        {Number(totals.assignments_with_no_assets ?? 0).toLocaleString()}
-                                    </div>
+                                    <div className="text-3xl font-bold">{Number(totals.assignments_with_no_assets ?? 0).toLocaleString()}</div>
                                 </div>
                             </div>
 
                             {/* Personnels with Assets */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                                     <UserCheck2 className="h-7 w-7 text-green-600" />
                                 </div>
                                 <div>
                                     <div className="text-sm text-muted-foreground">Personnels w/ Assets</div>
-                                    <div className="text-3xl font-bold">
-                                        {Number(totals.total_personnels_with_assets ?? 0).toLocaleString()}
-                                    </div>
+                                    <div className="text-3xl font-bold">{Number(totals.total_personnels_with_assets ?? 0).toLocaleString()}</div>
                                 </div>
                             </div>
 
                             {/* Inactive Personnels */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
                                     <UserX className="h-7 w-7 text-gray-600" />
                                 </div>
@@ -205,20 +225,17 @@ export default function AssignmentsIndex({
                             </div>
 
                             {/* Left University */}
-                            <div className="rounded-2xl border p-4 flex items-center gap-3">
+                            <div className="flex hidden items-center gap-3 rounded-2xl border p-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
                                     <AlertTriangle className="h-7 w-7 text-red-600" />
                                 </div>
                                 <div>
-                                    <div className="text-sm text-muted-foreground">
-                                        Assets w/ Former Personnels
-                                    </div>
+                                    <div className="text-sm text-muted-foreground">Assets w/ Former Personnels</div>
                                     <div className="text-3xl font-bold">
                                         {Number(totals.assets_assigned_to_left_university ?? 0).toLocaleString()}
                                     </div>
                                 </div>
                             </div>
-                        
                         </div>
                     )}
 
@@ -243,7 +260,7 @@ export default function AssignmentsIndex({
                                     setSortDir(dir);
                                 }}
                             />
-                            
+
                             {hasFilters && (
                                 <Button
                                     variant="destructive"
@@ -271,9 +288,10 @@ export default function AssignmentsIndex({
                                 onClear={() => {
                                     setSelectedUnitId('');
                                     setSelectedStatus('');
+                                    notifyFiltersCleared();
                                 }}
                             />
-                            
+
                             {canCreate && (
                                 <Button onClick={() => setShowAdd(true)} className="cursor-pointer">
                                     <PlusCircle className="mr-1 h-4 w-4" /> Add New Assignment
@@ -283,13 +301,11 @@ export default function AssignmentsIndex({
                     </div>
                 </div>
 
-                
-
                 {/* Table */}
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Personnel</TableHead>
                                 <TableHead className="text-center">Unit/Department</TableHead>
@@ -304,102 +320,93 @@ export default function AssignmentsIndex({
                         <TableBody className="text-center">
                             {page_items.length > 0 ? (
                                 page_items.map((a) => (
-                                <TableRow key={a.id}>
-                                    <TableCell>{a.id}</TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className='font-medium'>{a.personnel?.full_name ?? '—'}</span>
-                                            <span className="text-xs text-muted-foreground">{a.personnel?.position ?? ''}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>{a.personnel?.unit_or_department?.name ?? '—'}</TableCell>
-                                    <TableCell>{a.items_count ?? 0}</TableCell>
-                                    {/* <TableCell>{formatDateLong(a.date_assigned)}</TableCell> */}
-                                    {/* <TableCell>{formatDateTimeLong(a.updated_at)}</TableCell> */}
-                                    <TableCell>{formatDateLong(a.updated_at)}</TableCell>
-                                    <TableCell>{a.assigned_by_user?.name ?? '—'}</TableCell>
-                                    <TableCell>
-                                        <div className="flex justify-center items-center gap-2">
-                                            {canReassign && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setReassignPersonnel(a.id);
-                                                        setShowReassign(true);
-                                                    }}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <UserPen className="h-4 w-4 text-blue-600" />
-                                                </Button>
-                                            )}
+                                    <TableRow key={a.id}>
+                                        <TableCell>{a.id}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{a.personnel?.full_name ?? '—'}</span>
+                                                <span className="text-xs text-muted-foreground">{a.personnel?.position ?? ''}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>{a.personnel?.unit_or_department?.name ?? '—'}</TableCell>
+                                        <TableCell>{a.items_count ?? 0}</TableCell>
+                                        {/* <TableCell>{formatDateLong(a.date_assigned)}</TableCell> */}
+                                        {/* <TableCell>{formatDateTimeLong(a.updated_at)}</TableCell> */}
+                                        <TableCell>{formatDateLong(a.updated_at)}</TableCell>
+                                        <TableCell>{a.assigned_by_user?.name ?? '—'}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {canReassign && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setReassignPersonnel(a.id);
+                                                            setShowReassign(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <UserPen className="h-4 w-4 text-blue-600" />
+                                                    </Button>
+                                                )}
 
-                                            {canEdit && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setToEdit(a);
-                                                        setShowEdit(true);
-                                                    }}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                                                {canEdit && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setToEdit(a);
+                                                            setShowEdit(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
 
-                                            {canDelete && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setToDelete(a);
-                                                        setShowDelete(true);
-                                                    }}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            )}
+                                                {canDelete && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setToDelete(a);
+                                                            setShowDelete(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="cursor-pointer"
-                                            >
-                                                <Link href={`/assignments/${a.id}`} preserveScroll>
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                </Link>
-                                            </Button>
-                                        </div>
+                                                <Button variant="ghost" size="icon" className="cursor-pointer">
+                                                    <Link href={`/assignments/${a.id}`} preserveScroll>
+                                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                        No assignments found.
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                                    No assignments found.
-                                </TableCell>
-                            </TableRow>
-                        )}
+                            )}
                         </TableBody>
                     </Table>
                 </div>
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between">
-                    <PageInfo
-                        page={assignments.current_page}
-                        total={assignments.total}
-                        pageSize={assignments.per_page}
-                        label="records"
-                    />
+                    <PageInfo page={assignments.current_page} total={assignments.total} pageSize={assignments.per_page} label="records" />
                     <Pagination
                         page={assignments.current_page}
                         total={assignments.total}
                         pageSize={assignments.per_page}
                         onPageChange={(p) => {
-                        router.get('/assignments', { page: p }, { preserveScroll: true });
+                            router.get('/assignments', { page: p }, { preserveScroll: true });
                         }}
                     />
                 </div>
@@ -409,7 +416,7 @@ export default function AssignmentsIndex({
             <AddAssignmentModal
                 show={showAdd}
                 onClose={() => {
-                    setShowAdd(false)
+                    setShowAdd(false);
                     refreshAssignments();
                 }}
                 assets={assets}
@@ -428,21 +435,16 @@ export default function AssignmentsIndex({
                         refreshAssignments();
                     }}
                     assignment={toEdit}
-                    assets={assets}          
+                    assets={assets}
                     available_personnels={available_personnels}
-                    units={units}  
+                    units={units}
                     currentUserId={currentUser?.id ?? 0}
-                    users={users}       
+                    users={users}
                 />
             )}
 
             {viewAssignment && props.viewing_items && (
-                <ViewAssignmentModal
-                    open={showView}
-                    onClose={closeView}
-                    assignment={viewAssignment}
-                    items={props.viewing_items}
-                />
+                <ViewAssignmentModal open={showView} onClose={closeView} assignment={viewAssignment} items={props.viewing_items} />
             )}
 
             {reassignPersonnel && (
@@ -453,7 +455,7 @@ export default function AssignmentsIndex({
                         setReassignPersonnel(null);
                         refreshAssignments();
                     }}
-                    assignmentId={reassignPersonnel} 
+                    assignmentId={reassignPersonnel}
                     personnels={personnels}
                 />
             )}
@@ -466,11 +468,11 @@ export default function AssignmentsIndex({
                 onConfirm={() => {
                     if (toDelete) {
                         router.delete(`/assignments/${toDelete.id}`, {
-                        preserveScroll: true,
-                        onSuccess: () => {
-                            setShowDelete(false);
-                            setToDelete(null);
-                        },
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowDelete(false);
+                                setToDelete(null);
+                            },
                         });
                     }
                 }}

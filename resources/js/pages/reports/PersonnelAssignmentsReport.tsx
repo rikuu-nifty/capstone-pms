@@ -1,43 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import { PickerInput } from '@/components/picker-input';
-import PersonnelAssignmentsTable from './PersonnelAssignmentsTable';
-import PersonnelAssignmentsDetailedTable from './PersonnelAssignmentsDetailedTable';
-import Select from 'react-select';
-import {
-    Filter,
-    RotateCcw,
-    FileDown,
-    FileText,
-    FileSpreadsheet
-} from 'lucide-react';
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
-} from '@/components/ui/card';
-import {
-    ChartConfig,
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-    ChartLegend,
-    ChartLegendContent,
-} from '@/components/ui/chart';
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    XAxis,
-    ResponsiveContainer,
-    YAxis,
-} from 'recharts';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import AppLayout from '@/layouts/app-layout';
+import { notifyExportReady, notifyFiltersCleared, notifyNoRecordsFound } from '@/lib/toast-feedback';
+import { type BreadcrumbItem } from '@/types';
 import { formatEnums } from '@/types/custom-index';
+import { Head, router, usePage } from '@inertiajs/react';
+import { FileDown, FileSpreadsheet, FileText, Filter, RotateCcw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import Select from 'react-select';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { route } from 'ziggy-js';
+import PersonnelAssignmentsDetailedTable from './PersonnelAssignmentsDetailedTable';
+import PersonnelAssignmentsTable from './PersonnelAssignmentsTable';
 
 type PersonnelRow = {
     id: number;
@@ -118,14 +94,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function PersonnelAssignmentsReport() {
     const firstLoadRef = useRef(true);
-    const { 
-        records, 
+    const {
+        records,
         assetRecords,
         departments,
         personnels,
         categories,
-        filters: initialFilters, 
-        chartData: initialChartData
+        filters: initialFilters,
+        chartData: initialChartData,
     } = usePage<PageProps>().props;
 
     const defaultFilters = {
@@ -192,7 +168,7 @@ export default function PersonnelAssignmentsReport() {
                     setPageSize(paginator.meta.per_page ?? 10);
                     setChartData(pageData.props.chartData as ChartRow[]);
                 },
-            }
+            },
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page]);
@@ -200,7 +176,7 @@ export default function PersonnelAssignmentsReport() {
     const chartConfig: ChartConfig = {
         past: { label: 'Prior Assets (Previous Update)', color: 'var(--chart-1)' },
         current: { label: 'Current Assignments', color: 'var(--chart-2)' },
-        missing: { label: 'Missing Assets', color: '#741414ff', },
+        missing: { label: 'Missing Assets', color: '#741414ff' },
         all_time: { label: 'All-Time Assignments (Unique)', color: 'var(--chart-5)' },
     };
 
@@ -212,27 +188,22 @@ export default function PersonnelAssignmentsReport() {
                 {/* Header */}
                 <div>
                     <h1 className="text-2xl font-semibold">Personnel Assignments Report</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Analyze the distribution of current and past asset assignments per personnel.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Analyze the distribution of current and past asset assignments per personnel.</p>
                 </div>
 
                 {/* Filters */}
                 <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm">
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        
                         {/* Export Report Type */}
-                        <div className="lg:col-span-4 md:col-span-3 sm:col-span-2 col-span-1">
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Export Report Type
-                            </label>
+                        <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Export Report Type</label>
                             <Select
                                 className="w-full cursor-pointer"
                                 isSearchable={false}
                                 value={
-                                exportType === 'summary'
-                                    ? { value: 'summary', label: 'Summary Report' }
-                                    : { value: 'detailed', label: 'Detailed Report' }
+                                    exportType === 'summary'
+                                        ? { value: 'summary', label: 'Summary Report' }
+                                        : { value: 'detailed', label: 'Detailed Report' }
                                 }
                                 options={[
                                     { value: 'summary', label: 'Summary Report' },
@@ -244,37 +215,23 @@ export default function PersonnelAssignmentsReport() {
 
                         {/* From Date */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Date Assigned (From)
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Date Assigned (From)</label>
                             <PickerInput
                                 type="date"
-                                value={filters.from ?? ""}
-                                onChange={(v) =>
-                                    updateFilter("from", v && v.trim() !== "" ? v : null)
-                                }
+                                value={filters.from ?? ''}
+                                onChange={(v) => updateFilter('from', v && v.trim() !== '' ? v : null)}
                             />
                         </div>
 
                         {/* To Date */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Date Assigned (To)
-                            </label>
-                            <PickerInput
-                                type="date"
-                                value={filters.to ?? ""}
-                                onChange={(v) =>
-                                updateFilter("to", v && v.trim() !== "" ? v : null)
-                                }
-                            />
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Date Assigned (To)</label>
+                            <PickerInput type="date" value={filters.to ?? ''} onChange={(v) => updateFilter('to', v && v.trim() !== '' ? v : null)} />
                         </div>
 
                         {/* Personnel In Charge */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Personnel In Charge
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Personnel In Charge</label>
                             <Select
                                 className="w-full"
                                 isClearable
@@ -282,52 +239,45 @@ export default function PersonnelAssignmentsReport() {
                                 value={
                                     filters.personnel_id
                                         ? {
-                                            value: filters.personnel_id,
-                                            label:
-                                                personnels.find((p) => p.id === filters.personnel_id)?.full_name || "",
-                                        }
+                                              value: filters.personnel_id,
+                                              label: personnels.find((p) => p.id === filters.personnel_id)?.full_name || '',
+                                          }
                                         : null
                                 }
                                 options={personnels.map((p) => ({
                                     value: p.id,
                                     label: p.full_name,
                                 }))}
-                                onChange={(opt) => updateFilter("personnel_id", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('personnel_id', opt?.value ?? null)}
                             />
                         </div>
 
                         {/* Department */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Unit / Department
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Unit / Department</label>
                             <Select
                                 className="w-full"
                                 isClearable
                                 placeholder="Select department"
                                 value={
-                                filters.department_id
-                                    ? {
-                                        value: filters.department_id,
-                                        label:
-                                        departments.find((d) => d.id === filters.department_id)
-                                            ?.name || "",
-                                    }
-                                    : null
+                                    filters.department_id
+                                        ? {
+                                              value: filters.department_id,
+                                              label: departments.find((d) => d.id === filters.department_id)?.name || '',
+                                          }
+                                        : null
                                 }
                                 options={departments.map((d) => ({
-                                value: d.id,
-                                label: d.name,
+                                    value: d.id,
+                                    label: d.name,
                                 }))}
-                                onChange={(opt) => updateFilter("department_id", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('department_id', opt?.value ?? null)}
                             />
                         </div>
 
                         {/* Personnel Status */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Personnel Status
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Personnel Status</label>
                             <Select
                                 className="w-full"
                                 isClearable
@@ -335,27 +285,23 @@ export default function PersonnelAssignmentsReport() {
                                 value={
                                     filters.status
                                         ? {
-                                            value: filters.status,
-                                            label: filters.status
-                                            .replace("_", " ")
-                                            .replace(/\b\w/g, (c) => c.toUpperCase()),
-                                        }
+                                              value: filters.status,
+                                              label: filters.status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+                                          }
                                         : null
-                                    }
-                                    options={[
-                                    { value: "active", label: "Active" },
-                                    { value: "inactive", label: "Inactive" },
-                                    { value: "left_university", label: "Left University" },
+                                }
+                                options={[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'inactive', label: 'Inactive' },
+                                    { value: 'left_university', label: 'Left University' },
                                 ]}
-                                onChange={(opt) => updateFilter("status", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('status', opt?.value ?? null)}
                             />
                         </div>
 
                         {/* Category */}
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Asset Category
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Asset Category</label>
                             <Select
                                 className="w-full"
                                 isClearable
@@ -363,33 +309,26 @@ export default function PersonnelAssignmentsReport() {
                                 value={
                                     filters.category_id
                                         ? {
-                                            value: filters.category_id,
-                                            label:
-                                            categories.find((c) => c.id === filters.category_id)?.name || "",
-                                        }
+                                              value: filters.category_id,
+                                              label: categories.find((c) => c.id === filters.category_id)?.name || '',
+                                          }
                                         : null
-                                    }
-                                    options={categories.map((c) => ({
+                                }
+                                options={categories.map((c) => ({
                                     value: c.id,
                                     label: c.name,
                                 }))}
-                                onChange={(opt) => updateFilter("category_id", opt?.value ?? null)}
+                                onChange={(opt) => updateFilter('category_id', opt?.value ?? null)}
                             />
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                Asset Status
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-gray-700">Asset Status</label>
                             <Select
                                 className="w-full"
                                 isClearable
                                 placeholder="Select asset status"
-                                value={
-                                    filters.asset_status
-                                        ? { value: filters.asset_status, label: formatEnums(filters.asset_status) }
-                                        : null
-                                }
+                                value={filters.asset_status ? { value: filters.asset_status, label: formatEnums(filters.asset_status) } : null}
                                 options={[
                                     { value: 'active', label: 'Active' },
                                     { value: 'archived', label: 'Archived' },
@@ -408,20 +347,25 @@ export default function PersonnelAssignmentsReport() {
                                 setFilters(defaultFilters);
                                 setAppliedFilters(defaultFilters);
                                 setPage(1);
-                                router.get(route('reports.personnel-assignments'), {}, {
-                                    preserveState: true,
-                                    preserveScroll: true,
-                                    replace: true,
-                                    onSuccess: (pageData) => {
-                                        const paginator = pageData.props.records as Paginator<PersonnelRow>;
-                                        setDisplayed(paginator.data);
-                                        setTotal(paginator.meta.total ?? 0);
-                                        setPageSize(paginator.meta.per_page ?? 10);
-                                        setChartData(pageData.props.chartData as ChartRow[]);
+                                router.get(
+                                    route('reports.personnel-assignments'),
+                                    {},
+                                    {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                        replace: true,
+                                        onSuccess: (pageData) => {
+                                            const paginator = pageData.props.records as Paginator<PersonnelRow>;
+                                            setDisplayed(paginator.data);
+                                            setTotal(paginator.meta.total ?? 0);
+                                            setPageSize(paginator.meta.per_page ?? 10);
+                                            setChartData(pageData.props.chartData as ChartRow[]);
+                                            notifyFiltersCleared();
+                                        },
                                     },
-                                });
+                                );
                             }}
-                            className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
+                            className="flex cursor-pointer items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <RotateCcw className="h-4 w-4" />
                             Clear Filters
@@ -433,7 +377,7 @@ export default function PersonnelAssignmentsReport() {
                                 setPage(1);
                                 setAppliedFilters(filters);
                                 router.get(
-                                    route("reports.personnel-assignments"),
+                                    route('reports.personnel-assignments'),
                                     { ...cleanFilters(filters), page: 1 },
                                     {
                                         preserveState: true,
@@ -445,11 +389,12 @@ export default function PersonnelAssignmentsReport() {
                                             setTotal(paginator.meta.total ?? 0);
                                             setPageSize(paginator.meta.per_page ?? 10);
                                             setChartData(pageData.props.chartData as ChartRow[]);
+                                            if (paginator.data.length === 0) notifyNoRecordsFound();
                                         },
-                                    }
+                                    },
                                 );
                             }}
-                            className="flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 cursor-pointer"
+                            className="flex cursor-pointer items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <Filter className="h-4 w-4" />
                             Apply Filters
@@ -459,28 +404,28 @@ export default function PersonnelAssignmentsReport() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <button
-                                    className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white cursor-pointer"
-                                    style={{ backgroundColor: "#155dfc" }}
+                                    className="flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
+                                    style={{ backgroundColor: '#155dfc' }}
                                 >
                                     <FileDown className="h-4 w-4" />
                                     Export Summary
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-44 p-2">
-                                <p className="px-2 pb-2 text-xs font-medium text-gray-600">
-                                    Download as
-                                </p>
+                                <p className="px-2 pb-2 text-xs font-medium text-gray-600">Download as</p>
                                 <div className="mb-2 border-t" />
-                                 <button
+                                <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const pdfRoute = exportType === "detailed"
-                                            ? route("reports.personnel-assignments.export.detailed.pdf")
-                                            : route("reports.personnel-assignments.export.pdf");
+                                        const pdfRoute =
+                                            exportType === 'detailed'
+                                                ? route('reports.personnel-assignments.export.detailed.pdf')
+                                                : route('reports.personnel-assignments.export.pdf');
 
-                                        window.open(`${pdfRoute}?${query}`, "_blank");
+                                        window.open(`${pdfRoute}?${query}`, '_blank');
+                                        notifyExportReady('PDF');
                                     }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
                                     PDF
@@ -489,20 +434,19 @@ export default function PersonnelAssignmentsReport() {
                                 <button
                                     onClick={() => {
                                         const query = buildQuery(filters);
-                                        const excelRoute = exportType === "detailed"
-                                            ? route("reports.personnel-assignments.export.detailed.excel")
-                                            : route("reports.personnel-assignments.export.excel");
+                                        const excelRoute =
+                                            exportType === 'detailed'
+                                                ? route('reports.personnel-assignments.export.detailed.excel')
+                                                : route('reports.personnel-assignments.export.excel');
 
-                                        window.open(`${excelRoute}?${query}`, "_blank");
+                                        window.open(`${excelRoute}?${query}`, '_blank');
+                                        notifyExportReady('Excel');
                                     }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel
                                 </button>
-
-                                
-                               
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -519,10 +463,10 @@ export default function PersonnelAssignmentsReport() {
                                         setViewMode('chart');
                                         if (filters.category_id) updateFilter('category_id', null);
                                     }}
-                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
+                                    className={`cursor-pointer border px-4 py-2 text-sm font-medium ${
                                         viewMode === 'chart'
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                            ? 'border-blue-600 bg-blue-600 text-white'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                     } rounded-l-md`}
                                 >
                                     Chart
@@ -531,20 +475,20 @@ export default function PersonnelAssignmentsReport() {
                                     onClick={() => {
                                         setViewMode('summary');
                                     }}
-                                    className={`border-t border-b px-4 py-2 text-sm font-medium cursor-pointer ${
-                                    viewMode === 'summary'
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    className={`cursor-pointer border-t border-b px-4 py-2 text-sm font-medium ${
+                                        viewMode === 'summary'
+                                            ? 'border-blue-600 bg-blue-600 text-white'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                     }`}
                                 >
                                     Summary
                                 </button>
                                 <button
                                     onClick={() => setViewMode('detailed')}
-                                    className={`border px-4 py-2 text-sm font-medium cursor-pointer ${
-                                    viewMode === 'detailed'
-                                        ? 'border-blue-600 bg-blue-600 text-white'
-                                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                    className={`cursor-pointer border px-4 py-2 text-sm font-medium ${
+                                        viewMode === 'detailed'
+                                            ? 'border-blue-600 bg-blue-600 text-white'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                     } rounded-r-md`}
                                 >
                                     Detailed
@@ -556,15 +500,9 @@ export default function PersonnelAssignmentsReport() {
                     <CardContent className="h-[400px] px-6">
                         {viewMode === 'chart' ? (
                             chartData && chartData.length > 0 ? (
-                                <ChartContainer
-                                    config={chartConfig}
-                                    className="w-full aspect-[4/3] max-h-[400px]"
-                                >
+                                <ChartContainer config={chartConfig} className="aspect-[4/3] max-h-[400px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart 
-                                            data={chartData}
-                                            barSize={100}
-                                        >
+                                        <BarChart data={chartData} barSize={100}>
                                             <CartesianGrid vertical={false} />
 
                                             <YAxis
@@ -572,8 +510,8 @@ export default function PersonnelAssignmentsReport() {
                                                 axisLine={false}
                                                 tick={{ fill: '#666', fontSize: 11 }}
                                                 width={30} // give it room so labels don’t overlap bars
-                                                domain={[0, 'auto']}       // start at 0
-                                                allowDecimals={false}      // no decimal tick values
+                                                domain={[0, 'auto']} // start at 0
+                                                allowDecimals={false} // no decimal tick values
                                                 tickFormatter={(v) => `${Math.round(v)}`} // extra safety: render as integers
                                             />
 
@@ -582,19 +520,14 @@ export default function PersonnelAssignmentsReport() {
                                                 tickLine={false}
                                                 axisLine={false}
                                                 tickMargin={8}
-                                                tickFormatter={(v) =>
-                                                    v.length > 12 ? v.slice(0, 12) + '…' : v
-                                                }
+                                                tickFormatter={(v) => (v.length > 12 ? v.slice(0, 12) + '…' : v)}
                                             />
-                                            <ChartTooltip
-                                                cursor={false}
-                                                content={<ChartTooltipContent indicator="dashed" />}
-                                            />
+                                            <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dashed" />} />
                                             <Bar dataKey="all_time" fill="var(--chart-5)" radius={4} />
                                             <Bar dataKey="past" fill="var(--chart-1)" radius={4} />
                                             <Bar dataKey="current" fill="var(--chart-2)" radius={4} />
                                             <Bar dataKey="missing" fill={chartConfig.missing.color} radius={4} />
-                                            
+
                                             <ChartLegend content={<ChartLegendContent />} />
                                         </BarChart>
                                     </ResponsiveContainer>

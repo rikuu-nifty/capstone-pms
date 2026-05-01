@@ -89,7 +89,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
     };
 
     return (
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 transition-[width,height] ease-linear md:px-4">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-background px-6 transition-[width,height] ease-linear md:px-4">
             {/* Left side */}
             <div className="flex items-center gap-3">
                 <SidebarTrigger className="-ml-1" />
@@ -103,8 +103,8 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                     {user && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="flex items-center gap-3 rounded-full px-3 hover:bg-gray-100">
-                                    <Avatar className="h-10 w-10 border border-gray-300">
+                                <Button variant="ghost" className="flex items-center gap-3 rounded-full px-3 hover:bg-accent">
+                                    <Avatar className="h-10 w-10 border border-border">
                                         <AvatarImage src={user.avatar} alt={user.name} />
                                         <AvatarFallback>
                                             {user.name
@@ -116,7 +116,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                     </Avatar>
 
                                     <div className="hidden max-w-[200px] flex-col items-start text-left sm:flex">
-                                        <p className="w-full truncate text-sm leading-none font-medium text-gray-900">{user.name}</p>
+                                        <p className="w-full truncate text-sm leading-none font-medium text-foreground">{user.name}</p>
                                         <p className="w-full truncate text-xs leading-tight text-muted-foreground">{user.email}</p>
                                     </div>
                                 </Button>
@@ -125,7 +125,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel className="font-normal">
                                     <div className="flex max-w-[200px] flex-col space-y-1 text-left">
-                                        <p className="w-full truncate text-sm leading-none font-medium text-gray-900">{user.name}</p>
+                                        <p className="w-full truncate text-sm leading-none font-medium text-foreground">{user.name}</p>
                                         <p className="w-full truncate text-xs leading-tight text-muted-foreground">{user.email}</p>
                                     </div>
                                 </DropdownMenuLabel>
@@ -136,7 +136,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                 <DropdownMenuItem asChild>
                                     <Link
                                         href={route().has('profile.edit') ? route('profile.edit') : '#'}
-                                        className="flex cursor-pointer items-center hover:bg-gray-100"
+                                        className="flex cursor-pointer items-center hover:bg-accent"
                                     >
                                         <User className="mr-2 h-4 w-4" />
                                         Profile
@@ -147,7 +147,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                 <DropdownMenuItem asChild>
                                     <Link
                                         href={route().has('password.edit') ? route('password.edit') : '#'}
-                                        className="flex cursor-pointer items-center hover:bg-gray-100"
+                                        className="flex cursor-pointer items-center hover:bg-accent"
                                     >
                                         <Settings className="mr-2 h-4 w-4" />
                                         Settings
@@ -162,7 +162,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                         href={route().has('logout') ? route('logout') : '#'}
                                         method="post"
                                         as="button"
-                                        className="flex w-full cursor-pointer items-center text-red-600 hover:bg-gray-100 hover:text-red-600"
+                                        className="flex w-full cursor-pointer items-center text-red-600 hover:bg-accent hover:text-red-600"
                                     >
                                         <LogOut className="mr-2 h-4 w-4 text-red-600" />
                                         <span className="text-red-600">Logout</span>
@@ -179,7 +179,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100"
+                                className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-border hover:bg-accent"
                             >
                                 <Bell className="h-5 w-5" />
                                 {notifications.unread_count > 0 && (
@@ -192,8 +192,8 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
 
                         <DropdownMenuContent className="max-h-96 w-96 overflow-y-auto rounded-xl shadow-lg" align="end">
                             {/* Header */}
-                            <div className="flex items-center justify-between rounded-t-xl border-b bg-gray-50 px-4 py-2">
-                                <span className="text-sm font-semibold text-gray-800">Notifications</span>
+                            <div className="flex items-center justify-between rounded-t-xl border-b bg-muted px-4 py-2">
+                                <span className="text-sm font-semibold text-foreground">Notifications</span>
                                 {notifications.unread_count > 0 && (
                                     <Link
                                         href={route('notifications.markAllRead')}
@@ -207,19 +207,19 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                             </div>
 
                             {!notifications?.items || notifications.items.length === 0 ? (
-                                <div className="p-6 text-center text-sm text-gray-500">No notifications</div>
+                                <div className="p-6 text-center text-sm text-muted-foreground">No notifications</div>
                             ) : (
-                                <div className="divide-y">
+                                <div className="divide-y divide-border">
                                     {notifications.items.map((n) => {
                                         const dueText = getDueDateText(n);
                                         const approvalNeeded = isApprovalNeeded(n);
 
                                         return (
                                             <DropdownMenuItem key={n.id} asChild>
-                                                <div className="group relative flex w-full items-start gap-3 px-4 py-3 transition hover:bg-gray-50">
+                                                <div className="group relative flex w-full items-start gap-3 px-4 py-3 transition hover:bg-accent">
                                                     {/* ✅ LEFT (retain your original label style) */}
                                                     <Link href={route('notifications.index')}>
-                                                        <Button variant="ghost" className="flex cursor-pointer items-center gap-2 hover:bg-blue-100">
+                                                        <Button variant="ghost" className="flex cursor-pointer items-center gap-2 hover:bg-accent">
                                                             <Bell className="h-4 w-4" />
                                                             Notifications
                                                         </Button>
@@ -236,7 +236,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                                             <div className="flex items-center gap-2">
                                                                 <p
                                                                     className={`truncate text-sm font-medium ${
-                                                                        n.read_at === null ? 'text-gray-900' : 'text-gray-600'
+                                                                        n.read_at === null ? 'text-foreground' : 'text-muted-foreground'
                                                                     }`}
                                                                 >
                                                                     {approvalNeeded ? 'Approval Needed' : 'Maintenance Needed'}
@@ -244,16 +244,16 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                                                             </div>
                                                             {/* Show message only for approval */}
                                                             {approvalNeeded && n.data?.message && (
-                                                                <p className="mt-1 line-clamp-2 text-xs text-gray-500">{n.data.message}</p>
+                                                                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{n.data.message}</p>
                                                             )}
 
                                                             {/* For maintenance, show asset name instead of raw message */}
                                                             {!approvalNeeded && n.data?.asset_name && (
-                                                                <p className="mt-1 text-xs text-gray-500">Asset: {n.data.asset_name}</p>
+                                                                <p className="mt-1 text-xs text-muted-foreground">Asset: {n.data.asset_name}</p>
                                                             )}
 
                                                             {/* show due date only if valid */}
-                                                            {dueText && <p className="mt-1 text-xs text-gray-400">Due Date: {dueText}</p>}
+                                                            {dueText && <p className="mt-1 text-xs text-muted-foreground/80">Due Date: {dueText}</p>}
                                                         </Link>
                                                     </div>
 
@@ -274,7 +274,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                             )}
 
                             {/* Footer link */}
-                            <div className="border-t bg-white px-4 py-2">
+                            <div className="border-t bg-background px-4 py-2">
                                 <Link href={route('notifications.index')} className="text-xs font-medium text-blue-600 hover:underline">
                                     View all notifications
                                 </Link>

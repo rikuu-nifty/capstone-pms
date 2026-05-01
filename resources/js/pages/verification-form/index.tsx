@@ -1,5 +1,6 @@
 import SortDropdown, { SortDir } from '@/components/filters/SortDropdown';
 import Pagination, { PageInfo } from '@/components/Pagination';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -277,35 +278,27 @@ export default function VerificationFormIndex() {
                 {/* KPI Cards */}
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <div className="flex items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                                <CalendarCheck className="h-7 w-7 text-blue-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Verified This Month</div>
-                                <div className="text-3xl font-bold">{totals.verified_this_month}</div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                                <ClipboardCheck className="h-7 w-7 text-green-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Verified</div>
-                                <div className="text-3xl font-bold">{totals.total_verified}</div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 rounded-2xl border p-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
-                                <Clock4 className="h-7 w-7 text-yellow-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Pending Verification</div>
-                                <div className="text-3xl font-bold">{totals.pending_verification}</div>
-                            </div>
-                        </div>
+                        <MetricKpiCard
+                            icon={CalendarCheck}
+                            label="Verified This Month"
+                            value={totals.verified_this_month}
+                            detail="Completed verifications this month"
+                            tone="blue"
+                        />
+                        <MetricKpiCard
+                            icon={ClipboardCheck}
+                            label="Total Verified"
+                            value={totals.total_verified}
+                            detail="All completed verification forms"
+                            tone="green"
+                        />
+                        <MetricKpiCard
+                            icon={Clock4}
+                            label="Pending Verification"
+                            value={totals.pending_verification}
+                            detail="Forms still awaiting verification"
+                            tone="yellow"
+                        />
                     </div>
                 )}
 
@@ -350,10 +343,10 @@ export default function VerificationFormIndex() {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto rounded-lg border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 <TableHead className="w-[120px] text-center">VF No.</TableHead>
                                 <TableHead className="w-[180px] text-center">Unit / Department</TableHead>
                                 <TableHead className="w-[200px] text-center">Requester</TableHead>

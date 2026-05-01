@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AppLayout from '@/layouts/app-layout';
+import { notifyExportReady, notifyFiltersCleared, notifyNoRecordsFound } from '@/lib/toast-feedback';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { FileDown, FileSpreadsheet, FileText, Filter, RotateCcw } from 'lucide-react';
@@ -29,8 +30,8 @@ export type Asset = {
     asset_type: string;
     status: string;
     date_purchased: string;
-    unit_cost: number | null; 
-    memorandum_no: string | null; 
+    unit_cost: number | null;
+    memorandum_no: string | null;
 };
 
 type InventoryListPageProps = {
@@ -159,9 +160,7 @@ export default function InventoryListReport() {
                         <Select
                             className="w-full"
                             options={reportTypes}
-                            value={
-                                filters.report_type ? reportTypes.find((r) => r.value === filters.report_type) : null 
-                            }
+                            value={filters.report_type ? reportTypes.find((r) => r.value === filters.report_type) : null}
                             onChange={(opt) => updateFilter('report_type', opt?.value ?? null)} // no default
                             placeholder="Select report type..." // show placeholder when null
                         />
@@ -276,7 +275,11 @@ export default function InventoryListReport() {
                             <label className="mb-1 block text-sm font-medium text-black">Asset Status</label>
                             <Select
                                 className="w-full"
-                                value={filters.status ? { value: filters.status, label: filters.status.charAt(0).toUpperCase() + filters.status.slice(1) } : null}
+                                value={
+                                    filters.status
+                                        ? { value: filters.status, label: filters.status.charAt(0).toUpperCase() + filters.status.slice(1) }
+                                        : null
+                                }
                                 options={[
                                     { value: 'active', label: 'Active' },
                                     { value: 'archived', label: 'Archived' },
@@ -303,10 +306,11 @@ export default function InventoryListReport() {
                                     onSuccess: (page) => {
                                         // reset table to all assets
                                         setDisplayedAssets(page.props.assets as Asset[]);
+                                        notifyFiltersCleared();
                                     },
                                 });
                             }}
-                            className="cursor-pointer flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            className="flex cursor-pointer items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <RotateCcw className="h-4 w-4" />
                             Clear Filters
@@ -321,11 +325,13 @@ export default function InventoryListReport() {
                                     preserveScroll: true, // keep current scroll position
                                     onSuccess: (page) => {
                                         // update displayedAssets only when request completes
-                                        setDisplayedAssets(page.props.assets as Asset[]);
+                                        const nextAssets = page.props.assets as Asset[];
+                                        setDisplayedAssets(nextAssets);
+                                        if (nextAssets.length === 0) notifyNoRecordsFound();
                                     },
                                 });
                             }}
-                            className="cursor-pointer flex items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            className="flex cursor-pointer items-center gap-2 rounded-md border bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
                             <Filter className="h-4 w-4" />
                             Apply Filters
@@ -335,7 +341,7 @@ export default function InventoryListReport() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <button
-                                    className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white cursor-pointer"
+                                    className="flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white"
                                     style={{ backgroundColor: '#155dfc' }}
                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0d47d9')}
                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#155dfc')}
@@ -352,8 +358,9 @@ export default function InventoryListReport() {
                                     onClick={() => {
                                         const url = route('reports.inventory-list.export.pdf', appliedFilters);
                                         window.open(url, '_blank'); // open in new tab
+                                        notifyExportReady('PDF');
                                     }}
-                                    className="cursor-pointer flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileText className="h-4 w-4 text-red-600" />
                                     PDF
@@ -364,8 +371,9 @@ export default function InventoryListReport() {
                                     onClick={() => {
                                         const url = route('reports.inventory-list.export.excel', appliedFilters);
                                         window.open(url, '_blank'); // open in new tab instead of forcing download
+                                        notifyExportReady('Excel');
                                     }}
-                                    className="cursor-pointer flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
+                                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100"
                                 >
                                     <FileSpreadsheet className="h-4 w-4 text-green-600" />
                                     Excel

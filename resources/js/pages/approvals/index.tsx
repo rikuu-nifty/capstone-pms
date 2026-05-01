@@ -211,27 +211,21 @@ export default function ApprovalsIndex() {
 
                 {/* Search */}
                 <div className="mb-3 w-80">
-                    <Input
-                        placeholder="Search for the form title or requester..."
-                        value={search}
-                        onChange={(e) => onSearch(e.target.value)}
-                    />
+                    <Input placeholder="Search for the form title or requester..." value={search} onChange={(e) => onSearch(e.target.value)} />
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto rounded-lg border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted">
+                            <TableRow>
                                 <TableHead className="text-center">Form Title</TableHead>
                                 <TableHead className="text-center">Date Created</TableHead>
                                 <TableHead className="text-center">Date Updated</TableHead>
                                 <TableHead className="text-center">Requested By</TableHead>
                                 <TableHead className="text-center">Approval Status</TableHead>
                                 {props.tab !== 'approved' && (
-                                    <TableHead className="text-center">
-                                        {props.tab === 'rejected' ? 'Reason' : 'Requires Approval From'}
-                                    </TableHead>
+                                    <TableHead className="text-center">{props.tab === 'rejected' ? 'Reason' : 'Requires Approval From'}</TableHead>
                                 )}
                                 <TableHead className="text-center">Actions</TableHead>
                             </TableRow>
@@ -383,10 +377,7 @@ export default function ApprovalsIndex() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell
-                                        colSpan={props.tab === 'approved' ? 6 : 7}
-                                        className="text-sm text-muted-foreground"
-                                    >
+                                    <TableCell colSpan={props.tab === 'approved' ? 6 : 7} className="text-sm text-muted-foreground">
                                         No items found.
                                     </TableCell>
                                 </TableRow>
@@ -505,7 +496,8 @@ export default function ApprovalsIndex() {
                 message={
                     <>
                         Are you sure you want to delete this form approval record?
-                        <br /><br />
+                        <br />
+                        <br />
                         This will move it to the Trash Bin and can be restored later.
                     </>
                 }

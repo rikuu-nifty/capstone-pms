@@ -1,21 +1,22 @@
 import { PickerInput } from '@/components/picker-input';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
 import { DeleteScheduleModal } from '@/pages/inventory-scheduling/delete-inventory-scheduling';
 import { EditInventorySchedulingModal } from '@/pages/inventory-scheduling/edit-inventory-scheduling';
 import { ViewScheduleModal } from '@/pages/inventory-scheduling/view-inventory-scheduling';
 import { type BreadcrumbItem } from '@/types';
+import { formatNumber } from '@/types/custom-index';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { type VariantProps } from 'class-variance-authority';
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Ban, CalendarClock, Clock, Eye, Pencil, PlusCircle, Timer, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Select from 'react-select';
 import { Asset } from '../inventory-list';
-import { Clock, CalendarClock, Ban, Timer } from 'lucide-react';
-import { formatNumber } from '@/types/custom-index';
 
 import { formatDate, type Building, type SubArea } from '@/types/custom-index';
 import { validateScheduleForm } from '@/types/validateScheduleForm';
@@ -209,14 +210,13 @@ export default function InventorySchedulingIndex({
     const { from } = usePage().props as { from?: string };
 
     const handleExit = () => {
-  if (from === 'notifications') {
-    router.get(route('notifications.index'), {}, { preserveScroll: true });
-  } else {
-    router.get(route('inventory-scheduling.index'), {}, { preserveScroll: true });
-  }
-};
+        if (from === 'notifications') {
+            router.get(route('notifications.index'), {}, { preserveScroll: true });
+        } else {
+            router.get(route('inventory-scheduling.index'), {}, { preserveScroll: true });
+        }
+    };
 
-    
     const { signatories, totals } = props; // extract signatories
     const currentUser = props.auth.user;
 
@@ -280,7 +280,7 @@ export default function InventorySchedulingIndex({
     useEffect(() => {
         setPage(1);
     }, [search]);
-    
+
     useEffect(() => {
         if (!props.viewing) return;
         setSelectedSchedule(props.viewing);
@@ -298,6 +298,7 @@ export default function InventorySchedulingIndex({
         setSelectedInventoryMonth('');
         setSelectedActualDate('');
         setSelectedDesignatedEmployee('');
+        notifyFiltersCleared();
     };
 
     const closeView = () => {
@@ -439,12 +440,11 @@ export default function InventorySchedulingIndex({
     // );
 
     const filtered = schedules.filter((item) => {
-
         const formattedMonth = item.inventory_schedule
             ? new Date(`${item.inventory_schedule}-01T00:00:00`).toLocaleString('en-US', {
-                month: 'long',
-                year: 'numeric',
-            })
+                  month: 'long',
+                  year: 'numeric',
+              })
             : '';
 
         const haystack = `
@@ -460,11 +460,12 @@ export default function InventorySchedulingIndex({
 
         const matchesSearch = !search || haystack.includes(search.toLowerCase());
         const matchesStatus = !selected_status || item.scheduling_status === selected_status;
-        
-        const matchesMonth = !selected_inventory_month || item.inventory_schedule?.startsWith(selected_inventory_month); // YYYY-MM
-        const matchesActualDate = !selected_actual_date || item.actual_date_of_inventory === selected_actual_date;// YYYY-MM-DD
 
-        const matchesDesignatedEmployee = !selectedDesignatedEmployee || (item.designated_employee?.name?.toLowerCase().includes(selectedDesignatedEmployee.toLowerCase()));
+        const matchesMonth = !selected_inventory_month || item.inventory_schedule?.startsWith(selected_inventory_month); // YYYY-MM
+        const matchesActualDate = !selected_actual_date || item.actual_date_of_inventory === selected_actual_date; // YYYY-MM-DD
+
+        const matchesDesignatedEmployee =
+            !selectedDesignatedEmployee || item.designated_employee?.name?.toLowerCase().includes(selectedDesignatedEmployee.toLowerCase());
 
         return matchesSearch && matchesStatus && matchesMonth && matchesActualDate && matchesDesignatedEmployee;
     });
@@ -476,7 +477,7 @@ export default function InventorySchedulingIndex({
         Overdue: 'Overdue',
         Cancelled: 'Cancelled',
     };
-    
+
     const start = (page - 1) * PAGE_SIZE;
     const page_items = filtered.slice(start, start + PAGE_SIZE);
 
@@ -487,78 +488,57 @@ export default function InventorySchedulingIndex({
             <div className="flex flex-col gap-4 p-4">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold">Inventory Scheduling</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Manage and monitor scheduled inventory checks by room and department.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Manage and monitor scheduled inventory checks by room and department.</p>
                 </div>
 
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-                        {/* On-Time Completion */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                                <Clock className="h-7 w-7 text-green-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">On-Time Completion (This Month)</div>
-                                <div className="text-3xl font-bold">{totals.on_time_completion_rate}%</div>
-                            </div>
-                        </div>
-
-                        {/* Overdue Last Month */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                                <CalendarClock className="h-7 w-7 text-red-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Last Month's Overdue</div>
-                                <div className="text-3xl font-bold">{formatNumber(totals.overdue_last_month)}</div>
-                            </div>
-                        </div>
-
-                        {/* Pending Next 30 Days */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
-                                <Clock className="h-7 w-7 text-sky-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Pending (Next 30 Days)</div>
-                                <div className="text-3xl font-bold">{formatNumber(totals.pending_next_30_days)}</div>
-                            </div>
-                        </div>
-
-                        {/* Cancellation Rate */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-                                <Ban className="h-7 w-7 text-orange-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Cancellation Rate</div>
-                                <div className="text-3xl font-bold">{totals.cancellation_rate}%</div>
-                            </div>
-                        </div>
-
-                        {/* Average Delay */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
-                                <Timer className="h-7 w-7 text-purple-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Avg Delay (Days)</div>
-                                <div className="text-3xl font-bold">{totals.avg_delay_days} days</div>
-                            </div>
-                        </div>
+                        <MetricKpiCard
+                            icon={Clock}
+                            label="On-Time Completion (This Month)"
+                            value={`${totals.on_time_completion_rate}%`}
+                            detail="Schedules completed on time"
+                            tone="green"
+                        />
+                        <MetricKpiCard
+                            icon={CalendarClock}
+                            label="Last Month's Overdue"
+                            value={formatNumber(totals.overdue_last_month)}
+                            detail="Overdue schedules last month"
+                            tone="red"
+                        />
+                        <MetricKpiCard
+                            icon={Clock}
+                            label="Pending (Next 30 Days)"
+                            value={formatNumber(totals.pending_next_30_days)}
+                            detail="Upcoming pending schedules"
+                            tone="sky"
+                        />
+                        <MetricKpiCard
+                            icon={Ban}
+                            label="Cancellation Rate"
+                            value={`${totals.cancellation_rate}%`}
+                            detail="Cancelled schedule ratio"
+                            tone="orange"
+                        />
+                        <MetricKpiCard
+                            icon={Timer}
+                            label="Avg Delay (Days)"
+                            value={`${totals.avg_delay_days} days`}
+                            detail="Average schedule delay"
+                            tone="purple"
+                        />
                     </div>
                 )}
 
-                <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-2 w-96">
+                <div className="mt-2 flex items-center justify-between">
+                    <div className="flex w-96 items-center gap-2">
                         <Input
-                        type="text"
-                        placeholder="Search by building, department, or status..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="max-w-xs"
+                            type="text"
+                            placeholder="Search by building, department, or status..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="max-w-xs"
                         />
                     </div>
 
@@ -581,10 +561,10 @@ export default function InventorySchedulingIndex({
                     </div>
                 </div>
 
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table className="w-full table-auto">
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Inventory Schedule</TableHead>
                                 <TableHead className="text-center">Actual Date of Inventory</TableHead>
@@ -597,96 +577,76 @@ export default function InventorySchedulingIndex({
 
                         <TableBody>
                             {/* {filtered.map((item) => ( */}
-                             {page_items.length > 0 ? (
+                            {page_items.length > 0 ? (
                                 page_items.map((item) => (
-                                <TableRow key={item.id} className="text-center">
-                                    <TableCell>{item.id}</TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        {formatMonth(item.inventory_schedule) || '—'}
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        {item.actual_date_of_inventory
-                                            ? formatDate(item.actual_date_of_inventory)
-                                            : '—'}
-                                    </TableCell>
-                                    <TableCell>{item.checked_by || '—'}</TableCell>
-                                    <TableCell>{item.verified_by || '—'}</TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}
-                                        >
-                                            {item.scheduling_status.replace('_', ' ')}
-                                        </Badge>
-                                    </TableCell>
+                                    <TableRow key={item.id} className="text-center">
+                                        <TableCell>{item.id}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{formatMonth(item.inventory_schedule) || '—'}</TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            {item.actual_date_of_inventory ? formatDate(item.actual_date_of_inventory) : '—'}
+                                        </TableCell>
+                                        <TableCell>{item.checked_by || '—'}</TableCell>
+                                        <TableCell>{item.verified_by || '—'}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
+                                                {item.scheduling_status.replace('_', ' ')}
+                                            </Badge>
+                                        </TableCell>
 
-                                    {/* Actions */}
-                                    <TableCell>
-                                        <div className="flex items-center justify-center gap-2">
-                                            {canEdit && (
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                        setSelectedSchedule(item);
-                                                        setEditModalVisible(true);
-                                                    }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
+                                        {/* Actions */}
+                                        <TableCell>
+                                            <div className="flex items-center justify-center gap-2">
+                                                {canEdit && (
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setSelectedSchedule(item);
+                                                            setEditModalVisible(true);
+                                                        }}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+
+                                                {canDelete && (
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setSelectedSchedule(item);
+                                                            setDeleteModalVisible(true);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
+
+                                                <Button size="icon" variant="ghost" asChild>
+                                                    <Link href={route('inventory-scheduling.view', item.id)} preserveScroll>
+                                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                                    </Link>
                                                 </Button>
-                                            )}
-
-                                            {canDelete && (
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                        setSelectedSchedule(item);
-                                                        setDeleteModalVisible(true);
-                                                    }}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            )}
-
-                                            <Button size="icon" variant="ghost" asChild>
-                                                <Link
-                                                    href={route('inventory-scheduling.view', item.id)}
-                                                    preserveScroll
-                                                >
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                </Link>
-                                            </Button>
-                                        </div>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                                        No schedules found.
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                                    No schedules found.
-                                </TableCell>
-                            </TableRow>
-                        )}
+                            )}
                         </TableBody>
                     </Table>
                 </div>
 
-                <div className="flex items-center justify-between mt-3">
-                    <PageInfo
-                        page={page}
-                        total={filtered.length}
-                        pageSize={PAGE_SIZE}
-                        label="Inventory Schedule records"
-                    />
-                    <Pagination
-                        page={page}
-                        total={filtered.length}
-                        pageSize={PAGE_SIZE}
-                        onPageChange={setPage}
-                    />
+                <div className="mt-3 flex items-center justify-between">
+                    <PageInfo page={page} total={filtered.length} pageSize={PAGE_SIZE} label="Inventory Schedule records" />
+                    <Pagination page={page} total={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
                 </div>
             </div>
-            
 
             {editModalVisible && selectedSchedule && (
                 <EditInventorySchedulingModal
@@ -702,8 +662,8 @@ export default function InventorySchedulingIndex({
                     // statusOptions={['Completed', 'Pending', 'Overdue', 'Cancelled', 'Pending_Review']}
                     statusOptions={
                         selectedSchedule.scheduling_status === 'Pending_Review'
-                        ? ['Pending_Review'] // only show this if it hasn’t been approved
-                        : ['Pending', 'Overdue', 'Completed', 'Cancelled'] // no Pending_Review allowed
+                            ? ['Pending_Review'] // only show this if it hasn’t been approved
+                            : ['Pending', 'Overdue', 'Completed', 'Cancelled'] // no Pending_Review allowed
                     }
                     assets={assets}
                 />
@@ -731,20 +691,19 @@ export default function InventorySchedulingIndex({
                 />
             )}
 
-        {viewModalVisible && selectedSchedule && (
-  <ViewScheduleModal
-    schedule={selectedSchedule}
-    assets={assets ?? []}
-    signatories={signatories}
-    onClose={() => {
-      closeView(); // closes the modal
-      setTimeout(() => {
-        handleExit(); // decides where to go (notifications OR inventory scheduling)
-      }, 200);
-    }}
-  />
-)}
-
+            {viewModalVisible && selectedSchedule && (
+                <ViewScheduleModal
+                    schedule={selectedSchedule}
+                    assets={assets ?? []}
+                    signatories={signatories}
+                    onClose={() => {
+                        closeView(); // closes the modal
+                        setTimeout(() => {
+                            handleExit(); // decides where to go (notifications OR inventory scheduling)
+                        }, 200);
+                    }}
+                />
+            )}
 
             {/* Side Panel Modal with Slide Effect (Schedule Inventory) */}
             <div className={`fixed inset-0 z-50 flex transition-all duration-300 ease-in-out ${showAddScheduleInventory ? 'visible' : 'invisible'}`}>
@@ -1331,8 +1290,12 @@ export default function InventorySchedulingIndex({
                                         onChange={(e) => setData('scheduling_status', e.target.value)}
                                     >
                                         <option value="Pending_Review">Pending Review</option>
-                                        <option value="Pending" disabled>Pending</option>
-                                        <option value="Overdue" disabled>Overdue</option>
+                                        <option value="Pending" disabled>
+                                            Pending
+                                        </option>
+                                        <option value="Overdue" disabled>
+                                            Overdue
+                                        </option>
                                         <option value="Completed" disabled>
                                             Completed
                                         </option>
@@ -1341,7 +1304,7 @@ export default function InventorySchedulingIndex({
                                         </option>
                                     </select>
                                 </div>
-                                
+
                                 <div>
                                     <label className="mb-1 block font-medium">Designated Staff</label>
                                     <Select

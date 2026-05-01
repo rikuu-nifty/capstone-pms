@@ -1,9 +1,11 @@
 import { PickerInput } from '@/components/picker-input';
 import { Button } from '@/components/ui/button';
+import { notifyUploadStarted } from '@/lib/toast-feedback';
 import type { Personnel, SubArea, UnitOrDepartment } from '@/types/custom-index';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Select from 'react-select';
+import { toast } from 'sonner';
 import type { AssetModel, Building, BuildingRoom, Category } from './index';
 import { WebcamCapture } from './WebcamCapture';
 
@@ -126,11 +128,20 @@ export function AddBulkAssetModalForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const uploadToast = notifyUploadStarted();
+
         post('/inventory-list', {
+            onError: () => {
+                toast.dismiss(uploadToast);
+            },
             onSuccess: () => {
+                toast.dismiss(uploadToast);
                 reset();
                 clearErrors();
                 onClose();
+            },
+            onFinish: () => {
+                toast.dismiss(uploadToast);
             },
         });
     };

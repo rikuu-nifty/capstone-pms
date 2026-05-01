@@ -1,13 +1,15 @@
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
 import { type BreadcrumbItem } from '@/types';
 import type { Paginator } from '@/types/paginatorOffCampus';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { type VariantProps } from 'class-variance-authority';
-import { Eye, Pencil, PlusCircle, Trash2, ClipboardList, Repeat, AlertTriangle, Wrench } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Eye, Pencil, PlusCircle, Repeat, Trash2, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
@@ -52,12 +54,12 @@ export type OffCampus = {
     checked_by?: string | null;
 
     // ✅ Add these virtual (appended) attributes
-  issued_by_name?: string | null;
-  issued_by_title?: string | null;
-  approved_by_name?: string | null;
-  approved_by_title?: string | null;
-  issued_by_signed?: boolean;   // 👈 add this line
-  
+    issued_by_name?: string | null;
+    issued_by_title?: string | null;
+    approved_by_name?: string | null;
+    approved_by_title?: string | null;
+    issued_by_signed?: boolean; // 👈 add this line
+
     assets?: OffCampusAsset[];
     asset_model?: { id: number; brand: string; model: string } | null;
     college_or_unit?: { id: number; name: string; code: string } | null;
@@ -252,29 +254,29 @@ export default function OffCampusIndex({
             // free text search
             let matchesSearch = true;
             if (q) {
-            const assetStrings = (row.assets ?? [])
-                .map((a) =>
-                [a.asset?.asset_name, a.asset?.description, a.asset?.serial_no, a.asset?.asset_model?.brand, a.asset?.asset_model?.model]
+                const assetStrings = (row.assets ?? [])
+                    .map((a) =>
+                        [a.asset?.asset_name, a.asset?.description, a.asset?.serial_no, a.asset?.asset_model?.brand, a.asset?.asset_model?.model]
+                            .filter(Boolean)
+                            .join(' '),
+                    )
+                    .join(' ');
+
+                const fields = [
+                    row.requester_name,
+                    row.college_or_unit?.name,
+                    row.college_or_unit?.code,
+                    row.asset_model?.brand,
+                    row.asset_model?.model,
+                    row.remarks,
+                    row.purpose,
+                    assetStrings,
+                ]
                     .filter(Boolean)
-                    .join(' '),
-                )
-                .join(' ');
+                    .join(' ')
+                    .toLowerCase();
 
-            const fields = [
-                row.requester_name,
-                row.college_or_unit?.name,
-                row.college_or_unit?.code,
-                row.asset_model?.brand,
-                row.asset_model?.model,
-                row.remarks,
-                row.purpose,
-                assetStrings,
-            ]
-                .filter(Boolean)
-                .join(' ')
-                .toLowerCase();
-
-            matchesSearch = fields.includes(q);
+                matchesSearch = fields.includes(q);
             }
 
             // filters
@@ -285,7 +287,7 @@ export default function OffCampusIndex({
 
             return matchesSearch && matchesStatus && matchesCollege && matchesIssued && matchesReturn;
         });
-        }, [search, rows, selected_status, selected_college_unit, selected_date_issued, selected_return_date]);
+    }, [search, rows, selected_status, selected_college_unit, selected_date_issued, selected_return_date]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -295,78 +297,47 @@ export default function OffCampusIndex({
                 {/* Header */}
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold">Off-Campus</h1>
-                    <p className="text-sm text-muted-foreground">
-                    Forms authorizing items to be brought out of AUF premises.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Forms authorizing items to be brought out of AUF premises.</p>
                 </div>
 
                 {/* KPI Cards */}
                 {totals && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {/* Pending Review (This Month) */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-                            <ClipboardList className="h-7 w-7 text-orange-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Pending Review (This Month)</div>
-                            <div className="text-3xl font-bold">{totals.pending_review_this_month}</div>
-                        </div>
-                        </div>
-
-                        {/* Pending vs Returned */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                            <Repeat className="h-7 w-7 text-blue-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Pending vs Returned</div>
-                            <div className="text-lg font-semibold">
-                            <span className="text-blue-600">{totals.pending_return_percentage}% Pending</span>
-                            <span className="text-muted-foreground"> / </span>
-                            <span className="text-green-600">{totals.returned_percentage}% Returned</span>
-                            </div>
-                        </div>
-                        </div>
-
-                        {/* Missing */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100">
-                            <AlertTriangle className="h-7 w-7 text-red-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Missing</div>
-                            <div className="text-3xl font-bold text-red-600">{totals.missing_count}</div>
-                        </div>
-                        </div>
-
-                        {/* Official Use vs Repair */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100">
-                            <Wrench className="h-7 w-7 text-indigo-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm text-muted-foreground">Official Use vs Repair</div>
-                            <div className="text-lg font-semibold">
-                            <span className="text-blue-600">{totals.official_use_percentage}% Official</span>
-                            <span className="text-muted-foreground"> / </span>
-                            <span className="text-orange-600">{totals.repair_percentage}% Repair</span>
-                            </div>
-                        </div>
-                        </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <MetricKpiCard
+                            icon={ClipboardList}
+                            label="Pending Review (This Month)"
+                            value={totals.pending_review_this_month}
+                            detail="Off-campus requests awaiting review"
+                            tone="orange"
+                        />
+                        <MetricKpiCard
+                            icon={Repeat}
+                            label="Pending vs Returned"
+                            value={`${totals.pending_return_percentage}% / ${totals.returned_percentage}%`}
+                            detail="Return status distribution"
+                            tone="blue"
+                        />
+                        <MetricKpiCard icon={AlertTriangle} label="Missing" value={totals.missing_count} detail="Assets marked missing" tone="red" />
+                        <MetricKpiCard
+                            icon={Wrench}
+                            label="Official Use vs Repair"
+                            value={`${totals.official_use_percentage}% / ${totals.repair_percentage}%`}
+                            detail="Purpose distribution"
+                            tone="indigo"
+                        />
                     </div>
                 )}
 
                 {/* Search + Buttons Row */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 w-full sm:w-96">
-                    <Input
-                        type="text"
-                        placeholder="Search requester name, quantity and college/unit…"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="max-w-xs"
-                    />
+                    <div className="flex w-full items-center gap-2 sm:w-96">
+                        <Input
+                            type="text"
+                            placeholder="Search requester name, quantity and college/unit…"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="max-w-xs"
+                        />
                     </div>
 
                     <div className="flex gap-2">
@@ -382,6 +353,7 @@ export default function OffCampusIndex({
                                 setSelectedCollegeUnit('');
                                 setSelectedDateIssued('');
                                 setSelectedReturnDate('');
+                                notifyFiltersCleared();
                             }}
                             selected_status={selected_status}
                             selected_college_unit={selected_college_unit}
@@ -403,10 +375,10 @@ export default function OffCampusIndex({
                 </div>
 
                 {/* Table */}
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">College/Unit</TableHead>
                                 <TableHead className="text-center">Requester Name</TableHead>
@@ -493,19 +465,14 @@ export default function OffCampusIndex({
                         </TableBody>
                     </Table>
                 </div>
-                <div className="flex items-center justify-between mt-3">
-                    <PageInfo
-                        page={offCampuses.current_page}
-                        total={offCampuses.total}
-                        pageSize={offCampuses.per_page}
-                        label="Off-Campus records"
-                    />
+                <div className="mt-3 flex items-center justify-between">
+                    <PageInfo page={offCampuses.current_page} total={offCampuses.total} pageSize={offCampuses.per_page} label="Off-Campus records" />
                     <Pagination
                         page={offCampuses.current_page}
                         total={offCampuses.total}
                         pageSize={offCampuses.per_page}
                         onPageChange={(newPage) => {
-                        router.get(route('off-campus.index'), { page: newPage }, { preserveScroll: true });
+                            router.get(route('off-campus.index'), { page: newPage }, { preserveScroll: true });
                         }}
                     />
                 </div>
@@ -549,10 +516,10 @@ export default function OffCampusIndex({
                 )} */}
 
                 {showViewOffCampus && selectedOffCampus && (
-                    <OffCampusViewModal 
-                        open={showViewOffCampus} 
-                        onClose={onCloseView} 
-                        offCampus={selectedOffCampus}  
+                    <OffCampusViewModal
+                        open={showViewOffCampus}
+                        onClose={onCloseView}
+                        offCampus={selectedOffCampus}
                         signatories={props.signatories}
                         pmoHead={props.pmoHead}
                     />

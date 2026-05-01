@@ -1,32 +1,33 @@
-import { Button } from '@/components/ui/button';
+import MetricKpiCard from '@/components/statistics/MetricKpiCard';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useEffect, useMemo, useState } from 'react';
-import { Head, Link, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 
 import SortDropdown, { type SortDir } from '@/components/filters/SortDropdown';
-import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
-import type { BreadcrumbItem } from '@/types';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import { notifyFiltersCleared } from '@/lib/toast-feedback';
+import type { BreadcrumbItem } from '@/types';
+import { Eye, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 
 import type { CategoriesPageProps, CategoryWithModels } from '@/types/category';
-import { formatStatusLabel, formatNumber } from '@/types/custom-index';
+import { formatNumber, formatStatusLabel } from '@/types/custom-index';
 // import KPIStatCard from '@/components/statistics/KPIStatCard';
-import { Boxes, Tags, ListChecks } from 'lucide-react';
+import { Boxes, ListChecks, Tags } from 'lucide-react';
 
-
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import Pagination, { PageInfo } from '@/components/Pagination';
 import AddCategoryModal from './AddCategory';
 import EditCategoryModal from './EditCategory';
 import ViewCategoryModal from './ViewCategory';
-import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
-import Pagination, { PageInfo } from '@/components/Pagination';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { 
-        title: 'Categories', 
-        href: '/categories' 
+    {
+        title: 'Categories',
+        href: '/categories',
     },
 ];
 
@@ -41,24 +42,20 @@ const categorySortOptions = [
 type CategorySortKey = (typeof categorySortOptions)[number]['value'];
 
 export type AssetModelRow = {
-  id: number;
-  brand: string | null;
-  model: string | null;
-  status: string | null;          // or narrow if you have an enum/union
-  category_id: number;
-  category_name: string | null;
-  assets_count: number;
+    id: number;
+    brand: string | null;
+    model: string | null;
+    status: string | null; // or narrow if you have an enum/union
+    category_id: number;
+    category_name: string | null;
+    assets_count: number;
 };
 
 type PageProps = CategoriesPageProps & {
     viewing?: CategoryWithModels;
 };
 
-export default function CategoriesIndex({ 
-    categories = [], 
-    totals,
-}: CategoriesPageProps) {
-
+export default function CategoriesIndex({ categories = [], totals }: CategoriesPageProps) {
     const { props } = usePage<PageProps>();
     const viewing = props.viewing;
 
@@ -101,9 +98,7 @@ export default function CategoriesIndex({
     useEffect(() => {
         if (!viewing) return;
         openViewCategory(viewing);
-    }, [
-        viewing
-    ]);
+    }, [viewing]);
 
     const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
     const [categoryToDelete, setCategoryToDelete] = useState<CategoryWithModels | null>(null);
@@ -115,6 +110,7 @@ export default function CategoriesIndex({
 
     const clearFilters = () => {
         setSelected_status('');
+        notifyFiltersCleared();
     };
 
     // const applyFilters = (f: CategoryFilters) => {
@@ -128,17 +124,11 @@ export default function CategoriesIndex({
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 5;
 
-    useEffect(() => { 
-        setPage(1); 
-    }, [
-        search,
-        selected_status,
-        sortKey,
-        sortDir,
-    ]);
+    useEffect(() => {
+        setPage(1);
+    }, [search, selected_status, sortKey, sortDir]);
 
     const filtered = useMemo(() => {
-
         return categories.filter((c) => {
             const haystack = `${c.id} ${c.name ?? ''} ${c.description ?? ''}`.toLowerCase();
             const matchesSearch = !search || haystack.includes(search);
@@ -146,41 +136,35 @@ export default function CategoriesIndex({
             const models = c.asset_models ?? [];
 
             // Status filter: category passes if ANY model has that status
-            const matchesStatus =
-                !selected_status ||
-                models.some((m) => m.status === selected_status);
+            const matchesStatus = !selected_status || models.some((m) => m.status === selected_status);
 
             return matchesSearch && matchesStatus;
         });
-    }, [
-        categories,
-        search,
-        selected_status,
-    ]);
+    }, [categories, search, selected_status]);
 
-  // Sorting helpers
+    // Sorting helpers
     const numberKey = (c: CategoryWithModels, k: CategorySortKey) =>
-        k === 'id' ? Number(c.id) || 0
-        : k === 'models_count' ? Number(c.models_count) || 0
-        : k === 'assets_count' ? Number(c.assets_count) || 0
-        : k === 'brands_count' ? Number(c.brands_count) || 0
-        : 0;
+        k === 'id'
+            ? Number(c.id) || 0
+            : k === 'models_count'
+              ? Number(c.models_count) || 0
+              : k === 'assets_count'
+                ? Number(c.assets_count) || 0
+                : k === 'brands_count'
+                  ? Number(c.brands_count) || 0
+                  : 0;
 
     const sorted = useMemo(() => {
         const dir = sortDir === 'asc' ? 1 : -1;
         return [...filtered].sort((a, b) => {
             if (sortKey === 'name') {
                 const d = (a.name ?? '').localeCompare(b.name ?? '');
-                return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
+                return (d !== 0 ? d : Number(a.id) - Number(b.id)) * dir;
             }
             const d = numberKey(a, sortKey) - numberKey(b, sortKey);
-            return (d !== 0 ? d : (Number(a.id) - Number(b.id))) * dir;
+            return (d !== 0 ? d : Number(a.id) - Number(b.id)) * dir;
         });
-    }, [
-        filtered, 
-        sortKey, 
-        sortDir
-    ]);
+    }, [filtered, sortKey, sortDir]);
 
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
@@ -192,7 +176,6 @@ export default function CategoriesIndex({
             <Head title="Categories" />
 
             <div className="flex flex-col gap-4 p-4">
-                
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold">Categories</h1>
                     <p className="text-sm text-muted-foreground">List of asset categories.</p>
@@ -200,63 +183,40 @@ export default function CategoriesIndex({
 
                 {totals && (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        {/* Total Categories */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-                                <Tags className="h-7 w-7 text-orange-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Categories</div>
-                                <div className="text-3xl font-bold">
-                                    {formatNumber(totalCats)}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Total Models */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100">
-                                <ListChecks className="h-7 w-7 text-sky-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Models</div>
-                                <div className="text-3xl font-bold">
-                                    {formatNumber(totalModels)}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Total Assets */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-100">
-                                <Boxes className="h-7 w-7 text-teal-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Total Assets</div>
-                                <div className="text-3xl font-bold">
-                                    {formatNumber(totalAssets)}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Models per Category */}
-                        <div className="rounded-2xl border p-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
-                                <Boxes className="h-7 w-7 text-purple-600" />
-                            </div>
-                            <div>
-                                <div className="text-sm text-muted-foreground">Models per Category</div>
-                                <div className="text-3xl font-bold">
-                                    {avgModelsPerCat.toFixed(1)}
-                                </div>
-                            </div>
-                        </div>
+                        <MetricKpiCard
+                            icon={Tags}
+                            label="Total Categories"
+                            value={formatNumber(totalCats)}
+                            detail="Asset category records"
+                            tone="orange"
+                        />
+                        <MetricKpiCard
+                            icon={ListChecks}
+                            label="Total Models"
+                            value={formatNumber(totalModels)}
+                            detail="Models linked to categories"
+                            tone="sky"
+                        />
+                        <MetricKpiCard
+                            icon={Boxes}
+                            label="Total Assets"
+                            value={formatNumber(totalAssets)}
+                            detail="Assets across categories"
+                            tone="teal"
+                        />
+                        <MetricKpiCard
+                            icon={Boxes}
+                            label="Models per Category"
+                            value={avgModelsPerCat.toFixed(1)}
+                            detail="Average model coverage"
+                            tone="purple"
+                        />
                     </div>
                 )}
 
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2 w-96">
+                        <div className="flex w-96 items-center gap-2">
                             <Input
                                 type="text"
                                 placeholder="Search by id, name or description..."
@@ -267,17 +227,10 @@ export default function CategoriesIndex({
                         </div>
 
                         <div className="flex flex-wrap gap-2 pt-1">
+                            {selected_status && <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>}
                             {selected_status && (
-                                <Badge variant="darkOutline">Status: {formatStatusLabel(selected_status)}</Badge>
-                            )}
-                            {(selected_status) && (
-                                <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={clearFilters}
-                                className="cursor-pointer"
-                                >
-                                Clear filters
+                                <Button size="sm" variant="destructive" onClick={clearFilters} className="cursor-pointer">
+                                    Clear filters
                                 </Button>
                             )}
                         </div>
@@ -288,12 +241,17 @@ export default function CategoriesIndex({
                             sortKey={sortKey}
                             sortDir={sortDir}
                             options={categorySortOptions}
-                            onChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
+                            onChange={(key, dir) => {
+                                setSortKey(key);
+                                setSortDir(dir);
+                            }}
                         />
-                        
+
                         {canCreate && (
                             <Button
-                                onClick={() => { setShowAddCategory(true); }}
+                                onClick={() => {
+                                    setShowAddCategory(true);
+                                }}
                                 className="cursor-pointer"
                             >
                                 <PlusCircle className="mr-1 h-4 w-4" /> Add New Category
@@ -302,10 +260,10 @@ export default function CategoriesIndex({
                     </div>
                 </div>
 
-                <div className="rounded-lg-lg overflow-x-auto border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted text-foreground">
+                            <TableRow>
                                 <TableHead className="text-center">ID</TableHead>
                                 <TableHead className="text-center">Name</TableHead>
                                 <TableHead className="text-center">Description</TableHead>
@@ -317,76 +275,68 @@ export default function CategoriesIndex({
                         </TableHeader>
 
                         <TableBody className="text-center">
-                            {page_items.length > 0 ? page_items.map((cat) => (
-                                <TableRow
-                                    key={cat.id}
-                                    onClick={() => 
-                                        setSelectedCategoryId(Number(cat.id))
-                                        // setSelectedCategoryId((prev) => (prev === Number(cat.id) ? null : Number(cat.id)))
-                                    }
-                                    className={`cursor-pointer ${selectedCategoryId === Number(cat.id) ? 'bg-muted/50' : ''}`}
-                                >
-                                    <TableCell>{cat.id}</TableCell>
-                                    <TableCell className="font-medium">{cat.name}</TableCell>
-                                    <TableCell 
-                                        className={`max-w-[250px] whitespace-normal break-words ${
-                                            cat.description && cat.description !== '-' 
-                                            ? 'text-justify' 
-                                            : 'text-center'
-                                        }`}
+                            {page_items.length > 0 ? (
+                                page_items.map((cat) => (
+                                    <TableRow
+                                        key={cat.id}
+                                        onClick={
+                                            () => setSelectedCategoryId(Number(cat.id))
+                                            // setSelectedCategoryId((prev) => (prev === Number(cat.id) ? null : Number(cat.id)))
+                                        }
+                                        className={`cursor-pointer ${selectedCategoryId === Number(cat.id) ? 'bg-muted/50' : ''}`}
                                     >
-                                        {cat.description ?? '—'}
-                                    </TableCell>
-                                    <TableCell>{cat.brands_count}</TableCell>
-                                    <TableCell>{cat.models_count}</TableCell>
-                                    <TableCell>{cat.assets_count}</TableCell>
-                                    <TableCell className="h-full">
-                                        <div className="flex justify-center items-center gap-2 h-full">
-                                            {canEdit && (
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="cursor-pointer"
-                                                    onClick={() => {
-                                                        setSelectedCategory(cat);
-                                                        setShowEditCategory(true);
-                                                    }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                                        <TableCell>{cat.id}</TableCell>
+                                        <TableCell className="font-medium">{cat.name}</TableCell>
+                                        <TableCell
+                                            className={`max-w-[250px] break-words whitespace-normal ${
+                                                cat.description && cat.description !== '-' ? 'text-justify' : 'text-center'
+                                            }`}
+                                        >
+                                            {cat.description ?? '—'}
+                                        </TableCell>
+                                        <TableCell>{cat.brands_count}</TableCell>
+                                        <TableCell>{cat.models_count}</TableCell>
+                                        <TableCell>{cat.assets_count}</TableCell>
+                                        <TableCell className="h-full">
+                                            <div className="flex h-full items-center justify-center gap-2">
+                                                {canEdit && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="cursor-pointer"
+                                                        onClick={() => {
+                                                            setSelectedCategory(cat);
+                                                            setShowEditCategory(true);
+                                                        }}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
 
-                                            {canDelete && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => {
-                                                        setCategoryToDelete(cat);
-                                                        setShowDeleteCategoryModal(true);
-                                                    }}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            )}
+                                                {canDelete && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setCategoryToDelete(cat);
+                                                            setShowDeleteCategoryModal(true);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                )}
 
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                asChild
-                                                className="cursor-pointer"
-                                            >
-                                                <Link
-                                                    href={`/categories/view/${cat.id}`}
-                                                    preserveScroll
-                                                >
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )) : (
+                                                <Button variant="ghost" size="icon" asChild className="cursor-pointer">
+                                                    <Link href={`/categories/view/${cat.id}`} preserveScroll>
+                                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                                         No categories found.
@@ -396,24 +346,14 @@ export default function CategoriesIndex({
                         </TableBody>
                     </Table>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                     <PageInfo page={page} total={sorted.length} pageSize={PAGE_SIZE} label="categories" />
-                    <Pagination
-                        page={page}
-                        total={sorted.length}
-                        pageSize={PAGE_SIZE}
-                        onPageChange={setPage}
-                    />
+                    <Pagination page={page} total={sorted.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
                 </div>
             </div>
 
-            <AddCategoryModal 
-                show={showAddCategory} 
-                onClose={() => 
-                    setShowAddCategory(false)
-                } 
-            />
+            <AddCategoryModal show={showAddCategory} onClose={() => setShowAddCategory(false)} />
 
             {selectedCategory && (
                 <EditCategoryModal
@@ -426,19 +366,11 @@ export default function CategoriesIndex({
                 />
             )}
 
-            {selectedCategory && (
-                <ViewCategoryModal
-                    open={showViewCategory}
-                    onClose={closeViewCategory}
-                    category={selectedCategory}
-                />
-            )}
+            {selectedCategory && <ViewCategoryModal open={showViewCategory} onClose={closeViewCategory} category={selectedCategory} />}
 
             <DeleteConfirmationModal
                 show={showDeleteCategoryModal}
-                onCancel={() => 
-                    setShowDeleteCategoryModal(false)
-                }
+                onCancel={() => setShowDeleteCategoryModal(false)}
                 onConfirm={() => {
                     if (categoryToDelete) {
                         router.delete(`/categories/${categoryToDelete.id}`, {

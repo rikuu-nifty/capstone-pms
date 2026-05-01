@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { TransferPageProps, FilterModalProps } from '@/types/page-props';
+import { FilterModalProps } from '@/types/page-props';
 import { Button } from '@/components/ui/button';
 
 const statusOptions = ['upcoming', 'in_progress', 'overdue', 'completed'] as const;

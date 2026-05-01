@@ -22,7 +22,6 @@ type PageProps = {
 };
 
 export default function SignatoriesIndex() {
-
     const { auth } = usePage().props as unknown as {
         auth: {
             permissions: string[];
@@ -45,7 +44,7 @@ export default function SignatoriesIndex() {
         approved_by: 'Approved by',
         received_by: 'Received by',
         noted_by: 'Noted by',
-        issued_by: 'Issued by'
+        issued_by: 'Issued by',
     };
 
     const { signatories, moduleType } = usePage<PageProps>().props;
@@ -95,10 +94,10 @@ export default function SignatoriesIndex() {
                 </div>
 
                 {/* Table Content*/}
-                <div className="overflow-x-auto rounded-lg border">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted">
+                            <TableRow>
                                 <TableHead className="text-center">Role Key</TableHead>
                                 <TableHead className="text-center">Name</TableHead>
                                 <TableHead className="text-center">Title</TableHead>
@@ -114,25 +113,25 @@ export default function SignatoriesIndex() {
                                         <TableCell>{s.title}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center justify-center gap-2">
-                                                    <Button 
-                                                        size="icon"
-                                                        className="cursor-pointer disabled:bg-gray-600 disabled:text-gray-300 disabled:opacity-100 " 
-                                                        variant="outline" 
-                                                        onClick={() => setEditSignatory(s)}
-                                                        disabled={!canEdit}
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
+                                                <Button
+                                                    size="icon"
+                                                    className="cursor-pointer disabled:bg-gray-600 disabled:text-gray-300 disabled:opacity-100"
+                                                    variant="outline"
+                                                    onClick={() => setEditSignatory(s)}
+                                                    disabled={!canEdit}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
 
-                                                    <Button 
-                                                        size="icon"
-                                                        className="cursor-pointer disabled:bg-gray-600 disabled:text-gray-300 disabled:opacity-100 " 
-                                                        variant="destructive" 
-                                                        onClick={() => setDeleteSignatory(s)}
-                                                        disabled={!canDelete}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                <Button
+                                                    size="icon"
+                                                    className="cursor-pointer disabled:bg-gray-600 disabled:text-gray-300 disabled:opacity-100"
+                                                    variant="destructive"
+                                                    onClick={() => setDeleteSignatory(s)}
+                                                    disabled={!canDelete}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
