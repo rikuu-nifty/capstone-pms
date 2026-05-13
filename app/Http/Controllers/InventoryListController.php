@@ -604,6 +604,23 @@ class InventoryListController extends Controller
         return back()->with('success', 'Asset archived successfully.');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct', 'exists:inventory_lists,id'],
+        ]);
+
+        $assets = InventoryList::whereIn('id', $data['ids'])->get();
+
+        foreach ($assets as $asset) {
+            $asset->forceFill(['deleted_by_id' => $request->user()->id ?? null])->save();
+            $asset->delete();
+        }
+
+        return back()->with('success', $assets->count() . ' assets archived successfully.');
+    }
+
     public function restore(int $id)
     {
         // view-all-inventory-listInclude trashed to find archived asset

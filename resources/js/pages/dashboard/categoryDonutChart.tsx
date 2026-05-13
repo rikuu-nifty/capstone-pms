@@ -9,6 +9,8 @@ type Props = {
 };
 
 const BASE_COLORS = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#65a30d', '#c2410c', '#be185d', '#475569'];
+const MAX_VISIBLE_CATEGORIES = 5;
+const OTHER_COLOR = '#64748b';
 
 function generateColor(index: number, total: number): string {
     if (index < BASE_COLORS.length) {
@@ -21,11 +23,27 @@ function generateColor(index: number, total: number): string {
 
 export default function CategoryDonutChart({ categories, assetTrend }: Props) {
     const totalAssets = categories.reduce((sum, category) => sum + category.count, 0);
-    const chartData = categories.map((category, index) => ({
+    const sortedCategories = [...categories].sort((a, b) => b.count - a.count);
+    const visibleCategories = sortedCategories.slice(0, MAX_VISIBLE_CATEGORIES);
+    const hiddenCategories = sortedCategories.slice(MAX_VISIBLE_CATEGORIES);
+    const hiddenAssets = hiddenCategories.reduce((sum, category) => sum + category.count, 0);
+    const chartCategories =
+        hiddenCategories.length > 0
+            ? [
+                  ...visibleCategories,
+                  {
+                      name: 'Others',
+                      count: hiddenAssets,
+                  },
+              ]
+            : visibleCategories;
+
+    const chartData = chartCategories.map((category, index) => ({
         category: category.name,
         assets: category.count,
         percentage: totalAssets > 0 ? (category.count / totalAssets) * 100 : 0,
-        fill: generateColor(index, categories.length),
+        fill: category.name === 'Others' ? OTHER_COLOR : generateColor(index, chartCategories.length),
+        hiddenCategoryCount: category.name === 'Others' ? hiddenCategories.length : 0,
     }));
     const isPositive = assetTrend >= 0;
 
@@ -42,6 +60,12 @@ export default function CategoryDonutChart({ categories, assetTrend }: Props) {
                 <p className="text-muted-foreground">
                     {data.assets.toLocaleString()} assets ({data.percentage.toFixed(1)}%)
                 </p>
+                {data.hiddenCategoryCount > 0 && (
+                    <p className="mt-1 text-muted-foreground">
+                        Combined from {data.hiddenCategoryCount.toLocaleString()} smaller categor
+                        {data.hiddenCategoryCount === 1 ? 'y' : 'ies'}.
+                    </p>
+                )}
             </div>
         );
     };
@@ -77,7 +101,7 @@ export default function CategoryDonutChart({ categories, assetTrend }: Props) {
                         </ChartContainer>
 
                         <div className="mt-2 grid w-full gap-2 sm:grid-cols-2">
-                            {chartData.slice(0, 6).map((item) => (
+                            {chartData.map((item) => (
                                 <div key={item.category} className="flex min-w-0 items-center justify-between gap-2 text-sm">
                                     <span className="flex min-w-0 items-center gap-2">
                                         <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: item.fill }} />

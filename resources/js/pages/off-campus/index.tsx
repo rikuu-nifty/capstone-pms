@@ -376,43 +376,73 @@ export default function OffCampusIndex({
 
                 {/* Table */}
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="text-center">ID</TableHead>
-                                <TableHead className="text-center">College/Unit</TableHead>
-                                <TableHead className="text-center">Requester Name</TableHead>
-                                <TableHead className="text-center">Date Issued</TableHead>
-                                <TableHead className="text-center">Return Date</TableHead>
-                                <TableHead className="text-center">Qty</TableHead>
-                                <TableHead className="text-center">Unit</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">Actions</TableHead>
+                    <Table className="min-w-[1080px]" containerClassName="rounded-none border-0 shadow-none">
+                        <TableHeader className="sticky top-0 z-10">
+                            <TableRow className="border-b border-neutral-200 bg-neutral-100 text-sm tracking-wide text-neutral-800 uppercase hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-900">
+                                <TableHead className="w-[72px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">ID</TableHead>
+                                <TableHead className="min-w-[220px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    College/Unit
+                                </TableHead>
+                                <TableHead className="min-w-[180px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Requester Name
+                                </TableHead>
+                                <TableHead className="min-w-[150px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Date Issued
+                                </TableHead>
+                                <TableHead className="min-w-[150px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
+                                    Return Date
+                                </TableHead>
+                                <TableHead className="w-[90px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">Qty</TableHead>
+                                <TableHead className="w-[100px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">Unit</TableHead>
+                                <TableHead className="w-[150px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Status
+                                </TableHead>
+                                <TableHead className="w-[132px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
                             {filtered.length > 0 ? (
                                 filtered.map((row) => (
-                                    <TableRow className="text-center" key={row.id}>
-                                        <TableCell>{row.id || '—'}</TableCell>
-                                        <TableCell>
-                                            {row.college_or_unit ? `${row.college_or_unit.name} (${row.college_or_unit.code})` : '—'}
+                                    <TableRow
+                                        className="group border-b border-slate-100 bg-white transition-colors last:border-0 hover:bg-blue-50/40 dark:bg-slate-950 dark:hover:bg-blue-950/20"
+                                        key={row.id}
+                                    >
+                                        <TableCell className="px-4 py-4 text-left align-middle font-mono text-xs text-muted-foreground">
+                                            #{row.id || '—'}
                                         </TableCell>
-                                        <TableCell>{row.requester_name || '—'}</TableCell>
-                                        <TableCell>{formatDate(row.date_issued)}</TableCell>
-                                        <TableCell>{formatDate(row.return_date)}</TableCell>
-                                        <TableCell>{row.quantity}</TableCell>
-                                        <TableCell>{row.units}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle">
+                                            <div className="flex min-w-0 flex-col gap-1">
+                                                <span className="max-w-[240px] truncate font-semibold text-foreground">
+                                                    {row.college_or_unit?.name ?? '—'}
+                                                </span>
+                                                <span className="max-w-[240px] truncate text-xs tracking-wide text-muted-foreground">
+                                                    {row.college_or_unit?.code ? String(row.college_or_unit.code).toUpperCase() : 'No unit code'}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle font-medium">{row.requester_name || '—'}</TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle text-sm text-foreground">
+                                            {formatDate(row.date_issued)}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-left align-middle text-sm text-foreground">
+                                            {formatDate(row.return_date)}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle font-medium">{row.quantity}</TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">{row.units}</TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
                                             <Badge variant={offCampusStatusMap[row.status] ?? 'default'}>{formatStatusLabel(row.status)}</Badge>
                                         </TableCell>
 
-                                        <TableCell className="flex justify-center gap-2">
+                                        <TableCell className="px-4 py-4 text-center align-middle">
+                                            <div className="flex items-center justify-center gap-1.5">
                                             {canEdit && (
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
+                                                    className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                                                     onClick={() => {
                                                         setSelectedOffCampus(row);
                                                         setEditModalVisible(true);
@@ -426,7 +456,7 @@ export default function OffCampusIndex({
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    className="cursor-pointer"
+                                                    className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-red-200 hover:bg-red-50"
                                                     onClick={() => {
                                                         setOffCampusToDelete({ id: row.id });
                                                         setShowDeleteModal(true);
@@ -447,25 +477,40 @@ export default function OffCampusIndex({
                                             >
                                                 <Eye className="h-4 w-4 text-muted-foreground" />
                                             </Button> */}
-                                            <Button size="icon" variant="ghost" asChild className="cursor-pointer">
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                asChild
+                                                className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm"
+                                            >
                                                 <Link href={route('off-campus.view', row.id)} preserveScroll>
                                                     <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Link>
                                             </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
-                                        No Off Campus Records Found.
+                                    <TableCell colSpan={9} className="h-48 text-center">
+                                        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-muted-foreground">
+                                            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
+                                                <ClipboardList className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-foreground">No off-campus records found</p>
+                                                <p className="text-sm">Try adjusting your search or filter settings.</p>
+                                            </div>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
+
+                <div className="flex items-center justify-between">
                     <PageInfo page={offCampuses.current_page} total={offCampuses.total} pageSize={offCampuses.per_page} label="Off-Campus records" />
                     <Pagination
                         page={offCampuses.current_page}

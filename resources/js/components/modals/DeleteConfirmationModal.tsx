@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { XCircle } from 'lucide-react';
+import * as React from 'react';
 
 interface DeleteConfirmationModalProps {
     show: boolean;
@@ -17,6 +18,8 @@ const DeleteConfirmationModal = ({
     title = 'Confirm Deletion',
     message = 'Are you sure you want to delete this transfer?',
 }: DeleteConfirmationModalProps) => {
+    const hasStructuredMessage = React.isValidElement(message);
+
     return (
         <Dialog open={show} onOpenChange={(open) => !open && onCancel()}>
             <DialogContent className="w-full max-w-md space-y-4 p-6 text-center">
@@ -30,10 +33,16 @@ const DeleteConfirmationModal = ({
                     <DialogTitle className="text-2xl font-semibold">
                         {title}
                     </DialogTitle>
-                    <DialogDescription className="text-center text-base leading-snug text-muted-foreground">
-                        {message}
-                        <br />
-                    </DialogDescription>
+                    {hasStructuredMessage ? (
+                        <DialogDescription asChild>
+                            <div className="text-center text-base leading-snug text-muted-foreground">{message}</div>
+                        </DialogDescription>
+                    ) : (
+                        <DialogDescription className="text-center text-base leading-snug text-muted-foreground">
+                            {message}
+                            <br />
+                        </DialogDescription>
+                    )}
                 </DialogHeader>
 
                 {/* Footer */}

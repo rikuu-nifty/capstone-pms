@@ -292,6 +292,32 @@
     }
 }
 
+@layer components {
+    table:not([data-slot='table']) {
+        @apply w-full caption-bottom text-sm;
+    }
+
+    table:not([data-slot='table']) thead tr {
+        @apply border-b border-neutral-200 bg-neutral-100 text-sm tracking-wide text-neutral-800 uppercase hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-900;
+    }
+
+    table:not([data-slot='table']) th {
+        @apply h-10 px-4 py-3 text-left align-middle text-sm font-bold tracking-wide whitespace-nowrap text-neutral-800 uppercase dark:text-neutral-100;
+    }
+
+    table:not([data-slot='table']) tbody tr {
+        @apply border-b border-slate-100 bg-white transition-colors hover:bg-blue-50/40 dark:border-neutral-800 dark:bg-slate-950 dark:hover:bg-blue-950/20;
+    }
+
+    table:not([data-slot='table']) tbody tr:last-child {
+        @apply border-0;
+    }
+
+    table:not([data-slot='table']) td {
+        @apply px-4 py-4 align-middle whitespace-nowrap;
+    }
+}
+
 @layer utilities {
     .dark .bg-white:not([class*='dark:bg-']),
     .dark .bg-gray-50:not([class*='dark:bg-']),

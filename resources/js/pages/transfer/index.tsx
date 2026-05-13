@@ -296,48 +296,78 @@ export default function TransferIndex({
                 </div>
 
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="text-center">ID</TableHead>
-                                <TableHead className="text-center">Asset Count</TableHead>
-                                <TableHead className="text-center">Current Location</TableHead>
-                                <TableHead className="text-center">Current Unit/Dept</TableHead>
-                                <TableHead className="text-center">Receiving Location</TableHead>
-                                <TableHead className="text-center">Receiving Unit/Dept</TableHead>
-                                <TableHead className="text-center">Scheduled Date</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">Designated</TableHead>
-                                <TableHead className="text-center">Actions</TableHead>
+                    <Table className="min-w-[1180px]" containerClassName="rounded-none border-0 shadow-none">
+                        <TableHeader className="sticky top-0 z-10">
+                            <TableRow className="border-b border-neutral-200 bg-neutral-100 text-sm tracking-wide text-neutral-800 uppercase hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-900">
+                                <TableHead className="w-[72px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">ID</TableHead>
+                                <TableHead className="w-[120px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Asset Count
+                                </TableHead>
+                                <TableHead className="min-w-[170px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Current Location
+                                </TableHead>
+                                <TableHead className="min-w-[170px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Current Unit/Dept
+                                </TableHead>
+                                <TableHead className="min-w-[180px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Receiving Location
+                                </TableHead>
+                                <TableHead className="min-w-[180px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Receiving Unit/Dept
+                                </TableHead>
+                                <TableHead className="min-w-[160px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Scheduled Date
+                                </TableHead>
+                                <TableHead className="w-[140px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Status
+                                </TableHead>
+                                <TableHead className="min-w-[180px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Designated
+                                </TableHead>
+                                <TableHead className="w-[132px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody className="text-center">
+                        <TableBody>
                             {page_items.length > 0 ? (
                                 page_items.map((transfer) => (
-                                    <TableRow key={transfer.id}>
-                                        <TableCell>{transfer.id}</TableCell>
-                                        <TableCell>{transfer.asset_count}</TableCell>
-                                        <TableCell>
+                                    <TableRow
+                                        key={transfer.id}
+                                        className="group border-b border-slate-100 bg-white transition-colors last:border-0 hover:bg-blue-50/40 dark:bg-slate-950 dark:hover:bg-blue-950/20"
+                                    >
+                                        <TableCell className="px-4 py-4 text-left align-middle font-mono text-xs text-muted-foreground">
+                                            #{transfer.id}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle font-medium">{transfer.asset_count}</TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
                                             {formatEnums(transfer.currentBuildingRoom?.building?.code).toUpperCase() ?? '—'} (
                                             {transfer.currentBuildingRoom?.room ?? '—'})
                                         </TableCell>
-                                        <TableCell>{formatEnums(transfer.currentOrganization?.code).toUpperCase() ?? '—'}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle font-semibold tracking-wide text-slate-700 dark:text-slate-200">
+                                            {formatEnums(transfer.currentOrganization?.code).toUpperCase() ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
                                             {formatEnums(transfer.receivingBuildingRoom?.building?.code).toUpperCase() ?? '—'} (
                                             {transfer.receivingBuildingRoom?.room ?? '—'})
                                         </TableCell>
-                                        <TableCell>{formatEnums(transfer.receivingOrganization?.code).toUpperCase() ?? '—'}</TableCell>
-                                        <TableCell>{formatDate(transfer.scheduled_date)}</TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle font-semibold tracking-wide text-slate-700 dark:text-slate-200">
+                                            {formatEnums(transfer.receivingOrganization?.code).toUpperCase() ?? '—'}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle text-sm text-foreground">
+                                            {formatDate(transfer.scheduled_date)}
+                                        </TableCell>
 
-                                        <TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
                                             <Badge variant={statusVariantMap[transfer.status.toLowerCase()] ?? 'secondary'}>
                                                 {formatStatusLabel(transfer.status.toLowerCase())}
                                             </Badge>
                                         </TableCell>
 
-                                        <TableCell>{transfer.designatedEmployee?.name ?? '—'}</TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">{transfer.designatedEmployee?.name ?? '—'}</TableCell>
 
-                                        <TableCell className="flex items-center justify-center gap-2">
+                                        <TableCell className="px-4 py-4 text-center align-middle">
+                                            <div className="flex items-center justify-center gap-1.5">
                                             {canEdit && (
                                                 <Button
                                                     variant="ghost"
@@ -346,7 +376,7 @@ export default function TransferIndex({
                                                         setSelectedTransfer(transfer);
                                                         setShowEditTransfer(true);
                                                     }}
-                                                    className="cursor-pointer"
+                                                    className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -360,31 +390,46 @@ export default function TransferIndex({
                                                         setTransferToDelete(transfer);
                                                         setShowDeleteModal(true);
                                                     }}
-                                                    className="cursor-pointer"
+                                                    className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-red-200 hover:bg-red-50"
                                                 >
                                                     <Trash2 className="h-4 w-4 text-destructive" />
                                                 </Button>
                                             )}
 
-                                            <Button variant="ghost" size="icon" asChild className="cursor-pointer">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                asChild
+                                                className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm"
+                                            >
                                                 <Link href={`/transfers/${transfer.id}/view`} preserveScroll>
                                                     <Eye className="h-4 w-4 text-muted-foreground" />
                                                 </Link>
                                             </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={10} className="text-center text-sm text-muted-foreground">
-                                        No transfers found.
+                                    <TableCell colSpan={10} className="h-48 text-center">
+                                        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-muted-foreground">
+                                            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
+                                                <Inbox className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-foreground">No transfers found</p>
+                                                <p className="text-sm">Try adjusting your search, sort, or filter settings.</p>
+                                            </div>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
+
+                <div className="flex items-center justify-between">
                     <PageInfo page={page} total={sortedTransfers.length} pageSize={page_size} label="Transfer records" />
                     <Pagination page={page} total={sortedTransfers.length} pageSize={page_size} onPageChange={setPage} />
                 </div>

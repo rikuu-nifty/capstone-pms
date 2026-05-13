@@ -11,7 +11,7 @@ import type { BreadcrumbItem } from '@/types';
 import { formatDateTime, formatEnums, ucwords } from '@/types/custom-index';
 import { PageProps, type RequestPayload } from '@inertiajs/core';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Archive, Building, Calendar, Database, Globe, Inbox, Truck, Users } from 'lucide-react';
+import { Archive, Building, Calendar, CheckSquare, Database, Globe, Inbox, Trash2, Truck, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
@@ -698,7 +698,57 @@ export default function TrashBinIndex(props: TrashBinProps) {
     const [sortDir, setSortDir] = useState<SortDir>(props.filters.dir ?? 'desc');
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [showBulkRestoreModal, setShowBulkRestoreModal] = useState(false);
     const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedTrashIds, setSelectedTrashIds] = useState<number[]>([]);
+    const visibleTrashIds = activeData?.data?.map((row: TrashRecord) => row.id) ?? [];
+    const allVisibleSelected = visibleTrashIds.length > 0 && visibleTrashIds.every((id) => selectedTrashIds.includes(id));
+    const selectedTrashRows = selectedTrashIds
+        .map((id) => activeData?.data?.find((row: TrashRecord) => row.id === id))
+        .filter((row): row is TrashRecord => Boolean(row));
+    const kpiGridClass =
+        activeGroup === 'forms'
+            ? 'lg:grid-cols-6'
+            : activeGroup === 'usermgmt' && activeTab !== 'form_approvals' && activeTab !== 'signatories'
+              ? 'lg:grid-cols-2'
+              : 'lg:grid-cols-4';
+
+    useEffect(() => {
+        setSelectionMode(false);
+        setSelectedTrashIds([]);
+    }, [activeTab]);
+
+    useEffect(() => {
+        const visibleIdSet = new Set(visibleTrashIds);
+        setSelectedTrashIds((current) => current.filter((id) => visibleIdSet.has(id)));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeData]);
+
+    const toggleSelectionMode = () => {
+        setSelectionMode((current) => {
+            if (current) {
+                setSelectedTrashIds([]);
+            }
+
+            return !current;
+        });
+    };
+
+    const toggleTrashSelection = (id: number) => {
+        setSelectedTrashIds((current) => (current.includes(id) ? current.filter((selectedId) => selectedId !== id) : [...current, id]));
+    };
+
+    const toggleVisibleSelection = () => {
+        setSelectedTrashIds((current) => {
+            if (allVisibleSelected) {
+                return current.filter((id) => !visibleTrashIds.includes(id));
+            }
+
+            return Array.from(new Set([...current, ...visibleTrashIds]));
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -734,7 +784,7 @@ export default function TrashBinIndex(props: TrashBinProps) {
 
                 {/* KPIs Section */}
                 {totals && (
-                    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${activeGroup === 'forms' ? 'lg:grid-cols-6' : 'lg:grid-cols-4'} `}>
+                    <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${kpiGridClass}`}>
                         {activeGroup === 'forms' && (
                             <>
                                 <MetricKpiCard
@@ -1526,6 +1576,33 @@ export default function TrashBinIndex(props: TrashBinProps) {
                                 );
                             }}
                         />
+                        {(canRestore || canPermanentDelete) && (
+                            <Button
+                                type="button"
+                                variant={selectionMode ? 'secondary' : 'outline'}
+                                onClick={toggleSelectionMode}
+                                className="cursor-pointer"
+                            >
+                                <CheckSquare className="mr-1 h-4 w-4" />
+                                {selectionMode ? 'Cancel Selection' : 'Select Rows'}
+                            </Button>
+                        )}
+                        {canRestore && selectedTrashIds.length > 0 && (
+                            <Button type="button" onClick={() => setShowBulkRestoreModal(true)} className="cursor-pointer">
+                                Restore ({selectedTrashIds.length})
+                            </Button>
+                        )}
+                        {canPermanentDelete && selectedTrashIds.length > 0 && (
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={() => setShowBulkDeleteModal(true)}
+                                className="cursor-pointer"
+                            >
+                                <Trash2 className="mr-1 h-4 w-4" />
+                                Permanent Delete ({selectedTrashIds.length})
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -1553,6 +1630,18 @@ export default function TrashBinIndex(props: TrashBinProps) {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                {selectionMode && (
+                                    <TableHead className="w-[52px] text-center">
+                                        <input
+                                            type="checkbox"
+                                            aria-label="Select all visible trash records"
+                                            checked={allVisibleSelected}
+                                            onChange={toggleVisibleSelection}
+                                            disabled={!activeData?.data?.length}
+                                            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                    </TableHead>
+                                )}
                                 <TableHead className="w-[80px] text-center">Record ID</TableHead>
                                 <TableHead className="w-[400px] text-center">Record Name</TableHead>
                                 <TableHead className="w-[180px] text-center">Date Deleted</TableHead>
@@ -1561,41 +1650,56 @@ export default function TrashBinIndex(props: TrashBinProps) {
                         </TableHeader>
                         <TableBody className="text-center">
                             {activeData?.data?.length ? (
-                                activeData.data.map((row: TrashRecord) => (
-                                    <TableRow key={row.id}>
-                                        <TableCell className="max-w-[80px]">{row.id}</TableCell>
-                                        <TableCell className="max-w-[400px] break-words whitespace-normal">
-                                            {formatRecordName(row, activeTab)}
-                                        </TableCell>
-                                        <TableCell className="max-w-[180px]">{formatDateTime(row.deleted_at)}</TableCell>
-                                        <TableCell className="max-w-[150px]">
-                                            <div className="flex justify-center gap-2">
-                                                <Button
-                                                    onClick={() => handleRestore(activeTab, row.id, row)}
-                                                    className="cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-600 disabled:opacity-50"
-                                                    disabled={!canRestore}
-                                                >
-                                                    Restore
-                                                </Button>
+                                activeData.data.map((row: TrashRecord) => {
+                                    const isSelected = selectedTrashIds.includes(row.id);
 
-                                                <Button
-                                                    className="cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-600 disabled:opacity-50"
-                                                    variant="destructive"
-                                                    disabled={!canPermanentDelete}
-                                                    onClick={() => {
-                                                        setSelectedDeleteId(row.id);
-                                                        setShowDeleteModal(true);
-                                                    }}
-                                                >
-                                                    Permanent Delete
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                    return (
+                                        <TableRow key={row.id} className={isSelected ? 'bg-blue-50 dark:bg-blue-950/30' : undefined}>
+                                            {selectionMode && (
+                                                <TableCell className="text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        aria-label={`Select trash record ${row.id}`}
+                                                        checked={isSelected}
+                                                        onChange={() => toggleTrashSelection(row.id)}
+                                                        className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                </TableCell>
+                                            )}
+                                            <TableCell className="max-w-[80px]">{row.id}</TableCell>
+                                            <TableCell className="max-w-[400px] break-words whitespace-normal">
+                                                {formatRecordName(row, activeTab)}
+                                            </TableCell>
+                                            <TableCell className="max-w-[180px]">{formatDateTime(row.deleted_at)}</TableCell>
+                                            <TableCell className="max-w-[150px]">
+                                                <div className="flex justify-center gap-2">
+                                                    <Button
+                                                        onClick={() => handleRestore(activeTab, row.id, row)}
+                                                        className="cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-600 disabled:opacity-50"
+                                                        disabled={!canRestore}
+                                                    >
+                                                        Restore
+                                                    </Button>
+
+                                                    <Button
+                                                        className="cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-600 disabled:opacity-50"
+                                                        variant="destructive"
+                                                        disabled={!canPermanentDelete}
+                                                        onClick={() => {
+                                                            setSelectedDeleteId(row.id);
+                                                            setShowDeleteModal(true);
+                                                        }}
+                                                    >
+                                                        Permanent Delete
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                    <TableCell colSpan={selectionMode ? 5 : 4} className="text-center text-muted-foreground">
                                         No records found.
                                     </TableCell>
                                 </TableRow>
@@ -1635,6 +1739,79 @@ export default function TrashBinIndex(props: TrashBinProps) {
                 }}
                 title="Confirm Permanent Deletion"
                 message="This will permanently remove the record from the system. This action cannot be undone."
+            />
+
+            <DeleteConfirmationModal
+                show={showBulkDeleteModal}
+                onCancel={() => setShowBulkDeleteModal(false)}
+                onConfirm={() => {
+                    if (selectedTrashIds.length === 0) return;
+
+                    router.delete(`/trash-bin/permanent-delete/${restoreMap[activeTab]}/bulk`, {
+                        data: { ids: selectedTrashIds },
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            setShowBulkDeleteModal(false);
+                            setSelectedTrashIds([]);
+                            setSelectionMode(false);
+                        },
+                    });
+                }}
+                title="Permanently Delete Selected Rows"
+                message={
+                    <div className="space-y-4">
+                        <p>
+                            Are you sure you want to permanently delete {selectedTrashIds.length} selected{' '}
+                            {selectedTrashIds.length === 1 ? 'row' : 'rows'}?
+                        </p>
+                        <ul className="mx-auto max-h-40 max-w-sm list-disc overflow-y-auto pl-6 text-left text-sm text-foreground">
+                            {selectedTrashRows.map((row) => (
+                                <li key={row.id} className="break-words">
+                                    {formatRecordName(row, activeTab)}
+                                </li>
+                            ))}
+                        </ul>
+                        <p>This will permanently remove them from the system. This action cannot be undone.</p>
+                    </div>
+                }
+            />
+
+            <DeleteConfirmationModal
+                show={showBulkRestoreModal}
+                onCancel={() => setShowBulkRestoreModal(false)}
+                onConfirm={() => {
+                    if (selectedTrashIds.length === 0) return;
+
+                    router.post(
+                        `/trash-bin/restore/${restoreMap[activeTab]}/bulk`,
+                        { ids: selectedTrashIds },
+                        {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setShowBulkRestoreModal(false);
+                                setSelectedTrashIds([]);
+                                setSelectionMode(false);
+                            },
+                        },
+                    );
+                }}
+                title="Restore Selected Rows"
+                message={
+                    <div className="space-y-4">
+                        <p>
+                            Are you sure you want to restore {selectedTrashIds.length} selected{' '}
+                            {selectedTrashIds.length === 1 ? 'row' : 'rows'}?
+                        </p>
+                        <ul className="mx-auto max-h-40 max-w-sm list-disc overflow-y-auto pl-6 text-left text-sm text-foreground">
+                            {selectedTrashRows.map((row) => (
+                                <li key={row.id} className="break-words">
+                                    {formatRecordName(row, activeTab)}
+                                </li>
+                            ))}
+                        </ul>
+                        <p>These records will be moved out of the Trash Bin.</p>
+                    </div>
+                }
             />
         </AppLayout>
     );

@@ -644,6 +644,49 @@ class TrashBinController extends Controller
         return back()->with('success', ucfirst($type) . ' restored successfully.');
     }
 
+    public function bulkRestore(Request $request, string $type)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $restoredCount = 0;
+
+        if ($type === 'signatory') {
+            $signatoryModels = [
+                InventorySchedulingSignatory::class,
+                TransferSignatory::class,
+                TurnoverDisposalSignatory::class,
+                OffCampusSignatory::class,
+            ];
+
+            foreach ($data['ids'] as $id) {
+                foreach ($signatoryModels as $model) {
+                    $signatory = $model::withTrashed()->find($id);
+
+                    if ($signatory) {
+                        $signatory->restore();
+                        $restoredCount++;
+                        break;
+                    }
+                }
+            }
+
+            return back()->with('success', $restoredCount . ' signatory records restored successfully.');
+        }
+
+        $modelClass = $this->resolveModel($type);
+        $records = $modelClass::withTrashed()->whereIn('id', $data['ids'])->get();
+
+        foreach ($records as $record) {
+            $record->restore();
+            $restoredCount++;
+        }
+
+        return back()->with('success', $restoredCount . ' records restored successfully.');
+    }
+
     private function resolveModel(string $type): string
     {
         return match ($type) {
@@ -705,5 +748,54 @@ class TrashBinController extends Controller
         $record->forceDelete();
 
         return back()->with('success', ucfirst($type) . ' permanently deleted.');
+    }
+
+    public function bulkPermanentDelete(Request $request, string $type)
+    {
+        $user = Auth::user();
+
+        if (!in_array(optional($user->role)->code, ['superuser', 'pmo_head'])) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $deletedCount = 0;
+
+        if ($type === 'signatory') {
+            $signatoryModels = [
+                InventorySchedulingSignatory::class,
+                TransferSignatory::class,
+                TurnoverDisposalSignatory::class,
+                OffCampusSignatory::class,
+            ];
+
+            foreach ($data['ids'] as $id) {
+                foreach ($signatoryModels as $model) {
+                    $signatory = $model::withTrashed()->find($id);
+
+                    if ($signatory) {
+                        $signatory->forceDelete();
+                        $deletedCount++;
+                        break;
+                    }
+                }
+            }
+
+            return back()->with('success', $deletedCount . ' signatory records permanently deleted.');
+        }
+
+        $modelClass = $this->resolveModel($type);
+        $records = $modelClass::withTrashed()->whereIn('id', $data['ids'])->get();
+
+        foreach ($records as $record) {
+            $record->forceDelete();
+            $deletedCount++;
+        }
+
+        return back()->with('success', $deletedCount . ' records permanently deleted.');
     }
 }

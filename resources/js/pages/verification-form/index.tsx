@@ -344,31 +344,59 @@ export default function VerificationFormIndex() {
 
                 {/* Table */}
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[120px] text-center">VF No.</TableHead>
-                                <TableHead className="w-[180px] text-center">Unit / Department</TableHead>
-                                <TableHead className="w-[200px] text-center">Requester</TableHead>
-                                <TableHead className="w-[120px] text-center">Status</TableHead>
-                                <TableHead className="w-[150px] text-center">Verification Date</TableHead>
-                                <TableHead className="w-[150px] text-center">Notes</TableHead>
-                                <TableHead className="w-[180px] text-center">Remarks</TableHead>
-                                <TableHead className="w-[160px] text-center">Action</TableHead>
+                    <Table className="min-w-[1120px]" containerClassName="rounded-none border-0 shadow-none">
+                        <TableHeader className="sticky top-0 z-10">
+                            <TableRow className="border-b border-neutral-200 bg-neutral-100 text-sm tracking-wide text-neutral-800 uppercase hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-900">
+                                <TableHead className="w-[120px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">VF No.</TableHead>
+                                <TableHead className="min-w-[220px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Unit / Department
+                                </TableHead>
+                                <TableHead className="min-w-[190px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Requester
+                                </TableHead>
+                                <TableHead className="w-[130px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Status
+                                </TableHead>
+                                <TableHead className="min-w-[170px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Verification Date
+                                </TableHead>
+                                <TableHead className="min-w-[160px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Notes
+                                </TableHead>
+                                <TableHead className="min-w-[190px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Remarks
+                                </TableHead>
+                                <TableHead className="w-[132px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody className="text-center">
+                        <TableBody>
                             {pageItems.length > 0 ? (
                                 pageItems.map((vf) => {
                                     const unitName = vf.unit_or_department?.name ?? '—';
                                     const requesterName = vf.requested_by_personnel?.name || vf.requested_by_snapshot?.name || '—';
 
                                     return (
-                                        <TableRow key={vf.id}>
-                                            <TableCell>VF-{vf.id.toString().padStart(3, '0')}</TableCell>
-                                            <TableCell>{unitName}</TableCell>
-                                            <TableCell className="break-words whitespace-pre-wrap">{requesterName}</TableCell>
-                                            <TableCell>
+                                        <TableRow
+                                            key={vf.id}
+                                            className="group border-b border-slate-100 bg-white transition-colors last:border-0 hover:bg-blue-50/40 dark:bg-slate-950 dark:hover:bg-blue-950/20"
+                                        >
+                                            <TableCell className="px-4 py-4 text-center align-middle font-mono text-xs text-muted-foreground">
+                                                VF-{vf.id.toString().padStart(3, '0')}
+                                            </TableCell>
+                                            <TableCell className="px-4 py-4 text-center align-middle">
+                                                <div className="mx-auto flex min-w-0 flex-col items-center gap-1">
+                                                    <span className="max-w-[240px] truncate text-center font-semibold text-foreground">{unitName}</span>
+                                                    <span className="max-w-[240px] truncate text-center text-xs tracking-wide text-muted-foreground">
+                                                        {vf.unit_or_department?.code ? String(vf.unit_or_department.code).toUpperCase() : 'No unit code'}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="px-4 py-4 text-center align-middle font-medium break-words whitespace-pre-wrap">
+                                                {requesterName}
+                                            </TableCell>
+                                            <TableCell className="px-4 py-4 text-center align-middle">
                                                 <Badge
                                                     variant={
                                                         vf.status === 'pending'
@@ -384,10 +412,16 @@ export default function VerificationFormIndex() {
                                                     {formatStatusLabel(vf.status)}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell>{formatDateLong(vf.verified_at)}</TableCell>
-                                            <TableCell className="break-words whitespace-pre-wrap">{ucwords(vf.notes ?? '—')}</TableCell>
-                                            <TableCell className="break-words whitespace-pre-wrap">{ucwords(vf.remarks ?? '—')}</TableCell>
-                                            <TableCell className="text-center">
+                                            <TableCell className="px-4 py-4 text-center align-middle text-sm text-foreground">
+                                                {formatDateLong(vf.verified_at)}
+                                            </TableCell>
+                                            <TableCell className="px-4 py-4 text-center align-middle break-words whitespace-pre-wrap">
+                                                {ucwords(vf.notes ?? '—')}
+                                            </TableCell>
+                                            <TableCell className="px-4 py-4 text-center align-middle break-words whitespace-pre-wrap">
+                                                {ucwords(vf.remarks ?? '—')}
+                                            </TableCell>
+                                            <TableCell className="px-4 py-4 text-center align-middle">
                                                 <DropdownMenu
                                                     modal={false}
                                                     open={openActionId === vf.id}
@@ -397,7 +431,7 @@ export default function VerificationFormIndex() {
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8 rounded-full border border-transparent transition hover:border-border hover:bg-muted"
+                                                            className="h-8 w-8 cursor-pointer rounded-full border border-transparent transition hover:border-slate-200 hover:bg-white hover:shadow-sm"
                                                         >
                                                             <EllipsisVertical className="h-4 w-4" />
                                                         </Button>
@@ -486,8 +520,16 @@ export default function VerificationFormIndex() {
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
-                                        No verification forms found.
+                                    <TableCell colSpan={8} className="h-48 text-center">
+                                        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-muted-foreground">
+                                            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
+                                                <ClipboardCheck className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-foreground">No verification forms found</p>
+                                                <p className="text-sm">Try adjusting your search, sort, or filter settings.</p>
+                                            </div>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -495,7 +537,6 @@ export default function VerificationFormIndex() {
                     </Table>
                 </div>
 
-                {/* Pagination */}
                 <div className="flex items-center justify-between">
                     <PageInfo page={page} total={sorted.length} pageSize={pageSize} label="verification forms" />
                     <Pagination page={page} total={sorted.length} pageSize={pageSize} onPageChange={setPage} />

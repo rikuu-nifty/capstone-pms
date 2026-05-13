@@ -562,16 +562,28 @@ export default function InventorySchedulingIndex({
                 </div>
 
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
-                    <Table className="w-full table-auto">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="text-center">ID</TableHead>
-                                <TableHead className="text-center">Inventory Schedule</TableHead>
-                                <TableHead className="text-center">Actual Date of Inventory</TableHead>
-                                <TableHead className="text-center">Checked By</TableHead>
-                                <TableHead className="text-center">Verified By</TableHead>
-                                <TableHead className="text-center">Status</TableHead>
-                                <TableHead className="text-center">Action</TableHead>
+                    <Table className="min-w-[980px]" containerClassName="rounded-none border-0 shadow-none">
+                        <TableHeader className="sticky top-0 z-10">
+                            <TableRow className="border-b border-neutral-200 bg-neutral-100 text-sm tracking-wide text-neutral-800 uppercase hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-900">
+                                <TableHead className="w-[72px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">ID</TableHead>
+                                <TableHead className="min-w-[180px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Inventory Schedule
+                                </TableHead>
+                                <TableHead className="min-w-[210px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Actual Date of Inventory
+                                </TableHead>
+                                <TableHead className="min-w-[170px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Checked By
+                                </TableHead>
+                                <TableHead className="min-w-[170px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Verified By
+                                </TableHead>
+                                <TableHead className="w-[150px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Status
+                                </TableHead>
+                                <TableHead className="w-[132px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -579,27 +591,35 @@ export default function InventorySchedulingIndex({
                             {/* {filtered.map((item) => ( */}
                             {page_items.length > 0 ? (
                                 page_items.map((item) => (
-                                    <TableRow key={item.id} className="text-center">
-                                        <TableCell>{item.id}</TableCell>
-                                        <TableCell className="whitespace-nowrap">{formatMonth(item.inventory_schedule) || '—'}</TableCell>
-                                        <TableCell className="whitespace-nowrap">
+                                    <TableRow
+                                        key={item.id}
+                                        className="group border-b border-slate-100 bg-white transition-colors last:border-0 hover:bg-blue-50/40 dark:bg-slate-950 dark:hover:bg-blue-950/20"
+                                    >
+                                        <TableCell className="px-4 py-4 text-left align-middle font-mono text-xs text-muted-foreground">
+                                            #{item.id}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle font-medium whitespace-nowrap">
+                                            {formatMonth(item.inventory_schedule) || '—'}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle text-sm whitespace-nowrap text-foreground">
                                             {item.actual_date_of_inventory ? formatDate(item.actual_date_of_inventory) : '—'}
                                         </TableCell>
-                                        <TableCell>{item.checked_by || '—'}</TableCell>
-                                        <TableCell>{item.verified_by || '—'}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">{item.checked_by || '—'}</TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">{item.verified_by || '—'}</TableCell>
+                                        <TableCell className="px-4 py-4 text-center align-middle">
                                             <Badge variant={schedulingStatusMap[item.scheduling_status] ?? 'default'}>
                                                 {item.scheduling_status.replace('_', ' ')}
                                             </Badge>
                                         </TableCell>
 
                                         {/* Actions */}
-                                        <TableCell>
-                                            <div className="flex items-center justify-center gap-2">
+                                        <TableCell className="px-4 py-4 text-center align-middle">
+                                            <div className="flex items-center justify-center gap-1.5">
                                                 {canEdit && (
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
+                                                        className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                                                         onClick={() => {
                                                             setSelectedSchedule(item);
                                                             setEditModalVisible(true);
@@ -613,6 +633,7 @@ export default function InventorySchedulingIndex({
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
+                                                        className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-red-200 hover:bg-red-50"
                                                         onClick={() => {
                                                             setSelectedSchedule(item);
                                                             setDeleteModalVisible(true);
@@ -622,7 +643,12 @@ export default function InventorySchedulingIndex({
                                                     </Button>
                                                 )}
 
-                                                <Button size="icon" variant="ghost" asChild>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    asChild
+                                                    className="h-8 w-8 cursor-pointer rounded-full border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm"
+                                                >
                                                     <Link href={route('inventory-scheduling.view', item.id)} preserveScroll>
                                                         <Eye className="h-4 w-4 text-muted-foreground" />
                                                     </Link>
@@ -633,8 +659,16 @@ export default function InventorySchedulingIndex({
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                                        No schedules found.
+                                    <TableCell colSpan={7} className="h-48 text-center">
+                                        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-muted-foreground">
+                                            <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
+                                                <CalendarClock className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-foreground">No schedules found</p>
+                                                <p className="text-sm">Try adjusting your search or filter settings.</p>
+                                            </div>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -642,7 +676,7 @@ export default function InventorySchedulingIndex({
                     </Table>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between">
+                <div className="flex items-center justify-between">
                     <PageInfo page={page} total={filtered.length} pageSize={PAGE_SIZE} label="Inventory Schedule records" />
                     <Pagination page={page} total={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
                 </div>

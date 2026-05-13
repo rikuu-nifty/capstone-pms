@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { statusVariantMap } from '@/types/custom-index';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -264,7 +265,9 @@ export default function Dashboard() {
                                                         <p className="text-xs text-muted-foreground">{formatDate(transfer.created_at)}</p>
                                                     </div>
                                                     <span className="flex shrink-0 items-center gap-2">
-                                                        <Badge variant="outline">{formatStatus(transfer.status)}</Badge>
+                                                        <Badge variant={statusVariantMap[transfer.status.toLowerCase()] ?? 'outline'}>
+                                                            {formatStatus(transfer.status)}
+                                                        </Badge>
                                                         <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-blue-600" />
                                                     </span>
                                                 </Link>

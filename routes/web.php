@@ -320,6 +320,9 @@ Route::get('/unauthorized', fn() => Inertia::render('errors/Unauthorized', [
     Route::get('/inventory-list/{inventory_list}/edit', [InventoryListController::class, 'edit'])
         ->name('inventory-list.edit')
         ->middleware('can:update-inventory-list');
+    Route::delete('/inventory-list/bulk-destroy', [InventoryListController::class, 'bulkDestroy'])
+        ->name('inventory-list.bulk-destroy')
+        ->middleware('can:delete-inventory-list');
     Route::delete('/inventory-list/{inventory_list}', [InventoryListController::class, 'destroy'])
         ->name('inventory-list.destroy')
         ->middleware('can:delete-inventory-list');
@@ -614,8 +617,12 @@ Route::delete('/verification-form/{id}/force-delete', [VerificationFormControlle
     // RESTORATION
     Route::get('/trash-bin', [TrashBinController::class, 'index'])->name('trash-bin.index')
         ->middleware('can:view-trash-bin');
+    Route::post('/trash-bin/restore/{type}/bulk', [TrashBinController::class, 'bulkRestore'])->name('trash-bin.bulkRestore')
+        ->middleware('can:restore-trash-bin');
     Route::post('/trash-bin/restore/{type}/{id}', [TrashBinController::class, 'restore'])->name('trash-bin.restore')
         ->middleware('can:restore-trash-bin');
+    Route::delete('/trash-bin/permanent-delete/{type}/bulk', [TrashBinController::class, 'bulkPermanentDelete'])->name('trash.bulkPermanentDelete')
+        ->middleware('can:permanent-delete-trash-bin');
     Route::delete('/trash-bin/permanent-delete/{type}/{id}', [TrashBinController::class, 'permanentDelete'])->name('trash.permanentDelete')
         ->middleware('can:permanent-delete-trash-bin');
 });

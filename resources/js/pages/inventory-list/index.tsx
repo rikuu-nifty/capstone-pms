@@ -1,6 +1,7 @@
 import { DeleteAssetModal } from '@/components/delete-modal-form';
 import Pagination, { PageInfo } from '@/components/Pagination';
 import { PickerInput } from '@/components/picker-input';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { EditAssetModalForm } from '@/pages/inventory-list/edit-asset-modal-form
 import { ViewAssetModal } from '@/pages/inventory-list/view-modal-form';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AlertTriangleIcon, Banknote, Boxes, Copy, Eye, FolderArchive, ImageIcon, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
+import { AlertTriangleIcon, Banknote, Boxes, CheckSquare, Copy, Eye, FolderArchive, ImageIcon, Pencil, Pin, PlusCircle, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AddBulkAssetModalForm } from './addBulkAssetModal';
@@ -370,6 +371,9 @@ export default function InventoryListIndex({
     const [selectedStatus, setSelectedStatus] = useState<string>('');
 
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedAssetIds, setSelectedAssetIds] = useState<number[]>([]);
+    const [bulkDeleteModalVisible, setBulkDeleteModalVisible] = useState(false);
 
     useEffect(() => {
         if (canViewOwn && !canViewAll && auth.unit_or_department_id) {
@@ -568,10 +572,44 @@ export default function InventoryListIndex({
 
     const total = sortedData.length;
     const paginatedData = sortedData.slice((page - 1) * pageSize, page * pageSize);
+    const visibleAssetIds = paginatedData.map((item) => item.id);
+    const allVisibleSelected = visibleAssetIds.length > 0 && visibleAssetIds.every((id) => selectedAssetIds.includes(id));
+    const selectedAssetsForDelete = selectedAssetIds
+        .map((id) => assets.find((asset) => asset.id === id))
+        .filter((asset): asset is Asset => Boolean(asset));
 
     useEffect(() => {
         setPage(1);
     }, [search, selectedCategoryId, selectedUnitId, selectedStatus, sortKey, sortDir]);
+
+    useEffect(() => {
+        const currentAssetIds = new Set(assets.map((asset) => asset.id));
+        setSelectedAssetIds((current) => current.filter((id) => currentAssetIds.has(id)));
+    }, [assets]);
+
+    const toggleSelectionMode = () => {
+        setSelectionMode((current) => {
+            if (current) {
+                setSelectedAssetIds([]);
+            }
+
+            return !current;
+        });
+    };
+
+    const toggleAssetSelection = (id: number) => {
+        setSelectedAssetIds((current) => (current.includes(id) ? current.filter((assetId) => assetId !== id) : [...current, id]));
+    };
+
+    const toggleVisibleSelection = () => {
+        setSelectedAssetIds((current) => {
+            if (allVisibleSelected) {
+                return current.filter((id) => !visibleAssetIds.includes(id));
+            }
+
+            return Array.from(new Set([...current, ...visibleAssetIds]));
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -756,7 +794,7 @@ export default function InventoryListIndex({
                         </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap justify-end gap-2">
                         <SortDropdown<InventorySortKey>
                             sortKey={sortKey}
                             sortDir={sortDir}
@@ -786,6 +824,23 @@ export default function InventoryListIndex({
                                 notifyFiltersCleared();
                             }}
                         />
+                        {canDelete && (
+                            <Button type="button" variant={selectionMode ? 'secondary' : 'outline'} onClick={toggleSelectionMode} className="cursor-pointer">
+                                <CheckSquare className="mr-1 h-4 w-4" />
+                                {selectionMode ? 'Cancel Selection' : 'Select Rows'}
+                            </Button>
+                        )}
+                        {canDelete && selectedAssetIds.length > 0 && (
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={() => setBulkDeleteModalVisible(true)}
+                                className="cursor-pointer"
+                            >
+                                <Trash2 className="mr-1 h-4 w-4" />
+                                Delete ({selectedAssetIds.length})
+                            </Button>
+                        )}
                         {canCreate && ( // only show if user has create permission
                             <Button
                                 onClick={() => {
@@ -802,9 +857,21 @@ export default function InventoryListIndex({
                 </div>
 
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm">
-                    <Table className="min-w-[1180px]">
+                    <Table className={selectionMode ? 'min-w-[1230px]' : 'min-w-[1180px]'} containerClassName="rounded-none border-0 shadow-none">
                         <TableHeader className="sticky top-0 z-10">
                             <TableRow className="border-b border-neutral-200 bg-neutral-100 text-sm tracking-wide text-neutral-800 uppercase hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-900">
+                                {selectionMode && (
+                                    <TableHead className="w-[52px] px-4 py-3 text-center font-bold text-neutral-800 dark:text-neutral-100">
+                                        <input
+                                            type="checkbox"
+                                            aria-label="Select all visible assets"
+                                            checked={allVisibleSelected}
+                                            onChange={toggleVisibleSelection}
+                                            disabled={paginatedData.length === 0}
+                                            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                    </TableHead>
+                                )}
                                 <TableHead className="w-[72px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">ID</TableHead>
                                 <TableHead className="min-w-[220px] px-4 py-3 text-left font-bold text-neutral-800 dark:text-neutral-100">
                                     Asset
@@ -840,7 +907,7 @@ export default function InventoryListIndex({
                         <TableBody>
                             {paginatedData.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={11} className="h-48 text-center">
+                                    <TableCell colSpan={selectionMode ? 12 : 11} className="h-48 text-center">
                                         <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-muted-foreground">
                                             <div className="grid h-12 w-12 place-items-center rounded-full bg-muted">
                                                 <Boxes className="h-6 w-6" />
@@ -856,11 +923,25 @@ export default function InventoryListIndex({
                             {paginatedData.map((item) => {
                                 const assetImageSrc = getAssetImageSrc(item.image_path);
                                 const locationLabel = getLocationLabel(item);
+                                const isSelected = selectedAssetIds.includes(item.id);
                                 return (
                                     <TableRow
                                         key={item.id}
-                                        className="group border-b border-slate-100 bg-white transition-colors hover:bg-blue-50/40 dark:bg-slate-950 dark:hover:bg-blue-950/20"
+                                        className={`group border-b border-slate-100 transition-colors last:border-0 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 ${
+                                            isSelected ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-white dark:bg-slate-950'
+                                        }`}
                                     >
+                                        {selectionMode && (
+                                            <TableCell className="px-4 py-4 text-center align-middle">
+                                                <input
+                                                    type="checkbox"
+                                                    aria-label={`Select asset ${item.id}`}
+                                                    checked={isSelected}
+                                                    onChange={() => toggleAssetSelection(item.id)}
+                                                    className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                            </TableCell>
+                                        )}
                                         <TableCell className="px-4 py-4 text-left align-middle font-mono text-xs text-muted-foreground">
                                             #{item.id}
                                         </TableCell>
@@ -898,7 +979,7 @@ export default function InventoryListIndex({
                                                 {ucwords(item.asset_model?.brand ?? '-')}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="px-4 py-4 text-left align-middle text-sm text-muted-foreground">
+                                        <TableCell className="px-4 py-4 text-left align-middle text-sm text-foreground">
                                             {formatDate(item.date_purchased) || '-'}
                                         </TableCell>
                                         <TableCell className="px-4 py-4 text-left align-middle">
@@ -1025,10 +1106,11 @@ export default function InventoryListIndex({
                             })}
                         </TableBody>
                     </Table>
-                    <div className="flex items-center justify-between p-3">
-                        <PageInfo page={page} total={total} pageSize={pageSize} />
-                        <Pagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
-                    </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                    <PageInfo page={page} total={total} pageSize={pageSize} />
+                    <Pagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
                 </div>
             </div>
 
@@ -1049,6 +1131,42 @@ export default function InventoryListIndex({
                     personnels={personnels} // pass here
                 />
             )}
+
+            <DeleteConfirmationModal
+                show={bulkDeleteModalVisible}
+                title="Delete Selected Rows"
+                message={
+                    <div className="space-y-4">
+                        <p>
+                            Are you sure you want to delete {selectedAssetIds.length} selected{' '}
+                            {selectedAssetIds.length === 1 ? 'row' : 'rows'}?
+                        </p>
+                        <ul className="mx-auto max-h-40 max-w-sm list-disc overflow-y-auto pl-6 text-left text-sm text-foreground">
+                            {selectedAssetsForDelete.map((asset) => (
+                                <li key={asset.id} className="break-words">
+                                    {ucwords(asset.asset_name)}
+                                </li>
+                            ))}
+                        </ul>
+                        <p>This will move them to the Trash Bin and can be restored later.</p>
+                    </div>
+                }
+                onCancel={() => setBulkDeleteModalVisible(false)}
+                onConfirm={() => {
+                    router.delete('/inventory-list/bulk-destroy', {
+                        data: { ids: selectedAssetIds },
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            setBulkDeleteModalVisible(false);
+                            setSelectedAssetIds([]);
+                            setSelectionMode(false);
+                        },
+                        onError: (err) => {
+                            console.error('Failed to delete selected assets:', err);
+                        },
+                    });
+                }}
+            />
 
             {deleteModalVisible && selectedAsset && (
                 <DeleteAssetModal
